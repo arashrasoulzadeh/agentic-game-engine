@@ -10,7 +10,7 @@ top to bottom — not strict, adjust as dependencies emerge.
       jump support, one-way platforms
 - [ ] Tilemaps: tile-based level representation + collision against
       tile grids (distinct from the current per-entity spatial hash)
-- [ ] Persistence: save/load a `World` snapshot to/from disk (builds on
+- [x] Persistence: save/load a `World` snapshot to/from disk (builds on
       existing `toJson`/`applyPatch`)
 - [x] Level lint: expose `Level.validate()` as a `game_agent` CLI
       subcommand so a level file can be checked without running the game

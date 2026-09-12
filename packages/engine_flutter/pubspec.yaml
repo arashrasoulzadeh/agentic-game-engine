@@ -30,6 +30,11 @@ dependencies:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
       path: packages/engine_core
       ref: main
+  # For SaveGame: shared_preferences works identically on
+  # Android/iOS/web/desktop, unlike raw File I/O (path_provider's File
+  # APIs don't work on web at all) — the right cross-platform choice
+  # given this engine's Android+iOS+Web target.
+  shared_preferences: ^2.3.0
 
 dev_dependencies:
   flutter_test:
