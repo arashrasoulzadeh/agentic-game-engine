@@ -1,0 +1,27 @@
+name: engine_flutter
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/engine_flutter/**'
+      - '.github/workflows/engine_flutter.yml'
+  pull_request:
+    paths:
+      - 'packages/engine_flutter/**'
+      - '.github/workflows/engine_flutter.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/engine_flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
