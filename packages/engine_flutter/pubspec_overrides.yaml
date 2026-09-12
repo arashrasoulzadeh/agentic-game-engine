@@ -1,0 +1,9 @@
+# Local monorepo development only: resolves engine_core from the sibling
+# checkout instead of git, so editing both packages together doesn't
+# require a commit+push round-trip. Only applies when running pub inside
+# this package directly — ignored when engine_flutter is fetched as a
+# git dependency by another project, so it can't cause the ref-mismatch
+# conflict pubspec.yaml's comment describes.
+dependency_overrides:
+  engine_core:
+    path: ../engine_core

@@ -10,8 +10,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Self-referencing git dependency (not a local `path:`) so the ref
+  # string here always matches whatever ref an external consumer pins
+  # engine_core to. A local `path:` would make pub see two different
+  # engine_core "descriptions" (a resolved commit vs. the consumer's
+  # `ref: main`) and refuse to solve — see pubspec_overrides.yaml for
+  # local monorepo development.
   engine_core:
-    path: ../engine_core
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_core
+      ref: main
 
 dev_dependencies:
   flutter_test:
