@@ -1,16 +1,24 @@
+export 'src/action.dart';
+export 'src/actions/set_velocity_action.dart';
+export 'src/behavior.dart';
 export 'src/component_registry.dart';
 export 'src/component_store.dart';
+export 'src/components/ai_state.dart';
 export 'src/components/collider.dart';
 export 'src/components/position.dart';
 export 'src/components/velocity.dart';
 export 'src/entity.dart';
 export 'src/event_bus.dart';
+export 'src/level.dart';
 export 'src/spatial_hash.dart';
 export 'src/system.dart';
+export 'src/systems/ai_system.dart';
 export 'src/systems/collision_system.dart';
 export 'src/systems/movement_system.dart';
 export 'src/world.dart';
+export 'src/world_view.dart';
 
+import 'src/components/ai_state.dart';
 import 'src/components/collider.dart';
 import 'src/components/position.dart';
 import 'src/components/velocity.dart';
@@ -34,5 +42,10 @@ void registerCoreComponents(World world) {
     'collider',
     (c) => c.toJson(),
     Collider.fromJson,
+  );
+  world.components.register<AIState>(
+    'aiState',
+    (a) => a.toJson(),
+    AIState.fromJson,
   );
 }
