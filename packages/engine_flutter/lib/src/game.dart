@@ -45,6 +45,14 @@ abstract class Game {
 
   /// Called when the app returns to the foreground after a pause.
   void onResume() {}
+
+  /// Shown while `populateWorld`/`loadAssets` are running, before the
+  /// first frame can render. Defaults to a centered spinner on the
+  /// configured background color — override for a branded splash
+  /// screen/logo instead.
+  Widget buildLoadingScreen(BuildContext context) {
+    return const Center(child: CircularProgressIndicator());
+  }
 }
 
 class _LoadedGame {
@@ -118,7 +126,10 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
       builder: (context, snapshot) {
         final loaded = snapshot.data;
         if (loaded == null) {
-          return ColoredBox(color: widget.game.config.backgroundColor);
+          return ColoredBox(
+            color: widget.game.config.backgroundColor,
+            child: widget.game.buildLoadingScreen(context),
+          );
         }
         return EngineView(
           world: loaded.world,

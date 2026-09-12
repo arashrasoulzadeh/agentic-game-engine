@@ -20,6 +20,20 @@ class _TestGame extends Game {
   void onResume() => resumed = true;
 }
 
+class _SlowLoadingGame extends _TestGame {
+  @override
+  Future<AtlasRegistry> loadAssets() async {
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    return AtlasRegistry();
+  }
+}
+
+class _CustomLoadingScreenGame extends _SlowLoadingGame {
+  @override
+  Widget buildLoadingScreen(BuildContext context) =>
+      const Center(child: Text('Loading my game...'));
+}
+
 void main() {
   testWidgets('GameRunner loads the game and renders EngineView', (tester) async {
     final game = _TestGame();
@@ -54,5 +68,35 @@ void main() {
         .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(game.resumed, isTrue);
+  });
+
+  testWidgets('shows the default loading screen until assets finish loading',
+      (tester) async {
+    final game = _SlowLoadingGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(EngineView), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 60));
+    await tester.pump();
+
+    expect(find.byType(EngineView), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('buildLoadingScreen can be overridden', (tester) async {
+    final game = _CustomLoadingScreenGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+
+    expect(find.text('Loading my game...'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+
+    // Let the pending delayed Future resolve before the test ends, or
+    // the test framework flags it as a leaked timer.
+    await tester.pump(const Duration(milliseconds: 60));
+    await tester.pump();
   });
 }
