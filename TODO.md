@@ -52,5 +52,8 @@ top to bottom — not strict, adjust as dependencies emerge.
 
 ## Validation
 
-- [ ] Build one real (small but complete) game on the engine — every
-      test so far uses the CLI's placeholder demo, not actual gameplay
+- [x] Build one real (small but complete) game on the engine —
+      `test_game` (local-only, gitignored): tile-based platformer
+      physics, keyboard-controlled player, patrolling AI enemy,
+      collectible coins, camera-follow, all via `engine_platformer`'s
+      helpers
