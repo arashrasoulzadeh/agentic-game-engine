@@ -7,6 +7,7 @@ World _buildWorld() {
   world.addSystem(MovementSystem());
   world.addSystem(GravitySystem());
   world.addSystem(PlatformerSystem());
+  world.addSystem(JumpSystem());
   return world;
 }
 

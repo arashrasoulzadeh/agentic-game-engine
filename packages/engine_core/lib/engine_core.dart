@@ -1,6 +1,7 @@
 export 'src/action.dart';
 export 'src/actions/set_velocity_action.dart';
 export 'src/behavior.dart';
+export 'src/collision_math.dart';
 export 'src/component_registry.dart';
 export 'src/component_store.dart';
 export 'src/components/ai_state.dart';
@@ -9,6 +10,7 @@ export 'src/components/gravity.dart';
 export 'src/components/platform_body.dart';
 export 'src/components/platformer_controller.dart';
 export 'src/components/position.dart';
+export 'src/components/tile_map.dart';
 export 'src/components/velocity.dart';
 export 'src/entity.dart';
 export 'src/event_bus.dart';
@@ -18,8 +20,10 @@ export 'src/system.dart';
 export 'src/systems/ai_system.dart';
 export 'src/systems/collision_system.dart';
 export 'src/systems/gravity_system.dart';
+export 'src/systems/jump_system.dart';
 export 'src/systems/movement_system.dart';
 export 'src/systems/platformer_system.dart';
+export 'src/systems/tile_collision_system.dart';
 export 'src/world.dart';
 export 'src/world_view.dart';
 
@@ -29,6 +33,7 @@ import 'src/components/gravity.dart';
 import 'src/components/platform_body.dart';
 import 'src/components/platformer_controller.dart';
 import 'src/components/position.dart';
+import 'src/components/tile_map.dart';
 import 'src/components/velocity.dart';
 import 'src/world.dart';
 
@@ -70,5 +75,10 @@ void registerCoreComponents(World world) {
     'platformerController',
     (p) => p.toJson(),
     PlatformerController.fromJson,
+  );
+  world.components.register<TileMap>(
+    'tileMap',
+    (t) => t.toJson(),
+    TileMap.fromJson,
   );
 }

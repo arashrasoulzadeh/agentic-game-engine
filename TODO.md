@@ -8,7 +8,7 @@ top to bottom — not strict, adjust as dependencies emerge.
 
 - [x] Platformer physics: gravity component/system, ground detection,
       jump support, one-way platforms
-- [ ] Tilemaps: tile-based level representation + collision against
+- [x] Tilemaps: tile-based level representation + collision against
       tile grids (distinct from the current per-entity spatial hash)
 - [x] Persistence: save/load a `World` snapshot to/from disk (builds on
       existing `toJson`/`applyPatch`)
