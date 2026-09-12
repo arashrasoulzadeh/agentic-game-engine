@@ -1,0 +1,26 @@
+name: {{PROJECT_NAME}}
+description: A game built with the agentic-game-engine.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  engine_core:
+    git:
+      url: {{ENGINE_REPO_URL}}
+      path: packages/engine_core
+      ref: {{ENGINE_REF}}
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

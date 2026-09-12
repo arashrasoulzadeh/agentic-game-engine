@@ -1,0 +1,11 @@
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:{{PROJECT_NAME}}/main.dart';
+
+void main() {
+  testWidgets('game boots and renders', (WidgetTester tester) async {
+    await tester.pumpWidget(const GameApp());
+    await tester.pump();
+    expect(find.byType(GameApp), findsOneWidget);
+  });
+}
