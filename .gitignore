@@ -44,14 +44,16 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Monorepo packages (engine_core, future engine_flutter, CLI, etc.) each
-# get their own build/.dart_tool artifacts — ignore them wherever they live.
+# Monorepo packages (engine_core, engine_cli, future engine_flutter, etc.)
+# each get their own build/.dart_tool artifacts — ignore them wherever
+# they live.
 packages/**/.dart_tool/
 packages/**/build/
 packages/**/.pub-cache/
 packages/**/pubspec.lock
 
-
-# CLI-generated game projects if scaffolded inside this repo during dev/testing
-/examples/**/build/
-/examples/**/.dart_tool/
+# This repo only tracks the engine itself (packages/). Any Flutter game
+# scaffolded here via `game_agent create` (e.g. test_game/) is local-only
+# dev/testing scratch — never committed.
+/test_game/
+/examples/
