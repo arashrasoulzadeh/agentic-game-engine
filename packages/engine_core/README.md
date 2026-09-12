@@ -27,9 +27,7 @@ for you. See [engine_cli](../engine_cli/README.md).)
 
 ```dart
 final world = World(width: 800, height: 480);
-registerCoreComponents(world); // Position, Velocity, Collider, AIState,
-                                // Gravity, PlatformBody,
-                                // PlatformerController, TileMap
+registerCoreComponents(world); // Position, Velocity, Collider, AIState, TileMap
 
 final id = world.spawn();
 world.storeOf<Position>().set(id, Position(100, 50));
@@ -62,21 +60,15 @@ Systems run in the order they're registered — `world.systemOrder` lists
 that order. This is deliberate: a bug is "read the list top to bottom,"
 not "trace which system's `initState` ran first."
 
-**Built-in systems and the order they generally need to run in**, when
-building a platformer:
-
-1. Your own input/AI-decision systems (set velocity/intent from input
-   or `AISystem`)
-2. `GravitySystem` — adds downward acceleration
-3. `MovementSystem` — integrates position by velocity
-4. `PlatformerSystem` — resolves against `PlatformBody` entities, sets
-   `grounded`
-5. `TileCollisionSystem` — resolves against `TileMap` tiles, also sets
-   `grounded` (additively; it never resets it — see its doc comment)
-6. `JumpSystem` — consumes jump input, **must run after both 4 and 5**,
-   or a jump off tile-only ground gets silently eaten (this was a real
-   bug caught by testing — see the commit history if curious)
-7. `CollisionSystem` — circle-vs-circle collision, emits `CollisionEvent`
+`MovementSystem` (integrates position by velocity, bounces off world
+bounds) and `CollisionSystem` (circle-vs-circle, emits `CollisionEvent`)
+are the only built-in systems here — they're genre-general. Gravity,
+jump, and platform/tile *collision* logic (which needs `TileMap` data
+but adds platformer-specific semantics like `grounded`) live in
+[`engine_platformer`](../engine_platformer/README.md), including the
+system-ordering rules for a platformer (`GravitySystem` →
+`MovementSystem` → `PlatformerSystem`/`TileCollisionSystem` →
+`JumpSystem` — order matters, see that package's README).
 
 ### Components reference
 
@@ -85,10 +77,7 @@ building a platformer:
 | `Position(x, y)` | World-space position |
 | `Velocity(x, y)` | Per-second velocity, integrated by `MovementSystem` |
 | `Collider(radius)` | Circle collider for entity-vs-entity collision |
-| `Gravity(scale)` | Marks an entity affected by `GravitySystem` |
-| `PlatformBody(width, height, oneWay)` | An AABB platform/ground rectangle |
-| `PlatformerController(grounded, jumpSpeed, jumpRequested)` | Ground state + jump input, maintained by `PlatformerSystem`/`TileCollisionSystem`/`JumpSystem` |
-| `TileMap(cols, rows, tileWidth, tileHeight, tiles, solidTileIds, oneWayTileIds)` | A tile grid for level geometry; attach to an entity with a `Position` (the grid's origin) |
+| `TileMap(cols, rows, tileWidth, tileHeight, tiles, solidTileIds, oneWayTileIds)` | A tile grid for level geometry; attach to an entity with a `Position` (the grid's origin). The data type is genre-general (RPGs/puzzle games use tile grids too); only platformer *collision* against it lives in `engine_platformer` |
 | `AIState(behaviorId, memory)` | Marks an entity as driven by a registered `Behavior` |
 
 ### Events
@@ -161,9 +150,9 @@ apply. This is the sandbox: an LLM-backed or rule-based agent can
 control an entity without any path to corrupting simulation state
 outside what its own `Action` does.
 
-Define your own `Action` subclasses for game-specific effects (see
-`test_game`'s `_PatrolStepAction` for an example that also writes into
-the entity's own `AIState.memory` blackboard).
+Define your own `Action` subclasses for game-specific effects — see
+`engine_platformer`'s `PatrolBehavior` for one that writes into the
+entity's own `AIState.memory` blackboard through its `Action`.
 
 ## Testing
 

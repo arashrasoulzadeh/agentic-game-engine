@@ -1,9 +1,10 @@
 # agentic-game-engine
 
-A pure-Dart 2D game engine (ECS, fixed-timestep simulation, spatial-hash
-collision, tile-based and entity-based platformer physics) built to be
-**AI-agent-friendly**: world state is plain, serializable data an agent
-can read and patch, content is authored as data, and a sandboxed
+A pure-Dart 2D game engine for building platformers (ECS, fixed-timestep
+simulation, spatial-hash collision, tile-based and entity-based
+platformer physics, patrol/follow AI, movement-driven animation) built
+to be **AI-agent-friendly**: world state is plain, serializable data an
+agent can read and patch, content is authored as data, and a sandboxed
 `Behavior`/`WorldView` API lets an agent drive an entity at runtime
 without any path to corrupting simulation state. Flutter is used only
 as the cross-platform shell (rendering, input, audio, packaging) for
@@ -13,8 +14,9 @@ Android/iOS/Web — the simulation core has no Flutter dependency at all.
 
 | Package | What it is |
 |---|---|
-| [`packages/engine_core`](packages/engine_core/README.md) | The engine itself: ECS, physics (gravity/jump/tilemaps/platforms), collision, the content DSL, and the agent-facing `WorldView`/`Behavior` API. Pure Dart, zero Flutter imports. |
+| [`packages/engine_core`](packages/engine_core/README.md) | The genre-general engine: ECS, `Position`/`Velocity`/`Collider`, spatial-hash collision, `TileMap` data, the content DSL, and the agent-facing `WorldView`/`Behavior` API. Pure Dart, zero Flutter imports. |
 | [`packages/engine_flutter`](packages/engine_flutter/README.md) | The Flutter shell: `Game`/`GameRunner` app framework, sprite rendering, camera, input, audio, save/load. No gameplay logic. |
+| [`packages/engine_platformer`](packages/engine_platformer/README.md) | 2D-platformer-genre gameplay: gravity, jump, tile/platform collision, player/enemy spawn helpers, patrol/follow AI behaviors, facing + movement-driven animation. Kept separate from `engine_core` so a non-platformer 2D game isn't forced to depend on gravity/jump concepts. |
 | [`packages/engine_cli`](packages/engine_cli/README.md) | The `game_agent` CLI — scaffolds new Flutter games wired to the engine, updates their pinned version, lints content files. |
 
 This repo is the **engine library**, not a game — there's no sample app

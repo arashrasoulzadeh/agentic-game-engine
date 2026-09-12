@@ -1,7 +1,6 @@
+import 'package:engine_core/engine_core.dart';
+
 import '../components/platformer_controller.dart';
-import '../components/velocity.dart';
-import '../system.dart';
-import '../world.dart';
 
 /// Consumes jump input. Deliberately separate from `PlatformerSystem`/
 /// `TileCollisionSystem` and must run *after* both: grounded state can

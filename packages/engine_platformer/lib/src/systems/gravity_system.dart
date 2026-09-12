@@ -1,8 +1,7 @@
+import 'package:engine_core/engine_core.dart';
+
 import '../components/gravity.dart';
 import '../components/platformer_controller.dart';
-import '../components/velocity.dart';
-import '../system.dart';
-import '../world.dart';
 
 /// Accelerates `Velocity.y` downward for every entity with a `Gravity`
 /// component. Skips entities `PlatformerSystem` has already marked

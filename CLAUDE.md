@@ -23,9 +23,26 @@ made explicitly (see the "Remove root sample app" commit).
 
 | Package | What | Depends on |
 |---|---|---|
-| `packages/engine_core` | ECS, physics, content DSL, agent API. Pure Dart, no Flutter. | nothing engine-internal |
+| `packages/engine_core` | Genre-general ECS, `TileMap` data, content DSL, agent API. Pure Dart, no Flutter. | nothing engine-internal |
 | `packages/engine_flutter` | Rendering, input, camera, audio, save/load. | `engine_core` |
+| `packages/engine_platformer` | Platformer-genre gameplay: gravity, jump, tile/platform collision, spawn helpers, patrol/follow behaviors, movement animation. | `engine_core`, `engine_flutter` |
 | `packages/engine_cli` | `game_agent` CLI: `create`/`upgrade`/`lint`. | `engine_core` (for `lint`) |
+
+**Dependency direction is a one-way DAG: `engine_core` → `engine_flutter`
+→ `engine_platformer`.** Nothing may depend "backward" up this chain.
+This bit us once already: `TileMap` was briefly moved into
+`engine_platformer` (it looked platformer-specific), but
+`engine_flutter`'s tile *renderer* needs the type to draw tiles at all —
+making `engine_flutter` depend on `engine_platformer` would be
+circular, since `engine_platformer` depends on `engine_flutter` for
+sprites/animation. `flutter test` caught it immediately (compile
+error across all three packages). The resolution, and the general
+rule: a type earlier in the chain can't depend on something defined
+later in it, no matter how "specific" that something's *use* seems —
+genre-general **data** (like `TileMap`) belongs in `engine_core` even
+when only one genre currently uses it seriously; only the genre-specific
+**logic** operating on that data (like `TileCollisionSystem`) belongs
+in `engine_platformer`.
 
 Read each package's own README for its API — this file is about
 *working in the repo*, not the engine's API surface.
@@ -64,7 +81,7 @@ Read each package's own README for its API — this file is about
 - **Every change gets a test**, and the test suite must pass before
   committing: `dart test`/`dart analyze --fatal-infos` for
   `engine_core`/`engine_cli`, `flutter test`/`flutter analyze
-  --fatal-infos` for `engine_flutter`.
+  --fatal-infos` for `engine_flutter`/`engine_platformer`.
 - **Verify end-to-end, not just unit tests, for anything touching the
   CLI or cross-package dependency wiring.** Several real bugs in this
   repo's history were only caught by actually running `game_agent
@@ -96,11 +113,16 @@ rather than letting it go untracked.
 ## If you're extending the ECS
 
 - New built-in component → register it in `registerCoreComponents`
-  (engine_core) or `registerFlutterComponents` (engine_flutter), with
-  `toJson`/`fromJson`, so it participates in `World.toJson()`/
+  (engine_core), `registerFlutterComponents` (engine_flutter), or
+  `registerPlatformerComponents` (engine_platformer) as appropriate,
+  with `toJson`/`fromJson`, so it participates in `World.toJson()`/
   `applyPatch()`/`Level.loadInto()` like everything else. An
   unregistered component silently can't be serialized — that's a
-  common mistake to check for.
+  common mistake to check for (caught `MovementAnimationSet` missing
+  its registration during this package's own test suite).
+- Before adding a new type to any package, check it doesn't create a
+  backward dependency per the DAG rule above — genre-general data goes
+  in `engine_core` even if only one current package uses it heavily.
 - New system → think about registration order relative to existing
   systems before writing it. `JumpSystem` had a real ordering bug (jump
   consumption ran before tile-based grounding was resolved) caught only

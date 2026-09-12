@@ -1,11 +1,7 @@
+import 'package:engine_core/engine_core.dart';
+
 import '../collision_math.dart';
-import '../components/collider.dart';
 import '../components/platformer_controller.dart';
-import '../components/position.dart';
-import '../components/tile_map.dart';
-import '../components/velocity.dart';
-import '../system.dart';
-import '../world.dart';
 
 /// Ground detection and collision against `TileMap` grids, mirroring
 /// `PlatformerSystem` but for tile-based level geometry. Only checks

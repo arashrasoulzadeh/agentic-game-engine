@@ -24,6 +24,19 @@ top to bottom — not strict, adjust as dependencies emerge.
       package, with an engine_core-facing abstraction like `InputState`
       has for input
 
+## Platformer helpers (engine_platformer)
+
+- [x] Player/enemy spawn helpers (`spawnPlayer`/`spawnEnemy`),
+      `PlatformerInputSystem` (input -> move/jump), `PatrolBehavior`/
+      `FollowBehavior`, `FacingSystem`/`MovementAnimationSystem` — all
+      moved out of `engine_core` into a new `engine_platformer` package
+      so a non-platformer 2D game isn't forced to depend on
+      gravity/jump concepts
+- [ ] Update `engine_cli`'s `default_game` template to use
+      `engine_platformer` (spawnPlayer + a small tile level) instead of
+      the current bouncing-circle stress-test demo, now that a real
+      platformer starting point exists
+
 ## Tooling / release
 
 - [ ] Cut a real `v0.1.0` git tag once the API stops churning; update

@@ -1,5 +1,4 @@
-import 'components/position.dart';
-import 'components/velocity.dart';
+import 'package:engine_core/engine_core.dart';
 
 /// Shared circle-vs-AABB resolution, used by both `PlatformerSystem`
 /// (for `PlatformBody` entities) and `TileCollisionSystem` (for

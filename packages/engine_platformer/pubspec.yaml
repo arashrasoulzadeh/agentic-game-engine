@@ -1,0 +1,38 @@
+name: engine_platformer
+description: >
+  2D-platformer-genre gameplay on top of engine_core/engine_flutter:
+  gravity, jump, tile/platform collision, player and enemy spawn
+  helpers, patrol/follow behaviors, facing and movement-driven
+  animation. Not general-purpose ECS/rendering — that stays in
+  engine_core/engine_flutter so a non-platformer 2D game (top-down,
+  puzzle, etc.) isn't forced to depend on gravity/jump concepts.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Self-referencing git dependencies, same pattern (and same
+  # ref-must-match-consumer limitation) as engine_flutter's own
+  # dependency on engine_core — see that pubspec.yaml's comment.
+  engine_core:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_core
+      ref: main
+  engine_flutter:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_flutter
+      ref: main
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:

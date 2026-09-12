@@ -1,0 +1,8 @@
+# Local monorepo development only — see engine_flutter/pubspec_overrides.yaml
+# for why this exists and why it's safe (ignored when engine_platformer
+# is fetched as a git dependency by another project).
+dependency_overrides:
+  engine_core:
+    path: ../engine_core
+  engine_flutter:
+    path: ../engine_flutter

@@ -1,9 +1,11 @@
 import 'package:engine_core/engine_core.dart';
-import 'package:test/test.dart';
+import 'package:engine_platformer/engine_platformer.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 World _buildWorld() {
   final world = World(width: 1000, height: 1000);
   registerCoreComponents(world);
+  registerPlatformerComponents(world);
   world.addSystem(MovementSystem());
   world.addSystem(GravitySystem());
   world.addSystem(PlatformerSystem());
