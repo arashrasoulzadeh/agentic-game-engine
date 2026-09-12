@@ -17,7 +17,7 @@ top to bottom — not strict, adjust as dependencies emerge.
 
 ## Rendering/platform (engine_flutter)
 
-- [ ] Real sprite asset pipeline: load an actual sprite sheet image via
+- [x] Real sprite asset pipeline: load an actual sprite sheet image via
       `rootBundle` + `ui.instantiateImageCodec`, plus a manifest format
       for named regions (replacing the runtime-generated placeholder)
 - [ ] Audio: sound effect + music playback, likely via a small wrapper
