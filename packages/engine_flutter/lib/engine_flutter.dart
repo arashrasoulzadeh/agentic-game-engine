@@ -1,3 +1,4 @@
+export 'src/audio_manager.dart';
 export 'src/camera.dart';
 export 'src/components/animation.dart';
 export 'src/components/sprite.dart';

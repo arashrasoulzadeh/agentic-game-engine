@@ -20,7 +20,7 @@ top to bottom — not strict, adjust as dependencies emerge.
 - [x] Real sprite asset pipeline: load an actual sprite sheet image via
       `rootBundle` + `ui.instantiateImageCodec`, plus a manifest format
       for named regions (replacing the runtime-generated placeholder)
-- [ ] Audio: sound effect + music playback, likely via a small wrapper
+- [x] Audio: sound effect + music playback, likely via a small wrapper
       package, with an engine_core-facing abstraction like `InputState`
       has for input
 

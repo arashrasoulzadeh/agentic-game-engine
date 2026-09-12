@@ -35,6 +35,7 @@ dependencies:
   # APIs don't work on web at all) — the right cross-platform choice
   # given this engine's Android+iOS+Web target.
   shared_preferences: ^2.3.0
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
