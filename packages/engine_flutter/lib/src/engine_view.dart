@@ -21,6 +21,8 @@ class EngineView extends StatefulWidget {
   final InputController? inputController;
   final EntityId? cameraFollowEntity;
   final Color backgroundColor;
+  final bool paused;
+  final bool showFpsOverlay;
 
   const EngineView({
     super.key,
@@ -30,6 +32,8 @@ class EngineView extends StatefulWidget {
     this.inputController,
     this.cameraFollowEntity,
     this.backgroundColor = const Color(0xFF000000),
+    this.paused = false,
+    this.showFpsOverlay = false,
   });
 
   @override
@@ -41,6 +45,8 @@ class _EngineViewState extends State<EngineView>
   late final Ticker _ticker;
   Duration _lastTick = Duration.zero;
   final FocusNode _focusNode = FocusNode();
+  double _fps = 0;
+  final List<double> _recentDts = [];
 
   @override
   void initState() {
@@ -54,8 +60,16 @@ class _EngineViewState extends State<EngineView>
         : (elapsed - _lastTick).inMicroseconds / 1e6;
     _lastTick = elapsed;
     if (dt <= 0 || dt > 0.25) return;
+    if (widget.paused) return;
 
     widget.world.step(dt);
+
+    if (widget.showFpsOverlay) {
+      _recentDts.add(dt);
+      if (_recentDts.length > 30) _recentDts.removeAt(0);
+      final avgDt = _recentDts.reduce((a, b) => a + b) / _recentDts.length;
+      _fps = avgDt > 0 ? 1 / avgDt : 0;
+    }
 
     final followId = widget.cameraFollowEntity;
     if (followId != null) {
@@ -92,7 +106,27 @@ class _EngineViewState extends State<EngineView>
       backgroundColor: widget.backgroundColor,
     );
 
-    final child = CustomPaint(painter: painter, size: Size.infinite);
+    Widget child = CustomPaint(painter: painter, size: Size.infinite);
+
+    if (widget.showFpsOverlay) {
+      child = Stack(
+        children: [
+          child,
+          Positioned(
+            left: 4,
+            top: 4,
+            child: Text(
+              'fps: ${_fps.toStringAsFixed(0)}',
+              style: const TextStyle(
+                color: Color(0xFF00FF00),
+                fontSize: 12,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     if (controller == null) return child;
 

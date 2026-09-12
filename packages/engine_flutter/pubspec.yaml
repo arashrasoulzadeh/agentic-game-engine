@@ -16,6 +16,15 @@ dependencies:
   # engine_core "descriptions" (a resolved commit vs. the consumer's
   # `ref: main`) and refuse to solve — see pubspec_overrides.yaml for
   # local monorepo development.
+  #
+  # KNOWN LIMITATION: this ref must exactly match whatever ref
+  # engine_cli's `--ref` pins a generated project's engine_core/
+  # engine_flutter dependencies to, or the same "forbidden" conflict
+  # reappears. Since this ref is baked into committed code (not
+  # templated per-consumer), the practical rule is: `main` always works;
+  # pinning to a tag only works if this file is updated to that same tag
+  # (and re-tagged) as part of cutting the release. Moving to pub.dev
+  # publishing removes this constraint entirely via normal semver.
   engine_core:
     git:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
