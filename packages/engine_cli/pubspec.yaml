@@ -9,6 +9,13 @@ environment:
 dependencies:
   args: ^2.5.0
   path: ^1.9.0
+  # Self-referencing git dependency, same pattern as engine_flutter (see
+  # its pubspec.yaml comment) — `game_agent lint` needs Level.validate().
+  engine_core:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_core
+      ref: main
 
 dev_dependencies:
   test: ^1.25.0

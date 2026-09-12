@@ -25,3 +25,16 @@ Run from inside a project created by `game_agent create`:
 ```bash
 game_agent upgrade --ref main
 ```
+
+## Lint a level/content file
+
+Validates a JSON file against the content DSL (`Level.validate` in
+`engine_core`) without running the game — useful in CI or for an
+agent to check a level file it just authored:
+
+```bash
+game_agent lint assets/level1.json
+```
+
+Exits 0 with a summary on success, or 1 with the specific error (e.g.
+`entities[2].components["position"] must be an object`) on failure.
