@@ -1,0 +1,11 @@
+name: engine_core
+description: Pure-Dart 2D game engine core (ECS, scheduler, spatial hash). No Flutter dependency.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^5.0.0
