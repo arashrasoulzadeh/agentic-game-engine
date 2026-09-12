@@ -157,6 +157,8 @@ class _EnginePainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, Paint()..color = backgroundColor);
 
     final positions = world.storeOf<Position>();
+    _paintTileMaps(canvas, size, positions);
+
     final sprites = world.storeOf<Sprite>();
     final paint = Paint();
 
@@ -189,4 +191,44 @@ class _EnginePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _EnginePainter oldDelegate) => true;
+
+  /// Draws every non-empty tile of every `TileMap` in the world — this
+  /// was missing entirely until now: `TileMap` only ever fed collision
+  /// (`PlatformerSystem`/`TileCollisionSystem`), so a game using tiles
+  /// for its level geometry had physically correct but *invisible*
+  /// ground/platforms. Solid-colored rects only (no atlas lookup) since
+  /// tiles are level geometry, not sprites — a game wanting textured
+  /// tiles draws them as regular `Sprite` entities instead.
+  void _paintTileMaps(Canvas canvas, Size size, ComponentStore<Position> positions) {
+    final tileMaps = world.storeOf<TileMap>();
+    for (var m = 0; m < tileMaps.length; m++) {
+      final mapEntity = tileMaps.entityAt(m);
+      final map = tileMaps.denseAt(m);
+      final origin = positions.get(mapEntity) ?? Position(0, 0);
+
+      for (var row = 0; row < map.rows; row++) {
+        for (var col = 0; col < map.cols; col++) {
+          final tileId = map.tileAt(col, row);
+          if (tileId == 0) continue;
+
+          final left = origin.x + col * map.tileWidth;
+          final top = origin.y + row * map.tileHeight;
+          final screenPos = camera.worldToScreen(left, top, size);
+          final color = map.oneWayTileIds.contains(tileId)
+              ? const Color(0x8899CCFF)
+              : const Color(0xFF4A4A4A);
+
+          canvas.drawRect(
+            Rect.fromLTWH(
+              screenPos.dx,
+              screenPos.dy,
+              map.tileWidth * camera.zoom,
+              map.tileHeight * camera.zoom,
+            ),
+            Paint()..color = color,
+          );
+        }
+      }
+    }
+  }
 }
