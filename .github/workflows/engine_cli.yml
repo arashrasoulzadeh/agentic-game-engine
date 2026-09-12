@@ -1,0 +1,25 @@
+name: engine_cli
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/engine_cli/**'
+      - '.github/workflows/engine_cli.yml'
+  pull_request:
+    paths:
+      - 'packages/engine_cli/**'
+      - '.github/workflows/engine_cli.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/engine_cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test

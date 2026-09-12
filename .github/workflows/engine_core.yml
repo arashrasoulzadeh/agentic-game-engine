@@ -1,0 +1,25 @@
+name: engine_core
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/engine_core/**'
+      - '.github/workflows/engine_core.yml'
+  pull_request:
+    paths:
+      - 'packages/engine_core/**'
+      - '.github/workflows/engine_core.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/engine_core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test
