@@ -59,4 +59,18 @@ void main() {
     await SaveGame.deleteSave();
     expect(await SaveGame.hasSave(), isFalse);
   });
+
+  test('load throws LevelLoadException on corrupted (non-object) save data', () async {
+    SharedPreferences.setMockInitialValues({'engine_save_default': '"just a string"'});
+    final world = _buildWorld();
+    expect(() => SaveGame.load(world), throwsA(isA<LevelLoadException>()));
+  });
+
+  test('load throws LevelLoadException when the saved snapshot has a malformed entity', () async {
+    SharedPreferences.setMockInitialValues({
+      'engine_save_default': '{"entities": [{"id": 0, "components": "not an object"}]}',
+    });
+    final world = _buildWorld();
+    expect(() => SaveGame.load(world), throwsA(isA<LevelLoadException>()));
+  });
 }

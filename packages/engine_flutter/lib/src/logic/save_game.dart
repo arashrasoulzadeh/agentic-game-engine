@@ -27,11 +27,23 @@ class SaveGame {
   /// one. Call this on a new `World` (components registered, nothing
   /// spawned yet), not one `populateWorld` has already filled in.
   /// Returns `false` with no effect if no save exists for that slot.
+  /// Throws [LevelLoadException] if the stored data isn't a JSON object
+  /// (corrupted storage, or a save written by something else entirely)
+  /// — `Level.loadInto` itself already throws that same exception type
+  /// for a malformed-but-object-shaped snapshot, so a caller catching
+  /// it handles both cases the same way.
   static Future<bool> load(World world, {String slot = 'default'}) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key(slot));
     if (raw == null) return false;
-    Level.loadInto(world, jsonDecode(raw) as Map<String, dynamic>);
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) {
+      throw LevelLoadException(
+        'Save data for slot "$slot" is corrupted: expected a JSON '
+        'object, got ${decoded.runtimeType}',
+      );
+    }
+    Level.loadInto(world, decoded);
     return true;
   }
 

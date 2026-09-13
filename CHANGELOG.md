@@ -8,6 +8,17 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### v1.0 release readiness
+
+- **`LICENSE`**: MIT, at the repo root and in each of the four
+  packages; `homepage`/`repository` added to every `pubspec.yaml`.
+- **Malformed-input robustness**: `ComponentRegistry.applyToEntity`/
+  `World.applyPatch` (the entity-patch-JSON entry points behind
+  `Level.loadInto`, `SaveGame.load`, and direct `applyPatch` calls) now
+  throw clear, catchable `ComponentApplyException`/`WorldPatchException`
+  on malformed input instead of a bare `TypeError`. `SaveGame.load`
+  also guards a corrupted (non-object) save the same way.
+
 ### Fully-fledged platformer engine
 
 Working through the gap list in TODO.md's "Fully-fledged platformer

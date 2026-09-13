@@ -1,6 +1,26 @@
 import 'component_store.dart';
 import 'entity.dart';
 
+/// Thrown by [ComponentRegistry.applyToEntity] when a named component's
+/// JSON is malformed — not shaped like a JSON object, or rejected by
+/// that component's own `fromJson` (a wrong field type, a failed
+/// constructor invariant like `TileMap`'s tiles-length check, etc.).
+/// Carries [componentName]/[entity] so an agent/human debugging a bad
+/// level file or `World.applyPatch` call gets "component 'health' on
+/// entity 3 is broken", not a bare, contextless `TypeError` from deep
+/// inside some component's `fromJson`.
+class ComponentApplyException implements Exception {
+  final String componentName;
+  final EntityId entity;
+  final Object cause;
+  ComponentApplyException(this.componentName, this.entity, this.cause);
+
+  @override
+  String toString() =>
+      'ComponentApplyException: component "$componentName" on entity '
+      '$entity: $cause';
+}
+
 /// Bundles a `ComponentStore<T>` with its (de)serializers so World.toJson()
 /// can dump arbitrary component types without hardcoding them — this is
 /// what lets an agent read/write world state as plain JSON regardless of
@@ -71,7 +91,21 @@ class ComponentRegistry {
     for (final entry in components.entries) {
       final reg = _byName[entry.key];
       if (reg == null) continue;
-      reg.applyJson(entity, entry.value as Map<String, dynamic>);
+      final rawValue = entry.value;
+      if (rawValue is! Map) {
+        throw ComponentApplyException(
+          entry.key,
+          entity,
+          'expected an object, got ${rawValue.runtimeType}',
+        );
+      }
+      try {
+        reg.applyJson(entity, rawValue.cast<String, dynamic>());
+      } on ComponentApplyException {
+        rethrow;
+      } catch (cause) {
+        throw ComponentApplyException(entry.key, entity, cause);
+      }
     }
   }
 

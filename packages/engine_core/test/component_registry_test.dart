@@ -53,4 +53,51 @@ void main() {
     expect(byId[particleEntity]['particle']['lifetime'], 1);
     expect(byId[emitterEntity]['particleEmitter']['rate'], 0);
   });
+
+  test('applyToEntity throws ComponentApplyException when a component value is not an object', () {
+    final world = World(width: 10, height: 10);
+    registerCoreComponents(world);
+    final id = world.spawn();
+
+    expect(
+      () => world.components.applyToEntity(id, {'aiState': 'not an object'}),
+      throwsA(isA<ComponentApplyException>()
+          .having((e) => e.componentName, 'componentName', 'aiState')
+          .having((e) => e.entity, 'entity', id)),
+    );
+  });
+
+  test('applyToEntity throws ComponentApplyException when fromJson itself rejects the data', () {
+    final world = World(width: 10, height: 10);
+    registerCoreComponents(world);
+    final id = world.spawn();
+
+    // TileMap's constructor validates tiles.length == cols * rows and
+    // throws on mismatch -- applyToEntity should wrap that, not let it
+    // escape as a bare, contextless error.
+    expect(
+      () => world.components.applyToEntity(id, {
+        'tileMap': {
+          'cols': 2,
+          'rows': 2,
+          'tileWidth': 10,
+          'tileHeight': 10,
+          'tiles': [1], // wrong length
+        },
+      }),
+      throwsA(isA<ComponentApplyException>()
+          .having((e) => e.componentName, 'componentName', 'tileMap')),
+    );
+  });
+
+  test('applyToEntity skips unknown component names without throwing', () {
+    final world = World(width: 10, height: 10);
+    registerCoreComponents(world);
+    final id = world.spawn();
+
+    expect(
+      () => world.components.applyToEntity(id, {'notARealComponent': {}}),
+      returnsNormally,
+    );
+  });
 }

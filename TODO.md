@@ -33,11 +33,26 @@ repo, not from memory.
       and are good API references, but nothing currently walks a
       brand-new user through `game_agent create` → running the result,
       start to finish, in one place.
-- [ ] Malformed-input robustness: a published engine gets fed level/
-      save JSON by people (or agents) who don't fully control it —
-      worth a real pass confirming `Level.loadInto`/`TileMap.fromJson`/
-      save-load fail with a clear, catchable error on garbage input
-      rather than crashing, instead of assuming they already do.
+- [x] Malformed-input robustness: `Level.validate`/`TileMap.fromJson`
+      already threw clear, specific exceptions — the real gap was two
+      layers underneath: `ComponentRegistry.applyToEntity` and
+      `World.applyPatch` (both entity-patch-JSON entry points, used by
+      `Level.loadInto`, `SaveGame.load`, and any agent calling
+      `applyPatch` directly) did raw, unguarded type casts, so a
+      malformed component value or patch shape threw a bare, contextless
+      Dart `TypeError`/`CastError` instead of anything catchable/
+      debuggable. New `ComponentApplyException` (component name + entity
+      id + underlying cause) and `WorldPatchException` (which part of
+      the patch shape was wrong) close that gap, mirroring
+      `LevelLoadException`'s existing design. `SaveGame.load` also
+      guards its top-level JSON decode (a corrupted/non-object save now
+      throws `LevelLoadException` instead of a bare cast failure).
+      Verified: new tests in `component_registry_test.dart` (3),
+      `world_test.dart` (7), and `save_game_test.dart` (2) covering both
+      the error paths and that valid/unknown-component input still
+      works exactly as before; full `engine_core`/`engine_flutter`/
+      `engine_platformer`/`engine_cli` suites green, all four analyzers
+      clean.
 
 ## Tooling / release
 

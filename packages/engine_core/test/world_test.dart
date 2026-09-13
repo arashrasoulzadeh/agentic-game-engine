@@ -120,4 +120,82 @@ void main() {
 
     expect(collisionCount, greaterThan(0));
   });
+
+  group('applyPatch malformed input', () {
+    test('missing "entities" key is a no-op, not an error', () {
+      final world = _buildWorld();
+      expect(() => world.applyPatch({}), returnsNormally);
+    });
+
+    test('throws WorldPatchException when "entities" is not a list', () {
+      final world = _buildWorld();
+      expect(
+        () => world.applyPatch({'entities': 'not a list'}),
+        throwsA(isA<WorldPatchException>()),
+      );
+    });
+
+    test('throws WorldPatchException when an entity entry is not an object', () {
+      final world = _buildWorld();
+      expect(
+        () => world.applyPatch({
+          'entities': ['not an object'],
+        }),
+        throwsA(isA<WorldPatchException>()),
+      );
+    });
+
+    test('throws WorldPatchException when an entity id is missing/wrong type', () {
+      final world = _buildWorld();
+      expect(
+        () => world.applyPatch({
+          'entities': [
+            {'components': {}},
+          ],
+        }),
+        throwsA(isA<WorldPatchException>()),
+      );
+    });
+
+    test('a patch entry for a dead/unknown entity id is silently skipped', () {
+      final world = _buildWorld();
+      expect(
+        () => world.applyPatch({
+          'entities': [
+            {'id': 999999, 'components': {}},
+          ],
+        }),
+        returnsNormally,
+      );
+    });
+
+    test('throws WorldPatchException when components is not an object', () {
+      final world = _buildWorld();
+      final id = world.spawn();
+      expect(
+        () => world.applyPatch({
+          'entities': [
+            {'id': id, 'components': 'not an object'},
+          ],
+        }),
+        throwsA(isA<WorldPatchException>()),
+      );
+    });
+
+    test('propagates ComponentApplyException from a malformed component payload', () {
+      final world = _buildWorld();
+      final id = world.spawn();
+      expect(
+        () => world.applyPatch({
+          'entities': [
+            {
+              'id': id,
+              'components': {'position': 'not an object'},
+            },
+          ],
+        }),
+        throwsA(isA<ComponentApplyException>()),
+      );
+    });
+  });
 }
