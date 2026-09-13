@@ -2,21 +2,24 @@ import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 
 import 'components/gravity.dart';
+import 'components/movement_animation_set.dart';
 import 'components/platformer_controller.dart';
 
 /// Spawns a fully-wired platformer player: `Position`, `Velocity`,
 /// `Collider`, `Gravity`, `PlatformerController`, and — critically — the
 /// [input] `InputState` instance attached as a component, so a
 /// `PlatformerInputSystem(id)` (which you still add yourself, since
-/// system registration order is the caller's call) can read live key
-/// presses. Pass [atlasId]/[spriteRegion] to also attach a `Sprite`.
+/// system registration order is the caller's call — or let
+/// `installPlatformerSystems` handle it) can read live key presses.
+/// Pass [atlasId]/[spriteRegion] to also attach a `Sprite`, and
+/// [animations] (e.g. from `MovementAnimationSet.fromSequences`) to
+/// wire up idle/walk/jump switching in the same call.
 ///
-/// This is the "moving"/"jumping" setup helper: it replaces the
-/// hand-spawned entity + component boilerplate every platformer needs
-/// for its player, without hiding *how* movement/jump actually work —
-/// you still register `GravitySystem`/`PlatformerSystem`or
-/// `TileCollisionSystem`/`JumpSystem`/`PlatformerInputSystem` yourself,
-/// in the order their doc comments describe.
+/// This is the "moving"/"jumping"/character setup helper: it replaces
+/// the hand-spawned entity + component boilerplate every platformer
+/// needs for its player, without hiding *how* movement/jump actually
+/// work — see `installPlatformerSystems` for the systems that make
+/// this component data actually do something.
 EntityId spawnPlayer(
   World world, {
   required double x,
@@ -27,6 +30,7 @@ EntityId spawnPlayer(
   double gravityScale = 1,
   String? atlasId,
   String? spriteRegion,
+  MovementAnimationSet? animations,
 }) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(x, y));
@@ -41,13 +45,18 @@ EntityId spawnPlayer(
   if (atlasId != null && spriteRegion != null) {
     world.storeOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
   }
+  if (animations != null) {
+    world.storeOf<MovementAnimationSet>().set(id, animations);
+    world.storeOf<AnimationState>().set(id, AnimationState(animations.idle));
+  }
   return id;
 }
 
 /// Spawns an AI-driven enemy: `Position`, `Velocity`, `Collider`, and an
 /// `AIState` referencing [behaviorId] (register the actual `Behavior`
 /// yourself via a `BehaviorRegistry` — see `PatrolBehavior`/
-/// `FollowBehavior` for ready-made ones, or write your own).
+/// `FollowBehavior` for ready-made ones, or write your own). Pass
+/// [animations] the same way as `spawnPlayer` for idle/walk switching.
 ///
 /// Pass [affectedByGravity] for an enemy that should fall/land like the
 /// player (needs `GravitySystem`/`PlatformerSystem`/`TileCollisionSystem`
@@ -65,6 +74,7 @@ EntityId spawnEnemy(
   Map<String, dynamic>? memory,
   String? atlasId,
   String? spriteRegion,
+  MovementAnimationSet? animations,
 }) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(x, y));
@@ -77,6 +87,10 @@ EntityId spawnEnemy(
   }
   if (atlasId != null && spriteRegion != null) {
     world.storeOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
+  }
+  if (animations != null) {
+    world.storeOf<MovementAnimationSet>().set(id, animations);
+    world.storeOf<AnimationState>().set(id, AnimationState(animations.idle));
   }
   return id;
 }

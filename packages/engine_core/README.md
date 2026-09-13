@@ -92,6 +92,16 @@ Typed pub/sub so systems don't call each other directly. Events queued
 during `update()` are flushed once per `world.step()`, after all
 systems have run.
 
+**Collision convenience helpers** — `CollisionEvent.a`/`.b` are
+unordered, so "did the player touch this coin" always means checking
+both orderings; these extension methods on `World` do that for you:
+
+```dart
+world.onCollisionBetween(a, b, () { ... });                 // exactly this pair
+world.onCollisionInvolving(player, (other) { ... });        // player + anything
+world.onCollisionWithAny(coinIds, (coin, other) { ... });   // any coin + anything
+```
+
 ## The agent-facing API
 
 This is the part that makes the engine "AI-agent-friendly," not just a

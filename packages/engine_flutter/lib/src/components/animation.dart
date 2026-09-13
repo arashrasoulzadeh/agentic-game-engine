@@ -14,6 +14,24 @@ class AnimationClip {
     this.loop = true,
   });
 
+  /// Builds a clip from a naming convention (`${prefix}_0`, `${prefix}_1`,
+  /// ...) instead of spelling out `List.generate(n, (i) => 'walk_\$i')`
+  /// at every call site — the common case for a sprite sheet where
+  /// frames are already laid out and named that way.
+  factory AnimationClip.sequence(
+    String name,
+    String prefix,
+    int frameCount, {
+    double frameDurationSeconds = 0.1,
+    bool loop = true,
+  }) =>
+      AnimationClip(
+        name,
+        List.generate(frameCount, (i) => '${prefix}_$i'),
+        frameDurationSeconds: frameDurationSeconds,
+        loop: loop,
+      );
+
   Map<String, dynamic> toJson() => {
         'name': name,
         'frameRegions': frameRegions,

@@ -24,31 +24,11 @@ dependencies:
       ref: main
 ```
 
-## System order
+## Quick start: `installPlatformerSystems`
 
-Platformer physics is order-sensitive. Register systems in this order:
-
-```dart
-world.addSystem(PlatformerInputSystem(playerId)); // or your own input/AI systems
-world.addSystem(AISystem(behaviorRegistry));       // enemy behaviors
-world.addSystem(GravitySystem());
-world.addSystem(MovementSystem());                 // from engine_core
-world.addSystem(PlatformerSystem());               // PlatformBody collision
-world.addSystem(TileCollisionSystem());            // TileMap collision
-world.addSystem(JumpSystem());                     // must run after both of the above
-world.addSystem(FacingSystem());
-world.addSystem(MovementAnimationSystem());
-world.addSystem(AnimationSystem());                // from engine_flutter, must run after MovementAnimationSystem
-world.addSystem(CollisionSystem());                // from engine_core
-```
-
-**Why `JumpSystem` goes last of the movement systems**: grounded state
-can come from either a `PlatformBody` or a `TileMap` tile, resolved by
-two different systems. If jump input were checked before both had run,
-a jump off tile-only ground would silently do nothing — a real bug this
-package's tests caught (see `PlatformerSystem`'s doc comment).
-
-## Player and enemies
+Platformer physics is order-sensitive (see below for why) — instead of
+hand-writing ~10 `world.addSystem(...)` calls in the right order, call
+`installPlatformerSystems` once:
 
 ```dart
 final input = InputController();
@@ -65,24 +45,63 @@ void populateWorld(World world) {
     x: 40, y: 40,
     input: input.state,
     jumpSpeed: 500,
-    atlasId: 'atlas', spriteRegion: 'player_idle',
+    atlasId: 'atlas',
+    spriteRegion: 'idle',
+    animations: MovementAnimationSet.fromSequences(
+      idleRegion: 'idle',
+      walkPrefix: 'walk', walkFrameCount: 8,
+      jumpPrefix: 'jump', jumpFrameCount: 4,
+    ),
   );
-  world.addSystem(PlatformerInputSystem(player));
 
   final behaviors = BehaviorRegistry()
     ..register('patrol', PatrolBehavior(minX: 100, maxX: 300, speed: 60))
     ..register('chase', FollowBehavior(target: player, maxDistance: 200));
-  world.addSystem(AISystem(behaviors));
 
-  spawnEnemy(world, x: 150, y: 40, behaviorId: 'patrol', atlasId: 'atlas', spriteRegion: 'enemy');
+  installPlatformerSystems(world, player: player, behaviors: behaviors);
+
+  spawnEnemy(
+    world,
+    x: 150, y: 40,
+    behaviorId: 'patrol',
+    atlasId: 'atlas', spriteRegion: 'enemy_idle',
+  );
 }
 ```
 
 `spawnPlayer`/`spawnEnemy` wire up the component boilerplate (Position,
 Velocity, Collider, Gravity, PlatformerController, AIState, optional
-Sprite) — they don't hide *how* movement/physics work, they just save
-you writing the same six `world.storeOf<T>().set(...)` calls for every
-character.
+Sprite + `MovementAnimationSet`/`AnimationState`) — they don't hide
+*how* movement/physics work, they just save you writing the same calls
+for every character. Need a system this pack doesn't cover (a custom
+input system, a score system)? Just `world.addSystem(...)` it yourself
+before or after — `installPlatformerSystems` doesn't own the whole list,
+only the platformer-genre part of it.
+
+## System order (what `installPlatformerSystems` does for you)
+
+```dart
+world.addSystem(PlatformerInputSystem(playerId)); // or your own input/AI systems
+world.addSystem(AISystem(behaviorRegistry));       // enemy behaviors
+world.addSystem(GravitySystem());
+world.addSystem(MovementSystem());                 // from engine_core
+world.addSystem(PlatformerSystem());               // PlatformBody collision
+world.addSystem(TileCollisionSystem());            // TileMap collision
+world.addSystem(JumpSystem());                     // must run after both of the above
+world.addSystem(CollisionSystem());                // from engine_core
+world.addSystem(FacingSystem());
+world.addSystem(MovementAnimationSystem());
+world.addSystem(AnimationSystem());                // from engine_flutter, must run after MovementAnimationSystem
+```
+
+**Why `JumpSystem` goes after both `PlatformerSystem` and
+`TileCollisionSystem`**: grounded state can come from either a
+`PlatformBody` or a `TileMap` tile, resolved by two different systems.
+If jump input were checked before both had run, a jump off tile-only
+ground would silently do nothing — a real bug this package's tests
+caught (see `PlatformerSystem`'s doc comment) and that
+`installPlatformerSystems` now makes structurally impossible to get
+wrong by hand.
 
 ## Behaviors
 
@@ -101,22 +120,53 @@ for the `Behavior`/`WorldView` contract).
 
 ## Animation
 
+`MovementAnimationSet.fromSequences` builds idle/walk/jump clips from a
+naming convention (`walk_0`, `walk_1`, ... — see `AnimationClip.sequence`
+in `engine_flutter`) instead of spelling out each `AnimationClip` by
+hand — this is what `spawnPlayer`'s `animations:` argument in the
+quick-start example above uses. For anything not covered by the naming
+convention, build `MovementAnimationSet` directly:
+
 ```dart
 world.storeOf<MovementAnimationSet>().set(playerId, MovementAnimationSet(
   idle: AnimationClip('idle', ['idle_0', 'idle_1'], frameDurationSeconds: 0.2),
   walk: AnimationClip('walk', ['walk_0', 'walk_1', 'walk_2'], frameDurationSeconds: 0.1),
   jump: AnimationClip('jump', ['jump_0']),
 ));
-world.addSystem(FacingSystem());
-world.addSystem(MovementAnimationSystem());
-world.addSystem(AnimationSystem()); // from engine_flutter — must run after
 ```
+
+(`installPlatformerSystems`/`FacingSystem`+`MovementAnimationSystem`+
+`AnimationSystem` still need to be registered either way —
+`installPlatformerSystems` does this for you when `includeAnimation`
+is left at its default `true`.)
 
 `MovementAnimationSystem` picks idle/walk/jump from velocity and
 `PlatformerController.grounded`, swapping `AnimationState`'s clip only
 when the picked clip actually changes (so it never resets playback
 mid-loop). `FacingSystem` flips `Sprite.scaleX` to face the direction
 of horizontal movement, holding the last facing while idle.
+
+## Reacting to collisions (coins, hitting an enemy, ...)
+
+`engine_core` ships `onCollisionBetween`/`onCollisionInvolving`/
+`onCollisionWithAny` extension methods on `World`, replacing the manual
+"check both orderings of `CollisionEvent.a`/`.b`" boilerplate every
+handler otherwise repeats:
+
+```dart
+world.onCollisionInvolving(player, (other) {
+  if (other == enemy) { /* respawn */ }
+});
+
+final coins = <EntityId>{...};
+world.onCollisionWithAny(coins, (coin, _) {
+  coins.remove(coin);
+  world.destroy(coin);
+});
+```
+
+See [engine_core's README](../engine_core/README.md#events) for the
+full set.
 
 ## Tilemaps vs. platform entities
 

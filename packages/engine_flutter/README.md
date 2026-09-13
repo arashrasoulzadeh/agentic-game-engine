@@ -105,6 +105,11 @@ by `GameRunner`):
 Plus `AnimationSystem`, which advances `AnimationState` and writes the
 current frame's region onto the entity's `Sprite`.
 
+Building an `AnimationClip` from a sprite sheet's numbered frames
+(`walk_0`, `walk_1`, ...)? `AnimationClip.sequence('walk', 'walk', 8)`
+generates the region list for you instead of writing
+`List.generate(8, (i) => 'walk_$i')` at every call site.
+
 ## Sprites and atlases
 
 ```dart

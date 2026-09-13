@@ -24,6 +24,37 @@ class MovementAnimationSet {
     this.moveThreshold = 5,
   });
 
+  /// Builds idle/walk/jump clips from atlas region names in one call —
+  /// the common case for a sprite sheet with a single idle frame and
+  /// numbered walk/jump sequences (`walk_0`, `walk_1`, ... — see
+  /// `AnimationClip.sequence`), instead of constructing each `AnimationClip`
+  /// by hand. [idleRegion] is a single frame name since idle poses are
+  /// usually static; [walkPrefix]/[jumpPrefix] follow the `${prefix}_N`
+  /// numbering convention.
+  factory MovementAnimationSet.fromSequences({
+    required String idleRegion,
+    required String walkPrefix,
+    required int walkFrameCount,
+    String? jumpPrefix,
+    int? jumpFrameCount,
+    double idleFrameDurationSeconds = 0.2,
+    double walkFrameDurationSeconds = 0.1,
+    double jumpFrameDurationSeconds = 0.1,
+    double moveThreshold = 5,
+  }) {
+    return MovementAnimationSet(
+      idle: AnimationClip('idle', [idleRegion],
+          frameDurationSeconds: idleFrameDurationSeconds),
+      walk: AnimationClip.sequence('walk', walkPrefix, walkFrameCount,
+          frameDurationSeconds: walkFrameDurationSeconds),
+      jump: (jumpPrefix != null && jumpFrameCount != null)
+          ? AnimationClip.sequence('jump', jumpPrefix, jumpFrameCount,
+              frameDurationSeconds: jumpFrameDurationSeconds, loop: false)
+          : null,
+      moveThreshold: moveThreshold,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'idle': idle.toJson(),
         'walk': walk.toJson(),

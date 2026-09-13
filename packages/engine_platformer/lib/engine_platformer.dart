@@ -6,6 +6,7 @@ export 'src/components/movement_animation_set.dart';
 export 'src/components/platform_body.dart';
 export 'src/components/platformer_controller.dart';
 export 'src/spawn_helpers.dart';
+export 'src/system_pack.dart';
 export 'src/systems/facing_system.dart';
 export 'src/systems/gravity_system.dart';
 export 'src/systems/jump_system.dart';

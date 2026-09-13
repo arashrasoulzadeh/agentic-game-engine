@@ -10,6 +10,7 @@ export 'src/components/tile_map.dart';
 export 'src/components/velocity.dart';
 export 'src/entity.dart';
 export 'src/event_bus.dart';
+export 'src/event_helpers.dart';
 export 'src/level.dart';
 export 'src/spatial_hash.dart';
 export 'src/system.dart';
