@@ -149,26 +149,36 @@ top to bottom — not strict, adjust as dependencies emerge.
       recycled id collided with this stale-index case — worth
       remembering as the reason `entity_churn_benchmark.dart` stays in
       the suite even though nothing is currently being optimized there.
-- [ ] **To fix**: `CollisionSystem` degrades worse than linearly as
-      entity *density* (entities per spatial-hash cell) rises, not just
-      as entity count rises. `collision_system_benchmark.dart` (packs
-      entities into a fixed-size world so density scales with count)
-      measured roughly 100 -> 1,000 -> 5,000 entities costing
-      ~1ms -> ~13ms -> ~2.5s per `step()` on this machine — the last
-      jump is ~193x for a 5x entity increase, not the ~5x a linear
-      (let alone the intended near-linear spatial-hash) scaling would
-      predict. Root cause is almost certainly `SpatialHash`'s fixed
-      default `cellSize` (24): `forEachNearbyPair`'s cost per cell is
-      quadratic in that cell's occupancy, so a crowded scene without a
-      cell size tuned to its entity size/density pays for every pair in
-      the crowded cells combinatorially. Candidate fixes to evaluate
-      here later: auto-size `cellSize` from typical `Collider.radius`
-      in `World`, let `CollisionSystem` reject/cap absurdly large
-      per-cell buckets with a documented tradeoff, or add a
-      broad-phase pass that subdivides an overcrowded cell instead of
-      brute-forcing its pairs. Reproduce with
-      `dart run benchmark/collision_system_benchmark.dart` in
-      `engine_core` before/after any attempted fix.
+- [x] **Fixed (partial) + real correctness bug found**: `CollisionSystem`
+      used a fixed default `cellSize` (24) regardless of actual
+      `Collider.radius`. Beyond the performance cost this TODO
+      originally flagged, that was also a **latent correctness bug**:
+      `SpatialHash.forEachNearbyPair` only checks same/adjacent cells,
+      which only catches every colliding pair when `cellSize >= ` the
+      largest `radiusA + radiusB` that can occur — a fixed 24 could
+      silently miss real collisions between two colliders each bigger
+      than radius 12. Fixed by auto-sizing `cellSize` every tick to
+      `2 * ` the largest `Collider.radius` currently in the world
+      (always satisfies that bound; `CollisionSystem(cellSize: ...)`
+      still accepts an explicit override for a profiled special case).
+      Regression tests in `collision_system_test.dart` cover both the
+      correctness fix (a large-radius pair a small fixed cellSize would
+      have missed) and the miss itself (with an explicit too-small
+      `cellSize`, to document the failure mode auto-sizing avoids).
+      Benchmarked improvement (this machine, `collision_system_benchmark`,
+      radius-4 colliders so auto-sized cellSize=8 vs. the old fixed 24):
+      n=100 ~320us -> ~188us (~1.7x), n=1000 ~4.56ms -> ~1.74ms (~2.6x),
+      n=5000 ~1.11s -> ~0.57s (~1.9x).
+      **Not fully fixed**: at n=5000 the benchmark still shows
+      superlinear cost, but this is now understood to be inherent to a
+      uniform-grid spatial hash under extreme physical clustering (the
+      benchmark's entities pile up at the world edges via
+      `MovementSystem`'s bounce, which no `cellSize` choice fixes —
+      cells at genuinely maximum occupancy still cost O(k^2) each). A
+      real fix for that residual case needs a fundamentally different
+      broad-phase (cell subdivision, a BVH) — worth a future TODO item
+      if a real game hits it, not undertaken here since it's a much
+      bigger change for a scenario no current game has actually hit.
 - [x] **Fixed**: `ComponentStore`'s sparse side was a
       `Map<EntityId, int>`, paying hashing/boxing overhead on every
       `get`/`set`/`has`/`remove` (the hottest path in the engine) for
