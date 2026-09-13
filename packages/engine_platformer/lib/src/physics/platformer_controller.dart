@@ -47,6 +47,16 @@ class PlatformerController {
   /// How long a dash's speed burst lasts.
   double dashDurationSeconds;
 
+  /// Multiplier applied once to `Velocity.y` the tick the jump button
+  /// is released while still ascending (a "jump cut" / variable jump
+  /// height — a quick tap gives a short hop, holding gives the full
+  /// jump). `1.0` (default) disables it — releasing early has no
+  /// effect, the original full-arc-regardless-of-hold behavior. A
+  /// typical value is around `0.5`; `0` would zero all upward velocity
+  /// instantly on release, which reads as a hard stop rather than a
+  /// shortened arc.
+  double jumpCutMultiplier;
+
   // --- Runtime state (maintained by the systems above) ---
 
   /// Seconds since `grounded` was last true this frame — `0` the tick
@@ -84,6 +94,12 @@ class PlatformerController {
   /// ask than double-jump).
   bool dashUsed;
 
+  /// Whether the jump button was held (`jumpRequested`) as of last
+  /// tick's `JumpSystem` pass — compared against this tick's
+  /// `jumpRequested` to detect the release edge that triggers
+  /// `jumpCutMultiplier`. Not meant to be set from game code.
+  bool jumpHeldLastTick;
+
   /// Last nonzero horizontal movement direction (`1` or `-1`) —
   /// updated by `PlatformerInputSystem`, read by `DashSystem` to know
   /// which way to dash when there's no horizontal input held down.
@@ -100,6 +116,7 @@ class PlatformerController {
     this.wallSlideMaxFallSpeed,
     this.dashSpeed = 0,
     this.dashDurationSeconds = 0.15,
+    this.jumpCutMultiplier = 1.0,
     this.timeSinceGrounded = 0,
     this.timeSinceJumpPressed = 1e9,
     this.airJumpsUsed = 0,
@@ -108,6 +125,7 @@ class PlatformerController {
     this.dashRequested = false,
     this.dashTimeRemaining = 0,
     this.dashUsed = false,
+    this.jumpHeldLastTick = false,
     this.facingSign = 1,
   });
 
@@ -122,6 +140,7 @@ class PlatformerController {
         if (wallSlideMaxFallSpeed != null) 'wallSlideMaxFallSpeed': wallSlideMaxFallSpeed,
         'dashSpeed': dashSpeed,
         'dashDurationSeconds': dashDurationSeconds,
+        'jumpCutMultiplier': jumpCutMultiplier,
         'timeSinceGrounded': timeSinceGrounded,
         'timeSinceJumpPressed': timeSinceJumpPressed,
         'airJumpsUsed': airJumpsUsed,
@@ -130,6 +149,7 @@ class PlatformerController {
         'dashRequested': dashRequested,
         'dashTimeRemaining': dashTimeRemaining,
         'dashUsed': dashUsed,
+        'jumpHeldLastTick': jumpHeldLastTick,
         'facingSign': facingSign,
       };
 
@@ -145,6 +165,7 @@ class PlatformerController {
         wallSlideMaxFallSpeed: (json['wallSlideMaxFallSpeed'] as num?)?.toDouble(),
         dashSpeed: (json['dashSpeed'] as num?)?.toDouble() ?? 0,
         dashDurationSeconds: (json['dashDurationSeconds'] as num?)?.toDouble() ?? 0.15,
+        jumpCutMultiplier: (json['jumpCutMultiplier'] as num?)?.toDouble() ?? 1.0,
         timeSinceGrounded: (json['timeSinceGrounded'] as num?)?.toDouble() ?? 0,
         timeSinceJumpPressed: (json['timeSinceJumpPressed'] as num?)?.toDouble() ?? 1e9,
         airJumpsUsed: (json['airJumpsUsed'] as num?)?.toInt() ?? 0,
@@ -153,6 +174,7 @@ class PlatformerController {
         dashRequested: json['dashRequested'] as bool? ?? false,
         dashTimeRemaining: (json['dashTimeRemaining'] as num?)?.toDouble() ?? 0,
         dashUsed: json['dashUsed'] as bool? ?? false,
+        jumpHeldLastTick: json['jumpHeldLastTick'] as bool? ?? false,
         facingSign: (json['facingSign'] as num?)?.toDouble() ?? 1,
       );
 }

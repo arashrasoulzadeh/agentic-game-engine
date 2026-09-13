@@ -32,6 +32,10 @@ item at a time.
 - **Multi-component query helper**: `WorldView.entitiesWithAll<A, B>()`
   — every entity carrying both component types, in no particular
   order, without hand-nesting a loop plus null-checks at the call site.
+- **Variable jump height (jump-cut)**: `PlatformerController.jumpCutMultiplier`
+  (opt-in, off by default) + `JumpSystem` — a one-shot `Velocity.y`
+  clamp the tick the jump button is released while still ascending, for
+  a short hop vs. a full jump from one input.
 
 ### Fully-fledged platformer engine
 

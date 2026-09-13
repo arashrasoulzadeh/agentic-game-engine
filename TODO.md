@@ -164,12 +164,20 @@ belongs in.
 - [ ] Steering/avoidance among multiple AI: `PatrolBehavior`/
       `FollowBehavior`/`PathFollowBehavior` don't avoid each other, so
       packs of enemies overlap/stack.
-- [ ] Variable jump height (jump-cut): every other jump-feel primitive
-      (coyote time, buffering, double jump, wall jump, dash) already
-      exists, but releasing the jump button early doesn't shorten the
-      jump — `JumpSystem` always applies the full `jumpSpeed` for the
-      whole arc, so there's no way to do a quick hop vs. a full-height
-      jump with one input.
+- [x] Variable jump height (jump-cut): `PlatformerController.jumpCutMultiplier`
+      (`1.0` default — disabled, original full-arc-regardless-of-hold
+      behavior) + `JumpSystem` applying it. A one-shot `Velocity.y`
+      clamp on the tick the jump button goes from held to not-held
+      while still ascending — tracked via a new `jumpHeldLastTick`
+      runtime field (compared against this tick's `jumpRequested`) so
+      it fires exactly once on release instead of re-clamping every
+      subsequent tick the button stays up, which is what a naive
+      "not requested this tick" check would have done. Verified: 5 new
+      tests in `jump_feel_test.dart` (disabled-by-default, fires once on
+      release, doesn't re-fire on a later tick, doesn't fire while still
+      held, doesn't fire while not ascending) plus round-trip coverage
+      in `component_serialization_test.dart`; full `engine_platformer`
+      suite green, analyzer clean.
 - [ ] Ledge grab / mantle: no way for an entity near the top of a wall
       at the peak of a jump to grab on and climb up — every ledge has
       to be cleared by a clean jump arc today, which is a common

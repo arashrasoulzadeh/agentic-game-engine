@@ -29,6 +29,13 @@ import 'platformer_controller.dart';
 /// jump: wall jump (if touching a wall and `wallJumpPushSpeed > 0`),
 /// then an air jump (if `airJumpsUsed < maxAirJumps`). At most one kind
 /// fires per tick.
+///
+/// Also applies `jumpCutMultiplier` (see `PlatformerController`'s doc
+/// comment) — a one-shot `Velocity.y` clamp the tick the jump button
+/// goes from held to not-held while still ascending, for variable jump
+/// height. Tracked via `jumpHeldLastTick` rather than just checking
+/// "not requested this tick," so it fires exactly once on release
+/// instead of re-clamping every subsequent tick the button stays up.
 class JumpSystem implements System {
   @override
   String get name => 'jump';
@@ -78,6 +85,20 @@ class JumpSystem implements System {
           _consumeJump(controller);
         }
       }
+
+      // Jump cut: the tick the button goes from held to not-held while
+      // still ascending, apply the cut once. Comparing against last
+      // tick's held state (not just "not requested this tick") is what
+      // makes this a one-shot clamp on release rather than something
+      // that would re-multiply every tick the button stays up.
+      if (controller.jumpCutMultiplier < 1.0 &&
+          controller.jumpHeldLastTick &&
+          !controller.jumpRequested &&
+          vel != null &&
+          vel.y < 0) {
+        vel.y *= controller.jumpCutMultiplier;
+      }
+      controller.jumpHeldLastTick = controller.jumpRequested;
 
       controller.jumpRequested = false;
     }

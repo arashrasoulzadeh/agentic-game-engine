@@ -252,4 +252,78 @@ void main() {
       expect(world.storeOf<Velocity>().get(id)!.y, 400);
     });
   });
+
+  group('jump cut (variable jump height)', () {
+    test('does nothing when jumpCutMultiplier is 1.0 (default)', () {
+      final world = _buildWorld();
+      final controller = PlatformerController(jumpSpeed: 300);
+      final id = _spawnController(world, controller, x: 500, y: 500);
+      world.storeOf<Velocity>().get(id)!.y = -300;
+
+      controller.jumpRequested = true;
+      world.step(0.016); // held
+      controller.jumpRequested = false;
+      world.step(0.016); // released
+
+      expect(world.storeOf<Velocity>().get(id)!.y, -300);
+    });
+
+    test('clamps Velocity.y once on the tick the button is released while still ascending', () {
+      final world = _buildWorld();
+      final controller = PlatformerController(jumpSpeed: 300, jumpCutMultiplier: 0.5);
+      final id = _spawnController(world, controller, x: 500, y: 500);
+      world.storeOf<Velocity>().get(id)!.y = -300;
+
+      controller.jumpRequested = true;
+      world.step(0.016); // held this tick -> no cut yet, just records jumpHeldLastTick
+      expect(world.storeOf<Velocity>().get(id)!.y, -300);
+
+      controller.jumpRequested = false;
+      world.step(0.016); // released -> cut fires once
+      expect(world.storeOf<Velocity>().get(id)!.y, -150);
+    });
+
+    test('does not re-cut on a later tick after the release already fired', () {
+      final world = _buildWorld();
+      final controller = PlatformerController(jumpSpeed: 300, jumpCutMultiplier: 0.5);
+      final id = _spawnController(world, controller, x: 500, y: 500);
+      world.storeOf<Velocity>().get(id)!.y = -300;
+
+      controller.jumpRequested = true;
+      world.step(0.016);
+      controller.jumpRequested = false;
+      world.step(0.016); // cut fires -> -150
+      world.step(0.016); // still not held -> should NOT cut again
+
+      expect(world.storeOf<Velocity>().get(id)!.y, -150);
+    });
+
+    test('does not cut while the jump button is still held', () {
+      final world = _buildWorld();
+      final controller = PlatformerController(jumpSpeed: 300, jumpCutMultiplier: 0.5);
+      final id = _spawnController(world, controller, x: 500, y: 500);
+      world.storeOf<Velocity>().get(id)!.y = -300;
+
+      controller.jumpRequested = true;
+      world.step(0.016);
+      controller.jumpRequested = true;
+      world.step(0.016);
+
+      expect(world.storeOf<Velocity>().get(id)!.y, -300);
+    });
+
+    test('does not cut while not ascending (Velocity.y >= 0)', () {
+      final world = _buildWorld();
+      final controller = PlatformerController(jumpSpeed: 300, jumpCutMultiplier: 0.5);
+      final id = _spawnController(world, controller, x: 500, y: 500);
+      world.storeOf<Velocity>().get(id)!.y = 100; // falling, not jumping
+
+      controller.jumpRequested = true;
+      world.step(0.016);
+      controller.jumpRequested = false;
+      world.step(0.016);
+
+      expect(world.storeOf<Velocity>().get(id)!.y, greaterThan(0));
+    });
+  });
 }

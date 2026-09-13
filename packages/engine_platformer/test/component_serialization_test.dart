@@ -38,6 +38,16 @@ void main() {
     expect(restored.grounded, isFalse);
     expect(restored.jumpSpeed, 300);
     expect(restored.jumpRequested, isFalse);
+    expect(restored.jumpCutMultiplier, 1.0);
+    expect(restored.jumpHeldLastTick, isFalse);
+  });
+
+  test('PlatformerController round-trips jumpCutMultiplier/jumpHeldLastTick', () {
+    final restored = PlatformerController.fromJson(
+      PlatformerController(jumpCutMultiplier: 0.5, jumpHeldLastTick: true).toJson(),
+    );
+    expect(restored.jumpCutMultiplier, 0.5);
+    expect(restored.jumpHeldLastTick, isTrue);
   });
 
   test('PlatformBody round-trips through toJson/fromJson', () {
