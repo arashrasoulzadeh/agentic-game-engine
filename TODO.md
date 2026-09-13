@@ -169,19 +169,21 @@ top to bottom — not strict, adjust as dependencies emerge.
       brute-forcing its pairs. Reproduce with
       `dart run benchmark/collision_system_benchmark.dart` in
       `engine_core` before/after any attempted fix.
-- [ ] **To improve**: `ComponentStore._entityToDense` is a
-      `Map<EntityId, int>` (`packages/engine_core/lib/src/component_store.dart`),
-      but `EntityId` is a small, densely-recycled `int` from
-      `EntityManager` — every `get`/`set`/`has`/`remove` (i.e. every
-      component touch, the hottest path in the whole engine) pays
-      `Map<int,int>` hashing/boxing overhead it doesn't need to.
-      Replacing it with a growable `List<int>` indexed directly by
-      entity id (classic sparse-set: `-1`/sentinel for "absent", grown
-      with `List.filled`/`length` doubling as ids increase) should be a
-      straight win with no behavior change. Verify with
-      `world_step_benchmark.dart`/`collision_system_benchmark.dart`
-      before/after — this touches the single most call-frequent method
-      in the engine, so even a small per-call win compounds.
+- [x] **Fixed**: `ComponentStore`'s sparse side was a
+      `Map<EntityId, int>`, paying hashing/boxing overhead on every
+      `get`/`set`/`has`/`remove` (the hottest path in the engine) for
+      no reason — `EntityId` is a small, densely-recycled `int`.
+      Replaced with a `List<int>` indexed directly by entity id (`-1` =
+      absent, grown on demand, never shrinks — the standard sparse-set
+      tradeoff). Behavior-preserving (same swap-remove logic, same fix
+      for the dangling-index bug above, all existing tests pass
+      unchanged). Measured with the benchmark suite, before -> after on
+      this machine: `world_step_benchmark` n=5000 ~1010us -> ~391us
+      (~2.6x), `entity_churn_benchmark` n=5000 ~18.2ms -> ~12.2ms
+      (~1.5x), `collision_system_benchmark` n=5000 ~2.5s -> ~1.1s
+      (~2.3x — the remaining cost there is the density issue below,
+      unrelated to this fix), `particle_system_benchmark`
+      emitters=500 ~1.47ms -> ~0.82ms (~1.8x).
 - [ ] **To improve**: `EventBus.flush` (`packages/engine_core/lib/src/event_bus.dart`)
       dispatches via `Function.apply(h, [event])`, which is measurably
       slower than a direct typed call — Dart's `Function.apply` goes
