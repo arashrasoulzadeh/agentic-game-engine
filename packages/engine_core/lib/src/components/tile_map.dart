@@ -13,6 +13,18 @@ class TileMap {
   final Set<int> solidTileIds;
   final Set<int> oneWayTileIds;
 
+  /// Ramp tiles a `TileCollisionSystem` walks an entity up/down instead
+  /// of blocking it — [slopeUpRightTileIds] rise as `x` increases
+  /// within the tile (low on the tile's left edge, high on its right:
+  /// walking right goes uphill), [slopeUpLeftTileIds] the mirror
+  /// (walking left goes uphill). A tile id in either set is a full
+  /// solid rectangle vertically to the shorter side and a straight
+  /// diagonal surface across the tile, not true polygon physics — a
+  /// walkable surface only, not something that blocks from underneath
+  /// or the sides; see `TileCollisionSystem`'s doc comment.
+  final Set<int> slopeUpRightTileIds;
+  final Set<int> slopeUpLeftTileIds;
+
   /// Draw order relative to every other renderable (`Sprite`,
   /// `ParallaxLayer`, another `TileMap`, `Particle`) — see
   /// `engine_flutter`'s `Sprite.zIndex` for the full rule. Useful for a
@@ -30,9 +42,13 @@ class TileMap {
     required this.tiles,
     Set<int>? solidTileIds,
     Set<int>? oneWayTileIds,
+    Set<int>? slopeUpRightTileIds,
+    Set<int>? slopeUpLeftTileIds,
     this.zIndex = 0,
   })  : solidTileIds = solidTileIds ?? <int>{},
-        oneWayTileIds = oneWayTileIds ?? <int>{} {
+        oneWayTileIds = oneWayTileIds ?? <int>{},
+        slopeUpRightTileIds = slopeUpRightTileIds ?? <int>{},
+        slopeUpLeftTileIds = slopeUpLeftTileIds ?? <int>{} {
     if (tiles.length != cols * rows) {
       throw ArgumentError(
           'tiles.length (${tiles.length}) must equal cols*rows (${cols * rows})');
@@ -46,6 +62,8 @@ class TileMap {
 
   bool isSolid(int col, int row) => solidTileIds.contains(tileAt(col, row));
   bool isOneWay(int col, int row) => oneWayTileIds.contains(tileAt(col, row));
+  bool isSlopeUpRight(int col, int row) => slopeUpRightTileIds.contains(tileAt(col, row));
+  bool isSlopeUpLeft(int col, int row) => slopeUpLeftTileIds.contains(tileAt(col, row));
 
   Map<String, dynamic> toJson() => {
         'cols': cols,
@@ -55,6 +73,8 @@ class TileMap {
         'tiles': tiles,
         'solidTileIds': solidTileIds.toList(),
         'oneWayTileIds': oneWayTileIds.toList(),
+        'slopeUpRightTileIds': slopeUpRightTileIds.toList(),
+        'slopeUpLeftTileIds': slopeUpLeftTileIds.toList(),
         'zIndex': zIndex,
       };
 
@@ -73,6 +93,10 @@ class TileMap {
     final zIndex = (json['zIndex'] as num?)?.toInt() ?? 0;
     final solidTileIds = ((json['solidTileIds'] as List?) ?? const []).cast<int>().toSet();
     final oneWayTileIds = ((json['oneWayTileIds'] as List?) ?? const []).cast<int>().toSet();
+    final slopeUpRightTileIds =
+        ((json['slopeUpRightTileIds'] as List?) ?? const []).cast<int>().toSet();
+    final slopeUpLeftTileIds =
+        ((json['slopeUpLeftTileIds'] as List?) ?? const []).cast<int>().toSet();
     if (legend != null) {
       return _fromLegend(
         legend: (legend as Map).cast<String, dynamic>(),
@@ -81,6 +105,8 @@ class TileMap {
         tileHeight: (json['tileHeight'] as num).toDouble(),
         solidTileIds: solidTileIds,
         oneWayTileIds: oneWayTileIds,
+        slopeUpRightTileIds: slopeUpRightTileIds,
+        slopeUpLeftTileIds: slopeUpLeftTileIds,
         zIndex: zIndex,
       );
     }
@@ -92,6 +118,8 @@ class TileMap {
       tiles: (json['tiles'] as List).cast<int>(),
       solidTileIds: solidTileIds,
       oneWayTileIds: oneWayTileIds,
+      slopeUpRightTileIds: slopeUpRightTileIds,
+      slopeUpLeftTileIds: slopeUpLeftTileIds,
       zIndex: zIndex,
     );
   }
@@ -103,6 +131,8 @@ class TileMap {
     required double tileHeight,
     required Set<int> solidTileIds,
     required Set<int> oneWayTileIds,
+    required Set<int> slopeUpRightTileIds,
+    required Set<int> slopeUpLeftTileIds,
     required int zIndex,
   }) {
     if (asciiRows.isEmpty) {
@@ -132,6 +162,8 @@ class TileMap {
       tiles: tiles,
       solidTileIds: solidTileIds,
       oneWayTileIds: oneWayTileIds,
+      slopeUpRightTileIds: slopeUpRightTileIds,
+      slopeUpLeftTileIds: slopeUpLeftTileIds,
       zIndex: zIndex,
     );
   }

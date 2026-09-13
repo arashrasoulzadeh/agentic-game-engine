@@ -156,7 +156,14 @@ unless marked, roughly in priority order.
       priority; new `DashSystem` (registered by
       `installPlatformerSystems`) consumes a dash request using
       `facingSign` (now tracked by `PlatformerInputSystem`).
-- [ ] Sloped tile collision — only flat/one-way tiles exist, no ramps.
+- [x] Sloped tile collision: `TileMap.slopeUpRightTileIds`/
+      `slopeUpLeftTileIds` + `resolveSlopeCircleAabb` (`collision_math.dart`)
+      + `TileCollisionSystem`. A walkable-surface simplification (floor
+      height linearly interpolated across the tile), not true polygon
+      physics — never blocks from underneath or the side, only resolves
+      "standing on top" of the diagonal. Scoped to `TileMap` only, not
+      `PlatformBody` (a rectangle has no natural ramp shape) — same
+      scoping split as moving platforms, mirrored the other way.
 - [ ] Tiled (`.tmx`/`.tsx`) import — `TileMap`'s JSON (even with the
       ASCII-legend sugar) is a bespoke format; every real-world
       platformer content workflow uses Tiled or similar. Likely the

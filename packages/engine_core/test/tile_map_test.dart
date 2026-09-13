@@ -112,6 +112,39 @@ void main() {
     );
   });
 
+  test('isSlopeUpRight/isSlopeUpLeft check tileAt against the configured id sets', () {
+    final map = TileMap(
+      cols: 2,
+      rows: 1,
+      tileWidth: 10,
+      tileHeight: 10,
+      tiles: [3, 4],
+      slopeUpRightTileIds: {3},
+      slopeUpLeftTileIds: {4},
+    );
+
+    expect(map.isSlopeUpRight(0, 0), isTrue);
+    expect(map.isSlopeUpLeft(0, 0), isFalse);
+    expect(map.isSlopeUpRight(1, 0), isFalse);
+    expect(map.isSlopeUpLeft(1, 0), isTrue);
+  });
+
+  test('slope tile ids round-trip through toJson/fromJson', () {
+    final map = TileMap(
+      cols: 2,
+      rows: 1,
+      tileWidth: 10,
+      tileHeight: 10,
+      tiles: [3, 4],
+      slopeUpRightTileIds: {3},
+      slopeUpLeftTileIds: {4},
+    );
+
+    final decoded = TileMap.fromJson(map.toJson());
+    expect(decoded.slopeUpRightTileIds, {3});
+    expect(decoded.slopeUpLeftTileIds, {4});
+  });
+
   test('TileMap.fromJson legend form rejects a character missing from the legend', () {
     expect(
       () => TileMap.fromJson({

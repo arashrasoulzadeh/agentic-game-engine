@@ -27,6 +27,10 @@ engine" section, one item at a time.
   `resolveSolidCircleAabb` now returns a `CollisionSide` enum instead
   of a bool, so wall contact can be derived from the same collision
   call that already resolved "grounded."
+- **Sloped tile collision**: `TileMap.slopeUpRightTileIds`/
+  `slopeUpLeftTileIds` + `TileCollisionSystem` — a walkable ramp
+  surface (floor height linearly interpolated across the tile), not
+  full polygon physics.
 
 ## [0.1.0]
 

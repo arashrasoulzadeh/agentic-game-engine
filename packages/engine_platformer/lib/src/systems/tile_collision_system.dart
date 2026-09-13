@@ -4,9 +4,12 @@ import '../collision_math.dart';
 import '../components/platformer_controller.dart';
 
 /// Ground detection and collision against `TileMap` grids, mirroring
-/// `PlatformerSystem` but for tile-based level geometry. Only checks
-/// the small range of tiles overlapping each entity's bounding box
-/// (not the whole grid) — the actual broad-phase for tile collision.
+/// `PlatformerSystem` but for tile-based level geometry — including
+/// `TileMap.slopeUpRightTileIds`/`slopeUpLeftTileIds` ramps, which have
+/// no `PlatformBody` equivalent (see `resolveSlopeCircleAabb`'s doc
+/// comment for what "ramp" means here). Only checks the small range of
+/// tiles overlapping each entity's bounding box (not the whole grid) —
+/// the actual broad-phase for tile collision.
 ///
 /// Never resets `controller.grounded`/`touchingWallLeft`/
 /// `touchingWallRight` — `PlatformerSystem` owns that reset. This
@@ -78,6 +81,20 @@ class TileCollisionSystem implements System {
                 bottom: bottom,
               );
               applyCollisionSideToController(side: side, controller: controller, vel: vel);
+            } else if (map.slopeUpRightTileIds.contains(tileId) ||
+                map.slopeUpLeftTileIds.contains(tileId)) {
+              if (resolveSlopeCircleAabb(
+                pos: pos,
+                vel: vel,
+                radius: collider.radius,
+                left: left,
+                right: right,
+                top: top,
+                bottom: bottom,
+                ascendingRight: map.slopeUpRightTileIds.contains(tileId),
+              )) {
+                controller.grounded = true;
+              }
             }
           }
         }

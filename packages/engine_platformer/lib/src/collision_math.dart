@@ -101,6 +101,43 @@ void _clampWallSlide(PlatformerController controller, Velocity vel) {
   if (maxFall != null && vel.y > maxFall) vel.y = maxFall;
 }
 
+/// Ramp ("walkable diagonal surface") resolution: the floor height at
+/// [pos]'s `x` is linearly interpolated across the tile — from
+/// ([left], [bottom]) to ([right], [top]) when [ascendingRight] (low on
+/// the left, high on the right: walking right goes uphill), or the
+/// mirror when not. Catches an entity whose foot has reached or passed
+/// that height while falling/resting (`vel.y >= 0`), snapping it to sit
+/// exactly on the ramp surface — unlike `resolveOneWayCircleAabb`'s
+/// strict "crossed this exact frame" check, a ramp catches at *any*
+/// foot position at/below the surface, since the surface height varies
+/// continuously as an entity walks across it and a frame-crossing check
+/// would glitch at normal walking speed. This is a walkable-surface
+/// simplification, not true polygon physics — it never blocks an entity
+/// approaching from underneath or the side, only ever resolves the
+/// "standing on top" case. Returns whether it caught the entity.
+bool resolveSlopeCircleAabb({
+  required Position pos,
+  required Velocity vel,
+  required double radius,
+  required double left,
+  required double right,
+  required double top,
+  required double bottom,
+  required bool ascendingRight,
+}) {
+  if (vel.y < 0) return false;
+  if (pos.x < left || pos.x > right) return false;
+
+  final t = ((pos.x - left) / (right - left)).clamp(0.0, 1.0);
+  final floorY = ascendingRight ? bottom + (top - bottom) * t : top + (bottom - top) * t;
+  final foot = pos.y + radius;
+  if (foot < floorY) return false;
+
+  pos.y = floorY - radius;
+  vel.y = 0;
+  return true;
+}
+
 /// One-way ("landable from above only") resolution: catches an entity
 /// only if it's falling/resting and its foot crossed [top] this frame —
 /// never blocks from below or the sides. Returns whether it landed.
