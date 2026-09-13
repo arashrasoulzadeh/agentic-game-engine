@@ -29,7 +29,15 @@ class MenuButtonSpec {
 /// needs more than buttons — background art, a title, a `TileMap` — the
 /// base implementation only ever adds the button entities.
 abstract class ButtonMenuScene extends Scene {
-  /// The buttons this menu shows, top to bottom.
+  /// The `GameState` this menu was populated with — set by `populate`
+  /// before [buttons]/[onButtonPressed] can run, so a subclass can read
+  /// it (e.g. to show a coin count in a button's label) or write to it
+  /// (e.g. a "New Game" button resetting progress) without needing its
+  /// own field for something `Scene.populate` already receives.
+  late final GameState state;
+
+  /// The buttons this menu shows, top to bottom. Called after [state]
+  /// is set, so labels may depend on it (e.g. `'PLAY (${state.data['coins']})'`).
   List<MenuButtonSpec> buttons();
 
   /// Called with the `actionId` of whichever button was tapped —
@@ -44,7 +52,8 @@ abstract class ButtonMenuScene extends Scene {
   double get buttonSpacing => kMenuButtonHeight + 16;
 
   @override
-  Future<void> populate(World world, SceneController scenes) async {
+  Future<void> populate(World world, SceneController scenes, GameState state) async {
+    this.state = state;
     final specs = buttons();
     final startY = world.height / 2 - (specs.length - 1) * buttonSpacing / 2;
     for (var i = 0; i < specs.length; i++) {

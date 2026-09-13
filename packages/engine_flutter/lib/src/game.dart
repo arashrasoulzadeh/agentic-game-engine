@@ -24,6 +24,13 @@ abstract class Game {
   /// `Scene`'s doc comment.
   Scene createInitialScene();
 
+  /// The `GameState` `GameRunner` creates once and hands to every
+  /// `Scene.populate` call for this game's whole run — the one thing
+  /// that survives a `loadScene` swap (see `Scene.populate`'s doc
+  /// comment). Defaults to an empty state; override to seed starting
+  /// values (e.g. `GameState({'coinsCollected': 0})`).
+  GameState createInitialState() => GameState();
+
   /// Returns null (no keyboard input wired) by default — override to
   /// supply an `InputController` with custom key bindings. The same
   /// controller drives on-screen touch controls too (see
@@ -93,6 +100,7 @@ class GameRunner extends StatefulWidget {
 
 class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   final SceneController _sceneController = SceneController();
+  late final GameState _gameState;
   late Future<_LoadedGame> _future;
   bool _paused = false;
   _LoadedGame? _overlay;
@@ -107,6 +115,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
       pushOverlay: _pushOverlay,
       popOverlay: _popOverlay,
     );
+    _gameState = widget.game.createInitialState();
     _future = _load(widget.game.createInitialScene());
   }
 
@@ -150,7 +159,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     );
     registerCoreComponents(world);
     registerFlutterComponents(world);
-    await scene.populate(world, _sceneController);
+    await scene.populate(world, _sceneController, _gameState);
 
     final atlasRegistry = await scene.loadAssets();
     final camera = scene.createCamera(world);

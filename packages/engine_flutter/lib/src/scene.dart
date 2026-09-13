@@ -23,11 +23,18 @@ abstract class Scene {
   /// a door/room-exit collision); stash it in a closure/`Behavior` if
   /// the trigger fires later than `populate` itself.
   ///
+  /// [state] is the one `GameState` instance `GameRunner` keeps for the
+  /// whole running game — read whatever this scene needs from it (coins
+  /// collected so far, which rooms are unlocked) and write back before
+  /// switching away, since `loadScene` always starts the next scene from
+  /// a blank `World` (see `SceneController.loadScene`) but [state] is
+  /// the one thing that survives that swap.
+  ///
   /// `Future<void>` (not `void`) because loading a level from a bundled
   /// JSON asset — `rootBundle.loadString` + `Level.loadInto` — is
   /// itself async; a scene with nothing to await can just mark this
   /// `async` with no `await` in the body, or return a completed Future.
-  Future<void> populate(World world, SceneController scenes);
+  Future<void> populate(World world, SceneController scenes, GameState state);
 
   /// Loads sprite atlases (or other async setup) before the scene's
   /// first frame. Defaults to an empty registry for a scene with no

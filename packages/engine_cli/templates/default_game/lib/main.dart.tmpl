@@ -37,7 +37,7 @@ class MyGame extends Game {
 
 class MainScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes) async {
+  Future<void> populate(World world, SceneController scenes, GameState state) async {
     world.addSystem(MovementSystem());
     world.addSystem(CollisionSystem());
     world.addSystem(AnimationSystem());

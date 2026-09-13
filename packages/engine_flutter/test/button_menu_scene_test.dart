@@ -30,7 +30,7 @@ void main() {
       (tester) async {
     final menu = _RecordingMenu();
     final world = _buildWorld();
-    await menu.populate(world, SceneController());
+    await menu.populate(world, SceneController(), GameState());
 
     final buttons = world.storeOf<Button>();
     expect(buttons.length, 2);
@@ -63,7 +63,7 @@ void main() {
     final menu = _RecordingMenu();
     final world = _buildWorld();
     final scenes = SceneController();
-    await menu.populate(world, scenes);
+    await menu.populate(world, scenes, GameState());
 
     final firstButtonPos = world.storeOf<Position>().get(world.storeOf<Button>().entityAt(0))!;
     menu.handleTap(world, scenes, Offset(firstButtonPos.x, firstButtonPos.y));
@@ -75,7 +75,7 @@ void main() {
     final menu = _RecordingMenu();
     final world = _buildWorld();
     final scenes = SceneController();
-    await menu.populate(world, scenes);
+    await menu.populate(world, scenes, GameState());
 
     menu.handleTap(world, scenes, const Offset(-9999, -9999));
 

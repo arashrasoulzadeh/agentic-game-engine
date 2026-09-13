@@ -5,12 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 class _EmptyScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes) async {}
+  Future<void> populate(World world, SceneController scenes, GameState state) async {}
 }
 
 class _SlowLoadingScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes) async {}
+  Future<void> populate(World world, SceneController scenes, GameState state) async {}
 
   @override
   Future<AtlasRegistry> loadAssets() async {
@@ -178,6 +178,28 @@ void main() {
     );
   });
 
+  testWidgets('GameState is the same instance across a loadScene switch, unlike World',
+      (tester) async {
+    final firstScene = _MarkerScene('first');
+    final game = _SwitchingGame(firstScene);
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump();
+
+    firstScene.state!.data['coinsCollected'] = 3;
+
+    final secondScene = _MarkerScene('second');
+    firstScene.scenes!.loadScene(secondScene);
+    await tester.pump();
+    await tester.pump();
+
+    // The whole point of GameState (unlike World, which is deliberately
+    // rebuilt fresh per scene -- see the test above) is that it's the
+    // one thing carried forward untouched by a scene switch.
+    expect(identical(secondScene.state, firstScene.state), isTrue);
+    expect(secondScene.state!.data['coinsCollected'], 3);
+  });
+
   testWidgets('SceneController.pushOverlay pauses the base scene without replacing its World',
       (tester) async {
     final baseScene = _MarkerScene('base');
@@ -220,11 +242,13 @@ class _MarkerScene extends Scene {
 
   final String label;
   SceneController? scenes;
+  GameState? state;
   EntityId? markerId;
 
   @override
-  Future<void> populate(World world, SceneController scenes) async {
+  Future<void> populate(World world, SceneController scenes, GameState state) async {
     this.scenes = scenes;
+    this.state = state;
     markerId = world.spawn();
     world.storeOf<Sprite>().set(markerId!, Sprite('none', label));
   }

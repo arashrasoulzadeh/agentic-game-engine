@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 class _EmptyScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes) async {}
+  Future<void> populate(World world, SceneController scenes, GameState state) async {}
 }
 
 class _ControllableGame extends Game {
