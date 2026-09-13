@@ -177,7 +177,11 @@ This closes out every item added under "New engine features" above.
   size, and typed direct dispatch in `EventBus` (replacing
   `Function.apply`).
 - `ComponentStore`'s sparse side switched from `Map<int,int>` to a
-  `List<int>`.
+  `List<int>`. Along the way, fixed a real bug found by the benchmark
+  suite: `remove` left a dangling sparse-index entry when removing the
+  last entity in a store, which could silently corrupt component data
+  or crash once a recycled entity id collided with it under sustained
+  spawn/destroy churn.
 - A performance benchmark suite (`benchmark/` in `engine_core`/
   `engine_platformer`) and a full pass to 100% test coverage across
   `engine_core`/`engine_flutter`/`engine_platformer`.
