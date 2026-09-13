@@ -252,12 +252,15 @@ top to bottom — not strict, adjust as dependencies emerge.
       `Canvas.clipPath`/`saveLayer`+`BlendMode.dstIn` pass in
       `EngineView`) — worth doing once there's a concrete use case
       (e.g. a fog-of-war reveal, a vignette, a wipe transition).
-- [ ] **To evaluate**: `WorldView.nearestWithPosition`
-      (`packages/engine_core/lib/src/world_view.dart`) is a linear scan
-      over every `Position`, called potentially once per AI-driven
-      entity per tick via a `Behavior`. Already documented in its own
-      doc comment as "fine at the entity counts a single AI query
-      needs" — no action unless a game with many simultaneous AI
-      queries per tick shows this mattering in a benchmark; noted here
-      so it's not forgotten as a candidate if that day comes (a
-      `SpatialHash`-backed nearest-neighbor query would be the fix).
+- [x] **Evaluated — no action needed yet**: `WorldView.nearestWithPosition`
+      is O(n) per call, so O(n²) per tick in the worst realistic case
+      (every entity is AI-driven and queries once per tick) — measured
+      via `benchmark/world_view_benchmark.dart`: ~0.06ms/tick at 50
+      simultaneous queriers, ~0.7ms/tick at 200, ~14.4ms/tick at 1000
+      (already most of a 60fps frame budget on its own). Confirms the
+      doc comment's existing caveat with real numbers rather than
+      leaving it a guess: fine for a typical platformer's AI entity
+      count (tens to a couple hundred), a real cost only once a game
+      has many hundreds of simultaneously-querying AI agents. No fix
+      applied — `SpatialHash`-backed nearest-neighbor is still the
+      documented remedy if a game actually hits that scale.
