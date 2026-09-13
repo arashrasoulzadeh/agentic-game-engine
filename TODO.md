@@ -184,17 +184,13 @@ top to bottom — not strict, adjust as dependencies emerge.
       (~2.3x — the remaining cost there is the density issue below,
       unrelated to this fix), `particle_system_benchmark`
       emitters=500 ~1.47ms -> ~0.82ms (~1.8x).
-- [ ] **To improve**: `EventBus.flush` (`packages/engine_core/lib/src/event_bus.dart`)
-      dispatches via `Function.apply(h, [event])`, which is measurably
-      slower than a direct typed call — Dart's `Function.apply` goes
-      through a dynamic-invocation path that can't be inlined the way
-      a normal call site can. Only matters for event-heavy games
-      (lots of `CollisionEvent`s/game-defined events per tick); low
-      priority unless a benchmark shows it matters, but the fix is
-      straightforward: store handlers as `void Function(Object)`
-      (cast once at `on<T>` registration time via a closure that does
-      the `is T` check/cast itself) instead of raw `Function` +
-      `apply`.
+- [x] **Fixed**: `EventBus.flush` dispatched via
+      `Function.apply(h, [event])`. Replaced with handlers stored as
+      `void Function(Object)`, wrapping the `as T` cast in a closure
+      created once at `on<T>` registration time instead of per
+      dispatch — a direct, inlinable call site instead of the slower
+      dynamic-invocation path `Function.apply` goes through.
+      Behavior-preserving (all existing tests pass unchanged).
 - [ ] **To improve**: `EngineView`'s sprite pass (`_EnginePainter.paint`
       in `packages/engine_flutter/lib/src/engine_view.dart`) does one
       `canvas.save()`/`translate()`/`scale()`/`drawImageRect()`/
