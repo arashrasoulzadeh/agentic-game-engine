@@ -73,3 +73,9 @@ belongs in.
 - [ ] Steering/avoidance among multiple AI: `PatrolBehavior`/
       `FollowBehavior`/`PathFollowBehavior` don't avoid each other, so
       packs of enemies overlap/stack.
+- [ ] Variable jump height (jump-cut): every other jump-feel primitive
+      (coyote time, buffering, double jump, wall jump, dash) already
+      exists, but releasing the jump button early doesn't shorten the
+      jump — `JumpSystem` always applies the full `jumpSpeed` for the
+      whole arc, so there's no way to do a quick hop vs. a full-height
+      jump with one input.
