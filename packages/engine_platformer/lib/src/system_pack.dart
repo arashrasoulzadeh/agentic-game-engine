@@ -9,6 +9,7 @@ import 'systems/jump_system.dart';
 import 'systems/movement_animation_system.dart';
 import 'systems/platformer_input_system.dart';
 import 'systems/platformer_system.dart';
+import 'systems/projectile_system.dart';
 import 'systems/tile_collision_system.dart';
 
 /// Registers every system a platformer needs, in the one order that's
@@ -27,11 +28,13 @@ import 'systems/tile_collision_system.dart';
 /// `MovementAnimationSet` at all (e.g. a headless test world).
 ///
 /// Includes `HealthSystem` (ticks down `Health.invincibleSeconds` —
-/// harmless even if nothing in your game has a `Health` component yet).
-/// Damage/death/respawn themselves are helpers you call explicitly
-/// (`damageEntity`, `dealDamageOnTouch`, `respawnOnDeath`), not part of
-/// this pack, so *when* an entity takes damage stays visible in game
-/// code.
+/// harmless even if nothing in your game has a `Health` component yet)
+/// and `ProjectileSystem` (ages/expires `Projectile`s, same "harmless
+/// if unused" reasoning). Damage/death/respawn themselves, and
+/// projectile-vs-target damage (`installProjectileDamage`), are helpers
+/// you call explicitly (`damageEntity`, `dealDamageOnTouch`,
+/// `respawnOnDeath`, `installProjectileDamage`), not part of this pack,
+/// so *when*/*what* takes damage stays visible in game code.
 ///
 /// If you need a system not covered here (a custom input system, a
 /// score system, whatever your game needs), just call
@@ -58,6 +61,7 @@ void installPlatformerSystems(
   world.addSystem(DashSystem());
   world.addSystem(CollisionSystem());
   world.addSystem(HealthSystem());
+  world.addSystem(ProjectileSystem());
   if (includeAnimation) {
     world.addSystem(FacingSystem());
     world.addSystem(MovementAnimationSystem());

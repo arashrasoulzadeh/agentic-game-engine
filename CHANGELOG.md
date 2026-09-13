@@ -46,6 +46,9 @@ engine" section, one item at a time.
 - **`Pushable`** + `PushableSystem`: genre-general entity-pushes-entity
   resolution (a crate, a boulder) — pairs with `PlatformerController`
   for wall-blocking rather than duplicating tile/platform collision.
+- **Ranged/projectile combat**: `Projectile` + `spawnProjectile` +
+  `ProjectileSystem` (lifetime expiry) + `installProjectileDamage`
+  (on-hit damage via one shared subscription, not one per projectile).
 
 ## [0.1.0]
 

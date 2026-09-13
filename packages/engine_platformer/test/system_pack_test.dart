@@ -27,6 +27,7 @@ void main() {
       'dash',
       'collision',
       'health',
+      'projectile',
       'facing',
       'movementAnimation',
       'animation',
@@ -46,6 +47,7 @@ void main() {
       'dash',
       'collision',
       'health',
+      'projectile',
       'facing',
       'movementAnimation',
       'animation',
@@ -65,6 +67,7 @@ void main() {
       'dash',
       'collision',
       'health',
+      'projectile',
     ]);
   });
 

@@ -208,9 +208,18 @@ unless marked, roughly in priority order.
       stops at a wall, since `TileCollisionSystem`/`PlatformerSystem`
       already do that for any physics entity — no duplicated wall logic.
       No momentum: velocity snaps to `0` the instant nothing is pushing.
-- [ ] Ranged/projectile combat — only touch-damage
-      (`dealDamageOnTouch`) exists; no projectile spawn/lifetime/hit
-      helpers.
+- [x] Ranged/projectile combat (`engine_platformer`, alongside existing
+      combat/`Health`): `Projectile` component + `spawnProjectile` +
+      `ProjectileSystem` (lifetime expiry — added to
+      `installPlatformerSystems`, harmless when unused like
+      `HealthSystem`) + `installProjectileDamage` (on-hit damage, one
+      shared `CollisionEvent` subscription for every projectile ever
+      fired — `EventBus` has no per-handler unsubscribe, so a
+      per-instance handler would leak one per shot over a play session).
+      Excludes its own shooter via `owner`. Deliberately doesn't collide
+      with level geometry (walls/tiles) — most projectiles fly straight
+      unaffected by platforming physics; documented as a follow-up if a
+      game actually needs it.
 - [ ] Remappable controls UI — `InputController.bindings` is a
       code-level map; no in-game "press a key to rebind" flow.
 - [ ] Screen shake / camera-effect helpers — doable by hand today with
