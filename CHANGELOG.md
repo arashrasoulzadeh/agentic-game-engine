@@ -38,6 +38,11 @@ engine" section, one item at a time.
 - **`game_agent lint --render`**: rasterizes a level's `TileMap` (color-
   coded by collision kind) plus a labeled marker per named entity to a
   PNG, so a level's shape is visible without running the game.
+- **`TriggerZone`** + `installTriggerZones`: a general "fires
+  `TriggerEvent` on touch, never blocks movement" primitive — the
+  generic counterpart to `RoomExit`. Along the way, fixed
+  `EventBus.flush()` to deliver events emitted by another event's
+  handler within the same flush, instead of a tick later.
 
 ## [0.1.0]
 

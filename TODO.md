@@ -185,10 +185,20 @@ unless marked, roughly in priority order.
       right place. Scoped down from "a full visual level editor" (out
       of reach for a CLI-first engine repo in one pass) to this bounded,
       genuinely useful version of the same gap.
-- [ ] Trigger/zone volumes distinct from solid colliders: a general
-      "fires on overlap, never blocks movement" primitive —
-      `RoomExit`/coin pickups each hand-roll this via `CollisionSystem`
-      today.
+- [x] Trigger/zone volumes: `TriggerZone` component + `installTriggerZones`
+      (`engine_core`) — attach `TriggerZone(triggerId, data:)` to any
+      `Position`+`Collider` entity (deliberately no `Velocity`, so
+      `CollisionSystem`'s elastic swap never touches it) and a touch
+      fires `TriggerEvent`. A level author now only ever needs a
+      component + an id, not a bespoke `onCollisionInvolving` handler
+      per zone. Found and fixed a real, more consequential bug while
+      building this: `EventBus.flush()` only delivered events queued
+      *before* a flush call started, so an event emitted by another
+      event's handler within the same flush (exactly what
+      `installTriggerZones` does, translating `CollisionEvent` ->
+      `TriggerEvent`) wasn't delivered until the *next* tick — a
+      one-tick lag nobody would expect. `flush()` now drains cascading
+      rounds within one call (capped against a genuine handler cycle).
 - [ ] Pushable/dynamic physics objects — crates are decoration today;
       no entity-pushes-entity resolution.
 - [ ] Ranged/projectile combat — only touch-damage

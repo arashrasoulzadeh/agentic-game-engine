@@ -13,6 +13,7 @@ export 'src/components/particle_emitter.dart';
 export 'src/components/position.dart';
 export 'src/components/room_exit.dart';
 export 'src/components/tile_map.dart';
+export 'src/components/trigger_zone.dart';
 export 'src/components/tween.dart';
 export 'src/components/velocity.dart';
 export 'src/entity.dart';
@@ -28,6 +29,7 @@ export 'src/systems/movement_system.dart';
 export 'src/systems/particle_system.dart';
 export 'src/systems/tween_system.dart';
 export 'src/tmx_import.dart';
+export 'src/trigger_helpers.dart';
 export 'src/world.dart';
 export 'src/world_view.dart';
 
@@ -39,6 +41,7 @@ import 'src/components/particle_emitter.dart';
 import 'src/components/position.dart';
 import 'src/components/room_exit.dart';
 import 'src/components/tile_map.dart';
+import 'src/components/trigger_zone.dart';
 import 'src/components/tween.dart';
 import 'src/components/velocity.dart';
 import 'src/world.dart';
@@ -108,5 +111,10 @@ void registerCoreComponents(World world) {
     'tween',
     (t) => t.toJson(),
     Tween.fromJson,
+  );
+  world.components.register<TriggerZone>(
+    'triggerZone',
+    (t) => t.toJson(),
+    TriggerZone.fromJson,
   );
 }
