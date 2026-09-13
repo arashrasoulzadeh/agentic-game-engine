@@ -109,11 +109,17 @@ belongs in.
 - [ ] Spatial range queries: `spatial_hash.dart` backs `CollisionSystem`
       internally but isn't exposed for general "what's near this
       point/rect" queries (useful for AI perception, area-of-effect).
-- [ ] Multi-component query helper: `WorldView.entitiesWith<T>()` only
-      filters on one component type — "every entity with both X and Y"
-      still means hand-nesting a loop plus null-checks per call site;
-      a real ECS this size usually wants `entitiesWithAll<A, B>()` (or
-      similar) as a first-class query.
+- [x] Multi-component query helper: `WorldView.entitiesWithAll<A, B>()`
+      — scans whichever of the two component stores is currently
+      smaller and checks the other via a direct `has` lookup, since
+      neither component is privileged in a two-component query and the
+      smaller-first scan is strictly cheaper. For three or more
+      components, chain `.where(hasComponent<C>)` on the result rather
+      than growing this into a variadic-arity API nobody's asked for
+      yet. Verified: 3 new tests in `world_view_test.dart` (basic
+      filtering, correctness regardless of which store happens to be
+      smaller, empty result) — 160 `engine_core` tests passing, analyzer
+      clean.
 - [ ] Priority-queue-backed pathfinding open set: `findPath`'s open set
       is a linear-scan sorted list, documented as "fine at the scale a
       single AI pathfind needs" — true today, but worth swapping for a

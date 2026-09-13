@@ -30,6 +30,30 @@ class WorldView {
     }
   }
 
+  /// All entities carrying both [A] and [B], in no particular order —
+  /// "entities with both X and Y" otherwise means hand-nesting a loop
+  /// plus `hasComponent` checks at every call site. Scans whichever of
+  /// the two stores is currently smaller and checks the other via a
+  /// direct `has` lookup, since neither component is privileged in a
+  /// two-component query and the smaller-first scan is strictly
+  /// cheaper. For three or more components, chain a `.where(...)`
+  /// using `hasComponent<C>` on the result.
+  Iterable<EntityId> entitiesWithAll<A, B>() sync* {
+    final storeA = _world.storeOf<A>();
+    final storeB = _world.storeOf<B>();
+    if (storeA.length <= storeB.length) {
+      for (var i = 0; i < storeA.length; i++) {
+        final id = storeA.entityAt(i);
+        if (storeB.has(id)) yield id;
+      }
+    } else {
+      for (var i = 0; i < storeB.length; i++) {
+        final id = storeB.entityAt(i);
+        if (storeA.has(id)) yield id;
+      }
+    }
+  }
+
   /// The closest entity with a `Position` to ([x], [y]), or null if none
   /// qualify. Linear scan — fine at the entity counts a single AI
   /// query needs; reach for `SpatialHash` directly in a System if you

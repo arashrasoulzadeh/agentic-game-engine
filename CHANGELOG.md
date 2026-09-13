@@ -24,6 +24,15 @@ pubspec.yaml.
   and explicitly keeps the `Text`/`Velocity`/`Action` Flutter-name-
   collision `hide` workaround as a permanent, deliberate decision.
 
+### New engine features (round 2)
+
+Working through TODO.md's "New engine features (round 2)" section, one
+item at a time.
+
+- **Multi-component query helper**: `WorldView.entitiesWithAll<A, B>()`
+  — every entity carrying both component types, in no particular
+  order, without hand-nesting a loop plus null-checks at the call site.
+
 ### Fully-fledged platformer engine
 
 Working through the gap list in TODO.md's "Fully-fledged platformer

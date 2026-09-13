@@ -44,6 +44,43 @@ void main() {
     expect(view.entitiesWith<Position>().toSet(), {a, b});
   });
 
+  test('entitiesWithAll yields only entities carrying both components', () {
+    final world = _buildWorld();
+    final both = world.spawn();
+    final onlyPosition = world.spawn();
+    final onlyVelocity = world.spawn();
+    world.spawn(); // neither
+    world.storeOf<Position>().set(both, Position(0, 0));
+    world.storeOf<Velocity>().set(both, Velocity(0, 0));
+    world.storeOf<Position>().set(onlyPosition, Position(0, 0));
+    world.storeOf<Velocity>().set(onlyVelocity, Velocity(0, 0));
+
+    final view = WorldView(world);
+    expect(view.entitiesWithAll<Position, Velocity>().toSet(), {both});
+  });
+
+  test('entitiesWithAll works regardless of which store is smaller', () {
+    final world = _buildWorld();
+    final both = world.spawn();
+    world.storeOf<Position>().set(both, Position(0, 0));
+    world.storeOf<Velocity>().set(both, Velocity(0, 0));
+    for (var i = 0; i < 5; i++) {
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(0, 0)); // Position store now larger
+    }
+
+    final view = WorldView(world);
+    expect(view.entitiesWithAll<Position, Velocity>().toSet(), {both});
+    expect(view.entitiesWithAll<Velocity, Position>().toSet(), {both});
+  });
+
+  test('entitiesWithAll returns empty when nothing has both components', () {
+    final world = _buildWorld();
+    world.spawn();
+    final view = WorldView(world);
+    expect(view.entitiesWithAll<Position, Velocity>(), isEmpty);
+  });
+
   test('nearestWithPosition finds the closest match and respects exclude/maxDistance', () {
     final world = _buildWorld();
     final near = world.spawn();
