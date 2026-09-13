@@ -27,6 +27,7 @@ export 'src/systems/collision_system.dart';
 export 'src/systems/movement_system.dart';
 export 'src/systems/particle_system.dart';
 export 'src/systems/tween_system.dart';
+export 'src/tmx_import.dart';
 export 'src/world.dart';
 export 'src/world_view.dart';
 

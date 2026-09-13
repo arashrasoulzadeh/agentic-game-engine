@@ -6,6 +6,12 @@ publish_to: none
 environment:
   sdk: ^3.9.0
 
+dependencies:
+  # For TmxImport (Tiled .tmx/.tsx -> TileMap) -- a standard, minimal
+  # XML parser rather than hand-rolling one for a real interchange
+  # format's actual grammar.
+  xml: ^6.5.0
+
 dev_dependencies:
   test: ^1.25.0
   lints: ^5.0.0

@@ -31,6 +31,10 @@ engine" section, one item at a time.
   `slopeUpLeftTileIds` + `TileCollisionSystem` — a walkable ramp
   surface (floor height linearly interpolated across the tile), not
   full polygon physics.
+- **Tiled `.tmx` import**: `tileMapFromTmx` parses a self-contained
+  (embedded tileset, CSV layer data) `.tmx` into a `TileMap`, with
+  per-tile bool properties (`solid`/`oneWay`/`slopeUpRight`/
+  `slopeUpLeft`) mapping onto the matching collision set.
 
 ## [0.1.0]
 

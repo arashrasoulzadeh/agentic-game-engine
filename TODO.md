@@ -164,10 +164,18 @@ unless marked, roughly in priority order.
       "standing on top" of the diagonal. Scoped to `TileMap` only, not
       `PlatformBody` (a rectangle has no natural ramp shape) — same
       scoping split as moving platforms, mirrored the other way.
-- [ ] Tiled (`.tmx`/`.tsx`) import — `TileMap`'s JSON (even with the
-      ASCII-legend sugar) is a bespoke format; every real-world
-      platformer content workflow uses Tiled or similar. Likely the
-      single highest-leverage content-pipeline addition.
+- [x] Tiled `.tmx` import: `tileMapFromTmx` (`engine_core`, new `xml`
+      package dependency — a standard XML parser, not a hand-rolled
+      one) parses a **self-contained** `.tmx` (Tiled's "Embed Tileset"
+      option) with **CSV**-encoded layer data into a `TileMap`. Per-tile
+      bool custom properties named `solid`/`oneWay`/`slopeUpRight`/
+      `slopeUpLeft` map onto the matching collision set. Scoped MVP,
+      documented in its own doc comment: one tileset, one layer, no
+      external `.tsx` (`source=`) support (would need file I/O this
+      Flutter-free/web-targeting package doesn't do), no base64/
+      compressed layer data, tile-flip flags silently stripped (base
+      id imports, orientation is lost). Worth revisiting multi-layer/
+      external-tileset support if a real level actually needs it.
 - [ ] A way to preview/render a level file without running the whole
       game (e.g. `game_agent lint --render` rasterizing the tilemap to
       a PNG) — scoped down from "a full visual level editor," which is
