@@ -5,6 +5,8 @@ export 'src/component_registry.dart';
 export 'src/component_store.dart';
 export 'src/components/ai_state.dart';
 export 'src/components/collider.dart';
+export 'src/components/particle.dart';
+export 'src/components/particle_emitter.dart';
 export 'src/components/position.dart';
 export 'src/components/tile_map.dart';
 export 'src/components/velocity.dart';
@@ -17,11 +19,14 @@ export 'src/system.dart';
 export 'src/systems/ai_system.dart';
 export 'src/systems/collision_system.dart';
 export 'src/systems/movement_system.dart';
+export 'src/systems/particle_system.dart';
 export 'src/world.dart';
 export 'src/world_view.dart';
 
 import 'src/components/ai_state.dart';
 import 'src/components/collider.dart';
+import 'src/components/particle.dart';
+import 'src/components/particle_emitter.dart';
 import 'src/components/position.dart';
 import 'src/components/tile_map.dart';
 import 'src/components/velocity.dart';
@@ -67,5 +72,15 @@ void registerCoreComponents(World world) {
     'tileMap',
     (t) => t.toJson(),
     TileMap.fromJson,
+  );
+  world.components.register<Particle>(
+    'particle',
+    (p) => p.toJson(),
+    Particle.fromJson,
+  );
+  world.components.register<ParticleEmitter>(
+    'particleEmitter',
+    (p) => p.toJson(),
+    ParticleEmitter.fromJson,
   );
 }

@@ -187,10 +187,63 @@ class _EnginePainter extends CustomPainter {
       canvas.drawImageRect(atlas.image, srcRect, destRect, paint);
       canvas.restore();
     }
+
+    _paintParticles(canvas, size, positions);
   }
 
   @override
   bool shouldRepaint(covariant _EnginePainter oldDelegate) => true;
+
+  /// Draws every `Particle` (from `ParticleSystem`) on top of sprites —
+  /// the common case for hit sparks/dust/collect flair sitting above
+  /// gameplay art rather than under it. A particle with its own
+  /// `Sprite` component (the game attached one for a textured look)
+  /// draws that region scaled by `Particle.scale`; otherwise a plain
+  /// circle of `Particle.colorArgb`. Both fade via `Particle.alpha` —
+  /// for the sprite case that relies on the paint's alpha channel
+  /// modulating the whole `drawImageRect` call, the standard Flutter
+  /// trick for compositing an image at partial opacity without a
+  /// `saveLayer` per particle.
+  void _paintParticles(Canvas canvas, Size size, ComponentStore<Position> positions) {
+    final particles = world.storeOf<Particle>();
+    if (particles.length == 0) return;
+
+    final sprites = world.storeOf<Sprite>();
+    for (var i = 0; i < particles.length; i++) {
+      final entity = particles.entityAt(i);
+      final particle = particles.denseAt(i);
+      final pos = positions.get(entity);
+      if (pos == null) continue;
+
+      final alpha = particle.alpha.clamp(0.0, 1.0);
+      if (alpha <= 0 || particle.scale <= 0) continue;
+
+      final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+      final sprite = sprites.get(entity);
+      if (sprite != null && atlasRegistry.has(sprite.atlasId)) {
+        final atlas = atlasRegistry.resolve(sprite.atlasId);
+        final srcRect = atlas.regionFor(sprite.region);
+        final destRect = ui.Rect.fromCenter(
+          center: screenPos,
+          width: srcRect.width * particle.scale * camera.zoom,
+          height: srcRect.height * particle.scale * camera.zoom,
+        );
+        canvas.drawImageRect(
+          atlas.image,
+          srcRect,
+          destRect,
+          Paint()..color = Color.fromRGBO(255, 255, 255, alpha),
+        );
+      } else {
+        final base = Color(particle.colorArgb);
+        canvas.drawCircle(
+          screenPos,
+          4 * particle.scale * camera.zoom,
+          Paint()..color = base.withValues(alpha: alpha * base.a),
+        );
+      }
+    }
+  }
 
   /// Draws every non-empty tile of every `TileMap` in the world — this
   /// was missing entirely until now: `TileMap` only ever fed collision
