@@ -17,11 +17,20 @@ class OnScreenButtonSpec {
 /// `InputState`) can't tell the two apart. Horizontal-only by default
 /// (the common platformer case); pass [verticalEnabled] for a
 /// top-down/free-movement game that also needs up/down.
+///
+/// [floating] (default `true`, the standard mobile-game pattern) makes
+/// the joystick invisible until touched, then draws it wherever the
+/// finger lands within the widget's bounds — this is what avoids a
+/// fixed-position joystick permanently overlapping gameplay content
+/// (e.g. a camera-followed player rendered underneath it near a world
+/// edge, which a fixed base can't avoid in general). Pass `false` for
+/// the classic always-visible joystick at a fixed spot instead.
 class VirtualJoystick extends StatefulWidget {
   final InputController controller;
   final bool verticalEnabled;
   final double baseRadius;
   final double knobRadius;
+  final bool floating;
 
   /// Fraction of [baseRadius] the knob must move past before a
   /// direction counts as pressed — avoids tiny accidental drags
@@ -35,6 +44,7 @@ class VirtualJoystick extends StatefulWidget {
     this.baseRadius = 50,
     this.knobRadius = 24,
     this.deadzone = 0.25,
+    this.floating = true,
   });
 
   @override
@@ -43,11 +53,24 @@ class VirtualJoystick extends StatefulWidget {
 
 class _VirtualJoystickState extends State<VirtualJoystick> {
   Offset _knobOffset = Offset.zero;
+  Offset? _origin;
   final Set<String> _activeActions = {};
 
-  void _updateFromLocalPosition(Offset localPosition) {
-    final center = Offset(widget.baseRadius, widget.baseRadius);
-    var delta = localPosition - center;
+  void _onDragStart(Offset localPosition, Size bounds) {
+    if (widget.floating) {
+      // Clamp so the base circle stays fully within bounds even if the
+      // finger lands right at an edge.
+      _origin = Offset(
+        localPosition.dx.clamp(widget.baseRadius, bounds.width - widget.baseRadius),
+        localPosition.dy.clamp(widget.baseRadius, bounds.height - widget.baseRadius),
+      );
+    }
+    _updateKnob(localPosition);
+  }
+
+  void _updateKnob(Offset localPosition) {
+    final origin = _origin ?? Offset(widget.baseRadius, widget.baseRadius);
+    var delta = localPosition - origin;
     final distance = delta.distance;
     if (distance > widget.baseRadius) {
       delta = delta * (widget.baseRadius / distance);
@@ -86,7 +109,10 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
 
   void _reset() {
     _clearActiveActions();
-    setState(() => _knobOffset = Offset.zero);
+    setState(() {
+      _knobOffset = Offset.zero;
+      if (widget.floating) _origin = null;
+    });
   }
 
   @override
@@ -100,28 +126,49 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
 
   @override
   Widget build(BuildContext context) {
-    final size = widget.baseRadius * 2;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onPanStart: (details) => _updateFromLocalPosition(details.localPosition),
-      onPanUpdate: (details) => _updateFromLocalPosition(details.localPosition),
-      onPanEnd: (_) => _reset(),
-      onPanCancel: _reset,
-      child: SizedBox(
-        width: size,
-        height: size,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            _circle(size, const Color(0x33FFFFFF)),
-            Transform.translate(
-              offset: _knobOffset,
-              child: _circle(widget.knobRadius * 2, const Color(0x88FFFFFF)),
-            ),
-          ],
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bounds = constraints.biggest;
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanStart: (details) => _onDragStart(details.localPosition, bounds),
+          onPanUpdate: (details) => _updateKnob(details.localPosition),
+          onPanEnd: (_) => _reset(),
+          onPanCancel: _reset,
+          child: SizedBox.expand(
+            child: (widget.floating && _origin == null)
+                ? null
+                : _joystickVisual(widget.floating ? _origin! : null, bounds),
+          ),
+        );
+      },
     );
+  }
+
+  Widget _joystickVisual(Offset? floatingOrigin, Size bounds) {
+    final size = widget.baseRadius * 2;
+    final base = Stack(
+      alignment: Alignment.center,
+      children: [
+        _circle(size, const Color(0x33FFFFFF)),
+        Transform.translate(
+          offset: _knobOffset,
+          child: _circle(widget.knobRadius * 2, const Color(0x88FFFFFF)),
+        ),
+      ],
+    );
+
+    if (floatingOrigin == null) {
+      // Fixed mode: bottom-left of whatever space this widget occupies.
+      return Align(alignment: Alignment.bottomLeft, child: base);
+    }
+    return Stack(children: [
+      Positioned(
+        left: floatingOrigin.dx - widget.baseRadius,
+        top: floatingOrigin.dy - widget.baseRadius,
+        child: base,
+      ),
+    ]);
   }
 
   Widget _circle(double diameter, Color color) => Container(
@@ -213,12 +260,21 @@ class OnScreenControls extends StatelessWidget {
       minimum: const EdgeInsets.all(16),
       child: Stack(
         children: [
-          Positioned(
-            left: 0,
-            bottom: 0,
-            child: VirtualJoystick(
-              controller: controller,
-              verticalEnabled: verticalEnabled,
+          // The joystick gets the whole bottom-left region as its touch
+          // area (floating: true by default, so it's invisible until
+          // touched) rather than a small fixed-size box in the corner
+          // -- both so there's room for the finger to land anywhere
+          // comfortable, and so nothing is drawn over gameplay content
+          // until the player actually starts using it.
+          Positioned.fill(
+            child: FractionallySizedBox(
+              alignment: Alignment.bottomLeft,
+              widthFactor: 0.5,
+              heightFactor: 0.6,
+              child: VirtualJoystick(
+                controller: controller,
+                verticalEnabled: verticalEnabled,
+              ),
             ),
           ),
           Positioned(

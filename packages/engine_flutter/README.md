@@ -175,7 +175,17 @@ bool get onScreenJoystickVertical => false; // true for top-down games
 ```
 
 Force controls on/off regardless of platform via `GameConfig.onScreenControls`
-(useful for testing touch controls in a desktop browser). `VirtualJoystick`/
+(useful for testing touch controls in a desktop browser).
+
+The joystick is **floating** by default (`VirtualJoystick.floating`,
+default `true`): invisible until touched, then drawn wherever the
+finger lands within its touch region — not fixed permanently in the
+corner. This is the standard mobile-game pattern, and it's what avoids
+a persistent joystick overlapping gameplay it can't get out of the way
+of (e.g. a camera-followed player rendered underneath a fixed-position
+joystick near a world edge — found during manual testing of this
+engine's own sample game). Pass `floating: false` for the classic
+always-visible joystick instead. `VirtualJoystick`/
 `VirtualButton` also work standalone if `OnScreenControls`'s
 joystick-bottom-left/buttons-bottom-right layout doesn't fit your game.
 

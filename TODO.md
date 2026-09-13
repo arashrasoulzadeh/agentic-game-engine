@@ -27,13 +27,12 @@ top to bottom — not strict, adjust as dependencies emerge.
       `VirtualButton`/`OnScreenControls`), driving the same
       `InputController` as keyboard input, auto-shown on Android/iOS via
       `GameConfig.onScreenControls`
-- [ ] On-screen joystick UX: currently fixed bottom-left, so the
-      camera-followed player can end up rendered underneath it near
-      world edges (noticed during manual verification, not yet fixed —
-      see suggestion in the session that added this). A "floating"
-      joystick (appears wherever the finger first touches, common in
-      mobile games) or a camera dead-zone that avoids the control
-      regions would fix this.
+- [x] On-screen joystick UX: `VirtualJoystick` is now floating by
+      default (invisible until touched, drawn at the touch point within
+      its region) instead of fixed bottom-left, fixing the
+      camera-followed-player-under-the-joystick overlap. `floating:
+      false` keeps the classic always-visible joystick for anyone who
+      wants it.
 
 ## Platformer helpers (engine_platformer)
 
