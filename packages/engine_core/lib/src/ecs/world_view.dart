@@ -85,6 +85,34 @@ class WorldView {
     return best;
   }
 
+  /// All entities with a `Position` within [radius] of ([x], [y]) — for
+  /// "what's near this point" queries (AI perception, an explosion's
+  /// area of effect). Linear scan, same approach and the same caveat
+  /// as [nearestWithPosition]: fine at the entity counts a single
+  /// query needs; reach for `SpatialHash` directly in a System if you
+  /// need this at scale across many simultaneous queriers per tick.
+  /// Scoped to radius (a circle) rather than also offering a rect
+  /// variant — circle covers every AoE/perception use case this engine
+  /// has actually needed so far; add a rect query if a real one shows
+  /// up rather than building it speculatively now.
+  Iterable<EntityId> entitiesWithinRadius(
+    double x,
+    double y,
+    double radius, {
+    EntityId? exclude,
+  }) sync* {
+    final positions = _world.storeOf<Position>();
+    final radiusSq = radius * radius;
+    for (var i = 0; i < positions.length; i++) {
+      final id = positions.entityAt(i);
+      if (id == exclude) continue;
+      final p = positions.denseAt(i);
+      final dx = p.x - x;
+      final dy = p.y - y;
+      if (dx * dx + dy * dy <= radiusSq) yield id;
+    }
+  }
+
   /// Whether a straight line from ([fromX], [fromY]) to ([toX], [toY])
   /// is unobstructed by any solid tile in any `TileMap` in this world —
   /// built on `raycastTileMap`. The line-of-sight primitive AI

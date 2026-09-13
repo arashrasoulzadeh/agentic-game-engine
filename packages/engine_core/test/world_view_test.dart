@@ -81,6 +81,33 @@ void main() {
     expect(view.entitiesWithAll<Position, Velocity>(), isEmpty);
   });
 
+  test('entitiesWithinRadius yields every entity within range, excluding self', () {
+    final world = _buildWorld();
+    final near = world.spawn();
+    final onEdge = world.spawn();
+    final far = world.spawn();
+    final self = world.spawn();
+    world.storeOf<Position>().set(near, Position(3, 4)); // distance 5
+    world.storeOf<Position>().set(onEdge, Position(10, 0)); // distance 10, exactly on radius
+    world.storeOf<Position>().set(far, Position(100, 0));
+    world.storeOf<Position>().set(self, Position(0, 0));
+
+    final view = WorldView(world);
+    expect(
+      view.entitiesWithinRadius(0, 0, 10, exclude: self).toSet(),
+      {near, onEdge},
+    );
+  });
+
+  test('entitiesWithinRadius returns empty when nothing is in range', () {
+    final world = _buildWorld();
+    final far = world.spawn();
+    world.storeOf<Position>().set(far, Position(1000, 1000));
+
+    final view = WorldView(world);
+    expect(view.entitiesWithinRadius(0, 0, 10), isEmpty);
+  });
+
   test('nearestWithPosition finds the closest match and respects exclude/maxDistance', () {
     final world = _buildWorld();
     final near = world.spawn();

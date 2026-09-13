@@ -106,9 +106,19 @@ belongs in.
       physics-heavy game.
 - [ ] Save-schema versioning: `GameState`/`World.toJson()` have no
       migration story — a save from an older build shape just breaks.
-- [ ] Spatial range queries: `spatial_hash.dart` backs `CollisionSystem`
-      internally but isn't exposed for general "what's near this
-      point/rect" queries (useful for AI perception, area-of-effect).
+- [x] Spatial range queries: `WorldView.entitiesWithinRadius(x, y,
+      radius, {exclude})` — linear scan, same approach and caveat as
+      `nearestWithPosition` (fine at single-query scale; reach for
+      `SpatialHash` directly in a System at bigger scale). Scoped to a
+      circle, not also a rect variant — every AoE/perception use case
+      this engine has actually needed so far is a radius; add rect if a
+      real one shows up rather than building it speculatively. Did not
+      reuse `spatial_hash.dart`'s internal grid directly since it's
+      rebuilt fresh by `CollisionSystem` every tick and discarded, not
+      persisted state a `WorldView` query could reach into. Verified: 2
+      new tests in `world_view_test.dart` (in-range/on-edge/out-of-range/
+      excluded-self, and an empty-result case) — 162 `engine_core` tests
+      passing, analyzer clean.
 - [x] Multi-component query helper: `WorldView.entitiesWithAll<A, B>()`
       — scans whichever of the two component stores is currently
       smaller and checks the other via a direct `has` lookup, since

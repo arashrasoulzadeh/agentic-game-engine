@@ -36,6 +36,9 @@ item at a time.
   (opt-in, off by default) + `JumpSystem` — a one-shot `Velocity.y`
   clamp the tick the jump button is released while still ascending, for
   a short hop vs. a full jump from one input.
+- **Spatial range queries**: `WorldView.entitiesWithinRadius(x, y,
+  radius, {exclude})` — every entity with a `Position` within range,
+  for AI perception / area-of-effect queries.
 
 ### Fully-fledged platformer engine
 
