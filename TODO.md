@@ -124,6 +124,47 @@ top to bottom — not strict, adjust as dependencies emerge.
       JSON was validated directly against `Level.validate`/`TileMap.fromJson`,
       and the Dart mirrors patterns already browser-verified in `test_game`.
 
+## Fully-fledged platformer engine
+
+Gaps identified against what a genuinely complete platformer engine
+needs (moving-platform feel, modern jump mechanics, a real content
+pipeline, gameplay breadth, player-facing polish) — not yet started
+unless marked, roughly in priority order.
+
+- [ ] Moving/kinematic platforms: a platform entity with its own
+      velocity that carries a rider along (an elevator, a moving ledge)
+      — `TileCollisionSystem`/`PlatformBody` are static-only today;
+      nothing propagates a platform's velocity into whatever's standing
+      on it.
+- [ ] Modern jump-feel primitives: coyote time, jump buffering, wall
+      jump/slide, dash, double jump. `JumpSystem` is a single
+      `jumpSpeed` + grounded check today; none of the "feels good"
+      mechanics most post-2015 platformers rely on exist.
+- [ ] Sloped tile collision — only flat/one-way tiles exist, no ramps.
+- [ ] Tiled (`.tmx`/`.tsx`) import — `TileMap`'s JSON (even with the
+      ASCII-legend sugar) is a bespoke format; every real-world
+      platformer content workflow uses Tiled or similar. Likely the
+      single highest-leverage content-pipeline addition.
+- [ ] A way to preview/render a level file without running the whole
+      game (e.g. `game_agent lint --render` rasterizing the tilemap to
+      a PNG) — scoped down from "a full visual level editor," which is
+      out of reach for a CLI-first engine repo in one pass; this is the
+      honest, bounded version of that gap.
+- [ ] Trigger/zone volumes distinct from solid colliders: a general
+      "fires on overlap, never blocks movement" primitive —
+      `RoomExit`/coin pickups each hand-roll this via `CollisionSystem`
+      today.
+- [ ] Pushable/dynamic physics objects — crates are decoration today;
+      no entity-pushes-entity resolution.
+- [ ] Ranged/projectile combat — only touch-damage
+      (`dealDamageOnTouch`) exists; no projectile spawn/lifetime/hit
+      helpers.
+- [ ] Remappable controls UI — `InputController.bindings` is a
+      code-level map; no in-game "press a key to rebind" flow.
+- [ ] Screen shake / camera-effect helpers — doable by hand today with
+      `Tween` + `Camera`, but no ready-made helper the way
+      `installPlatformerSystems` is for physics.
+
 ## Tooling / release
 
 - [x] Cut a `v0.1.0` git tag: `engine_flutter`/`engine_platformer`'s
