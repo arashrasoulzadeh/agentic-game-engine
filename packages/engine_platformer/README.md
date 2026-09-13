@@ -235,3 +235,24 @@ landing, side contact, and hitting the underside).
 flutter test
 flutter analyze --fatal-infos
 ```
+
+Test coverage is 100% (line coverage via `flutter test --coverage`,
+producing `coverage/lcov.info`).
+
+## Benchmarks
+
+`benchmark/` holds `package:benchmark_harness` benchmarks for this
+package's systems, run via `flutter test` (not plain `dart run` — this
+package depends on the Flutter SDK transitively through
+`engine_flutter`, which plain `dart run` can't resolve):
+
+```bash
+flutter test benchmark/tile_collision_benchmark.dart
+flutter test benchmark/full_pipeline_benchmark.dart
+```
+
+("No tests found" at the end is expected — these are `main()`-only
+scripts, not `test()`-based suites; the numbers print before that.)
+See `engine_core`'s README for that package's own benchmarks
+(`CollisionSystem`, `ParticleSystem`, entity spawn/destroy churn) and
+TODO.md's Performance section for what these have found so far.

@@ -32,10 +32,20 @@ class ComponentStore<T> {
     final idx = _entityToDense.remove(entity);
     if (idx == null) return;
     final lastIdx = _dense.length - 1;
-    final lastEntity = _denseToEntity[lastIdx];
-    _dense[idx] = _dense[lastIdx];
-    _denseToEntity[idx] = lastEntity;
-    _entityToDense[lastEntity] = idx;
+    // Removing anything but the last dense slot needs the swap-in from
+    // the end; removing the last slot directly (the common single-
+    // element case) must NOT re-run it -- `lastEntity` would equal the
+    // entity just removed, and re-inserting its `_entityToDense` entry
+    // here left a dangling index once `removeLast()` below shrank past
+    // it, corrupting the very next `set()` on a recycled id with that
+    // entity number (caught by a benchmark exercising spawn/destroy
+    // churn, RangeError inside `set`'s `_dense[existing] = value`).
+    if (idx != lastIdx) {
+      final lastEntity = _denseToEntity[lastIdx];
+      _dense[idx] = _dense[lastIdx];
+      _denseToEntity[idx] = lastEntity;
+      _entityToDense[lastEntity] = idx;
+    }
     _dense.removeLast();
     _denseToEntity.removeLast();
   }

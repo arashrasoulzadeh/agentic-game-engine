@@ -94,3 +94,56 @@ top to bottom — not strict, adjust as dependencies emerge.
       physics, keyboard-controlled player, patrolling AI enemy,
       collectible coins, camera-follow, all via `engine_platformer`'s
       helpers
+- [x] Test coverage: `engine_core`/`engine_flutter`/`engine_platformer`
+      all at 100% line coverage (`dart test --coverage` /
+      `flutter test --coverage`). `engine_flutter`'s
+      `audio_manager.dart` is a deliberate, documented exception
+      (`// coverage:ignore-file` — see that file's comment).
+
+## Performance
+
+- [x] Benchmark suite: `package:benchmark_harness` benchmarks added
+      under `packages/engine_core/benchmark/` (`world_step`,
+      `collision_system`, `particle_system`, `entity_churn`) and
+      `packages/engine_platformer/benchmark/` (`tile_collision`,
+      `full_pipeline`) — see each package's README for how to run
+      them. A baseline for the items below and for future speed work in
+      general; re-run before/after a perf-motivated change to check it
+      actually helped.
+- [x] **Fixed real bug**, found by `entity_churn_benchmark.dart`
+      crashing with a `RangeError` on its first run:
+      `ComponentStore.remove` left a dangling `_entityToDense` entry
+      when removing an entity that was the *only* (or last) one in that
+      store's dense array — `lastEntity` in that case equals the entity
+      already being removed, so the old code re-inserted the mapping it
+      had just deleted, pointing at an index the very next
+      `_dense.removeLast()` made invalid. A later `set()` on a *recycled*
+      entity id (exactly what `EntityManager` does under sustained
+      spawn/destroy churn) would then write past the end of `_dense`.
+      Fixed in `packages/engine_core/lib/src/component_store.dart`, with
+      a regression test in `component_store_test.dart`. This means
+      before this fix, **any game destroying entities under load could
+      have silently corrupted component data or crashed** the moment a
+      recycled id collided with this stale-index case — worth
+      remembering as the reason `entity_churn_benchmark.dart` stays in
+      the suite even though nothing is currently being optimized there.
+- [ ] **To fix**: `CollisionSystem` degrades worse than linearly as
+      entity *density* (entities per spatial-hash cell) rises, not just
+      as entity count rises. `collision_system_benchmark.dart` (packs
+      entities into a fixed-size world so density scales with count)
+      measured roughly 100 -> 1,000 -> 5,000 entities costing
+      ~1ms -> ~13ms -> ~2.5s per `step()` on this machine — the last
+      jump is ~193x for a 5x entity increase, not the ~5x a linear
+      (let alone the intended near-linear spatial-hash) scaling would
+      predict. Root cause is almost certainly `SpatialHash`'s fixed
+      default `cellSize` (24): `forEachNearbyPair`'s cost per cell is
+      quadratic in that cell's occupancy, so a crowded scene without a
+      cell size tuned to its entity size/density pays for every pair in
+      the crowded cells combinatorially. Candidate fixes to evaluate
+      here later: auto-size `cellSize` from typical `Collider.radius`
+      in `World`, let `CollisionSystem` reject/cap absurdly large
+      per-cell buckets with a documented tradeoff, or add a
+      broad-phase pass that subdivides an overcrowded cell instead of
+      brute-forcing its pairs. Reproduce with
+      `dart run benchmark/collision_system_benchmark.dart` in
+      `engine_core` before/after any attempted fix.

@@ -190,3 +190,37 @@ entity's own `AIState.memory` blackboard through its `Action`.
 dart test
 dart analyze --fatal-infos
 ```
+
+Test coverage is 100% (line coverage via `package:coverage`):
+
+```bash
+dart pub global activate coverage
+dart pub global run coverage:test_with_coverage
+# coverage/lcov.info
+```
+
+## Benchmarks
+
+`benchmark/` holds `package:benchmark_harness` micro-benchmarks for
+this package's hot paths — a baseline for *future* performance work
+(TODO.md tracks specific findings), not something every change needs
+to re-run. Each file scales entity count over a few sizes so you can
+see how a change affects scaling, not just absolute speed at one size:
+
+```bash
+dart run benchmark/world_step_benchmark.dart       # per-tick floor (MovementSystem only)
+dart run benchmark/collision_system_benchmark.dart # CollisionSystem under crowding
+dart run benchmark/particle_system_benchmark.dart  # steady-state particle emission/aging
+dart run benchmark/entity_churn_benchmark.dart     # spawn/destroy throughput
+```
+
+`collision_system_benchmark.dart` already found a real scaling problem
+worth fixing (see TODO.md's Performance section). `entity_churn_benchmark.dart`
+is literally how a real bug in `ComponentStore.remove` was caught —
+it crashed with a `RangeError` on its very first run, since churning
+entities constantly hits the "just removed the last/only dense entry"
+path unit tests hadn't happened to exercise. Already fixed, with a
+regression test (`component_store_test.dart`) — worth remembering as a
+case for keeping benchmarks around even when nothing is actively being
+optimized: they're also just more code paths a fuzzing-adjacent stress
+test walks that unit tests might not think to.
