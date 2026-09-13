@@ -271,9 +271,37 @@ belongs in.
       standalone by any Flutter app, so the primitive itself is already
       complete; wiring a config knob through `Game` wasn't what this
       item asked for and can follow separately if wanted.
-- [ ] Basic 2D lighting: no dynamic-light concept at all today (a torch
-      glow, a flashlight cone, ambient darkness) — every game that
-      wants mood lighting has to fake it with `Sprite`s.
+- [x] Basic 2D lighting: new `Light2D` component + `EngineView.ambientBrightness`
+      (`1.0` default — disabled, scene renders exactly as before at no
+      per-frame cost beyond one comparison). A well-known technique,
+      self-contained as a post-pass rather than woven into the z-sorted
+      draw list (it darkens *everything* underneath regardless of that
+      content's own zIndex, which a z-sorted item can't express): a
+      `saveLayer`'d black rect at `1 - ambientBrightness` opacity, with
+      each `Light2D` punching a soft radial hole back through to the
+      scene's true colors via `BlendMode.dstOut` + `ui.Gradient.radial`,
+      then `restore()` composites that mask over the real scene.
+      Reveals the scene's actual colors rather than tinting — no
+      colored lights, and no shadow casting from `TileMap`/`Collider`
+      geometry (a light shines through solid walls) — both real,
+      much bigger scopes nothing has asked for yet; this covers the
+      concrete "torch glow"/"ambient darkness" cases from this item's
+      own description. `showColliderDebug` deliberately draws *after*
+      the lighting pass, so debug outlines stay visible even in a
+      darkened scene. Verified: 7 new tests in `light2d_test.dart`
+      (round-trip, defaults, disabled-by-default renders identically,
+      a darkened scene with a light renders without crashing, a
+      light with no Position is skipped gracefully, a fully-black
+      zero-light scene, debug outlines surviving on top of darkness);
+      full existing `engine_flutter` suite passed unchanged; analyzer
+      clean. **Not verified live in the browser**: `ambientBrightness`
+      isn't plumbed through `Game`/`GameConfig` (same "the primitive
+      itself is already complete, usable by any Flutter app; a config
+      knob through `Game` can follow separately" scoping call as
+      `fixedTimestepSeconds` above), so a live `test_game` check would
+      need either that extra plumbing or a throwaway app outside
+      `test_game`'s existing structure — relying on the unit/widget
+      test coverage above instead.
 - [x] Localization / i18n: new `StringTable` (`engine_core`, zero
       Flutter dependency — plain data, same category as `Level`/
       `GameState`) — JSON-authorable strings keyed by id then locale,

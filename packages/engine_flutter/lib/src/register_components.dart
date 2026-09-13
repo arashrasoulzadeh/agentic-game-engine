@@ -3,6 +3,7 @@ import 'package:engine_core/engine_core.dart';
 import 'rendering/animation.dart';
 import 'rendering/animation_transition.dart';
 import 'rendering/hud_bar.dart';
+import 'rendering/light2d.dart';
 import 'rendering/nine_slice_sprite.dart';
 import 'rendering/parallax_layer.dart';
 import 'rendering/sprite.dart';
@@ -52,5 +53,10 @@ void registerFlutterComponents(World world) {
     'animationTransition',
     (a) => a.toJson(),
     AnimationTransition.fromJson,
+  );
+  world.components.register<Light2D>(
+    'light2d',
+    (l) => l.toJson(),
+    Light2D.fromJson,
   );
 }

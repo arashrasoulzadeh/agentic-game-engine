@@ -79,6 +79,14 @@ item at a time.
 - **Localization / i18n**: new `StringTable` (`engine_core`) —
   JSON-authorable strings keyed by id then locale, with `{param}`
   substitution and a locale → default-locale → raw-key fallback chain.
+- **Basic 2D lighting**: new `Light2D` component + `EngineView.ambientBrightness`
+  (opt-in, `1.0`/off by default) — darkens the scene and reveals it
+  again through each light's soft radial falloff. No colored lights or
+  shadow casting.
+
+This closes out the "Rendering (`engine_flutter`)" group of "New engine
+features (round 2)" — see TODO.md for the remaining Core/Platformer
+items in that section.
 
 ### Fully-fledged platformer engine
 

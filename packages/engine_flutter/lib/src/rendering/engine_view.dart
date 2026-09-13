@@ -12,6 +12,7 @@ import 'sprite.dart';
 // brings into scope.
 import 'animation_transition.dart';
 import 'hud_bar.dart';
+import 'light2d.dart';
 import 'nine_slice_sprite.dart';
 import 'text.dart' as txt;
 import 'debug_memory.dart';
@@ -75,6 +76,16 @@ class EngineView extends StatefulWidget {
   /// A typical value is `1 / 60`.
   final double? fixedTimestepSeconds;
 
+  /// `1.0` (default) disables the ambient-darkness lighting pass
+  /// entirely — the scene renders exactly as before this existed, at
+  /// no per-frame cost beyond one comparison. A lower value darkens
+  /// the whole scene by that fraction (`0.0` is fully black), with
+  /// every `Light2D` entity punching a soft, falling-off-to-nothing
+  /// hole back through to the scene's true colors at its `Position` —
+  /// see `Light2D`'s doc comment for what this basic version does and
+  /// deliberately doesn't do (no colored tint, no shadow casting).
+  final double ambientBrightness;
+
   const EngineView({
     super.key,
     required this.world,
@@ -88,6 +99,7 @@ class EngineView extends StatefulWidget {
     this.showColliderDebug = false,
     this.onWorldTap,
     this.fixedTimestepSeconds,
+    this.ambientBrightness = 1.0,
   });
 
   @override
@@ -238,6 +250,7 @@ class _EngineViewState extends State<EngineView>
       showColliderDebug: widget.showColliderDebug,
       previousPositions: _previousPositions,
       interpolationAlpha: _interpolationAlpha,
+      ambientBrightness: widget.ambientBrightness,
     );
 
     Widget child = CustomPaint(painter: painter, size: Size.infinite);
@@ -299,6 +312,7 @@ class _EnginePainter extends CustomPainter {
   /// directly. See `EngineView.fixedTimestepSeconds`'s doc comment.
   final Map<EntityId, Position> previousPositions;
   final double interpolationAlpha;
+  final double ambientBrightness;
 
   _EnginePainter({
     required this.world,
@@ -308,6 +322,7 @@ class _EnginePainter extends CustomPainter {
     this.showColliderDebug = false,
     this.previousPositions = const {},
     this.interpolationAlpha = 1,
+    this.ambientBrightness = 1.0,
   }) : super(repaint: null);
 
   /// [current]'s position blended with wherever that entity was just
@@ -355,6 +370,10 @@ class _EnginePainter extends CustomPainter {
       item.paint(canvas);
     }
 
+    if (ambientBrightness < 1.0) {
+      _drawLighting(canvas, size, positions);
+    }
+
     // Drawn last (on top of everything else) and outside the z-sorted
     // item list entirely -- debug outlines are diagnostic, not part of
     // the game's actual draw order, so they always win regardless of
@@ -363,6 +382,54 @@ class _EnginePainter extends CustomPainter {
       _drawColliderDebug(canvas, size, positions);
       _drawTileMapDebug(canvas, size, positions);
     }
+  }
+
+  /// Ambient-darkness lighting pass (see `EngineView.ambientBrightness`
+  /// and `Light2D`'s doc comments) — drawn as its own layer entirely on
+  /// top of the already-composited scene rather than woven into the
+  /// z-sorted item list, since it darkens *everything* underneath it
+  /// regardless of that content's own zIndex, which a z-sorted item
+  /// can't express. `saveLayer` isolates the darkness rect + light
+  /// holes from the rest of the canvas so `BlendMode.dstOut` only
+  /// erases within this layer (the black rect just drawn), not
+  /// anything drawn before `paint` even started this pass; `restore`
+  /// then composites the resulting mask (opaque black where dark,
+  /// transparent where a light reached) back over the real scene with
+  /// normal alpha blending, which is what actually darkens it.
+  void _drawLighting(Canvas canvas, Size size, ComponentStore<Position> positions) {
+    final lights = world.storeOf<Light2D>();
+    final fullRect = Offset.zero & size;
+
+    canvas.saveLayer(fullRect, Paint());
+    canvas.drawRect(
+      fullRect,
+      Paint()..color = Color.fromRGBO(0, 0, 0, (1 - ambientBrightness).clamp(0, 1)),
+    );
+
+    for (var i = 0; i < lights.length; i++) {
+      final entity = lights.entityAt(i);
+      final light = lights.denseAt(i);
+      final pos = positions.get(entity);
+      if (pos == null) continue;
+
+      final radius = light.radius * camera.zoom;
+      if (radius <= 0) continue;
+      final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+
+      final holePaint = Paint()
+        ..blendMode = BlendMode.dstOut
+        ..shader = ui.Gradient.radial(
+          screenPos,
+          radius,
+          [
+            Color.fromRGBO(255, 255, 255, light.intensity.clamp(0, 1)),
+            const Color(0x00FFFFFF),
+          ],
+        );
+      canvas.drawCircle(screenPos, radius, holePaint);
+    }
+
+    canvas.restore();
   }
 
   /// A stroked circle at every `Collider`'s actual radius — see
