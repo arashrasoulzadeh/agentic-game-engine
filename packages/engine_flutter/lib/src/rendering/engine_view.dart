@@ -57,6 +57,24 @@ class EngineView extends StatefulWidget {
   /// tap-driven UI pays nothing for it.
   final void Function(Offset worldPosition)? onWorldTap;
 
+  /// When set, decouples simulation from display refresh rate: instead
+  /// of calling `world.step(dt)` once per rendered frame with whatever
+  /// `dt` that frame happened to take (so physics behavior subtly
+  /// differs between e.g. 30fps and 144fps — the same gravity constant
+  /// integrated over a bigger or smaller `dt` each tick), real elapsed
+  /// time accumulates and `world.step(fixedTimestepSeconds)` runs
+  /// however many whole steps fit (capped at 5 per rendered frame, so a
+  /// long pause/tab-switch can't spiral into simulating an ever-growing
+  /// backlog), each with the exact same `dt` regardless of frame rate.
+  /// The leftover fractional step is used to interpolate `Position` for
+  /// `Sprite`/`Particle` rendering between the last two simulated
+  /// states, so motion still looks smooth at a display rate faster than
+  /// the fixed step (60Hz simulation on a 120Hz display, say) instead
+  /// of visibly stepping. `null` (default) keeps the original variable-
+  /// timestep-per-frame behavior exactly as it was before this existed.
+  /// A typical value is `1 / 60`.
+  final double? fixedTimestepSeconds;
+
   const EngineView({
     super.key,
     required this.world,
@@ -69,6 +87,7 @@ class EngineView extends StatefulWidget {
     this.showFpsOverlay = false,
     this.showColliderDebug = false,
     this.onWorldTap,
+    this.fixedTimestepSeconds,
   });
 
   @override
@@ -85,6 +104,15 @@ class _EngineViewState extends State<EngineView>
   int _memorySampleCounter = 0;
   final List<double> _recentDts = [];
 
+  // Fixed-timestep bookkeeping -- unused (stays at defaults, at no
+  // per-frame cost beyond a null check) when `fixedTimestepSeconds` is
+  // null.
+  double _accumulator = 0;
+  Map<EntityId, Position> _previousPositions = const {};
+  double _interpolationAlpha = 1;
+
+  static const _maxStepsPerFrame = 5;
+
   @override
   void initState() {
     super.initState();
@@ -99,7 +127,27 @@ class _EngineViewState extends State<EngineView>
     if (dt <= 0 || dt > 0.25) return;
     if (widget.paused) return;
 
-    widget.world.step(dt);
+    final fixedDt = widget.fixedTimestepSeconds;
+    if (fixedDt == null || fixedDt <= 0) {
+      widget.world.step(dt);
+      _interpolationAlpha = 1;
+    } else {
+      _accumulator += dt;
+      var steps = 0;
+      while (_accumulator >= fixedDt && steps < _maxStepsPerFrame) {
+        _previousPositions = _snapshotPositions();
+        widget.world.step(fixedDt);
+        _accumulator -= fixedDt;
+        steps++;
+      }
+      // A frame slow enough to hit the cap drops the excess backlog
+      // rather than trying to catch up every subsequent frame too --
+      // the alternative (never clamping) is the classic "spiral of
+      // death" where a slow frame causes more simulation work, which
+      // causes the next frame to be slower still.
+      if (steps == _maxStepsPerFrame) _accumulator = 0;
+      _interpolationAlpha = (_accumulator / fixedDt).clamp(0, 1);
+    }
     // Decays/recomputes any active Camera.shake() offset -- called
     // unconditionally (not just when cameraFollowEntity is set), since
     // a static camera still needs to shake on e.g. an explosion.
@@ -139,6 +187,22 @@ class _EngineViewState extends State<EngineView>
     setState(() {});
   }
 
+  /// A plain copy of every entity's current `Position` (value fields,
+  /// not references — a `Position` is mutated in place by systems like
+  /// `MovementSystem`, so keeping the same instance would make this
+  /// "snapshot" silently track the live value instead of the moment it
+  /// was taken). Only fixed-timestep mode calls this.
+  Map<EntityId, Position> _snapshotPositions() {
+    final positions = widget.world.storeOf<Position>();
+    final snapshot = <EntityId, Position>{};
+    for (var i = 0; i < positions.length; i++) {
+      final entity = positions.entityAt(i);
+      final p = positions.denseAt(i);
+      snapshot[entity] = Position(p.x, p.y);
+    }
+    return snapshot;
+  }
+
   @override
   void dispose() {
     _ticker.dispose();
@@ -172,6 +236,8 @@ class _EngineViewState extends State<EngineView>
       camera: widget.camera,
       backgroundColor: widget.backgroundColor,
       showColliderDebug: widget.showColliderDebug,
+      previousPositions: _previousPositions,
+      interpolationAlpha: _interpolationAlpha,
     );
 
     Widget child = CustomPaint(painter: painter, size: Size.infinite);
@@ -226,13 +292,38 @@ class _EnginePainter extends CustomPainter {
   final Color backgroundColor;
   final bool showColliderDebug;
 
+  /// Positions as of just before the most recently simulated fixed
+  /// step — empty (the default) when `EngineView.fixedTimestepSeconds`
+  /// is null, in which case [interpolationAlpha] is always `1` and
+  /// [_interpolated] is exactly equivalent to reading `Position`
+  /// directly. See `EngineView.fixedTimestepSeconds`'s doc comment.
+  final Map<EntityId, Position> previousPositions;
+  final double interpolationAlpha;
+
   _EnginePainter({
     required this.world,
     required this.atlasRegistry,
     required this.camera,
     required this.backgroundColor,
     this.showColliderDebug = false,
+    this.previousPositions = const {},
+    this.interpolationAlpha = 1,
   }) : super(repaint: null);
+
+  /// [current]'s position blended with wherever that entity was just
+  /// before the last fixed step, by [interpolationAlpha] — smooths
+  /// motion between simulated states when rendering happens more often
+  /// than the fixed step runs. Falls back to [current] outright for an
+  /// entity with no recorded previous position (just spawned this
+  /// frame, or fixed-timestep mode isn't in use at all).
+  Offset _interpolated(EntityId entity, Position current) {
+    final prev = previousPositions[entity];
+    if (prev == null) return Offset(current.x, current.y);
+    return Offset(
+      prev.x + (current.x - prev.x) * interpolationAlpha,
+      prev.y + (current.y - prev.y) * interpolationAlpha,
+    );
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -393,7 +484,8 @@ class _EnginePainter extends CustomPainter {
         final pos = positions.get(entity)!;
         final atlas = atlasRegistry.resolve(sprite.atlasId);
         final srcRect = atlas.regionFor(sprite.region);
-        final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+        final worldPos = _interpolated(entity, pos);
+        final screenPos = camera.worldToScreen(worldPos.dx, worldPos.dy, size);
 
         final batch = batchesByImage.putIfAbsent(atlas.image, () => _SpriteBatch());
         batch.transforms.add(RSTransform.fromComponents(
@@ -438,7 +530,8 @@ class _EnginePainter extends CustomPainter {
     final pos = positions.get(entity)!;
     final atlas = atlasRegistry.resolve(sprite.atlasId);
     final srcRect = atlas.regionFor(sprite.region);
-    final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+    final worldPos = _interpolated(entity, pos);
+    final screenPos = camera.worldToScreen(worldPos.dx, worldPos.dy, size);
 
     canvas.save();
     canvas.translate(screenPos.dx, screenPos.dy);
@@ -538,7 +631,8 @@ class _EnginePainter extends CustomPainter {
       if (alpha <= 0 || particle.scale <= 0) continue;
 
       items.add(_DrawItem(particle.zIndex, order++, (canvas) {
-        final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+        final worldPos = _interpolated(entity, pos);
+        final screenPos = camera.worldToScreen(worldPos.dx, worldPos.dy, size);
         final sprite = sprites.get(entity);
         if (sprite != null && atlasRegistry.has(sprite.atlasId)) {
           final atlas = atlasRegistry.resolve(sprite.atlasId);

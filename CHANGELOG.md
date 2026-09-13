@@ -70,6 +70,12 @@ item at a time.
   `AnimationTransitionSystem` — a frozen-frame crossfade fades the
   outgoing clip's last frame out instead of popping instantly to the
   new clip.
+- **Fixed-timestep + render interpolation**: new
+  `EngineView.fixedTimestepSeconds` (opt-in, `null`/off by default) —
+  decouples simulation from display refresh rate (a fixed-size
+  `world.step` regardless of frame rate, capped backlog on a slow
+  frame) and interpolates `Sprite`/`Particle` positions between
+  simulated states for smooth motion at any display rate.
 
 ### Fully-fledged platformer engine
 

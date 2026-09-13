@@ -241,9 +241,36 @@ belongs in.
       a plain scaled rect, since there's no border art in that test
       asset to show it off; the slicing math itself is what the unit
       tests verify.
-- [ ] Fixed-timestep + render interpolation: physics and rendering
-      currently share one `dt` — smooth motion at low/uneven frame
-      rates wants these decoupled.
+- [x] Fixed-timestep + render interpolation: new `EngineView.fixedTimestepSeconds`
+      (`null` default — disabled, exactly the original "one
+      `world.step(dt)` per rendered frame with whatever `dt` that frame
+      took" behavior). When set, real elapsed time accumulates and
+      `world.step(fixedTimestepSeconds)` runs however many whole steps
+      fit (capped at 5 per rendered frame — a long pause/tab-switch
+      drops the excess backlog instead of spiraling into an
+      ever-growing catch-up queue), each with the exact same `dt`
+      regardless of frame rate — the actual correctness fix: physics
+      behavior no longer subtly differs between e.g. 30fps and 144fps.
+      The leftover fractional step becomes an interpolation alpha,
+      blending `Sprite`/`Particle` positions between the last two
+      simulated states for smooth motion on a display faster than the
+      fixed step. Deliberately scoped to `Sprite`/`Particle` only —
+      `TileMap`/`ParallaxLayer` are effectively static per-frame, `Text`/
+      `HudBar`/`NineSliceSprite` are mostly screen-space UI, and
+      `AnimationTransition`'s ghost is an intentionally frozen frame
+      that shouldn't move at all. Verified: 4 new tests in
+      `fixed_timestep_test.dart` — exact `world.tick` counts for the
+      default path, the accumulator (a partial step doesn't advance
+      `tick`, a completing step does), and the steps-per-frame cap
+      (200ms backlog at a 10ms fixed step caps at 5 steps, not 20);
+      plus a smoke test that a moving sprite renders without crashing
+      across a mix of shorter/longer real-frame durations. Full
+      existing `engine_flutter` suite passed **unchanged** (proving the
+      default path is truly behavior-preserving, not just "should be").
+      Not plumbed through `Game`/`GameConfig` — `EngineView` is usable
+      standalone by any Flutter app, so the primitive itself is already
+      complete; wiring a config knob through `Game` wasn't what this
+      item asked for and can follow separately if wanted.
 - [ ] Basic 2D lighting: no dynamic-light concept at all today (a torch
       glow, a flashlight cone, ambient darkness) — every game that
       wants mood lighting has to fake it with `Sprite`s.
