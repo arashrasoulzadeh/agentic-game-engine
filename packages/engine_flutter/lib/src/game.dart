@@ -204,6 +204,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           backgroundColor: widget.game.config.backgroundColor,
           paused: _paused || overlay != null,
           showFpsOverlay: widget.game.config.showFpsOverlay,
+          showColliderDebug: widget.game.config.showColliderDebug,
           // No taps while an overlay is up -- it alone should be
           // interactive, so the paused scene underneath can't be
           // accidentally poked through it.

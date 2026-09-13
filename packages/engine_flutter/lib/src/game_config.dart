@@ -25,6 +25,13 @@ class GameConfig {
   final double worldHeight;
   final Color backgroundColor;
   final bool showFpsOverlay;
+
+  /// See `EngineView.showColliderDebug`'s doc comment — a stroked
+  /// outline per `Collider`/solid-or-one-way-or-slope tile, on top of
+  /// everything else. Off by default; a game typically only flips this
+  /// on for local development (e.g. via a debug build flag), not in a
+  /// shipped `game_config.json`.
+  final bool showColliderDebug;
   final bool pauseOnBackground;
   final OnScreenControlsMode onScreenControls;
 
@@ -35,6 +42,7 @@ class GameConfig {
     required this.worldHeight,
     this.backgroundColor = const Color(0xFF000000),
     this.showFpsOverlay = false,
+    this.showColliderDebug = false,
     this.pauseOnBackground = true,
     this.onScreenControls = OnScreenControlsMode.auto,
   });
@@ -46,6 +54,7 @@ class GameConfig {
         'worldHeight': worldHeight,
         'backgroundColor': backgroundColor.toARGB32(),
         'showFpsOverlay': showFpsOverlay,
+        'showColliderDebug': showColliderDebug,
         'pauseOnBackground': pauseOnBackground,
         'onScreenControls': onScreenControls.name,
       };
@@ -62,6 +71,7 @@ class GameConfig {
             ? Color(json['backgroundColor'] as int)
             : const Color(0xFF000000),
         showFpsOverlay: json['showFpsOverlay'] as bool? ?? false,
+        showColliderDebug: json['showColliderDebug'] as bool? ?? false,
         pauseOnBackground: json['pauseOnBackground'] as bool? ?? true,
         onScreenControls: OnScreenControlsMode.values.firstWhere(
           (m) => m.name == json['onScreenControls'],

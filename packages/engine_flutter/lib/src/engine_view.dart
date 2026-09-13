@@ -34,6 +34,18 @@ class EngineView extends StatefulWidget {
   /// web, `dart:io` has no memory API there, so that line is omitted).
   final bool showFpsOverlay;
 
+  /// Draws collision debug outlines on top of everything else: a
+  /// stroked circle for every `Collider` (green), and a stroked border
+  /// per solid (red)/one-way (blue)/slope (orange) `TileMap` tile —
+  /// "does my hitbox actually match what's drawn," the question this
+  /// session's own physics debugging kept answering by hand-deriving
+  /// coordinates instead. Doesn't draw `PlatformBody` rectangles —
+  /// that's an `engine_platformer` concept `EngineView` (`engine_core`
+  /// + Flutter only) can't reference without a backward dependency; a
+  /// game using `PlatformBody` walls would need its own overlay for
+  /// those specifically.
+  final bool showColliderDebug;
+
   /// Called with the tap/click position converted to world coordinates
   /// via `camera.screenToWorld` — how a `Scene.handleTap` implementation
   /// (an ECS menu button, a door tapped in-world) learns where the
@@ -52,6 +64,7 @@ class EngineView extends StatefulWidget {
     this.backgroundColor = const Color(0xFF000000),
     this.paused = false,
     this.showFpsOverlay = false,
+    this.showColliderDebug = false,
     this.onWorldTap,
   });
 
@@ -155,6 +168,7 @@ class _EngineViewState extends State<EngineView>
       atlasRegistry: widget.atlasRegistry,
       camera: widget.camera,
       backgroundColor: widget.backgroundColor,
+      showColliderDebug: widget.showColliderDebug,
     );
 
     Widget child = CustomPaint(painter: painter, size: Size.infinite);
@@ -207,12 +221,14 @@ class _EnginePainter extends CustomPainter {
   final AtlasRegistry atlasRegistry;
   final Camera camera;
   final Color backgroundColor;
+  final bool showColliderDebug;
 
   _EnginePainter({
     required this.world,
     required this.atlasRegistry,
     required this.camera,
     required this.backgroundColor,
+    this.showColliderDebug = false,
   }) : super(repaint: null);
 
   @override
@@ -240,6 +256,80 @@ class _EnginePainter extends CustomPainter {
 
     for (final item in items) {
       item.paint(canvas);
+    }
+
+    // Drawn last (on top of everything else) and outside the z-sorted
+    // item list entirely -- debug outlines are diagnostic, not part of
+    // the game's actual draw order, so they always win regardless of
+    // any zIndex a real renderable happens to have.
+    if (showColliderDebug) {
+      _drawColliderDebug(canvas, size, positions);
+      _drawTileMapDebug(canvas, size, positions);
+    }
+  }
+
+  /// A stroked circle at every `Collider`'s actual radius — see
+  /// `EngineView.showColliderDebug`'s doc comment for why (and what
+  /// this deliberately doesn't cover).
+  void _drawColliderDebug(Canvas canvas, Size size, ComponentStore<Position> positions) {
+    final colliders = world.storeOf<Collider>();
+    final paint = Paint()
+      ..color = const Color(0xFF00FF00)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    for (var i = 0; i < colliders.length; i++) {
+      final entity = colliders.entityAt(i);
+      final pos = positions.get(entity);
+      if (pos == null) continue;
+      final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+      canvas.drawCircle(screenPos, colliders.denseAt(i).radius * camera.zoom, paint);
+    }
+  }
+
+  /// A stroked border per solid (red)/one-way (blue)/slope (orange)
+  /// tile, on top of `_collectTileMapItems`'s filled color — makes a
+  /// tile's exact collision boundary unambiguous even when its fill
+  /// color is hard to tell apart from a neighboring tile at a glance.
+  void _drawTileMapDebug(Canvas canvas, Size size, ComponentStore<Position> positions) {
+    final tileMaps = world.storeOf<TileMap>();
+    for (var m = 0; m < tileMaps.length; m++) {
+      final mapEntity = tileMaps.entityAt(m);
+      final map = tileMaps.denseAt(m);
+      final origin = positions.get(mapEntity) ?? Position(0, 0);
+
+      for (var row = 0; row < map.rows; row++) {
+        for (var col = 0; col < map.cols; col++) {
+          final tileId = map.tileAt(col, row);
+          if (tileId == 0) continue;
+
+          final isSolid = map.solidTileIds.contains(tileId);
+          final isOneWay = map.oneWayTileIds.contains(tileId);
+          final isSlope = map.slopeUpRightTileIds.contains(tileId) || map.slopeUpLeftTileIds.contains(tileId);
+          if (!isSolid && !isOneWay && !isSlope) continue;
+
+          final left = origin.x + col * map.tileWidth;
+          final top = origin.y + row * map.tileHeight;
+          final screenPos = camera.worldToScreen(left, top, size);
+          final color = isSolid
+              ? const Color(0xFFFF3B30)
+              : isOneWay
+                  ? const Color(0xFF3B82F6)
+                  : const Color(0xFFFF9500);
+
+          canvas.drawRect(
+            Rect.fromLTWH(
+              screenPos.dx,
+              screenPos.dy,
+              map.tileWidth * camera.zoom,
+              map.tileHeight * camera.zoom,
+            ),
+            Paint()
+              ..color = color
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.5,
+          );
+        }
+      }
     }
   }
 
@@ -516,7 +606,9 @@ class _EnginePainter extends CustomPainter {
             final screenPos = camera.worldToScreen(left, top, size);
             final color = map.oneWayTileIds.contains(tileId)
                 ? const Color(0x8899CCFF)
-                : const Color(0xFF4A4A4A);
+                : (map.slopeUpRightTileIds.contains(tileId) || map.slopeUpLeftTileIds.contains(tileId))
+                    ? const Color(0xFFC08040)
+                    : const Color(0xFF4A4A4A);
 
             canvas.drawRect(
               Rect.fromLTWH(

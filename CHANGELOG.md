@@ -69,6 +69,10 @@ a time.
   fresh every frame via `TextPainter`, `screenSpace` chooses
   world-space (scrolls/zooms with the camera) vs. screen-space (fixed
   viewport pixels, for a HUD).
+- **Debug visualization**: `EngineView.showColliderDebug`/
+  `GameConfig.showColliderDebug` — a stroked outline per `Collider` and
+  per solid/one-way/slope `TileMap` tile. Also fixed slope tiles
+  rendering visually identical to solid tiles in the normal renderer.
 
 ## [0.1.0]
 

@@ -285,12 +285,22 @@ is for everything else.
       Verified in the browser: added a live `Coins: N` HUD readout to
       `test_game`'s `MainScene`, confirmed it renders at a fixed screen
       position regardless of camera movement.
-- [ ] Debug visualization: the fps/tick overlay exists, but there's no
-      way to *see* what the physics is doing — no collider/AABB outline
-      draw, no tile-collision-bounds visualization, no spatial-hash
-      grid overlay. Every physics bug found this session got diagnosed
-      by hand-deriving coordinates and adding print statements; a
-      debug-draw toggle would have caught several of them instantly.
+- [x] Debug visualization: `EngineView.showColliderDebug`/
+      `GameConfig.showColliderDebug` — a stroked green circle per
+      `Collider`, a stroked red/blue/orange border per solid/one-way/
+      slope `TileMap` tile, drawn on top of everything else. Doesn't
+      draw `PlatformBody` rectangles — that's an `engine_platformer`
+      concept `EngineView` (`engine_core` + Flutter only) can't
+      reference without a backward dependency; a game using
+      `PlatformBody` walls needs its own overlay for those. No
+      spatial-hash grid overlay either (`CollisionSystem`-internal,
+      harder to expose cleanly — skipped as lower-value than
+      collider/tile outlines). Found and fixed a related real gap along
+      the way: slope tiles rendered visually identical to solid tiles
+      in the *normal* (non-debug) renderer too — now a distinct color.
+      Verified visually in the browser (not just unit tests): enabled
+      it in `test_game`, confirmed collider circles around the player/
+      coins and red tile borders on every ground/platform tile.
 - [ ] Raycasting: no ray-vs-tile or ray-vs-entity query exists anywhere
       — useful standalone (line-of-sight checks, ground/wall probes,
       hitscan weapons) and a direct prerequisite for AI depth below.
