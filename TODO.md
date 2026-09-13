@@ -265,6 +265,42 @@ This closes out every item in this section.
       builds; orientation lock, lifecycle pause/resume, and real-world
       performance are unverified outside that
 
+## New engine features
+
+Gaps identified in a follow-up "what tools/systems are missing now"
+pass, checked directly against the code (not from memory) — none of
+this existed anywhere in `engine_core`/`engine_flutter` at the time
+these were written. Roughly priority-ordered by how load-bearing each
+is for everything else.
+
+- [ ] Text rendering: no `Text`/`Label` component anywhere — the only
+      text on screen at all is `ButtonMenuScene`'s baked-atlas button
+      labels (`menu_button_atlas.dart`), which only works because it's
+      a small, fixed set of strings rasterized once. No way to draw
+      arbitrary in-world text (a damage number, a dialogue line, an NPC
+      name, a score readout) — blocks HUDs and dialogue systems
+      entirely. The single most load-bearing item here.
+- [ ] Debug visualization: the fps/tick overlay exists, but there's no
+      way to *see* what the physics is doing — no collider/AABB outline
+      draw, no tile-collision-bounds visualization, no spatial-hash
+      grid overlay. Every physics bug found this session got diagnosed
+      by hand-deriving coordinates and adding print statements; a
+      debug-draw toggle would have caught several of them instantly.
+- [ ] Raycasting: no ray-vs-tile or ray-vs-entity query exists anywhere
+      — useful standalone (line-of-sight checks, ground/wall probes,
+      hitscan weapons) and a direct prerequisite for AI depth below.
+- [ ] AI depth: only `PatrolBehavior`/`FollowBehavior` exist — no
+      steering behaviors, no vision-cone/line-of-sight gating (an enemy
+      "follows" through walls today), no pathfinding (no A*/navmesh at
+      all), so any enemy smarter than "patrol a fixed range" or "chase
+      in a straight line regardless of obstacles" has to be hand-built
+      from scratch.
+- [ ] HUD/UI framework: `ButtonMenuScene` covers menus; nothing covers
+      persistent in-game UI (health bar, minimap, inventory display) —
+      blocked on text rendering above, and even with that, no
+      screen-space (as opposed to world-space/camera-relative) render
+      concept exists yet.
+
 ## Validation
 
 - [x] Build one real (small but complete) game on the engine —
