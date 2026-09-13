@@ -53,6 +53,22 @@ top to bottom — not strict, adjust as dependencies emerge.
       like `Sprite`, plus a per-axis `scrollFactor`) — `EngineView`
       draws every layer first, behind tiles/sprites/particles, tiling
       across the viewport when `tileX`/`tileY` are set.
+- [ ] Tweening/easing helpers: a small `Tween<T>`/interpolation utility
+      (position, scale, alpha; a handful of easing curves) for UI and
+      one-off gameplay animation that doesn't fit the frame-based
+      `AnimationClip`/`AnimationState` system (e.g. a menu transition,
+      a screen-shake, a damage-flash). Likely `engine_core`-side data
+      (genre-general) with any Flutter-curve-conversion glue in
+      `engine_flutter`.
+- [ ] Save-slot UI helpers: a ready-made save/load menu widget in
+      `engine_flutter` building on the existing `SaveGame` (slots,
+      `hasSave`, `deleteSave`) so a game doesn't have to hand-roll a
+      slot-picker screen — the "menu" analogue of what `OnScreenControls`
+      already is for touch input.
+- [ ] Basic scene/screen management: a `Scene`/`Screen` abstraction (or
+      a thin wrapper over `Navigator`) for switching between menu/
+      gameplay/pause/game-over without each game hand-rolling its own
+      `Stack`/`Navigator` logic on top of `GameRunner`.
 
 ## Platformer helpers (engine_platformer)
 
@@ -69,6 +85,10 @@ top to bottom — not strict, adjust as dependencies emerge.
 - [x] Checkpoint/respawn: `Checkpoint`/`LastCheckpoint` components,
       `trackCheckpoints`, `respawnPlayer`/`respawnOnDeath` — resets
       position/velocity/health to the last touched checkpoint.
+- [ ] Collectible/inventory helpers: pickup helpers (coins, keys,
+      power-ups) building on the existing `onCollisionWithAny`/
+      `dealDamageOnTouch`-style collision helpers, plus a simple
+      `Inventory` component (item id -> count) a player can carry.
 - [ ] Update `engine_cli`'s `default_game` template to use
       `engine_platformer` (spawnPlayer + a small tile level) instead of
       the current bouncing-circle stress-test demo, now that a real
