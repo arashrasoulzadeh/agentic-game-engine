@@ -1,6 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 
 import 'rendering/animation.dart';
+import 'rendering/animation_transition.dart';
 import 'rendering/hud_bar.dart';
 import 'rendering/nine_slice_sprite.dart';
 import 'rendering/parallax_layer.dart';
@@ -46,5 +47,10 @@ void registerFlutterComponents(World world) {
     'nineSliceSprite',
     (n) => n.toJson(),
     NineSliceSprite.fromJson,
+  );
+  world.components.register<AnimationTransition>(
+    'animationTransition',
+    (a) => a.toJson(),
+    AnimationTransition.fromJson,
   );
 }

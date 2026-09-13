@@ -105,5 +105,84 @@ void main() {
       expect(state.frameIndex, 1, reason: 'should not have reset playback');
       expect(state.elapsed, 0.05);
     });
+
+    test('does not create an AnimationTransition when crossfadeSeconds is 0 (default)', () {
+      final world = _buildWorld();
+      world.addSystem(MovementAnimationSystem());
+      final id = world.spawn();
+      final idle = AnimationClip('idle', ['idle_0']);
+      final walk = AnimationClip('walk', ['walk_0']);
+      world.storeOf<MovementAnimationSet>().set(id, MovementAnimationSet(idle: idle, walk: walk));
+      world.storeOf<Sprite>().set(id, Sprite('atlas', 'idle_0'));
+      world.storeOf<AnimationState>().set(id, AnimationState(idle));
+      world.storeOf<Velocity>().set(id, Velocity(50, 0)); // triggers idle -> walk
+
+      world.step(0.016);
+
+      expect(world.storeOf<AnimationTransition>().has(id), isFalse);
+    });
+
+    test('snapshots the outgoing Sprite frame into an AnimationTransition when crossfading', () {
+      final world = _buildWorld();
+      world.addSystem(MovementAnimationSystem());
+      final id = world.spawn();
+      final idle = AnimationClip('idle', ['idle_0']);
+      final walk = AnimationClip('walk', ['walk_0']);
+      world.storeOf<MovementAnimationSet>().set(id, MovementAnimationSet(idle: idle, walk: walk));
+      world.storeOf<Sprite>().set(id, Sprite('atlas', 'idle_0', scaleX: 2, scaleY: 2, zIndex: 3));
+      world.storeOf<AnimationState>().set(id, AnimationState(idle, crossfadeSeconds: 0.2));
+      world.storeOf<Velocity>().set(id, Velocity(50, 0)); // triggers idle -> walk
+
+      world.step(0.016);
+
+      final transition = world.storeOf<AnimationTransition>().get(id);
+      expect(transition, isNotNull);
+      expect(transition!.atlasId, 'atlas');
+      expect(transition.region, 'idle_0', reason: 'snapshot of the outgoing frame');
+      expect(transition.scaleX, 2);
+      expect(transition.scaleY, 2);
+      expect(transition.zIndex, 3);
+      expect(transition.remainingSeconds, 0.2);
+      expect(transition.totalSeconds, 0.2);
+
+      // crossfadeSeconds carries forward onto the new AnimationState.
+      expect(world.storeOf<AnimationState>().get(id)!.crossfadeSeconds, 0.2);
+    });
+  });
+
+  group('AnimationTransitionSystem', () {
+    test('counts remainingSeconds down and removes the component at 0', () {
+      final world = _buildWorld();
+      world.addSystem(AnimationTransitionSystem());
+      final id = world.spawn();
+      world.storeOf<AnimationTransition>().set(
+            id,
+            AnimationTransition('atlas', 'idle_0', remainingSeconds: 0.3, totalSeconds: 0.3),
+          );
+
+      world.step(0.2);
+      expect(world.storeOf<AnimationTransition>().get(id)!.remainingSeconds, closeTo(0.1, 0.001));
+
+      world.step(0.2);
+      expect(world.storeOf<AnimationTransition>().has(id), isFalse);
+    });
+  });
+
+  group('AnimationTransition.alpha', () {
+    test('fades from 1 to 0 as remainingSeconds counts down', () {
+      final full = AnimationTransition('a', 'r', remainingSeconds: 0.3, totalSeconds: 0.3);
+      expect(full.alpha, 1);
+
+      final half = AnimationTransition('a', 'r', remainingSeconds: 0.15, totalSeconds: 0.3);
+      expect(half.alpha, closeTo(0.5, 0.001));
+
+      final done = AnimationTransition('a', 'r', remainingSeconds: 0, totalSeconds: 0.3);
+      expect(done.alpha, 0);
+    });
+
+    test('totalSeconds <= 0 reads as already-finished rather than dividing by zero', () {
+      final transition = AnimationTransition('a', 'r', remainingSeconds: 0, totalSeconds: 0);
+      expect(transition.alpha, 0);
+    });
   });
 }

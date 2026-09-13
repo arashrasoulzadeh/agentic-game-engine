@@ -33,6 +33,7 @@ void main() {
       'facing',
       'movementAnimation',
       'animation',
+      'animationTransition',
     ]);
   });
 
@@ -55,6 +56,7 @@ void main() {
       'facing',
       'movementAnimation',
       'animation',
+      'animationTransition',
     ]);
   });
 

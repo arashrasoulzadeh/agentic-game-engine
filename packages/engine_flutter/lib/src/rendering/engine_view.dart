@@ -10,6 +10,7 @@ import 'sprite.dart';
 // Aliased -- `Text` collides with Flutter's own widget of the same
 // name, which `package:flutter/widgets.dart` (imported above) already
 // brings into scope.
+import 'animation_transition.dart';
 import 'hud_bar.dart';
 import 'nine_slice_sprite.dart';
 import 'text.dart' as txt;
@@ -242,6 +243,7 @@ class _EnginePainter extends CustomPainter {
     var order = 0;
     order = _collectParallaxItems(items, order, size, positions);
     order = _collectTileMapItems(items, order, size, positions);
+    order = _collectAnimationTransitionItems(items, order, size, positions);
     order = _collectSpriteItems(items, order, size, positions);
     order = _collectParticleItems(items, order, size, positions);
     order = _collectTextItems(items, order, size, positions);
@@ -452,6 +454,57 @@ class _EnginePainter extends CustomPainter {
     );
     canvas.drawImageRect(atlas.image, srcRect, destRect, Paint());
     canvas.restore();
+  }
+
+  /// Collects one `_DrawItem` per `AnimationTransition` — the frozen
+  /// outgoing frame of a crossfading animation (see
+  /// `AnimationState.crossfadeSeconds`), drawn at the same world
+  /// `Position` fading out via `alpha`. Collected (and thus drawn)
+  /// *before* `_collectSpriteItems` so the incoming, real `Sprite`
+  /// lands on top of the fading-out ghost within their shared default
+  /// zIndex, without needing this to be batched — one instance per
+  /// crossfading entity for a brief window is nowhere near the volume
+  /// `_collectSpriteItems`'s `drawAtlas` batching exists for.
+  int _collectAnimationTransitionItems(
+    List<_DrawItem> items,
+    int order,
+    Size size,
+    ComponentStore<Position> positions,
+  ) {
+    final transitions = world.storeOf<AnimationTransition>();
+    for (var i = 0; i < transitions.length; i++) {
+      final entity = transitions.entityAt(i);
+      final transition = transitions.denseAt(i);
+      final pos = positions.get(entity);
+      if (pos == null || !atlasRegistry.has(transition.atlasId)) continue;
+
+      items.add(_DrawItem(transition.zIndex, order++, (canvas) {
+        final atlas = atlasRegistry.resolve(transition.atlasId);
+        final srcRect = atlas.regionFor(transition.region);
+        final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+
+        canvas.save();
+        canvas.translate(screenPos.dx, screenPos.dy);
+        if (transition.rotation != 0) canvas.rotate(transition.rotation);
+        canvas.scale(
+          transition.scaleX * camera.zoom,
+          transition.scaleY * camera.zoom,
+        );
+        final destRect = ui.Rect.fromCenter(
+          center: Offset.zero,
+          width: srcRect.width,
+          height: srcRect.height,
+        );
+        canvas.drawImageRect(
+          atlas.image,
+          srcRect,
+          destRect,
+          Paint()..color = Color.fromRGBO(255, 255, 255, transition.alpha),
+        );
+        canvas.restore();
+      }));
+    }
+    return order;
   }
 
   /// Collects one `_DrawItem` per `Particle` (from `ParticleSystem`),

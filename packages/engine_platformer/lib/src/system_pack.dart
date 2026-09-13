@@ -73,5 +73,6 @@ void installPlatformerSystems(
     world.addSystem(FacingSystem());
     world.addSystem(MovementAnimationSystem());
     world.addSystem(AnimationSystem());
+    world.addSystem(AnimationTransitionSystem());
   }
 }

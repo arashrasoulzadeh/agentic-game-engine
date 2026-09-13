@@ -1,6 +1,7 @@
 export 'src/audio/audio_manager.dart';
 export 'src/rendering/camera.dart';
 export 'src/rendering/animation.dart';
+export 'src/rendering/animation_transition.dart';
 export 'src/rendering/hud_bar.dart';
 export 'src/rendering/nine_slice_sprite.dart';
 export 'src/rendering/parallax_layer.dart';
@@ -18,6 +19,7 @@ export 'src/logic/save_game.dart';
 export 'src/logic/scene.dart';
 export 'src/rendering/sprite_atlas.dart';
 export 'src/rendering/animation_system.dart';
+export 'src/rendering/animation_transition_system.dart';
 export 'src/ui/button_menu_scene.dart';
 export 'src/ui/menu_button_atlas.dart';
 export 'src/ui/remap_menu_scene.dart';

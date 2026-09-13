@@ -65,6 +65,11 @@ item at a time.
 - **Priority-queue pathfinding**: `findPath`'s open set is now a binary
   min-heap instead of a sort-then-take-first list — O(log n) insert/
   extract-min instead of O(n log n) every iteration. Behavior-preserving.
+- **Animation clip transitions**: `AnimationState.crossfadeSeconds`
+  (opt-in, off by default) + new `AnimationTransition` component/
+  `AnimationTransitionSystem` — a frozen-frame crossfade fades the
+  outgoing clip's last frame out instead of popping instantly to the
+  new clip.
 
 ### Fully-fledged platformer engine
 

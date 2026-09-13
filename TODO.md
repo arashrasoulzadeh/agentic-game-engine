@@ -250,10 +250,38 @@ belongs in.
 - [ ] Localization / i18n: `Text` takes a raw string with no string-
       table or locale-aware font-fallback concept — every UI string a
       game shows is hardcoded English today.
-- [ ] Animation clip transitions: `AnimationSystem` hard-cuts to a new
-      clip's frame 0 the instant `AnimationState.clip` changes — no
-      crossfade/blend between e.g. idle and walk, which reads as a
-      visible pop on faster-paced games.
+- [x] Animation clip transitions: new `AnimationState.crossfadeSeconds`
+      (`0` default — disabled, the original instant-cut behavior) +
+      new `AnimationTransition` component + `AnimationTransitionSystem`
+      (`engine_flutter`). A frozen-frame crossfade, not two fully-live
+      blended animations: on a clip swap, `MovementAnimationSystem`
+      snapshots whatever the entity's `Sprite` was showing the instant
+      before (region/scale/rotation/zIndex) into an `AnimationTransition`,
+      which `EngineView` draws as a fading-out ghost at the same
+      `Position` behind the real (incoming) `Sprite`, and
+      `AnimationTransitionSystem` counts down and removes once the fade
+      completes. Chose a frozen outgoing frame over blending two fully-
+      live playbacks deliberately — the latter needs a second complete
+      playback state (frame index, elapsed time, looping) rather than
+      one snapshot, real added complexity for a difference that's hard
+      to perceive over a fade this short. Not batched via `drawAtlas` —
+      one ghost per crossfading entity for a brief window is nowhere
+      near the volume that batching exists for. Verified: 10 new tests
+      in `animation_helpers_test.dart` (disabled-by-default, snapshot
+      correctness, `crossfadeSeconds` carrying forward onto the new
+      `AnimationState`, `AnimationTransitionSystem` countdown/removal,
+      `alpha` fade math including the zero-`totalSeconds` guard) plus 4
+      new tests in `animation_transition_test.dart` (round-trip,
+      defaults, renders without crashing, graceful skip on no-Position/
+      unregistered-atlas); full `engine_flutter`/`engine_platformer`
+      suites green, both analyzers clean. **Not verified live in the
+      browser**: the fade window is short (~0.2s) and reliably capturing
+      it via timed screenshots in this session's browser tooling would
+      be fragile on top of already-known simulated-keyboard-input
+      flakiness for reliably triggering a clip swap — relying on the
+      unit coverage above (which exercises both the snapshot data flow
+      and the actual render path) instead of forcing an unreliable
+      capture.
 
 ### Platformer (`engine_platformer`)
 

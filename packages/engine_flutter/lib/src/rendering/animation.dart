@@ -51,19 +51,34 @@ class AnimationClip {
 /// Playback state for one entity's currently-playing clip. `AnimationSystem`
 /// advances `elapsed`/`frameIndex` each tick and writes the resulting
 /// region name onto the entity's `Sprite` component.
+///
+/// [crossfadeSeconds] (`0` default — disabled, an instant cut exactly
+/// like before this field existed) tells whatever system swaps [clip]
+/// (e.g. `MovementAnimationSystem`) to snapshot the outgoing frame into
+/// an `AnimationTransition` first, so the old frame fades out over
+/// this many seconds instead of popping away the instant the new clip
+/// takes over.
 class AnimationState {
   AnimationClip clip;
   int frameIndex;
   double elapsed;
   bool playing;
+  double crossfadeSeconds;
 
-  AnimationState(this.clip, {this.frameIndex = 0, this.elapsed = 0, this.playing = true});
+  AnimationState(
+    this.clip, {
+    this.frameIndex = 0,
+    this.elapsed = 0,
+    this.playing = true,
+    this.crossfadeSeconds = 0,
+  });
 
   Map<String, dynamic> toJson() => {
         'clip': clip.toJson(),
         'frameIndex': frameIndex,
         'elapsed': elapsed,
         'playing': playing,
+        'crossfadeSeconds': crossfadeSeconds,
       };
 
   factory AnimationState.fromJson(Map<String, dynamic> json) => AnimationState(
@@ -71,5 +86,6 @@ class AnimationState {
         frameIndex: json['frameIndex'] as int? ?? 0,
         elapsed: (json['elapsed'] as num?)?.toDouble() ?? 0,
         playing: json['playing'] as bool? ?? true,
+        crossfadeSeconds: (json['crossfadeSeconds'] as num?)?.toDouble() ?? 0,
       );
 }
