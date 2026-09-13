@@ -167,3 +167,49 @@ top to bottom — not strict, adjust as dependencies emerge.
       brute-forcing its pairs. Reproduce with
       `dart run benchmark/collision_system_benchmark.dart` in
       `engine_core` before/after any attempted fix.
+- [ ] **To improve**: `ComponentStore._entityToDense` is a
+      `Map<EntityId, int>` (`packages/engine_core/lib/src/component_store.dart`),
+      but `EntityId` is a small, densely-recycled `int` from
+      `EntityManager` — every `get`/`set`/`has`/`remove` (i.e. every
+      component touch, the hottest path in the whole engine) pays
+      `Map<int,int>` hashing/boxing overhead it doesn't need to.
+      Replacing it with a growable `List<int>` indexed directly by
+      entity id (classic sparse-set: `-1`/sentinel for "absent", grown
+      with `List.filled`/`length` doubling as ids increase) should be a
+      straight win with no behavior change. Verify with
+      `world_step_benchmark.dart`/`collision_system_benchmark.dart`
+      before/after — this touches the single most call-frequent method
+      in the engine, so even a small per-call win compounds.
+- [ ] **To improve**: `EventBus.flush` (`packages/engine_core/lib/src/event_bus.dart`)
+      dispatches via `Function.apply(h, [event])`, which is measurably
+      slower than a direct typed call — Dart's `Function.apply` goes
+      through a dynamic-invocation path that can't be inlined the way
+      a normal call site can. Only matters for event-heavy games
+      (lots of `CollisionEvent`s/game-defined events per tick); low
+      priority unless a benchmark shows it matters, but the fix is
+      straightforward: store handlers as `void Function(Object)`
+      (cast once at `on<T>` registration time via a closure that does
+      the `is T` check/cast itself) instead of raw `Function` +
+      `apply`.
+- [ ] **To improve**: `EngineView`'s sprite pass (`_EnginePainter.paint`
+      in `packages/engine_flutter/lib/src/engine_view.dart`) does one
+      `canvas.save()`/`translate()`/`scale()`/`drawImageRect()`/
+      `restore()` *per sprite*, every frame. `Canvas.drawAtlas` (or
+      grouping sprites by shared atlas and building one `RSTransform`
+      list) draws many sprites from the same source image in a single
+      call with no per-sprite save/restore — the standard Flutter
+      technique for sprite-heavy 2D scenes. Worth an
+      `engine_flutter`-side benchmark (none exists yet — these need a
+      `flutter test`-based harness, see `engine_platformer/benchmark`'s
+      README note on why) before committing to the rewrite, since it
+      only pays off once sprite counts get large enough that
+      save/restore overhead dominates over the actual blit cost.
+- [ ] **To evaluate**: `WorldView.nearestWithPosition`
+      (`packages/engine_core/lib/src/world_view.dart`) is a linear scan
+      over every `Position`, called potentially once per AI-driven
+      entity per tick via a `Behavior`. Already documented in its own
+      doc comment as "fine at the entity counts a single AI query
+      needs" — no action unless a game with many simultaneous AI
+      queries per tick shows this mattering in a benchmark; noted here
+      so it's not forgotten as a candidate if that day comes (a
+      `SpatialHash`-backed nearest-neighbor query would be the fix).
