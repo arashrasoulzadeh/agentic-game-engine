@@ -103,6 +103,46 @@ Read each package's own README for its API — this file is about
   in-flight. If continuing that work, committing incrementally per
   completed item (not one giant commit) is the established norm here.
 
+## Code quality bar (SOLID/DRY, extensibility)
+
+- **Apply SOLID and DRY**, but weigh them against this file's other
+  rules (no premature abstraction, no unnecessary complexity) rather
+  than applying them mechanically — a genuine duplication (like
+  `collision_math.dart` below) gets extracted; three similar lines that
+  merely *look* alike don't get forced into a shared abstraction just
+  to satisfy DRY on paper.
+- **Single Responsibility**: a component is data; a system is one unit
+  of simulation logic; a helper function does one documented thing
+  (`damageEntity`, `dealDamageOnTouch`) — don't fold unrelated concerns
+  into one class/function because it's convenient right now.
+- **Open/Closed in practice**: prefer adding a new component/system/
+  helper over branching existing logic on a type/flag to special-case
+  new behavior. `installPlatformerSystems`'s `includeAnimation` flag is
+  the accepted exception (a genuine on/off toggle for a whole subsystem,
+  not type-based branching).
+- **Dependency direction stays the DAG** (see Package map above) —
+  SOLID's dependency-inversion instinct never justifies a backward
+  dependency in this repo; genre-general data still belongs in
+  `engine_core` even when a "cleaner" abstraction would colocate it
+  with its one current user.
+- **DRY real duplication, not superficial similarity**: two systems
+  computing the same physics (`collision_math.dart`) or two components
+  with the same shape belong in one shared place. Two `toJson`/
+  `fromJson` pairs that happen to look alike because they follow the
+  same convention are not duplication — that repetition *is* the
+  convention, and collapsing it into a generic/reflective helper would
+  break the plain-JSON-per-type contract the agent-facing API depends on.
+- **Write for extensibility**: new code should make the *next* feature
+  easier to add without rewriting this one — but don't build hooks/
+  configuration for hypothetical future features nobody has asked for
+  yet (see "Don't add features... beyond what the task requires"
+  elsewhere in this file's spirit). When refactoring existing code
+  toward this bar, keep the change behavior-preserving, keep 100% test
+  coverage passing (see Validation in TODO.md), and re-run the
+  benchmark suite for anything on a hot path (`packages/engine_core/benchmark/`,
+  `packages/engine_platformer/benchmark/`) to confirm a "cleaner"
+  version didn't regress performance.
+
 ## TODO.md
 
 Tracks remaining engine work, checked off as items land. Check it
