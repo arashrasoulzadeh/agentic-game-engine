@@ -1,17 +1,17 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 
-import 'systems/dash_system.dart';
-import 'systems/facing_system.dart';
-import 'systems/gravity_system.dart';
-import 'systems/health_hud_system.dart';
-import 'systems/health_system.dart';
-import 'systems/jump_system.dart';
-import 'systems/movement_animation_system.dart';
-import 'systems/platformer_input_system.dart';
-import 'systems/platformer_system.dart';
-import 'systems/projectile_system.dart';
-import 'systems/tile_collision_system.dart';
+import 'physics/dash_system.dart';
+import 'rendering/facing_system.dart';
+import 'physics/gravity_system.dart';
+import 'ui/health_hud_system.dart';
+import 'logic/health_system.dart';
+import 'physics/jump_system.dart';
+import 'rendering/movement_animation_system.dart';
+import 'physics/platformer_input_system.dart';
+import 'physics/platformer_system.dart';
+import 'logic/projectile_system.dart';
+import 'physics/tile_collision_system.dart';
 
 /// Registers every system a platformer needs, in the one order that's
 /// actually correct — the single call this package exists to make

@@ -1,7 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 
-import '../save_game.dart';
-import '../scene.dart';
+import '../logic/save_game.dart';
+import '../logic/scene.dart';
 import 'button_menu_scene.dart';
 
 /// One save slot a `SaveSlotMenuScene` shows: which `SaveGame` slot id

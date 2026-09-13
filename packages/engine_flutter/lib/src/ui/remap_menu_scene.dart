@@ -1,8 +1,8 @@
 import 'package:flutter/services.dart' show LogicalKeyboardKey;
 
-import '../input.dart';
-import '../input_bindings_storage.dart';
-import '../scene.dart';
+import '../input/input.dart';
+import '../input/input_bindings_storage.dart';
+import '../logic/scene.dart';
 import 'button_menu_scene.dart';
 
 /// A ready-made "press a key to rebind" controls menu — the

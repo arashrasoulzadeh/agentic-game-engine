@@ -2,8 +2,8 @@ import 'dart:ui' show Offset;
 
 import 'package:engine_core/engine_core.dart';
 
-import '../scene.dart';
-import '../sprite_atlas.dart';
+import '../logic/scene.dart';
+import '../rendering/sprite_atlas.dart';
 import 'menu_button_atlas.dart';
 
 /// One button in a `ButtonMenuScene`: what it says, and the id its tap

@@ -1,11 +1,11 @@
 import 'package:engine_core/engine_core.dart';
 
-import 'components/animation.dart';
-import 'components/hud_bar.dart';
-import 'components/parallax_layer.dart';
-import 'components/sprite.dart';
-import 'components/text.dart';
-import 'input.dart';
+import 'rendering/animation.dart';
+import 'rendering/hud_bar.dart';
+import 'rendering/parallax_layer.dart';
+import 'rendering/sprite.dart';
+import 'rendering/text.dart';
+import 'input/input.dart';
 
 /// Registers engine_flutter's components on [world], mirroring
 /// `registerCoreComponents`. `GameRunner` calls both automatically;

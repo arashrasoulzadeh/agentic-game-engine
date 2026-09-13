@@ -1,12 +1,12 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 
-import 'components/gravity.dart';
-import 'components/health.dart';
-import 'components/inventory.dart';
-import 'components/last_checkpoint.dart';
-import 'components/movement_animation_set.dart';
-import 'components/platformer_controller.dart';
+import 'physics/gravity.dart';
+import 'logic/health.dart';
+import 'logic/inventory.dart';
+import 'logic/last_checkpoint.dart';
+import 'rendering/movement_animation_set.dart';
+import 'physics/platformer_controller.dart';
 
 /// Position/Velocity/Collider, the physical minimum every spawned
 /// character needs regardless of player/enemy — shared so the two

@@ -86,6 +86,15 @@ a time.
   `HealthHudLink`/`HealthHudSystem`/`spawnHealthHudBar`
   (`engine_platformer`) wire a `HudBar` to an entity's `Health`,
   kept in sync every tick.
+- **`lib/src/` restructured by concern** in all three packages
+  (`ecs`/`physics`/`ai`/`rendering`/`ui`/`content` in `engine_core`;
+  `rendering`/`audio`/`input`/`logic`/`ui` in `engine_flutter`;
+  `physics`/`ai`/`logic`/`rendering`/`ui` in `engine_platformer`)
+  instead of the flat `components/`/`systems/` split. Pure file moves
+  plus import-path fixups, zero behavior change — every public export
+  path is unchanged, only its internal `src/...` target moved.
+
+This closes out every item added under "New engine features" above.
 
 ## [0.1.0]
 

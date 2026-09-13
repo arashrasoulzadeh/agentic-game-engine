@@ -3,8 +3,8 @@ import 'dart:ui' as ui;
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/painting.dart';
 
-import '../components/sprite.dart';
-import '../sprite_atlas.dart';
+import '../rendering/sprite.dart';
+import '../rendering/sprite_atlas.dart';
 
 /// Layout every engine-generated menu button shares — both
 /// `buildMenuButtonAtlas` (what's drawn) and `spawnMenuButton` (the

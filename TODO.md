@@ -359,14 +359,58 @@ is for everything else.
       repo yet, and `HudBar` plus `Text` plus `Sprite` already covers
       every HUD element asked for so far; add the next widget when a
       real one is needed rather than speculatively.
-- [ ] Restructure each package's `lib/src/` by concern (e.g.
-      `physics/`, `rendering/`, `logic/`/`ai/`, `ui/` — `engine_flutter`
-      already has a `ui/` folder as precedent) instead of the current
-      flat `components/`/`systems/` split with everything else loose at
-      the top level. A real refactor (import-path churn across every
-      package and `test_game`), not a feature — do it as its own
-      focused pass once the current feature-adding streak settles down,
-      not interleaved with it.
+- [x] Restructure each package's `lib/src/` by concern instead of the
+      flat `components/`/`systems/` split. `engine_core`:
+      `ecs/` (World/Entity/System/ComponentStore/ComponentRegistry/
+      EventBus/WorldView/Action/Behavior — the generic ECS substrate,
+      genre-general and physics-agnostic), `physics/` (Position/
+      Velocity/Collider/TileMap/Pushable + Movement/Collision/Pushable
+      systems + spatial_hash/raycast/pathfinding/tmx_import), `ai/`
+      (AIState/AISystem/SetVelocityAction), `rendering/` (Particle/
+      ParticleEmitter/Tween + their systems — visual-effect *data*,
+      even though engine_core does no actual drawing), `ui/` (Button/
+      button_hit_test/RoomExit/TriggerZone/trigger_helpers), `content/`
+      (Cinematic/GameState/Level — didn't fit the other four, kept as
+      its own bucket rather than forced into one). `engine_flutter`:
+      `rendering/` (Camera/EngineView/SpriteAtlas/Sprite/ParallaxLayer/
+      Text/HudBar/AnimationSystem/debug_memory), `audio/`
+      (AudioManager), `input/` (InputController/InputBindingsStorage/
+      on_screen_controls), `logic/` (Game/GameConfig/Scene/save_game/
+      room_exit_trigger), `ui/` (already existed — ButtonMenuScene &
+      friends, unchanged). `engine_platformer`: `physics/` (Gravity/
+      PlatformBody/PlatformerController + Platformer/TileCollision/
+      Gravity/Jump/Dash/PlatformerInput systems + collision_math),
+      `ai/` (Follow/PathFollow/PatrolBehavior), `logic/` (Health/
+      Projectile/Checkpoint/Inventory + their systems/helpers —
+      combat, pickups, checkpoints), `rendering/`
+      (MovementAnimationSet + its system + FacingSystem), `ui/`
+      (HealthHudLink/HealthHudSystem/hud_helpers). Each package kept a
+      small top-level residual at `lib/src/` for whatever ties the
+      whole package together and doesn't belong to one concern
+      (`register_components.dart`; `spawn_helpers.dart`/
+      `system_pack.dart`).
+
+      Pure file moves plus import-path fixups — zero behavior change.
+      Done mechanically (a Python script per package: build an old-path
+      → new-path map from the `git mv`s actually performed, then
+      rewrite every `import`/`export` string literal in every `.dart`
+      file to the correct new relative path) rather than by hand, since
+      hand-editing ~90 files' worth of relative imports across three
+      packages is exactly the kind of mechanical, error-prone task a
+      script does more reliably. Public API is unaffected — every type
+      is still re-exported from each package's top-level
+      `engine_core.dart`/`engine_flutter.dart`/`engine_platformer.dart`
+      at the same export path string a consumer already uses (`import
+      'package:engine_core/engine_core.dart'`), only the `src/...`
+      target of that export changed. Verified: `dart analyze
+      --fatal-infos`/`flutter analyze --fatal-infos` clean on all three
+      packages plus `engine_cli`; full test suites green (`engine_core`
+      147, `engine_flutter` and `engine_platformer` full suites,
+      `engine_cli` 8); and an end-to-end browser check — ran
+      `test_game` (which only ever imports the public `package:`
+      surface, so this doubles as confirmation the public API truly
+      didn't move), clicked Play, confirmed the full sample level
+      loads, renders, and the player is controllable exactly as before.
 
 ## Validation
 
