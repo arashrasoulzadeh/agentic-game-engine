@@ -24,7 +24,8 @@ checked in (see [CLAUDE.md](CLAUDE.md) for why, and how `test_game/` is
 used locally instead). Use the CLI (below) to generate one.
 
 See each package's README for its full API. [TODO.md](TODO.md) tracks
-what's left to build.
+what's left to build, and [CHANGELOG.md](CHANGELOG.md) tracks what's
+already shipped.
 
 ## Quick start
 

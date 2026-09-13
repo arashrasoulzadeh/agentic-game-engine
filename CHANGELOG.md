@@ -1,0 +1,106 @@
+# Changelog
+
+All notable changes to this project are documented in this file, newest
+first. No version has been tagged yet (see [TODO.md](TODO.md) — cutting
+`v0.1.0` is tracked there), so everything so far lives under
+**Unreleased**.
+
+## [Unreleased]
+
+### Scenes, menus & rooms
+
+- **Room/door transitions**: `RoomExit` component (`engine_core`) +
+  `installRoomExitTrigger` (`engine_flutter`) — touch a door, load the
+  target `Scene`, appear at the matching spawn marker. The target scene
+  is referenced by id (resolved against a game-registered factory map),
+  the same "data references registered code" pattern as
+  `AIState.behaviorId`.
+- **`GameState`**: a JSON-serializable data bag that survives a
+  `SceneController.loadScene` switch, unlike `World` (which is rebuilt
+  from scratch per scene on purpose). A game reads/writes it across
+  rooms/menus for things like a running score or unlocked content.
+- **`Scene` / `SceneController`**: `engine_flutter`'s scene-management
+  layer — `loadScene` (tear down and load a new room),
+  `pushOverlay`/`popOverlay` (freeze the current scene under a menu
+  without losing its state, e.g. a pause menu), and
+  `Scene.showOnScreenControls` so a tap-driven menu doesn't show a
+  joystick/action buttons meant for gameplay.
+- **`ButtonMenuScene`** + `MenuButtonSpec`: a ready-made ECS menu —
+  give it a button list and an action handler, it spawns the button
+  entities and hit-tests taps against them. Built on a new generic
+  `Button` component + `hitTestButton` in `engine_core`.
+- **Human-authorable levels**: `TileMap.fromJson` accepts a
+  `legend` + ASCII `rows` shape (characters instead of a flat id
+  array) alongside the original flat-array form; `Level.loadInto` can
+  name entities (`"name"` key) and returns a name → `EntityId` map, so
+  a scene can look up "the player"/"a door" after a data-driven level
+  load.
+
+### Platformer & gameplay helpers (`engine_platformer`)
+
+- Damage/health/combat and checkpoint/respawn helpers
+  (`damageEntity`/`healEntity`, `Checkpoint`/`LastCheckpoint`,
+  `respawnPlayer`).
+- Collectible/inventory helpers (`Inventory`, `collectItem`,
+  `dealPickupOnTouch`).
+- Patrol/follow AI behaviors, facing + movement-driven animation,
+  `installPlatformerSystems` (registers every platformer system in the
+  one order that's actually correct).
+- Shared `spawnPlayer`/`spawnEnemy` spawn logic; shared
+  `collision_math.dart` between `PlatformerSystem` and
+  `TileCollisionSystem`.
+
+### Rendering & assets (`engine_flutter`)
+
+- z-index draw ordering for `Sprite`/`ParallaxLayer`/`TileMap`/
+  `Particle`, with `Canvas.drawAtlas` batching per shared atlas/z-slot
+  for sprite-heavy scenes.
+- Particle effects (data + system in `engine_core`, rendering in
+  `engine_flutter`) and parallax scrolling backgrounds.
+- Tweening/easing helpers (`Tween`/`EasingType`/`TweenSystem`).
+- Real sprite asset loading (`SpriteAtlas.loadFromAssets`) and audio
+  playback (`AudioManager`, via `audioplayers`).
+- `SaveGame`: cross-platform `World` snapshot save/load.
+- A fuller `EngineView` debug overlay (fps, tick, entity/sprite/
+  particle counts, resident memory where available).
+
+### Input
+
+- Mobile input: on-screen virtual joystick + buttons
+  (`OnScreenControls`, `GameConfig.onScreenControls`), with haptics,
+  press-scale animation, analog joystick output, sprite-customizable
+  buttons, and a floating (not fixed-position) joystick to avoid
+  overlapping gameplay content or the camera.
+
+### Engine core & performance
+
+- Spatial-hash collision (`CollisionSystem`) with an auto-sized cell
+  size, and typed direct dispatch in `EventBus` (replacing
+  `Function.apply`).
+- `ComponentStore`'s sparse side switched from `Map<int,int>` to a
+  `List<int>`.
+- A performance benchmark suite (`benchmark/` in `engine_core`/
+  `engine_platformer`) and a full pass to 100% test coverage across
+  `engine_core`/`engine_flutter`/`engine_platformer`.
+
+### Tooling
+
+- `engine_cli`'s `game_agent` CLI: `create` (scaffold a new game),
+  `upgrade` (repin an existing game's engine version), `lint` (validate
+  a level/content file without running the game).
+
+### Foundation
+
+- Initial ECS scaffold (`engine_core`): `World`, `ComponentStore`,
+  systems, spatial hash.
+- `engine_flutter`: the Flutter shell — sprites, animation, camera,
+  input, `EngineView`.
+- `engine_platformer` split out from `engine_core` so a non-platformer
+  2D game isn't forced to depend on gravity/jump concepts.
+- The content DSL (`Level`) and the agent-facing runtime API
+  (`WorldView`/`Behavior`/`AISystem`) — world state as data an agent
+  can read/patch, and a sandboxed way for an agent to drive an entity
+  without a path to corrupting simulation state.
+- Tile-based platformer physics: gravity, ground detection, jump,
+  one-way platforms; `TileMap` + `TileCollisionSystem`.
+- `GameConfig` + the `Game`/`runGame` app framework.
