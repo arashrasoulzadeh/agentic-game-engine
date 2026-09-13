@@ -231,9 +231,17 @@ unless marked, roughly in priority order.
       simplification: no live "press any key now" visual state on the
       tapped button — the whole menu just reloads once a key is
       captured, reading the just-updated bindings fresh.
-- [ ] Screen shake / camera-effect helpers — doable by hand today with
-      `Tween` + `Camera`, but no ready-made helper the way
-      `installPlatformerSystems` is for physics.
+- [x] Screen shake: `Camera.shake(magnitude, duration)` + `Camera.update(dt)`
+      (a decaying random jitter offset, incorporated into `worldToScreen`/
+      `screenToWorld` — the latter so a tap during a shake still
+      resolves correctly). `EngineView` now calls `camera.update(dt)`
+      every frame unconditionally (previously `Camera` had no per-tick
+      lifecycle hook at all — only updated indirectly via `follow()`,
+      which isn't even called for a static, non-following camera; a
+      static camera still needs to shake on e.g. an explosion). Calling
+      `shake()` again mid-shake replaces rather than stacks.
+
+This closes out every item in this section.
 
 ## Tooling / release
 

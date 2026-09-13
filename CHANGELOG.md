@@ -52,6 +52,13 @@ engine" section, one item at a time.
 - **Remappable controls**: `InputController.captureNextKeyDown` (raw
   next-key capture) + `InputBindingsStorage` (save/load bindings) +
   `RemapMenuScene` (a ready-made "press a key to rebind" menu).
+- **Screen shake**: `Camera.shake`/`Camera.update`, a decaying random
+  jitter offset baked into `worldToScreen`/`screenToWorld` — `EngineView`
+  now calls `camera.update(dt)` every frame unconditionally (`Camera`
+  previously had no per-tick lifecycle hook at all).
+
+This closes out every item added under "Fully-fledged platformer
+engine" above.
 
 ## [0.1.0]
 

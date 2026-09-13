@@ -80,6 +80,10 @@ class _EngineViewState extends State<EngineView>
     if (widget.paused) return;
 
     widget.world.step(dt);
+    // Decays/recomputes any active Camera.shake() offset -- called
+    // unconditionally (not just when cameraFollowEntity is set), since
+    // a static camera still needs to shake on e.g. an explosion.
+    widget.camera.update(dt);
 
     if (widget.showFpsOverlay) {
       _recentDts.add(dt);
