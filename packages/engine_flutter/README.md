@@ -223,6 +223,28 @@ atlas hasn't loaded), the button falls back to the color/shape/label
 rendering, so `OnScreenButtonSpec.custom` is safe to use even before
 assets finish loading.
 
+#### Feel: haptics, press animation, analog joystick
+
+Every button scales down slightly (`AnimatedScale`, 80ms) while held,
+and both buttons and the joystick play a short vibration
+(`HapticFeedback.selectionClick()`, a no-op on platforms without
+haptic support such as web) the moment they're pressed or a new
+direction starts. Both are on by default — disable per-widget with
+`hapticFeedback: false` on `OnScreenControls`/`VirtualButton`/
+`VirtualJoystick`.
+
+The joystick reports only discrete `"left"`/`"right"`/`"up"`/`"down"`
+by default. Pass `analogOutput: true` (on `OnScreenControls` or
+`VirtualJoystick` directly) to also get continuous displacement on
+`InputState.axis('moveX')`/`axis('moveY')` (range -1..1) — useful for
+variable-speed movement or analog aiming instead of fixed-speed
+digital movement. Axis values reset to `0` on release. Existing
+systems that only read `isPressed(...)` are unaffected either way.
+
+```dart
+final speed = baseSpeed * inputState.axis('moveX').abs().clamp(0.3, 1.0);
+```
+
 ## Audio
 
 ```dart

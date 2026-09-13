@@ -38,6 +38,11 @@ top to bottom — not strict, adjust as dependencies emerge.
       regions) plus full color/shape/size/border-radius/label-style
       customization for non-sprite buttons; falls back to the
       color+label rendering if no atlas/region is given or resolvable.
+- [x] On-screen control feel: haptic feedback on press (buttons and
+      joystick direction changes), a press-scale animation on buttons,
+      and an opt-in `analogOutput` on `VirtualJoystick` exposing
+      continuous `moveX`/`moveY` on `InputState` (range -1..1) for
+      variable-speed movement, alongside the existing discrete actions.
 
 ## Platformer helpers (engine_platformer)
 

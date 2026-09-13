@@ -8,15 +8,29 @@ import 'package:flutter/widgets.dart' show KeyEventResult;
 class InputState {
   final Set<String> pressedActions;
 
-  InputState([Set<String>? pressedActions])
-      : pressedActions = pressedActions ?? <String>{};
+  /// Continuous values (e.g. `"moveX"`/`"moveY"` from an analog
+  /// joystick), range roughly -1..1. Discrete `pressedActions` are still
+  /// set alongside these past the deadzone, so a system can ignore axes
+  /// entirely and just read booleans if it doesn't need magnitude.
+  final Map<String, double> axisValues;
+
+  InputState([Set<String>? pressedActions, Map<String, double>? axisValues])
+      : pressedActions = pressedActions ?? <String>{},
+        axisValues = axisValues ?? <String, double>{};
 
   bool isPressed(String action) => pressedActions.contains(action);
 
-  Map<String, dynamic> toJson() => {'pressed': pressedActions.toList()};
+  double axis(String name) => axisValues[name] ?? 0.0;
+
+  Map<String, dynamic> toJson() => {
+        'pressed': pressedActions.toList(),
+        'axes': axisValues,
+      };
 
   factory InputState.fromJson(Map<String, dynamic> json) => InputState(
         ((json['pressed'] as List?) ?? const []).cast<String>().toSet(),
+        ((json['axes'] as Map?) ?? const {})
+            .map((k, v) => MapEntry(k as String, (v as num).toDouble())),
       );
 }
 
@@ -64,5 +78,12 @@ class InputController {
     } else {
       state.pressedActions.remove(action);
     }
+  }
+
+  /// Sets a continuous axis value (e.g. `"moveX"`) — the analog
+  /// counterpart to [setAction], used by [VirtualJoystick] to report
+  /// stick displacement instead of just discrete direction booleans.
+  void setAxis(String name, double value) {
+    state.axisValues[name] = value;
   }
 }

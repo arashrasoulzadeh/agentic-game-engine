@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter/widgets.dart';
 
 import 'input.dart';
@@ -87,6 +88,19 @@ class VirtualJoystick extends StatefulWidget {
   /// registering as movement.
   final double deadzone;
 
+  /// Whether the axis names `"moveX"`/`"moveY"` are set on
+  /// [InputController.state] with the stick's continuous displacement
+  /// (range -1..1), in addition to the discrete `"left"`/`"right"`/
+  /// `"up"`/`"down"` actions. Off by default — most existing systems
+  /// (e.g. `PlatformerInputSystem`) only read the discrete actions, so
+  /// this is opt-in for games that want variable-speed movement/aim.
+  final bool analogOutput;
+
+  /// Whether a short vibration plays when the stick first moves past
+  /// the deadzone (i.e. a new direction starts). No-op on platforms
+  /// without haptic support (e.g. web).
+  final bool hapticFeedback;
+
   const VirtualJoystick({
     super.key,
     required this.controller,
@@ -95,6 +109,8 @@ class VirtualJoystick extends StatefulWidget {
     this.knobRadius = 24,
     this.deadzone = 0.25,
     this.floating = true,
+    this.analogOutput = false,
+    this.hapticFeedback = true,
   });
 
   @override
@@ -139,6 +155,10 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
       if (delta.dy < -threshold) next.add('up');
     }
 
+    if (widget.hapticFeedback && _activeActions.isEmpty && next.isNotEmpty) {
+      HapticFeedback.selectionClick();
+    }
+
     for (final action in _activeActions.difference(next)) {
       widget.controller.setAction(action, false);
     }
@@ -148,6 +168,13 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
     _activeActions
       ..clear()
       ..addAll(next);
+
+    if (widget.analogOutput) {
+      widget.controller.setAxis('moveX', (delta.dx / widget.baseRadius).clamp(-1.0, 1.0));
+      if (widget.verticalEnabled) {
+        widget.controller.setAxis('moveY', (delta.dy / widget.baseRadius).clamp(-1.0, 1.0));
+      }
+    }
   }
 
   void _clearActiveActions() {
@@ -155,6 +182,10 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
       widget.controller.setAction(action, false);
     }
     _activeActions.clear();
+    if (widget.analogOutput) {
+      widget.controller.setAxis('moveX', 0);
+      if (widget.verticalEnabled) widget.controller.setAxis('moveY', 0);
+    }
   }
 
   void _reset() {
@@ -237,11 +268,16 @@ class VirtualButton extends StatefulWidget {
   final OnScreenButtonSpec spec;
   final AtlasRegistry? atlasRegistry;
 
+  /// Whether a short vibration plays on press. No-op on platforms
+  /// without haptic support (e.g. web).
+  final bool hapticFeedback;
+
   const VirtualButton({
     super.key,
     required this.controller,
     required this.spec,
     this.atlasRegistry,
+    this.hapticFeedback = true,
   });
 
   @override
@@ -253,6 +289,7 @@ class _VirtualButtonState extends State<VirtualButton> {
 
   void _setPressed(bool pressed) {
     if (_pressed == pressed) return;
+    if (pressed && widget.hapticFeedback) HapticFeedback.selectionClick();
     setState(() => _pressed = pressed);
     widget.controller.setAction(widget.spec.action, pressed);
   }
@@ -312,7 +349,12 @@ class _VirtualButtonState extends State<VirtualButton> {
       onTapDown: (_) => _setPressed(true),
       onTapUp: (_) => _setPressed(false),
       onTapCancel: () => _setPressed(false),
-      child: SizedBox(width: spec.diameter, height: spec.diameter, child: visual),
+      child: AnimatedScale(
+        scale: _pressed ? 0.9 : 1.0,
+        duration: const Duration(milliseconds: 80),
+        curve: Curves.easeOut,
+        child: SizedBox(width: spec.diameter, height: spec.diameter, child: visual),
+      ),
     );
   }
 }
@@ -352,12 +394,21 @@ class OnScreenControls extends StatelessWidget {
   /// `atlasId`/`region` — omit if none of your buttons are sprite-based.
   final AtlasRegistry? atlasRegistry;
 
+  /// See `VirtualJoystick.analogOutput` — off by default.
+  final bool analogOutput;
+
+  /// See `VirtualJoystick.hapticFeedback`/`VirtualButton.hapticFeedback`
+  /// — on by default for both the joystick and every button.
+  final bool hapticFeedback;
+
   const OnScreenControls({
     super.key,
     required this.controller,
     this.verticalEnabled = false,
     this.buttons = const [OnScreenButtonSpec('jump', 'JUMP')],
     this.atlasRegistry,
+    this.analogOutput = false,
+    this.hapticFeedback = true,
   });
 
   @override
@@ -380,6 +431,8 @@ class OnScreenControls extends StatelessWidget {
               child: VirtualJoystick(
                 controller: controller,
                 verticalEnabled: verticalEnabled,
+                analogOutput: analogOutput,
+                hapticFeedback: hapticFeedback,
               ),
             ),
           ),
@@ -394,6 +447,7 @@ class OnScreenControls extends StatelessWidget {
                     controller: controller,
                     spec: spec,
                     atlasRegistry: atlasRegistry,
+                    hapticFeedback: hapticFeedback,
                   ),
                   const SizedBox(width: 12),
                 ],
