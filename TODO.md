@@ -23,6 +23,17 @@ top to bottom — not strict, adjust as dependencies emerge.
 - [x] Audio: sound effect + music playback, likely via a small wrapper
       package, with an engine_core-facing abstraction like `InputState`
       has for input
+- [x] Mobile input: on-screen joystick + buttons (`VirtualJoystick`/
+      `VirtualButton`/`OnScreenControls`), driving the same
+      `InputController` as keyboard input, auto-shown on Android/iOS via
+      `GameConfig.onScreenControls`
+- [ ] On-screen joystick UX: currently fixed bottom-left, so the
+      camera-followed player can end up rendered underneath it near
+      world edges (noticed during manual verification, not yet fixed —
+      see suggestion in the session that added this). A "floating"
+      joystick (appears wherever the finger first touches, common in
+      mobile games) or a camera dead-zone that avoids the control
+      regions would fix this.
 
 ## Platformer helpers (engine_platformer)
 
