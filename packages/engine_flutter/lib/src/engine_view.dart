@@ -30,6 +30,14 @@ class EngineView extends StatefulWidget {
   /// web, `dart:io` has no memory API there, so that line is omitted).
   final bool showFpsOverlay;
 
+  /// Called with the tap/click position converted to world coordinates
+  /// via `camera.screenToWorld` — how a `Scene.handleTap` implementation
+  /// (an ECS menu button, a door tapped in-world) learns where the
+  /// player tapped without touching screen coordinates itself. Null (the
+  /// default) disables tap handling entirely, so a game with no
+  /// tap-driven UI pays nothing for it.
+  final void Function(Offset worldPosition)? onWorldTap;
+
   const EngineView({
     super.key,
     required this.world,
@@ -40,6 +48,7 @@ class EngineView extends StatefulWidget {
     this.backgroundColor = const Color(0xFF000000),
     this.paused = false,
     this.showFpsOverlay = false,
+    this.onWorldTap,
   });
 
   @override
@@ -162,12 +171,24 @@ class _EngineViewState extends State<EngineView>
       );
     }
 
-    if (controller == null) return child;
+    if (controller != null) {
+      child = Focus(
+        focusNode: _focusNode,
+        autofocus: true,
+        onKeyEvent: (node, event) => controller.handleKeyEvent(event),
+        child: child,
+      );
+    }
 
-    return Focus(
-      focusNode: _focusNode,
-      autofocus: true,
-      onKeyEvent: (node, event) => controller.handleKeyEvent(event),
+    final onWorldTap = widget.onWorldTap;
+    if (onWorldTap == null) return child;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTapUp: (details) {
+        final box = context.findRenderObject() as RenderBox?;
+        onWorldTap(widget.camera.screenToWorld(details.localPosition, box?.size ?? Size.zero));
+      },
       child: child,
     );
   }

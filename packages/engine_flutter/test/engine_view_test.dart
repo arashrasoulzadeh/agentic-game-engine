@@ -111,4 +111,51 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowLeft);
     expect(controller.state.isPressed('left'), isFalse);
   });
+
+  testWidgets('onWorldTap receives the tap position converted to world coordinates',
+      (tester) async {
+    final world = World(width: 400, height: 300);
+    registerCoreComponents(world);
+    registerFlutterComponents(world);
+    final camera = Camera(x: 0, y: 0, zoom: 1);
+    Offset? tapped;
+
+    await tester.pumpWidget(MaterialApp(
+      home: EngineView(
+        world: world,
+        atlasRegistry: AtlasRegistry(),
+        camera: camera,
+        onWorldTap: (worldPosition) => tapped = worldPosition,
+      ),
+    ));
+    await tester.pump();
+
+    // The test surface is 800x600 by default, so its center (400,300)
+    // sits over world origin (0,0) when the camera is centered there.
+    await tester.tapAt(const Offset(400, 300));
+    await tester.pump();
+
+    expect(tapped, isNotNull);
+    expect(tapped!.dx, closeTo(0, 0.01));
+    expect(tapped!.dy, closeTo(0, 0.01));
+  });
+
+  testWidgets('with no onWorldTap, a tap is a no-op rather than throwing',
+      (tester) async {
+    final world = World(width: 400, height: 300);
+    registerCoreComponents(world);
+    registerFlutterComponents(world);
+
+    await tester.pumpWidget(MaterialApp(
+      home: EngineView(
+        world: world,
+        atlasRegistry: AtlasRegistry(),
+        camera: Camera(),
+      ),
+    ));
+    await tester.pump();
+
+    await tester.tapAt(const Offset(400, 300));
+    await tester.pump();
+  });
 }

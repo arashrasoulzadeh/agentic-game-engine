@@ -10,5 +10,8 @@ export 'src/input.dart';
 export 'src/on_screen_controls.dart';
 export 'src/register_components.dart';
 export 'src/save_game.dart';
+export 'src/scene.dart';
 export 'src/sprite_atlas.dart';
 export 'src/systems/animation_system.dart';
+export 'src/ui/button_menu_scene.dart';
+export 'src/ui/menu_button_atlas.dart';

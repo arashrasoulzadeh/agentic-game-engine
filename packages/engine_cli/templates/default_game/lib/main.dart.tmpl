@@ -9,10 +9,13 @@ import 'package:flutter/material.dart' hide Velocity;
 //
 // - assets/game_config.json controls orientation, world size, and other
 //   app-level settings without touching Dart.
-// - MyGame.populateWorld adds systems and spawns entities; GameRunner
+// - MyGame.createInitialScene returns the first Scene GameRunner loads.
+// - MainScene.populate adds systems and spawns entities; GameRunner
 //   (via runGame) already built the World and registered the built-in
-//   components for you.
-// - MyGame.loadAssets loads sprite atlases before the first frame.
+//   components for you. A game with more than one level/room adds more
+//   Scene subclasses and switches between them via the SceneController
+//   handed to `populate`.
+// - MainScene.loadAssets loads sprite atlases before the first frame.
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +32,12 @@ class MyGame extends Game {
   GameConfig get config => _config;
 
   @override
-  void populateWorld(World world) {
+  Scene createInitialScene() => MainScene();
+}
+
+class MainScene extends Scene {
+  @override
+  Future<void> populate(World world, SceneController scenes) async {
     world.addSystem(MovementSystem());
     world.addSystem(CollisionSystem());
     world.addSystem(AnimationSystem());

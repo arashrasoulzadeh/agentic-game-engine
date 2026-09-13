@@ -8,30 +8,21 @@ import 'game_config.dart';
 import 'input.dart';
 import 'on_screen_controls.dart';
 import 'register_components.dart';
+import 'scene.dart';
 import 'sprite_atlas.dart';
 
 /// The top-level entry point a game implements. Extend this instead of
 /// hand-wiring `World`/`Ticker`/`CustomPaint` yourself — `runGame` handles
-/// orientation, asset loading, app-lifecycle pause/resume, and the
-/// render loop; you only define *what* the game is.
+/// orientation, asset loading, app-lifecycle pause/resume, scene
+/// switching, and the render loop; you only define *what* the game is.
 abstract class Game {
   GameConfig get config;
 
-  /// Adds systems and spawns entities on [world]. `GameRunner` has
-  /// already constructed `world` (sized from `config`) and registered
-  /// the core + Flutter built-in components on it — forgetting to
-  /// register `Sprite`/`Position`/etc. is a common footgun this design
-  /// removes entirely; you only ever add your own game-specific pieces.
-  void populateWorld(World world);
-
-  /// Loads sprite atlases (or other async setup) before the first frame.
-  /// Defaults to an empty registry for games with no sprites yet.
-  Future<AtlasRegistry> loadAssets() async => AtlasRegistry();
-
-  /// Defaults to a camera centered on the world. Override to start
-  /// somewhere else or follow a specific entity from frame one.
-  Camera createCamera(World world) =>
-      Camera(x: world.width / 2, y: world.height / 2);
+  /// The `Scene` (level/room) `GameRunner` loads first. A game with
+  /// rooms/doors switches to further scenes at runtime via the
+  /// `SceneController` handed to each `Scene.populate` call — see
+  /// `Scene`'s doc comment.
+  Scene createInitialScene();
 
   /// Returns null (no keyboard input wired) by default — override to
   /// supply an `InputController` with custom key bindings. The same
@@ -63,10 +54,15 @@ abstract class Game {
   /// Called when the app returns to the foreground after a pause.
   void onResume() {}
 
-  /// Shown while `populateWorld`/`loadAssets` are running, before the
-  /// first frame can render. Defaults to a centered spinner on the
-  /// configured background color — override for a branded splash
-  /// screen/logo instead.
+  /// Shown while the initial scene's `populate`/`loadAssets` are
+  /// running, before the first frame can render. A later
+  /// `SceneController.loadScene` switch keeps rendering the outgoing
+  /// scene (via Flutter's `FutureBuilder`, which retains the last
+  /// resolved snapshot while a new future is in flight) rather than
+  /// flashing back to this screen — override `Scene.loadAssets` to stay
+  /// fast if a room switch should feel instant. Defaults to a centered
+  /// spinner on the configured background color — override for a
+  /// branded splash screen/logo instead.
   Widget buildLoadingScreen(BuildContext context) {
     return const Center(child: CircularProgressIndicator());
   }
@@ -77,8 +73,9 @@ class _LoadedGame {
   final AtlasRegistry atlasRegistry;
   final Camera camera;
   final InputController? inputController;
+  final Scene scene;
 
-  _LoadedGame(this.world, this.atlasRegistry, this.camera, this.inputController);
+  _LoadedGame(this.world, this.atlasRegistry, this.camera, this.inputController, this.scene);
 }
 
 /// Hosts a [Game]: applies orientation, loads assets, then renders via
@@ -95,30 +92,70 @@ class GameRunner extends StatefulWidget {
 }
 
 class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
-  late final Future<_LoadedGame> _future;
+  final SceneController _sceneController = SceneController();
+  late Future<_LoadedGame> _future;
   bool _paused = false;
+  _LoadedGame? _overlay;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     widget.game.config.applyOrientation();
-    _future = _load();
+    _sceneController.attach(
+      loadScene: _loadScene,
+      pushOverlay: _pushOverlay,
+      popOverlay: _popOverlay,
+    );
+    _future = _load(widget.game.createInitialScene());
   }
 
-  Future<_LoadedGame> _load() async {
+  /// The `SceneController` callback: rebuilds `_future` with [next], so
+  /// `build`'s `FutureBuilder` shows the loading screen again while it
+  /// resolves, then swaps in the new scene's `World`/camera/atlases.
+  /// Also drops any active overlay — a full scene switch makes whatever
+  /// was paused underneath it moot.
+  void _loadScene(Scene next) {
+    setState(() {
+      _future = _load(next);
+      _overlay = null;
+    });
+  }
+
+  /// Loads [overlay] into its own small `World` (via the same `_load`
+  /// every scene uses) without touching `_future` at all — the base
+  /// scene's `World` just keeps existing, frozen (see `build`'s
+  /// `paused: _paused || _overlay != null`), so popping the overlay
+  /// resumes it exactly where it left off. This is the whole mechanism
+  /// behind `SceneController.pushOverlay`'s "pause without losing
+  /// state" contract.
+  Future<void> _pushOverlay(Scene overlay) async {
+    final loaded = await _load(overlay);
+    if (!mounted) return;
+    setState(() => _overlay = loaded);
+  }
+
+  void _popOverlay() {
+    setState(() => _overlay = null);
+  }
+
+  /// Builds a brand-new `World` for [scene] rather than clearing the
+  /// previous one — the previous scene's systems (added in its own
+  /// `populate`) would otherwise keep running against the new scene's
+  /// entities, a class of bug a fresh `World` rules out entirely.
+  Future<_LoadedGame> _load(Scene scene) async {
     final world = World(
       width: widget.game.config.worldWidth,
       height: widget.game.config.worldHeight,
     );
     registerCoreComponents(world);
     registerFlutterComponents(world);
-    widget.game.populateWorld(world);
+    await scene.populate(world, _sceneController);
 
-    final atlasRegistry = await widget.game.loadAssets();
-    final camera = widget.game.createCamera(world);
+    final atlasRegistry = await scene.loadAssets();
+    final camera = scene.createCamera(world);
     final inputController = widget.game.createInputController();
-    return _LoadedGame(world, atlasRegistry, camera, inputController);
+    return _LoadedGame(world, atlasRegistry, camera, inputController, scene);
   }
 
   @override
@@ -148,32 +185,49 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
             child: widget.game.buildLoadingScreen(context),
           );
         }
+        final overlay = _overlay;
         final engineView = EngineView(
           world: loaded.world,
           atlasRegistry: loaded.atlasRegistry,
           camera: loaded.camera,
           inputController: loaded.inputController,
-          cameraFollowEntity: widget.game.cameraFollowEntity(loaded.world),
+          cameraFollowEntity: loaded.scene.cameraFollowEntity(loaded.world),
           backgroundColor: widget.game.config.backgroundColor,
-          paused: _paused,
+          paused: _paused || overlay != null,
           showFpsOverlay: widget.game.config.showFpsOverlay,
+          // No taps while an overlay is up -- it alone should be
+          // interactive, so the paused scene underneath can't be
+          // accidentally poked through it.
+          onWorldTap: overlay == null
+              ? (worldPosition) =>
+                  loaded.scene.handleTap(loaded.world, _sceneController, worldPosition)
+              : null,
         );
 
         final controller = loaded.inputController;
-        if (controller == null || !_shouldShowOnScreenControls()) {
-          return engineView;
-        }
-        return Stack(
-          children: [
-            engineView,
+        final children = [
+          engineView,
+          if (controller != null && _shouldShowOnScreenControls())
             OnScreenControls(
               controller: controller,
               verticalEnabled: widget.game.onScreenJoystickVertical,
               buttons: widget.game.onScreenButtons(),
               atlasRegistry: loaded.atlasRegistry,
             ),
-          ],
-        );
+          if (overlay != null)
+            EngineView(
+              world: overlay.world,
+              atlasRegistry: overlay.atlasRegistry,
+              camera: overlay.camera,
+              // No keyboard focus for the overlay -- it's tap-driven
+              // only, so it never steals focus the base scene would
+              // otherwise want back once resumed.
+              backgroundColor: const Color(0x99101018),
+              onWorldTap: (worldPosition) =>
+                  overlay.scene.handleTap(overlay.world, _sceneController, worldPosition),
+            ),
+        ];
+        return children.length == 1 ? engineView : Stack(children: children);
       },
     );
   }

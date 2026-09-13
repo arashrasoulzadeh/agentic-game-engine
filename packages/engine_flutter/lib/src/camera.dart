@@ -44,4 +44,15 @@ class Camera {
       (worldY - y) * zoom + viewportSize.height / 2,
     );
   }
+
+  /// Inverse of [worldToScreen] — where in world space a tap/click at
+  /// [screen] landed, e.g. for hit-testing `Button` entities against a
+  /// pointer event. `EngineView` calls this so a `Scene`'s tap handler
+  /// never has to know about screen coordinates or the camera at all.
+  Offset screenToWorld(Offset screen, Size viewportSize) {
+    return Offset(
+      (screen.dx - viewportSize.width / 2) / zoom + x,
+      (screen.dy - viewportSize.height / 2) / zoom + y,
+    );
+  }
 }

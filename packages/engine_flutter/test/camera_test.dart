@@ -30,4 +30,16 @@ void main() {
     expect(camera.x, 400); // clamped to half-viewport-width
     expect(camera.y, 300);
   });
+
+  test('screenToWorld is the exact inverse of worldToScreen', () {
+    final camera = Camera(x: 120, y: -40, zoom: 1.5);
+    const viewport = Size(800, 600);
+    const worldPoint = Offset(37, 210);
+
+    final screen = camera.worldToScreen(worldPoint.dx, worldPoint.dy, viewport);
+    final backToWorld = camera.screenToWorld(screen, viewport);
+
+    expect(backToWorld.dx, closeTo(worldPoint.dx, 1e-9));
+    expect(backToWorld.dy, closeTo(worldPoint.dy, 1e-9));
+  });
 }

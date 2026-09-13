@@ -4,6 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _EmptyScene extends Scene {
+  @override
+  Future<void> populate(World world, SceneController scenes) async {}
+}
+
 class _ControllableGame extends Game {
   _ControllableGame(this.config);
 
@@ -11,7 +16,7 @@ class _ControllableGame extends Game {
   final GameConfig config;
 
   @override
-  void populateWorld(World world) {}
+  Scene createInitialScene() => _EmptyScene();
 
   @override
   InputController? createInputController() => InputController();
@@ -85,5 +90,5 @@ class _NoInputGame extends Game {
   GameConfig get config => const GameConfig(worldWidth: 200, worldHeight: 100);
 
   @override
-  void populateWorld(World world) {}
+  Scene createInitialScene() => _EmptyScene();
 }
