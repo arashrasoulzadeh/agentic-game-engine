@@ -16,13 +16,14 @@ in this file are done." An engine can ship 1.0 with a smaller, stable
 feature set; it can't ship without these. Checked directly against the
 repo, not from memory.
 
-- [ ] `LICENSE` file: there is currently **no license file anywhere in
-      this repo** — a real blocker, not just a nice-to-have: nobody can
-      safely depend on this engine without one, and pub.dev requires/
-      heavily penalizes its absence.
-- [ ] `pubspec.yaml` metadata: none of the four packages set
-      `homepage`/`repository`/`license` fields — pub.dev's publish
-      validation checks these and a real score depends on them.
+- [x] `LICENSE` file: MIT, at the repo root plus a copy in each of the
+      four packages (`packages/*/LICENSE`) since pub.dev's per-package
+      publish validation looks for a `LICENSE` in that package's own
+      root, not just the repo root.
+- [x] `pubspec.yaml` metadata: added `homepage`/`repository` (both
+      pointing at the GitHub repo) to all four packages. No `license:`
+      field added — that's not a real pub.dev-recognized pubspec key;
+      pub.dev auto-detects license from the `LICENSE` file above.
 - [ ] API stability commitment: pre-1.0 this repo has made real
       breaking changes freely (e.g. `resolveSolidCircleAabb` returning
       a `CollisionSide` enum instead of a `bool`) — 1.0 means promising
