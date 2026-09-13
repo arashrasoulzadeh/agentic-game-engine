@@ -298,6 +298,38 @@ region scaled by `Particle.scale`, otherwise a plain circle in
 `Particle.colorArgb` — both fade via `Particle.alpha` as the particle
 ages toward its lifetime.
 
+## Draw order (z-index)
+
+Every renderable — `Sprite`, `ParallaxLayer`, `TileMap`, `Particle`
+(`Particle.zIndex` comes from the `ParticleEmitter.zIndex` that spawned
+it) — has a `zIndex` (an `int`, default `0`). `EngineView` draws lower
+`zIndex` first (further back) and higher last (further forward),
+regardless of which kind of renderable it is:
+
+```dart
+world.storeOf<Sprite>().set(id, Sprite('atlas', 'idle', zIndex: 10)); // draws in front of...
+world.storeOf<ParallaxLayer>().set(bg, ParallaxLayer('atlas', 'sky', zIndex: -10)); // ...this
+```
+
+Ties (the common case: everything left at the default `0`) fall back to
+the engine's original fixed order — parallax, then tiles, then sprites,
+then particles, each in `ComponentStore` order — so a game that never
+sets `zIndex` renders exactly as before this existed. Use it for a
+foreground mask/overhang `TileMap` layer drawn above characters, a
+sprite that should always render in front of/behind everything else,
+or reordering parallax layers relative to gameplay content.
+
+Sprite batching (see below) still applies *within* a `zIndex` — sprites
+sharing both a `zIndex` and an atlas batch into one `Canvas.drawAtlas`
+call; different `zIndex` values always mean separate draw calls, since
+they can't be interleaved with other kinds' draws otherwise.
+
+Note: this orders *draw calls*, not alpha compositing — two overlapping
+opaque sprites at different `zIndex` behave as you'd expect (the higher
+one fully covers the lower one where they overlap), but this isn't a
+clipping/masking primitive on its own (no clip paths, no blend modes).
+A true mask/clip feature is tracked separately in TODO.md if needed.
+
 ## Audio
 
 ```dart

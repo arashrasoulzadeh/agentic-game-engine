@@ -191,77 +191,113 @@ class _EnginePainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, Paint()..color = backgroundColor);
 
     final positions = world.storeOf<Position>();
-    _paintParallaxLayers(canvas, size, positions);
-    _paintTileMaps(canvas, size, positions);
+    final items = <_DrawItem>[];
+    var order = 0;
+    order = _collectParallaxItems(items, order, size, positions);
+    order = _collectTileMapItems(items, order, size, positions);
+    order = _collectSpriteItems(items, order, size, positions);
+    _collectParticleItems(items, order, size, positions);
 
-    _paintSprites(canvas, size, positions);
-    _paintParticles(canvas, size, positions);
+    // Stable by construction (`order` is a strictly increasing
+    // tie-breaker assigned in the engine's original draw order --
+    // parallax, then tiles, then sprites, then particles, each in
+    // ComponentStore order) -- ties at the same zIndex (the default:
+    // everything at 0) reproduce that original order exactly.
+    items.sort((a, b) {
+      final byZ = a.zIndex.compareTo(b.zIndex);
+      return byZ != 0 ? byZ : a.order.compareTo(b.order);
+    });
+
+    for (final item in items) {
+      item.paint(canvas);
+    }
   }
 
   @override
   bool shouldRepaint(covariant _EnginePainter oldDelegate) => true;
 
-  /// Draws every `Sprite`, batching as many as possible into one
-  /// `Canvas.drawAtlas` call per shared atlas image instead of a
-  /// `save`/`translate`/`scale`/`drawImageRect`/`restore` sequence per
-  /// sprite — meaningfully cheaper at sprite-heavy scenes, since
-  /// `drawAtlas` needs no per-sprite canvas state changes.
+  /// Collects one `_DrawItem` per shared-atlas batch (plus one per
+  /// non-batchable fallback sprite), grouped by `Sprite.zIndex` first so
+  /// items land in the right slot once `paint()` sorts everything —
+  /// batching only ever combines sprites that already share both a
+  /// `zIndex` and an atlas, so it can't smear a sprite across the wrong
+  /// z-slot.
   ///
-  /// `RSTransform` (what `drawAtlas` takes per sprite) only supports one
-  /// *positive, uniform* scale factor, not independent X/Y scale — so a
-  /// sprite with `scaleX != scaleY`, or a negative one (the standard way
-  /// `FacingSystem` flips a sprite horizontally), can't be expressed
-  /// that way and falls back to the original per-sprite `drawImageRect`
-  /// path instead. Batched sprites are grouped by atlas and drawn
-  /// first, one `drawAtlas` call per atlas; fallback sprites draw after,
-  /// each individually, in their original relative order — so sprites
-  /// on *different* atlases (or mixing batchable and non-batchable) can
-  /// end up in a different relative draw order than plain insertion
-  /// order would give. Harmless today (nothing in this engine has an
-  /// explicit z-index/layering concept beyond insertion order to begin
-  /// with), but worth knowing if two sprites' overlap ever looks wrong.
-  void _paintSprites(Canvas canvas, Size size, ComponentStore<Position> positions) {
+  /// Batching itself: `Canvas.drawAtlas` draws many sprites from one
+  /// source image in a single call with no per-sprite canvas state
+  /// changes — meaningfully cheaper than a `save`/`translate`/`scale`/
+  /// `drawImageRect`/`restore` sequence per sprite at sprite-heavy
+  /// scenes. `RSTransform` (what `drawAtlas` takes per sprite) only
+  /// supports one *positive, uniform* scale factor, not independent X/Y
+  /// scale — so a sprite with `scaleX != scaleY`, or a negative one (the
+  /// standard way `FacingSystem` flips a sprite horizontally), can't be
+  /// expressed that way and falls back to the original per-sprite
+  /// `drawImageRect` path instead.
+  int _collectSpriteItems(
+    List<_DrawItem> items,
+    int order,
+    Size size,
+    ComponentStore<Position> positions,
+  ) {
     final sprites = world.storeOf<Sprite>();
-    if (sprites.length == 0) return;
+    if (sprites.length == 0) return order;
 
-    final batchesByImage = <ui.Image, _SpriteBatch>{};
-    final fallbackIndices = <int>[];
-
+    final indicesByZ = <int, List<int>>{};
     for (var i = 0; i < sprites.length; i++) {
       final entity = sprites.entityAt(i);
       final sprite = sprites.denseAt(i);
       final pos = positions.get(entity);
       if (pos == null || !atlasRegistry.has(sprite.atlasId)) continue;
+      (indicesByZ[sprite.zIndex] ??= []).add(i);
+    }
 
-      if (sprite.scaleX != sprite.scaleY || sprite.scaleX <= 0) {
-        fallbackIndices.add(i);
-        continue;
+    for (final zEntry in indicesByZ.entries) {
+      final z = zEntry.key;
+      final batchesByImage = <ui.Image, _SpriteBatch>{};
+      final fallbackIndices = <int>[];
+
+      for (final i in zEntry.value) {
+        final entity = sprites.entityAt(i);
+        final sprite = sprites.denseAt(i);
+        if (sprite.scaleX != sprite.scaleY || sprite.scaleX <= 0) {
+          fallbackIndices.add(i);
+          continue;
+        }
+
+        final pos = positions.get(entity)!;
+        final atlas = atlasRegistry.resolve(sprite.atlasId);
+        final srcRect = atlas.regionFor(sprite.region);
+        final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+
+        final batch = batchesByImage.putIfAbsent(atlas.image, () => _SpriteBatch());
+        batch.transforms.add(RSTransform.fromComponents(
+          rotation: sprite.rotation,
+          scale: sprite.scaleX * camera.zoom,
+          anchorX: srcRect.width / 2,
+          anchorY: srcRect.height / 2,
+          translateX: screenPos.dx,
+          translateY: screenPos.dy,
+        ));
+        batch.rects.add(srcRect);
       }
 
-      final atlas = atlasRegistry.resolve(sprite.atlasId);
-      final srcRect = atlas.regionFor(sprite.region);
-      final screenPos = camera.worldToScreen(pos.x, pos.y, size);
-
-      final batch = batchesByImage.putIfAbsent(atlas.image, () => _SpriteBatch());
-      batch.transforms.add(RSTransform.fromComponents(
-        rotation: sprite.rotation,
-        scale: sprite.scaleX * camera.zoom,
-        anchorX: srcRect.width / 2,
-        anchorY: srcRect.height / 2,
-        translateX: screenPos.dx,
-        translateY: screenPos.dy,
-      ));
-      batch.rects.add(srcRect);
+      if (batchesByImage.isNotEmpty) {
+        items.add(_DrawItem(z, order++, (canvas) {
+          final paint = Paint();
+          for (final entry in batchesByImage.entries) {
+            canvas.drawAtlas(entry.key, entry.value.transforms, entry.value.rects, null, null, null, paint);
+          }
+        }));
+      }
+      for (final i in fallbackIndices) {
+        items.add(_DrawItem(
+          z,
+          order++,
+          (canvas) => _paintSpriteIndividually(canvas, size, positions, sprites, i),
+        ));
+      }
     }
-
-    final paint = Paint();
-    for (final entry in batchesByImage.entries) {
-      canvas.drawAtlas(entry.key, entry.value.transforms, entry.value.rects, null, null, null, paint);
-    }
-
-    for (final i in fallbackIndices) {
-      _paintSpriteIndividually(canvas, size, positions, sprites, i, paint);
-    }
+    return order;
   }
 
   void _paintSpriteIndividually(
@@ -270,7 +306,6 @@ class _EnginePainter extends CustomPainter {
     ComponentStore<Position> positions,
     ComponentStore<Sprite> sprites,
     int i,
-    Paint paint,
   ) {
     final entity = sprites.entityAt(i);
     final sprite = sprites.denseAt(i);
@@ -291,12 +326,13 @@ class _EnginePainter extends CustomPainter {
       width: srcRect.width,
       height: srcRect.height,
     );
-    canvas.drawImageRect(atlas.image, srcRect, destRect, paint);
+    canvas.drawImageRect(atlas.image, srcRect, destRect, Paint());
     canvas.restore();
   }
 
-  /// Draws every `Particle` (from `ParticleSystem`) on top of sprites —
-  /// the common case for hit sparks/dust/collect flair sitting above
+  /// Collects one `_DrawItem` per `Particle` (from `ParticleSystem`),
+  /// grouped by `Particle.zIndex` — defaults land after sprites, the
+  /// common case for hit sparks/dust/collect flair sitting above
   /// gameplay art rather than under it. A particle with its own
   /// `Sprite` component (the game attached one for a textured look)
   /// draws that region scaled by `Particle.scale`; otherwise a plain
@@ -305,9 +341,14 @@ class _EnginePainter extends CustomPainter {
   /// modulating the whole `drawImageRect` call, the standard Flutter
   /// trick for compositing an image at partial opacity without a
   /// `saveLayer` per particle.
-  void _paintParticles(Canvas canvas, Size size, ComponentStore<Position> positions) {
+  int _collectParticleItems(
+    List<_DrawItem> items,
+    int order,
+    Size size,
+    ComponentStore<Position> positions,
+  ) {
     final particles = world.storeOf<Particle>();
-    if (particles.length == 0) return;
+    if (particles.length == 0) return order;
 
     final sprites = world.storeOf<Sprite>();
     for (var i = 0; i < particles.length; i++) {
@@ -319,76 +360,88 @@ class _EnginePainter extends CustomPainter {
       final alpha = particle.alpha.clamp(0.0, 1.0);
       if (alpha <= 0 || particle.scale <= 0) continue;
 
-      final screenPos = camera.worldToScreen(pos.x, pos.y, size);
-      final sprite = sprites.get(entity);
-      if (sprite != null && atlasRegistry.has(sprite.atlasId)) {
-        final atlas = atlasRegistry.resolve(sprite.atlasId);
-        final srcRect = atlas.regionFor(sprite.region);
-        final destRect = ui.Rect.fromCenter(
-          center: screenPos,
-          width: srcRect.width * particle.scale * camera.zoom,
-          height: srcRect.height * particle.scale * camera.zoom,
-        );
-        canvas.drawImageRect(
-          atlas.image,
-          srcRect,
-          destRect,
-          Paint()..color = Color.fromRGBO(255, 255, 255, alpha),
-        );
-      } else {
-        final base = Color(particle.colorArgb);
-        canvas.drawCircle(
-          screenPos,
-          4 * particle.scale * camera.zoom,
-          Paint()..color = base.withValues(alpha: alpha * base.a),
-        );
-      }
+      items.add(_DrawItem(particle.zIndex, order++, (canvas) {
+        final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+        final sprite = sprites.get(entity);
+        if (sprite != null && atlasRegistry.has(sprite.atlasId)) {
+          final atlas = atlasRegistry.resolve(sprite.atlasId);
+          final srcRect = atlas.regionFor(sprite.region);
+          final destRect = ui.Rect.fromCenter(
+            center: screenPos,
+            width: srcRect.width * particle.scale * camera.zoom,
+            height: srcRect.height * particle.scale * camera.zoom,
+          );
+          canvas.drawImageRect(
+            atlas.image,
+            srcRect,
+            destRect,
+            Paint()..color = Color.fromRGBO(255, 255, 255, alpha),
+          );
+        } else {
+          final base = Color(particle.colorArgb);
+          canvas.drawCircle(
+            screenPos,
+            4 * particle.scale * camera.zoom,
+            Paint()..color = base.withValues(alpha: alpha * base.a),
+          );
+        }
+      }));
     }
+    return order;
   }
 
-  /// Draws every `ParallaxLayer`, first (behind tiles/sprites/particles).
-  /// Each layer's screen anchor scales the camera by `scrollFactorX`/`Y`
-  /// instead of using it 1:1 like `worldToScreen` does for regular
-  /// sprites — that scaled-down camera movement is the entire parallax
-  /// effect. `tileX`/`tileY` repeat the region across the viewport by
-  /// drawing it at every `_tileStarts` offset instead of once, so one
-  /// authored strip covers arbitrarily wide/tall scrolling.
-  void _paintParallaxLayers(Canvas canvas, Size size, ComponentStore<Position> positions) {
+  /// Collects one `_DrawItem` per `ParallaxLayer`, defaulting to before
+  /// tiles/sprites/particles (see `Sprite.zIndex`). Each layer's screen
+  /// anchor scales the camera by `scrollFactorX`/`Y` instead of using it
+  /// 1:1 like `worldToScreen` does for regular sprites — that scaled-
+  /// down camera movement is the entire parallax effect. `tileX`/`tileY`
+  /// repeat the region across the viewport by drawing it at every
+  /// `_tileStarts` offset instead of once, so one authored strip covers
+  /// arbitrarily wide/tall scrolling.
+  int _collectParallaxItems(
+    List<_DrawItem> items,
+    int order,
+    Size size,
+    ComponentStore<Position> positions,
+  ) {
     final layers = world.storeOf<ParallaxLayer>();
-    if (layers.length == 0) return;
+    if (layers.length == 0) return order;
 
     for (var i = 0; i < layers.length; i++) {
       final entity = layers.entityAt(i);
       final layer = layers.denseAt(i);
       if (!atlasRegistry.has(layer.atlasId)) continue;
 
-      final atlas = atlasRegistry.resolve(layer.atlasId);
-      final srcRect = atlas.regionFor(layer.region);
-      final tileWidth = srcRect.width * camera.zoom;
-      final tileHeight = srcRect.height * camera.zoom;
-      if (tileWidth <= 0 || tileHeight <= 0) continue;
+      items.add(_DrawItem(layer.zIndex, order++, (canvas) {
+        final atlas = atlasRegistry.resolve(layer.atlasId);
+        final srcRect = atlas.regionFor(layer.region);
+        final tileWidth = srcRect.width * camera.zoom;
+        final tileHeight = srcRect.height * camera.zoom;
+        if (tileWidth <= 0 || tileHeight <= 0) return;
 
-      final pos = positions.get(entity) ?? Position(0, 0);
-      final anchorX =
-          (pos.x - camera.x * layer.scrollFactorX) * camera.zoom + size.width / 2;
-      final anchorY =
-          (pos.y - camera.y * layer.scrollFactorY) * camera.zoom + size.height / 2;
+        final pos = positions.get(entity) ?? Position(0, 0);
+        final anchorX =
+            (pos.x - camera.x * layer.scrollFactorX) * camera.zoom + size.width / 2;
+        final anchorY =
+            (pos.y - camera.y * layer.scrollFactorY) * camera.zoom + size.height / 2;
 
-      final xs = layer.tileX ? _tileStarts(anchorX, tileWidth, size.width) : [anchorX];
-      final ys = layer.tileY ? _tileStarts(anchorY, tileHeight, size.height) : [anchorY];
+        final xs = layer.tileX ? _tileStarts(anchorX, tileWidth, size.width) : [anchorX];
+        final ys = layer.tileY ? _tileStarts(anchorY, tileHeight, size.height) : [anchorY];
 
-      final paint = Paint();
-      for (final y in ys) {
-        for (final x in xs) {
-          canvas.drawImageRect(
-            atlas.image,
-            srcRect,
-            Rect.fromLTWH(x, y, tileWidth, tileHeight),
-            paint,
-          );
+        final paint = Paint();
+        for (final y in ys) {
+          for (final x in xs) {
+            canvas.drawImageRect(
+              atlas.image,
+              srcRect,
+              Rect.fromLTWH(x, y, tileWidth, tileHeight),
+              paint,
+            );
+          }
         }
-      }
+      }));
     }
+    return order;
   }
 
   /// Every `tileSize`-spaced offset from at-or-before 0 up to
@@ -403,49 +456,70 @@ class _EnginePainter extends CustomPainter {
     return [for (var x = start; x < viewportSize; x += tileSize) x];
   }
 
-  /// Draws every non-empty tile of every `TileMap` in the world — this
-  /// was missing entirely until now: `TileMap` only ever fed collision
-  /// (`PlatformerSystem`/`TileCollisionSystem`), so a game using tiles
-  /// for its level geometry had physically correct but *invisible*
-  /// ground/platforms. Solid-colored rects only (no atlas lookup) since
-  /// tiles are level geometry, not sprites — a game wanting textured
-  /// tiles draws them as regular `Sprite` entities instead.
-  void _paintTileMaps(Canvas canvas, Size size, ComponentStore<Position> positions) {
+  /// Collects one `_DrawItem` per `TileMap`, grouped by `TileMap.zIndex`
+  /// (defaults to before sprites/particles, same as before this became
+  /// z-sortable) — draws every non-empty tile as a solid-colored rect
+  /// (no atlas lookup, since tiles are level geometry, not sprites; a
+  /// game wanting textured tiles draws them as regular `Sprite`
+  /// entities instead, or a foreground `TileMap` with a higher `zIndex`
+  /// for a mask/overhang layer).
+  int _collectTileMapItems(
+    List<_DrawItem> items,
+    int order,
+    Size size,
+    ComponentStore<Position> positions,
+  ) {
     final tileMaps = world.storeOf<TileMap>();
     for (var m = 0; m < tileMaps.length; m++) {
       final mapEntity = tileMaps.entityAt(m);
       final map = tileMaps.denseAt(m);
-      final origin = positions.get(mapEntity) ?? Position(0, 0);
 
-      for (var row = 0; row < map.rows; row++) {
-        for (var col = 0; col < map.cols; col++) {
-          final tileId = map.tileAt(col, row);
-          if (tileId == 0) continue;
+      items.add(_DrawItem(map.zIndex, order++, (canvas) {
+        final origin = positions.get(mapEntity) ?? Position(0, 0);
+        for (var row = 0; row < map.rows; row++) {
+          for (var col = 0; col < map.cols; col++) {
+            final tileId = map.tileAt(col, row);
+            if (tileId == 0) continue;
 
-          final left = origin.x + col * map.tileWidth;
-          final top = origin.y + row * map.tileHeight;
-          final screenPos = camera.worldToScreen(left, top, size);
-          final color = map.oneWayTileIds.contains(tileId)
-              ? const Color(0x8899CCFF)
-              : const Color(0xFF4A4A4A);
+            final left = origin.x + col * map.tileWidth;
+            final top = origin.y + row * map.tileHeight;
+            final screenPos = camera.worldToScreen(left, top, size);
+            final color = map.oneWayTileIds.contains(tileId)
+                ? const Color(0x8899CCFF)
+                : const Color(0xFF4A4A4A);
 
-          canvas.drawRect(
-            Rect.fromLTWH(
-              screenPos.dx,
-              screenPos.dy,
-              map.tileWidth * camera.zoom,
-              map.tileHeight * camera.zoom,
-            ),
-            Paint()..color = color,
-          );
+            canvas.drawRect(
+              Rect.fromLTWH(
+                screenPos.dx,
+                screenPos.dy,
+                map.tileWidth * camera.zoom,
+                map.tileHeight * camera.zoom,
+              ),
+              Paint()..color = color,
+            );
+          }
         }
-      }
+      }));
     }
+    return order;
   }
 }
 
+/// One item in the z-sorted draw list `_EnginePainter.paint` builds —
+/// see its doc comment and `Sprite.zIndex` for the full ordering rule.
+/// [order] is a tie-breaker for items sharing the same [zIndex],
+/// assigned in the engine's original fixed draw order (parallax, tiles,
+/// sprites, particles) so the common case (everything at the default
+/// zIndex 0) renders identically to before z-index existed.
+class _DrawItem {
+  final int zIndex;
+  final int order;
+  final void Function(Canvas canvas) paint;
+  _DrawItem(this.zIndex, this.order, this.paint);
+}
+
 /// One `Canvas.drawAtlas` call's worth of sprites sharing a source
-/// image — see `_EnginePainter._paintSprites`.
+/// image — see `_EnginePainter._collectSpriteItems`.
 class _SpriteBatch {
   final transforms = <RSTransform>[];
   final rects = <Rect>[];

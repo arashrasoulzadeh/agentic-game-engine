@@ -27,6 +27,11 @@ class ParticleEmitter {
   double endAlpha;
   int colorArgb;
 
+  /// `Particle.zIndex` copied onto every particle this emitter spawns —
+  /// see `Sprite.zIndex` (in `engine_flutter`) for the full draw-order
+  /// rule this participates in.
+  int zIndex;
+
   /// Fractional particles owed to the next tick(s) from [rate] — internal
   /// bookkeeping so a rate like 2.5/sec doesn't lose the ".5" every tick.
   double accumulator;
@@ -45,6 +50,7 @@ class ParticleEmitter {
     this.startAlpha = 1,
     this.endAlpha = 0,
     this.colorArgb = 0xFFFFFFFF,
+    this.zIndex = 0,
     this.accumulator = 0,
   });
 
@@ -62,6 +68,7 @@ class ParticleEmitter {
         'startAlpha': startAlpha,
         'endAlpha': endAlpha,
         'colorArgb': colorArgb,
+        'zIndex': zIndex,
         'accumulator': accumulator,
       };
 
@@ -79,6 +86,7 @@ class ParticleEmitter {
         startAlpha: (json['startAlpha'] as num?)?.toDouble() ?? 1,
         endAlpha: (json['endAlpha'] as num?)?.toDouble() ?? 0,
         colorArgb: (json['colorArgb'] as num?)?.toInt() ?? 0xFFFFFFFF,
+        zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
         accumulator: (json['accumulator'] as num?)?.toDouble() ?? 0,
       );
 }

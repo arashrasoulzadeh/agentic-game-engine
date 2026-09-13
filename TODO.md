@@ -201,19 +201,40 @@ top to bottom — not strict, adjust as dependencies emerge.
       dispatch — a direct, inlinable call site instead of the slower
       dynamic-invocation path `Function.apply` goes through.
       Behavior-preserving (all existing tests pass unchanged).
-- [ ] **To improve**: `EngineView`'s sprite pass (`_EnginePainter.paint`
-      in `packages/engine_flutter/lib/src/engine_view.dart`) does one
+- [x] **Fixed**: `EngineView`'s sprite pass did one
       `canvas.save()`/`translate()`/`scale()`/`drawImageRect()`/
-      `restore()` *per sprite*, every frame. `Canvas.drawAtlas` (or
-      grouping sprites by shared atlas and building one `RSTransform`
-      list) draws many sprites from the same source image in a single
-      call with no per-sprite save/restore — the standard Flutter
-      technique for sprite-heavy 2D scenes. Worth an
-      `engine_flutter`-side benchmark (none exists yet — these need a
-      `flutter test`-based harness, see `engine_platformer/benchmark`'s
-      README note on why) before committing to the rewrite, since it
-      only pays off once sprite counts get large enough that
-      save/restore overhead dominates over the actual blit cost.
+      `restore()` *per sprite*, every frame. Sprites with uniform
+      positive scale (the common case) now batch into one
+      `Canvas.drawAtlas` call per shared atlas image instead — no
+      per-sprite canvas state changes. `RSTransform` (what `drawAtlas`
+      takes per sprite) only supports one positive, uniform scale
+      factor, so a sprite with `scaleX != scaleY` or a negative scale
+      (the standard `FacingSystem` horizontal-flip pattern) falls back
+      to the original per-sprite path. `sprite_rendering_test.dart`
+      covers both paths and mixed-atlas rendering; 100% coverage held.
+
+## Features (engine_flutter)
+
+- [x] Z-index / draw order: `Sprite`/`ParallaxLayer`/`TileMap`/
+      `Particle` (via `ParticleEmitter.zIndex`) all gained a `zIndex`
+      (int, default 0) — `EngineView` now sorts every renderable by it
+      before drawing, with the engine's original fixed order (parallax,
+      tiles, sprites, particles) as the tie-break so a game that never
+      sets `zIndex` renders identically to before. Sprite atlas batching
+      (the `drawAtlas` item above) still applies *within* a `zIndex`.
+      See `engine_flutter`'s README "Draw order (z-index)" section.
+      `z_index_test.dart` covers defaults, round-trips, and actual
+      reordering (a negative-`zIndex` sprite drawing behind a
+      default-`zIndex` `ParallaxLayer`/`TileMap`); 100% coverage held
+      across `engine_core`/`engine_flutter`.
+- [ ] **Not done — real masking/clipping**: z-index only reorders draw
+      *calls*; it has no clip-path or blend-mode primitive, so it can't
+      express "this shape cuts a hole in what's behind it" or "this
+      layer only shows through a mask shape." A real masking feature
+      would need its own API (e.g. a `Mask`/`ClipShape` component and a
+      `Canvas.clipPath`/`saveLayer`+`BlendMode.dstIn` pass in
+      `EngineView`) — worth doing once there's a concrete use case
+      (e.g. a fog-of-war reveal, a vignette, a wipe transition).
 - [ ] **To evaluate**: `WorldView.nearestWithPosition`
       (`packages/engine_core/lib/src/world_view.dart`) is a linear scan
       over every `Position`, called potentially once per AI-driven

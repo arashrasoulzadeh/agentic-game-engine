@@ -2,8 +2,9 @@
 /// scrolls at a fraction of the camera's movement instead of moving
 /// 1:1 with it — the classic layered-background effect (distant
 /// mountains barely move, near clouds move more, the actual level
-/// moves fully). `EngineView` draws every `ParallaxLayer` first, behind
-/// tiles and sprites.
+/// moves fully). `EngineView` draws every `ParallaxLayer` first by
+/// default (behind tiles/sprites/particles) — see [zIndex] to change
+/// that.
 ///
 /// [scrollFactorX]/[scrollFactorY] are the fraction of camera movement
 /// this layer tracks: `0` means fixed to the screen regardless of
@@ -27,6 +28,13 @@ class ParallaxLayer {
   bool tileX;
   bool tileY;
 
+  /// Draw order relative to every other renderable — see `Sprite.zIndex`
+  /// for the full rule. Left at the default (0, tying with everything
+  /// else), a `ParallaxLayer` still draws behind tiles/sprites/particles
+  /// because of the engine's original-order tie-break, so most games
+  /// never need to touch this.
+  int zIndex;
+
   ParallaxLayer(
     this.atlasId,
     this.region, {
@@ -34,6 +42,7 @@ class ParallaxLayer {
     this.scrollFactorY = 0,
     this.tileX = true,
     this.tileY = false,
+    this.zIndex = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -43,6 +52,7 @@ class ParallaxLayer {
         'scrollFactorY': scrollFactorY,
         'tileX': tileX,
         'tileY': tileY,
+        'zIndex': zIndex,
       };
 
   factory ParallaxLayer.fromJson(Map<String, dynamic> json) => ParallaxLayer(
@@ -52,5 +62,6 @@ class ParallaxLayer {
         scrollFactorY: (json['scrollFactorY'] as num?)?.toDouble() ?? 0,
         tileX: json['tileX'] as bool? ?? true,
         tileY: json['tileY'] as bool? ?? false,
+        zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
       );
 }

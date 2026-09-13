@@ -13,6 +13,15 @@ class TileMap {
   final Set<int> solidTileIds;
   final Set<int> oneWayTileIds;
 
+  /// Draw order relative to every other renderable (`Sprite`,
+  /// `ParallaxLayer`, another `TileMap`, `Particle`) — see
+  /// `engine_flutter`'s `Sprite.zIndex` for the full rule. Useful for a
+  /// second, foreground `TileMap` (decorative overhang tiles, a mask
+  /// layer) drawn above characters instead of below them; collision
+  /// still comes from `solidTileIds`/`oneWayTileIds` regardless of
+  /// `zIndex`, which only affects rendering.
+  final int zIndex;
+
   TileMap({
     required this.cols,
     required this.rows,
@@ -21,6 +30,7 @@ class TileMap {
     required this.tiles,
     Set<int>? solidTileIds,
     Set<int>? oneWayTileIds,
+    this.zIndex = 0,
   })  : solidTileIds = solidTileIds ?? <int>{},
         oneWayTileIds = oneWayTileIds ?? <int>{} {
     if (tiles.length != cols * rows) {
@@ -45,6 +55,7 @@ class TileMap {
         'tiles': tiles,
         'solidTileIds': solidTileIds.toList(),
         'oneWayTileIds': oneWayTileIds.toList(),
+        'zIndex': zIndex,
       };
 
   factory TileMap.fromJson(Map<String, dynamic> json) => TileMap(
@@ -55,5 +66,6 @@ class TileMap {
         tiles: (json['tiles'] as List).cast<int>(),
         solidTileIds: ((json['solidTileIds'] as List?) ?? const []).cast<int>().toSet(),
         oneWayTileIds: ((json['oneWayTileIds'] as List?) ?? const []).cast<int>().toSet(),
+        zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
       );
 }

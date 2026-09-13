@@ -76,6 +76,7 @@ class ParticleSystem implements System {
             startAlpha: emitter.startAlpha,
             endAlpha: emitter.endAlpha,
             colorArgb: emitter.colorArgb,
+            zIndex: emitter.zIndex,
           ),
         );
   }

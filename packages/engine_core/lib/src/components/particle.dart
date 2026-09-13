@@ -14,6 +14,12 @@ class Particle {
   final double endAlpha;
   final int colorArgb;
 
+  /// Draw order relative to every other renderable (`Sprite`,
+  /// `ParallaxLayer`, `TileMap`, another `Particle`) — see
+  /// `engine_flutter`'s `Sprite.zIndex` for the full rule. Copied from
+  /// the spawning `ParticleEmitter.zIndex` by `ParticleSystem`.
+  final int zIndex;
+
   Particle({
     this.age = 0,
     required this.lifetime,
@@ -22,6 +28,7 @@ class Particle {
     this.startAlpha = 1,
     this.endAlpha = 0,
     this.colorArgb = 0xFFFFFFFF,
+    this.zIndex = 0,
   });
 
   double get progress => lifetime <= 0 ? 1 : (age / lifetime).clamp(0.0, 1.0);
@@ -37,6 +44,7 @@ class Particle {
         'startAlpha': startAlpha,
         'endAlpha': endAlpha,
         'colorArgb': colorArgb,
+        'zIndex': zIndex,
       };
 
   factory Particle.fromJson(Map<String, dynamic> json) => Particle(
@@ -47,5 +55,6 @@ class Particle {
         startAlpha: (json['startAlpha'] as num?)?.toDouble() ?? 1,
         endAlpha: (json['endAlpha'] as num?)?.toDouble() ?? 0,
         colorArgb: (json['colorArgb'] as num?)?.toInt() ?? 0xFFFFFFFF,
+        zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
       );
 }
