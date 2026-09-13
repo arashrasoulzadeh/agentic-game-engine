@@ -100,6 +100,15 @@ class PlatformerController {
   /// `jumpCutMultiplier`. Not meant to be set from game code.
   bool jumpHeldLastTick;
 
+  /// Seconds remaining of "hitstun" — while `> 0`,
+  /// `PlatformerInputSystem` ignores this entity's input entirely
+  /// (movement, jump, dash), so a knockback impulse from `damageEntity`
+  /// isn't immediately overridden by the player still holding a
+  /// direction. Counted down by `HitstunSystem`. Set via
+  /// `damageEntity`'s `hitstunSeconds` parameter, or directly for a
+  /// custom hit-reaction of your own.
+  double hitstunSeconds;
+
   /// Last nonzero horizontal movement direction (`1` or `-1`) —
   /// updated by `PlatformerInputSystem`, read by `DashSystem` to know
   /// which way to dash when there's no horizontal input held down.
@@ -126,6 +135,7 @@ class PlatformerController {
     this.dashTimeRemaining = 0,
     this.dashUsed = false,
     this.jumpHeldLastTick = false,
+    this.hitstunSeconds = 0,
     this.facingSign = 1,
   });
 
@@ -150,6 +160,7 @@ class PlatformerController {
         'dashTimeRemaining': dashTimeRemaining,
         'dashUsed': dashUsed,
         'jumpHeldLastTick': jumpHeldLastTick,
+        'hitstunSeconds': hitstunSeconds,
         'facingSign': facingSign,
       };
 
@@ -175,6 +186,7 @@ class PlatformerController {
         dashTimeRemaining: (json['dashTimeRemaining'] as num?)?.toDouble() ?? 0,
         dashUsed: json['dashUsed'] as bool? ?? false,
         jumpHeldLastTick: json['jumpHeldLastTick'] as bool? ?? false,
+        hitstunSeconds: (json['hitstunSeconds'] as num?)?.toDouble() ?? 0,
         facingSign: (json['facingSign'] as num?)?.toDouble() ?? 1,
       );
 }

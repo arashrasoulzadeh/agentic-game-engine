@@ -27,6 +27,7 @@ void main() {
       'dash',
       'collision',
       'health',
+      'hitstun',
       'healthHud',
       'projectile',
       'facing',
@@ -48,6 +49,7 @@ void main() {
       'dash',
       'collision',
       'health',
+      'hitstun',
       'healthHud',
       'projectile',
       'facing',
@@ -69,6 +71,7 @@ void main() {
       'dash',
       'collision',
       'health',
+      'hitstun',
       'healthHud',
       'projectile',
     ]);

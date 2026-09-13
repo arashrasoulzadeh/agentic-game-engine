@@ -14,6 +14,11 @@ import 'platformer_controller.dart';
 /// Bindings default to `InputController.defaultBindings()`'s action
 /// names (`"left"`/`"right"`/`"jump"`) — pass your own if you rebound
 /// `InputController`.
+///
+/// Ignores all input entirely while `PlatformerController.hitstunSeconds
+/// > 0` — a knockback impulse from `damageEntity` would otherwise be
+/// overridden the very next tick by whatever direction the player still
+/// happens to be holding.
 class PlatformerInputSystem implements System {
   final EntityId entity;
   final double moveSpeed;
@@ -45,12 +50,14 @@ class PlatformerInputSystem implements System {
     final vel = world.storeOf<Velocity>().get(entity);
     if (input == null || vel == null) return;
 
+    final controller = world.storeOf<PlatformerController>().get(entity);
+    if (controller != null && controller.hitstunSeconds > 0) return;
+
     var vx = 0.0;
     if (input.isPressed(leftAction)) vx -= moveSpeed;
     if (input.isPressed(rightAction)) vx += moveSpeed;
     vel.x = vx;
 
-    final controller = world.storeOf<PlatformerController>().get(entity);
     if (controller != null && vx != 0) {
       controller.facingSign = vx.sign;
     }

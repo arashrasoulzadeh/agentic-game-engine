@@ -190,8 +190,30 @@ belongs in.
 
 - [ ] Ladders/climbing, conveyors, per-tile friction: collision is
       binary solid/one-way/slope today — no variable surface behavior.
-- [ ] Hitstun/knockback on damage: `damageEntity` changes health but
-      nothing pushes the entity back or freezes input briefly.
+- [x] Hitstun/knockback on damage: `damageEntity` gained optional
+      `source`/`knockbackSpeed`/`hitstunSeconds` params (all `0`/`null`
+      by default — disabled, original behavior unchanged). Knockback
+      pushes the damaged entity directly away from `source` (both need
+      a `Position`, the entity needs a `Velocity`; a zero-distance pair
+      is skipped rather than dividing by zero). Hitstun sets a new
+      `PlatformerController.hitstunSeconds` (counted down by a new tiny
+      `HitstunSystem`, same one-job split as `HealthSystem`/
+      `Health.invincibleSeconds`) that `PlatformerInputSystem` now
+      checks first thing and, while `> 0`, ignores that entity's input
+      entirely — movement, jump, and dash — so a knockback impulse
+      isn't immediately overridden by whatever direction the player
+      still happens to be holding. A no-op for an entity with no
+      `PlatformerController` (e.g. a flying/AI-only enemy), matching
+      this package's established "harmless if the component isn't
+      there" pattern. `dealDamageOnTouch` forwards both new params and
+      automatically uses the touched hazard as the knockback source.
+      Verified: 12 new tests across `combat_test.dart` (knockback
+      direction/magnitude, disabled-by-default, zero-distance no-op,
+      `dealDamageOnTouch`'s automatic source, hitstun set/disabled/
+      no-controller no-op, `HitstunSystem` countdown,
+      `PlatformerInputSystem` freezing then resuming input) plus
+      round-trip coverage in `component_serialization_test.dart`; full
+      `engine_platformer` suite green, analyzer clean.
 - [ ] Steering/avoidance among multiple AI: `PatrolBehavior`/
       `FollowBehavior`/`PathFollowBehavior` don't avoid each other, so
       packs of enemies overlap/stack.

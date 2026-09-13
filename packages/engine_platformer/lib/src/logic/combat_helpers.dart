@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:engine_core/engine_core.dart';
 
+import '../physics/platformer_controller.dart';
 import 'health.dart';
 
 /// Emitted by [damageEntity] the tick an entity's `Health.current`
@@ -21,11 +24,25 @@ class DeathEvent {
 ///
 /// A no-op (returns `false`) if [entity] has no `Health` component —
 /// safe to call from a collision handler without checking first.
+///
+/// [knockbackSpeed] (`0` default — disabled) pushes [entity] away from
+/// [source] on a hit: both need a `Position` and [entity] needs a
+/// `Velocity` for this to do anything, and a zero-distance pair (same
+/// position) is skipped rather than dividing by zero. [hitstunSeconds]
+/// (`0` default — disabled) sets `PlatformerController.hitstunSeconds`
+/// on [entity] if it has one, freezing `PlatformerInputSystem`'s input
+/// handling for that entity until it counts down — a no-op for an
+/// entity with no `PlatformerController` (e.g. a flying/AI-only
+/// enemy), same "harmless if the component isn't there" pattern the
+/// rest of this package uses.
 bool damageEntity(
   World world,
   EntityId entity,
   double amount, {
   double invincibilitySeconds = 0.5,
+  EntityId? source,
+  double knockbackSpeed = 0,
+  double hitstunSeconds = 0,
 }) {
   final health = world.storeOf<Health>().get(entity);
   if (health == null || health.isInvincible || health.isDead) return false;
@@ -35,6 +52,26 @@ bool damageEntity(
   if (health.isDead) {
     world.events.emit(DeathEvent(entity));
   }
+
+  if (knockbackSpeed > 0 && source != null) {
+    final vel = world.storeOf<Velocity>().get(entity);
+    final entityPos = world.storeOf<Position>().get(entity);
+    final sourcePos = world.storeOf<Position>().get(source);
+    if (vel != null && entityPos != null && sourcePos != null) {
+      final dx = entityPos.x - sourcePos.x;
+      final dy = entityPos.y - sourcePos.y;
+      final dist = sqrt(dx * dx + dy * dy);
+      if (dist > 0) {
+        vel.x = dx / dist * knockbackSpeed;
+        vel.y = dy / dist * knockbackSpeed;
+      }
+    }
+  }
+
+  if (hitstunSeconds > 0) {
+    world.storeOf<PlatformerController>().get(entity)?.hitstunSeconds = hitstunSeconds;
+  }
+
   return true;
 }
 
@@ -52,13 +89,28 @@ void healEntity(World world, EntityId entity, double amount) {
 /// specific (damage only under some condition, different amounts per
 /// hazard), call `damageEntity` directly from your own collision
 /// listener instead; this helper doesn't try to cover every case.
+///
+/// [knockbackSpeed]/[hitstunSeconds] forward straight to [damageEntity]
+/// — whichever hazard was actually touched is used as the knockback
+/// source, so the pushed entity moves away from *that* spike/enemy,
+/// not some fixed direction.
 void dealDamageOnTouch(
   World world,
   Set<EntityId> hazards,
   double amount, {
   double invincibilitySeconds = 0.5,
+  double knockbackSpeed = 0,
+  double hitstunSeconds = 0,
 }) {
   world.onCollisionWithAny(hazards, (self, other) {
-    damageEntity(world, other, amount, invincibilitySeconds: invincibilitySeconds);
+    damageEntity(
+      world,
+      other,
+      amount,
+      invincibilitySeconds: invincibilitySeconds,
+      source: self,
+      knockbackSpeed: knockbackSpeed,
+      hitstunSeconds: hitstunSeconds,
+    );
   });
 }

@@ -45,6 +45,11 @@ item at a time.
   `SaveVersionException` on an unhandled version mismatch instead of
   silently loading wrong-shaped data. Pre-existing (unversioned) saves
   still load, read as version `1`.
+- **Hitstun/knockback**: `damageEntity`/`dealDamageOnTouch` gained
+  opt-in `knockbackSpeed` (pushes the damaged entity away from a
+  `source`) and `hitstunSeconds` (freezes `PlatformerInputSystem`'s
+  input handling for that entity via a new
+  `PlatformerController.hitstunSeconds` + `HitstunSystem`).
 
 ### Fully-fledged platformer engine
 

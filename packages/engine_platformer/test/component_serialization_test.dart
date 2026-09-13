@@ -50,6 +50,14 @@ void main() {
     expect(restored.jumpHeldLastTick, isTrue);
   });
 
+  test('PlatformerController round-trips hitstunSeconds', () {
+    final restored = PlatformerController.fromJson(
+      PlatformerController(hitstunSeconds: 0.4).toJson(),
+    );
+    expect(restored.hitstunSeconds, 0.4);
+    expect(PlatformerController.fromJson({}).hitstunSeconds, 0);
+  });
+
   test('PlatformBody round-trips through toJson/fromJson', () {
     final restored = PlatformBody.fromJson(PlatformBody(50, 10, oneWay: true).toJson());
     expect(restored.width, 50);

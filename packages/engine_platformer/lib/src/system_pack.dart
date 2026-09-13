@@ -6,6 +6,7 @@ import 'rendering/facing_system.dart';
 import 'physics/gravity_system.dart';
 import 'ui/health_hud_system.dart';
 import 'logic/health_system.dart';
+import 'physics/hitstun_system.dart';
 import 'physics/jump_system.dart';
 import 'rendering/movement_animation_system.dart';
 import 'physics/platformer_input_system.dart';
@@ -30,7 +31,8 @@ import 'physics/tile_collision_system.dart';
 ///
 /// Includes `HealthSystem` (ticks down `Health.invincibleSeconds` —
 /// harmless even if nothing in your game has a `Health` component yet),
-/// `HealthHudSystem` (syncs any `HudBar` wired up via
+/// `HitstunSystem` (ticks down `PlatformerController.hitstunSeconds`,
+/// same reasoning), `HealthHudSystem` (syncs any `HudBar` wired up via
 /// `spawnHealthHudBar`/`HealthHudLink` — same "harmless if unused"
 /// reasoning), and `ProjectileSystem` (ages/expires `Projectile`s, same
 /// reasoning again). Damage/death/respawn themselves, and
@@ -64,6 +66,7 @@ void installPlatformerSystems(
   world.addSystem(DashSystem());
   world.addSystem(CollisionSystem());
   world.addSystem(HealthSystem());
+  world.addSystem(HitstunSystem());
   world.addSystem(HealthHudSystem());
   world.addSystem(ProjectileSystem());
   if (includeAnimation) {
