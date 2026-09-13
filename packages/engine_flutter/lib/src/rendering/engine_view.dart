@@ -11,6 +11,7 @@ import 'sprite.dart';
 // name, which `package:flutter/widgets.dart` (imported above) already
 // brings into scope.
 import 'hud_bar.dart';
+import 'nine_slice_sprite.dart';
 import 'text.dart' as txt;
 import 'debug_memory.dart';
 import '../input/input.dart';
@@ -244,7 +245,8 @@ class _EnginePainter extends CustomPainter {
     order = _collectSpriteItems(items, order, size, positions);
     order = _collectParticleItems(items, order, size, positions);
     order = _collectTextItems(items, order, size, positions);
-    _collectHudBarItems(items, order, positions);
+    order = _collectHudBarItems(items, order, positions);
+    _collectNineSliceItems(items, order, positions);
 
     // Stable by construction (`order` is a strictly increasing
     // tie-breaker assigned in the engine's original draw order --
@@ -717,6 +719,60 @@ class _EnginePainter extends CustomPainter {
         canvas.drawRect(rect, Paint()..color = Color(bar.backgroundColorArgb));
         final fillRect = Rect.fromLTWH(pos.x, pos.y, bar.width * bar.fraction, bar.height);
         canvas.drawRect(fillRect, Paint()..color = Color(bar.fillColorArgb));
+      }));
+    }
+    return order;
+  }
+
+  /// Collects one `_DrawItem` per `NineSliceSprite` — always screen
+  /// space, same reasoning as `HudBar`. Draws 9 `drawImageRect` calls
+  /// (corners at native size, edges/center stretched) rather than
+  /// `Canvas.drawImageNine`, since that method always nine-slices the
+  /// *whole* source image with no sub-rect parameter — useless against
+  /// a shared atlas where the region is one packed rect within a much
+  /// bigger image. A destination cell that would come out zero or
+  /// negative size (e.g. `width`/`height` smaller than the insets sum
+  /// to) is skipped rather than handed to `drawImageRect`.
+  int _collectNineSliceItems(
+    List<_DrawItem> items,
+    int order,
+    ComponentStore<Position> positions,
+  ) {
+    final sprites = world.storeOf<NineSliceSprite>();
+    for (var i = 0; i < sprites.length; i++) {
+      final entity = sprites.entityAt(i);
+      final nine = sprites.denseAt(i);
+      final pos = positions.get(entity);
+      if (pos == null || !atlasRegistry.has(nine.atlasId)) continue;
+
+      items.add(_DrawItem(nine.zIndex, order++, (canvas) {
+        final atlas = atlasRegistry.resolve(nine.atlasId);
+        final src = atlas.regionFor(nine.region);
+
+        final srcXs = [src.left, src.left + nine.insetLeft, src.right - nine.insetRight, src.right];
+        final srcYs = [src.top, src.top + nine.insetTop, src.bottom - nine.insetBottom, src.bottom];
+        final dstXs = [
+          pos.x,
+          pos.x + nine.insetLeft,
+          pos.x + nine.width - nine.insetRight,
+          pos.x + nine.width,
+        ];
+        final dstYs = [
+          pos.y,
+          pos.y + nine.insetTop,
+          pos.y + nine.height - nine.insetBottom,
+          pos.y + nine.height,
+        ];
+
+        final paint = Paint();
+        for (var col = 0; col < 3; col++) {
+          for (var row = 0; row < 3; row++) {
+            final srcRect = Rect.fromLTRB(srcXs[col], srcYs[row], srcXs[col + 1], srcYs[row + 1]);
+            final dstRect = Rect.fromLTRB(dstXs[col], dstYs[row], dstXs[col + 1], dstYs[row + 1]);
+            if (dstRect.width <= 0 || dstRect.height <= 0) continue;
+            canvas.drawImageRect(atlas.image, srcRect, dstRect, paint);
+          }
+        }
       }));
     }
     return order;

@@ -2,6 +2,7 @@ import 'package:engine_core/engine_core.dart';
 
 import 'rendering/animation.dart';
 import 'rendering/hud_bar.dart';
+import 'rendering/nine_slice_sprite.dart';
 import 'rendering/parallax_layer.dart';
 import 'rendering/sprite.dart';
 import 'rendering/text.dart';
@@ -40,5 +41,10 @@ void registerFlutterComponents(World world) {
     'hudBar',
     (h) => h.toJson(),
     HudBar.fromJson,
+  );
+  world.components.register<NineSliceSprite>(
+    'nineSliceSprite',
+    (n) => n.toJson(),
+    NineSliceSprite.fromJson,
   );
 }

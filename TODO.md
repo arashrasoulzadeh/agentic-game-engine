@@ -198,8 +198,30 @@ belongs in.
       full existing test still passes unchanged. Also verified visually
       in the browser (not just unit tests): `test_game`'s real level
       still renders its floor/platforms/staircase correctly.
-- [ ] 9-slice sprites: needed for resizable UI panels/dialog boxes;
-      `Sprite` is fixed-region only today.
+- [x] 9-slice sprites: new `NineSliceSprite` component (`engine_flutter`)
+      — an atlas region split into a 3×3 grid by
+      `insetLeft`/`insetTop`/`insetRight`/`insetBottom`, corners at
+      native size, edges/center stretched to fill `width`/`height`.
+      Always screen space, same "no concrete world-space use case yet"
+      reasoning `HudBar` already documents. Drawn as 9 individual
+      `Canvas.drawImageRect` calls rather than
+      `Canvas.drawImageNine` — checked, and that method always
+      nine-slices the *whole* source image with no sub-rect parameter,
+      useless against one packed region within a shared atlas image. A
+      destination cell that would come out zero/negative size (e.g.
+      `width`/`height` smaller than the insets sum to) is skipped rather
+      than handed to `drawImageRect`. Verified: 8 new tests in
+      `nine_slice_sprite_test.dart` (round-trip, defaults, renders
+      without crashing, the degenerate-small-size skip case, missing-
+      atlas/missing-Position graceful skips); full `engine_flutter`
+      suite green, analyzer clean. Also verified visually in the
+      browser: rendered at the correct position/size in `test_game`
+      (reverted after, gitignored) — though with the test atlas's flat-
+      colored region, 9-slice's actual distinguishing feature (crisp
+      corners vs. stretched edges) wasn't visually distinguishable from
+      a plain scaled rect, since there's no border art in that test
+      asset to show it off; the slicing math itself is what the unit
+      tests verify.
 - [ ] Fixed-timestep + render interpolation: physics and rendering
       currently share one `dt` — smooth motion at low/uneven frame
       rates wants these decoupled.

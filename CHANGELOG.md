@@ -59,6 +59,9 @@ item at a time.
   `Camera.screenToWorld`), instead of every tile in the map every
   frame — render cost now scales with visible tiles, not total map
   size.
+- **9-slice sprites**: new `NineSliceSprite` component — a resizable
+  UI panel/dialog-box background from one atlas region, corners at
+  native size, edges/center stretched to fill.
 
 ### Fully-fledged platformer engine
 

@@ -2,6 +2,7 @@ export 'src/audio/audio_manager.dart';
 export 'src/rendering/camera.dart';
 export 'src/rendering/animation.dart';
 export 'src/rendering/hud_bar.dart';
+export 'src/rendering/nine_slice_sprite.dart';
 export 'src/rendering/parallax_layer.dart';
 export 'src/rendering/sprite.dart';
 export 'src/rendering/text.dart';
