@@ -89,6 +89,11 @@ JSON-serializable app settings, loaded from a bundled asset:
 }
 ```
 
+`showFpsOverlay` shows a top-left debug panel (not just fps despite the
+name): fps, tick count, live entity/sprite/particle counts, and
+resident memory where available (not on web — `dart:io` has no memory
+API there, so that line is simply omitted).
+
 `orientation` is one of `"portrait"`, `"landscape"`, `"auto"` —
 **note: this only has any effect on Android/iOS**; browsers ignore
 `SystemChrome.setPreferredOrientations` entirely, so on web the

@@ -55,7 +55,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
 
-    expect(find.textContaining('fps:'), findsOneWidget);
+    final text = tester.widget<Text>(find.textContaining('fps:')).data!;
+    expect(text, contains('fps:'));
+    expect(text, contains('tick:'));
+    expect(text, contains('entities:'));
+    expect(text, contains('sprites:'));
+    expect(text, contains('particles:'));
   });
 
   testWidgets('cameraFollowEntity moves the camera toward that entity\'s Position',
