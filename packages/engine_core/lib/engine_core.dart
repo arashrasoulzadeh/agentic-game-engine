@@ -10,6 +10,7 @@ export 'src/components/collider.dart';
 export 'src/components/particle.dart';
 export 'src/components/particle_emitter.dart';
 export 'src/components/position.dart';
+export 'src/components/room_exit.dart';
 export 'src/components/tile_map.dart';
 export 'src/components/tween.dart';
 export 'src/components/velocity.dart';
@@ -34,6 +35,7 @@ import 'src/components/collider.dart';
 import 'src/components/particle.dart';
 import 'src/components/particle_emitter.dart';
 import 'src/components/position.dart';
+import 'src/components/room_exit.dart';
 import 'src/components/tile_map.dart';
 import 'src/components/tween.dart';
 import 'src/components/velocity.dart';
@@ -79,6 +81,11 @@ void registerCoreComponents(World world) {
     'button',
     (b) => b.toJson(),
     Button.fromJson,
+  );
+  world.components.register<RoomExit>(
+    'roomExit',
+    (r) => r.toJson(),
+    RoomExit.fromJson,
   );
   world.components.register<TileMap>(
     'tileMap',
