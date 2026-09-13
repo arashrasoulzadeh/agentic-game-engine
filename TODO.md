@@ -87,10 +87,10 @@ top to bottom — not strict, adjust as dependencies emerge.
 - [x] Checkpoint/respawn: `Checkpoint`/`LastCheckpoint` components,
       `trackCheckpoints`, `respawnPlayer`/`respawnOnDeath` — resets
       position/velocity/health to the last touched checkpoint.
-- [ ] Collectible/inventory helpers: pickup helpers (coins, keys,
-      power-ups) building on the existing `onCollisionWithAny`/
-      `dealDamageOnTouch`-style collision helpers, plus a simple
-      `Inventory` component (item id -> count) a player can carry.
+- [x] Collectible/inventory helpers: `Inventory` component (item id ->
+      count), `collectItem`/`dealPickupOnTouch` helpers (mirroring
+      `damageEntity`/`dealDamageOnTouch`'s pattern) + `ItemCollectedEvent`.
+      `spawnPlayer` grows an optional `startingInventory`.
 - [ ] Update `engine_cli`'s `default_game` template to use
       `engine_platformer` (spawnPlayer + a small tile level) instead of
       the current bouncing-circle stress-test demo, now that a real

@@ -132,6 +132,9 @@ void main() {
     final lastCheckpointEntity = world.spawn();
     world.storeOf<LastCheckpoint>().set(lastCheckpointEntity, LastCheckpoint(1, 2));
 
+    final inventoryEntity = world.spawn();
+    world.storeOf<Inventory>().set(inventoryEntity, Inventory({'coin': 3}));
+
     final snapshot = world.toJson();
     final byId = {
       for (final e in snapshot['entities'] as List) (e as Map)['id']: e['components']
@@ -144,5 +147,6 @@ void main() {
     expect(byId[healthEntity]['health']['current'], 5);
     expect(byId[checkpointEntity]['checkpoint']['id'], 'cp1');
     expect(byId[lastCheckpointEntity]['lastCheckpoint']['x'], 1);
+    expect(byId[inventoryEntity]['inventory']['items']['coin'], 3);
   });
 }

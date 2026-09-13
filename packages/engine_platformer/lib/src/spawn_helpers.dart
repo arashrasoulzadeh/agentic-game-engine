@@ -3,6 +3,7 @@ import 'package:engine_flutter/engine_flutter.dart';
 
 import 'components/gravity.dart';
 import 'components/health.dart';
+import 'components/inventory.dart';
 import 'components/last_checkpoint.dart';
 import 'components/movement_animation_set.dart';
 import 'components/platformer_controller.dart';
@@ -18,7 +19,10 @@ import 'components/platformer_controller.dart';
 /// wire up idle/walk/jump switching in the same call. Pass [maxHealth]
 /// to also attach `Health` (full at spawn) and a `LastCheckpoint`
 /// seeded at the spawn position, ready for `respawnPlayer`/
-/// `respawnOnDeath` without a separate setup call.
+/// `respawnOnDeath` without a separate setup call. Pass
+/// [startingInventory] to also attach an `Inventory` pre-populated with
+/// those item counts (e.g. `{'coin': 0}`), ready for `collectItem`/
+/// `dealPickupOnTouch`.
 ///
 /// This is the "moving"/"jumping"/character setup helper: it replaces
 /// the hand-spawned entity + component boilerplate every platformer
@@ -37,6 +41,7 @@ EntityId spawnPlayer(
   String? spriteRegion,
   MovementAnimationSet? animations,
   double? maxHealth,
+  Map<String, int>? startingInventory,
 }) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(x, y));
@@ -58,6 +63,9 @@ EntityId spawnPlayer(
   if (maxHealth != null) {
     world.storeOf<Health>().set(id, Health(current: maxHealth, max: maxHealth));
     world.storeOf<LastCheckpoint>().set(id, LastCheckpoint(x, y));
+  }
+  if (startingInventory != null) {
+    world.storeOf<Inventory>().set(id, Inventory(Map.of(startingInventory)));
   }
   return id;
 }

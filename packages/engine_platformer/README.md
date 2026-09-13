@@ -215,6 +215,28 @@ yet) to fire automatically on `DeathEvent` — skip it and call
 `respawnPlayer` directly if you need a delay or a death animation
 first.
 
+## Collectibles/inventory
+
+```dart
+final player = spawnPlayer(world, x: 0, y: 0, input: input.state, startingInventory: {'coin': 0});
+
+final coin = world.spawn();
+world.storeOf<Position>().set(coin, Position(200, 40));
+world.storeOf<Collider>().set(coin, Collider(8));
+dealPickupOnTouch(world, {coin}, 'coin');
+```
+
+`spawnPlayer`'s optional `startingInventory` attaches an `Inventory`
+(item id -> count) pre-populated with those counts. `dealPickupOnTouch`
+is the common case (a coin/key/power-up touched by anyone with an
+`Inventory`) in one call via `World.onCollisionWithAny`; pass
+`destroyOnCollect: false` for something reusable instead of consumed
+(a lever, a repeatable trigger). For anything more specific, call
+`collectItem(world, holder, itemId, amount: n)` directly from your own
+collision listener — it's a no-op if `holder` has no `Inventory`, safe
+to call without checking first, and emits `ItemCollectedEvent` exactly
+when it actually adds something.
+
 ## Tilemaps vs. platform entities
 
 Two ways to build level geometry, usable together:

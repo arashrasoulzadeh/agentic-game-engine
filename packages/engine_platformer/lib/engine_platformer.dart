@@ -6,10 +6,12 @@ export 'src/combat_helpers.dart';
 export 'src/components/checkpoint.dart';
 export 'src/components/gravity.dart';
 export 'src/components/health.dart';
+export 'src/components/inventory.dart';
 export 'src/components/last_checkpoint.dart';
 export 'src/components/movement_animation_set.dart';
 export 'src/components/platform_body.dart';
 export 'src/components/platformer_controller.dart';
+export 'src/pickup_helpers.dart';
 export 'src/spawn_helpers.dart';
 export 'src/system_pack.dart';
 export 'src/systems/facing_system.dart';
@@ -26,6 +28,7 @@ import 'package:engine_core/engine_core.dart';
 import 'src/components/checkpoint.dart';
 import 'src/components/gravity.dart';
 import 'src/components/health.dart';
+import 'src/components/inventory.dart';
 import 'src/components/last_checkpoint.dart';
 import 'src/components/movement_animation_set.dart';
 import 'src/components/platform_body.dart';
@@ -71,5 +74,10 @@ void registerPlatformerComponents(World world) {
     'lastCheckpoint',
     (l) => l.toJson(),
     LastCheckpoint.fromJson,
+  );
+  world.components.register<Inventory>(
+    'inventory',
+    (i) => i.toJson(),
+    Inventory.fromJson,
   );
 }
