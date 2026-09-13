@@ -301,9 +301,15 @@ is for everything else.
       Verified visually in the browser (not just unit tests): enabled
       it in `test_game`, confirmed collider circles around the player/
       coins and red tile borders on every ground/platform tile.
-- [ ] Raycasting: no ray-vs-tile or ray-vs-entity query exists anywhere
-      — useful standalone (line-of-sight checks, ground/wall probes,
-      hitscan weapons) and a direct prerequisite for AI depth below.
+- [x] Raycasting (`engine_core`): `raycastTileMap` (a real grid-DDA/
+      Amanatides-&-Woo traversal — walks every cell the ray actually
+      crosses, so it can't tunnel through a thin wall the way sampling
+      points at fixed intervals could) + `raycastEntities` (ray-vs-circle
+      math, nearest hit, `exclude` for the caster itself). Slope tiles
+      never block a raycast (walkable-surface concept, not a wall);
+      one-way tiles don't either, by default (`blockOneWay` opts in) —
+      seeing/shooting through a one-way platform from below is usually
+      what's wanted.
 - [ ] AI depth: only `PatrolBehavior`/`FollowBehavior` exist — no
       steering behaviors, no vision-cone/line-of-sight gating (an enemy
       "follows" through walls today), no pathfinding (no A*/navmesh at

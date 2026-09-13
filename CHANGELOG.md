@@ -73,6 +73,8 @@ a time.
   `GameConfig.showColliderDebug` — a stroked outline per `Collider` and
   per solid/one-way/slope `TileMap` tile. Also fixed slope tiles
   rendering visually identical to solid tiles in the normal renderer.
+- **Raycasting**: `raycastTileMap` (grid-DDA, no tunneling through thin
+  walls) + `raycastEntities` (nearest ray-vs-circle hit).
 
 ## [0.1.0]
 
