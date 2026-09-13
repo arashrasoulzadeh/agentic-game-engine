@@ -650,16 +650,17 @@ class _EnginePainter extends CustomPainter {
       items.add(_DrawItem(text.zIndex, order++, (canvas) {
         final screenPos =
             text.screenSpace ? Offset(pos.x, pos.y) : camera.worldToScreen(pos.x, pos.y, size);
+        final scale = text.screenSpace ? 1.0 : camera.zoom;
         final painter = TextPainter(
           text: TextSpan(
             text: text.text,
             style: TextStyle(
               color: Color(text.colorArgb),
-              fontSize: text.fontSize * (text.screenSpace ? 1 : camera.zoom),
+              fontSize: text.fontSize * scale,
             ),
           ),
           textDirection: TextDirection.ltr,
-        )..layout();
+        )..layout(maxWidth: text.maxWidth == null ? double.infinity : text.maxWidth! * scale);
 
         final dx = switch (text.align) {
           txt.TextAlignment.left => 0.0,

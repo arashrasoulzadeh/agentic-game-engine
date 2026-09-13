@@ -165,8 +165,21 @@ belongs in.
 
 ### Rendering (`engine_flutter`)
 
-- [ ] Multi-line / wrapped `Text`: currently single-line only, no
-      wrapping or rich formatting.
+- [x] Multi-line / wrapped `Text`: new `maxWidth` field (`null` default
+      — today's original unbounded single-line behavior). `EngineView`
+      passes it straight through to `TextPainter.layout(maxWidth:)`,
+      scaled by `Camera.zoom` in world space the same way `fontSize`
+      already is (so the wrap point stays visually consistent at any
+      zoom level) — Flutter's own `TextPainter` does the actual line-
+      breaking; nothing hand-rolled. Rich formatting (mixed styles/
+      colors within one string) intentionally left out — no concrete
+      use case yet, and `TextSpan` children could be added later
+      without touching this field if one shows up. Verified: 2 new
+      tests in `text_test.dart` (defaults/round-trip) + 2 new rendering
+      tests in `text_rendering_test.dart` (wraps without crashing,
+      unbounded text still renders at nonzero zoom); visually confirmed
+      in the browser — a long line with `maxWidth: 180` wrapped onto 5
+      lines correctly in `test_game` (reverted after, gitignored).
 - [ ] Tile culling for large maps: `_collectTileMapItems` walks every
       tile every frame regardless of camera viewport — fine at current
       map sizes, will matter once levels get big.

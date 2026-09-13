@@ -50,6 +50,10 @@ item at a time.
   `source`) and `hitstunSeconds` (freezes `PlatformerInputSystem`'s
   input handling for that entity via a new
   `PlatformerController.hitstunSeconds` + `HitstunSystem`).
+- **Multi-line / wrapped `Text`**: new `maxWidth` field (`null` default
+  — unbounded, single-line, unchanged from before) — `EngineView`
+  passes it through to `TextPainter`'s own line-breaking, scaled by
+  `Camera.zoom` in world space the same way `fontSize` already is.
 
 ### Fully-fledged platformer engine
 

@@ -37,4 +37,13 @@ void main() {
     final decoded = Text.fromJson({'text': 'x', 'align': 'not-a-real-alignment'});
     expect(decoded.align, TextAlignment.center);
   });
+
+  test('maxWidth defaults to null (unbounded, single-line) and round-trips when set', () {
+    expect(Text('x').maxWidth, isNull);
+    expect(Text.fromJson(Text('x').toJson()).maxWidth, isNull);
+    expect(Text.fromJson({'text': 'x'}).maxWidth, isNull);
+
+    final decoded = Text.fromJson(Text('a long line', maxWidth: 120).toJson());
+    expect(decoded.maxWidth, 120);
+  });
 }

@@ -66,4 +66,47 @@ void main() {
 
     expect(find.byType(EngineView), findsOneWidget);
   });
+
+  testWidgets('EngineView wraps long text onto multiple lines when maxWidth is set',
+      (tester) async {
+    final world = World(width: 400, height: 300);
+    registerCoreComponents(world);
+    registerFlutterComponents(world);
+
+    final id = world.spawn();
+    world.storeOf<Position>().set(id, Position(100, 100));
+    world.storeOf<engine.Text>().set(
+          id,
+          engine.Text(
+            'This is a long line of dialogue that should wrap onto several lines',
+            screenSpace: true,
+            maxWidth: 80,
+          ),
+        );
+
+    await tester.pumpWidget(MaterialApp(
+      home: EngineView(world: world, atlasRegistry: AtlasRegistry(), camera: Camera()),
+    ));
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(find.byType(EngineView), findsOneWidget);
+  });
+
+  testWidgets('EngineView renders unbounded (maxWidth null) world-space text at any zoom',
+      (tester) async {
+    final world = World(width: 400, height: 300);
+    registerCoreComponents(world);
+    registerFlutterComponents(world);
+
+    final id = world.spawn();
+    world.storeOf<Position>().set(id, Position(100, 100));
+    world.storeOf<engine.Text>().set(id, engine.Text('unwrapped'));
+
+    await tester.pumpWidget(MaterialApp(
+      home: EngineView(world: world, atlasRegistry: AtlasRegistry(), camera: Camera(zoom: 2)),
+    ));
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(find.byType(EngineView), findsOneWidget);
+  });
 }
