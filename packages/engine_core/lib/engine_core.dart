@@ -9,6 +9,7 @@ export 'src/components/particle.dart';
 export 'src/components/particle_emitter.dart';
 export 'src/components/position.dart';
 export 'src/components/tile_map.dart';
+export 'src/components/tween.dart';
 export 'src/components/velocity.dart';
 export 'src/entity.dart';
 export 'src/event_bus.dart';
@@ -20,6 +21,7 @@ export 'src/systems/ai_system.dart';
 export 'src/systems/collision_system.dart';
 export 'src/systems/movement_system.dart';
 export 'src/systems/particle_system.dart';
+export 'src/systems/tween_system.dart';
 export 'src/world.dart';
 export 'src/world_view.dart';
 
@@ -29,6 +31,7 @@ import 'src/components/particle.dart';
 import 'src/components/particle_emitter.dart';
 import 'src/components/position.dart';
 import 'src/components/tile_map.dart';
+import 'src/components/tween.dart';
 import 'src/components/velocity.dart';
 import 'src/world.dart';
 
@@ -82,5 +85,10 @@ void registerCoreComponents(World world) {
     'particleEmitter',
     (p) => p.toJson(),
     ParticleEmitter.fromJson,
+  );
+  world.components.register<Tween>(
+    'tween',
+    (t) => t.toJson(),
+    Tween.fromJson,
   );
 }

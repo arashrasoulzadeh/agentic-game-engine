@@ -53,13 +53,15 @@ top to bottom — not strict, adjust as dependencies emerge.
       like `Sprite`, plus a per-axis `scrollFactor`) — `EngineView`
       draws every layer first, behind tiles/sprites/particles, tiling
       across the viewport when `tileX`/`tileY` are set.
-- [ ] Tweening/easing helpers: a small `Tween<T>`/interpolation utility
-      (position, scale, alpha; a handful of easing curves) for UI and
-      one-off gameplay animation that doesn't fit the frame-based
-      `AnimationClip`/`AnimationState` system (e.g. a menu transition,
-      a screen-shake, a damage-flash). Likely `engine_core`-side data
-      (genre-general) with any Flutter-curve-conversion glue in
-      `engine_flutter`.
+- [x] Tweening/easing helpers: `Tween`/`EasingType`/`TweenSystem` in
+      `engine_core` (genre-general, pure Dart) — interpolates one
+      `double` from `from` to `to` with `linear`/`easeInQuad`/
+      `easeOutQuad`/`easeInOutQuad`, `loop`/`pingPong` modes, and a
+      `TweenCompleteEvent` fired once for a plain (non-looping) tween.
+      Deliberately doesn't write into another component itself — a game
+      reads `.value` and applies it to whatever it's animating (menu
+      transition, screen-shake, damage-flash), matching the rest of the
+      engine's "doesn't hide how it works" approach.
 - [ ] Save-slot UI helpers: a ready-made save/load menu widget in
       `engine_flutter` building on the existing `SaveGame` (slots,
       `hasSave`, `deleteSave`) so a game doesn't have to hand-roll a

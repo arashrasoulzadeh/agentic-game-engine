@@ -83,6 +83,36 @@ system-ordering rules for a platformer (`GravitySystem` →
 | `AIState(behaviorId, memory)` | Marks an entity as driven by a registered `Behavior` |
 | `ParticleEmitter(rate, burstCount, ...)` | Attach to an entity with a `Position`; `ParticleSystem` spawns `Particle` entities from it — `rate` for continuous emission, `burstCount` for a one-shot burst (consumed back to 0 the tick it fires) |
 | `Particle(lifetime, startScale, endScale, startAlpha, endAlpha, colorArgb)` | One spawned particle; ages via `ParticleSystem`, destroyed once `age >= lifetime`. `scale`/`alpha` ramp linearly over the particle's life — `engine_flutter`'s `EngineView` reads them to render. `colorArgb` is a plain int (not a Flutter `Color`) so this stays Flutter-free |
+| `Tween(from, to, duration, ...)` | Interpolates one `double`; advanced by `TweenSystem`, read via `.value` — see Tweening/easing below |
+
+### Tweening/easing
+
+```dart
+world.addSystem(TweenSystem());
+
+final shake = world.spawn();
+world.storeOf<Tween>().set(shake, Tween(
+  from: -4, to: 4, duration: 0.08,
+  pingPong: true, easing: EasingType.easeInOutQuad,
+));
+```
+
+`Tween` interpolates one `double` from `from` to `to` — it doesn't
+write into any other component itself; read `.value` each tick and
+apply it to whatever it's driving (a `Position.x` offset for a screen
+shake, a UI opacity, a menu slide). `EasingType` is a plain enum
+(`linear`, `easeInQuad`, `easeOutQuad`, `easeInOutQuad`) rather than a
+closure, so `Tween` stays JSON-plain like everything else. `loop`
+restarts from `from`; `pingPong` reverses direction at each end
+instead (wins over `loop` if both are set). A plain (non-looping,
+non-ping-pong) tween fires `TweenCompleteEvent` exactly once when it
+finishes:
+
+```dart
+world.events.on<TweenCompleteEvent>((e) {
+  if (e.entity == shake) world.destroy(shake);
+});
+```
 
 ### Particles
 
