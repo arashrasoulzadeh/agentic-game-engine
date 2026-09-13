@@ -43,6 +43,9 @@ engine" section, one item at a time.
   generic counterpart to `RoomExit`. Along the way, fixed
   `EventBus.flush()` to deliver events emitted by another event's
   handler within the same flush, instead of a tick later.
+- **`Pushable`** + `PushableSystem`: genre-general entity-pushes-entity
+  resolution (a crate, a boulder) — pairs with `PlatformerController`
+  for wall-blocking rather than duplicating tile/platform collision.
 
 ## [0.1.0]
 

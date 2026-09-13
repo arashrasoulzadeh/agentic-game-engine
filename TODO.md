@@ -199,8 +199,15 @@ unless marked, roughly in priority order.
       `TriggerEvent`) wasn't delivered until the *next* tick — a
       one-tick lag nobody would expect. `flush()` now drains cascading
       rounds within one call (capped against a genuine handler cycle).
-- [ ] Pushable/dynamic physics objects — crates are decoration today;
-      no entity-pushes-entity resolution.
+- [x] Pushable/dynamic physics objects: `Pushable` component +
+      `PushableSystem` (`engine_core`, genre-general — Sokoban/top-down
+      games want this too, not just platformers). Deliberately doesn't
+      handle wall-blocking itself: it only sets `Velocity.x` from
+      whether something's currently overlapping it; pair with a
+      `PlatformerController` (`engine_platformer`) for a pushable that
+      stops at a wall, since `TileCollisionSystem`/`PlatformerSystem`
+      already do that for any physics entity — no duplicated wall logic.
+      No momentum: velocity snaps to `0` the instant nothing is pushing.
 - [ ] Ranged/projectile combat — only touch-damage
       (`dealDamageOnTouch`) exists; no projectile spawn/lifetime/hit
       helpers.

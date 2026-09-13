@@ -11,6 +11,7 @@ export 'src/components/collider.dart';
 export 'src/components/particle.dart';
 export 'src/components/particle_emitter.dart';
 export 'src/components/position.dart';
+export 'src/components/pushable.dart';
 export 'src/components/room_exit.dart';
 export 'src/components/tile_map.dart';
 export 'src/components/trigger_zone.dart';
@@ -27,6 +28,7 @@ export 'src/systems/ai_system.dart';
 export 'src/systems/collision_system.dart';
 export 'src/systems/movement_system.dart';
 export 'src/systems/particle_system.dart';
+export 'src/systems/pushable_system.dart';
 export 'src/systems/tween_system.dart';
 export 'src/tmx_import.dart';
 export 'src/trigger_helpers.dart';
@@ -39,6 +41,7 @@ import 'src/components/collider.dart';
 import 'src/components/particle.dart';
 import 'src/components/particle_emitter.dart';
 import 'src/components/position.dart';
+import 'src/components/pushable.dart';
 import 'src/components/room_exit.dart';
 import 'src/components/tile_map.dart';
 import 'src/components/trigger_zone.dart';
@@ -116,5 +119,10 @@ void registerCoreComponents(World world) {
     'triggerZone',
     (t) => t.toJson(),
     TriggerZone.fromJson,
+  );
+  world.components.register<Pushable>(
+    'pushable',
+    (p) => p.toJson(),
+    Pushable.fromJson,
   );
 }
