@@ -35,6 +35,9 @@ engine" section, one item at a time.
   (embedded tileset, CSV layer data) `.tmx` into a `TileMap`, with
   per-tile bool properties (`solid`/`oneWay`/`slopeUpRight`/
   `slopeUpLeft`) mapping onto the matching collision set.
+- **`game_agent lint --render`**: rasterizes a level's `TileMap` (color-
+  coded by collision kind) plus a labeled marker per named entity to a
+  PNG, so a level's shape is visible without running the game.
 
 ## [0.1.0]
 

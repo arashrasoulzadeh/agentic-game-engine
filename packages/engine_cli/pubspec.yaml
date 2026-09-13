@@ -9,6 +9,10 @@ environment:
 dependencies:
   args: ^2.5.0
   path: ^1.9.0
+  # For `lint --render`: rasterizing a level's TileMap to a PNG so a
+  # human (or an agent) can see the level's shape without running the
+  # whole game.
+  image: ^4.7.0
   # Self-referencing git dependency, same pattern as engine_flutter (see
   # its pubspec.yaml comment) — `game_agent lint` needs Level.validate().
   engine_core:

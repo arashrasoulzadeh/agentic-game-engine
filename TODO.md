@@ -176,11 +176,15 @@ unless marked, roughly in priority order.
       compressed layer data, tile-flip flags silently stripped (base
       id imports, orientation is lost). Worth revisiting multi-layer/
       external-tileset support if a real level actually needs it.
-- [ ] A way to preview/render a level file without running the whole
-      game (e.g. `game_agent lint --render` rasterizing the tilemap to
-      a PNG) — scoped down from "a full visual level editor," which is
-      out of reach for a CLI-first engine repo in one pass; this is the
-      honest, bounded version of that gap.
+- [x] Level preview: `game_agent lint --render <path.png>` rasterizes
+      the level's `TileMap` (solid/one-way/slope tiles color-coded) plus
+      a labeled marker per named entity with a `position`, using a new
+      `image` package dependency. Verified visually against
+      `test_game`'s real 100x36 level — staircase, both pits, one-way
+      platforms, and every named entity all render correctly in the
+      right place. Scoped down from "a full visual level editor" (out
+      of reach for a CLI-first engine repo in one pass) to this bounded,
+      genuinely useful version of the same gap.
 - [ ] Trigger/zone volumes distinct from solid colliders: a general
       "fires on overlap, never blocks movement" primitive —
       `RoomExit`/coin pickups each hand-roll this via `CollisionSystem`
