@@ -62,10 +62,20 @@ repo, not from memory.
 
 - [ ] Publish `engine_core`/`engine_flutter`/`engine_cli` to pub.dev —
       removes the git-ref-matching constraint entirely via normal semver
-- [ ] Test on a real Android/iOS device (or at least a release build) —
-      everything so far has only been verified on Flutter web debug
-      builds; orientation lock, lifecycle pause/resume, and real-world
-      performance are unverified outside that
+- [ ] Test on a real Android/iOS device — **partial progress**:
+      `flutter build apk --release` for `test_game` now succeeds
+      (43.1MB, real release build, not just web debug) — confirms
+      release-mode compilation/R8 minification doesn't break anything.
+      `flutter build ios --release --no-codesign` failed on this
+      environment's broken CocoaPods (Ruby/CocoaPods version mismatch)
+      — a local sandbox issue, not an engine bug, not attempted to fix
+      here since it'd mean touching system Ruby/CocoaPods outside this
+      repo's scope. Neither build has actually been *installed and run*
+      on a real device or emulator — no Android device/emulator tooling
+      available in this environment, only an iOS Simulator control tool
+      that's moot while the iOS build itself won't compile here.
+      Orientation lock, lifecycle pause/resume, and real-world
+      performance remain genuinely unverified outside Flutter web debug.
 
 ## Features (engine_flutter)
 
