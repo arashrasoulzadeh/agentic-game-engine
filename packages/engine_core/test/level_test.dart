@@ -31,6 +31,48 @@ void main() {
     expect(positions, 2);
   });
 
+  test('loadInto returns spawned ids keyed by "name", skipping unnamed entities', () {
+    final world = _buildWorld();
+    final named = Level.loadInto(world, {
+      'entities': [
+        {
+          'name': 'player',
+          'components': {
+            'position': {'x': 10, 'y': 20},
+          },
+        },
+        {
+          'components': {
+            'position': {'x': 0, 'y': 0},
+          },
+        },
+        {
+          'name': 'door',
+          'components': <String, dynamic>{},
+        },
+      ],
+    });
+
+    expect(named.keys, {'player', 'door'});
+    expect(world.storeOf<Position>().get(named['player']!)?.x, 10);
+  });
+
+  test('throws LevelLoadException when "name" is not a string', () {
+    final world = _buildWorld();
+    expect(
+      () => Level.loadInto(world, {
+        'entities': [
+          {'name': 42},
+        ],
+      }),
+      throwsA(isA<LevelLoadException>().having(
+        (e) => e.message,
+        'message',
+        contains('entities[0].name'),
+      )),
+    );
+  });
+
   test('entity with no components key spawns with no components', () {
     final world = _buildWorld();
     Level.loadInto(world, {

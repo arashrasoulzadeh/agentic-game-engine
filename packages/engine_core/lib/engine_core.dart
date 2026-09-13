@@ -1,9 +1,11 @@
 export 'src/action.dart';
 export 'src/actions/set_velocity_action.dart';
 export 'src/behavior.dart';
+export 'src/button_hit_test.dart';
 export 'src/component_registry.dart';
 export 'src/component_store.dart';
 export 'src/components/ai_state.dart';
+export 'src/components/button.dart';
 export 'src/components/collider.dart';
 export 'src/components/particle.dart';
 export 'src/components/particle_emitter.dart';
@@ -26,6 +28,7 @@ export 'src/world.dart';
 export 'src/world_view.dart';
 
 import 'src/components/ai_state.dart';
+import 'src/components/button.dart';
 import 'src/components/collider.dart';
 import 'src/components/particle.dart';
 import 'src/components/particle_emitter.dart';
@@ -70,6 +73,11 @@ void registerCoreComponents(World world) {
     'aiState',
     (a) => a.toJson(),
     AIState.fromJson,
+  );
+  world.components.register<Button>(
+    'button',
+    (b) => b.toJson(),
+    Button.fromJson,
   );
   world.components.register<TileMap>(
     'tileMap',

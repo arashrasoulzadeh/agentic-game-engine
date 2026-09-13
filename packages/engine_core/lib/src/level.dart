@@ -1,3 +1,4 @@
+import 'entity.dart';
 import 'world.dart';
 
 /// Thrown when level JSON fails validation. Carries a specific,
@@ -22,14 +23,26 @@ class Level {
   /// applying its `components` map via the same path `World.applyPatch`
   /// uses. Throws [LevelLoadException] with a specific message on any
   /// structural problem — never silently drops or misapplies data.
-  static void loadInto(World world, Map<String, dynamic> json) {
+  ///
+  /// Returns the ids of every entity that had a `"name"` key, keyed by
+  /// that name — how calling code finds "the player"/"the door" etc.
+  /// after a data-driven load, for anything a level file can't express
+  /// itself (attaching a live `InputState`, passing an id to
+  /// `installPlatformerSystems`). An entity with no `"name"` isn't in
+  /// the returned map at all; it's still spawned normally.
+  static Map<String, EntityId> loadInto(World world, Map<String, dynamic> json) {
     final entities = validate(json);
+    final named = <String, EntityId>{};
     for (final entityJson in entities) {
       final id = world.spawn();
       final components =
           entityJson['components'] as Map<String, dynamic>? ?? const {};
       world.components.applyToEntity(id, components);
+      if (entityJson['name'] case final String name) {
+        named[name] = id;
+      }
     }
+    return named;
   }
 
   /// Validates [json] and returns its `entities` list, cast, on success.
@@ -53,6 +66,11 @@ class Level {
             'entities[$i] must be an object, got ${entry.runtimeType}');
       }
       final entityJson = entry.cast<String, dynamic>();
+
+      if (entityJson.containsKey('name') && entityJson['name'] is! String) {
+        throw LevelLoadException(
+            'entities[$i].name must be a string, got ${entityJson['name'].runtimeType}');
+      }
 
       if (entityJson.containsKey('components')) {
         final components = entityJson['components'];

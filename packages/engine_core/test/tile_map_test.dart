@@ -76,4 +76,51 @@ void main() {
     expect(decoded.solidTileIds, isEmpty);
     expect(decoded.oneWayTileIds, isEmpty);
   });
+
+  test('TileMap.fromJson accepts a legend + ASCII rows instead of a flat tiles array', () {
+    final decoded = TileMap.fromJson({
+      'tileWidth': 10,
+      'tileHeight': 10,
+      'legend': {'.': 0, '#': 1, '=': 2},
+      'rows': [
+        '..=..',
+        '.....',
+        '##.##',
+      ],
+      'solidTileIds': [1],
+      'oneWayTileIds': [2],
+    });
+
+    expect(decoded.cols, 5);
+    expect(decoded.rows, 3);
+    expect(decoded.tileAt(2, 0), 2);
+    expect(decoded.tileAt(0, 2), 1);
+    expect(decoded.tileAt(2, 2), 0);
+    expect(decoded.isSolid(0, 2), isTrue);
+    expect(decoded.isOneWay(2, 0), isTrue);
+  });
+
+  test('TileMap.fromJson legend form rejects a row of the wrong width', () {
+    expect(
+      () => TileMap.fromJson({
+        'tileWidth': 10,
+        'tileHeight': 10,
+        'legend': {'.': 0},
+        'rows': ['...', '..'],
+      }),
+      throwsArgumentError,
+    );
+  });
+
+  test('TileMap.fromJson legend form rejects a character missing from the legend', () {
+    expect(
+      () => TileMap.fromJson({
+        'tileWidth': 10,
+        'tileHeight': 10,
+        'legend': {'.': 0},
+        'rows': ['.#.'],
+      }),
+      throwsArgumentError,
+    );
+  });
 }

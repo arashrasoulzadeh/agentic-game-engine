@@ -58,14 +58,81 @@ class TileMap {
         'zIndex': zIndex,
       };
 
-  factory TileMap.fromJson(Map<String, dynamic> json) => TileMap(
-        cols: json['cols'] as int,
-        rows: json['rows'] as int,
+  /// Accepts either the raw `cols`/`rows`/`tiles` (flat id array) shape
+  /// `toJson` emits, or a human-authorable alternative: `legend` (a
+  /// character -> tile id map) plus `rows` as a `List<String>`, one row
+  /// per string, one character per column. The legend form is what a
+  /// human or agent should actually author by hand — a several-hundred
+  /// entry flat int array reads as noise, while a handful of ASCII rows
+  /// reads as the level's shape at a glance. Both forms produce an
+  /// identical `TileMap`; `toJson` always emits the flat-array form, so
+  /// a legend-authored level re-serializes (e.g. via `SaveGame`) as
+  /// plain ids — round-tripping the ASCII art itself isn't required.
+  factory TileMap.fromJson(Map<String, dynamic> json) {
+    final legend = json['legend'];
+    final zIndex = (json['zIndex'] as num?)?.toInt() ?? 0;
+    final solidTileIds = ((json['solidTileIds'] as List?) ?? const []).cast<int>().toSet();
+    final oneWayTileIds = ((json['oneWayTileIds'] as List?) ?? const []).cast<int>().toSet();
+    if (legend != null) {
+      return _fromLegend(
+        legend: (legend as Map).cast<String, dynamic>(),
+        asciiRows: (json['rows'] as List).cast<String>(),
         tileWidth: (json['tileWidth'] as num).toDouble(),
         tileHeight: (json['tileHeight'] as num).toDouble(),
-        tiles: (json['tiles'] as List).cast<int>(),
-        solidTileIds: ((json['solidTileIds'] as List?) ?? const []).cast<int>().toSet(),
-        oneWayTileIds: ((json['oneWayTileIds'] as List?) ?? const []).cast<int>().toSet(),
-        zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
+        solidTileIds: solidTileIds,
+        oneWayTileIds: oneWayTileIds,
+        zIndex: zIndex,
       );
+    }
+    return TileMap(
+      cols: json['cols'] as int,
+      rows: json['rows'] as int,
+      tileWidth: (json['tileWidth'] as num).toDouble(),
+      tileHeight: (json['tileHeight'] as num).toDouble(),
+      tiles: (json['tiles'] as List).cast<int>(),
+      solidTileIds: solidTileIds,
+      oneWayTileIds: oneWayTileIds,
+      zIndex: zIndex,
+    );
+  }
+
+  static TileMap _fromLegend({
+    required Map<String, dynamic> legend,
+    required List<String> asciiRows,
+    required double tileWidth,
+    required double tileHeight,
+    required Set<int> solidTileIds,
+    required Set<int> oneWayTileIds,
+    required int zIndex,
+  }) {
+    if (asciiRows.isEmpty) {
+      throw ArgumentError('TileMap "rows" must not be empty when using "legend"');
+    }
+    final cols = asciiRows.first.length;
+    final tiles = <int>[];
+    for (var r = 0; r < asciiRows.length; r++) {
+      final row = asciiRows[r];
+      if (row.length != cols) {
+        throw ArgumentError(
+            'TileMap "rows"[$r] has length ${row.length}, expected $cols (row 0\'s length) — every row must be the same width');
+      }
+      for (final ch in row.split('')) {
+        final id = legend[ch];
+        if (id == null) {
+          throw ArgumentError('TileMap "legend" has no entry for character "$ch"');
+        }
+        tiles.add(id as int);
+      }
+    }
+    return TileMap(
+      cols: cols,
+      rows: asciiRows.length,
+      tileWidth: tileWidth,
+      tileHeight: tileHeight,
+      tiles: tiles,
+      solidTileIds: solidTileIds,
+      oneWayTileIds: oneWayTileIds,
+      zIndex: zIndex,
+    );
+  }
 }
