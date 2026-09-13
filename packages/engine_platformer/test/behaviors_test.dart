@@ -122,5 +122,157 @@ void main() {
       world.step(0.016);
       expect(world.storeOf<Velocity>().get(follower)!.x, 0);
     });
+
+    test('requireLineOfSight: false (default) chases straight through a wall', () {
+      final world = _buildWorld();
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(
+              cols: 3,
+              rows: 1,
+              tileWidth: 40,
+              tileHeight: 40,
+              tiles: [0, 1, 0],
+              solidTileIds: {1},
+            ),
+          );
+      final target = world.spawn();
+      world.storeOf<Position>().set(target, Position(100, 20));
+
+      final registry = BehaviorRegistry()
+        ..register('follow', FollowBehavior(target: target, speed: 40));
+      world.addSystem(AISystem(registry));
+
+      final follower = world.spawn();
+      world.storeOf<Position>().set(follower, Position(0, 20));
+      world.storeOf<Velocity>().set(follower, Velocity(0, 0));
+      world.storeOf<AIState>().set(follower, AIState('follow'));
+
+      world.step(0.016);
+      expect(world.storeOf<Velocity>().get(follower)!.x, 40);
+    });
+
+    test('requireLineOfSight: true stops chasing when a wall blocks sight', () {
+      final world = _buildWorld();
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(
+              cols: 3,
+              rows: 1,
+              tileWidth: 40,
+              tileHeight: 40,
+              tiles: [0, 1, 0],
+              solidTileIds: {1},
+            ),
+          );
+      final target = world.spawn();
+      world.storeOf<Position>().set(target, Position(100, 20));
+
+      final registry = BehaviorRegistry()
+        ..register('follow', FollowBehavior(target: target, speed: 40, requireLineOfSight: true));
+      world.addSystem(AISystem(registry));
+
+      final follower = world.spawn();
+      world.storeOf<Position>().set(follower, Position(0, 20));
+      world.storeOf<Velocity>().set(follower, Velocity(0, 0));
+      world.storeOf<AIState>().set(follower, AIState('follow'));
+
+      world.step(0.016);
+      expect(world.storeOf<Velocity>().get(follower)!.x, 0);
+    });
+
+    test('requireLineOfSight: true still chases once sight is clear', () {
+      final world = _buildWorld();
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(cols: 3, rows: 1, tileWidth: 40, tileHeight: 40, tiles: [0, 0, 0]),
+          );
+      final target = world.spawn();
+      world.storeOf<Position>().set(target, Position(100, 20));
+
+      final registry = BehaviorRegistry()
+        ..register('follow', FollowBehavior(target: target, speed: 40, requireLineOfSight: true));
+      world.addSystem(AISystem(registry));
+
+      final follower = world.spawn();
+      world.storeOf<Position>().set(follower, Position(0, 20));
+      world.storeOf<Velocity>().set(follower, Velocity(0, 0));
+      world.storeOf<AIState>().set(follower, AIState('follow'));
+
+      world.step(0.016);
+      expect(world.storeOf<Velocity>().get(follower)!.x, 40);
+    });
+  });
+
+  group('PathFollowBehavior', () {
+    test('walks toward the first waypoint, then advances once arrived', () {
+      final world = _buildWorld();
+      final path = [PathPoint(50, 0), PathPoint(100, 0)];
+      final registry = BehaviorRegistry()
+        ..register('pathFollow', PathFollowBehavior(path, speed: 40, arriveDistance: 5));
+      world.addSystem(AISystem(registry));
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(0, 0));
+      world.storeOf<Velocity>().set(id, Velocity(0, 0));
+      world.storeOf<AIState>().set(id, AIState('pathFollow'));
+
+      world.step(0.016);
+      expect(world.storeOf<Velocity>().get(id)!.x, 40, reason: 'heading toward the first waypoint');
+    });
+
+    test('advances to the next waypoint once within arriveDistance', () {
+      final world = _buildWorld();
+      final path = [PathPoint(2, 0), PathPoint(100, 0)];
+      final behavior = PathFollowBehavior(path, speed: 40, arriveDistance: 5);
+      final registry = BehaviorRegistry()..register('pathFollow', behavior);
+      world.addSystem(AISystem(registry));
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(0, 0)); // already within arriveDistance of waypoint 1
+      world.storeOf<Velocity>().set(id, Velocity(0, 0));
+      world.storeOf<AIState>().set(id, AIState('pathFollow'));
+
+      world.step(0.016);
+      expect(behavior.currentTarget, path[1]);
+      expect(world.storeOf<Velocity>().get(id)!.x, 40, reason: 'now heading toward waypoint 2');
+    });
+
+    test('stops once the last waypoint is reached', () {
+      final world = _buildWorld();
+      final path = [PathPoint(2, 0)];
+      final behavior = PathFollowBehavior(path, speed: 40, arriveDistance: 5);
+      final registry = BehaviorRegistry()..register('pathFollow', behavior);
+      world.addSystem(AISystem(registry));
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(0, 0));
+      world.storeOf<Velocity>().set(id, Velocity(0, 0));
+      world.storeOf<AIState>().set(id, AIState('pathFollow'));
+
+      world.step(0.016);
+      expect(behavior.currentTarget, isNull);
+      expect(world.storeOf<Velocity>().get(id)!.x, 0);
+    });
+
+    test('an empty path stops immediately', () {
+      final world = _buildWorld();
+      final registry = BehaviorRegistry()..register('pathFollow', PathFollowBehavior(const []));
+      world.addSystem(AISystem(registry));
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(0, 0));
+      world.storeOf<Velocity>().set(id, Velocity(5, 0));
+      world.storeOf<AIState>().set(id, AIState('pathFollow'));
+
+      world.step(0.016);
+      expect(world.storeOf<Velocity>().get(id)!.x, 0);
+    });
   });
 }

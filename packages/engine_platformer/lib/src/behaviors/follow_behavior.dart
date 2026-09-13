@@ -7,18 +7,24 @@ import 'package:engine_core/engine_core.dart';
 ///
 /// [maxDistance] (if set) is an aggro range: outside it, the entity
 /// stops rather than chasing forever. [stopDistance] avoids jittering
-/// back and forth once already alongside the target.
+/// back and forth once already alongside the target. [requireLineOfSight]
+/// (off by default, so existing behavior is unchanged) makes it stop
+/// chasing — same as being out of range — whenever `WorldView.hasLineOfSight`
+/// says a wall is between it and [target], so "following" doesn't mean
+/// chasing straight through solid geometry.
 class FollowBehavior implements Behavior {
   final EntityId target;
   final double speed;
   final double? maxDistance;
   final double stopDistance;
+  final bool requireLineOfSight;
 
   FollowBehavior({
     required this.target,
     this.speed = 80,
     this.maxDistance,
     this.stopDistance = 4,
+    this.requireLineOfSight = false,
   });
 
   @override
@@ -32,7 +38,9 @@ class FollowBehavior implements Behavior {
     final dx = targetPos.x - pos.x;
     final distance = dx.abs();
     final outOfRange = maxDistance != null && distance > maxDistance!;
-    if (outOfRange || distance <= stopDistance) {
+    final blocked = requireLineOfSight &&
+        !view.hasLineOfSight(pos.x, pos.y, targetPos.x, targetPos.y);
+    if (outOfRange || blocked || distance <= stopDistance) {
       return _SetVelocityXAction(self, 0);
     }
 

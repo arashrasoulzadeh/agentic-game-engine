@@ -310,12 +310,30 @@ is for everything else.
       one-way tiles don't either, by default (`blockOneWay` opts in) —
       seeing/shooting through a one-way platform from below is usually
       what's wanted.
-- [ ] AI depth: only `PatrolBehavior`/`FollowBehavior` exist — no
-      steering behaviors, no vision-cone/line-of-sight gating (an enemy
-      "follows" through walls today), no pathfinding (no A*/navmesh at
-      all), so any enemy smarter than "patrol a fixed range" or "chase
-      in a straight line regardless of obstacles" has to be hand-built
-      from scratch.
+- [x] AI depth (`engine_core` + `engine_platformer`): `findPath`
+      (`engine_core`) is a 4-directional A* over a `TileMap`'s grid —
+      only `solidTileIds` block, one-way/slope tiles are walkable,
+      open-set is a linear-scan sorted list (not a real priority queue —
+      fine at the scale a single AI pathfind needs, matching
+      `WorldView.nearestWithPosition`'s existing linear-scan precedent).
+      `WorldView.hasLineOfSight` builds on `raycastTileMap` (added in
+      the raycasting item above) to check every `TileMap` in the world
+      for a blocking tile between two points. `FollowBehavior` gained an
+      opt-in `requireLineOfSight` (default `false`, so existing games
+      are unaffected) that stops the chase — same as leaving
+      `maxDistance` — once a wall is between chaser and target, fixing
+      the "follows straight through walls" gap. New
+      `PathFollowBehavior` (`engine_platformer`) walks a precomputed
+      `findPath` route one waypoint at a time, horizontal-only movement
+      mirroring `FollowBehavior`'s exact `Velocity.x`-only pattern;
+      deliberately does not decide *when* to jump onto a higher
+      waypoint itself, since a 4-directional grid path doesn't
+      distinguish "step up" from "walk forward" — that stays a
+      game-specific rule built on top. Full steering behaviors
+      (separation/cohesion/alignment) were considered and left out:
+      nothing in this repo's actual usage needs flocking yet, and
+      `PatrolBehavior`/`FollowBehavior`/`PathFollowBehavior` cover
+      every enemy-AI pattern asked for so far.
 - [ ] HUD/UI framework: `ButtonMenuScene` covers menus; nothing covers
       persistent in-game UI (health bar, minimap, inventory display) —
       blocked on text rendering above, and even with that, no

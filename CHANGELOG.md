@@ -75,6 +75,12 @@ a time.
   rendering visually identical to solid tiles in the normal renderer.
 - **Raycasting**: `raycastTileMap` (grid-DDA, no tunneling through thin
   walls) + `raycastEntities` (nearest ray-vs-circle hit).
+- **AI depth**: `findPath` (`engine_core`) — 4-directional A* pathfind
+  over a `TileMap`. `WorldView.hasLineOfSight`, built on
+  `raycastTileMap`. `FollowBehavior.requireLineOfSight` (opt-in, off by
+  default) stops a chase blocked by a wall instead of following through
+  it. New `PathFollowBehavior` (`engine_platformer`) walks a `findPath`
+  route one waypoint at a time.
 
 ## [0.1.0]
 

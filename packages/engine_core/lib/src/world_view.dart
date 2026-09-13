@@ -1,5 +1,7 @@
 import 'components/position.dart';
+import 'components/tile_map.dart';
 import 'entity.dart';
+import 'raycast.dart';
 import 'world.dart';
 
 /// Read-only window onto a [World] for runtime agents/NPC behaviors.
@@ -57,5 +59,30 @@ class WorldView {
       }
     }
     return best;
+  }
+
+  /// Whether a straight line from ([fromX], [fromY]) to ([toX], [toY])
+  /// is unobstructed by any solid tile in any `TileMap` in this world —
+  /// built on `raycastTileMap`. The line-of-sight primitive AI
+  /// `Behavior`s read directly (e.g. `FollowBehavior`'s
+  /// `requireLineOfSight`) so "chasing" doesn't mean chasing through
+  /// walls. [blockOneWay] matches `raycastTileMap`'s own default (off)
+  /// — a one-way platform usually shouldn't block sight the way a real
+  /// wall does.
+  bool hasLineOfSight(
+    double fromX,
+    double fromY,
+    double toX,
+    double toY, {
+    bool blockOneWay = false,
+  }) {
+    for (final mapEntity in entitiesWith<TileMap>()) {
+      final map = component<TileMap>(mapEntity)!;
+      final origin = component<Position>(mapEntity) ?? Position(0, 0);
+      if (raycastTileMap(map, origin, fromX, fromY, toX, toY, blockOneWay: blockOneWay) != null) {
+        return false;
+      }
+    }
+    return true;
   }
 }

@@ -1,4 +1,5 @@
 export 'src/behaviors/follow_behavior.dart';
+export 'src/behaviors/path_follow_behavior.dart';
 export 'src/behaviors/patrol_behavior.dart';
 export 'src/checkpoint_helpers.dart';
 export 'src/collision_math.dart';
