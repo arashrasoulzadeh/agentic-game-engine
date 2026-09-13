@@ -23,12 +23,12 @@ dependencies:
     git:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
       path: packages/engine_core
-      ref: main
+      ref: v0.1.0
   engine_flutter:
     git:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
       path: packages/engine_flutter
-      ref: main
+      ref: v0.1.0
 
 dev_dependencies:
   flutter_test:

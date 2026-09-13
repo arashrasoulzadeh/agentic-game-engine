@@ -126,10 +126,19 @@ top to bottom — not strict, adjust as dependencies emerge.
 
 ## Tooling / release
 
-- [ ] Cut a real `v0.1.0` git tag once the API stops churning; update
-      `engine_flutter`'s self-referencing `engine_core` git ref to match
-      (see the KNOWN LIMITATION comment in
-      `packages/engine_flutter/pubspec.yaml`)
+- [x] Cut a `v0.1.0` git tag: `engine_flutter`/`engine_platformer`'s
+      self-referencing git refs updated from `main` to `v0.1.0` (see the
+      KNOWN LIMITATION comment in `packages/engine_flutter/pubspec.yaml`),
+      `engine_cli`'s `create`/`upgrade` `--ref` defaults updated to match
+      so a fresh `game_agent create`/`upgrade` pins to the tag instead of
+      `main` by default. Tagged **locally only** — not pushed to the
+      remote, so the tag doesn't exist on GitHub yet and nothing depends
+      on it externally until that happens (a separate, explicit step).
+      Noticed but not fixed in passing: `upgrade`'s regex only rewrites
+      the `engine_core:` ref in a generated project's pubspec.yaml, not
+      `engine_platformer:`'s — pre-existing gap, worth its own TODO if
+      `engine_platformer` ends up in the default template's dependency
+      list (it now is, see the template-update item above).
 - [ ] Publish `engine_core`/`engine_flutter`/`engine_cli` to pub.dev —
       removes the git-ref-matching constraint entirely via normal semver
 - [ ] Test on a real Android/iOS device (or at least a release build) —
