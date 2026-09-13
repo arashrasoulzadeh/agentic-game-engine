@@ -70,4 +70,54 @@ void main() {
     controller.setAxis('moveX', 0.75);
     expect(controller.state.axis('moveX'), 0.75);
   });
+
+  group('captureNextKeyDown', () {
+    test('captures the next key-down, clears itself, and consumes the event', () {
+      final controller = InputController();
+      LogicalKeyboardKey? captured;
+      controller.captureNextKeyDown = (key) => captured = key;
+
+      final result = controller.handleKeyEvent(const KeyDownEvent(
+        physicalKey: PhysicalKeyboardKey.keyW,
+        logicalKey: LogicalKeyboardKey.keyW,
+        timeStamp: Duration.zero,
+      ));
+
+      expect(result, KeyEventResult.handled);
+      expect(captured, LogicalKeyboardKey.keyW);
+      expect(controller.captureNextKeyDown, isNull);
+    });
+
+    test('capturing an already-bound key does not also fire its old action', () {
+      final controller = InputController(); // space is bound to "jump" by default
+      controller.captureNextKeyDown = (_) {};
+
+      controller.handleKeyEvent(const KeyDownEvent(
+        physicalKey: PhysicalKeyboardKey.space,
+        logicalKey: LogicalKeyboardKey.space,
+        timeStamp: Duration.zero,
+      ));
+
+      expect(controller.state.isPressed('jump'), isFalse);
+    });
+
+    test('normal binding handling resumes once nothing is capturing', () {
+      final controller = InputController();
+      controller.captureNextKeyDown = (_) {};
+      controller.handleKeyEvent(const KeyDownEvent(
+        physicalKey: PhysicalKeyboardKey.keyW,
+        logicalKey: LogicalKeyboardKey.keyW,
+        timeStamp: Duration.zero,
+      ));
+
+      final result = controller.handleKeyEvent(const KeyDownEvent(
+        physicalKey: PhysicalKeyboardKey.arrowLeft,
+        logicalKey: LogicalKeyboardKey.arrowLeft,
+        timeStamp: Duration.zero,
+      ));
+
+      expect(result, KeyEventResult.handled);
+      expect(controller.state.isPressed('left'), isTrue);
+    });
+  });
 }

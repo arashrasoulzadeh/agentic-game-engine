@@ -220,8 +220,17 @@ unless marked, roughly in priority order.
       with level geometry (walls/tiles) — most projectiles fly straight
       unaffected by platforming physics; documented as a follow-up if a
       game actually needs it.
-- [ ] Remappable controls UI — `InputController.bindings` is a
-      code-level map; no in-game "press a key to rebind" flow.
+- [x] Remappable controls UI: `InputController.captureNextKeyDown`
+      (captures the next raw key press regardless of binding, consuming
+      the event so the old binding doesn't also fire) +
+      `InputBindingsStorage` (save/load via `shared_preferences`, same
+      cross-platform choice as `SaveGame`) + `RemapMenuScene` (a ready-
+      made "press a key to rebind" menu, the `SaveSlotMenuScene`
+      analogue for input — concrete, not subclassed, since every bit of
+      its behavior is already a constructor parameter). One documented
+      simplification: no live "press any key now" visual state on the
+      tapped button — the whole menu just reloads once a key is
+      captured, reading the just-updated bindings fresh.
 - [ ] Screen shake / camera-effect helpers — doable by hand today with
       `Tween` + `Camera`, but no ready-made helper the way
       `installPlatformerSystems` is for physics.

@@ -54,7 +54,26 @@ class InputController {
         LogicalKeyboardKey.space: 'jump',
       };
 
+  /// Set by a control-remapping UI (see `RemapMenuScene`) to capture
+  /// the *next* physical key pressed, regardless of whether it's
+  /// already bound — [handleKeyEvent] checks this first, calls it with
+  /// that key, clears it back to `null`, and consumes the event, so
+  /// the key's old binding (if it had one) doesn't also fire from the
+  /// same press it's being reassigned by. `null` (the default) means
+  /// normal binding-based handling — nothing about this changes
+  /// gameplay input unless something explicitly sets it.
+  void Function(LogicalKeyboardKey key)? captureNextKeyDown;
+
   KeyEventResult handleKeyEvent(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      final capture = captureNextKeyDown;
+      if (capture != null) {
+        captureNextKeyDown = null;
+        capture(event.logicalKey);
+        return KeyEventResult.handled;
+      }
+    }
+
     final action = bindings[event.logicalKey];
     if (action == null) return KeyEventResult.ignored;
 

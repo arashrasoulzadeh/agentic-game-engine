@@ -49,6 +49,9 @@ engine" section, one item at a time.
 - **Ranged/projectile combat**: `Projectile` + `spawnProjectile` +
   `ProjectileSystem` (lifetime expiry) + `installProjectileDamage`
   (on-hit damage via one shared subscription, not one per projectile).
+- **Remappable controls**: `InputController.captureNextKeyDown` (raw
+  next-key capture) + `InputBindingsStorage` (save/load bindings) +
+  `RemapMenuScene` (a ready-made "press a key to rebind" menu).
 
 ## [0.1.0]
 
