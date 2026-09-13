@@ -18,6 +18,11 @@ pubspec.yaml.
   throw clear, catchable `ComponentApplyException`/`WorldPatchException`
   on malformed input instead of a bare `TypeError`. `SaveGame.load`
   also guards a corrupted (non-object) save the same way.
+- **API stability commitment**: root `README.md` now documents the
+  semver contract each package makes starting at `1.0.0` (its
+  top-level export surface only, `src/` internals stay free to move),
+  and explicitly keeps the `Text`/`Velocity`/`Action` Flutter-name-
+  collision `hide` workaround as a permanent, deliberate decision.
 
 ### Fully-fledged platformer engine
 

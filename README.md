@@ -83,6 +83,32 @@ for the full `Game` API (assets, camera, input, audio, save/load) and
 [`packages/engine_core/README.md`](packages/engine_core/README.md) for
 the ECS/physics/agent API underneath it.
 
+## API stability
+
+Every package is pre-1.0 (`0.1.0`) today, so breaking changes can and
+do happen freely — e.g. `resolveSolidCircleAabb` returning a
+`CollisionSide` enum instead of a `bool`. Once a package reaches
+`1.0.0`, it commits to normal semver: a breaking change to anything
+exported from that package's top-level `<package>.dart` (`engine_core.dart`/
+`engine_flutter.dart`/`engine_platformer.dart`/`engine_cli`'s public
+API) requires a major version bump. Nothing under a package's internal
+`lib/src/` makes that promise at any version — only the top-level
+export surface is the contract; `src/` internals (including which
+concern-folder a file lives in) can keep moving freely.
+
+One deliberate, permanent exception carried into that commitment:
+`engine_core`'s `Velocity`/`Action` and `engine_flutter`'s `Text`
+collide with Flutter's own types of the same name. A consumer
+importing both this engine and `material`/`widgets` resolves this with
+`hide` on one side (`import 'package:flutter/material.dart' hide
+Text;` or the reverse) — an established pattern, not a one-off
+oversight (19 call sites across this repo already do it). Renaming these types to dodge
+the collision was considered and rejected: it would be a bigger,
+lower-value breaking change than the `hide` workaround it replaces,
+which every consumer already has to reach for anyway when using any
+Dart/Flutter package with a same-named type. This is staying as-is
+through 1.0 and beyond.
+
 ## Development
 
 Each package is tested independently:

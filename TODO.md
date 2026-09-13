@@ -24,15 +24,19 @@ repo, not from memory.
       pointing at the GitHub repo) to all four packages. No `license:`
       field added — that's not a real pub.dev-recognized pubspec key;
       pub.dev auto-detects license from the `LICENSE` file above.
-- [ ] API stability commitment: pre-1.0 this repo has made real
-      breaking changes freely (e.g. `resolveSolidCircleAabb` returning
-      a `CollisionSide` enum instead of a `bool`) — 1.0 means promising
-      semver going forward, so decide what's "stable public API" vs.
-      still-experimental before the tag, not after.
-- [ ] Root-level getting-started walkthrough: per-package READMEs exist
-      and are good API references, but nothing currently walks a
-      brand-new user through `game_agent create` → running the result,
-      start to finish, in one place.
+- [x] API stability commitment: new "API stability" section in the root
+      `README.md` — the contract is each package's top-level export
+      surface (`<package>.dart`), `src/` internals stay free to move at
+      any version; explicitly documents `Text`/`Velocity`/`Action`'s
+      Flutter-name-collision `hide`-workaround (19 existing call sites)
+      as a deliberate, permanent decision rather than a pre-1.0 wart to
+      fix — renaming would be a bigger, lower-value breaking change than
+      the `hide` pattern it replaces.
+- [x] Root-level getting-started walkthrough: re-checked against the
+      actual current `README.md` rather than assumed — its existing
+      "Quick start" section already does exactly this (install the CLI,
+      `game_agent create`, `cd`, `flutter run`, all in one place), so
+      this item was already satisfied when written; no change needed.
 - [x] Malformed-input robustness: `Level.validate`/`TileMap.fromJson`
       already threw clear, specific exceptions — the real gap was two
       layers underneath: `ComponentRegistry.applyToEntity` and
