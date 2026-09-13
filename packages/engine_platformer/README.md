@@ -89,6 +89,7 @@ world.addSystem(PlatformerSystem());               // PlatformBody collision
 world.addSystem(TileCollisionSystem());            // TileMap collision
 world.addSystem(JumpSystem());                     // must run after both of the above
 world.addSystem(CollisionSystem());                // from engine_core
+world.addSystem(HealthSystem());                   // ticks Health.invincibleSeconds down
 world.addSystem(FacingSystem());
 world.addSystem(MovementAnimationSystem());
 world.addSystem(AnimationSystem());                // from engine_flutter, must run after MovementAnimationSystem
@@ -167,6 +168,52 @@ world.onCollisionWithAny(coins, (coin, _) {
 
 See [engine_core's README](../engine_core/README.md#events) for the
 full set.
+
+## Damage/health/combat
+
+```dart
+final player = spawnPlayer(world, x: 40, y: 40, input: input.state, maxHealth: 100);
+final enemy = spawnEnemy(world, x: 150, y: 40, behaviorId: 'patrol', maxHealth: 20);
+
+dealDamageOnTouch(world, {enemy}, 10); // touching this enemy damages the player
+```
+
+`maxHealth` on `spawnPlayer`/`spawnEnemy` attaches a `Health`
+component (full at spawn); `spawnPlayer` also seeds a `LastCheckpoint`
+at the spawn point. `HealthSystem` (part of `installPlatformerSystems`)
+only ticks `Health.invincibleSeconds` down each tick — damage/death
+stay explicit calls you make yourself, not hidden system behavior:
+
+- **`damageEntity(world, id, amount, {invincibilitySeconds})`** —
+  subtracts health, starts an invincibility window (further damage is a
+  no-op until it expires), and emits `DeathEvent` exactly once when
+  health first reaches 0.
+- **`healEntity(world, id, amount)`** — restores health, clamped to max.
+- **`dealDamageOnTouch(world, hazards, amount, {invincibilitySeconds})`**
+  — the common case (spikes, enemy contact damage) in one call, via
+  `World.onCollisionWithAny` under the hood. For anything more specific
+  (conditional damage, different amounts per hazard), call
+  `damageEntity` directly from your own collision listener instead.
+
+## Checkpoints and respawn
+
+```dart
+trackCheckpoints(world, player);
+respawnOnDeath(world, player, fallbackX: 40, fallbackY: 40);
+
+final checkpoint = world.spawn();
+world.storeOf<Position>().set(checkpoint, Position(500, 40));
+world.storeOf<Collider>().set(checkpoint, Collider(16));
+world.storeOf<Checkpoint>().set(checkpoint, Checkpoint('cp1'));
+```
+
+`trackCheckpoints` listens for the player touching any `Checkpoint`
+entity and records its `Position` as the player's `LastCheckpoint`.
+`respawnOnDeath` wires `respawnPlayer` (resets position/velocity/health
+to the last checkpoint, or `fallbackX`/`fallbackY` if none was touched
+yet) to fire automatically on `DeathEvent` — skip it and call
+`respawnPlayer` directly if you need a delay or a death animation
+first.
 
 ## Tilemaps vs. platform entities
 

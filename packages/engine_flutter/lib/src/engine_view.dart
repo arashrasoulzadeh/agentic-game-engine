@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'camera.dart';
+import 'components/parallax_layer.dart';
 import 'components/sprite.dart';
 import 'input.dart';
 import 'sprite_atlas.dart';
@@ -157,6 +158,7 @@ class _EnginePainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, Paint()..color = backgroundColor);
 
     final positions = world.storeOf<Position>();
+    _paintParallaxLayers(canvas, size, positions);
     _paintTileMaps(canvas, size, positions);
 
     final sprites = world.storeOf<Sprite>();
@@ -243,6 +245,63 @@ class _EnginePainter extends CustomPainter {
         );
       }
     }
+  }
+
+  /// Draws every `ParallaxLayer`, first (behind tiles/sprites/particles).
+  /// Each layer's screen anchor scales the camera by `scrollFactorX`/`Y`
+  /// instead of using it 1:1 like `worldToScreen` does for regular
+  /// sprites — that scaled-down camera movement is the entire parallax
+  /// effect. `tileX`/`tileY` repeat the region across the viewport by
+  /// drawing it at every `_tileStarts` offset instead of once, so one
+  /// authored strip covers arbitrarily wide/tall scrolling.
+  void _paintParallaxLayers(Canvas canvas, Size size, ComponentStore<Position> positions) {
+    final layers = world.storeOf<ParallaxLayer>();
+    if (layers.length == 0) return;
+
+    for (var i = 0; i < layers.length; i++) {
+      final entity = layers.entityAt(i);
+      final layer = layers.denseAt(i);
+      if (!atlasRegistry.has(layer.atlasId)) continue;
+
+      final atlas = atlasRegistry.resolve(layer.atlasId);
+      final srcRect = atlas.regionFor(layer.region);
+      final tileWidth = srcRect.width * camera.zoom;
+      final tileHeight = srcRect.height * camera.zoom;
+      if (tileWidth <= 0 || tileHeight <= 0) continue;
+
+      final pos = positions.get(entity) ?? Position(0, 0);
+      final anchorX =
+          (pos.x - camera.x * layer.scrollFactorX) * camera.zoom + size.width / 2;
+      final anchorY =
+          (pos.y - camera.y * layer.scrollFactorY) * camera.zoom + size.height / 2;
+
+      final xs = layer.tileX ? _tileStarts(anchorX, tileWidth, size.width) : [anchorX];
+      final ys = layer.tileY ? _tileStarts(anchorY, tileHeight, size.height) : [anchorY];
+
+      final paint = Paint();
+      for (final y in ys) {
+        for (final x in xs) {
+          canvas.drawImageRect(
+            atlas.image,
+            srcRect,
+            Rect.fromLTWH(x, y, tileWidth, tileHeight),
+            paint,
+          );
+        }
+      }
+    }
+  }
+
+  /// Every `tileSize`-spaced offset from at-or-before 0 up to
+  /// [viewportSize], starting from [anchor] — i.e. the set of positions
+  /// to draw one tile at so the whole viewport is covered with no gaps,
+  /// regardless of how far [anchor] has scrolled. Dart's `%` is floored
+  /// (always non-negative for a positive divisor), so this works the
+  /// same for a negative [anchor] as a positive one.
+  List<double> _tileStarts(double anchor, double tileSize, double viewportSize) {
+    var start = anchor % tileSize;
+    if (start > 0) start -= tileSize;
+    return [for (var x = start; x < viewportSize; x += tileSize) x];
   }
 
   /// Draws every non-empty tile of every `TileMap` in the world — this

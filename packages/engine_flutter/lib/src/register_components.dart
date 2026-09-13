@@ -1,6 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 
 import 'components/animation.dart';
+import 'components/parallax_layer.dart';
 import 'components/sprite.dart';
 import 'input.dart';
 
@@ -22,5 +23,10 @@ void registerFlutterComponents(World world) {
     'inputState',
     (i) => i.toJson(),
     InputState.fromJson,
+  );
+  world.components.register<ParallaxLayer>(
+    'parallaxLayer',
+    (p) => p.toJson(),
+    ParallaxLayer.fromJson,
   );
 }

@@ -245,6 +245,54 @@ systems that only read `isPressed(...)` are unaffected either way.
 final speed = baseSpeed * inputState.axis('moveX').abs().clamp(0.3, 1.0);
 ```
 
+## Parallax backgrounds
+
+```dart
+final sky = world.spawn();
+world.storeOf<Position>().set(sky, Position(0, 0));
+world.storeOf<ParallaxLayer>().set(sky, ParallaxLayer('bg', 'sky', scrollFactorX: 0.2));
+
+final mountains = world.spawn();
+world.storeOf<Position>().set(mountains, Position(0, 40));
+world.storeOf<ParallaxLayer>().set(mountains, ParallaxLayer('bg', 'mountains', scrollFactorX: 0.5));
+```
+
+`ParallaxLayer` is an atlas region (same `atlasId`/`region` idea as
+`Sprite`) that scrolls at `scrollFactorX`/`scrollFactorY` — the
+fraction of camera movement it tracks: `0` stays fixed to the screen,
+`1` scrolls exactly like normal world content, anything in between
+reads as "further away." `EngineView` draws every layer first, behind
+tiles/sprites/particles. `tileX`/`tileY` (default `tileX: true`) repeat
+the region across the whole viewport so one authored strip covers
+arbitrarily wide scrolling — turn either off for a layer meant to
+appear once (a fixed logo, say) instead of tiled.
+
+## Particle effects
+
+```dart
+final emitter = world.spawn();
+world.storeOf<Position>().set(emitter, Position(playerX, playerY));
+world.storeOf<ParticleEmitter>().set(emitter, ParticleEmitter(
+  burstCount: 20,          // one-shot -- set again for another burst
+  speedMin: 60, speedMax: 160,
+  lifetimeMin: 0.3, lifetimeMax: 0.6,
+  colorArgb: 0xFFFFAA33,
+));
+```
+
+`ParticleEmitter`/`Particle`/`ParticleSystem` live in `engine_core`
+(genre-general, pure Dart — `colorArgb` is a plain int rather than a
+Flutter `Color` so this stays usable with no Flutter dependency).
+Register `ParticleSystem()` alongside `MovementSystem()` — spawned
+particles get `Position`/`Velocity` from the emitter's origin and rely
+on `MovementSystem` to actually move, not a separate step. Set
+`emitter.rate` instead of/alongside `burstCount` for continuous
+emission (a torch, a waterfall). `EngineView` draws every `Particle` on
+top of sprites: a particle with its own `Sprite` component renders that
+region scaled by `Particle.scale`, otherwise a plain circle in
+`Particle.colorArgb` — both fade via `Particle.alpha` as the particle
+ages toward its lifetime.
+
 ## Audio
 
 ```dart

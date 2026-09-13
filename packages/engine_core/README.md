@@ -61,8 +61,10 @@ that order. This is deliberate: a bug is "read the list top to bottom,"
 not "trace which system's `initState` ran first."
 
 `MovementSystem` (integrates position by velocity, bounces off world
-bounds) and `CollisionSystem` (circle-vs-circle, emits `CollisionEvent`)
-are the only built-in systems here — they're genre-general. Gravity,
+bounds), `CollisionSystem` (circle-vs-circle, emits `CollisionEvent`),
+and `ParticleSystem` (spawns/ages `Particle` entities from
+`ParticleEmitter`s — see below) are the only built-in systems here —
+they're genre-general. Gravity,
 jump, and platform/tile *collision* logic (which needs `TileMap` data
 but adds platformer-specific semantics like `grounded`) live in
 [`engine_platformer`](../engine_platformer/README.md), including the
@@ -79,6 +81,24 @@ system-ordering rules for a platformer (`GravitySystem` →
 | `Collider(radius)` | Circle collider for entity-vs-entity collision |
 | `TileMap(cols, rows, tileWidth, tileHeight, tiles, solidTileIds, oneWayTileIds)` | A tile grid for level geometry; attach to an entity with a `Position` (the grid's origin). The data type is genre-general (RPGs/puzzle games use tile grids too); only platformer *collision* against it lives in `engine_platformer` |
 | `AIState(behaviorId, memory)` | Marks an entity as driven by a registered `Behavior` |
+| `ParticleEmitter(rate, burstCount, ...)` | Attach to an entity with a `Position`; `ParticleSystem` spawns `Particle` entities from it — `rate` for continuous emission, `burstCount` for a one-shot burst (consumed back to 0 the tick it fires) |
+| `Particle(lifetime, startScale, endScale, startAlpha, endAlpha, colorArgb)` | One spawned particle; ages via `ParticleSystem`, destroyed once `age >= lifetime`. `scale`/`alpha` ramp linearly over the particle's life — `engine_flutter`'s `EngineView` reads them to render. `colorArgb` is a plain int (not a Flutter `Color`) so this stays Flutter-free |
+
+### Particles
+
+```dart
+world.addSystem(ParticleSystem());
+world.addSystem(MovementSystem()); // moves particles via their Velocity
+
+final emitter = world.spawn();
+world.storeOf<Position>().set(emitter, Position(100, 100));
+world.storeOf<ParticleEmitter>().set(emitter, ParticleEmitter(burstCount: 20));
+```
+
+`ParticleSystem` spawns particles with `Position`/`Velocity` (a random
+angle/speed within the emitter's configured range) and relies on
+`MovementSystem` to actually move them — it doesn't duplicate velocity
+integration. See `engine_flutter`'s README for how particles render.
 
 ### Events
 

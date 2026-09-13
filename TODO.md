@@ -14,6 +14,9 @@ top to bottom — not strict, adjust as dependencies emerge.
       existing `toJson`/`applyPatch`)
 - [x] Level lint: expose `Level.validate()` as a `game_agent` CLI
       subcommand so a level file can be checked without running the game
+- [x] Particle effects: `ParticleEmitter`/`Particle`/`ParticleSystem`
+      (bursts + continuous emission, scale/alpha fade over life) —
+      genre-general, pure Dart (rendering lives in `engine_flutter`).
 
 ## Rendering/platform (engine_flutter)
 
@@ -43,6 +46,13 @@ top to bottom — not strict, adjust as dependencies emerge.
       and an opt-in `analogOutput` on `VirtualJoystick` exposing
       continuous `moveX`/`moveY` on `InputState` (range -1..1) for
       variable-speed movement, alongside the existing discrete actions.
+- [x] Particle rendering: `EngineView` draws every `Particle` on top of
+      sprites — sprite-backed (scaled by `Particle.scale`) or a plain
+      colored circle, both fading via `Particle.alpha`.
+- [x] Parallax backgrounds: `ParallaxLayer` component (an atlas region,
+      like `Sprite`, plus a per-axis `scrollFactor`) — `EngineView`
+      draws every layer first, behind tiles/sprites/particles, tiling
+      across the viewport when `tileX`/`tileY` are set.
 
 ## Platformer helpers (engine_platformer)
 
@@ -59,12 +69,6 @@ top to bottom — not strict, adjust as dependencies emerge.
 - [x] Checkpoint/respawn: `Checkpoint`/`LastCheckpoint` components,
       `trackCheckpoints`, `respawnPlayer`/`respawnOnDeath` — resets
       position/velocity/health to the last touched checkpoint.
-- [ ] Particle effects: `ParticleEmitter` component/system
-      (bursts + continuous emission, fade/scale over life) — data in
-      `engine_core`, rendering in `engine_flutter`.
-- [ ] Tilemap-driven parallax backgrounds: multi-layer scrolling
-      background authored as level data, scrolling at a per-layer speed
-      ratio relative to camera position.
 - [ ] Update `engine_cli`'s `default_game` template to use
       `engine_platformer` (spawnPlayer + a small tile level) instead of
       the current bouncing-circle stress-test demo, now that a real

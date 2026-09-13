@@ -1,6 +1,7 @@
 export 'src/audio_manager.dart';
 export 'src/camera.dart';
 export 'src/components/animation.dart';
+export 'src/components/parallax_layer.dart';
 export 'src/components/sprite.dart';
 export 'src/engine_view.dart';
 export 'src/game.dart';
