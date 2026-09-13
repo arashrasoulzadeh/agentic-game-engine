@@ -60,6 +60,16 @@ engine" section, one item at a time.
 This closes out every item added under "Fully-fledged platformer
 engine" above.
 
+### New engine features
+
+Working through TODO.md's "New engine features" section, one item at
+a time.
+
+- **Text rendering**: `Text` component (`engine_flutter`) — drawn
+  fresh every frame via `TextPainter`, `screenSpace` chooses
+  world-space (scrolls/zooms with the camera) vs. screen-space (fixed
+  viewport pixels, for a HUD).
+
 ## [0.1.0]
 
 ### Scenes, menus & rooms

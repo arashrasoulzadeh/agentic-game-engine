@@ -7,6 +7,10 @@ import 'package:flutter/scheduler.dart';
 import 'camera.dart';
 import 'components/parallax_layer.dart';
 import 'components/sprite.dart';
+// Aliased -- `Text` collides with Flutter's own widget of the same
+// name, which `package:flutter/widgets.dart` (imported above) already
+// brings into scope.
+import 'components/text.dart' as txt;
 import 'debug_memory.dart';
 import 'input.dart';
 import 'sprite_atlas.dart';
@@ -221,7 +225,8 @@ class _EnginePainter extends CustomPainter {
     order = _collectParallaxItems(items, order, size, positions);
     order = _collectTileMapItems(items, order, size, positions);
     order = _collectSpriteItems(items, order, size, positions);
-    _collectParticleItems(items, order, size, positions);
+    order = _collectParticleItems(items, order, size, positions);
+    _collectTextItems(items, order, size, positions);
 
     // Stable by construction (`order` is a strictly increasing
     // tie-breaker assigned in the engine's original draw order --
@@ -524,6 +529,50 @@ class _EnginePainter extends CustomPainter {
             );
           }
         }
+      }));
+    }
+    return order;
+  }
+
+  /// Collects one `_DrawItem` per `Text` — drawn fresh every frame via
+  /// `TextPainter`, not batched (unlike sprites), since text doesn't
+  /// share a source image the way atlas-based sprites do. `screenSpace`
+  /// text skips the camera transform entirely (`Position` is already in
+  /// viewport pixels); world-space text goes through `camera.worldToScreen`
+  /// like a `Sprite`, so it scrolls/zooms with everything else.
+  int _collectTextItems(
+    List<_DrawItem> items,
+    int order,
+    Size size,
+    ComponentStore<Position> positions,
+  ) {
+    final texts = world.storeOf<txt.Text>();
+    for (var i = 0; i < texts.length; i++) {
+      final entity = texts.entityAt(i);
+      final text = texts.denseAt(i);
+      final pos = positions.get(entity);
+      if (pos == null) continue;
+
+      items.add(_DrawItem(text.zIndex, order++, (canvas) {
+        final screenPos =
+            text.screenSpace ? Offset(pos.x, pos.y) : camera.worldToScreen(pos.x, pos.y, size);
+        final painter = TextPainter(
+          text: TextSpan(
+            text: text.text,
+            style: TextStyle(
+              color: Color(text.colorArgb),
+              fontSize: text.fontSize * (text.screenSpace ? 1 : camera.zoom),
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+
+        final dx = switch (text.align) {
+          txt.TextAlignment.left => 0.0,
+          txt.TextAlignment.center => -painter.width / 2,
+          txt.TextAlignment.right => -painter.width,
+        };
+        painter.paint(canvas, Offset(screenPos.dx + dx, screenPos.dy - painter.height / 2));
       }));
     }
     return order;

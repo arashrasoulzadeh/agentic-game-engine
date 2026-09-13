@@ -1,5 +1,5 @@
 import 'package:engine_core/engine_core.dart';
-import 'package:engine_flutter/engine_flutter.dart';
+import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import 'package:flutter/material.dart' hide Velocity;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

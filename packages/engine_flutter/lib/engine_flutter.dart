@@ -3,6 +3,7 @@ export 'src/camera.dart';
 export 'src/components/animation.dart';
 export 'src/components/parallax_layer.dart';
 export 'src/components/sprite.dart';
+export 'src/components/text.dart';
 export 'src/engine_view.dart';
 export 'src/game.dart';
 export 'src/game_config.dart';

@@ -3,6 +3,7 @@ import 'package:engine_core/engine_core.dart';
 import 'components/animation.dart';
 import 'components/parallax_layer.dart';
 import 'components/sprite.dart';
+import 'components/text.dart';
 import 'input.dart';
 
 /// Registers engine_flutter's components on [world], mirroring
@@ -28,5 +29,10 @@ void registerFlutterComponents(World world) {
     'parallaxLayer',
     (p) => p.toJson(),
     ParallaxLayer.fromJson,
+  );
+  world.components.register<Text>(
+    'text',
+    (t) => t.toJson(),
+    Text.fromJson,
   );
 }

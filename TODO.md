@@ -273,13 +273,18 @@ this existed anywhere in `engine_core`/`engine_flutter` at the time
 these were written. Roughly priority-ordered by how load-bearing each
 is for everything else.
 
-- [ ] Text rendering: no `Text`/`Label` component anywhere — the only
-      text on screen at all is `ButtonMenuScene`'s baked-atlas button
-      labels (`menu_button_atlas.dart`), which only works because it's
-      a small, fixed set of strings rasterized once. No way to draw
-      arbitrary in-world text (a damage number, a dialogue line, an NPC
-      name, a score readout) — blocks HUDs and dialogue systems
-      entirely. The single most load-bearing item here.
+- [x] Text rendering: `Text` component (`engine_flutter`) — drawn fresh
+      every frame via `TextPainter` in `EngineView`, `screenSpace: bool`
+      chooses world-space (scrolls/zooms with the `Camera`, e.g. a
+      damage number) vs. screen-space (fixed viewport pixels, e.g. a
+      HUD score — the primitive the still-open HUD/UI item below needs).
+      Aliased as `txt.Text` inside `engine_view.dart` and documented to
+      collide with Flutter's own `Text` widget — a consumer importing
+      both `engine_flutter` and `material`/`widgets` needs `hide Text`
+      on one side, same precedent `Velocity`/`Action` already set.
+      Verified in the browser: added a live `Coins: N` HUD readout to
+      `test_game`'s `MainScene`, confirmed it renders at a fixed screen
+      position regardless of camera movement.
 - [ ] Debug visualization: the fps/tick overlay exists, but there's no
       way to *see* what the physics is doing — no collider/AABB outline
       draw, no tile-collision-bounds visualization, no spatial-hash
