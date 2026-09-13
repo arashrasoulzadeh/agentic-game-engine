@@ -300,6 +300,14 @@ is for everything else.
       blocked on text rendering above, and even with that, no
       screen-space (as opposed to world-space/camera-relative) render
       concept exists yet.
+- [ ] Restructure each package's `lib/src/` by concern (e.g.
+      `physics/`, `rendering/`, `logic/`/`ai/`, `ui/` — `engine_flutter`
+      already has a `ui/` folder as precedent) instead of the current
+      flat `components/`/`systems/` split with everything else loose at
+      the top level. A real refactor (import-path churn across every
+      package and `test_game`), not a feature — do it as its own
+      focused pass once the current feature-adding streak settles down,
+      not interleaved with it.
 
 ## Validation
 
