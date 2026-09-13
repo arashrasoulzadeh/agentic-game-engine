@@ -76,6 +76,9 @@ item at a time.
   `world.step` regardless of frame rate, capped backlog on a slow
   frame) and interpolates `Sprite`/`Particle` positions between
   simulated states for smooth motion at any display rate.
+- **Localization / i18n**: new `StringTable` (`engine_core`) —
+  JSON-authorable strings keyed by id then locale, with `{param}`
+  substitution and a locale → default-locale → raw-key fallback chain.
 
 ### Fully-fledged platformer engine
 

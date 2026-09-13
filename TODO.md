@@ -274,9 +274,28 @@ belongs in.
 - [ ] Basic 2D lighting: no dynamic-light concept at all today (a torch
       glow, a flashlight cone, ambient darkness) — every game that
       wants mood lighting has to fake it with `Sprite`s.
-- [ ] Localization / i18n: `Text` takes a raw string with no string-
-      table or locale-aware font-fallback concept — every UI string a
-      game shows is hardcoded English today.
+- [x] Localization / i18n: new `StringTable` (`engine_core`, zero
+      Flutter dependency — plain data, same category as `Level`/
+      `GameState`) — JSON-authorable strings keyed by id then locale,
+      `resolve(key, {params})` falling back locale → `defaultLocale` →
+      the raw key itself (a missing translation stays visible/
+      debuggable in-game rather than silently blank), plus simple
+      `{name}`-style substitution and `hasTranslation` for flagging
+      gaps. Deliberately standalone from `Text` — `Text` renders a
+      string, `StringTable` decides which one, single responsibility;
+      a game calls `Text(table.resolve('greeting', params: {...}))`
+      itself rather than the two being coupled. Font-fallback for
+      scripts a bundled custom font doesn't cover is explicitly out of
+      scope — that's an asset/font-selection concern, not a string-
+      lookup one, and this component never touches rendering at all.
+      No real ICU pluralization/formatting — `{param}` substitution
+      only, since nothing has asked for plural-form rules yet and that
+      would be a much bigger scope than a first pass warrants.
+      Verified: 8 new tests in `string_table_test.dart` (locale
+      resolution, `defaultLocale` fallback, raw-key fallback, param
+      substitution, runtime locale switching, `hasTranslation`,
+      round-trip, `fromJson` defaults); full `engine_core` suite (169
+      tests) green, analyzer clean.
 - [x] Animation clip transitions: new `AnimationState.crossfadeSeconds`
       (`0` default — disabled, the original instant-cut behavior) +
       new `AnimationTransition` component + `AnimationTransitionSystem`
