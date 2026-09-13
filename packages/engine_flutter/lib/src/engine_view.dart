@@ -194,8 +194,38 @@ class _EnginePainter extends CustomPainter {
     _paintParallaxLayers(canvas, size, positions);
     _paintTileMaps(canvas, size, positions);
 
+    _paintSprites(canvas, size, positions);
+    _paintParticles(canvas, size, positions);
+  }
+
+  @override
+  bool shouldRepaint(covariant _EnginePainter oldDelegate) => true;
+
+  /// Draws every `Sprite`, batching as many as possible into one
+  /// `Canvas.drawAtlas` call per shared atlas image instead of a
+  /// `save`/`translate`/`scale`/`drawImageRect`/`restore` sequence per
+  /// sprite — meaningfully cheaper at sprite-heavy scenes, since
+  /// `drawAtlas` needs no per-sprite canvas state changes.
+  ///
+  /// `RSTransform` (what `drawAtlas` takes per sprite) only supports one
+  /// *positive, uniform* scale factor, not independent X/Y scale — so a
+  /// sprite with `scaleX != scaleY`, or a negative one (the standard way
+  /// `FacingSystem` flips a sprite horizontally), can't be expressed
+  /// that way and falls back to the original per-sprite `drawImageRect`
+  /// path instead. Batched sprites are grouped by atlas and drawn
+  /// first, one `drawAtlas` call per atlas; fallback sprites draw after,
+  /// each individually, in their original relative order — so sprites
+  /// on *different* atlases (or mixing batchable and non-batchable) can
+  /// end up in a different relative draw order than plain insertion
+  /// order would give. Harmless today (nothing in this engine has an
+  /// explicit z-index/layering concept beyond insertion order to begin
+  /// with), but worth knowing if two sprites' overlap ever looks wrong.
+  void _paintSprites(Canvas canvas, Size size, ComponentStore<Position> positions) {
     final sprites = world.storeOf<Sprite>();
-    final paint = Paint();
+    if (sprites.length == 0) return;
+
+    final batchesByImage = <ui.Image, _SpriteBatch>{};
+    final fallbackIndices = <int>[];
 
     for (var i = 0; i < sprites.length; i++) {
       final entity = sprites.entityAt(i);
@@ -203,31 +233,67 @@ class _EnginePainter extends CustomPainter {
       final pos = positions.get(entity);
       if (pos == null || !atlasRegistry.has(sprite.atlasId)) continue;
 
+      if (sprite.scaleX != sprite.scaleY || sprite.scaleX <= 0) {
+        fallbackIndices.add(i);
+        continue;
+      }
+
       final atlas = atlasRegistry.resolve(sprite.atlasId);
       final srcRect = atlas.regionFor(sprite.region);
       final screenPos = camera.worldToScreen(pos.x, pos.y, size);
 
-      canvas.save();
-      canvas.translate(screenPos.dx, screenPos.dy);
-      if (sprite.rotation != 0) canvas.rotate(sprite.rotation);
-      canvas.scale(
-        sprite.scaleX * camera.zoom,
-        sprite.scaleY * camera.zoom,
-      );
-      final destRect = ui.Rect.fromCenter(
-        center: Offset.zero,
-        width: srcRect.width,
-        height: srcRect.height,
-      );
-      canvas.drawImageRect(atlas.image, srcRect, destRect, paint);
-      canvas.restore();
+      final batch = batchesByImage.putIfAbsent(atlas.image, () => _SpriteBatch());
+      batch.transforms.add(RSTransform.fromComponents(
+        rotation: sprite.rotation,
+        scale: sprite.scaleX * camera.zoom,
+        anchorX: srcRect.width / 2,
+        anchorY: srcRect.height / 2,
+        translateX: screenPos.dx,
+        translateY: screenPos.dy,
+      ));
+      batch.rects.add(srcRect);
     }
 
-    _paintParticles(canvas, size, positions);
+    final paint = Paint();
+    for (final entry in batchesByImage.entries) {
+      canvas.drawAtlas(entry.key, entry.value.transforms, entry.value.rects, null, null, null, paint);
+    }
+
+    for (final i in fallbackIndices) {
+      _paintSpriteIndividually(canvas, size, positions, sprites, i, paint);
+    }
   }
 
-  @override
-  bool shouldRepaint(covariant _EnginePainter oldDelegate) => true;
+  void _paintSpriteIndividually(
+    Canvas canvas,
+    Size size,
+    ComponentStore<Position> positions,
+    ComponentStore<Sprite> sprites,
+    int i,
+    Paint paint,
+  ) {
+    final entity = sprites.entityAt(i);
+    final sprite = sprites.denseAt(i);
+    final pos = positions.get(entity)!;
+    final atlas = atlasRegistry.resolve(sprite.atlasId);
+    final srcRect = atlas.regionFor(sprite.region);
+    final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+
+    canvas.save();
+    canvas.translate(screenPos.dx, screenPos.dy);
+    if (sprite.rotation != 0) canvas.rotate(sprite.rotation);
+    canvas.scale(
+      sprite.scaleX * camera.zoom,
+      sprite.scaleY * camera.zoom,
+    );
+    final destRect = ui.Rect.fromCenter(
+      center: Offset.zero,
+      width: srcRect.width,
+      height: srcRect.height,
+    );
+    canvas.drawImageRect(atlas.image, srcRect, destRect, paint);
+    canvas.restore();
+  }
 
   /// Draws every `Particle` (from `ParticleSystem`) on top of sprites —
   /// the common case for hit sparks/dust/collect flair sitting above
@@ -376,4 +442,11 @@ class _EnginePainter extends CustomPainter {
       }
     }
   }
+}
+
+/// One `Canvas.drawAtlas` call's worth of sprites sharing a source
+/// image — see `_EnginePainter._paintSprites`.
+class _SpriteBatch {
+  final transforms = <RSTransform>[];
+  final rects = <Rect>[];
 }
