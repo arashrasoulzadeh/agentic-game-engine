@@ -10,6 +10,7 @@ import 'components/sprite.dart';
 // Aliased -- `Text` collides with Flutter's own widget of the same
 // name, which `package:flutter/widgets.dart` (imported above) already
 // brings into scope.
+import 'components/hud_bar.dart';
 import 'components/text.dart' as txt;
 import 'debug_memory.dart';
 import 'input.dart';
@@ -242,7 +243,8 @@ class _EnginePainter extends CustomPainter {
     order = _collectTileMapItems(items, order, size, positions);
     order = _collectSpriteItems(items, order, size, positions);
     order = _collectParticleItems(items, order, size, positions);
-    _collectTextItems(items, order, size, positions);
+    order = _collectTextItems(items, order, size, positions);
+    _collectHudBarItems(items, order, positions);
 
     // Stable by construction (`order` is a strictly increasing
     // tie-breaker assigned in the engine's original draw order --
@@ -665,6 +667,32 @@ class _EnginePainter extends CustomPainter {
           txt.TextAlignment.right => -painter.width,
         };
         painter.paint(canvas, Offset(screenPos.dx + dx, screenPos.dy - painter.height / 2));
+      }));
+    }
+    return order;
+  }
+
+  /// Collects one `_DrawItem` per `HudBar` — always screen space
+  /// (`Position` is viewport pixels, never transformed by the camera;
+  /// see `HudBar`'s doc comment for why), a background rect at [HudBar.width]/
+  /// `.height` plus a foreground rect scaled to `HudBar.fraction`.
+  int _collectHudBarItems(
+    List<_DrawItem> items,
+    int order,
+    ComponentStore<Position> positions,
+  ) {
+    final bars = world.storeOf<HudBar>();
+    for (var i = 0; i < bars.length; i++) {
+      final entity = bars.entityAt(i);
+      final bar = bars.denseAt(i);
+      final pos = positions.get(entity);
+      if (pos == null) continue;
+
+      items.add(_DrawItem(bar.zIndex, order++, (canvas) {
+        final rect = Rect.fromLTWH(pos.x, pos.y, bar.width, bar.height);
+        canvas.drawRect(rect, Paint()..color = Color(bar.backgroundColorArgb));
+        final fillRect = Rect.fromLTWH(pos.x, pos.y, bar.width * bar.fraction, bar.height);
+        canvas.drawRect(fillRect, Paint()..color = Color(bar.fillColorArgb));
       }));
     }
     return order;

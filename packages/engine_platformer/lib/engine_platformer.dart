@@ -7,12 +7,14 @@ export 'src/combat_helpers.dart';
 export 'src/components/checkpoint.dart';
 export 'src/components/gravity.dart';
 export 'src/components/health.dart';
+export 'src/components/health_hud_link.dart';
 export 'src/components/inventory.dart';
 export 'src/components/last_checkpoint.dart';
 export 'src/components/movement_animation_set.dart';
 export 'src/components/platform_body.dart';
 export 'src/components/platformer_controller.dart';
 export 'src/components/projectile.dart';
+export 'src/hud_helpers.dart';
 export 'src/pickup_helpers.dart';
 export 'src/projectile_helpers.dart';
 export 'src/spawn_helpers.dart';
@@ -20,6 +22,7 @@ export 'src/system_pack.dart';
 export 'src/systems/dash_system.dart';
 export 'src/systems/facing_system.dart';
 export 'src/systems/gravity_system.dart';
+export 'src/systems/health_hud_system.dart';
 export 'src/systems/health_system.dart';
 export 'src/systems/jump_system.dart';
 export 'src/systems/movement_animation_system.dart';
@@ -33,6 +36,7 @@ import 'package:engine_core/engine_core.dart';
 import 'src/components/checkpoint.dart';
 import 'src/components/gravity.dart';
 import 'src/components/health.dart';
+import 'src/components/health_hud_link.dart';
 import 'src/components/inventory.dart';
 import 'src/components/last_checkpoint.dart';
 import 'src/components/movement_animation_set.dart';
@@ -90,5 +94,10 @@ void registerPlatformerComponents(World world) {
     'projectile',
     (p) => p.toJson(),
     Projectile.fromJson,
+  );
+  world.components.register<HealthHudLink>(
+    'healthHudLink',
+    (h) => h.toJson(),
+    HealthHudLink.fromJson,
   );
 }

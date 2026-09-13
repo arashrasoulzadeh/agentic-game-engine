@@ -334,11 +334,31 @@ is for everything else.
       nothing in this repo's actual usage needs flocking yet, and
       `PatrolBehavior`/`FollowBehavior`/`PathFollowBehavior` cover
       every enemy-AI pattern asked for so far.
-- [ ] HUD/UI framework: `ButtonMenuScene` covers menus; nothing covers
-      persistent in-game UI (health bar, minimap, inventory display) —
-      blocked on text rendering above, and even with that, no
-      screen-space (as opposed to world-space/camera-relative) render
-      concept exists yet.
+- [x] HUD/UI framework: `HudBar` component (`engine_flutter`) — a
+      filled rect drawn from `value`/`maxValue` (clamped fraction,
+      `maxValue <= 0` renders empty rather than dividing by zero),
+      always screen space (a bar pinned to the viewport is the only
+      case that's come up; a world-space bar over an enemy's head is
+      just a `Sprite`/`Text` pair, not this) — same "doesn't hide how
+      it works, drawn fresh every frame" primitive `Text` already is
+      for HUD numbers, now covering the other common HUD shape (health/
+      stamina/mana/boss bars). `engine_platformer` adds the genre-level
+      glue: `HealthHudLink` (attached to a `HudBar` entity, points at
+      whichever entity's `Health` it mirrors) + `HealthHudSystem`
+      (copies `current`/`max` into the linked bar every tick, silently
+      skipping a link whose source has no `Health` rather than
+      erroring, since a HUD bar briefly outliving its source — e.g. the
+      frame an enemy dies — is normal) + `spawnHealthHudBar` (the
+      one-call version: spawn the bar, wire the link, done). Verified
+      visually in the browser (not just unit tests): temporarily gave
+      `test_game`'s player `Health` and a `spawnHealthHudBar` bar,
+      confirmed a red fill over a dark background rendering at a fixed
+      screen position regardless of camera, then reverted (test_game is
+      gitignored, nothing to commit there). A minimap/inventory-grid
+      widget was considered and left out — no concrete use case in this
+      repo yet, and `HudBar` plus `Text` plus `Sprite` already covers
+      every HUD element asked for so far; add the next widget when a
+      real one is needed rather than speculatively.
 - [ ] Restructure each package's `lib/src/` by concern (e.g.
       `physics/`, `rendering/`, `logic/`/`ai/`, `ui/` — `engine_flutter`
       already has a `ui/` folder as precedent) instead of the current

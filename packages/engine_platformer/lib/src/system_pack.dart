@@ -4,6 +4,7 @@ import 'package:engine_flutter/engine_flutter.dart';
 import 'systems/dash_system.dart';
 import 'systems/facing_system.dart';
 import 'systems/gravity_system.dart';
+import 'systems/health_hud_system.dart';
 import 'systems/health_system.dart';
 import 'systems/jump_system.dart';
 import 'systems/movement_animation_system.dart';
@@ -28,9 +29,11 @@ import 'systems/tile_collision_system.dart';
 /// `MovementAnimationSet` at all (e.g. a headless test world).
 ///
 /// Includes `HealthSystem` (ticks down `Health.invincibleSeconds` —
-/// harmless even if nothing in your game has a `Health` component yet)
-/// and `ProjectileSystem` (ages/expires `Projectile`s, same "harmless
-/// if unused" reasoning). Damage/death/respawn themselves, and
+/// harmless even if nothing in your game has a `Health` component yet),
+/// `HealthHudSystem` (syncs any `HudBar` wired up via
+/// `spawnHealthHudBar`/`HealthHudLink` — same "harmless if unused"
+/// reasoning), and `ProjectileSystem` (ages/expires `Projectile`s, same
+/// reasoning again). Damage/death/respawn themselves, and
 /// projectile-vs-target damage (`installProjectileDamage`), are helpers
 /// you call explicitly (`damageEntity`, `dealDamageOnTouch`,
 /// `respawnOnDeath`, `installProjectileDamage`), not part of this pack,
@@ -61,6 +64,7 @@ void installPlatformerSystems(
   world.addSystem(DashSystem());
   world.addSystem(CollisionSystem());
   world.addSystem(HealthSystem());
+  world.addSystem(HealthHudSystem());
   world.addSystem(ProjectileSystem());
   if (includeAnimation) {
     world.addSystem(FacingSystem());

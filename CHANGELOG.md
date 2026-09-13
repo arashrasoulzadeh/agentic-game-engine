@@ -81,6 +81,11 @@ a time.
   default) stops a chase blocked by a wall instead of following through
   it. New `PathFollowBehavior` (`engine_platformer`) walks a `findPath`
   route one waypoint at a time.
+- **HUD/UI framework**: `HudBar` component (`engine_flutter`) — a
+  screen-space filled-rect bar (health/stamina/boss meters). New
+  `HealthHudLink`/`HealthHudSystem`/`spawnHealthHudBar`
+  (`engine_platformer`) wire a `HudBar` to an entity's `Health`,
+  kept in sync every tick.
 
 ## [0.1.0]
 

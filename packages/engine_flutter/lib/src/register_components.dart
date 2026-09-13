@@ -1,6 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 
 import 'components/animation.dart';
+import 'components/hud_bar.dart';
 import 'components/parallax_layer.dart';
 import 'components/sprite.dart';
 import 'components/text.dart';
@@ -34,5 +35,10 @@ void registerFlutterComponents(World world) {
     'text',
     (t) => t.toJson(),
     Text.fromJson,
+  );
+  world.components.register<HudBar>(
+    'hudBar',
+    (h) => h.toJson(),
+    HudBar.fromJson,
   );
 }
