@@ -58,6 +58,7 @@ void main() {
       showColliderDebug: true,
       pauseOnBackground: false,
       onScreenControls: OnScreenControlsMode.on,
+      ambientBrightness: 0.3,
     );
 
     final restored = GameConfig.fromJson(config.toJson());
@@ -71,6 +72,7 @@ void main() {
     expect(restored.showColliderDebug, isTrue);
     expect(restored.pauseOnBackground, isFalse);
     expect(restored.onScreenControls, OnScreenControlsMode.on);
+    expect(restored.ambientBrightness, 0.3);
   });
 
   test('fromJson falls back to defaults for missing/unknown fields', () {
@@ -88,5 +90,6 @@ void main() {
     expect(config.showColliderDebug, isFalse);
     expect(config.pauseOnBackground, isTrue);
     expect(config.onScreenControls, OnScreenControlsMode.auto);
+    expect(config.ambientBrightness, 1.0);
   });
 }

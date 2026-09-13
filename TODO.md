@@ -294,14 +294,24 @@ belongs in.
       light with no Position is skipped gracefully, a fully-black
       zero-light scene, debug outlines surviving on top of darkness);
       full existing `engine_flutter` suite passed unchanged; analyzer
-      clean. **Not verified live in the browser**: `ambientBrightness`
-      isn't plumbed through `Game`/`GameConfig` (same "the primitive
-      itself is already complete, usable by any Flutter app; a config
-      knob through `Game` can follow separately" scoping call as
-      `fixedTimestepSeconds` above), so a live `test_game` check would
-      need either that extra plumbing or a throwaway app outside
-      `test_game`'s existing structure — relying on the unit/widget
-      test coverage above instead.
+      clean. Since plumbed through `GameConfig.ambientBrightness` (see
+      below) and verified live in the browser: `test_game`'s player
+      carries a `Light2D` (just attached to the player entity's own
+      `Position` — no separate follow system needed) plus two fixed
+      "torch" `Light2D`s along the level, `ambientBrightness: 0.25` in
+      `game_config.json`; confirmed a soft glowing circle around the
+      player correctly revealing the darkened level as they move.
+- [x] Plumb `ambientBrightness` through `GameConfig`/`Game`: added the
+      field to `GameConfig` (JSON round-trip, `1.0` default) and passed
+      it into the base scene's `EngineView` in `game.dart` (not the
+      overlay's — matches `showColliderDebug`'s existing pattern of
+      only applying to the base). **Known limitation found while wiring
+      this up**: `ambientBrightness` is one global, `GameConfig`-level
+      setting, so it darkens *every* scene equally, including menus —
+      confirmed in the browser: `test_game`'s main menu darkened too
+      even though `MainMenuScene` has no `Light2D` of its own to reveal
+      it, since nothing scopes the setting to just gameplay scenes. Not
+      fixed here — see the new "Lighting follow-ups" section below.
 - [x] Localization / i18n: new `StringTable` (`engine_core`, zero
       Flutter dependency — plain data, same category as `Level`/
       `GameState`) — JSON-authorable strings keyed by id then locale,
@@ -356,6 +366,43 @@ belongs in.
       unit coverage above (which exercises both the snapshot data flow
       and the actual render path) instead of forcing an unreliable
       capture.
+
+### Lighting follow-ups
+
+Real gaps identified while building and then actually using basic 2D
+lighting in `test_game` (above) — not started, listed roughly in the
+order a real game would hit them.
+
+- [ ] Per-scene (or per-`Light2D`-presence) ambient brightness instead
+      of one global `GameConfig` setting — found live in the browser:
+      `test_game`'s main menu darkened along with gameplay, even though
+      only the gameplay scene has any `Light2D` to reveal it, since
+      `ambientBrightness` has no concept of "which scene this applies
+      to." A menu/HUD-only scene shouldn't go dark just because the
+      game as a whole uses lighting.
+- [ ] Colored lights: `Light2D` only ever reveals the scene's true
+      colors (brightness/falloff only) — no way to tint what a light
+      reveals (a red emergency light, a blue moonlit patch), which
+      needs an actual additive-color layer, not just the darkness-mask
+      punch-through this pass uses.
+- [ ] Shadow casting: a `Light2D` shines straight through solid
+      `TileMap`/`Collider` geometry today — no occlusion at all, so a
+      light on one side of a wall still reveals the other side. Would
+      need real geometry-aware shadow volumes (or a cheaper approximation
+      like raycasting `raycastTileMap` per light per frame), a
+      meaningfully bigger scope than the brightness-only pass that
+      shipped.
+- [ ] Animated/flickering lights: no built-in way to vary `Light2D.intensity`
+      or `radius` over time (a guttering torch, a pulsing warning
+      light) — a game has to hand-roll its own system ticking those
+      fields today; a small opt-in flicker/pulse config on `Light2D`
+      itself (or a dedicated `LightFlickerSystem`) would cover the
+      common case without every game re-deriving the same noise
+      function.
+- [ ] Directional/cone lights: `Light2D` is a point light (radial falloff
+      in every direction) only — no flashlight-cone or directional-beam
+      shape, which the "New engine features (round 2)" item's own
+      description named as a concrete use case this doesn't cover yet.
 
 ### Platformer (`engine_platformer`)
 

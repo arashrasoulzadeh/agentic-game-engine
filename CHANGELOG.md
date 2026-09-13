@@ -80,9 +80,11 @@ item at a time.
   JSON-authorable strings keyed by id then locale, with `{param}`
   substitution and a locale → default-locale → raw-key fallback chain.
 - **Basic 2D lighting**: new `Light2D` component + `EngineView.ambientBrightness`
-  (opt-in, `1.0`/off by default) — darkens the scene and reveals it
+  (opt-in, `1.0`/off by default), also plumbed through
+  `GameConfig.ambientBrightness` — darkens the scene and reveals it
   again through each light's soft radial falloff. No colored lights or
-  shadow casting.
+  shadow casting; one global brightness per game, not per scene (see
+  TODO.md's "Lighting follow-ups").
 
 This closes out the "Rendering (`engine_flutter`)" group of "New engine
 features (round 2)" — see TODO.md for the remaining Core/Platformer

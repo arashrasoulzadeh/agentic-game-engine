@@ -35,6 +35,11 @@ class GameConfig {
   final bool pauseOnBackground;
   final OnScreenControlsMode onScreenControls;
 
+  /// See `EngineView.ambientBrightness`'s doc comment — `1.0` (default)
+  /// disables the lighting pass entirely; a lower value darkens the
+  /// scene, revealed again through each `Light2D` entity.
+  final double ambientBrightness;
+
   const GameConfig({
     this.title = 'Game',
     this.orientation = GameOrientation.auto,
@@ -45,6 +50,7 @@ class GameConfig {
     this.showColliderDebug = false,
     this.pauseOnBackground = true,
     this.onScreenControls = OnScreenControlsMode.auto,
+    this.ambientBrightness = 1.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -57,6 +63,7 @@ class GameConfig {
         'showColliderDebug': showColliderDebug,
         'pauseOnBackground': pauseOnBackground,
         'onScreenControls': onScreenControls.name,
+        'ambientBrightness': ambientBrightness,
       };
 
   factory GameConfig.fromJson(Map<String, dynamic> json) => GameConfig(
@@ -77,6 +84,7 @@ class GameConfig {
           (m) => m.name == json['onScreenControls'],
           orElse: () => OnScreenControlsMode.auto,
         ),
+        ambientBrightness: (json['ambientBrightness'] as num?)?.toDouble() ?? 1.0,
       );
 
   /// Loads a `GameConfig` from a bundled JSON asset, e.g.
