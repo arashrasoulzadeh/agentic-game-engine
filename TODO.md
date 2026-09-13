@@ -52,6 +52,19 @@ top to bottom — not strict, adjust as dependencies emerge.
       moved out of `engine_core` into a new `engine_platformer` package
       so a non-platformer 2D game isn't forced to depend on
       gravity/jump concepts
+- [x] Damage/health/combat: `Health` component, `HealthSystem`
+      (invincibility countdown), `damageEntity`/`healEntity`/
+      `dealDamageOnTouch` helpers, `DeathEvent`. `spawnPlayer`/
+      `spawnEnemy` grow an optional `maxHealth`.
+- [x] Checkpoint/respawn: `Checkpoint`/`LastCheckpoint` components,
+      `trackCheckpoints`, `respawnPlayer`/`respawnOnDeath` — resets
+      position/velocity/health to the last touched checkpoint.
+- [ ] Particle effects: `ParticleEmitter` component/system
+      (bursts + continuous emission, fade/scale over life) — data in
+      `engine_core`, rendering in `engine_flutter`.
+- [ ] Tilemap-driven parallax backgrounds: multi-layer scrolling
+      background authored as level data, scrolling at a per-layer speed
+      ratio relative to camera position.
 - [ ] Update `engine_cli`'s `default_game` template to use
       `engine_platformer` (spawnPlayer + a small tile level) instead of
       the current bouncing-circle stress-test demo, now that a real
