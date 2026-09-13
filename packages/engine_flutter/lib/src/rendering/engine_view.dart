@@ -1,3 +1,4 @@
+import 'dart:math' show cos, sin, pi;
 import 'dart:ui' as ui;
 
 import 'package:engine_core/engine_core.dart';
@@ -400,36 +401,135 @@ class _EnginePainter extends CustomPainter {
     final lights = world.storeOf<Light2D>();
     final fullRect = Offset.zero & size;
 
+    // Computed once per light, reused for both the darkness-reveal
+    // pass and the (optional) color-tint pass below, so a
+    // shadow-casting light's raycasts don't run twice.
+    final infos = <_LightRenderInfo>[];
+    for (var i = 0; i < lights.length; i++) {
+      final entity = lights.entityAt(i);
+      final light = lights.denseAt(i);
+      final worldPos = positions.get(entity);
+      if (worldPos == null) continue;
+      if (light.radius <= 0) continue;
+
+      final screenPos = camera.worldToScreen(worldPos.x, worldPos.y, size);
+      final screenRadius = light.radius * camera.zoom;
+      final clipPath = _lightClipPath(light, worldPos, size);
+      infos.add(_LightRenderInfo(light, screenPos, screenRadius, clipPath));
+    }
+
     canvas.saveLayer(fullRect, Paint());
     canvas.drawRect(
       fullRect,
       Paint()..color = Color.fromRGBO(0, 0, 0, (1 - ambientBrightness).clamp(0, 1)),
     );
 
-    for (var i = 0; i < lights.length; i++) {
-      final entity = lights.entityAt(i);
-      final light = lights.denseAt(i);
-      final pos = positions.get(entity);
-      if (pos == null) continue;
-
-      final radius = light.radius * camera.zoom;
-      if (radius <= 0) continue;
-      final screenPos = camera.worldToScreen(pos.x, pos.y, size);
-
-      final holePaint = Paint()
+    for (final info in infos) {
+      final revealPaint = Paint()
         ..blendMode = BlendMode.dstOut
         ..shader = ui.Gradient.radial(
-          screenPos,
-          radius,
+          info.screenPos,
+          info.screenRadius,
           [
-            Color.fromRGBO(255, 255, 255, light.intensity.clamp(0, 1)),
+            Color.fromRGBO(255, 255, 255, info.light.intensity.clamp(0, 1)),
             const Color(0x00FFFFFF),
           ],
         );
-      canvas.drawCircle(screenPos, radius, holePaint);
+      if (info.clipPath == null) {
+        canvas.drawCircle(info.screenPos, info.screenRadius, revealPaint);
+      } else {
+        canvas.save();
+        canvas.clipPath(info.clipPath!);
+        canvas.drawCircle(info.screenPos, info.screenRadius, revealPaint);
+        canvas.restore();
+      }
     }
 
     canvas.restore();
+
+    // Color tint: additive, drawn *after* the darkness mask is
+    // composited back onto the real scene (BlendMode.plus needs the
+    // scene's actual colors underneath it, not the black mask) --
+    // skipped per-light whenever colorArgb's alpha is 0 (the default),
+    // so a game that never sets a tint pays nothing for this pass.
+    for (final info in infos) {
+      final tintColor = Color(info.light.colorArgb);
+      if (tintColor.a == 0) continue;
+
+      final tintPaint = Paint()
+        ..blendMode = BlendMode.plus
+        ..shader = ui.Gradient.radial(
+          info.screenPos,
+          info.screenRadius,
+          [tintColor, tintColor.withAlpha(0)],
+        );
+      if (info.clipPath == null) {
+        canvas.drawCircle(info.screenPos, info.screenRadius, tintPaint);
+      } else {
+        canvas.save();
+        canvas.clipPath(info.clipPath!);
+        canvas.drawCircle(info.screenPos, info.screenRadius, tintPaint);
+        canvas.restore();
+      }
+    }
+  }
+
+  /// `null` for a plain full-circle light (the fast path — no
+  /// cone, no shadow casting: the gradient's own falloff already does
+  /// all the work `drawCircle` needs). Otherwise, a fan-shaped `Path`
+  /// from the light's screen position out to `rayCount` sampled points
+  /// around its `coneAngle` (or the full circle, if shadow-casting with
+  /// no cone) — each point at [Light2D.radius] normally, or wherever a
+  /// `raycastTileMap` hit stops it short when [Light2D.castsShadows] is
+  /// on, giving a real (if coarsely sampled) visibility polygon instead
+  /// of a light shining through walls.
+  Path? _lightClipPath(Light2D light, Position worldPos, Size size) {
+    final hasCone = light.coneAngle != null;
+    if (!hasCone && !light.castsShadows) return null;
+
+    const rayCount = 48;
+    final sweep = hasCone ? light.coneAngle! : 2 * pi;
+    final startAngle = hasCone ? light.coneDirection - sweep / 2 : 0.0;
+
+    final path = Path();
+    final centerScreen = camera.worldToScreen(worldPos.x, worldPos.y, size);
+    path.moveTo(centerScreen.dx, centerScreen.dy);
+
+    for (var i = 0; i <= rayCount; i++) {
+      final angle = startAngle + sweep * i / rayCount;
+      final dist = light.castsShadows
+          ? _raycastLightDistance(worldPos, angle, light.radius)
+          : light.radius;
+      final worldPointX = worldPos.x + cos(angle) * dist;
+      final worldPointY = worldPos.y + sin(angle) * dist;
+      final screenPoint = camera.worldToScreen(worldPointX, worldPointY, size);
+      path.lineTo(screenPoint.dx, screenPoint.dy);
+    }
+    path.close();
+    return path;
+  }
+
+  /// How far a light at [worldPos] can see along [angle] before the
+  /// nearest solid tile in any `TileMap` blocks it (via `raycastTileMap`
+  /// — the same primitive AI line-of-sight already uses), capped at
+  /// [maxRadius] when nothing blocks it at all.
+  double _raycastLightDistance(Position worldPos, double angle, double maxRadius) {
+    final toX = worldPos.x + cos(angle) * maxRadius;
+    final toY = worldPos.y + sin(angle) * maxRadius;
+    var nearest = maxRadius;
+
+    final tileMaps = world.storeOf<TileMap>();
+    final mapPositions = world.storeOf<Position>();
+    for (var m = 0; m < tileMaps.length; m++) {
+      final mapEntity = tileMaps.entityAt(m);
+      final map = tileMaps.denseAt(m);
+      final origin = mapPositions.get(mapEntity) ?? Position(0, 0);
+      final hit = raycastTileMap(map, origin, worldPos.x, worldPos.y, toX, toY);
+      if (hit != null && hit.distance < nearest) {
+        nearest = hit.distance;
+      }
+    }
+    return nearest;
   }
 
   /// A stroked circle at every `Collider`'s actual radius — see
@@ -1004,6 +1104,18 @@ class _DrawItem {
   final int order;
   final void Function(Canvas canvas) paint;
   _DrawItem(this.zIndex, this.order, this.paint);
+}
+
+/// One light's precomputed render data for `_EnginePainter._drawLighting`
+/// — [clipPath] is computed once (raycasting, if the light casts
+/// shadows, included) and reused for both the brightness-reveal and
+/// color-tint passes.
+class _LightRenderInfo {
+  final Light2D light;
+  final Offset screenPos;
+  final double screenRadius;
+  final Path? clipPath;
+  _LightRenderInfo(this.light, this.screenPos, this.screenRadius, this.clipPath);
 }
 
 /// One `Canvas.drawAtlas` call's worth of sprites sharing a source

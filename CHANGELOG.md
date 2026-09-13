@@ -82,9 +82,16 @@ item at a time.
 - **Basic 2D lighting**: new `Light2D` component + `EngineView.ambientBrightness`
   (opt-in, `1.0`/off by default), also plumbed through
   `GameConfig.ambientBrightness` — darkens the scene and reveals it
-  again through each light's soft radial falloff. No colored lights or
-  shadow casting; one global brightness per game, not per scene (see
-  TODO.md's "Lighting follow-ups").
+  again through each light's soft radial falloff.
+- **Lighting follow-ups** (all five, one pass): `Scene.ambientBrightness`
+  per-scene override (`ButtonMenuScene` opts every menu out of
+  darkening automatically); `Light2D.colorArgb` additive tint (alpha
+  channel is tint strength, `0` = no tint pass at all); `Light2D.castsShadows`
+  — real occlusion by `TileMap` walls via a `raycastTileMap`-sampled
+  visibility polygon; `Light2D.flickerSpeed`/`flickerAmount` + new
+  `LightFlickerSystem` for guttering/pulsing lights; `Light2D.coneAngle`/
+  `coneDirection` for flashlight-style directional lights (composes
+  with shadow casting for free — both use the same clip-path code).
 
 This closes out the "Rendering (`engine_flutter`)" group of "New engine
 features (round 2)" — see TODO.md for the remaining Core/Platformer

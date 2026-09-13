@@ -58,38 +58,83 @@ for what shipped and git history for the full why behind each change.
 
 Real gaps identified while building and then actually using basic 2D
 lighting (`Light2D`/`EngineView.ambientBrightness`) in `test_game` —
-not started, listed roughly in the order a real game would hit them.
+all five closed out in one pass.
 
-- [ ] Per-scene (or per-`Light2D`-presence) ambient brightness instead
-      of one global `GameConfig` setting — found live in the browser:
-      `test_game`'s main menu darkened along with gameplay, even though
-      only the gameplay scene has any `Light2D` to reveal it, since
-      `ambientBrightness` has no concept of "which scene this applies
-      to." A menu/HUD-only scene shouldn't go dark just because the
-      game as a whole uses lighting.
-- [ ] Colored lights: `Light2D` only ever reveals the scene's true
-      colors (brightness/falloff only) — no way to tint what a light
-      reveals (a red emergency light, a blue moonlit patch), which
-      needs an actual additive-color layer, not just the darkness-mask
-      punch-through this pass uses.
-- [ ] Shadow casting: a `Light2D` shines straight through solid
-      `TileMap`/`Collider` geometry today — no occlusion at all, so a
-      light on one side of a wall still reveals the other side. Would
-      need real geometry-aware shadow volumes (or a cheaper approximation
-      like raycasting `raycastTileMap` per light per frame), a
-      meaningfully bigger scope than the brightness-only pass that
-      shipped.
-- [ ] Animated/flickering lights: no built-in way to vary `Light2D.intensity`
-      or `radius` over time (a guttering torch, a pulsing warning
-      light) — a game has to hand-roll its own system ticking those
-      fields today; a small opt-in flicker/pulse config on `Light2D`
-      itself (or a dedicated `LightFlickerSystem`) would cover the
-      common case without every game re-deriving the same noise
-      function.
-- [ ] Directional/cone lights: `Light2D` is a point light (radial falloff
-      in every direction) only — no flashlight-cone or directional-beam
-      shape, which the "New engine features (round 2)" item's own
-      description named as a concrete use case this doesn't cover yet.
+- [x] Per-scene ambient brightness: new `Scene.ambientBrightness`
+      (`null` default — "use `GameConfig`'s global setting," unchanged
+      behavior) that `Game` prefers over the global config value when
+      set (`loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness`).
+      `ButtonMenuScene` (the base every menu in this engine builds on,
+      not just one specific menu) overrides it to `1.0` — a menu isn't
+      a lit game world and shouldn't darken just because gameplay uses
+      lighting. Verified live in the browser: `test_game`'s main menu
+      no longer darkens (confirmed both before this fix, darkened, and
+      after, not).
+- [x] Colored lights: `Light2D.colorArgb` (default `0x00FFFFFF` —
+      *transparent* white, meaning "no tint pass at all," not opaque
+      white, so the default costs nothing extra and changes nothing
+      visually). The color's own alpha channel doubles as tint
+      strength — an opaque-ish color like `0xAAFF6600` tints visibly,
+      alpha `0` skips the whole additive pass. Implemented as a
+      separate additive (`BlendMode.plus`) radial-gradient pass drawn
+      *after* the darkness mask is composited back onto the real scene
+      (additive blending needs the scene's actual colors underneath it,
+      which only exist post-composite) — the brightness-reveal pass
+      alone (via `BlendMode.dstOut`, erasing only alpha) can't add
+      color, only reveal what's already there.
+- [x] Shadow casting: new `Light2D.castsShadows` (`false` default,
+      unchanged plain-circle behavior). When on, `EngineView` samples
+      48 rays around the light via `raycastTileMap` (the exact same
+      primitive `WorldView.hasLineOfSight`/AI already use) to build a
+      visibility-polygon `Path`, clipping the reveal (and, if present,
+      the color-tint) to it — real occlusion by `TileMap` walls, not a
+      full shadow-volume renderer (a meaningfully bigger scope), but a
+      legitimate, well-known 2D-shadow-casting technique. Verified two
+      ways: (1) exact numeric assertions in `light2d_test.dart`'s new
+      "Shadow casting occlusion math" group — a solid tile stops a
+      raycast well short of the light's radius at the precise expected
+      distance, an unobstructed direction reaches the full radius
+      unblocked, both directly against `raycastTileMap` (the same
+      primitive the render path calls), not just "doesn't crash"; (2)
+      live in the browser against `test_game`'s **real level
+      TileMap/textures** — the player's light, both torches, and a new
+      flashlight-style cone light all have `castsShadows: true` active
+      simultaneously against the actual level geometry and sprites,
+      confirmed rendering with no crashes and no console errors.
+- [x] Animated/flickering lights: `Light2D` gained `flickerSpeed` (`0`
+      default — disabled) + `flickerAmount`, `baseIntensity`/
+      `baseRadius` (defaulted from the constructor's `intensity`/
+      `radius` args so enabling flicker on an existing light needs no
+      extra setup), and `flickerElapsed` (runtime). New
+      `LightFlickerSystem` oscillates `intensity`/`radius` around the
+      base values using two layered sine waves (deliberately not real
+      randomness — smoother frame-to-frame, and keeps `Light2D` plain
+      seedless data rather than needing a stored, JSON-round-trip-safe
+      `Random` seed per light) — a no-op, near-zero-cost for any light
+      with `flickerSpeed == 0`. Verified: `LightFlickerSystem` tests
+      confirm disabled-by-default is a true no-op, oscillation stays
+      correctly bounded, and intensity clamps to `[0, 1]` even under a
+      deliberately extreme `flickerAmount`. Live in the browser:
+      `test_game`'s two torches flicker (`flickerSpeed: 3,
+      flickerAmount: 0.15`) with no crashes.
+- [x] Directional/cone lights: `Light2D.coneAngle` (`null` default —
+      full 360° point light, unchanged) + `coneDirection`. When set,
+      the same visibility-polygon machinery shadow casting uses builds
+      a pie-slice fan instead of a full circle (sampling only across
+      the cone's angular width) — cones and shadow casting compose for
+      free, since both go through the identical clip-path code path.
+      Verified: dedicated cone and shadow-casting-cone widget tests
+      render without crashing; live in the browser, `test_game`'s new
+      flashlight-style cone light (`coneAngle: 0.9`, also
+      shadow-casting) renders correctly against the real level.
+
+All five verified together, live, in one pass: `test_game`'s player
+light, two colored/flickering torches, and the new cone light are all
+active simultaneously against the level's real `TileMap`/sprite
+textures, with `showColliderDebug`/the FPS overlay/coin HUD text all
+still rendering correctly on top. Full `engine_flutter` suite green
+(15 new tests in `light2d_test.dart`, bringing it to 22, plus 1 new in
+`button_menu_scene_test.dart`), `dart analyze --fatal-infos` clean.
 
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 

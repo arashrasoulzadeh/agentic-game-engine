@@ -81,4 +81,8 @@ void main() {
 
     expect(menu.pressed, isEmpty);
   });
+
+  test('ambientBrightness overrides to 1.0 so a menu never darkens with gameplay lighting', () {
+    expect(_RecordingMenu().ambientBrightness, 1.0);
+  });
 }

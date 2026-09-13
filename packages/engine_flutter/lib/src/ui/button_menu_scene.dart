@@ -58,6 +58,14 @@ abstract class ButtonMenuScene extends Scene {
   @override
   bool get showOnScreenControls => false;
 
+  /// A menu isn't a lit game world — it shouldn't darken just because
+  /// the game's gameplay scenes use `Light2D` lighting via
+  /// `GameConfig.ambientBrightness`. Found needed live: `test_game`'s
+  /// main menu darkened along with gameplay before this override
+  /// existed. See `Scene.ambientBrightness`.
+  @override
+  double get ambientBrightness => 1.0;
+
   @override
   Future<void> populate(World world, SceneController scenes, GameState state) async {
     this.state = state;

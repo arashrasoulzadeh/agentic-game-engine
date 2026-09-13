@@ -63,6 +63,17 @@ abstract class Scene {
   /// either.
   bool get showOnScreenControls => true;
 
+  /// Overrides `GameConfig.ambientBrightness` (see `EngineView`'s doc
+  /// comment on it) for just this scene — `null` (default) means "use
+  /// the game's own global setting." A gameplay scene using `Light2D`
+  /// lighting typically leaves this alone (that's what the global
+  /// config value is for); a menu/HUD-only scene that shouldn't darken
+  /// just because the rest of the game uses lighting overrides this to
+  /// `1.0`. Found needed live: `test_game`'s main menu darkened along
+  /// with gameplay before this existed, since `ambientBrightness` had
+  /// no way to be "off" for one specific scene.
+  double? get ambientBrightness => null;
+
   /// Called on every tap/click with its position already converted to
   /// world coordinates (see `Camera.screenToWorld`) — how an ECS menu
   /// (`Button`-tagged entities) or an in-world tap target (a door)
