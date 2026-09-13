@@ -1,11 +1,27 @@
 # Changelog
 
 All notable changes to this project are documented in this file, newest
-first. No version has been tagged yet (see [TODO.md](TODO.md) — cutting
-`v0.1.0` is tracked there), so everything so far lives under
-**Unreleased**.
+first. `v0.1.0` is tagged locally (see [TODO.md](TODO.md)) but not yet
+pushed to the remote or published to pub.dev — still consumed via the
+self-referencing git-dependency pattern documented in each package's
+pubspec.yaml.
 
 ## [Unreleased]
+
+### Fully-fledged platformer engine
+
+Working through the gap list in TODO.md's "Fully-fledged platformer
+engine" section, one item at a time.
+
+- **Moving/kinematic platforms**: `PlatformerSystem` now carries a
+  resting rider along a `PlatformBody` entity's horizontal `Velocity`
+  — give any platform a `Velocity` (move it with `MovementSystem`, a
+  `Tween`, or your own system) and a rider standing on it moves with
+  it. Vertical motion already carried a rider "for free" since the
+  collision AABB is recomputed from the platform's current position
+  every tick; only horizontal needed the fix.
+
+## [0.1.0]
 
 ### Scenes, menus & rooms
 
@@ -35,6 +51,14 @@ first. No version has been tagged yet (see [TODO.md](TODO.md) — cutting
   name entities (`"name"` key) and returns a name → `EntityId` map, so
   a scene can look up "the player"/"a door" after a data-driven level
   load.
+- **`SaveSlotMenuScene`** + `SaveSlotSpec`: a ready-made save/load
+  slot-picker menu on top of `SaveGame` — checks `hasSave` per slot on
+  every `populate` and reflects that in each button's label.
+- **Cinematic support**: `CinematicSystem` + `CinematicStep`
+  (`WaitStep`/`CallbackStep`/`TweenStep`) in `engine_core` — plays a
+  scripted, non-interactive sequence (a cutscene, a boss intro) as a
+  normal `System`, built on `Tween`'s own easing math. `skip()` jumps
+  straight to `CinematicCompleteEvent`.
 
 ### Platformer & gameplay helpers (`engine_platformer`)
 
@@ -88,6 +112,12 @@ first. No version has been tagged yet (see [TODO.md](TODO.md) — cutting
 - `engine_cli`'s `game_agent` CLI: `create` (scaffold a new game),
   `upgrade` (repin an existing game's engine version), `lint` (validate
   a level/content file without running the game).
+- `create`'s generated starter project rewritten to a real
+  `engine_platformer` starting point (a small data-driven tile level +
+  player, `installPlatformerSystems`) instead of the original
+  bouncing-circle stress-test demo. `upgrade` now rewrites every
+  self-referencing engine package's git ref in a project's
+  pubspec.yaml, not just `engine_core`'s.
 
 ### Foundation
 

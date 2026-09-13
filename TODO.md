@@ -131,11 +131,17 @@ needs (moving-platform feel, modern jump mechanics, a real content
 pipeline, gameplay breadth, player-facing polish) — not yet started
 unless marked, roughly in priority order.
 
-- [ ] Moving/kinematic platforms: a platform entity with its own
-      velocity that carries a rider along (an elevator, a moving ledge)
-      — `TileCollisionSystem`/`PlatformBody` are static-only today;
-      nothing propagates a platform's velocity into whatever's standing
-      on it.
+- [x] Moving/kinematic platforms: `PlatformerSystem` now carries a
+      resting rider along a `PlatformBody` entity's horizontal
+      `Velocity` (`pos.x += platformVel.x * dt` the tick collision
+      resolves "landed on top"). Vertical motion already carried a
+      rider "for free" (the AABB is recomputed from the platform's
+      current `Position` every tick) — only horizontal needed the fix.
+      No new component: give any `PlatformBody` entity a `Velocity` and
+      move it however you like (`MovementSystem`, a `Tween`, a custom
+      system) and riders follow. Scoped to `PlatformBody`, not
+      `TileMap`-based tiles — a whole moving tile grid is a much rarer
+      case and out of scope here.
 - [ ] Modern jump-feel primitives: coyote time, jump buffering, wall
       jump/slide, dash, double jump. `JumpSystem` is a single
       `jumpSpeed` + grounded check today; none of the "feels good"

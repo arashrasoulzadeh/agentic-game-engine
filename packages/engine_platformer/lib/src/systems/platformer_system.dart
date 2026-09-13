@@ -14,6 +14,19 @@ import '../components/platformer_controller.dart';
 ///   falling/resting — never blocks from below or the sides.
 /// - **Solid** (`oneWay: false`): full circle-vs-AABB resolution.
 ///
+/// A platform's vertical motion already carries a rider "for free": the
+/// AABB it's resolved against is recomputed from the platform's current
+/// `Position` every tick, so a rider resting on top tracks a rising/
+/// falling platform automatically. Horizontal motion doesn't — nothing
+/// about the resolution otherwise touches a resting entity's `x` — so a
+/// platform entity that also has a `Velocity` (add one, and move it
+/// with `MovementSystem`, a `Tween`, or your own system — this doesn't
+/// care how) has that `Velocity.x * dt` added directly to a rider's
+/// `Position.x` the tick it lands on it, carrying it along
+/// horizontally too. This only runs on the tick collision actually
+/// resolves "landed on top," so it can't push a rider that isn't
+/// actually standing on the platform.
+///
 /// Resets `controller.grounded = false` at the start of each entity's
 /// processing — the single reset point. `TileCollisionSystem` (if
 /// present) runs after this and only ever sets `grounded = true`
@@ -54,8 +67,9 @@ class PlatformerSystem implements System {
         final top = platformPos.y - platform.height / 2;
         final bottom = platformPos.y + platform.height / 2;
 
+        bool landed;
         if (platform.oneWay) {
-          if (resolveOneWayCircleAabb(
+          landed = resolveOneWayCircleAabb(
             pos: pos,
             vel: vel,
             radius: collider.radius,
@@ -63,11 +77,9 @@ class PlatformerSystem implements System {
             left: left,
             right: right,
             top: top,
-          )) {
-            controller.grounded = true;
-          }
+          );
         } else {
-          if (resolveSolidCircleAabb(
+          landed = resolveSolidCircleAabb(
             pos: pos,
             vel: vel,
             radius: collider.radius,
@@ -75,9 +87,12 @@ class PlatformerSystem implements System {
             right: right,
             top: top,
             bottom: bottom,
-          )) {
-            controller.grounded = true;
-          }
+          );
+        }
+        if (landed) {
+          controller.grounded = true;
+          final platformVel = velocities.get(platformEntity);
+          if (platformVel != null) pos.x += platformVel.x * dt;
         }
       }
     }
