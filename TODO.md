@@ -151,12 +151,31 @@ belongs in.
       filtering, correctness regardless of which store happens to be
       smaller, empty result) — 160 `engine_core` tests passing, analyzer
       clean.
-- [ ] Priority-queue-backed pathfinding open set: `findPath`'s open set
-      is a linear-scan sorted list, documented as "fine at the scale a
-      single AI pathfind needs" — true today, but worth swapping for a
-      real binary heap once a game actually runs pathfinding at a scale
-      (many simultaneous agents, or large maps) where that shows up on
-      a profile.
+- [x] Priority-queue-backed pathfinding open set: `findPath`'s open set
+      is now a private binary min-heap (`_MinHeap`, in
+      `pathfinding.dart` — small enough that a `package:collection`
+      dependency wasn't worth adding for it) instead of a sort-then-
+      take-first list: O(log n) insert/extract-min instead of
+      O(n log n) every iteration. No decrease-key — a node can be
+      pushed more than once if a cheaper route to it is found later;
+      the existing `closed`-set check already discards a stale
+      duplicate the moment it's popped a second time, so this stays
+      correct without the extra bookkeeping a real decrease-key would
+      need. Behavior-preserving: every existing `findPath` test passed
+      unchanged (the algorithm's actual logic didn't change, only the
+      open-set data structure). Verified: 1 new test in
+      `pathfinding_test.dart` — a 20×20 maze-like grid (400 cells, a
+      wall spanning column 10 with a single gap) forcing a real detour
+      through many more add/removeMin cycles than the existing small
+      tests exercise, asserting both the exact shortest-path length
+      (38, computed independently via Manhattan distance to the
+      mandatory gap) and that the path only ever crosses the wall at
+      that gap; full `engine_core` suite (161 tests) green, analyzer
+      clean. `_MinHeap`/`_Node` are library-private to `pathfinding.dart`
+      (each `.dart` file is its own library in Dart, so even a test
+      file importing it directly by relative path couldn't reach
+      them), so this is verified through `findPath`'s own observable
+      behavior rather than a unit test of the heap in isolation.
 - [ ] Content hot-reload: no way to re-load a level/`GameConfig` JSON
       file into a running `World` without a full app restart — this
       engine markets itself as agent-friendly/iteration-friendly, and

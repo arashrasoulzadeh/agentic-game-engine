@@ -21,12 +21,16 @@ class PathPoint {
 /// [toX]/[toY] is already in the same cell as [fromX]/[fromY], if the
 /// goal cell is blocked, or if no path exists at all.
 ///
-/// Uses a plain list (scanned for the lowest-cost node, not a real
-/// priority queue) as its open set — correct, and fine at the scale a
-/// single AI's pathfind needs (matching this engine's existing
-/// `WorldView.nearestWithPosition`, whose own linear scan carries the
-/// same "revisit if a real game's profiling shows this mattering"
-/// caveat — see `TODO.md`).
+/// Uses a binary min-heap (`_MinHeap`, private to this file — a small
+/// enough data structure that a `package:collection` dependency wasn't
+/// worth adding just for this) as its open set: O(log n) insert/
+/// extract-min instead of the O(n log n) sort-then-take-first a plain
+/// list previously did every iteration. Doesn't implement decrease-key
+/// (a node can be pushed more than once if a cheaper path to it is
+/// found later) — the existing `closed` set already discards a stale
+/// duplicate the moment it's popped a second time, so this stays
+/// correct without the extra bookkeeping a full decrease-key would
+/// need.
 List<PathPoint> findPath(
   TileMap map,
   Position origin,
@@ -56,13 +60,12 @@ List<PathPoint> findPath(
 
   final gScore = <int, double>{startKey: 0};
   final cameFrom = <int, int>{};
-  final open = <_Node>[_Node(startCol, startRow, _heuristic(startCol, startRow, goalCol, goalRow))];
+  final open = _MinHeap()..add(_Node(startCol, startRow, _heuristic(startCol, startRow, goalCol, goalRow)));
   final closed = <int>{};
   const dirs = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
   while (open.isNotEmpty) {
-    open.sort((a, b) => a.f.compareTo(b.f));
-    final current = open.removeAt(0);
+    final current = open.removeMin();
     final currentKey = key(current.col, current.row);
     if (currentKey == goalKey) {
       return _reconstructPath(cameFrom, startKey, currentKey, map, origin);
@@ -116,4 +119,52 @@ class _Node {
   final int row;
   final double f;
   _Node(this.col, this.row, this.f);
+}
+
+/// A plain binary min-heap on `_Node.f`, array-backed — the standard
+/// shape (parent at `i`, children at `2i+1`/`2i+2`), nothing fancier.
+/// No decrease-key: see `findPath`'s doc comment for why that's fine
+/// here.
+class _MinHeap {
+  final List<_Node> _items = [];
+
+  bool get isNotEmpty => _items.isNotEmpty;
+
+  void add(_Node node) {
+    _items.add(node);
+    var i = _items.length - 1;
+    while (i > 0) {
+      final parent = (i - 1) ~/ 2;
+      if (_items[i].f >= _items[parent].f) break;
+      _swap(i, parent);
+      i = parent;
+    }
+  }
+
+  _Node removeMin() {
+    final min = _items[0];
+    final last = _items.removeLast();
+    if (_items.isNotEmpty) {
+      _items[0] = last;
+      var i = 0;
+      final n = _items.length;
+      while (true) {
+        final left = 2 * i + 1;
+        final right = 2 * i + 2;
+        var smallest = i;
+        if (left < n && _items[left].f < _items[smallest].f) smallest = left;
+        if (right < n && _items[right].f < _items[smallest].f) smallest = right;
+        if (smallest == i) break;
+        _swap(i, smallest);
+        i = smallest;
+      }
+    }
+    return min;
+  }
+
+  void _swap(int a, int b) {
+    final tmp = _items[a];
+    _items[a] = _items[b];
+    _items[b] = tmp;
+  }
 }

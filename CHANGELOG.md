@@ -62,6 +62,9 @@ item at a time.
 - **9-slice sprites**: new `NineSliceSprite` component — a resizable
   UI panel/dialog-box background from one atlas region, corners at
   native size, edges/center stretched to fill.
+- **Priority-queue pathfinding**: `findPath`'s open set is now a binary
+  min-heap instead of a sort-then-take-first list — O(log n) insert/
+  extract-min instead of O(n log n) every iteration. Behavior-preserving.
 
 ### Fully-fledged platformer engine
 
