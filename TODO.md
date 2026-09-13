@@ -67,10 +67,20 @@ top to bottom — not strict, adjust as dependencies emerge.
       `hasSave`, `deleteSave`) so a game doesn't have to hand-roll a
       slot-picker screen — the "menu" analogue of what `OnScreenControls`
       already is for touch input.
-- [ ] Basic scene/screen management: a `Scene`/`Screen` abstraction (or
-      a thin wrapper over `Navigator`) for switching between menu/
-      gameplay/pause/game-over without each game hand-rolling its own
-      `Stack`/`Navigator` logic on top of `GameRunner`.
+- [x] Basic scene/screen management: `Scene` + `SceneController`
+      (`loadScene`/`pushOverlay`/`popOverlay`) in `engine_flutter`, plus
+      `GameState` for data that survives a scene switch and
+      `ButtonMenuScene` for menu/pause screens — see `scene.dart`'s doc
+      comment.
+- [ ] Cinematic support: a way to play a scripted, non-interactive
+      sequence (camera pans/pauses, character movement, timed dialogue/
+      text) between or within levels — a cutscene on level start, a
+      boss intro, an ending. Natural fit as a `Scene` variant (or a
+      `Tween`-driven `Behavior`/system) rather than a new top-level
+      concept, since `Tween`/`TweenSystem` already exist for driving a
+      value over time and `Scene`/`SceneController` already own
+      transitions; needs a way to (a) take/return input control from
+      the player mid-scene and (b) skip/fast-forward. Not started.
 
 ## Platformer helpers (engine_platformer)
 

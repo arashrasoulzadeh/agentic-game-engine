@@ -9,14 +9,28 @@ class _EmptyScene extends Scene {
   Future<void> populate(World world, SceneController scenes, GameState state) async {}
 }
 
+/// A minimal `ButtonMenuScene` — exists only to prove its inherited
+/// `showOnScreenControls == false` actually suppresses `OnScreenControls`
+/// when `GameRunner` renders it, the way a real title/pause screen does.
+class _NoOpMenuScene extends ButtonMenuScene {
+  @override
+  List<MenuButtonSpec> buttons() =>
+      const [MenuButtonSpec(label: 'RESUME', actionId: 'resume')];
+
+  @override
+  void onButtonPressed(String actionId, SceneController scenes) {}
+}
+
 class _ControllableGame extends Game {
-  _ControllableGame(this.config);
+  _ControllableGame(this.config, [Scene? initialScene]) : _initialScene = initialScene;
 
   @override
   final GameConfig config;
 
+  final Scene? _initialScene;
+
   @override
-  Scene createInitialScene() => _EmptyScene();
+  Scene createInitialScene() => _initialScene ?? _EmptyScene();
 
   @override
   InputController? createInputController() => InputController();
@@ -73,6 +87,38 @@ void main() {
     debugDefaultTargetPlatformOverride = null;
   });
 
+  testWidgets('mode "on" still hides controls for a scene that opts out (ButtonMenuScene)',
+      (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    final game = _ControllableGame(
+      const GameConfig(worldWidth: 200, worldHeight: 100, onScreenControls: OnScreenControlsMode.on),
+      _NoOpMenuScene(),
+    );
+    await _pumpLoaded(tester, game);
+
+    expect(find.byType(OnScreenControls), findsNothing);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('pushing an overlay hides controls even though the base scene wants them',
+      (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    final markerScene = _ControlsMarkerScene();
+    final game = _ControllableGame(
+      const GameConfig(worldWidth: 200, worldHeight: 100, onScreenControls: OnScreenControlsMode.on),
+      markerScene,
+    );
+    await _pumpLoaded(tester, game);
+    expect(find.byType(OnScreenControls), findsOneWidget);
+
+    markerScene.scenes!.pushOverlay(_NoOpMenuScene());
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(OnScreenControls), findsNothing);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   testWidgets('no controls at all when createInputController returns null',
       (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
@@ -83,6 +129,17 @@ void main() {
     expect(find.byType(EngineView), findsOneWidget);
     debugDefaultTargetPlatformOverride = null;
   });
+}
+
+/// A normal (non-menu) `Scene` that records the `SceneController` it was
+/// handed, so a test can trigger `pushOverlay` from outside `populate`.
+class _ControlsMarkerScene extends Scene {
+  SceneController? scenes;
+
+  @override
+  Future<void> populate(World world, SceneController scenes, GameState state) async {
+    this.scenes = scenes;
+  }
 }
 
 class _NoInputGame extends Game {

@@ -214,9 +214,18 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
         );
 
         final controller = loaded.inputController;
+        // No controls at all while an overlay (e.g. a pause menu) is up
+        // -- the base scene is frozen then, so they'd do nothing --  and
+        // none for the current scene (base or overlay) when it opts out
+        // via `Scene.showOnScreenControls` (every `ButtonMenuScene` does
+        // — a menu is tap-driven, not movement/action-driven).
+        final showControls = controller != null &&
+            _shouldShowOnScreenControls() &&
+            overlay == null &&
+            loaded.scene.showOnScreenControls;
         final children = [
           engineView,
-          if (controller != null && _shouldShowOnScreenControls())
+          if (showControls)
             OnScreenControls(
               controller: controller,
               verticalEnabled: widget.game.onScreenJoystickVertical,

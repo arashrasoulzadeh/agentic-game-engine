@@ -50,6 +50,19 @@ abstract class Scene {
   /// camera follow a specific entity (typically the player) each frame.
   EntityId? cameraFollowEntity(World world) => null;
 
+  /// Whether `GameRunner` overlays the joystick/button touch controls
+  /// (see `Game.onScreenButtons`/`OnScreenControls`) while this scene is
+  /// showing. Defaults to `true` — a gameplay scene needs them. A
+  /// tap-driven scene with no movement/action to control (any
+  /// `ButtonMenuScene` — a title screen, a pause menu) overrides this
+  /// to `false`, since a joystick/jump button floating over a menu is
+  /// visual clutter that does nothing there. `GameRunner` also hides
+  /// controls whenever an overlay (`SceneController.pushOverlay`) is
+  /// active, regardless of what the base scene underneath returns here
+  /// — the base scene is frozen then, so its controls would do nothing
+  /// either.
+  bool get showOnScreenControls => true;
+
   /// Called on every tap/click with its position already converted to
   /// world coordinates (see `Camera.screenToWorld`) — how an ECS menu
   /// (`Button`-tagged entities) or an in-world tap target (a door)

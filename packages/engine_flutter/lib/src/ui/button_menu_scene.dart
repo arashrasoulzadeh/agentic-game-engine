@@ -51,6 +51,13 @@ abstract class ButtonMenuScene extends Scene {
   /// [kMenuButtonHeight] (see `menu_button_atlas.dart`).
   double get buttonSpacing => kMenuButtonHeight + 16;
 
+  /// A menu is tap-driven, not movement/action-driven — the
+  /// joystick/jump-style buttons `Game.onScreenButtons` describes would
+  /// just float uselessly over every `ButtonMenuScene` otherwise. See
+  /// `Scene.showOnScreenControls`.
+  @override
+  bool get showOnScreenControls => false;
+
   @override
   Future<void> populate(World world, SceneController scenes, GameState state) async {
     this.state = state;
