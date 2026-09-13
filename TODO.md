@@ -101,10 +101,17 @@ top to bottom — not strict, adjust as dependencies emerge.
       count), `collectItem`/`dealPickupOnTouch` helpers (mirroring
       `damageEntity`/`dealDamageOnTouch`'s pattern) + `ItemCollectedEvent`.
       `spawnPlayer` grows an optional `startingInventory`.
-- [ ] Update `engine_cli`'s `default_game` template to use
-      `engine_platformer` (spawnPlayer + a small tile level) instead of
-      the current bouncing-circle stress-test demo, now that a real
-      platformer starting point exists
+- [x] Updated `engine_cli`'s `default_game` template: a real
+      `engine_platformer` starting point (a small tile level + player,
+      `installPlatformerSystems`) instead of the old bouncing-circle
+      stress-test demo. Data-driven via `Level.loadInto` +
+      `main.level.json.tmpl` (the human-readable ASCII-legend `TileMap`
+      form) rather than a hand-spawned `spawnPlayer` call in Dart, since
+      that's the pattern the engine has settled on since this item was
+      written. Not verified via an actual `game_agent create` run (pub.dev
+      is network-blocked in this environment — see TODO below); the level
+      JSON was validated directly against `Level.validate`/`TileMap.fromJson`,
+      and the Dart mirrors patterns already browser-verified in `test_game`.
 
 ## Tooling / release
 

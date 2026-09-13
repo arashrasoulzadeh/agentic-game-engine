@@ -1,0 +1,45 @@
+{
+  "entities": [
+    {
+      "name": "tileMap",
+      "components": {
+        "position": { "x": 0, "y": 0 },
+        "tileMap": {
+          "tileWidth": 40,
+          "tileHeight": 40,
+          "legend": { ".": 0, "#": 1 },
+          "rows": [
+            "....................",
+            "....................",
+            "....................",
+            "....................",
+            "....................",
+            "....................",
+            "....................",
+            "....................",
+            "....................",
+            "....................",
+            "....................",
+            "........###.........",
+            "....................",
+            "....................",
+            "####################"
+          ],
+          "solidTileIds": [1],
+          "oneWayTileIds": []
+        }
+      }
+    },
+    {
+      "name": "player",
+      "components": {
+        "position": { "x": 60, "y": 60 },
+        "velocity": { "x": 0, "y": 0 },
+        "collider": { "radius": 12 },
+        "gravity": { "scale": 1 },
+        "platformerController": { "grounded": false, "jumpSpeed": 500, "jumpRequested": false },
+        "sprite": { "atlasId": "default", "region": "player" }
+      }
+    }
+  ]
+}

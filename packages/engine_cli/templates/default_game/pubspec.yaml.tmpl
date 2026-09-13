@@ -21,6 +21,11 @@ dependencies:
       url: {{ENGINE_REPO_URL}}
       path: packages/engine_flutter
       ref: {{ENGINE_REF}}
+  engine_platformer:
+    git:
+      url: {{ENGINE_REPO_URL}}
+      path: packages/engine_platformer
+      ref: {{ENGINE_REF}}
 
 dev_dependencies:
   flutter_test:
@@ -31,3 +36,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/game_config.json
+    - assets/levels/main.level.json
