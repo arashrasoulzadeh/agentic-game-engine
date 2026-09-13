@@ -104,8 +104,29 @@ belongs in.
       input-replay capture exist yet, both of which matter for
       reproducible testing/debugging of an agent-driven or
       physics-heavy game.
-- [ ] Save-schema versioning: `GameState`/`World.toJson()` have no
-      migration story — a save from an older build shape just breaks.
+- [x] Save-schema versioning: scoped to `SaveGame` (`engine_flutter`) —
+      the actual save/load surface this concerned, not `World.toJson()`/
+      `GameState` in isolation, which have no persistence story of
+      their own to version (a game persisting `GameState` itself is
+      already outside `SaveGame`'s scope). `SaveGame.save` now takes a
+      `version` (default `1`) and wraps the World snapshot in a
+      `{schemaVersion, world}` envelope instead of storing it bare.
+      `SaveGame.load` takes a matching `version` plus an optional
+      `migrate` callback (raw saved JSON + its saved version -> current-
+      shape JSON); a version mismatch with no `migrate` throws a new
+      `SaveVersionException` instead of either silently loading
+      wrong-shaped data or surfacing a confusing
+      `ComponentApplyException` from deep inside `Level.loadInto`. A
+      save written before this existed (no envelope — the decoded map
+      itself never has a `"world"` key, since `World.toJson()` never
+      produces one) is detected and treated as version `1`, so existing
+      saves keep loading unchanged. Verified: 4 new tests in
+      `save_game_test.dart` (round-trip at a non-default version,
+      mismatch-with-no-migrate throws, mismatch-with-migrate loads the
+      migrated data, a legacy no-envelope save is read as version 1)
+      plus the full existing suite still green — 11/11 in that file,
+      full `engine_flutter` suite passing, analyzer clean (bar the
+      one pre-existing unrelated lint in `button_menu_scene_test.dart`).
 - [x] Spatial range queries: `WorldView.entitiesWithinRadius(x, y,
       radius, {exclude})` — linear scan, same approach and caveat as
       `nearestWithPosition` (fine at single-query scale; reach for

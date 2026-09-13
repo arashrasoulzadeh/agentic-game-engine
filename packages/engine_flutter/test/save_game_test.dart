@@ -73,4 +73,71 @@ void main() {
     final world = _buildWorld();
     expect(() => SaveGame.load(world), throwsA(isA<LevelLoadException>()));
   });
+
+  group('schema versioning', () {
+    test('save/load round-trip works at a non-default version', () async {
+      final original = _buildWorld();
+      final id = original.spawn();
+      original.storeOf<Position>().set(id, Position(5, 6));
+
+      await SaveGame.save(original, version: 3);
+      final restored = _buildWorld();
+      final loaded = await SaveGame.load(restored, version: 3);
+
+      expect(loaded, isTrue);
+      expect(restored.storeOf<Position>().get(restored.entities.all.first)!.x, 5);
+    });
+
+    test('a version mismatch with no migrate throws SaveVersionException', () async {
+      final original = _buildWorld()..spawn();
+      await SaveGame.save(original, version: 1);
+
+      final restored = _buildWorld();
+      expect(
+        () => SaveGame.load(restored, version: 2),
+        throwsA(isA<SaveVersionException>()
+            .having((e) => e.savedVersion, 'savedVersion', 1)
+            .having((e) => e.currentVersion, 'currentVersion', 2)),
+      );
+    });
+
+    test('a version mismatch calls migrate and loads the migrated data', () async {
+      final original = _buildWorld();
+      final id = original.spawn();
+      original.storeOf<Position>().set(id, Position(1, 1));
+      await SaveGame.save(original, version: 1);
+
+      final restored = _buildWorld();
+      var migrateCalledWithVersion = -1;
+      final loaded = await SaveGame.load(
+        restored,
+        version: 2,
+        migrate: (savedWorldJson, savedVersion) {
+          migrateCalledWithVersion = savedVersion;
+          return savedWorldJson; // no real shape change in this test
+        },
+      );
+
+      expect(loaded, isTrue);
+      expect(migrateCalledWithVersion, 1);
+      expect(restored.storeOf<Position>().get(restored.entities.all.first)!.x, 1);
+    });
+
+    test('a save written before versioning existed (no envelope) is treated as version 1', () async {
+      // What SaveGame.save produced before this parameter existed --
+      // the raw World JSON with no {schemaVersion, world} wrapper.
+      SharedPreferences.setMockInitialValues({
+        'engine_save_default': '{"tick": 0, "width": 200, "height": 200, "entities": []}',
+      });
+      final world = _buildWorld();
+
+      final loaded = await SaveGame.load(world, version: 1);
+      expect(loaded, isTrue);
+
+      expect(
+        () => SaveGame.load(_buildWorld(), version: 2),
+        throwsA(isA<SaveVersionException>().having((e) => e.savedVersion, 'savedVersion', 1)),
+      );
+    });
+  });
 }

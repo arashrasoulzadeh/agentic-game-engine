@@ -39,6 +39,12 @@ item at a time.
 - **Spatial range queries**: `WorldView.entitiesWithinRadius(x, y,
   radius, {exclude})` — every entity with a `Position` within range,
   for AI perception / area-of-effect queries.
+- **Save-schema versioning**: `SaveGame.save`/`load` take a `version`
+  and wrap the saved snapshot in a `{schemaVersion, world}` envelope;
+  `load` takes an optional `migrate` callback and throws a new
+  `SaveVersionException` on an unhandled version mismatch instead of
+  silently loading wrong-shaped data. Pre-existing (unversioned) saves
+  still load, read as version `1`.
 
 ### Fully-fledged platformer engine
 
