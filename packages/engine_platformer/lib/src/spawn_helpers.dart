@@ -8,6 +8,40 @@ import 'components/last_checkpoint.dart';
 import 'components/movement_animation_set.dart';
 import 'components/platformer_controller.dart';
 
+/// Position/Velocity/Collider, the physical minimum every spawned
+/// character needs regardless of player/enemy — shared so the two
+/// spawn helpers below can't drift on it.
+void _attachBody(World world, EntityId id, double x, double y, double radius) {
+  world.storeOf<Position>().set(id, Position(x, y));
+  world.storeOf<Velocity>().set(id, Velocity(0, 0));
+  world.storeOf<Collider>().set(id, Collider(radius));
+}
+
+/// Attaches a `Sprite` only if both [atlasId] and [spriteRegion] are
+/// given — shared so "sprite is optional, both-or-neither" isn't
+/// reimplemented (and potentially left inconsistent) per spawn helper.
+void _attachSprite(World world, EntityId id, String? atlasId, String? spriteRegion) {
+  if (atlasId != null && spriteRegion != null) {
+    world.storeOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
+  }
+}
+
+/// Attaches `MovementAnimationSet` + an initial `AnimationState` on the
+/// idle clip, if [animations] is given.
+void _attachAnimations(World world, EntityId id, MovementAnimationSet? animations) {
+  if (animations != null) {
+    world.storeOf<MovementAnimationSet>().set(id, animations);
+    world.storeOf<AnimationState>().set(id, AnimationState(animations.idle));
+  }
+}
+
+/// Attaches `Health` (full at spawn), if [maxHealth] is given.
+void _attachHealth(World world, EntityId id, double? maxHealth) {
+  if (maxHealth != null) {
+    world.storeOf<Health>().set(id, Health(current: maxHealth, max: maxHealth));
+  }
+}
+
 /// Spawns a fully-wired platformer player: `Position`, `Velocity`,
 /// `Collider`, `Gravity`, `PlatformerController`, and — critically — the
 /// [input] `InputState` instance attached as a component, so a
@@ -44,24 +78,17 @@ EntityId spawnPlayer(
   Map<String, int>? startingInventory,
 }) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(x, y));
-  world.storeOf<Velocity>().set(id, Velocity(0, 0));
-  world.storeOf<Collider>().set(id, Collider(radius));
+  _attachBody(world, id, x, y, radius);
   world.storeOf<Gravity>().set(id, Gravity(scale: gravityScale));
   world.storeOf<PlatformerController>().set(
         id,
         PlatformerController(jumpSpeed: jumpSpeed),
       );
   world.storeOf<InputState>().set(id, input);
-  if (atlasId != null && spriteRegion != null) {
-    world.storeOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
-  }
-  if (animations != null) {
-    world.storeOf<MovementAnimationSet>().set(id, animations);
-    world.storeOf<AnimationState>().set(id, AnimationState(animations.idle));
-  }
+  _attachSprite(world, id, atlasId, spriteRegion);
+  _attachAnimations(world, id, animations);
+  _attachHealth(world, id, maxHealth);
   if (maxHealth != null) {
-    world.storeOf<Health>().set(id, Health(current: maxHealth, max: maxHealth));
     world.storeOf<LastCheckpoint>().set(id, LastCheckpoint(x, y));
   }
   if (startingInventory != null) {
@@ -97,23 +124,14 @@ EntityId spawnEnemy(
   double? maxHealth,
 }) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(x, y));
-  world.storeOf<Velocity>().set(id, Velocity(0, 0));
-  world.storeOf<Collider>().set(id, Collider(radius));
+  _attachBody(world, id, x, y, radius);
   world.storeOf<AIState>().set(id, AIState(behaviorId, memory: memory));
   if (affectedByGravity) {
     world.storeOf<Gravity>().set(id, Gravity(scale: gravityScale));
     world.storeOf<PlatformerController>().set(id, PlatformerController());
   }
-  if (atlasId != null && spriteRegion != null) {
-    world.storeOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
-  }
-  if (animations != null) {
-    world.storeOf<MovementAnimationSet>().set(id, animations);
-    world.storeOf<AnimationState>().set(id, AnimationState(animations.idle));
-  }
-  if (maxHealth != null) {
-    world.storeOf<Health>().set(id, Health(current: maxHealth, max: maxHealth));
-  }
+  _attachSprite(world, id, atlasId, spriteRegion);
+  _attachAnimations(world, id, animations);
+  _attachHealth(world, id, maxHealth);
   return id;
 }
