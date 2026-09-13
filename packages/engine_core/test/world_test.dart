@@ -80,6 +80,31 @@ void main() {
     expect(restored.y, 20);
   });
 
+  test('systemOrder lists every registered system\'s name, and tick counts steps', () {
+    final world = _buildWorld();
+    world.addSystem(AISystem(BehaviorRegistry()));
+    world.addSystem(ParticleSystem());
+
+    expect(world.systemOrder, ['movement', 'collision', 'ai', 'particle']);
+    expect(world.tick, 0);
+
+    world.step(0.016);
+    world.step(0.016);
+    expect(world.tick, 2);
+  });
+
+  test('EventBus.clearHandlers removes every previously registered listener', () {
+    final world = _buildWorld();
+    var count = 0;
+    world.events.on<CollisionEvent>((e) => count++);
+
+    world.events.clearHandlers();
+    world.events.emit(CollisionEvent(0, 1));
+    world.events.flush();
+
+    expect(count, 0);
+  });
+
   test('spatial hash keeps collision system correct at higher entity counts', () {
     final world = _buildWorld();
     for (var i = 0; i < 500; i++) {

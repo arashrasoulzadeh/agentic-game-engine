@@ -87,6 +87,29 @@ void main() {
     );
   });
 
+  test('throws LevelLoadException when a component key is not a string', () {
+    final world = _buildWorld();
+    expect(
+      () => Level.loadInto(world, {
+        'entities': [
+          {
+            'components': {1: <String, dynamic>{}},
+          },
+        ],
+      }),
+      throwsA(isA<LevelLoadException>().having(
+        (e) => e.message,
+        'message',
+        contains('non-string key'),
+      )),
+    );
+  });
+
+  test('LevelLoadException.toString includes the message', () {
+    final exception = LevelLoadException('something went wrong');
+    expect(exception.toString(), 'LevelLoadException: something went wrong');
+  });
+
   test('throws LevelLoadException when a named component is not an object', () {
     final world = _buildWorld();
     expect(

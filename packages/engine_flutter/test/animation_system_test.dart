@@ -63,6 +63,11 @@ void main() {
     expect(state.playing, isFalse);
   });
 
+  test('name identifies this system in World.systemOrder', () {
+    final world = buildWorld();
+    expect(world.systemOrder, contains('animation'));
+  });
+
   test('AnimationState round-trips through toJson/fromJson', () {
     final clip = AnimationClip('walk', ['a', 'b'], frameDurationSeconds: 0.2);
     final state = AnimationState(clip, frameIndex: 1, elapsed: 0.05);

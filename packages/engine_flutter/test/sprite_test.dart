@@ -1,0 +1,24 @@
+import 'package:engine_flutter/engine_flutter.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('Sprite round-trips through toJson/fromJson with defaults', () {
+    final sprite = Sprite('atlas', 'idle');
+    final decoded = Sprite.fromJson(sprite.toJson());
+
+    expect(decoded.atlasId, 'atlas');
+    expect(decoded.region, 'idle');
+    expect(decoded.rotation, 0);
+    expect(decoded.scaleX, 1);
+    expect(decoded.scaleY, 1);
+  });
+
+  test('Sprite.fromJson honors explicit rotation/scale', () {
+    final sprite = Sprite('atlas', 'idle', rotation: 1.5, scaleX: 2, scaleY: 3);
+    final decoded = Sprite.fromJson(sprite.toJson());
+
+    expect(decoded.rotation, 1.5);
+    expect(decoded.scaleX, 2);
+    expect(decoded.scaleY, 3);
+  });
+}

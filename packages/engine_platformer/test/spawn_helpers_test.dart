@@ -61,6 +61,28 @@ void main() {
     expect(world.storeOf<PlatformerController>().get(id), isNotNull);
   });
 
+  test('spawnEnemy attaches a Sprite when atlasId/spriteRegion given', () {
+    final world = _buildWorld();
+    final id = spawnEnemy(
+      world,
+      x: 0,
+      y: 0,
+      behaviorId: 'patrol',
+      atlasId: 'atlas',
+      spriteRegion: 'enemy_idle',
+    );
+    expect(world.storeOf<Sprite>().get(id)?.region, 'enemy_idle');
+  });
+
+  test('spawnEnemy attaches Health when maxHealth is given', () {
+    final world = _buildWorld();
+    final id = spawnEnemy(world, x: 0, y: 0, behaviorId: 'patrol', maxHealth: 30);
+
+    final health = world.storeOf<Health>().get(id);
+    expect(health?.current, 30);
+    expect(health?.max, 30);
+  });
+
   test('PlatformerInputSystem turns pressed actions into velocity and jump requests', () {
     final world = _buildWorld();
     final input = InputState();

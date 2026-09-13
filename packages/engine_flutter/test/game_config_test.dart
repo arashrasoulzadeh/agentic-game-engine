@@ -1,8 +1,52 @@
 import 'package:engine_flutter/engine_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('loadFromAsset reads and decodes the bundled JSON asset', () async {
+    const jsonContent = '{"worldWidth": 320, "worldHeight": 240, "title": "Asset Game"}';
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMessageHandler('flutter/assets', (message) async {
+      return const StringCodec().encodeMessage(jsonContent);
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMessageHandler('flutter/assets', null);
+    });
+
+    final config = await GameConfig.loadFromAsset('assets/game_config.json');
+
+    expect(config.title, 'Asset Game');
+    expect(config.worldWidth, 320);
+    expect(config.worldHeight, 240);
+  });
+
+  test('applyOrientation requests the platform orientation for portrait/landscape/auto',
+      () async {
+    final requests = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'SystemChrome.setPreferredOrientations') {
+        requests.add(call.method);
+      }
+      return null;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    for (final orientation in GameOrientation.values) {
+      await GameConfig(orientation: orientation, worldWidth: 1, worldHeight: 1)
+          .applyOrientation();
+    }
+
+    expect(requests.length, GameOrientation.values.length);
+  });
+
   test('round-trips through toJson/fromJson', () {
     const config = GameConfig(
       title: 'My Game',

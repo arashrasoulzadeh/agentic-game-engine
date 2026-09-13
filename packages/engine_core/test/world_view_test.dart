@@ -20,6 +20,18 @@ void main() {
     expect(view.component<Velocity>(id), isNull);
   });
 
+  test('width/height/tick read through to the underlying World', () {
+    final world = _buildWorld();
+    world.addSystem(MovementSystem());
+    world.step(0.016);
+    world.step(0.016);
+
+    final view = WorldView(world);
+    expect(view.width, 500);
+    expect(view.height, 500);
+    expect(view.tick, 2);
+  });
+
   test('entitiesWith yields every entity carrying the component', () {
     final world = _buildWorld();
     final a = world.spawn();

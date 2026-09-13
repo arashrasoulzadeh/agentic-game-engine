@@ -88,6 +88,23 @@ void main() {
       expect(world.storeOf<Velocity>().get(follower)!.x, 0);
     });
 
+    test('stops (does not throw) when follower or target is missing a Position', () {
+      final world = _buildWorld();
+      final target = world.spawn(); // no Position
+
+      final registry = BehaviorRegistry()
+        ..register('follow', FollowBehavior(target: target));
+      world.addSystem(AISystem(registry));
+
+      final follower = world.spawn();
+      world.storeOf<Position>().set(follower, Position(0, 0));
+      world.storeOf<Velocity>().set(follower, Velocity(5, 0));
+      world.storeOf<AIState>().set(follower, AIState('follow'));
+
+      world.step(0.016);
+      expect(world.storeOf<Velocity>().get(follower)!.x, 0);
+    });
+
     test('stops once outside maxDistance', () {
       final world = _buildWorld();
       final target = world.spawn();

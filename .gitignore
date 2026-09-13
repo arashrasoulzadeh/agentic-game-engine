@@ -51,6 +51,7 @@ packages/**/.dart_tool/
 packages/**/build/
 packages/**/.pub-cache/
 packages/**/pubspec.lock
+packages/**/coverage/
 
 # This repo only tracks the engine itself (packages/). Any Flutter game
 # scaffolded here via `game_agent create` (e.g. test_game/) is local-only

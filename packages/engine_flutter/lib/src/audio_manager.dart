@@ -1,3 +1,12 @@
+// coverage:ignore-file
+// Real playback (play/playMusic/stopMusic/setMusicVolume) routes through
+// audioplayers' platform channels *and* its own asset-caching/path_provider
+// plumbing (temp-file caching on some platforms) before it ever reaches the
+// two method channels this package can mock -- see audio_manager_test.dart's
+// comment for what was tried and why it isn't worth chasing further than
+// construction/disposal in a unit test. Verify real playback on a device
+// (tracked in TODO.md), not by faking three platform plugins' internals here.
+
 import 'package:audioplayers/audioplayers.dart';
 
 /// Sound effect + music playback. Kept out of engine_core the same way

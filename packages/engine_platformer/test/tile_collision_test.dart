@@ -75,6 +75,42 @@ void main() {
     expect(world.storeOf<Velocity>().get(player)!.y, 0);
   });
 
+  test('one-way tile catches a falling entity from above', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.storeOf<Position>().set(mapEntity, Position(0, 0));
+    // The one-way tile is row 1 with nothing below it (only 2 rows
+    // total) -- using _testMap()'s one-way tile would also sweep in its
+    // adjacent solid floor row in the same broad-phase pass and land on
+    // THAT instead, never actually exercising the one-way resolution.
+    world.storeOf<TileMap>().set(
+          mapEntity,
+          TileMap(
+            cols: 1,
+            rows: 2,
+            tileWidth: 16,
+            tileHeight: 16,
+            tiles: [0, 2],
+            oneWayTileIds: {2},
+          ),
+        );
+
+    final player = world.spawn();
+    // Small dt keeps gravity's per-tick velocity addition (used by
+    // resolveOneWayCircleAabb's "was it above the tile last frame"
+    // check) from overshooting past the tile -- see that function's
+    // doc comment on how it infers a crossing.
+    world.storeOf<Position>().set(player, Position(8, 10.5));
+    world.storeOf<Velocity>().set(player, Velocity(0, 50));
+    world.storeOf<Collider>().set(player, Collider(5));
+    world.storeOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.02);
+
+    expect(world.storeOf<PlatformerController>().get(player)!.grounded, isTrue);
+    expect(world.storeOf<Velocity>().get(player)!.y, 0);
+  });
+
   test('one-way tile does not block movement from below', () {
     final world = _buildWorld();
     final mapEntity = world.spawn();

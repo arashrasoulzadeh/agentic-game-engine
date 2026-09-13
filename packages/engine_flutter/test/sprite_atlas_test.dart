@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:engine_flutter/engine_flutter.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -37,6 +38,40 @@ void main() {
     final image = await _tinyImage();
     final atlas = SpriteAtlas.fromManifest(image, {'regions': {}});
     expect(() => atlas.regionFor('missing'), throwsArgumentError);
+  });
+
+  test('loadFromAssets decodes the image and applies the manifest', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+
+    final image = await _tinyImage();
+    final pngBytes = (await image.toByteData(format: ui.ImageByteFormat.png))!
+        .buffer
+        .asUint8List();
+    const manifestJson = '{"regions": {"idle": {"x": 0, "y": 0, "w": 4, "h": 4}}}';
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMessageHandler('flutter/assets', (message) async {
+      final key = const StringCodec().decodeMessage(message);
+      if (key == 'assets/manifest.json') {
+        return const StringCodec().encodeMessage(manifestJson);
+      }
+      if (key == 'assets/sheet.png') {
+        return ByteData.sublistView(pngBytes);
+      }
+      return null;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMessageHandler('flutter/assets', null);
+    });
+
+    final atlas = await SpriteAtlas.loadFromAssets(
+      imageAssetPath: 'assets/sheet.png',
+      manifestAssetPath: 'assets/manifest.json',
+    );
+
+    expect(atlas.regionFor('idle'), const Rect.fromLTWH(0, 0, 4, 4));
+    expect(atlas.image.width, 4);
   });
 
   test('AtlasRegistry.resolve throws ArgumentError for an unregistered id', () {

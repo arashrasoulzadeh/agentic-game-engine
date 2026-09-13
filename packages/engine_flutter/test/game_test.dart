@@ -34,7 +34,39 @@ class _CustomLoadingScreenGame extends _SlowLoadingGame {
       const Center(child: Text('Loading my game...'));
 }
 
+class _DefaultCallbacksGame extends Game {
+  @override
+  GameConfig get config => const GameConfig(worldWidth: 100, worldHeight: 100);
+
+  @override
+  void populateWorld(World world) {}
+}
+
 void main() {
+  testWidgets('Game.onPause/onResume default to no-ops', (tester) async {
+    final game = _DefaultCallbacksGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump();
+
+    // Exercises the base-class no-op bodies directly -- GameRunner only
+    // calls these on a lifecycle change, which _TestGame's override
+    // already covers elsewhere; this proves the *default* Game itself
+    // (no override) doesn't throw.
+    game.onPause();
+    game.onResume();
+  });
+
+  testWidgets('runGame wraps GameRunner in a MaterialApp/Scaffold', (tester) async {
+    final game = _DefaultCallbacksGame();
+    runGame(game);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(MaterialApp), findsOneWidget);
+    expect(find.byType(GameRunner), findsOneWidget);
+  });
+
   testWidgets('GameRunner loads the game and renders EngineView', (tester) async {
     final game = _TestGame();
     await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
