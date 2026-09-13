@@ -20,6 +20,13 @@ engine" section, one item at a time.
   it. Vertical motion already carried a rider "for free" since the
   collision AABB is recomputed from the platform's current position
   every tick; only horizontal needed the fix.
+- **Modern jump-feel primitives**: coyote time, jump buffering, double
+  jump, wall jump, wall slide, and dash — all opt-in per
+  `PlatformerController` field (every default keeps the original
+  strict grounded-jump behavior). New `DashSystem`. `collision_math.dart`'s
+  `resolveSolidCircleAabb` now returns a `CollisionSide` enum instead
+  of a bool, so wall contact can be derived from the same collision
+  call that already resolved "grounded."
 
 ## [0.1.0]
 

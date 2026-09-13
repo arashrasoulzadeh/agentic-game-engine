@@ -142,10 +142,20 @@ unless marked, roughly in priority order.
       system) and riders follow. Scoped to `PlatformBody`, not
       `TileMap`-based tiles — a whole moving tile grid is a much rarer
       case and out of scope here.
-- [ ] Modern jump-feel primitives: coyote time, jump buffering, wall
-      jump/slide, dash, double jump. `JumpSystem` is a single
-      `jumpSpeed` + grounded check today; none of the "feels good"
-      mechanics most post-2015 platformers rely on exist.
+- [x] Modern jump-feel primitives: coyote time, jump buffering, double
+      jump, wall jump, wall slide, and dash — all opt-in per
+      `PlatformerController` field, all defaulting to the original
+      strict "grounded and pressed this exact tick" behavior (every
+      existing game keeps working unchanged). `collision_math.dart`'s
+      `resolveSolidCircleAabb` now returns a `CollisionSide` enum
+      (`top`/`bottom`/`left`/`right`/`none`) instead of a bare bool, so
+      `PlatformerSystem`/`TileCollisionSystem` can derive wall contact
+      from the same call that already resolved "grounded" — a real
+      (pre-1.0, no external consumers) API change, not additive.
+      `JumpSystem` grew coyote/buffer timers + air-jump/wall-jump
+      priority; new `DashSystem` (registered by
+      `installPlatformerSystems`) consumes a dash request using
+      `facingSign` (now tracked by `PlatformerInputSystem`).
 - [ ] Sloped tile collision — only flat/one-way tiles exist, no ramps.
 - [ ] Tiled (`.tmx`/`.tsx`) import — `TileMap`'s JSON (even with the
       ASCII-legend sugar) is a bespoke format; every real-world

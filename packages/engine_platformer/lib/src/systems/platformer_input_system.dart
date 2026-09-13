@@ -21,12 +21,19 @@ class PlatformerInputSystem implements System {
   final String rightAction;
   final String jumpAction;
 
+  /// Action name for `DashSystem`'s dash — not in
+  /// `InputController.defaultBindings()`, so bind it yourself the same
+  /// way `test_game` binds `'pause'` to a key of your choice, or pass a
+  /// different name here if you'd rather reuse an existing binding.
+  final String dashAction;
+
   PlatformerInputSystem(
     this.entity, {
     this.moveSpeed = 160,
     this.leftAction = 'left',
     this.rightAction = 'right',
     this.jumpAction = 'jump',
+    this.dashAction = 'dash',
   });
 
   @override
@@ -43,9 +50,16 @@ class PlatformerInputSystem implements System {
     if (input.isPressed(rightAction)) vx += moveSpeed;
     vel.x = vx;
 
+    final controller = world.storeOf<PlatformerController>().get(entity);
+    if (controller != null && vx != 0) {
+      controller.facingSign = vx.sign;
+    }
+
     if (input.isPressed(jumpAction)) {
-      final controller = world.storeOf<PlatformerController>().get(entity);
       controller?.jumpRequested = true;
+    }
+    if (input.isPressed(dashAction)) {
+      controller?.dashRequested = true;
     }
   }
 }

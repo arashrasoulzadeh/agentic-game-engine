@@ -8,9 +8,10 @@ import '../components/platformer_controller.dart';
 /// the small range of tiles overlapping each entity's bounding box
 /// (not the whole grid) — the actual broad-phase for tile collision.
 ///
-/// Never resets `controller.grounded` — `PlatformerSystem` owns that
-/// reset. This system only ever sets it to `true` additively, so
-/// running both in either order before `JumpSystem` is safe.
+/// Never resets `controller.grounded`/`touchingWallLeft`/
+/// `touchingWallRight` — `PlatformerSystem` owns that reset. This
+/// system only ever sets them additively, so running both in either
+/// order before `JumpSystem` is safe.
 class TileCollisionSystem implements System {
   @override
   String get name => 'tileCollision';
@@ -67,7 +68,7 @@ class TileCollisionSystem implements System {
                 controller.grounded = true;
               }
             } else if (map.solidTileIds.contains(tileId)) {
-              if (resolveSolidCircleAabb(
+              final side = resolveSolidCircleAabb(
                 pos: pos,
                 vel: vel,
                 radius: collider.radius,
@@ -75,9 +76,8 @@ class TileCollisionSystem implements System {
                 right: right,
                 top: top,
                 bottom: bottom,
-              )) {
-                controller.grounded = true;
-              }
+              );
+              applyCollisionSideToController(side: side, controller: controller, vel: vel);
             }
           }
         }

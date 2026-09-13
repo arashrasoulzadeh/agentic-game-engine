@@ -8,7 +8,7 @@ void main() {
       final pos = Position(18, 50);
       final vel = Velocity(10, 0);
 
-      final landed = resolveSolidCircleAabb(
+      final side = resolveSolidCircleAabb(
         pos: pos,
         vel: vel,
         radius: 5,
@@ -18,7 +18,7 @@ void main() {
         bottom: 200,
       );
 
-      expect(landed, isFalse);
+      expect(side, CollisionSide.left);
       expect(pos.x, 20 - 5);
       expect(vel.x, 0);
     });
@@ -27,7 +27,7 @@ void main() {
       final pos = Position(102, 50);
       final vel = Velocity(-10, 0);
 
-      final landed = resolveSolidCircleAabb(
+      final side = resolveSolidCircleAabb(
         pos: pos,
         vel: vel,
         radius: 5,
@@ -37,16 +37,54 @@ void main() {
         bottom: 200,
       );
 
-      expect(landed, isFalse);
+      expect(side, CollisionSide.right);
       expect(pos.x, 100 + 5);
       expect(vel.x, 0);
     });
 
-    test('no overlap is a no-op and returns false', () {
+    test('pushes out to the top when landing on top', () {
+      final pos = Position(50, 8);
+      final vel = Velocity(0, 10);
+
+      final side = resolveSolidCircleAabb(
+        pos: pos,
+        vel: vel,
+        radius: 5,
+        left: 0,
+        right: 100,
+        top: 10,
+        bottom: 200,
+      );
+
+      expect(side, CollisionSide.top);
+      expect(pos.y, 10 - 5);
+      expect(vel.y, 0);
+    });
+
+    test('pushes out to the bottom when overlapping from below', () {
+      final pos = Position(50, 202);
+      final vel = Velocity(0, -10);
+
+      final side = resolveSolidCircleAabb(
+        pos: pos,
+        vel: vel,
+        radius: 5,
+        left: 0,
+        right: 100,
+        top: 0,
+        bottom: 200,
+      );
+
+      expect(side, CollisionSide.bottom);
+      expect(pos.y, 200 + 5);
+      expect(vel.y, 0);
+    });
+
+    test('no overlap is a no-op and returns none', () {
       final pos = Position(0, 0);
       final vel = Velocity(0, 0);
 
-      final landed = resolveSolidCircleAabb(
+      final side = resolveSolidCircleAabb(
         pos: pos,
         vel: vel,
         radius: 1,
@@ -56,7 +94,7 @@ void main() {
         bottom: 200,
       );
 
-      expect(landed, isFalse);
+      expect(side, CollisionSide.none);
       expect(pos.x, 0);
       expect(pos.y, 0);
     });

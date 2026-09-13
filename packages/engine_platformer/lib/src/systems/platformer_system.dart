@@ -27,12 +27,12 @@ import '../components/platformer_controller.dart';
 /// resolves "landed on top," so it can't push a rider that isn't
 /// actually standing on the platform.
 ///
-/// Resets `controller.grounded = false` at the start of each entity's
-/// processing — the single reset point. `TileCollisionSystem` (if
-/// present) runs after this and only ever sets `grounded = true`
-/// additively; it never resets it, so registration order between the
-/// two doesn't matter for correctness as long as both run before
-/// `JumpSystem`.
+/// Resets `controller.grounded`/`touchingWallLeft`/`touchingWallRight`
+/// to `false` at the start of each entity's processing — the single
+/// reset point. `TileCollisionSystem` (if present) runs after this and
+/// only ever sets them additively; it never resets them, so
+/// registration order between the two doesn't matter for correctness
+/// as long as both run before `JumpSystem`.
 class PlatformerSystem implements System {
   @override
   String get name => 'platformer';
@@ -54,6 +54,8 @@ class PlatformerSystem implements System {
       if (pos == null || vel == null || collider == null) continue;
 
       controller.grounded = false;
+      controller.touchingWallLeft = false;
+      controller.touchingWallRight = false;
 
       for (var j = 0; j < platformBodies.length; j++) {
         final platformEntity = platformBodies.entityAt(j);
@@ -67,9 +69,9 @@ class PlatformerSystem implements System {
         final top = platformPos.y - platform.height / 2;
         final bottom = platformPos.y + platform.height / 2;
 
-        bool landed;
+        bool landedOnThis;
         if (platform.oneWay) {
-          landed = resolveOneWayCircleAabb(
+          landedOnThis = resolveOneWayCircleAabb(
             pos: pos,
             vel: vel,
             radius: collider.radius,
@@ -78,8 +80,9 @@ class PlatformerSystem implements System {
             right: right,
             top: top,
           );
+          if (landedOnThis) controller.grounded = true;
         } else {
-          landed = resolveSolidCircleAabb(
+          final side = resolveSolidCircleAabb(
             pos: pos,
             vel: vel,
             radius: collider.radius,
@@ -88,9 +91,11 @@ class PlatformerSystem implements System {
             top: top,
             bottom: bottom,
           );
+          landedOnThis = side == CollisionSide.top;
+          applyCollisionSideToController(side: side, controller: controller, vel: vel);
         }
-        if (landed) {
-          controller.grounded = true;
+
+        if (landedOnThis) {
           final platformVel = velocities.get(platformEntity);
           if (platformVel != null) pos.x += platformVel.x * dt;
         }

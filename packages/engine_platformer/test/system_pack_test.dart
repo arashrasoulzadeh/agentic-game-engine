@@ -24,6 +24,7 @@ void main() {
       'platformer',
       'tileCollision',
       'jump',
+      'dash',
       'collision',
       'health',
       'facing',
@@ -42,6 +43,7 @@ void main() {
       'platformer',
       'tileCollision',
       'jump',
+      'dash',
       'collision',
       'health',
       'facing',
@@ -60,6 +62,7 @@ void main() {
       'platformer',
       'tileCollision',
       'jump',
+      'dash',
       'collision',
       'health',
     ]);

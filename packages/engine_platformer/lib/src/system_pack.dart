@@ -1,6 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 
+import 'systems/dash_system.dart';
 import 'systems/facing_system.dart';
 import 'systems/gravity_system.dart';
 import 'systems/health_system.dart';
@@ -54,6 +55,7 @@ void installPlatformerSystems(
   world.addSystem(PlatformerSystem());
   world.addSystem(TileCollisionSystem());
   world.addSystem(JumpSystem());
+  world.addSystem(DashSystem());
   world.addSystem(CollisionSystem());
   world.addSystem(HealthSystem());
   if (includeAnimation) {

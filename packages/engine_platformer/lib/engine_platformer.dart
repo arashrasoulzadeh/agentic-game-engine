@@ -14,6 +14,7 @@ export 'src/components/platformer_controller.dart';
 export 'src/pickup_helpers.dart';
 export 'src/spawn_helpers.dart';
 export 'src/system_pack.dart';
+export 'src/systems/dash_system.dart';
 export 'src/systems/facing_system.dart';
 export 'src/systems/gravity_system.dart';
 export 'src/systems/health_system.dart';
