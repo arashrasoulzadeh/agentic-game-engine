@@ -33,6 +33,11 @@ top to bottom — not strict, adjust as dependencies emerge.
       camera-followed-player-under-the-joystick overlap. `floating:
       false` keeps the classic always-visible joystick for anyone who
       wants it.
+- [x] On-screen button customization: `OnScreenButtonSpec.custom()`
+      supports sprite-atlas-backed buttons (separate idle/pressed
+      regions) plus full color/shape/size/border-radius/label-style
+      customization for non-sprite buttons; falls back to the
+      color+label rendering if no atlas/region is given or resolvable.
 
 ## Platformer helpers (engine_platformer)
 

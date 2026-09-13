@@ -189,6 +189,40 @@ always-visible joystick instead. `VirtualJoystick`/
 `VirtualButton` also work standalone if `OnScreenControls`'s
 joystick-bottom-left/buttons-bottom-right layout doesn't fit your game.
 
+#### Custom/sprite buttons
+
+`OnScreenButtonSpec('jump', 'JUMP')` (the default constructor) gives
+you a plain colored circle with a label. For a button styled to match
+your game's art, use `OnScreenButtonSpec.custom(...)` instead:
+
+```dart
+@override
+List<OnScreenButtonSpec> onScreenButtons() => const [
+      OnScreenButtonSpec.custom(
+        'jump',
+        atlasId: 'ui',            // an atlas registered via loadAssets()
+        region: 'button_jump',    // region drawn while idle
+        pressedRegion: 'button_jump_pressed', // swapped in while held
+        diameter: 72,
+      ),
+      OnScreenButtonSpec.custom(
+        'attack',
+        label: 'ATK',             // no atlasId/region -> falls back to
+        shape: BoxShape.rectangle, // colored shape + label instead
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+        idleColor: Color(0xFF883322),
+        pressedColor: Color(0xFFCC5533),
+      ),
+    ];
+```
+
+`atlasId` is resolved against the same `AtlasRegistry` returned by
+`loadAssets()` — the one already backing your game's sprites. If
+`atlasId`/`region` are omitted, or the id doesn't resolve (e.g. the
+atlas hasn't loaded), the button falls back to the color/shape/label
+rendering, so `OnScreenButtonSpec.custom` is safe to use even before
+assets finish loading.
+
 ## Audio
 
 ```dart

@@ -170,6 +170,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
               controller: controller,
               verticalEnabled: widget.game.onScreenJoystickVertical,
               buttons: widget.game.onScreenButtons(),
+              atlasRegistry: loaded.atlasRegistry,
             ),
           ],
         );

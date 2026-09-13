@@ -1,14 +1,64 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/widgets.dart';
 
 import 'input.dart';
+import 'sprite_atlas.dart';
 
 /// One on-screen button: which logical action it sets while held, and
 /// what to show on it. Used by [OnScreenControls]/`Game.onScreenButtons`.
+///
+/// The default constructor covers the common case (a label on a plain
+/// circle). Use [OnScreenButtonSpec.custom] for a sprite-based button
+/// (draws a region from the game's own atlas — the same
+/// `AtlasRegistry`/`SpriteAtlas` your characters use, so a button can
+/// literally be a game icon) or any other visual customization: colors,
+/// size, shape, a different sprite while pressed, custom label style.
 class OnScreenButtonSpec {
   final String action;
-  final String label;
+  final String? label;
+  final Color idleColor;
+  final Color pressedColor;
+  final double diameter;
+  final BoxShape shape;
+  final BorderRadius? borderRadius;
+  final TextStyle? labelStyle;
 
-  const OnScreenButtonSpec(this.action, this.label);
+  /// Which atlas (registered via `AtlasRegistry.register`) and region
+  /// to draw as the button's face, instead of a plain color. Both must
+  /// be set for a sprite to render; falls back to [idleColor]/[label]
+  /// if the atlas isn't found (e.g. not loaded yet).
+  final String? atlasId;
+  final String? region;
+
+  /// Swaps to this region while the button is held, if given — e.g. a
+  /// "pressed" frame for a button that looks like it depresses.
+  final String? pressedRegion;
+
+  const OnScreenButtonSpec(this.action, [this.label])
+      : idleColor = const Color(0x33FFFFFF),
+        pressedColor = const Color(0x88FFFFFF),
+        diameter = 64,
+        shape = BoxShape.circle,
+        borderRadius = null,
+        labelStyle = null,
+        atlasId = null,
+        region = null,
+        pressedRegion = null;
+
+  const OnScreenButtonSpec.custom(
+    this.action, {
+    this.label,
+    this.idleColor = const Color(0x33FFFFFF),
+    this.pressedColor = const Color(0x88FFFFFF),
+    this.diameter = 64,
+    this.shape = BoxShape.circle,
+    this.borderRadius,
+    this.labelStyle,
+    this.atlasId,
+    this.region,
+    this.pressedRegion,
+  });
 }
 
 /// A draggable virtual joystick that sets `"left"`/`"right"`/`"up"`/
@@ -180,16 +230,18 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
 
 /// An on-screen button that sets [spec.action] pressed for as long as
 /// it's held down — the touch equivalent of holding a keyboard key.
+/// Renders a sprite from [atlasRegistry] when [spec] names one (see
+/// `OnScreenButtonSpec.custom`); otherwise a colored shape + label.
 class VirtualButton extends StatefulWidget {
   final InputController controller;
   final OnScreenButtonSpec spec;
-  final double diameter;
+  final AtlasRegistry? atlasRegistry;
 
   const VirtualButton({
     super.key,
     required this.controller,
     required this.spec,
-    this.diameter = 64,
+    this.atlasRegistry,
   });
 
   @override
@@ -211,31 +263,80 @@ class _VirtualButtonState extends State<VirtualButton> {
     super.dispose();
   }
 
+  SpriteAtlas? _resolveAtlas() {
+    final atlasId = widget.spec.atlasId;
+    final registry = widget.atlasRegistry;
+    if (atlasId == null || registry == null || !registry.has(atlasId)) {
+      return null;
+    }
+    return registry.resolve(atlasId);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final spec = widget.spec;
+    final activeRegion =
+        (_pressed ? spec.pressedRegion ?? spec.region : spec.region);
+    final atlas = activeRegion == null ? null : _resolveAtlas();
+
+    final Widget visual;
+    if (atlas != null && activeRegion != null) {
+      visual = CustomPaint(
+        key: ValueKey(activeRegion),
+        painter: _SpritePainter(atlas, activeRegion),
+      );
+    } else {
+      visual = DecoratedBox(
+        decoration: BoxDecoration(
+          color: _pressed ? spec.pressedColor : spec.idleColor,
+          shape: spec.shape,
+          borderRadius: spec.shape == BoxShape.rectangle ? spec.borderRadius : null,
+        ),
+        child: spec.label == null
+            ? null
+            : Center(
+                child: Text(
+                  spec.label!,
+                  style: spec.labelStyle ??
+                      const TextStyle(
+                        color: Color(0xFFFFFFFF),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ),
+      );
+    }
+
     return GestureDetector(
       onTapDown: (_) => _setPressed(true),
       onTapUp: (_) => _setPressed(false),
       onTapCancel: () => _setPressed(false),
-      child: Container(
-        width: widget.diameter,
-        height: widget.diameter,
-        decoration: BoxDecoration(
-          color: _pressed ? const Color(0x88FFFFFF) : const Color(0x33FFFFFF),
-          shape: BoxShape.circle,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          widget.spec.label,
-          style: const TextStyle(
-            color: Color(0xFFFFFFFF),
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+      child: SizedBox(width: spec.diameter, height: spec.diameter, child: visual),
     );
   }
+}
+
+class _SpritePainter extends CustomPainter {
+  final SpriteAtlas atlas;
+  final String region;
+
+  _SpritePainter(this.atlas, this.region);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final srcRect = atlas.regionFor(region);
+    canvas.drawImageRect(
+      atlas.image,
+      srcRect,
+      ui.Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint(),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SpritePainter oldDelegate) =>
+      oldDelegate.atlas != atlas || oldDelegate.region != region;
 }
 
 /// Joystick (bottom-left) + a row of buttons (bottom-right) overlaid on
@@ -247,11 +348,16 @@ class OnScreenControls extends StatelessWidget {
   final bool verticalEnabled;
   final List<OnScreenButtonSpec> buttons;
 
+  /// Needed only for buttons using `OnScreenButtonSpec.custom`'s
+  /// `atlasId`/`region` — omit if none of your buttons are sprite-based.
+  final AtlasRegistry? atlasRegistry;
+
   const OnScreenControls({
     super.key,
     required this.controller,
     this.verticalEnabled = false,
     this.buttons = const [OnScreenButtonSpec('jump', 'JUMP')],
+    this.atlasRegistry,
   });
 
   @override
@@ -284,7 +390,11 @@ class OnScreenControls extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 for (final spec in buttons) ...[
-                  VirtualButton(controller: controller, spec: spec),
+                  VirtualButton(
+                    controller: controller,
+                    spec: spec,
+                    atlasRegistry: atlasRegistry,
+                  ),
                   const SizedBox(width: 12),
                 ],
               ],
