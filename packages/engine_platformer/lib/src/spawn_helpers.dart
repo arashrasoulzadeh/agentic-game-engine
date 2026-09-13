@@ -2,6 +2,8 @@ import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 
 import 'components/gravity.dart';
+import 'components/health.dart';
+import 'components/last_checkpoint.dart';
 import 'components/movement_animation_set.dart';
 import 'components/platformer_controller.dart';
 
@@ -13,7 +15,10 @@ import 'components/platformer_controller.dart';
 /// `installPlatformerSystems` handle it) can read live key presses.
 /// Pass [atlasId]/[spriteRegion] to also attach a `Sprite`, and
 /// [animations] (e.g. from `MovementAnimationSet.fromSequences`) to
-/// wire up idle/walk/jump switching in the same call.
+/// wire up idle/walk/jump switching in the same call. Pass [maxHealth]
+/// to also attach `Health` (full at spawn) and a `LastCheckpoint`
+/// seeded at the spawn position, ready for `respawnPlayer`/
+/// `respawnOnDeath` without a separate setup call.
 ///
 /// This is the "moving"/"jumping"/character setup helper: it replaces
 /// the hand-spawned entity + component boilerplate every platformer
@@ -31,6 +36,7 @@ EntityId spawnPlayer(
   String? atlasId,
   String? spriteRegion,
   MovementAnimationSet? animations,
+  double? maxHealth,
 }) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(x, y));
@@ -49,6 +55,10 @@ EntityId spawnPlayer(
     world.storeOf<MovementAnimationSet>().set(id, animations);
     world.storeOf<AnimationState>().set(id, AnimationState(animations.idle));
   }
+  if (maxHealth != null) {
+    world.storeOf<Health>().set(id, Health(current: maxHealth, max: maxHealth));
+    world.storeOf<LastCheckpoint>().set(id, LastCheckpoint(x, y));
+  }
   return id;
 }
 
@@ -56,7 +66,8 @@ EntityId spawnPlayer(
 /// `AIState` referencing [behaviorId] (register the actual `Behavior`
 /// yourself via a `BehaviorRegistry` — see `PatrolBehavior`/
 /// `FollowBehavior` for ready-made ones, or write your own). Pass
-/// [animations] the same way as `spawnPlayer` for idle/walk switching.
+/// [animations] the same way as `spawnPlayer` for idle/walk switching,
+/// and [maxHealth] to make the enemy damageable via `damageEntity`.
 ///
 /// Pass [affectedByGravity] for an enemy that should fall/land like the
 /// player (needs `GravitySystem`/`PlatformerSystem`/`TileCollisionSystem`
@@ -75,6 +86,7 @@ EntityId spawnEnemy(
   String? atlasId,
   String? spriteRegion,
   MovementAnimationSet? animations,
+  double? maxHealth,
 }) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(x, y));
@@ -91,6 +103,9 @@ EntityId spawnEnemy(
   if (animations != null) {
     world.storeOf<MovementAnimationSet>().set(id, animations);
     world.storeOf<AnimationState>().set(id, AnimationState(animations.idle));
+  }
+  if (maxHealth != null) {
+    world.storeOf<Health>().set(id, Health(current: maxHealth, max: maxHealth));
   }
   return id;
 }

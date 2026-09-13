@@ -25,6 +25,7 @@ void main() {
       'tileCollision',
       'jump',
       'collision',
+      'health',
       'facing',
       'movementAnimation',
       'animation',
@@ -42,6 +43,7 @@ void main() {
       'tileCollision',
       'jump',
       'collision',
+      'health',
       'facing',
       'movementAnimation',
       'animation',
@@ -59,6 +61,7 @@ void main() {
       'tileCollision',
       'jump',
       'collision',
+      'health',
     ]);
   });
 

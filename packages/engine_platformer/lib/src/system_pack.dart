@@ -3,6 +3,7 @@ import 'package:engine_flutter/engine_flutter.dart';
 
 import 'systems/facing_system.dart';
 import 'systems/gravity_system.dart';
+import 'systems/health_system.dart';
 import 'systems/jump_system.dart';
 import 'systems/movement_animation_system.dart';
 import 'systems/platformer_input_system.dart';
@@ -24,8 +25,15 @@ import 'systems/tile_collision_system.dart';
 /// [includeAnimation] to false if you're not using `Sprite`/
 /// `MovementAnimationSet` at all (e.g. a headless test world).
 ///
+/// Includes `HealthSystem` (ticks down `Health.invincibleSeconds` —
+/// harmless even if nothing in your game has a `Health` component yet).
+/// Damage/death/respawn themselves are helpers you call explicitly
+/// (`damageEntity`, `dealDamageOnTouch`, `respawnOnDeath`), not part of
+/// this pack, so *when* an entity takes damage stays visible in game
+/// code.
+///
 /// If you need a system not covered here (a custom input system, a
-/// score/health system, whatever your game needs), just call
+/// score system, whatever your game needs), just call
 /// `world.addSystem(...)` for it yourself before or after this —
 /// this doesn't own the whole system list, only the platformer-genre
 /// part of it.
@@ -47,6 +55,7 @@ void installPlatformerSystems(
   world.addSystem(TileCollisionSystem());
   world.addSystem(JumpSystem());
   world.addSystem(CollisionSystem());
+  world.addSystem(HealthSystem());
   if (includeAnimation) {
     world.addSystem(FacingSystem());
     world.addSystem(MovementAnimationSystem());
