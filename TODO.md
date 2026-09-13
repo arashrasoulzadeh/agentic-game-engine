@@ -180,9 +180,24 @@ belongs in.
       unbounded text still renders at nonzero zoom); visually confirmed
       in the browser — a long line with `maxWidth: 180` wrapped onto 5
       lines correctly in `test_game` (reverted after, gitignored).
-- [ ] Tile culling for large maps: `_collectTileMapItems` walks every
-      tile every frame regardless of camera viewport — fine at current
-      map sizes, will matter once levels get big.
+- [x] Tile culling for large maps: `_collectTileMapItems` now converts
+      the viewport's on-screen rect to world-space (via
+      `Camera.screenToWorld`, already existed for tap handling) then to
+      tile-grid indices, with a 1-tile margin (a tile straddling the
+      edge still draws) and clamped to the map's actual bounds — turns
+      an unconditional O(rows×cols) walk into O(visible tiles),
+      regardless of total map size. A degenerate 0×0 map is guarded
+      against explicitly (would otherwise `clamp(0, -1)` and throw).
+      Scoped to the normal renderer only, not `_drawTileMapDebug`'s
+      debug-overlay walk — that's an opt-in dev-only diagnostic, lower
+      priority, left as a possible follow-up rather than folded in here.
+      Verified: new regression test in `tile_rendering_test.dart` — a
+      2000×2000 (4,000,000-tile) `TileMap` renders in well under a
+      second (bounded to <3s, generous to avoid flakiness — the point
+      is "doesn't scale with total tile count," not a precise number);
+      full existing test still passes unchanged. Also verified visually
+      in the browser (not just unit tests): `test_game`'s real level
+      still renders its floor/platforms/staircase correctly.
 - [ ] 9-slice sprites: needed for resizable UI panels/dialog boxes;
       `Sprite` is fixed-region only today.
 - [ ] Fixed-timestep + render interpolation: physics and rendering

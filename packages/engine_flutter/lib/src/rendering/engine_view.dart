@@ -597,9 +597,32 @@ class _EnginePainter extends CustomPainter {
       final map = tileMaps.denseAt(m);
 
       items.add(_DrawItem(map.zIndex, order++, (canvas) {
+        if (map.cols == 0 || map.rows == 0) return; // degenerate empty map
+
         final origin = positions.get(mapEntity) ?? Position(0, 0);
-        for (var row = 0; row < map.rows; row++) {
-          for (var col = 0; col < map.cols; col++) {
+
+        // Cull to the tiles actually on screen -- a map far bigger than
+        // the viewport (the common case once a level has any real
+        // size) would otherwise walk every single tile every frame
+        // regardless of how few are visible. `screenToWorld` gives the
+        // world-space rect the viewport currently shows; converting
+        // that into tile-grid indices (with a 1-tile margin so a tile
+        // straddling the edge still gets drawn, and clamped to the
+        // map's actual bounds) turns an O(rows*cols) walk into
+        // O(visible tiles).
+        final topLeftWorld = camera.screenToWorld(Offset.zero, size);
+        final bottomRightWorld = camera.screenToWorld(Offset(size.width, size.height), size);
+        final minCol = (((topLeftWorld.dx - origin.x) / map.tileWidth).floor() - 1)
+            .clamp(0, map.cols - 1);
+        final maxCol = (((bottomRightWorld.dx - origin.x) / map.tileWidth).ceil() + 1)
+            .clamp(0, map.cols - 1);
+        final minRow = (((topLeftWorld.dy - origin.y) / map.tileHeight).floor() - 1)
+            .clamp(0, map.rows - 1);
+        final maxRow = (((bottomRightWorld.dy - origin.y) / map.tileHeight).ceil() + 1)
+            .clamp(0, map.rows - 1);
+
+        for (var row = minRow; row <= maxRow; row++) {
+          for (var col = minCol; col <= maxCol; col++) {
             final tileId = map.tileAt(col, row);
             if (tileId == 0) continue;
 

@@ -54,6 +54,11 @@ item at a time.
   — unbounded, single-line, unchanged from before) — `EngineView`
   passes it through to `TextPainter`'s own line-breaking, scaled by
   `Camera.zoom` in world space the same way `fontSize` already is.
+- **Tile culling**: `_collectTileMapItems` now only walks tiles inside
+  the current viewport (converted to tile-grid indices via
+  `Camera.screenToWorld`), instead of every tile in the map every
+  frame — render cost now scales with visible tiles, not total map
+  size.
 
 ### Fully-fledged platformer engine
 
