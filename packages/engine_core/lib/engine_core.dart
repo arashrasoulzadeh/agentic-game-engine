@@ -2,6 +2,7 @@ export 'src/action.dart';
 export 'src/actions/set_velocity_action.dart';
 export 'src/behavior.dart';
 export 'src/button_hit_test.dart';
+export 'src/cinematic.dart';
 export 'src/component_registry.dart';
 export 'src/component_store.dart';
 export 'src/components/ai_state.dart';

@@ -75,15 +75,23 @@ top to bottom — not strict, adjust as dependencies emerge.
       `GameState` for data that survives a scene switch and
       `ButtonMenuScene` for menu/pause screens — see `scene.dart`'s doc
       comment.
-- [ ] Cinematic support: a way to play a scripted, non-interactive
-      sequence (camera pans/pauses, character movement, timed dialogue/
-      text) between or within levels — a cutscene on level start, a
-      boss intro, an ending. Natural fit as a `Scene` variant (or a
-      `Tween`-driven `Behavior`/system) rather than a new top-level
-      concept, since `Tween`/`TweenSystem` already exist for driving a
-      value over time and `Scene`/`SceneController` already own
-      transitions; needs a way to (a) take/return input control from
-      the player mid-scene and (b) skip/fast-forward. Not started.
+- [x] Cinematic support: `CinematicSystem` + `CinematicStep`
+      (`WaitStep`/`CallbackStep`/`TweenStep`) in `engine_core` — a
+      System like any other (`world.addSystem(CinematicSystem(steps))`),
+      Flutter-free, built on `Tween`'s own easing math rather than a new
+      top-level concept. Works the same for a dedicated cutscene `Scene`
+      or a scripted beat inside a playable level (a door opening, a boss
+      intro). (a) Input control: no new API — a game reads
+      `CinematicSystem.isPlaying` in whatever gates its own input-driven
+      systems, same as `pushOverlay` leaves "what an overlay shows" to
+      the game. (b) Skip: `CinematicSystem.skip()` calls `skip` on the
+      current + every remaining step then fires
+      `CinematicCompleteEvent` immediately — an honest "jump to end
+      state", not a simulated fast-forward. `TweenStep` example (a
+      camera pan by moving a "camera rig" entity's `Position`) is in its
+      doc comment; no dedicated camera-rig API was added since
+      `Scene.cameraFollowEntity` already supports pointing at any
+      entity a game chooses to animate.
 
 ## Platformer helpers (engine_platformer)
 
