@@ -16,3 +16,4 @@ export 'src/sprite_atlas.dart';
 export 'src/systems/animation_system.dart';
 export 'src/ui/button_menu_scene.dart';
 export 'src/ui/menu_button_atlas.dart';
+export 'src/ui/save_slot_menu_scene.dart';

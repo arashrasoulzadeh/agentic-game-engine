@@ -62,11 +62,14 @@ top to bottom — not strict, adjust as dependencies emerge.
       reads `.value` and applies it to whatever it's animating (menu
       transition, screen-shake, damage-flash), matching the rest of the
       engine's "doesn't hide how it works" approach.
-- [ ] Save-slot UI helpers: a ready-made save/load menu widget in
-      `engine_flutter` building on the existing `SaveGame` (slots,
-      `hasSave`, `deleteSave`) so a game doesn't have to hand-roll a
-      slot-picker screen — the "menu" analogue of what `OnScreenControls`
-      already is for touch input.
+- [x] Save-slot UI helpers: `SaveSlotMenuScene` (a `ButtonMenuScene`
+      subclass) + `SaveSlotSpec` in `engine_flutter` — give it a list of
+      slots and what selecting one should do, it checks
+      `SaveGame.hasSave` per slot fresh on every `populate` and reflects
+      that in each button's label. Built as a `Scene`, not a raw Flutter
+      widget, since that's the pattern every other menu in this engine
+      (`ButtonMenuScene`/`MainMenuScene`/`PauseMenuScene`) now follows —
+      this TODO predates `Scene` existing.
 - [x] Basic scene/screen management: `Scene` + `SceneController`
       (`loadScene`/`pushOverlay`/`popOverlay`) in `engine_flutter`, plus
       `GameState` for data that survives a scene switch and
