@@ -12,6 +12,7 @@ void main() {
       backgroundColor: Colors.red,
       showFpsOverlay: true,
       pauseOnBackground: false,
+      onScreenControls: OnScreenControlsMode.on,
     );
 
     final restored = GameConfig.fromJson(config.toJson());
@@ -23,6 +24,7 @@ void main() {
     expect(restored.backgroundColor.toARGB32(), Colors.red.toARGB32());
     expect(restored.showFpsOverlay, isTrue);
     expect(restored.pauseOnBackground, isFalse);
+    expect(restored.onScreenControls, OnScreenControlsMode.on);
   });
 
   test('fromJson falls back to defaults for missing/unknown fields', () {
@@ -38,5 +40,6 @@ void main() {
     expect(config.worldHeight, 200);
     expect(config.showFpsOverlay, isFalse);
     expect(config.pauseOnBackground, isTrue);
+    expect(config.onScreenControls, OnScreenControlsMode.auto);
   });
 }

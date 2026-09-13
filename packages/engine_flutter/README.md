@@ -61,10 +61,12 @@ class MyGame extends Game {
 |---|---|---|
 | `loadAssets()` | empty `AtlasRegistry` | Loading sprite atlases before the first frame |
 | `createCamera(world)` | centered on the world | Following the player from frame one |
-| `createInputController()` | `null` (no keyboard) | Custom key bindings |
+| `createInputController()` | `null` (no keyboard/touch input) | Custom key bindings — also drives on-screen touch controls, see below |
 | `cameraFollowEntity(world)` | `null` (static camera) | Camera-follow target (usually the player) |
 | `buildLoadingScreen(context)` | centered spinner | A branded splash screen |
 | `onPause()` / `onResume()` | no-op | Save-on-pause, pausing audio, etc. |
+| `onScreenButtons()` | one `"jump"` button | Which touch buttons to show and what action each sets |
+| `onScreenJoystickVertical` | `false` | Set `true` if the joystick should also drive `"up"`/`"down"` (top-down games) |
 
 `GameRunner` (what `runGame` wraps in a `MaterialApp`/`Scaffold`) also
 handles app-lifecycle pause/resume automatically (`config.pauseOnBackground`)
@@ -82,7 +84,8 @@ JSON-serializable app settings, loaded from a bundled asset:
   "worldHeight": 480,
   "backgroundColor": 4278190080,
   "showFpsOverlay": false,
-  "pauseOnBackground": true
+  "pauseOnBackground": true,
+  "onScreenControls": "auto"
 }
 ```
 
@@ -90,6 +93,9 @@ JSON-serializable app settings, loaded from a bundled asset:
 **note: this only has any effect on Android/iOS**; browsers ignore
 `SystemChrome.setPreferredOrientations` entirely, so on web the
 viewport shape is just whatever the browser window is.
+
+`onScreenControls` is one of `"auto"` (shown on Android/iOS, hidden
+elsewhere), `"on"`, `"off"` — see [Mobile touch controls](#mobile-touch-controls).
 
 ## Components/systems this package adds
 
@@ -142,9 +148,36 @@ Default bindings: arrow keys → `"left"`/`"right"`/`"up"`/`"down"`,
 space → `"jump"`. Pass a custom `bindings` map to `InputController` for
 your own scheme. To let a system read input, attach the *same*
 `InputState` instance (`controller.state`) as a component on the
-player entity in `populateWorld` — see `test_game`'s `main.dart` for a
-worked example, including the input-reading system itself
-(`_PlayerInputSystem`).
+player entity in `populateWorld` (`engine_platformer`'s `spawnPlayer`
+does this for you — see its README).
+
+### Mobile touch controls
+
+Returning an `InputController` from `createInputController()` also
+gets you an on-screen joystick + buttons for free — `GameRunner` shows
+`OnScreenControls`, wired to the *same* controller, whenever
+`config.onScreenControls` resolves to true (Android/iOS by default
+under `"auto"`). No separate touch-handling code needed: the joystick
+and buttons call `controller.setAction(...)`, the exact same method a
+keyboard binding uses internally, so `PlatformerInputSystem` (or any
+system reading `InputState`) never knows whether an action came from a
+key press or a finger.
+
+```dart
+@override
+List<OnScreenButtonSpec> onScreenButtons() => const [
+      OnScreenButtonSpec('jump', 'JUMP'),
+      OnScreenButtonSpec('attack', 'ATK'),
+    ];
+
+@override
+bool get onScreenJoystickVertical => false; // true for top-down games
+```
+
+Force controls on/off regardless of platform via `GameConfig.onScreenControls`
+(useful for testing touch controls in a desktop browser). `VirtualJoystick`/
+`VirtualButton` also work standalone if `OnScreenControls`'s
+joystick-bottom-left/buttons-bottom-right layout doesn't fit your game.
 
 ## Audio
 

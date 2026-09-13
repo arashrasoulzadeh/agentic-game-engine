@@ -7,6 +7,13 @@ import 'package:flutter/services.dart';
 /// `landscape`, most puzzle/vertical games want `portrait`.
 enum GameOrientation { portrait, landscape, auto }
 
+/// Whether to overlay touch controls (`OnScreenControls`). `auto` shows
+/// them on Android/iOS and hides them elsewhere (desktop/web assume a
+/// keyboard) — override with `on`/`off` for a game that wants touch
+/// controls everywhere (e.g. testing them in a browser) or nowhere
+/// (e.g. a game with no player-controlled movement at all).
+enum OnScreenControlsMode { auto, on, off }
+
 /// Declarative, JSON-serializable game settings — the first piece of the
 /// "content is data, not code" principle: an agent (or a human) can
 /// change orientation, world size, or the title by editing a file, no
@@ -19,6 +26,7 @@ class GameConfig {
   final Color backgroundColor;
   final bool showFpsOverlay;
   final bool pauseOnBackground;
+  final OnScreenControlsMode onScreenControls;
 
   const GameConfig({
     this.title = 'Game',
@@ -28,6 +36,7 @@ class GameConfig {
     this.backgroundColor = const Color(0xFF000000),
     this.showFpsOverlay = false,
     this.pauseOnBackground = true,
+    this.onScreenControls = OnScreenControlsMode.auto,
   });
 
   Map<String, dynamic> toJson() => {
@@ -38,6 +47,7 @@ class GameConfig {
         'backgroundColor': backgroundColor.toARGB32(),
         'showFpsOverlay': showFpsOverlay,
         'pauseOnBackground': pauseOnBackground,
+        'onScreenControls': onScreenControls.name,
       };
 
   factory GameConfig.fromJson(Map<String, dynamic> json) => GameConfig(
@@ -53,6 +63,10 @@ class GameConfig {
             : const Color(0xFF000000),
         showFpsOverlay: json['showFpsOverlay'] as bool? ?? false,
         pauseOnBackground: json['pauseOnBackground'] as bool? ?? true,
+        onScreenControls: OnScreenControlsMode.values.firstWhere(
+          (m) => m.name == json['onScreenControls'],
+          orElse: () => OnScreenControlsMode.auto,
+        ),
       );
 
   /// Loads a `GameConfig` from a bundled JSON asset, e.g.

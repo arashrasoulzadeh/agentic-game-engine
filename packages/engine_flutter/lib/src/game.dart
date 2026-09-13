@@ -1,10 +1,12 @@
 import 'package:engine_core/engine_core.dart';
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
 import 'camera.dart';
 import 'engine_view.dart';
 import 'game_config.dart';
 import 'input.dart';
+import 'on_screen_controls.dart';
 import 'register_components.dart';
 import 'sprite_atlas.dart';
 
@@ -32,8 +34,23 @@ abstract class Game {
       Camera(x: world.width / 2, y: world.height / 2);
 
   /// Returns null (no keyboard input wired) by default — override to
-  /// supply an `InputController` with custom key bindings.
+  /// supply an `InputController` with custom key bindings. The same
+  /// controller drives on-screen touch controls too (see
+  /// `onScreenButtons`/`onScreenJoystickVertical`), so keyboard and
+  /// touch input end up setting the exact same logical actions.
   InputController? createInputController() => null;
+
+  /// Buttons shown by the default on-screen control overlay (see
+  /// `GameConfig.onScreenControls`). Defaults to a single jump button —
+  /// override for a game with more/different actions.
+  List<OnScreenButtonSpec> onScreenButtons() =>
+      const [OnScreenButtonSpec('jump', 'JUMP')];
+
+  /// Whether the on-screen joystick also sets `"up"`/`"down"`. Off by
+  /// default (the common platformer case, where vertical movement is
+  /// gravity/jump, not joystick-driven) — override for a top-down or
+  /// free-movement game.
+  bool get onScreenJoystickVertical => false;
 
   /// Returns null (static camera) by default — override to make the
   /// camera follow a specific entity (typically the player) each frame.
@@ -131,7 +148,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
             child: widget.game.buildLoadingScreen(context),
           );
         }
-        return EngineView(
+        final engineView = EngineView(
           world: loaded.world,
           atlasRegistry: loaded.atlasRegistry,
           camera: loaded.camera,
@@ -141,8 +158,35 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           paused: _paused,
           showFpsOverlay: widget.game.config.showFpsOverlay,
         );
+
+        final controller = loaded.inputController;
+        if (controller == null || !_shouldShowOnScreenControls()) {
+          return engineView;
+        }
+        return Stack(
+          children: [
+            engineView,
+            OnScreenControls(
+              controller: controller,
+              verticalEnabled: widget.game.onScreenJoystickVertical,
+              buttons: widget.game.onScreenButtons(),
+            ),
+          ],
+        );
       },
     );
+  }
+
+  bool _shouldShowOnScreenControls() {
+    switch (widget.game.config.onScreenControls) {
+      case OnScreenControlsMode.on:
+        return true;
+      case OnScreenControlsMode.off:
+        return false;
+      case OnScreenControlsMode.auto:
+        return defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS;
+    }
   }
 }
 

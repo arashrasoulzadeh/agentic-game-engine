@@ -6,6 +6,7 @@ export 'src/engine_view.dart';
 export 'src/game.dart';
 export 'src/game_config.dart';
 export 'src/input.dart';
+export 'src/on_screen_controls.dart';
 export 'src/register_components.dart';
 export 'src/save_game.dart';
 export 'src/sprite_atlas.dart';

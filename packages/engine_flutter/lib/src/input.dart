@@ -51,4 +51,18 @@ class InputController {
     }
     return KeyEventResult.handled;
   }
+
+  /// Sets a logical action's pressed state directly — the touch-input
+  /// counterpart to [handleKeyEvent], used by [VirtualJoystick]/
+  /// [VirtualButton] since touch has no `LogicalKeyboardKey` to bind.
+  /// Systems reading [state] (e.g. `PlatformerInputSystem`) can't tell
+  /// keyboard and touch input apart, by design — both just set the same
+  /// named actions.
+  void setAction(String action, bool pressed) {
+    if (pressed) {
+      state.pressedActions.add(action);
+    } else {
+      state.pressedActions.remove(action);
+    }
+  }
 }
