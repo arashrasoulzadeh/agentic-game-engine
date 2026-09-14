@@ -317,6 +317,11 @@ item at a time.
   entity overlapping a water zone gets `controller.inWater = true`,
   buoyancy-capped `Velocity.y`, and a repeatable upward "stroke" on
   `jumpRequested` instead of a single jump arc.
+- **Boss/enemy phase framework**: new `BossPhase`/`BossPhaseSystem`
+  (`engine_platformer`) ties `CinematicSystem` and `Health` together —
+  watches an entity's health fraction and, the tick it crosses a
+  configured threshold, emits `BossPhaseChangedEvent` (a game's cue to
+  switch attack pattern) and optionally plays a one-shot cinematic beat.
 - **Save-schema versioning**: `SaveGame.save`/`load` take a `version`
   and wrap the saved snapshot in a `{schemaVersion, world}` envelope;
   `load` takes an optional `migrate` callback and throws a new

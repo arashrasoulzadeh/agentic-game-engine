@@ -1091,9 +1091,43 @@ implementing.
       it the way plain gravity would over that many ticks. Full
       `engine_platformer`/`engine_flutter` suites and `--fatal-infos`
       analyze clean.
-- [ ] Boss/enemy phase framework: `CinematicSystem` can script a
-      one-shot sequence and `Health`/`damageEntity` cover generic
-      combat, but there's no platformer-specific helper tying the two
-      together for "at 50% health, play this cinematic beat and switch
-      attack patterns" — every boss fight has to hand-roll that state
-      machine from scratch today.
+- [x] Boss/enemy phase framework: new `BossPhase`/`BossPhaseSystem`
+      (`engine_platformer`) ties `CinematicSystem` and `Health`
+      together for exactly this gap. `BossPhase(healthFraction,
+      patternId, cinematicSteps)` — `patternId` is opaque to the engine
+      (a game reads it off the new `BossPhaseChangedEvent` to switch
+      its own AI/attack pattern, same "reference by id, game owns the
+      meaning" convention `AIState`/`TriggerZone` already use);
+      `cinematicSteps` is a **factory**, not a list, since a
+      `CinematicStep` holds its own mutable progress and can't replay
+      once consumed. `BossPhaseSystem(entity, phases)` — phases given
+      in descending `healthFraction` order (validated in the
+      constructor, throws otherwise) — watches
+      `Health.current/Health.max` each tick; the tick it first drops
+      to/below a not-yet-triggered phase's threshold, emits
+      `BossPhaseChangedEvent` and, if that phase has `cinematicSteps`,
+      starts playing it via an internal `CinematicSystem` instance
+      driven directly from `BossPhaseSystem.update` — not registered
+      on `World` itself, so a boss fight's cutscene beats don't need a
+      separate system add/remove dance as they start and finish. A
+      phase never re-fires once triggered, even if healing brings
+      health back up and down again; a single hit crossing multiple
+      thresholds at once fires every crossed phase's event in order
+      (only the last one's cinematic, if any, actually plays — an
+      earlier phase's beat is skipped rather than queued). Deliberately
+      not an ECS `Component`/JSON-serializable (same as
+      `CinematicSystem` itself isn't) — a `CinematicStep` can carry
+      Dart closures (`CallbackStep`, `TweenStep.onUpdate`), so boss
+      fight scripting is Dart-code-configured, not level-JSON-authored,
+      consistent with how every other cinematic beat in this engine
+      already works. Verified: 10 new `boss_phase_system_test.dart`
+      tests (descending-order validation including ties; no-op above
+      every threshold; fires exactly at a threshold; never re-fires
+      after healing back up; multiple phases fire in order across
+      separate ticks; a single hit crossing multiple thresholds fires
+      every one in order; missing-`Health` no-op; a phase with no
+      `cinematicSteps` leaves `isInCinematic` false; a phase with
+      `cinematicSteps` actually plays it end-to-end through real
+      `world.step` ticks, `isInCinematic` true until the `WaitStep`
+      genuinely completes). Full `engine_platformer` suite and
+      `--fatal-infos` analyze clean.

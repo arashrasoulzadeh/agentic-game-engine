@@ -4,6 +4,7 @@ export 'src/ai/path_follow_behavior.dart';
 export 'src/ai/patrol_behavior.dart';
 export 'src/logic/checkpoint_helpers.dart';
 export 'src/physics/collision_math.dart';
+export 'src/logic/boss_phase_system.dart';
 export 'src/logic/combat_helpers.dart';
 export 'src/logic/checkpoint.dart';
 export 'src/physics/gravity.dart';
