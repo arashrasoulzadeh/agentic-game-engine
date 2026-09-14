@@ -15,6 +15,7 @@ import 'animation_transition.dart';
 import 'hud_bar.dart';
 import 'light2d.dart';
 import 'nine_slice_sprite.dart';
+import 'screen_tint.dart';
 import 'text.dart' as txt;
 import 'debug_memory.dart';
 import '../input/input.dart';
@@ -125,6 +126,7 @@ class _EngineViewState extends State<EngineView>
     with SingleTickerProviderStateMixin {
   late final Ticker _ticker;
   Duration _lastTick = Duration.zero;
+  Duration? _nextTickDue;
   final FocusNode _focusNode = FocusNode();
   double _fps = 0;
   int? _memoryBytes;
@@ -149,18 +151,28 @@ class _EngineViewState extends State<EngineView>
 
   void _onTick(Duration elapsed) {
     // maxFps caps how often a raw display callback is actually turned
-    // into a world step + repaint -- a callback arriving sooner than
-    // 1/maxFps since the last *processed* one (not the last raw
-    // callback) is skipped outright, so a 120Hz display capped to 60
-    // does half the simulation/render work instead of stepping with a
-    // half-sized dt every callback. `_lastTick` deliberately isn't
-    // updated on a skipped callback, so the eventual processed frame's
-    // dt still reflects real elapsed time since the last one that did
-    // anything.
+    // into a world step + repaint. This is scheduled against a virtual
+    // clock (_nextTickDue) that advances by exactly minInterval every
+    // processed frame, rather than comparing against the last
+    // *processed* callback's own (jittery) timestamp -- on a display
+    // whose refresh interval isn't an exact multiple of minInterval
+    // (a 90Hz or 120Hz phone capped to 60fps, e.g.), comparing against
+    // the last processed timestamp makes alternating real frame
+    // intervals unequal (e.g. ~11ms/~22ms on 90Hz->60fps) even though
+    // the long-run average hits 60 -- visible as uneven, "not solid"
+    // pacing rather than a real dropped-frame stutter. Anchoring to a
+    // virtual clock that ticks forward by a fixed amount each time
+    // removes that jitter; a stall (e.g. the app was backgrounded)
+    // resyncs the virtual clock to now instead of bursting through a
+    // backlog of catch-up frames.
     final maxFps = widget.maxFps;
-    if (maxFps != null && maxFps > 0 && _lastTick != Duration.zero) {
+    if (maxFps != null && maxFps > 0) {
       final minInterval = Duration(microseconds: (1e6 / maxFps).round());
-      if (elapsed - _lastTick < minInterval) return;
+      if (_nextTickDue != null && elapsed < _nextTickDue!) return;
+      final due = (_nextTickDue ?? elapsed) + minInterval;
+      _nextTickDue = due < elapsed ? elapsed + minInterval : due;
+    } else {
+      _nextTickDue = null;
     }
     final dt = _lastTick == Duration.zero
         ? 0.0
@@ -407,13 +419,15 @@ class _EnginePainter extends CustomPainter {
       return byZ != 0 ? byZ : a.order.compareTo(b.order);
     });
 
-    for (final item in items) {
-      item.paint(canvas);
+    if (ambientBrightness < 1.0) {
+      _paintZBanded(canvas, size, positions, items);
+    } else {
+      for (final item in items) {
+        item.paint(canvas);
+      }
     }
 
-    if (ambientBrightness < 1.0) {
-      _drawLighting(canvas, size, positions);
-    }
+    _drawScreenTint(canvas, size);
 
     // Drawn last (on top of everything else) and outside the z-sorted
     // item list entirely -- debug outlines are diagnostic, not part of
@@ -424,6 +438,71 @@ class _EnginePainter extends CustomPainter {
       _drawTileMapDebug(canvas, size, positions);
     }
   }
+
+  /// Splits [items] into z-bands at every `Light2D.minZIndex`/
+  /// `maxZIndex` boundary and draws + lights each band in isolation
+  /// (its own `saveLayer`/`restore`) before the next band's content is
+  /// drawn on top — see `Light2D.minZIndex`'s doc comment for why: a
+  /// light scoped to one band must only darken/reveal that band's own
+  /// content, never anything drawn before or after it in z-order. No
+  /// light in [items]' world using `minZIndex`/`maxZIndex` collapses
+  /// this back to exactly one band covering everything, i.e. the
+  /// original single full-screen pass — this path costs nothing extra
+  /// for a game that never sets those fields.
+  void _paintZBanded(
+    Canvas canvas,
+    Size size,
+    ComponentStore<Position> positions,
+    List<_DrawItem> items,
+  ) {
+    final lights = world.storeOf<Light2D>();
+    final boundaries = <int>{};
+    for (var i = 0; i < lights.length; i++) {
+      final light = lights.denseAt(i);
+      if (light.minZIndex != null) boundaries.add(light.minZIndex!);
+      if (light.maxZIndex != null) boundaries.add(light.maxZIndex! + 1);
+    }
+
+    if (boundaries.isEmpty) {
+      for (final item in items) {
+        item.paint(canvas);
+      }
+      _drawLighting(canvas, size, positions);
+      return;
+    }
+
+    final fullRect = Offset.zero & size;
+    final sorted = boundaries.toList()..sort();
+    final edges = [_negInfZ, ...sorted, _posInfZ];
+
+    var itemIndex = 0;
+    for (var b = 0; b < edges.length - 1; b++) {
+      final start = edges[b];
+      final end = edges[b + 1];
+      // A representative z within this band, used to test each light's
+      // range against it -- valid because bands are cut exactly at the
+      // points where light coverage can change, so every z inside one
+      // band gives the same answer for every light.
+      final bandZ = start == _negInfZ ? end - 1 : start;
+
+      canvas.saveLayer(fullRect, Paint());
+      while (itemIndex < items.length && items[itemIndex].zIndex < end) {
+        items[itemIndex].paint(canvas);
+        itemIndex++;
+      }
+      _drawLighting(
+        canvas,
+        size,
+        positions,
+        lightFilter: (light) =>
+            bandZ >= (light.minZIndex ?? _negInfZ) && bandZ <= (light.maxZIndex ?? _posInfZ),
+      );
+      canvas.restore();
+    }
+  }
+
+  static const int _negInfZ = -1 << 30;
+  static const int _posInfZ = 1 << 30;
 
   /// Ambient-darkness lighting pass (see `EngineView.ambientBrightness`
   /// and `Light2D`'s doc comments) — drawn as its own layer entirely on
@@ -437,7 +516,34 @@ class _EnginePainter extends CustomPainter {
   /// then composites the resulting mask (opaque black where dark,
   /// transparent where a light reached) back over the real scene with
   /// normal alpha blending, which is what actually darkens it.
-  void _drawLighting(Canvas canvas, Size size, ComponentStore<Position> positions) {
+  ///
+  /// [lightFilter], when given (by `_paintZBanded`, scoping this call to
+  /// one z-band), skips any light it returns `false` for — `null` (the
+  /// plain, unbanded path) includes every light, identical to before
+  /// z-scoped lights existed.
+  ///
+  /// Whenever [lightFilter] is given, the darkness rect below composites
+  /// with `BlendMode.srcATop` instead of the default `srcOver` — src-atop
+  /// only paints where the destination *already has* alpha, at that
+  /// alpha's own strength, so this pass darkens only pixels `_paintZBanded`
+  /// already drew into this band's layer and leaves the rest of it fully
+  /// transparent. Plain `srcOver` (used for the unbanded, single-pass
+  /// call, where "the destination" is the whole already-drawn scene, which
+  /// covers 100% of the screen) would otherwise have this band's darkness
+  /// rect blanket the *entire* screen in opaque black regardless of
+  /// whether this band drew anything there — silently erasing whatever
+  /// every other band composited before or after it. Caught by a real
+  /// pixel-sampling test (not just "renders without crashing"): a
+  /// zIndex-1 sprite outside a zIndex-0-scoped light's range was
+  /// correctly left dark, but so was the zIndex-0 sprite the light was
+  /// actually supposed to reveal, because the zIndex-1 band's own (empty
+  /// there) darkness rect painted over the whole canvas afterward.
+  void _drawLighting(
+    Canvas canvas,
+    Size size,
+    ComponentStore<Position> positions, {
+    bool Function(Light2D)? lightFilter,
+  }) {
     final lights = world.storeOf<Light2D>();
     final fullRect = Offset.zero & size;
 
@@ -448,6 +554,7 @@ class _EnginePainter extends CustomPainter {
     for (var i = 0; i < lights.length; i++) {
       final entity = lights.entityAt(i);
       final light = lights.denseAt(i);
+      if (lightFilter != null && !lightFilter(light)) continue;
       final worldPos = positions.get(entity);
       if (worldPos == null) continue;
       if (light.radius <= 0) continue;
@@ -467,7 +574,10 @@ class _EnginePainter extends CustomPainter {
       infos.add(_LightRenderInfo(light, screenPos, screenRadius, clipPath));
     }
 
-    canvas.saveLayer(fullRect, Paint());
+    canvas.saveLayer(
+      fullRect,
+      lightFilter != null ? (Paint()..blendMode = BlendMode.srcATop) : Paint(),
+    );
     canvas.drawRect(
       fullRect,
       Paint()..color = Color.fromRGBO(0, 0, 0, (1 - ambientBrightness).clamp(0, 1)),
@@ -522,6 +632,24 @@ class _EnginePainter extends CustomPainter {
         canvas.drawCircle(info.screenPos, info.screenRadius, tintPaint);
         canvas.restore();
       }
+    }
+  }
+
+  /// Draws one full-viewport rect per `ScreenTint` entity, normal
+  /// (`SrcOver`) blending — see `ScreenTint`'s doc comment for why this
+  /// runs after the lighting pass (so a tint isn't itself darkened) and
+  /// why multiple entities are allowed to layer. Skips a fully
+  /// transparent tint (`colorArgb`'s alpha `0`, the common case for a
+  /// `ScreenTintStep` mid-fade-in) entirely rather than drawing a
+  /// no-op rect every frame.
+  void _drawScreenTint(Canvas canvas, Size size) {
+    final tints = world.storeOf<ScreenTint>();
+    if (tints.length == 0) return;
+    final fullRect = Offset.zero & size;
+    for (var i = 0; i < tints.length; i++) {
+      final color = Color(tints.denseAt(i).colorArgb);
+      if (color.a == 0) continue;
+      canvas.drawRect(fullRect, Paint()..color = color);
     }
   }
 

@@ -168,5 +168,51 @@ void main() {
       }
       expect(world.tick, 5);
     });
+
+    testWidgets(
+        'anchors to a virtual clock instead of the last processed frame -- a '
+        'refresh rate that is not an exact multiple of the cap (90Hz -> 60fps) '
+        'used to alternate between unequal skip/process patterns even though '
+        'the long-run average hit the target rate; the fix keeps successive dt '
+        'gaps between processed frames consistent', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+      final dts = <double>[];
+      world.addSystem(_RecordingSystem(dts));
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          maxFps: 60,
+        ),
+      ));
+
+      await tester.pump(const Duration(milliseconds: 16)); // baseline only
+      // 90Hz raw callbacks (~11.11ms apart), well past the point where
+      // the ticks-processed count stabilizes.
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(microseconds: 11111));
+      }
+
+      expect(dts.length, greaterThan(3));
+      // Every processed dt should be close to the 16.67ms target -- a
+      // skip-based scheme instead alternates between roughly 11ms and
+      // 22ms gaps, which this asserts against.
+      for (final dt in dts.skip(1)) {
+        expect(dt, closeTo(1 / 60, 0.006));
+      }
+    });
   });
+}
+
+class _RecordingSystem extends System {
+  _RecordingSystem(this.dts);
+  final List<double> dts;
+  @override
+  String get name => 'recording';
+  @override
+  void update(World world, double dt) => dts.add(dt);
 }

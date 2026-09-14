@@ -146,6 +146,26 @@ class Light2D {
   /// time it renders this light, or whenever [shadowRayCount] changes.
   List<double> smoothedShadowDistances = <double>[];
 
+  /// Restricts which `zIndex` layer(s) this light's reveal/tint/shadow
+  /// affects — `null` (default, for both [minZIndex] and [maxZIndex])
+  /// means no restriction at all, the original "one light affects the
+  /// whole screen regardless of any zIndex" behavior. Set one or both to
+  /// scope a light to a specific band, e.g. a ground-level torch
+  /// (`minZIndex: 0, maxZIndex: 0`) that shouldn't dim or reveal a
+  /// foreground overlay or background parallax layer sitting at a
+  /// different `zIndex`, even though it's on screen at the same time.
+  /// `EngineView` implements this by rendering in z-bands (split at
+  /// every light's `minZIndex`/`maxZIndex` boundary) and compositing
+  /// each band's own lighting pass in isolation before the next band is
+  /// drawn on top — a game with no light using these fields never pays
+  /// for the extra bands (they collapse back to the original single
+  /// full-screen pass). Doesn't affect a shadow-casting light's raycast
+  /// geometry itself (still computed against the full `TileMap`
+  /// regardless of z), only which drawn content the resulting reveal is
+  /// allowed to touch.
+  int? minZIndex;
+  int? maxZIndex;
+
   Light2D({
     this.radius = 100,
     this.intensity = 1,
@@ -162,6 +182,8 @@ class Light2D {
     this.shadowRayCount = 48,
     this.shadowSmoothingSeconds = 0,
     this.shadowEdgeSoftness = 8,
+    this.minZIndex,
+    this.maxZIndex,
   })  : baseIntensity = baseIntensity ?? intensity,
         baseRadius = baseRadius ?? radius;
 
@@ -181,6 +203,8 @@ class Light2D {
         'shadowRayCount': shadowRayCount,
         'shadowSmoothingSeconds': shadowSmoothingSeconds,
         'shadowEdgeSoftness': shadowEdgeSoftness,
+        if (minZIndex != null) 'minZIndex': minZIndex,
+        if (maxZIndex != null) 'maxZIndex': maxZIndex,
       };
 
   factory Light2D.fromJson(Map<String, dynamic> json) => Light2D(
@@ -199,5 +223,7 @@ class Light2D {
         shadowRayCount: (json['shadowRayCount'] as num?)?.toInt() ?? 48,
         shadowSmoothingSeconds: (json['shadowSmoothingSeconds'] as num?)?.toDouble() ?? 0,
         shadowEdgeSoftness: (json['shadowEdgeSoftness'] as num?)?.toDouble() ?? 8,
+        minZIndex: (json['minZIndex'] as num?)?.toInt(),
+        maxZIndex: (json['maxZIndex'] as num?)?.toInt(),
       );
 }

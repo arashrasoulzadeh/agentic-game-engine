@@ -1,7 +1,33 @@
+import 'dart:ui' as ui;
+
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import 'package:flutter/material.dart' hide Velocity;
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+Future<ui.Image> _tinyImage(Color color) async {
+  final recorder = ui.PictureRecorder();
+  Canvas(recorder).drawRect(const Rect.fromLTWH(0, 0, 4, 4), Paint()..color = color);
+  return recorder.endRecording().toImage(4, 4);
+}
+
+Future<Color> _pixelAt(WidgetTester tester, Key boundaryKey, Offset point) async {
+  final boundary =
+      tester.renderObject<RenderRepaintBoundary>(find.byKey(boundaryKey));
+  final image = await boundary.toImage();
+  final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+  final x = point.dx.round().clamp(0, image.width - 1);
+  final y = point.dy.round().clamp(0, image.height - 1);
+  final offset = (y * image.width + x) * 4;
+  final data = bytes!;
+  return Color.fromARGB(
+    data.getUint8(offset + 3),
+    data.getUint8(offset),
+    data.getUint8(offset + 1),
+    data.getUint8(offset + 2),
+  );
+}
 
 void main() {
   group('Light2D', () {
@@ -97,6 +123,19 @@ void main() {
       expect(restored.shadowEdgeSoftness, 0);
     });
 
+    test('minZIndex/maxZIndex default to null (no z restriction) and round-trip', () {
+      final unrestricted = Light2D();
+      expect(unrestricted.minZIndex, isNull);
+      expect(unrestricted.maxZIndex, isNull);
+      expect(unrestricted.toJson().containsKey('minZIndex'), isFalse);
+      expect(unrestricted.toJson().containsKey('maxZIndex'), isFalse);
+
+      final scoped = Light2D(minZIndex: -1, maxZIndex: 2);
+      final restored = Light2D.fromJson(scoped.toJson());
+      expect(restored.minZIndex, -1);
+      expect(restored.maxZIndex, 2);
+    });
+
     test('smoothedShadowDistances starts empty and is not included in toJson', () {
       final light = Light2D();
       expect(light.smoothedShadowDistances, isEmpty);
@@ -177,6 +216,74 @@ void main() {
   });
 
   group('EngineView lighting', () {
+    testWidgets(
+        'a light scoped to minZIndex/maxJIndex reveals content in its own '
+        'z-band but leaves a different band fully dark -- proves the '
+        'z-banded compositing in EngineView._paintZBanded actually isolates '
+        'bands from each other, not just that it renders without crashing',
+        (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final registry = AtlasRegistry();
+      registry.register('atlas', SpriteAtlas(await _tinyImage(const Color(0xFFFFFFFF)), {
+        'lit': const Rect.fromLTWH(0, 0, 4, 4),
+        'unlit': const Rect.fromLTWH(0, 0, 4, 4),
+      }));
+
+      final litEntity = world.spawn();
+      world.storeOf<Position>().set(litEntity, Position(0, 0));
+      world.storeOf<Sprite>().set(
+          litEntity, Sprite('atlas', 'lit', zIndex: 0, scaleX: 30, scaleY: 30));
+
+      final unlitEntity = world.spawn();
+      world.storeOf<Position>().set(unlitEntity, Position(120, 0));
+      world.storeOf<Sprite>().set(
+          unlitEntity, Sprite('atlas', 'unlit', zIndex: 1, scaleX: 30, scaleY: 30));
+
+      final lightEntity = world.spawn();
+      world.storeOf<Position>().set(lightEntity, Position(0, 0));
+      world.storeOf<Light2D>().set(
+          lightEntity, Light2D(radius: 100, intensity: 1, minZIndex: 0, maxZIndex: 0));
+
+      final boundaryKey = UniqueKey();
+      await tester.pumpWidget(MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            height: 300,
+            child: RepaintBoundary(
+              key: boundaryKey,
+              child: EngineView(
+                world: world,
+                atlasRegistry: registry,
+                camera: Camera(),
+                ambientBrightness: 0,
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // World (0,0) -> screen (200, 150) at Camera(x:0,y:0,zoom:1) on a
+      // 400x300 viewport; world (120,0) -> screen (320, 150).
+      // toImage() needs the real rasterizer, not the fake test async
+      // zone -- runAsync is required or this hangs.
+      final litPixel = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(200, 150))))!;
+      final unlitPixel = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(320, 150))))!;
+
+      expect(litPixel.r, greaterThan(0.5),
+          reason: 'the zIndex-0 sprite sits inside the zIndex-0-scoped light, so full '
+              'ambientBrightness-0 darkness there should be revealed back to white');
+      expect(unlitPixel.r, lessThan(0.1),
+          reason: "the zIndex-1 sprite is outside the light's z-range, so its own band "
+              'gets ambientBrightness-0 darkness with nothing to reveal it');
+    });
+
     testWidgets('ambientBrightness 1.0 (default) renders identically to no lighting at all',
         (tester) async {
       final world = World(width: 400, height: 300);

@@ -105,6 +105,91 @@ pubspec.yaml.
   arrives sooner than `1 / maxFps` since the last processed one — a
   stable, platform-independent simulation/render rate instead of
   however fast a given display happens to run.
+- **`maxFps` cap read as uneven/"not solid" rather than a clean rate**:
+  the throttle compared each raw callback's timestamp against the
+  *last processed* callback's own (jittery) timestamp — on a display
+  whose refresh interval isn't an exact multiple of `1 / maxFps` (a
+  90Hz or 120Hz phone capped to 60fps, reported live: "why cant be
+  solid 60"), that produces alternating real frame gaps (e.g. ~11ms
+  then ~22ms on 90Hz→60fps) even though the long-run average genuinely
+  hits the target rate — visible as uneven pacing, not a real dropped
+  frame. Fixed by scheduling against a virtual clock (`_nextTickDue`)
+  that advances by exactly `1 / maxFps` every processed frame instead
+  of re-anchoring to wherever the last raw callback happened to land;
+  a stall (app backgrounded) resyncs the virtual clock to now rather
+  than bursting through a backlog. New regression test in
+  `fixed_timestep_test.dart` asserts every processed `dt` stays within
+  6ms of the 60fps target under simulated 90Hz raw callbacks — a
+  skip-based scheme fails this by alternating ~11ms/~22ms gaps.
+- **A light always affected the whole screen regardless of any
+  entity's `zIndex`** (reported live: "if light emitted from character
+  z-index and not in z-index of that object why it should affect it"):
+  the ambient-darkness pass was one full-screen darken-then-reveal
+  layer drawn after every sprite, with no concept of z at all. New
+  opt-in `Light2D.minZIndex`/`maxZIndex` (both `null` by default — no
+  restriction, identical to the original behavior at no extra cost)
+  scope a light to a z-band; `EngineView` implements this by splitting
+  the z-sorted draw list into bands at every light's z boundary and
+  compositing each band's own darkness/reveal pass in isolation before
+  the next band draws on top, so a torch scoped to the ground layer
+  can no longer bleed light onto a foreground overlay or background
+  parallax layer sitting at a different `zIndex`. Real bug caught only
+  by a genuine pixel-sampling test (not the usual "renders without
+  crashing" pattern): each band's darkness rect was unconditionally
+  full-screen, so a *later*, unlit band's rect painted solid black
+  over the *entire* accumulated canvas, silently erasing every earlier
+  band's already-revealed content. Fixed by compositing a banded
+  darkness pass with `BlendMode.srcATop` instead of the default
+  `srcOver`, so it only darkens pixels that band already drew into,
+  leaving the rest of its layer transparent (a no-op against whatever
+  other bands composited before or after it).
+
+### Cinematic camera & screen effects
+
+- `CameraPanStep`/`CameraZoomStep`/`CameraShakeStep`/
+  `CameraFollowStep` (`engine_flutter`): `CinematicStep` implementations
+  driving a `Camera` directly — pan/zoom capture their *from* value at
+  `start()` so steps chain without hand-tracking the previous step's
+  endpoint; `CameraShakeStep` just fires `Camera.shake()` once and
+  holds the sequence for its duration (`Camera.update` already runs
+  every frame regardless); `CameraFollowStep` continuously re-centers
+  on a moving target for one cinematic beat (a fleeing enemy), distinct
+  from `Scene.cameraFollowEntity`'s whole-scene, hard-snap-every-tick
+  following. Live purely in `engine_flutter`, not alongside
+  `CinematicStep` in `engine_core` — `Camera` is a rendering-only
+  concept with no ECS/`World` presence, and a step needs a direct
+  reference to the actual `Camera` instance `EngineView` renders with.
+- New `ScreenTint` component + `ScreenTintStep`: a full-screen color
+  overlay (alpha channel is strength, same convention as
+  `Light2D.colorArgb`) for fades and impact flashes. Real bug caught
+  by live testing, not unit tests: two independent `ScreenTintStep`s
+  chained as a flash (up then down) each spawned their *own*
+  `ScreenTint` entity by default, so the "up" step's entity was left
+  stuck at its peak alpha forever once its own step completed — a
+  persistent, wrong-looking tint for the rest of the cutscene, since
+  nothing ever animated *that* entity back down. Fixed with a mutable,
+  shareable `entity` constructor parameter so two steps can be pointed
+  at one entity spawned up front; regression tests cover both the bug
+  (unshared — stuck alpha) and the fix (shared — resets correctly).
+- A `Scene` using any of these must leave `cameraFollowEntity` at its
+  default `null` — `EngineView` hard-snaps the camera to a followed
+  entity's `Position` *every* tick when set, which would immediately
+  undo whatever a cinematic step just did that same tick.
+- Second real bug caught only by live testing: a `Scene` referencing
+  its own `Camera` field inside `populate()` (to build cinematic
+  steps referencing it) threw `LateError: Field has not been
+  initialized` — `Scene`'s documented lifecycle runs `populate()`
+  *before* `createCamera()`, so a `late Camera` field assigned inside
+  `createCamera()` doesn't exist yet when `populate()` needs it.
+  Surfaced only as an uncaught console promise rejection and an
+  infinite loading spinner, no visible error overlay. The general
+  fix for any `Scene` in this position: initialize the field at
+  declaration instead of inside `createCamera()`, which just returns it.
+- `test_game`'s new `CinematicDemoScene` (gitignored, not part of this
+  package) exercises the whole set: fade in, pan across a set, punch
+  in with a shake + red flash, pull back out, follow a fleeing enemy,
+  fade to black — reachable from the main menu's new "CINEMATIC DEMO"
+  button.
 
 ### v1.0 release readiness
 

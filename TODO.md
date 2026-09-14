@@ -50,6 +50,49 @@ for what shipped and git history for the full why behind each change.
 
 ## Features (engine_flutter)
 
+- [x] Full cinematic camera + screen-effect support — explicit request
+      ("full cinematic support, panning, following, zooming, shaking,
+      changing colors, adding effects"). `CinematicSystem`/
+      `CinematicStep` already existed (`engine_core`) as a pure
+      sequencing engine with no opinion on what a step actually does;
+      only the step *implementations* were missing. New
+      `CameraPanStep`/`CameraZoomStep`/`CameraShakeStep`/
+      `CameraFollowStep` + `ScreenTint` component + `ScreenTintStep`,
+      all in `engine_flutter` (not `engine_core`, alongside
+      `CinematicStep`) since `Camera` is a rendering-only concept with
+      no ECS/`World` presence — a step needs the actual `Camera`
+      instance `EngineView` renders with, not something look-up-able
+      from `World`. Pan/zoom capture their *from* value at `start()` so
+      steps chain without hand-tracking the previous step's endpoint;
+      `CameraFollowStep` continuously re-centers on a moving target for
+      one beat, distinct from `Scene.cameraFollowEntity`'s whole-scene
+      hard-snap following (a `Scene` using any of these steps must
+      leave `cameraFollowEntity` unset, or `EngineView`'s per-tick hard
+      snap undoes the step's own work that same tick).
+      Two real bugs found only by live browser testing, neither caught
+      by the otherwise-comprehensive unit suite (now both covered by
+      regression tests): (1) a `Scene` referencing its own `late
+      Camera` field inside `populate()` threw `LateError` — `Scene`'s
+      documented lifecycle runs `populate()` before `createCamera()`,
+      so a field assigned inside the latter doesn't exist yet when the
+      former needs it (surfaced only as an uncaught console promise
+      rejection + an infinite loading spinner, no visible error
+      overlay) — general fix: initialize such a field at declaration
+      instead. (2) chaining two independent `ScreenTintStep`s as a
+      flash (up then down) left the "up" step's entity stuck at its
+      peak alpha forever, since each spawned its own `ScreenTint`
+      entity by default and nothing ever animated the first one back
+      down — fixed with a mutable, shareable `entity` constructor
+      parameter. Verified: 15 new tests in
+      `cinematic_camera_steps_test.dart` (pan/zoom/shake/follow
+      behavior and skip; `ScreenTint` round-trip; both the
+      unshared-entity bug and the shared-entity fix as explicit
+      regression tests) and 3 new widget tests in
+      `screen_tint_rendering_test.dart`. `test_game`'s new (gitignored)
+      `CinematicDemoScene` exercises the whole set end-to-end —
+      reachable via a new "CINEMATIC DEMO" button on the main menu —
+      and was used to find both bugs above live before they were fixed.
+
 - [ ] Real masking/clipping: z-index only reorders draw *calls*; it has
       no clip-path or blend-mode primitive, so it can't express "this
       shape cuts a hole in what's behind it" or "this layer only shows
@@ -417,6 +460,49 @@ implementing.
       coverage for `maxFps`'s round-trip and its omitted-when-null
       `toJson` shape. Full `engine_flutter` suite (211 tests) green,
       `--fatal-infos` analyze clean.
+- [x] `maxFps`'s cap read as jittery, not a clean rate — reported live
+      ("fps is not solid 60 why?"). Root cause: the throttle compared
+      each raw callback against the *last processed* callback's own
+      timestamp; on a 90Hz/120Hz display capped to 60fps (not an exact
+      multiple), successive real frame gaps alternate (~11ms then
+      ~22ms) even though the long-run average is genuinely 60fps.
+      Fixed by scheduling against a virtual clock that advances by a
+      fixed `1 / maxFps` every processed frame instead of re-anchoring
+      to a jittery raw timestamp; a stall resyncs to now rather than
+      bursting through backlog. `test_game`'s `maxFps` also raised to
+      `120` per the same feedback. Verified: new regression test in
+      `fixed_timestep_test.dart` simulating 90Hz raw callbacks and
+      asserting every processed `dt` stays within 6ms of the 60fps
+      target — a skip-based scheme fails this by alternating gaps.
+- [x] Z-aware lighting — reported live ("if light emitted from
+      character z-index and not in z-index of that object why it
+      should affect it? add z-order to light emissions and shadow").
+      Scoped via `AskUserQuestion` to a per-light z-range (not full
+      per-object relighting, which the user didn't choose — that
+      option would cost real performance they've said matters as much
+      as light quality). New opt-in `Light2D.minZIndex`/`maxZIndex`
+      (both `null` default — no restriction, identical to the original
+      full-screen-affects-everything behavior at no extra render cost).
+      `EngineView` implements this by splitting the z-sorted draw list
+      into bands at every light's z boundary and compositing each
+      band's darkness/reveal pass in isolation (`saveLayer`/`restore`
+      per band) before the next band draws on top. Real bug caught
+      only by a genuine pixel-sampling test, not the usual "renders
+      without crashing" pattern this area otherwise relies on: each
+      band's darkness rect was unconditionally full-screen, so a
+      *later*, unlit band silently painted solid black over the
+      *entire* already-composited canvas, erasing every earlier band's
+      revealed content — fixed by compositing a banded darkness pass
+      with `BlendMode.srcATop` (only darkens pixels that band already
+      drew) instead of the default `srcOver`. Verified: new
+      `Light2D.minZIndex`/`maxZIndex` round-trip test; a real
+      pixel-sampling `EngineView` widget test (captures the rendered
+      frame via `RenderRepaintBoundary.toImage`, samples actual pixel
+      colors) proving a zIndex-0-scoped light reveals a zIndex-0 sprite
+      while a zIndex-1 sprite outside its range stays dark — this is
+      what caught the `srcATop` bug above; a plain "doesn't crash" test
+      would have missed it entirely. Full `engine_flutter` suite (232
+      tests) green, `--fatal-infos` analyze clean.
 - [ ] A light reveals open air, not just surfaces — reported live
       ("shouldn't light empty air"). This is inherent to the current
       model, not a quick parameter fix: `_drawLighting` reveals every

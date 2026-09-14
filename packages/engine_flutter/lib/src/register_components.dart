@@ -6,6 +6,7 @@ import 'rendering/hud_bar.dart';
 import 'rendering/light2d.dart';
 import 'rendering/nine_slice_sprite.dart';
 import 'rendering/parallax_layer.dart';
+import 'rendering/screen_tint.dart';
 import 'rendering/sprite.dart';
 import 'rendering/text.dart';
 import 'input/input.dart';
@@ -58,5 +59,10 @@ void registerFlutterComponents(World world) {
     'light2d',
     (l) => l.toJson(),
     Light2D.fromJson,
+  );
+  world.components.register<ScreenTint>(
+    'screenTint',
+    (s) => s.toJson(),
+    ScreenTint.fromJson,
   );
 }
