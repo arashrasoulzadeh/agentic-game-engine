@@ -39,6 +39,25 @@ for what shipped and git history for the full why behind each change.
       a concrete use case (fog-of-war reveal, a vignette, a wipe
       transition).
 
+- [ ] Textured `TileMap` rendering: `EngineView` draws every tile as a
+      flat solid-colored rect (see `_collectTileMapItems`'s doc
+      comment) — there's no atlas/sprite lookup for tiles at all, by
+      original design ("a game wanting textured tiles draws them as
+      regular `Sprite` entities instead"). Reported live as "tilemap
+      textures are all white" — not a rendering bug (there's no white
+      anywhere in the color table; what's being seen is the flat gray/
+      blue/orange/tan collision-kind colors, just very washed out
+      under the lighting darkness overlay), but a real usability gap:
+      `test_game` already loads a `tileset`/`Tile.png` atlas via
+      `AtlasRegistry` that nothing ever references, because there's no
+      supported way to say "draw this tile id using this atlas
+      region." Fix shape: a `TileMap.atlasId` + per-tile-id region
+      mapping (e.g. `Map<int, String> regionByTileId`), read by
+      `_collectTileMapItems` to `canvas.drawImageRect` the matching
+      atlas region instead of (or blended with) the flat debug color —
+      needs a design pass on how per-tile region lookup should work
+      without forcing every level to define one for every tile id.
+
 ## New engine features (round 2) — Core (`engine_core`)
 
 - [ ] Multi-layer / animated tiles: `TileMap` is single-layer with no

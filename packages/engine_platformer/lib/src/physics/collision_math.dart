@@ -35,7 +35,26 @@ CollisionSide resolveSolidCircleAabb({
   final dx = pos.x - closestX;
   final dy = pos.y - closestY;
   final distSq = dx * dx + dy * dy;
-  if (distSq >= radius * radius) return CollisionSide.none;
+  // Strictly `>`, not `>=`: an entity resting exactly on a surface
+  // (pos.y snapped to top - radius by a previous tick's resolution,
+  // unchanged since — GravitySystem skips a grounded entity, so
+  // nothing perturbs it) lands exactly on distSq == radius * radius,
+  // "touching" rather than "penetrating." Treating that as `none`
+  // (the previous `>=`) made grounded flicker false every other tick
+  // for anything at rest: GravitySystem saw the false tick and started
+  // re-accelerating vel.y, which nudged pos.y back into overlap the
+  // very next tick, re-triggering this resolution and snapping grounded
+  // back true — an every-other-frame oscillation invisible in position
+  // (each dip was undone within a tick) but very visible in
+  // `PlatformerController.grounded` itself: `JumpSystem` with the
+  // default `coyoteTimeSeconds: 0` only fires a jump on an exact
+  // grounded tick, so roughly half of all jump presses while standing
+  // still were silently dropped, and anything switching a "falling"
+  // animation clip on `!grounded` flickered between idle/fall every
+  // other frame. Found via a live debug readout in test_game showing
+  // `grounded: false` with `vy: 0.0` and an unmoving `y`, i.e.
+  // genuinely at rest, not actually falling.
+  if (distSq > radius * radius) return CollisionSide.none;
 
   final overlapLeft = (pos.x + radius) - left;
   final overlapRight = right - (pos.x - radius);

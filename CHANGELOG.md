@@ -8,6 +8,37 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Bug fixes
+
+- **`grounded` flickered false every other tick while resting on solid
+  ground**: `resolveSolidCircleAabb`'s overlap test used `distSq >=
+  radius * radius` to mean "no overlap," but an entity resolved to
+  rest exactly on a surface (`pos.y = top - radius`, set by the very
+  same function) sits precisely on that boundary — `>=` treated
+  "touching" as "not touching," so `grounded` (reset every tick by
+  `PlatformerSystem`, only re-set additively by a fresh detection)
+  read false every other tick once settled: `GravitySystem` saw the
+  false tick and nudged `vel.y` up, `MovementSystem` moved the entity
+  a fraction of a pixel into the surface, and the next tick's
+  detection caught it and snapped back — invisible in position, but
+  very visible in `grounded` itself. With `JumpSystem`'s default
+  `coyoteTimeSeconds: 0`, a jump only fires on an exact grounded tick,
+  so roughly half of all jump presses while standing still were
+  silently dropped; anything driving a falling/idle animation off
+  `!grounded` flickered every other frame. Fixed by making the check
+  strictly `>` — found live via a temporary debug readout in
+  `test_game` showing `grounded: false` with `vy: 0.0` and an
+  unchanging `y`, i.e. genuinely at rest, not actually falling.
+- **A non-solid `TileMap` tile (e.g. `ladderTileIds`) rendered
+  identically to a solid one**: `_collectTileMapItems`'s color lookup
+  only special-cased `oneWayTileIds`/slope ids, so anything else —
+  including a ladder, which the physics correctly treats as fully
+  walk-through — fell through to the same opaque solid-tile gray as an
+  actual wall. Visually indistinguishable from a real wall standing
+  right next to the player. Ladder tiles now get their own translucent
+  tan, matching the "translucent = passable" convention `oneWayTileIds`
+  already established.
+
 ### v1.0 release readiness
 
 - **`LICENSE`**: MIT, at the repo root and in each of the four

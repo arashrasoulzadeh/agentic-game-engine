@@ -922,7 +922,13 @@ class _EnginePainter extends CustomPainter {
   /// (no atlas lookup, since tiles are level geometry, not sprites; a
   /// game wanting textured tiles draws them as regular `Sprite`
   /// entities instead, or a foreground `TileMap` with a higher `zIndex`
-  /// for a mask/overhang layer).
+  /// for a mask/overhang layer). One placeholder color per collision
+  /// kind — solid (opaque dark gray, the default/fallback), one-way
+  /// (translucent blue) and slope (orange) already had one;
+  /// `ladderTileIds` gets its own translucent tan rather than falling
+  /// through to the opaque solid-tile color, so a non-solid, walk-
+  /// through ladder doesn't visually read as a wall the player can't
+  /// actually pass through.
   int _collectTileMapItems(
     List<_DrawItem> items,
     int order,
@@ -971,7 +977,9 @@ class _EnginePainter extends CustomPainter {
                 ? const Color(0x8899CCFF)
                 : (map.slopeUpRightTileIds.contains(tileId) || map.slopeUpLeftTileIds.contains(tileId))
                     ? const Color(0xFFC08040)
-                    : const Color(0xFF4A4A4A);
+                    : map.ladderTileIds.contains(tileId)
+                        ? const Color(0x88C09050)
+                        : const Color(0xFF4A4A4A);
 
             canvas.drawRect(
               Rect.fromLTWH(

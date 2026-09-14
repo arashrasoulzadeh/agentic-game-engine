@@ -75,6 +75,32 @@ void main() {
     expect(world.storeOf<Velocity>().get(player)!.y, 0);
   });
 
+  test(
+      'grounded stays true on every tick while resting on solid ground, not just the '
+      'landing tick (regression: used to flicker false every other tick once settled '
+      'exactly at the boundary — see resolveSolidCircleAabb)', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.storeOf<Position>().set(mapEntity, Position(0, 0));
+    world.storeOf<TileMap>().set(mapEntity, _testMap());
+
+    final player = world.spawn();
+    world.storeOf<Position>().set(player, Position(8, 11));
+    world.storeOf<Velocity>().set(player, Velocity(0, 50));
+    world.storeOf<Collider>().set(player, Collider(5));
+    world.storeOf<Gravity>().set(player, Gravity());
+    world.storeOf<PlatformerController>().set(player, PlatformerController());
+
+    // Let it land, then step many more ticks at rest -- every one of
+    // them must see grounded true, not an every-other-tick flicker.
+    for (var i = 0; i < 20; i++) {
+      world.step(0.016);
+      expect(world.storeOf<PlatformerController>().get(player)!.grounded, isTrue,
+          reason: 'tick $i');
+      expect(world.storeOf<Velocity>().get(player)!.y, 0, reason: 'tick $i');
+    }
+  });
+
   test('one-way tile catches a falling entity from above', () {
     final world = _buildWorld();
     final mapEntity = world.spawn();

@@ -98,5 +98,32 @@ void main() {
       expect(pos.x, 0);
       expect(pos.y, 0);
     });
+
+    test(
+        'an entity resting exactly at the top boundary (distSq == radius*radius) '
+        'keeps resolving as top, every call, not just the one that landed it '
+        '(regression: grounded used to flicker false every other tick at rest)',
+        () {
+      // Exactly the position resolveSolidCircleAabb itself snaps an
+      // entity to the instant it lands: pos.y == top - radius, i.e.
+      // sitting precisely on the boundary rather than overlapping it.
+      final pos = Position(50, 100 - 5);
+      final vel = Velocity(0, 0);
+
+      for (var i = 0; i < 5; i++) {
+        final side = resolveSolidCircleAabb(
+          pos: pos,
+          vel: vel,
+          radius: 5,
+          left: 0,
+          right: 100,
+          top: 100,
+          bottom: 200,
+        );
+        expect(side, CollisionSide.top, reason: 'call #$i');
+        expect(pos.y, 95);
+        expect(vel.y, 0);
+      }
+    });
   });
 }

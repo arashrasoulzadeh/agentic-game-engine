@@ -43,6 +43,39 @@ void main() {
   });
 
   testWidgets(
+    'a ladder tile renders without error, distinct from solid/one-way/slope tiles',
+    (tester) async {
+      final world = World(width: 400, height: 400);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(
+              cols: 4,
+              rows: 1,
+              tileWidth: 20,
+              tileHeight: 20,
+              tiles: [1, 2, 3, 4],
+              solidTileIds: {1},
+              oneWayTileIds: {2},
+              ladderTileIds: {3},
+              slopeUpRightTileIds: {4},
+            ),
+          );
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(world: world, atlasRegistry: AtlasRegistry(), camera: Camera()),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(find.byType(EngineView), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'a TileMap far bigger than the viewport still renders promptly (tile culling)',
     (tester) async {
       // 2000x2000 = 4,000,000 tiles -- without culling to the visible
