@@ -226,6 +226,51 @@ touching the render path.
       does turn fixed-timestep on. Fix shape: thread `_interpolated`
       through `_drawLighting`'s `worldPos` lookup the same way the
       sprite/particle passes already do.
+- [ ] One-way platforms never block light/shadows: `_raycastLightDistance`
+      calls `raycastTileMap` without `blockOneWay: true`, so a
+      `castsShadows` light treats every `oneWayTileIds` tile as fully
+      transparent — matches `raycastTileMap`'s own default (see its
+      doc comment: a one-way platform is "meant to be seen/shot
+      through from below," so AI line-of-sight defaults the same way),
+      but a one-way platform still *renders* as an opaque-looking
+      surface. A torch placed under one (as `test_game`'s flashlight-
+      adjacent geometry could easily have) would visibly shine straight
+      through something that looks solid on screen — a real mismatch
+      between what's drawn and what the light respects, not merely a
+      raycast-semantics footnote once lighting is layered on top. Fix
+      shape: a new opt-in `Light2D` field (e.g. `blockOneWayPlatforms`,
+      `false` default to match today's unchanged behavior) threaded
+      into `_raycastLightDistance`'s `raycastTileMap` call.
+- [ ] Only `TileMap` geometry casts shadows — a `castsShadows` light's
+      visibility polygon is built purely from `raycastTileMap`, which
+      only ever tests tile grid cells. Nothing with a `Collider` (a
+      crate, a pillar, a closed door, any prop or dynamic obstacle
+      that isn't baked into the tile grid) blocks light at all — stand
+      a solid-looking prop directly between a torch and a wall and the
+      torch's light (and any shadow polygon) passes straight through
+      it as if it weren't there. Real gap for any level that places
+      solid *entities* rather than only tile geometry between a light
+      and what it's lighting. Fix shape: a per-ray nearest-hit check
+      against `Collider`s tagged as light-blocking (a new opt-in flag,
+      not every `Collider` — most colliders, like a coin or an enemy's
+      hurtbox, shouldn't cast a shadow), merged with the existing
+      tile-hit distance the same way multiple `TileMap`s already are
+      in `_raycastLightDistance`.
+- [ ] Overlapping lights don't add brightness: the reveal pass punches
+      holes in the darkness mask via `BlendMode.dstOut`, which only
+      ever *erases* alpha — a second light's circle overlapping a
+      first's can't push the shared region any brighter than whichever
+      single light's `intensity` erases the most, since alpha has
+      nowhere to go below `0`. Real light is additive: two torches
+      standing close together should visibly brighten the ground
+      between them beyond what either manages alone, and right now
+      that area looks identical to just the stronger of the two. Not
+      simply a matter of switching blend modes — reveal (dstOut,
+      operating on the darkness mask's alpha) and tint (`BlendMode.plus`,
+      operating on real scene color) are different passes for a
+      reason (see `_drawLighting`'s doc comment on ordering), so this
+      needs its own design pass, not a one-line blend-mode swap —
+      logged here rather than attempted inline.
 
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
