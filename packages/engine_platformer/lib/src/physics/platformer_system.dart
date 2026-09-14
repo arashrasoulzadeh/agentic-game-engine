@@ -27,11 +27,11 @@ import 'platformer_controller.dart';
 /// resolves "landed on top," so it can't push a rider that isn't
 /// actually standing on the platform.
 ///
-/// Resets `controller.grounded`/`touchingWallLeft`/`touchingWallRight`
-/// to `false` at the start of each entity's processing — the single
-/// reset point. `TileCollisionSystem` (if present) runs after this and
-/// only ever sets them additively; it never resets them, so
-/// registration order between the two doesn't matter for correctness
+/// Resets `controller.grounded`/`touchingWallLeft`/`touchingWallRight`/
+/// `onLadder`/`groundFriction` at the start of each entity's processing
+/// — the single reset point. `TileCollisionSystem` (if present) runs
+/// after this and only ever sets them additively; it never resets them,
+/// so registration order between the two doesn't matter for correctness
 /// as long as both run before `JumpSystem`.
 class PlatformerSystem implements System {
   @override
@@ -56,6 +56,8 @@ class PlatformerSystem implements System {
       controller.grounded = false;
       controller.touchingWallLeft = false;
       controller.touchingWallRight = false;
+      controller.onLadder = false;
+      controller.groundFriction = 1.0;
 
       for (var j = 0; j < platformBodies.length; j++) {
         final platformEntity = platformBodies.entityAt(j);

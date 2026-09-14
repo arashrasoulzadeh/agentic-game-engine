@@ -156,4 +156,132 @@ void main() {
 
     expect(world.storeOf<Velocity>().get(player)!.y, -250);
   });
+
+  test('TileCollisionSystem sets onLadder on plain overlap with a ladder tile', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.storeOf<Position>().set(mapEntity, Position(0, 0));
+    world.storeOf<TileMap>().set(
+          mapEntity,
+          TileMap(
+            cols: 1,
+            rows: 1,
+            tileWidth: 16,
+            tileHeight: 16,
+            tiles: [9],
+            ladderTileIds: {9},
+          ),
+        );
+
+    final player = world.spawn();
+    world.storeOf<Position>().set(player, Position(8, 8));
+    world.storeOf<Velocity>().set(player, Velocity(0, 0));
+    world.storeOf<Collider>().set(player, Collider(5));
+    world.storeOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.016);
+
+    expect(world.storeOf<PlatformerController>().get(player)!.onLadder, isTrue);
+  });
+
+  test('onLadder resets to false once the entity leaves the ladder tile', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.storeOf<Position>().set(mapEntity, Position(0, 0));
+    world.storeOf<TileMap>().set(
+          mapEntity,
+          TileMap(
+            cols: 1,
+            rows: 1,
+            tileWidth: 16,
+            tileHeight: 16,
+            tiles: [9],
+            ladderTileIds: {9},
+          ),
+        );
+
+    final player = world.spawn();
+    world.storeOf<Position>().set(player, Position(8, 200));
+    world.storeOf<Velocity>().set(player, Velocity(0, 0));
+    world.storeOf<Collider>().set(player, Collider(5));
+    world.storeOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.016);
+
+    expect(world.storeOf<PlatformerController>().get(player)!.onLadder, isFalse);
+  });
+
+  test('a conveyor tile nudges Position.x for an entity grounded on it', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.storeOf<Position>().set(mapEntity, Position(0, 0));
+    world.storeOf<TileMap>().set(
+          mapEntity,
+          TileMap(
+            cols: 1,
+            rows: 1,
+            tileWidth: 16,
+            tileHeight: 16,
+            tiles: [1],
+            solidTileIds: {1},
+            conveyorSpeedByTileId: {1: 100},
+          ),
+        );
+
+    final player = world.spawn();
+    world.storeOf<Position>().set(player, Position(8, -4));
+    world.storeOf<Velocity>().set(player, Velocity(0, 50));
+    world.storeOf<Collider>().set(player, Collider(5));
+    world.storeOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.1);
+
+    expect(world.storeOf<PlatformerController>().get(player)!.grounded, isTrue);
+    expect(world.storeOf<Position>().get(player)!.x, greaterThan(8));
+  });
+
+  test('a friction tile sets PlatformerController.groundFriction while grounded on it', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.storeOf<Position>().set(mapEntity, Position(0, 0));
+    world.storeOf<TileMap>().set(
+          mapEntity,
+          TileMap(
+            cols: 1,
+            rows: 1,
+            tileWidth: 16,
+            tileHeight: 16,
+            tiles: [1],
+            solidTileIds: {1},
+            frictionByTileId: {1: 0.1},
+          ),
+        );
+
+    final player = world.spawn();
+    world.storeOf<Position>().set(player, Position(8, -4));
+    world.storeOf<Velocity>().set(player, Velocity(0, 50));
+    world.storeOf<Collider>().set(player, Collider(5));
+    world.storeOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.1);
+
+    expect(world.storeOf<PlatformerController>().get(player)!.groundFriction, 0.1);
+  });
+
+  test('groundFriction defaults back to 1.0 (instant snap) on an untagged tile', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.storeOf<Position>().set(mapEntity, Position(0, 0));
+    world.storeOf<TileMap>().set(mapEntity, _testMap());
+
+    final player = world.spawn();
+    world.storeOf<Position>().set(player, Position(8, 11));
+    world.storeOf<Velocity>().set(player, Velocity(0, 50));
+    world.storeOf<Collider>().set(player, Collider(5));
+    world.storeOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.1);
+
+    expect(world.storeOf<PlatformerController>().get(player)!.groundFriction, 1.0);
+  });
 }

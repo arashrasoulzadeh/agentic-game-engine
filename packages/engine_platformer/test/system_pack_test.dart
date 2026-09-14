@@ -24,6 +24,7 @@ void main() {
       'platformer',
       'tileCollision',
       'jump',
+      'ladder',
       'dash',
       'collision',
       'health',

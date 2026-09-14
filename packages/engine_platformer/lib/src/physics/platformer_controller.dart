@@ -114,6 +114,27 @@ class PlatformerController {
   /// which way to dash when there's no horizontal input held down.
   double facingSign;
 
+  /// Vertical climb speed on a ladder tile (see `TileMap.ladderTileIds`).
+  /// `0` (default) disables ladder climbing entirely — `LadderSystem`
+  /// is a no-op for a controller that doesn't set this, same
+  /// "off by default" convention as `wallJumpPushSpeed`.
+  double climbSpeed;
+
+  /// Whether this entity is overlapping a ladder tile this tick — set
+  /// additively by `TileCollisionSystem`, reset (like `grounded`) by
+  /// `PlatformerSystem` at the start of each entity's processing. Read
+  /// by `LadderSystem` to know whether climbing input should apply.
+  bool onLadder;
+
+  /// Multiplier on how fast grounded horizontal velocity snaps to the
+  /// input target, from the tile currently stood on (see
+  /// `TileMap.frictionByTileId`). Reset to `1.0` (instant snap, the
+  /// original behavior) each tick by `PlatformerSystem`, then set by
+  /// `TileCollisionSystem` from whatever tile is landed on — so a
+  /// controller that never touches a tagged tile behaves exactly as
+  /// before.
+  double groundFriction;
+
   PlatformerController({
     this.grounded = false,
     this.jumpSpeed = 300,
@@ -137,6 +158,9 @@ class PlatformerController {
     this.jumpHeldLastTick = false,
     this.hitstunSeconds = 0,
     this.facingSign = 1,
+    this.climbSpeed = 0,
+    this.onLadder = false,
+    this.groundFriction = 1.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -162,6 +186,9 @@ class PlatformerController {
         'jumpHeldLastTick': jumpHeldLastTick,
         'hitstunSeconds': hitstunSeconds,
         'facingSign': facingSign,
+        'climbSpeed': climbSpeed,
+        'onLadder': onLadder,
+        'groundFriction': groundFriction,
       };
 
   factory PlatformerController.fromJson(Map<String, dynamic> json) =>
@@ -188,5 +215,8 @@ class PlatformerController {
         jumpHeldLastTick: json['jumpHeldLastTick'] as bool? ?? false,
         hitstunSeconds: (json['hitstunSeconds'] as num?)?.toDouble() ?? 0,
         facingSign: (json['facingSign'] as num?)?.toDouble() ?? 1,
+        climbSpeed: (json['climbSpeed'] as num?)?.toDouble() ?? 0,
+        onLadder: json['onLadder'] as bool? ?? false,
+        groundFriction: (json['groundFriction'] as num?)?.toDouble() ?? 1.0,
       );
 }

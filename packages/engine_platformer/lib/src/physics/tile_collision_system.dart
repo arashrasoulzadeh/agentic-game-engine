@@ -12,9 +12,19 @@ import 'platformer_controller.dart';
 /// the actual broad-phase for tile collision.
 ///
 /// Never resets `controller.grounded`/`touchingWallLeft`/
-/// `touchingWallRight` — `PlatformerSystem` owns that reset. This
-/// system only ever sets them additively, so running both in either
-/// order before `JumpSystem` is safe.
+/// `touchingWallRight`/`onLadder`/`groundFriction` — `PlatformerSystem`
+/// owns that reset. This system only ever sets them additively, so
+/// running both in either order before `JumpSystem` is safe.
+///
+/// Also applies the tile the entity actually landed on this tick (i.e.
+/// grounded via a one-way/solid-top/slope surface) against
+/// `TileMap.conveyorSpeedByTileId` (nudges `Position.x` directly, like
+/// a moving `PlatformBody`'s horizontal carry) and
+/// `TileMap.frictionByTileId` (sets `controller.groundFriction`, read
+/// by `PlatformerInputSystem`). And separately, independent of landing,
+/// checks `TileMap.ladderTileIds` for plain overlap (a ladder isn't
+/// something you land "on top of") to set `controller.onLadder`, read
+/// by `LadderSystem`.
 class TileCollisionSystem implements System {
   @override
   String get name => 'tileCollision';
@@ -53,11 +63,16 @@ class TileCollisionSystem implements System {
             final tileId = map.tileAt(col, row);
             if (tileId == 0) continue;
 
+            if (map.ladderTileIds.contains(tileId)) {
+              controller.onLadder = true;
+            }
+
             final left = origin.x + col * map.tileWidth;
             final top = origin.y + row * map.tileHeight;
             final right = left + map.tileWidth;
             final bottom = top + map.tileHeight;
 
+            var landedOnThisTile = false;
             if (map.oneWayTileIds.contains(tileId)) {
               if (resolveOneWayCircleAabb(
                 pos: pos,
@@ -69,6 +84,7 @@ class TileCollisionSystem implements System {
                 top: top,
               )) {
                 controller.grounded = true;
+                landedOnThisTile = true;
               }
             } else if (map.solidTileIds.contains(tileId)) {
               final side = resolveSolidCircleAabb(
@@ -81,6 +97,7 @@ class TileCollisionSystem implements System {
                 bottom: bottom,
               );
               applyCollisionSideToController(side: side, controller: controller, vel: vel);
+              landedOnThisTile = side == CollisionSide.top;
             } else if (map.slopeUpRightTileIds.contains(tileId) ||
                 map.slopeUpLeftTileIds.contains(tileId)) {
               if (resolveSlopeCircleAabb(
@@ -94,7 +111,15 @@ class TileCollisionSystem implements System {
                 ascendingRight: map.slopeUpRightTileIds.contains(tileId),
               )) {
                 controller.grounded = true;
+                landedOnThisTile = true;
               }
+            }
+
+            if (landedOnThisTile) {
+              final conveyorSpeed = map.conveyorSpeedByTileId[tileId];
+              if (conveyorSpeed != null) pos.x += conveyorSpeed * dt;
+              final friction = map.frictionByTileId[tileId];
+              if (friction != null) controller.groundFriction = friction;
             }
           }
         }

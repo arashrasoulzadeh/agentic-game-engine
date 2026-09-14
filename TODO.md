@@ -138,8 +138,45 @@ still rendering correctly on top. Full `engine_flutter` suite green
 
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
-- [ ] Ladders/climbing, conveyors, per-tile friction: collision is
-      binary solid/one-way/slope today — no variable surface behavior.
+- [x] Ladders/climbing, conveyors, per-tile friction: `TileMap` gained
+      `ladderTileIds` (plain overlap marker, `engine_core`, same
+      genre-general-data reasoning as every other `*TileIds` set),
+      `conveyorSpeedByTileId` (px/s nudge to `Position.x` while resolved
+      grounded on that tile id), and `frictionByTileId` (multiplier on
+      how fast grounded velocity snaps to the input target — missing
+      entry, the default, means `1.0`/instant-snap, unchanged). New
+      `engine_platformer` `LadderSystem` (opt-in via
+      `PlatformerController.climbSpeed`, `0` default disables it, same
+      convention as `wallJumpPushSpeed`) reads `onLadder` (set by
+      `TileCollisionSystem`, reset by `PlatformerSystem` alongside
+      `grounded`) and up/down input to override `Velocity.y`, run last
+      in `installPlatformerSystems` so it has final say over gravity/
+      jump that tick. `PlatformerInputSystem` blends toward the input
+      target instead of snapping when `groundFriction < 1.0` (icy
+      tiles slide); `TileCollisionSystem` applies conveyor/friction only
+      on the tile actually landed on this tick, alongside the existing
+      solid/one-way/slope branches. All additive/opt-in — a level with
+      no tagged tiles behaves exactly as before (proven by the full
+      pre-existing suite passing unchanged). Verified: new tests in
+      `engine_core`'s `tile_map_test.dart` (round-trip + defaults) and
+      `engine_platformer`'s `tile_collision_test.dart` (ladder overlap
+      set/reset, conveyor nudges `Position.x` while grounded, friction
+      sets/defaults `groundFriction`) and new `ladder_friction_test.dart`
+      (friction blending vs. snap, grounded-only, `LadderSystem`'s
+      climb/hold/no-op/not-on-ladder behavior) — `flutter test`/
+      `dart test` and `--fatal-infos` analyze clean across all three
+      packages. Live in `test_game`: added a small ladder column, an
+      icy ground patch, and a conveyor ground patch to
+      `main.level.json` near the spawn — the level loads and renders
+      correctly with the new tile ids/legend entries (no crash, no
+      console error), confirming `TileMap.fromJson`'s new fields
+      round-trip through the human-authorable legend form correctly;
+      actually walking onto them to see the climb/slide/push in motion
+      hit the same simulated-keyboard-hold limitation noted earlier in
+      this project's session history (arrow-key presses via the browser
+      tool don't reliably sustain held movement) — not attempted to
+      fake, the physics itself is covered by the unit tests above
+      instead.
 - [ ] Steering/avoidance among multiple AI: `PatrolBehavior`/
       `FollowBehavior`/`PathFollowBehavior` don't avoid each other, so
       packs of enemies overlap/stack.

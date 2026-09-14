@@ -19,6 +19,12 @@ import 'platformer_controller.dart';
 /// > 0` — a knockback impulse from `damageEntity` would otherwise be
 /// overridden the very next tick by whatever direction the player still
 /// happens to be holding.
+///
+/// Horizontal velocity snaps straight to the input target every tick
+/// (`vel.x = vx`) unless `controller.groundFriction < 1.0` (see
+/// `TileMap.frictionByTileId`), in which case it blends toward the
+/// target instead — a lower value slides more (icy), the untagged-tile
+/// default `1.0` is the original instant-snap behavior.
 class PlatformerInputSystem implements System {
   final EntityId entity;
   final double moveSpeed;
@@ -56,7 +62,17 @@ class PlatformerInputSystem implements System {
     var vx = 0.0;
     if (input.isPressed(leftAction)) vx -= moveSpeed;
     if (input.isPressed(rightAction)) vx += moveSpeed;
-    vel.x = vx;
+    if (controller != null && controller.grounded && controller.groundFriction < 1.0) {
+      // Blend toward the target instead of snapping — groundFriction is
+      // read from last tick's TileCollisionSystem pass (see
+      // PlatformerController.groundFriction), so this is one tick stale
+      // exactly like every other controller.grounded read here. A value
+      // of 1.0 (the default, and every untagged tile) always takes the
+      // snap branch below, so untouched behavior is unchanged.
+      vel.x += (vx - vel.x) * controller.groundFriction;
+    } else {
+      vel.x = vx;
+    }
 
     if (controller != null && vx != 0) {
       controller.facingSign = vx.sign;

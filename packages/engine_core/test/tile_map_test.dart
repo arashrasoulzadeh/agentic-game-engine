@@ -145,6 +145,34 @@ void main() {
     expect(decoded.slopeUpLeftTileIds, {4});
   });
 
+  test('ladder/conveyor/friction tile data round-trips through toJson/fromJson', () {
+    final map = TileMap(
+      cols: 3,
+      rows: 1,
+      tileWidth: 10,
+      tileHeight: 10,
+      tiles: [5, 6, 7],
+      ladderTileIds: {5},
+      conveyorSpeedByTileId: {6: 80.0},
+      frictionByTileId: {7: 0.2},
+    );
+
+    expect(map.isLadder(0, 0), isTrue);
+    expect(map.isLadder(1, 0), isFalse);
+
+    final decoded = TileMap.fromJson(map.toJson());
+    expect(decoded.ladderTileIds, {5});
+    expect(decoded.conveyorSpeedByTileId, {6: 80.0});
+    expect(decoded.frictionByTileId, {7: 0.2});
+  });
+
+  test('ladder/conveyor/friction default to empty when unset', () {
+    final map = TileMap(cols: 1, rows: 1, tileWidth: 10, tileHeight: 10, tiles: [1]);
+    expect(map.ladderTileIds, isEmpty);
+    expect(map.conveyorSpeedByTileId, isEmpty);
+    expect(map.frictionByTileId, isEmpty);
+  });
+
   test('TileMap.fromJson legend form rejects a character missing from the legend', () {
     expect(
       () => TileMap.fromJson({

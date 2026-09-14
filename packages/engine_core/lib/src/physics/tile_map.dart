@@ -25,6 +25,31 @@ class TileMap {
   final Set<int> slopeUpRightTileIds;
   final Set<int> slopeUpLeftTileIds;
 
+  /// Tile ids an entity can climb — not solid on their own (a ladder
+  /// tile is typically walkable-through horizontally, not blocking),
+  /// purely a marker `TileCollisionSystem` checks for overlap the same
+  /// way it checks `solidTileIds`/`oneWayTileIds`. What climbing
+  /// *does* (vertical movement, suspending gravity) is genre-specific
+  /// logic and lives in `engine_platformer`'s `LadderSystem` — this
+  /// set is only the genre-general "which tiles are ladders" data,
+  /// same reasoning as every other `*TileIds` set here.
+  final Set<int> ladderTileIds;
+
+  /// Horizontal speed (px/s, signed — negative is leftward) added to an
+  /// entity resting on this tile id, for conveyor-belt tiles. Empty by
+  /// default (no entry for a tile id means "not a conveyor," identical
+  /// to today's behavior).
+  final Map<int, double> conveyorSpeedByTileId;
+
+  /// Multiplier on how quickly grounded horizontal velocity snaps to
+  /// the input target, for tiles with non-default surface friction — a
+  /// missing entry (the default for every tile id) means `1.0`,
+  /// "instant snap," i.e. today's unchanged behavior. Values below
+  /// `1.0` (ice) make the entity slide instead of stopping instantly;
+  /// see `PlatformerInputSystem`'s doc comment for exactly how it's
+  /// applied.
+  final Map<int, double> frictionByTileId;
+
   /// Draw order relative to every other renderable (`Sprite`,
   /// `ParallaxLayer`, another `TileMap`, `Particle`) — see
   /// `engine_flutter`'s `Sprite.zIndex` for the full rule. Useful for a
@@ -44,11 +69,17 @@ class TileMap {
     Set<int>? oneWayTileIds,
     Set<int>? slopeUpRightTileIds,
     Set<int>? slopeUpLeftTileIds,
+    Set<int>? ladderTileIds,
+    Map<int, double>? conveyorSpeedByTileId,
+    Map<int, double>? frictionByTileId,
     this.zIndex = 0,
   })  : solidTileIds = solidTileIds ?? <int>{},
         oneWayTileIds = oneWayTileIds ?? <int>{},
         slopeUpRightTileIds = slopeUpRightTileIds ?? <int>{},
-        slopeUpLeftTileIds = slopeUpLeftTileIds ?? <int>{} {
+        slopeUpLeftTileIds = slopeUpLeftTileIds ?? <int>{},
+        ladderTileIds = ladderTileIds ?? <int>{},
+        conveyorSpeedByTileId = conveyorSpeedByTileId ?? <int, double>{},
+        frictionByTileId = frictionByTileId ?? <int, double>{} {
     if (tiles.length != cols * rows) {
       throw ArgumentError(
           'tiles.length (${tiles.length}) must equal cols*rows (${cols * rows})');
@@ -64,6 +95,7 @@ class TileMap {
   bool isOneWay(int col, int row) => oneWayTileIds.contains(tileAt(col, row));
   bool isSlopeUpRight(int col, int row) => slopeUpRightTileIds.contains(tileAt(col, row));
   bool isSlopeUpLeft(int col, int row) => slopeUpLeftTileIds.contains(tileAt(col, row));
+  bool isLadder(int col, int row) => ladderTileIds.contains(tileAt(col, row));
 
   Map<String, dynamic> toJson() => {
         'cols': cols,
@@ -75,6 +107,9 @@ class TileMap {
         'oneWayTileIds': oneWayTileIds.toList(),
         'slopeUpRightTileIds': slopeUpRightTileIds.toList(),
         'slopeUpLeftTileIds': slopeUpLeftTileIds.toList(),
+        'ladderTileIds': ladderTileIds.toList(),
+        'conveyorSpeedByTileId': conveyorSpeedByTileId.map((k, v) => MapEntry(k.toString(), v)),
+        'frictionByTileId': frictionByTileId.map((k, v) => MapEntry(k.toString(), v)),
         'zIndex': zIndex,
       };
 
@@ -97,6 +132,11 @@ class TileMap {
         ((json['slopeUpRightTileIds'] as List?) ?? const []).cast<int>().toSet();
     final slopeUpLeftTileIds =
         ((json['slopeUpLeftTileIds'] as List?) ?? const []).cast<int>().toSet();
+    final ladderTileIds = ((json['ladderTileIds'] as List?) ?? const []).cast<int>().toSet();
+    final conveyorSpeedByTileId = ((json['conveyorSpeedByTileId'] as Map?) ?? const {})
+        .map((k, v) => MapEntry(int.parse(k as String), (v as num).toDouble()));
+    final frictionByTileId = ((json['frictionByTileId'] as Map?) ?? const {})
+        .map((k, v) => MapEntry(int.parse(k as String), (v as num).toDouble()));
     if (legend != null) {
       return _fromLegend(
         legend: (legend as Map).cast<String, dynamic>(),
@@ -107,6 +147,9 @@ class TileMap {
         oneWayTileIds: oneWayTileIds,
         slopeUpRightTileIds: slopeUpRightTileIds,
         slopeUpLeftTileIds: slopeUpLeftTileIds,
+        ladderTileIds: ladderTileIds,
+        conveyorSpeedByTileId: conveyorSpeedByTileId,
+        frictionByTileId: frictionByTileId,
         zIndex: zIndex,
       );
     }
@@ -120,6 +163,9 @@ class TileMap {
       oneWayTileIds: oneWayTileIds,
       slopeUpRightTileIds: slopeUpRightTileIds,
       slopeUpLeftTileIds: slopeUpLeftTileIds,
+      ladderTileIds: ladderTileIds,
+      conveyorSpeedByTileId: conveyorSpeedByTileId,
+      frictionByTileId: frictionByTileId,
       zIndex: zIndex,
     );
   }
@@ -133,6 +179,9 @@ class TileMap {
     required Set<int> oneWayTileIds,
     required Set<int> slopeUpRightTileIds,
     required Set<int> slopeUpLeftTileIds,
+    required Set<int> ladderTileIds,
+    required Map<int, double> conveyorSpeedByTileId,
+    required Map<int, double> frictionByTileId,
     required int zIndex,
   }) {
     if (asciiRows.isEmpty) {
@@ -164,6 +213,9 @@ class TileMap {
       oneWayTileIds: oneWayTileIds,
       slopeUpRightTileIds: slopeUpRightTileIds,
       slopeUpLeftTileIds: slopeUpLeftTileIds,
+      ladderTileIds: ladderTileIds,
+      conveyorSpeedByTileId: conveyorSpeedByTileId,
+      frictionByTileId: frictionByTileId,
       zIndex: zIndex,
     );
   }

@@ -26,6 +26,7 @@ export 'src/ui/health_hud_system.dart';
 export 'src/logic/health_system.dart';
 export 'src/physics/hitstun_system.dart';
 export 'src/physics/jump_system.dart';
+export 'src/physics/ladder_system.dart';
 export 'src/rendering/movement_animation_system.dart';
 export 'src/physics/platformer_input_system.dart';
 export 'src/physics/platformer_system.dart';

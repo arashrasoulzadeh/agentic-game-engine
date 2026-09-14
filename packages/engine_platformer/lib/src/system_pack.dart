@@ -8,6 +8,7 @@ import 'ui/health_hud_system.dart';
 import 'logic/health_system.dart';
 import 'physics/hitstun_system.dart';
 import 'physics/jump_system.dart';
+import 'physics/ladder_system.dart';
 import 'rendering/movement_animation_system.dart';
 import 'physics/platformer_input_system.dart';
 import 'physics/platformer_system.dart';
@@ -63,6 +64,9 @@ void installPlatformerSystems(
   world.addSystem(PlatformerSystem());
   world.addSystem(TileCollisionSystem());
   world.addSystem(JumpSystem());
+  if (player != null) {
+    world.addSystem(LadderSystem(player));
+  }
   world.addSystem(DashSystem());
   world.addSystem(CollisionSystem());
   world.addSystem(HealthSystem());

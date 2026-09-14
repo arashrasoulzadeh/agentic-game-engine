@@ -97,6 +97,18 @@ This closes out the "Rendering (`engine_flutter`)" group of "New engine
 features (round 2)" — see TODO.md for the remaining Core/Platformer
 items in that section.
 
+- **Ladders, conveyors, per-tile friction**: `TileMap` gained
+  `ladderTileIds`, `conveyorSpeedByTileId`, and `frictionByTileId`
+  (all opt-in, empty by default, unchanged behavior for untagged
+  tiles); new `engine_platformer` `LadderSystem` (opt-in via
+  `PlatformerController.climbSpeed`) turns up/down input into vertical
+  climb movement while overlapping a ladder tile;
+  `PlatformerInputSystem` slides instead of snapping grounded velocity
+  when standing on a low-friction (icy) tile; `TileCollisionSystem`
+  nudges `Position.x` for an entity grounded on a conveyor tile. First
+  item of the "Platformer (`engine_platformer`)" group of "New engine
+  features (round 2)" — see TODO.md for the rest.
+
 ### Fully-fledged platformer engine
 
 Working through the gap list in TODO.md's "Fully-fledged platformer
