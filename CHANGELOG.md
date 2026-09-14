@@ -76,25 +76,30 @@ pubspec.yaml.
   shadow-casting raycast — a one-way platform renders as an opaque-
   looking surface but let light shine straight through by default;
   set it per light that's actually near one.
-- **Flat, artificial (and, after an intermediate attempt, "cartoony")
-  light falloff + hard, faceted shadow edges**: reveal/tint gradients
-  now use a 6-stop falloff approximating a quadratic `(1-t)²` curve —
-  a small, genuinely bright core with a quick initial drop and a long
-  dim tail — instead of a flat linear dim or a too-uniform "glowing
-  disc." A shadow-casting/cone light's visibility-polygon edges get a
-  blur (once per light per frame, not per sampled ray, so it costs
-  nothing extra as `shadowRayCount` scales) instead of a hard cutoff,
-  now driven by a new configurable `Light2D.shadowEdgeSoftness` (`3`
-  default) instead of a hardcoded constant.
-- **Shadow flicker while the light source moves**: new opt-in
-  `Light2D.shadowSmoothingSeconds` (`0` default) exponentially smooths
-  each sampled shadow ray's raycast distance toward its raw value over
-  time instead of snapping every frame — a light re-raycasting fresh
-  every frame as it moves can have a ray's hit tile change in a small
-  discrete jump right at a tile boundary, which otherwise reads as the
-  shadow polygon's edge visibly popping. Framerate-independent, using
-  the real wall-clock frame delta newly threaded into `EngineView`'s
-  render pass.
+- **Flat/artificial, then "cartoony," then still-too-hazy light
+  falloff + hard, faceted shadow edges**: three iterations landed on a
+  *plateau* shape — full strength held flat out to 60% of the radius
+  (the light's body reads as a real, solidly-lit area) then falling
+  off only over the remaining 40% — instead of a curve that dims from
+  the very center, however smooth. Softness now lives only at the
+  edge, not smeared across the whole light. A shadow-casting/cone
+  light's visibility-polygon edges get a blur (once per light per
+  frame, not per sampled ray, so it costs nothing extra as
+  `shadowRayCount` scales) instead of a hard cutoff, driven by a new
+  configurable `Light2D.shadowEdgeSoftness` (default bumped from an
+  initial `3` to `8` — reported live as too subtle to read as soft at
+  all against a typical light radius).
+- **Shadow flicker while the light source moves**: root cause was the
+  grid-raycast tie-break jitter (see above), already fixed there. A
+  same-round attempt at an additional smoothing layer
+  (`Light2D.shadowSmoothingSeconds`, exponentially blending each ray's
+  distance toward its raw value over time) turned out to read as the
+  shadow visibly *lagging*/animating into place instead of tracking
+  the light exactly — reported live as "animating instead of casting
+  real." Real light has zero transition delay, so `test_game`'s player
+  light no longer sets it; the field stays available (`0` default,
+  opt-in) for a game that deliberately wants that softened look, but
+  the tie-break fix is the actual correct fix for the flicker.
 - **Frame-rate cap**: new `EngineView.maxFps`/`GameConfig.maxFps`
   (`null` default, uncapped) skips a ticker callback outright when it
   arrives sooner than `1 / maxFps` since the last processed one — a

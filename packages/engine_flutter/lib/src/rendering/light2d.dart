@@ -64,15 +64,18 @@ class Light2D {
 
   /// Blur radius (logical pixels, pre-`Camera.zoom`) `EngineView`
   /// applies to this light's reveal/tint paints when [castsShadows] or
-  /// [coneAngle] gives it a visibility-polygon edge to soften — `3`
-  /// (the default) softens the polygon's straight, faceted edges (an
-  /// artifact of approximating a curve with [shadowRayCount] straight
-  /// segments) into a gentler gradient instead of a hard, jagged
-  /// cutoff. Raise it for a deliberately soft/diffuse light source (a
-  /// hazy torch, moonlight through leaves); `0` gives a fully hard,
-  /// unblurred polygon edge. Meaningless for a plain circular light,
-  /// which has no polygon edge to soften in the first place — the
-  /// gradient's own falloff already handles that case.
+  /// [coneAngle] gives it a visibility-polygon edge to soften — softens
+  /// the polygon's straight, faceted edges (an artifact of
+  /// approximating a curve with [shadowRayCount] straight segments)
+  /// and the hard line where a shadow cuts the light off, into a
+  /// gradient instead of a sharp, unnatural-looking cutoff. `8` (the
+  /// default) is sized to actually read as soft against a typical
+  /// light radius (a few pixels of blur is imperceptible on a
+  /// 100–300px-radius light); raise it further for a deliberately
+  /// hazy/diffuse source, or set `0` for a fully hard, unblurred edge.
+  /// Meaningless for a plain circular light, which has no polygon edge
+  /// to soften in the first place — the falloff gradient already
+  /// handles that case.
   double shadowEdgeSoftness;
 
   /// Hz-ish oscillation speed for a flickering/guttering effect (a
@@ -158,7 +161,7 @@ class Light2D {
     this.flickerElapsed = 0,
     this.shadowRayCount = 48,
     this.shadowSmoothingSeconds = 0,
-    this.shadowEdgeSoftness = 3,
+    this.shadowEdgeSoftness = 8,
   })  : baseIntensity = baseIntensity ?? intensity,
         baseRadius = baseRadius ?? radius;
 
@@ -195,6 +198,6 @@ class Light2D {
         flickerElapsed: (json['flickerElapsed'] as num?)?.toDouble() ?? 0,
         shadowRayCount: (json['shadowRayCount'] as num?)?.toInt() ?? 48,
         shadowSmoothingSeconds: (json['shadowSmoothingSeconds'] as num?)?.toDouble() ?? 0,
-        shadowEdgeSoftness: (json['shadowEdgeSoftness'] as num?)?.toDouble() ?? 3,
+        shadowEdgeSoftness: (json['shadowEdgeSoftness'] as num?)?.toDouble() ?? 8,
       );
 }

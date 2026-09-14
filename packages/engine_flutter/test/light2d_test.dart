@@ -89,8 +89,8 @@ void main() {
       expect(restored.shadowSmoothingSeconds, 0.1);
     });
 
-    test('shadowEdgeSoftness defaults to 3 and round-trips through toJson/fromJson', () {
-      expect(Light2D().shadowEdgeSoftness, 3);
+    test('shadowEdgeSoftness defaults to 8 and round-trips through toJson/fromJson', () {
+      expect(Light2D().shadowEdgeSoftness, 8);
 
       final light = Light2D(shadowEdgeSoftness: 0);
       final restored = Light2D.fromJson(light.toJson());

@@ -527,22 +527,25 @@ class _EnginePainter extends CustomPainter {
 
   /// Radial-gradient stop positions shared by the reveal and tint
   /// passes, paired with [_falloffFractions] (that stop's alpha as a
-  /// fraction of the center's) to approximate a physically-inspired
-  /// inverse-square-*like* falloff — `alpha(t) ≈ (1 - t)²` sampled at
-  /// each stop — instead of either the original flat 2-stop linear dim
-  /// (uniform brightness loss, read as artificial) or an earlier
-  /// attempt at a softer curve that over-corrected into a large,
-  /// uniformly-bright "glowing disc" look (read as cartoonish — too
-  /// much of the radius stayed near-full-intensity before falling off).
-  /// A quadratic-ish curve drops off quickly from a small, genuinely
-  /// bright core and fades gradually through a long dim tail, closer
-  /// to how a real point light actually looks. `ui.Gradient.radial`
-  /// only interpolates linearly *between* stops, so approximating a
-  /// curve at all means sampling it at several points, not just one
-  /// middle stop — six points is enough to read as smooth without a
-  /// visible piecewise-linear kink.
-  static const List<double> _falloffStops = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
-  static const List<double> _falloffFractions = [1.0, 0.64, 0.36, 0.16, 0.04, 0.0];
+  /// fraction of the center's) — a *plateau*, not a curve that starts
+  /// dimming the instant it leaves the center: full strength held flat
+  /// out to 60% of the radius (the light's actual body reads as a real,
+  /// solidly-lit area, not something hazy from its own center), then
+  /// falls off only over the remaining 40%, landing at fully faded
+  /// right at the edge. Two earlier attempts got this wrong in
+  /// opposite directions: a flat 2-stop linear dim faded from the
+  /// center outward (read as artificial/washed-out); a quadratic-ish
+  /// curve that dimmed immediately from the peak, however smooth,
+  /// still read as the *light itself* being soft/hazy rather than a
+  /// real light with a soft *edge* — the actual, explicit ask. Softness
+  /// belongs at the boundary (here, plus the separate edge blur from
+  /// `Light2D.shadowEdgeSoftness` for a shadow-casting/cone light's
+  /// polygon), not smeared across the whole radius. `ui.Gradient.radial`
+  /// only interpolates linearly *between* stops, so the falloff portion
+  /// is sampled at a few points to still read as a smooth transition
+  /// rather than one visible linear kink.
+  static const List<double> _falloffStops = [0.0, 0.6, 0.8, 0.92, 1.0];
+  static const List<double> _falloffFractions = [1.0, 1.0, 0.7, 0.25, 0.0];
 
   /// Builds the gradient color list for [_falloffStops] from [peak] (the
   /// color at the light's exact center, alpha included) — each stop's

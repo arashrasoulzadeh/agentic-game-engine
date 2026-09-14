@@ -338,24 +338,33 @@ implementing.
       reason (see `_drawLighting`'s doc comment on ordering), so this
       needs its own design pass, not a one-line blend-mode swap —
       logged here rather than attempted inline.
-- [x] Softer, more natural falloff + soft shadow edges: the reveal/tint
-      radial gradients went from a flat 2-stop linear falloff (uniform
-      dimming center-to-edge, read as artificial) through an
-      intermediate 3-stop attempt (which over-corrected into a large,
-      uniformly-bright "glowing disc" — reported live as "cartoony") to
-      a 6-stop shape approximating a quadratic `(1-t)²` falloff: a
-      genuinely small, bright core that drops off quickly, then a long
-      dim tail — much closer to how a real point light actually looks.
-      Both the reveal and tint passes build their gradient colors from
-      one shared `_falloffColors`/`_falloffFractions` helper so a
-      recolor never has to touch the falloff math. Separately, a
+- [x] Softer, more natural falloff + soft shadow edges: three attempts
+      to get this right, in order — a flat 2-stop linear falloff
+      (uniform dimming center-to-edge, read as artificial); a 3-stop
+      curve that over-corrected into a large, uniformly-bright "glowing
+      disc" (reported live as "cartoony"); a 6-stop quadratic `(1-t)²`
+      curve that dimmed immediately from the peak — smoother than the
+      first two, but still read as the *light itself* being soft/hazy
+      rather than a real light with only a soft *edge* (reported live:
+      "I want edges of light to be soft, not light itself"). Landed on
+      a **plateau** shape instead of a curve at all: full strength held
+      flat out to 60% of the radius (the light's body reads as a real,
+      solidly-lit area, not hazy from its own center), falling off only
+      over the remaining 40%, landing fully faded right at the edge —
+      softness concentrated at the boundary, not smeared across the
+      whole light. Both the reveal and tint passes build their gradient
+      colors from one shared `_falloffColors`/`_falloffFractions`
+      helper so a recolor never has to touch the falloff math.
+      Separately, a
       shadow-casting/cone light's visibility polygon (a `shadowRayCount`
       -sided approximation of a curve, so its edges are visibly
       faceted/straight) gets a `MaskFilter.blur` on its reveal/tint
       paints, applied once per light per frame — not per sampled ray,
       so it doesn't scale with `shadowRayCount` — now driven by a new
-      configurable `Light2D.shadowEdgeSoftness` (`3` default, screen-
-      space, scaled by `Camera.zoom`) instead of a hardcoded constant,
+      configurable `Light2D.shadowEdgeSoftness` (`8` default, screen-
+      space, scaled by `Camera.zoom` — bumped up from an initial `3`,
+      reported live as too subtle to actually read as soft against a
+      typical 100–300px light radius) instead of a hardcoded constant,
       so a deliberately hazy/diffuse light can go softer and a crisp
       one can go to `0` (hard edge). All pure rendering-paint tweaks —
       no new raycasts, no per-tile cost.
@@ -383,7 +392,17 @@ implementing.
       converges close to the true raycast distance after many frames
       (proving it actually converges, not just lags forever);
       `shadowSmoothingSeconds: 0` confirmed to leave the cache unused
-      entirely (no smoothing overhead when disabled).
+      entirely (no smoothing overhead when disabled). **Follow-up,
+      reported live**: this made a moving light's shadow visibly *lag*/
+      transition instead of snapping instantly to the correct geometry
+      — read as "animating instead of casting real," a fair complaint:
+      real light has zero transition delay, shadows should be exactly
+      correct every single frame. `shadowSmoothingSeconds` stays
+      available (still opt-in, still `0`/off by default) for a game
+      that deliberately wants that softened look, but `test_game`'s
+      player light no longer sets it — the tie-break fix above is the
+      actual, correct fix for the flicker; smoothing was the wrong
+      tool for that job.
 - [x] Frame-rate cap: new `EngineView.maxFps`/`GameConfig.maxFps`
       (`null` default, uncapped — runs at whatever the platform's raw
       display callback delivers, same as before). A ticker callback
@@ -398,6 +417,23 @@ implementing.
       coverage for `maxFps`'s round-trip and its omitted-when-null
       `toJson` shape. Full `engine_flutter` suite (211 tests) green,
       `--fatal-infos` analyze clean.
+- [ ] A light reveals open air, not just surfaces — reported live
+      ("shouldn't light empty air"). This is inherent to the current
+      model, not a quick parameter fix: `_drawLighting` reveals every
+      direction out to `radius` unless a ray actually hits solid
+      geometry, so in a large open space above the ground (nothing
+      overhead to block it) the light keeps revealing upward through
+      empty sky, reading as a big blank lit circle floating with
+      nothing to actually illuminate — real light does travel through
+      open air the same way, but a game level's open volumes are
+      usually much bigger than what a torch would realistically brighten,
+      so it reads as fake at this scale. No design committed yet;
+      candidate directions: a secondary falloff purely by distance
+      from the *nearest solid surface* (not just the light source) so
+      open space dims faster than surface-hugging light; or just a
+      smaller default `radius` relative to typical level geometry.
+      Needs a decision before implementing, since either changes the
+      lighting model's actual shape, not just its paint parameters.
 
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
