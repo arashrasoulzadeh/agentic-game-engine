@@ -862,6 +862,118 @@ void main() {
     });
   });
 
+  group('Collider(blocksLight: true) casts shadows', () {
+    testWidgets(
+        'a Collider tagged blocksLight stops a shadow-casting ray short of the light\'s '
+        "full radius -- the ray's cachedShadowDistances entry lands right at the "
+        "collider's near edge, not the tile-only distance", (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final lightEntity = world.spawn();
+      // Ray 0 of a full-circle sweep always points in the +x direction
+      // (same convention the raycastTileMap-based tests above rely on).
+      world.storeOf<Position>().set(lightEntity, Position(10, 50));
+      final light = Light2D(
+        radius: 100,
+        castsShadows: true,
+        shadowRayCount: 4,
+        cacheShadowGeometry: true,
+      );
+      world.storeOf<Light2D>().set(lightEntity, light);
+
+      final blockerEntity = world.spawn();
+      world.storeOf<Position>().set(blockerEntity, Position(60, 50));
+      world.storeOf<Collider>().set(blockerEntity, Collider(10, blocksLight: true));
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // Light at x=10, collider center at x=60 radius 10 -- the ray
+      // along +x first touches the collider's near edge at x=50, a
+      // distance of 40 from the light, well short of the full 100
+      // radius.
+      expect(light.cachedShadowDistances![0], closeTo(40, 0.5));
+    });
+
+    testWidgets('an untagged Collider (blocksLight: false, the default) does not block '
+        'light at all', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final lightEntity = world.spawn();
+      world.storeOf<Position>().set(lightEntity, Position(10, 50));
+      final light = Light2D(
+        radius: 100,
+        castsShadows: true,
+        shadowRayCount: 4,
+        cacheShadowGeometry: true,
+      );
+      world.storeOf<Light2D>().set(lightEntity, light);
+
+      final nonBlockerEntity = world.spawn();
+      world.storeOf<Position>().set(nonBlockerEntity, Position(60, 50));
+      world.storeOf<Collider>().set(nonBlockerEntity, Collider(10)); // blocksLight defaults false
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(light.cachedShadowDistances![0], closeTo(100, 0.5),
+          reason: 'an untagged collider must not occlude light, same as before this '
+              'feature existed');
+    });
+
+    testWidgets('a light-blocking Collider entirely off the ray path leaves that ray '
+        'unobstructed', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final lightEntity = world.spawn();
+      world.storeOf<Position>().set(lightEntity, Position(10, 50));
+      final light = Light2D(
+        radius: 100,
+        castsShadows: true,
+        shadowRayCount: 4,
+        cacheShadowGeometry: true,
+      );
+      world.storeOf<Light2D>().set(lightEntity, light);
+
+      final blockerEntity = world.spawn();
+      // Well off the +x ray, on the far side of the light entirely.
+      world.storeOf<Position>().set(blockerEntity, Position(10, -200));
+      world.storeOf<Collider>().set(blockerEntity, Collider(10, blocksLight: true));
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(light.cachedShadowDistances![0], closeTo(100, 0.5));
+    });
+  });
+
   group('Light2D.cacheShadowGeometry', () {
     testWidgets('off by default -- cachedShadowDistances stays null across frames', (tester) async {
       final world = World(width: 400, height: 300);

@@ -783,21 +783,34 @@ implementing.
       sets `blockOneWayPlatforms: true` (it's the one light actually
       near the level's one-way platforms) — loads and plays normally,
       steady 120fps, no console errors.
-- [ ] Only `TileMap` geometry casts shadows — a `castsShadows` light's
-      visibility polygon is built purely from `raycastTileMap`, which
-      only ever tests tile grid cells. Nothing with a `Collider` (a
-      crate, a pillar, a closed door, any prop or dynamic obstacle
-      that isn't baked into the tile grid) blocks light at all — stand
-      a solid-looking prop directly between a torch and a wall and the
-      torch's light (and any shadow polygon) passes straight through
-      it as if it weren't there. Real gap for any level that places
-      solid *entities* rather than only tile geometry between a light
-      and what it's lighting. Fix shape: a per-ray nearest-hit check
-      against `Collider`s tagged as light-blocking (a new opt-in flag,
-      not every `Collider` — most colliders, like a coin or an enemy's
-      hurtbox, shouldn't cast a shadow), merged with the existing
-      tile-hit distance the same way multiple `TileMap`s already are
-      in `_raycastLightDistance`.
+- [x] Only `TileMap` geometry casts shadows — implemented exactly as
+      scoped: new `Collider.blocksLight` (`false` default, unchanged
+      behavior — most colliders, a coin or an enemy's hurtbox,
+      shouldn't cast a shadow just because they physically collide
+      with something). `_raycastLightDistance` now also does a per-ray
+      nearest-hit check against every `Collider(blocksLight: true)`
+      entity (standard ray-vs-circle intersection —
+      `_rayCircleDistance`, a new small helper), merged with the
+      existing tile-hit distance via the same "take whichever is
+      nearer" pattern multiple `TileMap`s already use there. The
+      light's own entity is excluded from the check (a torch prop
+      that's also solid would otherwise self-shadow at distance `0`)
+      — threaded through as a new `lightEntity` parameter on both
+      `_raycastLightDistance` and `_lightClipPath`. A ray whose origin
+      already starts inside a blocking circle treats it as a miss, not
+      an immediate zero-distance block — a light already overlapping
+      something is never occluded by it. Verified: 2 new `engine_core`
+      `collider_test.dart` tests (`blocksLight` default/round-trip)
+      and 3 new `engine_flutter` widget tests in `light2d_test.dart`'s
+      new "Collider(blocksLight: true) casts shadows" group — a tagged
+      collider directly on a light's ray stops it right at the
+      collider's near edge (reading `Light2D.cachedShadowDistances`
+      directly, same technique the existing shadow-smoothing tests
+      use); an *untagged* collider on the same ray leaves it fully
+      unobstructed, proving the opt-in flag actually gates the check;
+      a tagged collider entirely off the ray path doesn't affect it.
+      Full `engine_core`/`engine_flutter`/`engine_platformer` suites
+      and `--fatal-infos` analyze clean across all three.
 - [ ] Overlapping lights don't add brightness: the reveal pass punches
       holes in the darkness mask via `BlendMode.dstOut`, which only
       ever *erases* alpha — a second light's circle overlapping a

@@ -157,6 +157,12 @@ pubspec.yaml.
   already uses whenever `EngineView.fixedTimestepSeconds` is set — a
   light used to visibly lag/step relative to its own entity's smoothly-
   interpolated sprite; a no-op when fixed-timestep isn't in use.
+- **Only `TileMap` geometry cast shadows**: new opt-in
+  `Collider.blocksLight` (`false` default) — a shadow-casting light's
+  per-ray raycast now also checks every light-blocking `Collider`
+  (crates, pillars, closed doors — any solid prop not baked into the
+  tile grid), taking whichever hit (tile or collider) is nearer, the
+  same way multiple `TileMap`s already merge.
 - **Shadow flicker while the light source moves**: root cause was the
   grid-raycast tie-break jitter (see above), already fixed there. A
   same-round attempt at an additional smoothing layer

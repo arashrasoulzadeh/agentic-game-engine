@@ -1,4 +1,4 @@
-import 'dart:math' show cos, exp, sin, pi;
+import 'dart:math' show cos, exp, sin, pi, sqrt;
 import 'dart:ui' as ui;
 
 import 'package:engine_core/engine_core.dart';
@@ -646,7 +646,7 @@ class _EnginePainter extends CustomPainter {
       // just a micro-optimization (same reasoning as
       // _collectTileMapItems's tile culling above).
       if (!_circleIntersectsRect(screenPos, screenRadius, fullRect)) continue;
-      final clipPath = _lightClipPath(light, worldPos, size);
+      final clipPath = _lightClipPath(light, worldPos, size, entity);
       infos.add(_LightRenderInfo(light, screenPos, screenRadius, clipPath));
     }
 
@@ -801,7 +801,7 @@ class _EnginePainter extends CustomPainter {
   /// frame as it moves can have a ray's hit tile change in a small
   /// discrete jump right as the light crosses a tile boundary, which
   /// otherwise reads as the polygon's edge visibly popping.
-  Path? _lightClipPath(Light2D light, Position worldPos, Size size) {
+  Path? _lightClipPath(Light2D light, Position worldPos, Size size, EntityId lightEntity) {
     final hasCone = light.coneAngle != null;
     if (!hasCone && !light.castsShadows) return null;
 
@@ -847,7 +847,8 @@ class _EnginePainter extends CustomPainter {
       for (var i = 0; i <= rayCount; i++) {
         final angle = startAngle + sweep * i / rayCount;
         rawDistances[i] = light.castsShadows
-            ? _raycastLightDistance(worldPos, angle, light.radius, light.blockOneWayPlatforms)
+            ? _raycastLightDistance(
+                worldPos, angle, light.radius, light.blockOneWayPlatforms, lightEntity)
             : light.radius;
       }
       if (light.cacheShadowGeometry) {
@@ -888,17 +889,21 @@ class _EnginePainter extends CustomPainter {
   }
 
   /// How far a light at [worldPos] can see along [angle] before the
-  /// nearest solid tile in any `TileMap` blocks it (via `raycastTileMap`
-  /// — the same primitive AI line-of-sight already uses), capped at
+  /// nearest solid tile in any `TileMap`, or the nearest
+  /// `Collider(blocksLight: true)` entity, blocks it — capped at
   /// [maxRadius] when nothing blocks it at all. [blockOneWay] forwards
   /// straight to `raycastTileMap`'s own parameter of the same name
   /// (see `Light2D.blockOneWayPlatforms`'s doc comment for why a light
-  /// would want this on).
+  /// would want this on). [lightEntity], if the light itself also
+  /// happens to carry a light-blocking `Collider` (e.g. a torch prop
+  /// that's also solid), is excluded so a light never self-shadows at
+  /// zero distance.
   double _raycastLightDistance(
     Position worldPos,
     double angle,
     double maxRadius,
     bool blockOneWay,
+    EntityId lightEntity,
   ) {
     final toX = worldPos.x + cos(angle) * maxRadius;
     final toY = worldPos.y + sin(angle) * maxRadius;
@@ -916,7 +921,60 @@ class _EnginePainter extends CustomPainter {
         nearest = hit.distance;
       }
     }
+
+    // Genre-general opt-in occlusion: nothing with a Collider blocks
+    // light at all unless it's explicitly tagged -- most colliders (a
+    // coin, an enemy's hurtbox) shouldn't cast a shadow just because
+    // they physically collide with something.
+    final colliders = world.storeOf<Collider>();
+    if (colliders.length > 0) {
+      final positions = world.storeOf<Position>();
+      final dirX = cos(angle);
+      final dirY = sin(angle);
+      for (var c = 0; c < colliders.length; c++) {
+        final entity = colliders.entityAt(c);
+        if (entity == lightEntity) continue;
+        final collider = colliders.denseAt(c);
+        if (!collider.blocksLight) continue;
+        final colliderPos = positions.get(entity);
+        if (colliderPos == null) continue;
+
+        final hitDist = _rayCircleDistance(
+          worldPos.x, worldPos.y, dirX, dirY, colliderPos.x, colliderPos.y, collider.radius);
+        if (hitDist != null && hitDist < nearest) {
+          nearest = hitDist;
+        }
+      }
+    }
+
     return nearest;
+  }
+
+  /// Standard ray-vs-circle intersection: the distance from
+  /// `(originX, originY)` along the unit direction `(dirX, dirY)` to
+  /// the nearest point where it enters the circle at
+  /// `(circleX, circleY)` radius [radius], or `null` if the ray misses
+  /// it entirely (or the origin already starts inside it, treated the
+  /// same as a miss -- a light's own position is never occluded by
+  /// something it's already overlapping).
+  double? _rayCircleDistance(
+    double originX,
+    double originY,
+    double dirX,
+    double dirY,
+    double circleX,
+    double circleY,
+    double radius,
+  ) {
+    final ocX = originX - circleX;
+    final ocY = originY - circleY;
+    final b = ocX * dirX + ocY * dirY;
+    final c = ocX * ocX + ocY * ocY - radius * radius;
+    if (c < 0) return null; // origin already inside the circle
+    final discriminant = b * b - c;
+    if (discriminant < 0) return null;
+    final t = -b - sqrt(discriminant);
+    return t >= 0 ? t : null;
   }
 
   /// Whether a circle at [center] with [radius] overlaps [rect] at all
