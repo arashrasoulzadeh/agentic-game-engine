@@ -34,6 +34,7 @@ void main() {
       'projectile',
       'facing',
       'movementAnimation',
+      'jumpAnimation',
       'animation',
       'animationTransition',
     ]);
@@ -57,6 +58,7 @@ void main() {
       'projectile',
       'facing',
       'movementAnimation',
+      'jumpAnimation',
       'animation',
       'animationTransition',
     ]);

@@ -11,6 +11,7 @@ import 'physics/jump_system.dart';
 import 'physics/ladder_system.dart';
 import 'physics/ledge_grab_system.dart';
 import 'rendering/movement_animation_system.dart';
+import 'rendering/jump_animation_system.dart';
 import 'physics/platformer_input_system.dart';
 import 'physics/platformer_system.dart';
 import 'logic/projectile_system.dart';
@@ -29,7 +30,10 @@ import 'physics/tile_collision_system.dart';
 /// (patrol/follow enemies, etc.) — both optional, since not every game
 /// screen has both a controllable player and AI enemies. Set
 /// [includeAnimation] to false if you're not using `Sprite`/
-/// `MovementAnimationSet` at all (e.g. a headless test world).
+/// `MovementAnimationSet` at all (e.g. a headless test world). Also
+/// includes `JumpAnimationSystem`, a no-op for any entity without a
+/// `JumpAnimationSet`, so this costs nothing for a game only using
+/// `MovementAnimationSet.jump`'s plain single-clip jump.
 ///
 /// Includes `HealthSystem` (ticks down `Health.invincibleSeconds` —
 /// harmless even if nothing in your game has a `Health` component yet),
@@ -78,6 +82,7 @@ void installPlatformerSystems(
   if (includeAnimation) {
     world.addSystem(FacingSystem());
     world.addSystem(MovementAnimationSystem());
+    world.addSystem(JumpAnimationSystem());
     world.addSystem(AnimationSystem());
     world.addSystem(AnimationTransitionSystem());
   }

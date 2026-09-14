@@ -120,6 +120,32 @@ void main() {
     expect(restoredWithoutJump.moveThreshold, 5);
   });
 
+  test('JumpAnimationSet round-trips through toJson/fromJson', () {
+    final set = JumpAnimationSet.fromRegions(
+      start: ['jump_0'],
+      rising: ['jump_1', 'jump_2'],
+      peak: ['jump_3'],
+      falling: ['jump_4'],
+      landing: ['jump_5'],
+      completed: ['jump_6'],
+    );
+    final restored = JumpAnimationSet.fromJson(set.toJson());
+    expect(restored.start.frameRegions, ['jump_0']);
+    expect(restored.rising.frameRegions, ['jump_1', 'jump_2']);
+    expect(restored.peak.frameRegions, ['jump_3']);
+    expect(restored.falling.frameRegions, ['jump_4']);
+    expect(restored.landing.frameRegions, ['jump_5']);
+    expect(restored.completed.frameRegions, ['jump_6']);
+  });
+
+  test('JumpAnimationPhaseState round-trips through toJson/fromJson', () {
+    final restored = JumpAnimationPhaseState.fromJson(
+      JumpAnimationPhaseState(phase: 'falling', elapsed: 0.5).toJson(),
+    );
+    expect(restored.phase, 'falling');
+    expect(restored.elapsed, 0.5);
+  });
+
   test('every registered platformer component serializes through World.toJson', () {
     final world = _buildWorld();
 
@@ -153,6 +179,25 @@ void main() {
     final inventoryEntity = world.spawn();
     world.storeOf<Inventory>().set(inventoryEntity, Inventory({'coin': 3}));
 
+    final jumpSetEntity = world.spawn();
+    world.storeOf<JumpAnimationSet>().set(
+          jumpSetEntity,
+          JumpAnimationSet.fromRegions(
+            start: ['jump_0'],
+            rising: ['jump_1'],
+            peak: ['jump_2'],
+            falling: ['jump_3'],
+            landing: ['jump_4'],
+            completed: ['jump_5'],
+          ),
+        );
+
+    final jumpPhaseEntity = world.spawn();
+    world.storeOf<JumpAnimationPhaseState>().set(
+          jumpPhaseEntity,
+          JumpAnimationPhaseState(phase: 'peak', elapsed: 0.1),
+        );
+
     final snapshot = world.toJson();
     final byId = {
       for (final e in snapshot['entities'] as List) (e as Map)['id']: e['components']
@@ -166,5 +211,7 @@ void main() {
     expect(byId[checkpointEntity]['checkpoint']['id'], 'cp1');
     expect(byId[lastCheckpointEntity]['lastCheckpoint']['x'], 1);
     expect(byId[inventoryEntity]['inventory']['items']['coin'], 3);
+    expect(byId[jumpSetEntity]['jumpAnimationSet']['start']['frameRegions'], ['jump_0']);
+    expect(byId[jumpPhaseEntity]['jumpAnimationPhaseState']['phase'], 'peak');
   });
 }

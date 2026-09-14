@@ -12,6 +12,7 @@ export 'src/ui/health_hud_link.dart';
 export 'src/logic/inventory.dart';
 export 'src/logic/last_checkpoint.dart';
 export 'src/rendering/movement_animation_set.dart';
+export 'src/rendering/jump_animation_set.dart';
 export 'src/physics/platform_body.dart';
 export 'src/physics/platformer_controller.dart';
 export 'src/logic/projectile.dart';
@@ -30,6 +31,7 @@ export 'src/physics/jump_system.dart';
 export 'src/physics/ladder_system.dart';
 export 'src/physics/ledge_grab_system.dart';
 export 'src/rendering/movement_animation_system.dart';
+export 'src/rendering/jump_animation_system.dart';
 export 'src/physics/platformer_input_system.dart';
 export 'src/physics/platformer_system.dart';
 export 'src/logic/projectile_system.dart';
@@ -44,6 +46,7 @@ import 'src/ui/health_hud_link.dart';
 import 'src/logic/inventory.dart';
 import 'src/logic/last_checkpoint.dart';
 import 'src/rendering/movement_animation_set.dart';
+import 'src/rendering/jump_animation_set.dart';
 import 'src/physics/platform_body.dart';
 import 'src/physics/platformer_controller.dart';
 import 'src/logic/projectile.dart';
@@ -73,6 +76,16 @@ void registerPlatformerComponents(World world) {
     'movementAnimationSet',
     (m) => m.toJson(),
     MovementAnimationSet.fromJson,
+  );
+  world.components.register<JumpAnimationSet>(
+    'jumpAnimationSet',
+    (j) => j.toJson(),
+    JumpAnimationSet.fromJson,
+  );
+  world.components.register<JumpAnimationPhaseState>(
+    'jumpAnimationPhaseState',
+    (j) => j.toJson(),
+    JumpAnimationPhaseState.fromJson,
   );
   world.components.register<Health>(
     'health',
