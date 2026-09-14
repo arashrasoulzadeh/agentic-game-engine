@@ -77,6 +77,43 @@ class TileMap {
   /// `zIndex`, which only affects rendering.
   final int zIndex;
 
+  /// A purely visual layer drawn *before* (underneath) the main
+  /// [tiles] layer — same shape/indexing as [tiles] (`cols*rows`,
+  /// `null` entries mean empty), `null` (the default) means no such
+  /// layer at all, not an all-empty one, so single-layer levels (still
+  /// the common case) pay nothing. Collision only ever comes from
+  /// [tiles]/[solidTileIds]/etc. — background/foreground layers are
+  /// never consulted for it, same as a second `TileMap` entity's
+  /// `zIndex` already lets a level fake today, just without a second
+  /// full entity + `Position` + collision-irrelevant duplicate grid.
+  final List<int>? backgroundTiles;
+
+  /// A purely visual layer drawn *after* (on top of) the main [tiles]
+  /// layer — same contract as [backgroundTiles], for overhangs/
+  /// foliage a character should walk behind.
+  final List<int>? foregroundTiles;
+
+  /// Cycle of tile ids a base tile id animates through (torches,
+  /// water) — a base id with no entry here (the default: empty map)
+  /// renders as itself, unanimated, exactly like before this field
+  /// existed. See [currentTileId] for how a frame is picked from the
+  /// cycle at a given elapsed time.
+  final Map<int, List<int>> tileAnimations;
+
+  /// How many animation frames per second every entry in
+  /// [tileAnimations] advances at — one shared rate for the whole
+  /// `TileMap` rather than a per-tile-id rate, since real content
+  /// (torches, water) tends to want one consistent flicker/ripple
+  /// cadence per level, not per tile.
+  final double tileAnimationFps;
+
+  /// Seconds of animation time accumulated so far — advanced by
+  /// `TileAnimationSystem`, read by [currentTileId]. Internal render/
+  /// simulation state, not level content: excluded from [toJson] the
+  /// same way `Light2D`'s shadow-geometry cache fields are, so it
+  /// never round-trips through a save file or a level JSON edit.
+  double animationElapsed = 0;
+
   TileMap({
     required this.cols,
     required this.rows,
@@ -93,6 +130,10 @@ class TileMap {
     this.atlasId,
     Map<int, String>? regionByTileId,
     this.zIndex = 0,
+    this.backgroundTiles,
+    this.foregroundTiles,
+    Map<int, List<int>>? tileAnimations,
+    this.tileAnimationFps = 6,
   })  : solidTileIds = solidTileIds ?? <int>{},
         oneWayTileIds = oneWayTileIds ?? <int>{},
         slopeUpRightTileIds = slopeUpRightTileIds ?? <int>{},
@@ -100,16 +141,53 @@ class TileMap {
         ladderTileIds = ladderTileIds ?? <int>{},
         conveyorSpeedByTileId = conveyorSpeedByTileId ?? <int, double>{},
         frictionByTileId = frictionByTileId ?? <int, double>{},
-        regionByTileId = regionByTileId ?? <int, String>{} {
+        regionByTileId = regionByTileId ?? <int, String>{},
+        tileAnimations = tileAnimations ?? <int, List<int>>{} {
     if (tiles.length != cols * rows) {
       throw ArgumentError(
           'tiles.length (${tiles.length}) must equal cols*rows (${cols * rows})');
+    }
+    if (backgroundTiles != null && backgroundTiles!.length != cols * rows) {
+      throw ArgumentError(
+          'backgroundTiles.length (${backgroundTiles!.length}) must equal cols*rows (${cols * rows})');
+    }
+    if (foregroundTiles != null && foregroundTiles!.length != cols * rows) {
+      throw ArgumentError(
+          'foregroundTiles.length (${foregroundTiles!.length}) must equal cols*rows (${cols * rows})');
     }
   }
 
   int tileAt(int col, int row) {
     if (col < 0 || col >= cols || row < 0 || row >= rows) return 0;
     return tiles[row * cols + col];
+  }
+
+  int backgroundTileAt(int col, int row) {
+    final layer = backgroundTiles;
+    if (layer == null || col < 0 || col >= cols || row < 0 || row >= rows) return 0;
+    return layer[row * cols + col];
+  }
+
+  int foregroundTileAt(int col, int row) {
+    final layer = foregroundTiles;
+    if (layer == null || col < 0 || col >= cols || row < 0 || row >= rows) return 0;
+    return layer[row * cols + col];
+  }
+
+  /// The tile id to actually render for base id [tileId] right now —
+  /// [tileId] itself when it has no [tileAnimations] entry (the
+  /// common, unanimated case), otherwise the frame [animationElapsed]
+  /// *
+  /// [tileAnimationFps] has advanced to, cycling back to frame 0 once
+  /// past the end. Collision/solidity always keys off the *base* id
+  /// ([tileAt] et al.), never the currently-displayed animated frame —
+  /// a lava tile animating through frames still blocks/hurts based on
+  /// its authored id, not whatever frame happens to be showing.
+  int currentTileId(int tileId) {
+    final frames = tileAnimations[tileId];
+    if (frames == null || frames.isEmpty) return tileId;
+    final frame = (animationElapsed * tileAnimationFps).floor() % frames.length;
+    return frames[frame];
   }
 
   bool isSolid(int col, int row) => solidTileIds.contains(tileAt(col, row));
@@ -134,6 +212,11 @@ class TileMap {
         if (atlasId != null) 'atlasId': atlasId,
         'regionByTileId': regionByTileId.map((k, v) => MapEntry(k.toString(), v)),
         'zIndex': zIndex,
+        if (backgroundTiles != null) 'backgroundTiles': backgroundTiles,
+        if (foregroundTiles != null) 'foregroundTiles': foregroundTiles,
+        if (tileAnimations.isNotEmpty)
+          'tileAnimations': tileAnimations.map((k, v) => MapEntry(k.toString(), v)),
+        'tileAnimationFps': tileAnimationFps,
       };
 
   /// Accepts either the raw `cols`/`rows`/`tiles` (flat id array) shape
@@ -163,6 +246,11 @@ class TileMap {
     final atlasId = json['atlasId'] as String?;
     final regionByTileId = ((json['regionByTileId'] as Map?) ?? const {})
         .map((k, v) => MapEntry(int.parse(k as String), v as String));
+    final backgroundTiles = (json['backgroundTiles'] as List?)?.cast<int>();
+    final foregroundTiles = (json['foregroundTiles'] as List?)?.cast<int>();
+    final tileAnimations = ((json['tileAnimations'] as Map?) ?? const {}).map(
+        (k, v) => MapEntry(int.parse(k as String), (v as List).cast<int>()));
+    final tileAnimationFps = (json['tileAnimationFps'] as num?)?.toDouble() ?? 6;
     if (legend != null) {
       return _fromLegend(
         legend: (legend as Map).cast<String, dynamic>(),
@@ -197,6 +285,10 @@ class TileMap {
       atlasId: atlasId,
       regionByTileId: regionByTileId,
       zIndex: zIndex,
+      backgroundTiles: backgroundTiles,
+      foregroundTiles: foregroundTiles,
+      tileAnimations: tileAnimations,
+      tileAnimationFps: tileAnimationFps,
     );
   }
 

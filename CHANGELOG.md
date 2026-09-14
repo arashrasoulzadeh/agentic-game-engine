@@ -306,6 +306,12 @@ item at a time.
   down exactly those before applying an edited version, validating the
   new JSON first so a malformed edit leaves the previous, working level
   untouched instead of tearing it down for a load that fails.
+- **Multi-layer / animated tiles**: `TileMap.backgroundTiles`/
+  `foregroundTiles` (purely visual layers drawn under/over the main
+  collision layer) and `TileMap.tileAnimations`/`tileAnimationFps` +
+  new `TileAnimationSystem` (base tile id cycles through a set of
+  frames over time, resolved via `TileMap.currentTileId`) — collision
+  always keys off the base id regardless of which frame is showing.
 - **Save-schema versioning**: `SaveGame.save`/`load` take a `version`
   and wrap the saved snapshot in a `{schemaVersion, world}` envelope;
   `load` takes an optional `migrate` callback and throws a new

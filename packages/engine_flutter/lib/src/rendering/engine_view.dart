@@ -1336,6 +1336,15 @@ class _EnginePainter extends CustomPainter {
   /// textured and flat-color tiles freely (texture the visible terrain,
   /// leave an invisible trigger-marker id as plain color) rather than
   /// needing to texture every tile id or none.
+  ///
+  /// `TileMap.backgroundTiles`/`foregroundTiles`, when set, draw as a
+  /// second/third full pass under/over the main layer respectively
+  /// (same texture-or-flat-color resolution, just never contributing a
+  /// collision-kind color since those layers are purely visual). Every
+  /// tile id drawn (main, background, or foreground) is first resolved
+  /// through `TileMap.currentTileId` so an animated id shows its
+  /// current frame's texture — collision itself always keys off the
+  /// *base* id regardless of which frame is currently on screen.
   int _collectTileMapItems(
     List<_DrawItem> items,
     int order,
@@ -1380,46 +1389,76 @@ class _EnginePainter extends CustomPainter {
             ? atlasRegistry.resolve(map.atlasId!)
             : null;
 
+        // Draws one tile face at [col]/[row] for raw (pre-animation) id
+        // [rawTileId] -- shared by the background/main/foreground
+        // passes below so texture/color resolution and destRect math
+        // isn't triplicated. [colorFallback] is a background/
+        // foreground layer's own flat color when it has no atlas
+        // region (those layers are purely visual, so collision-kind
+        // colors like "one-way blue" don't apply to them the way they
+        // do for the main layer).
+        void drawTile(int rawTileId, int col, int row, Color Function() colorFallback) {
+          if (rawTileId == 0) return;
+          final tileId = map.currentTileId(rawTileId);
+
+          final left = origin.x + col * map.tileWidth;
+          final top = origin.y + row * map.tileHeight;
+          final screenPos = camera.worldToScreen(left, top, size);
+          final destRect = Rect.fromLTWH(
+            screenPos.dx,
+            screenPos.dy,
+            map.tileWidth * camera.zoom,
+            map.tileHeight * camera.zoom,
+          );
+
+          // A tile id with a real, loaded atlas region draws the
+          // actual texture; anything else (no atlasId set on this
+          // TileMap at all, the atlas hasn't loaded yet, or this
+          // particular tile id just has no region entry) falls back
+          // to a flat color, so a level using textures for most tiles
+          // can still leave some ids (an invisible trigger marker,
+          // say) as plain color.
+          final regionName = map.regionByTileId[tileId];
+          final region = atlas != null && regionName != null
+              ? atlas.regions[regionName]
+              : null;
+          if (region != null) {
+            canvas.drawImageRect(atlas!.image, region, destRect, Paint());
+            return;
+          }
+
+          canvas.drawRect(destRect, Paint()..color = colorFallback());
+        }
+
+        const backgroundForegroundFallback = Color(0xFF4A4A4A);
+
+        for (var row = minRow; row <= maxRow; row++) {
+          for (var col = minCol; col <= maxCol; col++) {
+            drawTile(map.backgroundTileAt(col, row), col, row,
+                () => backgroundForegroundFallback);
+          }
+        }
+
         for (var row = minRow; row <= maxRow; row++) {
           for (var col = minCol; col <= maxCol; col++) {
             final tileId = map.tileAt(col, row);
-            if (tileId == 0) continue;
+            drawTile(tileId, col, row, () {
+              return map.oneWayTileIds.contains(tileId)
+                  ? const Color(0x8899CCFF)
+                  : (map.slopeUpRightTileIds.contains(tileId) ||
+                          map.slopeUpLeftTileIds.contains(tileId))
+                      ? const Color(0xFFC08040)
+                      : map.ladderTileIds.contains(tileId)
+                          ? const Color(0x88C09050)
+                          : const Color(0xFF4A4A4A);
+            });
+          }
+        }
 
-            final left = origin.x + col * map.tileWidth;
-            final top = origin.y + row * map.tileHeight;
-            final screenPos = camera.worldToScreen(left, top, size);
-            final destRect = Rect.fromLTWH(
-              screenPos.dx,
-              screenPos.dy,
-              map.tileWidth * camera.zoom,
-              map.tileHeight * camera.zoom,
-            );
-
-            // A tile id with a real, loaded atlas region draws the
-            // actual texture; anything else (no atlasId set on this
-            // TileMap at all, the atlas hasn't loaded yet, or this
-            // particular tile id just has no region entry) falls back
-            // to the original flat debug color, so a level using
-            // textures for most tiles can still leave some ids
-            // (an invisible trigger marker, say) as plain color.
-            final regionName = map.regionByTileId[tileId];
-            final region = atlas != null && regionName != null
-                ? atlas.regions[regionName]
-                : null;
-            if (region != null) {
-              canvas.drawImageRect(atlas!.image, region, destRect, Paint());
-              continue;
-            }
-
-            final color = map.oneWayTileIds.contains(tileId)
-                ? const Color(0x8899CCFF)
-                : (map.slopeUpRightTileIds.contains(tileId) || map.slopeUpLeftTileIds.contains(tileId))
-                    ? const Color(0xFFC08040)
-                    : map.ladderTileIds.contains(tileId)
-                        ? const Color(0x88C09050)
-                        : const Color(0xFF4A4A4A);
-
-            canvas.drawRect(destRect, Paint()..color = color);
+        for (var row = minRow; row <= maxRow; row++) {
+          for (var col = minCol; col <= maxCol; col++) {
+            drawTile(map.foregroundTileAt(col, row), col, row,
+                () => backgroundForegroundFallback);
           }
         }
       }));

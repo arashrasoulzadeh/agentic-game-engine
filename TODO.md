@@ -479,9 +479,50 @@ own note).
 
 ## New engine features (round 2) — Core (`engine_core`)
 
-- [ ] Multi-layer / animated tiles: `TileMap` is single-layer with no
-      per-tile animation (torches, water) — most real levels want at
-      least a background/foreground layer split.
+- [x] Multi-layer / animated tiles: new `TileMap.backgroundTiles`/
+      `foregroundTiles` (both `null` by default — a single-layer level,
+      still the common case, pays nothing extra) are purely visual
+      layers, same `cols*rows` shape as `tiles`, drawn under/over the
+      main layer respectively; collision only ever comes from
+      `tiles`/`solidTileIds`/etc., never these. New
+      `TileMap.tileAnimations` (`Map<int, List<int>>`, base id -> cycle
+      of tile ids) + `tileAnimationFps` (default 6) + a new
+      `TileAnimationSystem` (`engine_core`, opt-in the same way
+      `TweenSystem` is — not auto-added) that advances
+      `TileMap.animationElapsed` each tick; `TileMap.currentTileId`
+      resolves a base id to its current frame's id from that elapsed
+      time, wrapping back to frame 0 past the end.
+      `animationElapsed` is excluded from `toJson` (internal render/
+      sim state, same pattern as `Light2D`'s shadow-geometry cache
+      fields) so it never round-trips through a save file or a level
+      JSON edit. Collision/solidity always keys off the *base* tile id
+      regardless of which animated frame is currently showing — a lava
+      tile mid-animation still blocks/hurts based on its authored id.
+      `EngineView._collectTileMapItems` draws background tiles first,
+      then the main layer, then foreground tiles, all through one
+      shared per-tile draw helper (texture-or-flat-color resolution,
+      now also passing every tile id through `currentTileId` first) so
+      the three passes don't triplicate that logic; background/
+      foreground tiles never contribute a collision-kind flat color
+      (one-way blue, slope orange, etc.) since those layers carry no
+      collision meaning. Verified: 12 new `engine_core` tests in
+      `tile_map_test.dart` (background/foreground null-by-default,
+      wrong-length rejected, independent-grid reads, JSON round-trip/
+      omission; `currentTileId` no-animation passthrough, frame
+      cycling/wrapping at a given `tileAnimationFps`, JSON round-trip/
+      omission, `animationElapsed` excluded from `toJson`) plus a
+      `TileAnimationSystem` test (`animationElapsed` advances by `dt`
+      across ticks). 3 new `engine_flutter` widget tests in
+      `tile_rendering_test.dart`: a background-layer-only cell still
+      draws (proves the background pass actually runs), a cell with
+      both a main and foreground tile renders without crashing, and a
+      genuinely end-to-end animation test (`TileAnimationSystem` wired
+      into a real `World`, ticked via `tester.pump`, asserting
+      `currentTileId` actually flips from frame 0 to frame 1 once
+      enough simulated time has elapsed — not just that the data model
+      alone can compute a frame index). Full `engine_core`,
+      `engine_flutter`, and `engine_platformer` suites and
+      `--fatal-infos` analyze all clean.
 - [x] Deterministic RNG + replay/record: new `DeterministicRandom`
       (`engine_core`) wraps a seeded `dart:math Random`, with `reset()`
       replaying the identical sequence from the start (needed to
