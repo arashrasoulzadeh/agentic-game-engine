@@ -59,6 +59,7 @@ void main() {
       pauseOnBackground: false,
       onScreenControls: OnScreenControlsMode.on,
       ambientBrightness: 0.3,
+      maxFps: 60,
     );
 
     final restored = GameConfig.fromJson(config.toJson());
@@ -73,6 +74,7 @@ void main() {
     expect(restored.pauseOnBackground, isFalse);
     expect(restored.onScreenControls, OnScreenControlsMode.on);
     expect(restored.ambientBrightness, 0.3);
+    expect(restored.maxFps, 60);
   });
 
   test('fromJson falls back to defaults for missing/unknown fields', () {
@@ -91,5 +93,11 @@ void main() {
     expect(config.pauseOnBackground, isTrue);
     expect(config.onScreenControls, OnScreenControlsMode.auto);
     expect(config.ambientBrightness, 1.0);
+    expect(config.maxFps, isNull);
+  });
+
+  test('maxFps null (default) is omitted from toJson entirely, not serialized as null', () {
+    const config = GameConfig(worldWidth: 1, worldHeight: 1);
+    expect(config.toJson().containsKey('maxFps'), isFalse);
   });
 }

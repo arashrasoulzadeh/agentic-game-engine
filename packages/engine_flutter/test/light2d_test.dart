@@ -80,6 +80,29 @@ void main() {
       expect(restored.blockOneWayPlatforms, isTrue);
     });
 
+    test('shadowSmoothingSeconds defaults to 0 (off) and round-trips through toJson/fromJson',
+        () {
+      expect(Light2D().shadowSmoothingSeconds, 0);
+
+      final light = Light2D(shadowSmoothingSeconds: 0.1);
+      final restored = Light2D.fromJson(light.toJson());
+      expect(restored.shadowSmoothingSeconds, 0.1);
+    });
+
+    test('shadowEdgeSoftness defaults to 3 and round-trips through toJson/fromJson', () {
+      expect(Light2D().shadowEdgeSoftness, 3);
+
+      final light = Light2D(shadowEdgeSoftness: 0);
+      final restored = Light2D.fromJson(light.toJson());
+      expect(restored.shadowEdgeSoftness, 0);
+    });
+
+    test('smoothedShadowDistances starts empty and is not included in toJson', () {
+      final light = Light2D();
+      expect(light.smoothedShadowDistances, isEmpty);
+      expect(light.toJson().containsKey('smoothedShadowDistances'), isFalse);
+    });
+
     test('shadowRayCount defaults to 48 and round-trips through toJson/fromJson', () {
       expect(Light2D().shadowRayCount, 48);
 
@@ -492,6 +515,120 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
 
       expect(find.byType(EngineView), findsOneWidget);
+    });
+  });
+
+  group('Shadow ray distance smoothing (Light2D.shadowSmoothingSeconds)', () {
+    // Real behavioral assertions on Light2D.smoothedShadowDistances
+    // (not just "renders without crashing") -- drives EngineView's
+    // real Ticker with explicit frame durations via tester.pump, so
+    // the exponential-smoothing math runs with real, known dt values.
+    testWidgets(
+        'a ray toward a solid wall converges from the initial radius toward the raw '
+        'raycast distance gradually over several frames, not instantly', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(
+              cols: 5,
+              rows: 5,
+              tileWidth: 20,
+              tileHeight: 20,
+              // Solid tile at col 2, row 2 (x=[40,60], y=[40,60]).
+              tiles: [
+                for (var row = 0; row < 5; row++)
+                  for (var col = 0; col < 5; col++) (col == 2 && row == 2) ? 1 : 0,
+              ],
+              solidTileIds: {1},
+            ),
+          );
+
+      final lightEntity = world.spawn();
+      // Same row as the wall (y=50), well to its left -- ray angle 0
+      // (the first of shadowRayCount samples, always +x direction)
+      // points straight at it. Raw distance to the wall's near edge:
+      // 40 - 10 = 30.
+      world.storeOf<Position>().set(lightEntity, Position(10, 50));
+      final light = Light2D(
+        radius: 100,
+        castsShadows: true,
+        shadowRayCount: 4,
+        shadowSmoothingSeconds: 1.0,
+      );
+      world.storeOf<Light2D>().set(lightEntity, light);
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+
+      // The very first ticker callback always has dt == 0 (no prior
+      // frame to measure elapsed time against -- see EngineView's
+      // _onTick), so smoothing doesn't even engage until the *second*
+      // pump. That priming frame first, then the one actually checked.
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 16));
+      final afterOneFrame = light.smoothedShadowDistances[0];
+      expect(afterOneFrame, greaterThan(90),
+          reason: 'barely smoothed in yet with tau=1.0s and a 16ms frame');
+
+      // Many more frames (16ms each, several seconds of simulated
+      // time at tau=1.0s) should converge it close to the raw value.
+      for (var i = 0; i < 300; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(light.smoothedShadowDistances[0], closeTo(30, 1));
+    });
+
+    testWidgets('shadowSmoothingSeconds: 0 (default) uses the raw distance immediately, '
+        'no lag', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(
+              cols: 5,
+              rows: 5,
+              tileWidth: 20,
+              tileHeight: 20,
+              tiles: [
+                for (var row = 0; row < 5; row++)
+                  for (var col = 0; col < 5; col++) (col == 2 && row == 2) ? 1 : 0,
+              ],
+              solidTileIds: {1},
+            ),
+          );
+
+      final lightEntity = world.spawn();
+      world.storeOf<Position>().set(lightEntity, Position(10, 50));
+      final light = Light2D(radius: 100, castsShadows: true, shadowRayCount: 4);
+      world.storeOf<Light2D>().set(lightEntity, light);
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // No smoothing cache is even used when disabled.
+      expect(light.smoothedShadowDistances, isEmpty);
     });
   });
 

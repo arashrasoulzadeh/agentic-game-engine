@@ -1,4 +1,4 @@
-import 'dart:math' show cos, sin, pi;
+import 'dart:math' show cos, exp, sin, pi;
 import 'dart:ui' as ui;
 
 import 'package:engine_core/engine_core.dart';
@@ -87,6 +87,19 @@ class EngineView extends StatefulWidget {
   /// deliberately doesn't do (no colored tint, no shadow casting).
   final double ambientBrightness;
 
+  /// Caps how often a tick (world step + repaint) actually runs, in
+  /// frames per second — `null` (default) runs one tick per raw
+  /// display callback, whatever the platform's actual refresh rate is
+  /// (60Hz, 120Hz, uncapped on some web/desktop configurations). A
+  /// ticker callback that arrives sooner than `1 / maxFps` since the
+  /// last *processed* one is skipped outright (no world step, no
+  /// repaint, negligible cost) rather than accumulated/batched, so
+  /// this is a ceiling on frequency, not a guarantee of exactly that
+  /// rate on a slower device. Set `60` for a stable, platform-
+  /// independent simulation/render rate instead of however fast the
+  /// display happens to run.
+  final int? maxFps;
+
   const EngineView({
     super.key,
     required this.world,
@@ -101,6 +114,7 @@ class EngineView extends StatefulWidget {
     this.onWorldTap,
     this.fixedTimestepSeconds,
     this.ambientBrightness = 1.0,
+    this.maxFps,
   });
 
   @override
@@ -116,6 +130,7 @@ class _EngineViewState extends State<EngineView>
   int? _memoryBytes;
   int _memorySampleCounter = 0;
   final List<double> _recentDts = [];
+  double _lastDt = 0;
 
   // Fixed-timestep bookkeeping -- unused (stays at defaults, at no
   // per-frame cost beyond a null check) when `fixedTimestepSeconds` is
@@ -133,11 +148,26 @@ class _EngineViewState extends State<EngineView>
   }
 
   void _onTick(Duration elapsed) {
+    // maxFps caps how often a raw display callback is actually turned
+    // into a world step + repaint -- a callback arriving sooner than
+    // 1/maxFps since the last *processed* one (not the last raw
+    // callback) is skipped outright, so a 120Hz display capped to 60
+    // does half the simulation/render work instead of stepping with a
+    // half-sized dt every callback. `_lastTick` deliberately isn't
+    // updated on a skipped callback, so the eventual processed frame's
+    // dt still reflects real elapsed time since the last one that did
+    // anything.
+    final maxFps = widget.maxFps;
+    if (maxFps != null && maxFps > 0 && _lastTick != Duration.zero) {
+      final minInterval = Duration(microseconds: (1e6 / maxFps).round());
+      if (elapsed - _lastTick < minInterval) return;
+    }
     final dt = _lastTick == Duration.zero
         ? 0.0
         : (elapsed - _lastTick).inMicroseconds / 1e6;
     _lastTick = elapsed;
     if (dt <= 0 || dt > 0.25) return;
+    _lastDt = dt;
     if (widget.paused) return;
 
     final fixedDt = widget.fixedTimestepSeconds;
@@ -252,6 +282,7 @@ class _EngineViewState extends State<EngineView>
       previousPositions: _previousPositions,
       interpolationAlpha: _interpolationAlpha,
       ambientBrightness: widget.ambientBrightness,
+      frameDtSeconds: _lastDt,
     );
 
     Widget child = CustomPaint(painter: painter, size: Size.infinite);
@@ -315,6 +346,14 @@ class _EnginePainter extends CustomPainter {
   final double interpolationAlpha;
   final double ambientBrightness;
 
+  /// Real wall-clock seconds since the last rendered frame — used only
+  /// to advance `Light2D.shadowSmoothingSeconds`' exponential smoothing
+  /// at the actual render frame rate (not the simulation's fixed/
+  /// variable tick rate, which can differ). `0` (the default) makes
+  /// every smoothed ray jump straight to its raw value the first time
+  /// it's read, same as smoothing being off.
+  final double frameDtSeconds;
+
   _EnginePainter({
     required this.world,
     required this.atlasRegistry,
@@ -324,6 +363,7 @@ class _EnginePainter extends CustomPainter {
     this.previousPositions = const {},
     this.interpolationAlpha = 1,
     this.ambientBrightness = 1.0,
+    this.frameDtSeconds = 0,
   }) : super(repaint: null);
 
   /// [current]'s position blended with wherever that entity was just
@@ -440,11 +480,7 @@ class _EnginePainter extends CustomPainter {
         ..shader = ui.Gradient.radial(
           info.screenPos,
           info.screenRadius,
-          [
-            Color.fromRGBO(255, 255, 255, intensity),
-            Color.fromRGBO(255, 255, 255, intensity * _falloffMidAlphaFraction),
-            const Color(0x00FFFFFF),
-          ],
+          _falloffColors(Color.fromRGBO(255, 255, 255, intensity)),
           _falloffStops,
         )
         ..maskFilter = _shadowEdgeMaskFilter(info);
@@ -474,11 +510,7 @@ class _EnginePainter extends CustomPainter {
         ..shader = ui.Gradient.radial(
           info.screenPos,
           info.screenRadius,
-          [
-            tintColor,
-            tintColor.withValues(alpha: tintColor.a * _falloffMidAlphaFraction),
-            tintColor.withAlpha(0),
-          ],
+          _falloffColors(tintColor),
           _falloffStops,
         )
         ..maskFilter = _shadowEdgeMaskFilter(info);
@@ -493,29 +525,55 @@ class _EnginePainter extends CustomPainter {
     }
   }
 
-  /// Radial-gradient stops shared by the reveal and tint passes: a
-  /// bright core out to 55% of the radius, then a softer tail to fully
-  /// faded at the edge, instead of the original two-stop linear
-  /// falloff (uniformly dimming from center to edge) that read as
-  /// flat/artificial compared to how light actually falls off.
-  /// [_falloffMidAlphaFraction] is the middle stop's alpha as a
-  /// fraction of the center's, applied to whatever color each pass
-  /// uses (plain white for reveal, the light's own tint color for the
-  /// tint pass) so both passes share one falloff shape.
-  static const List<double> _falloffStops = [0.0, 0.55, 1.0];
-  static const double _falloffMidAlphaFraction = 0.55;
+  /// Radial-gradient stop positions shared by the reveal and tint
+  /// passes, paired with [_falloffFractions] (that stop's alpha as a
+  /// fraction of the center's) to approximate a physically-inspired
+  /// inverse-square-*like* falloff — `alpha(t) ≈ (1 - t)²` sampled at
+  /// each stop — instead of either the original flat 2-stop linear dim
+  /// (uniform brightness loss, read as artificial) or an earlier
+  /// attempt at a softer curve that over-corrected into a large,
+  /// uniformly-bright "glowing disc" look (read as cartoonish — too
+  /// much of the radius stayed near-full-intensity before falling off).
+  /// A quadratic-ish curve drops off quickly from a small, genuinely
+  /// bright core and fades gradually through a long dim tail, closer
+  /// to how a real point light actually looks. `ui.Gradient.radial`
+  /// only interpolates linearly *between* stops, so approximating a
+  /// curve at all means sampling it at several points, not just one
+  /// middle stop — six points is enough to read as smooth without a
+  /// visible piecewise-linear kink.
+  static const List<double> _falloffStops = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+  static const List<double> _falloffFractions = [1.0, 0.64, 0.36, 0.16, 0.04, 0.0];
 
-  /// A small blur on shadow-casting/cone lights' reveal and tint paints
+  /// Builds the gradient color list for [_falloffStops] from [peak] (the
+  /// color at the light's exact center, alpha included) — each stop's
+  /// alpha is `peak`'s own alpha scaled by that stop's
+  /// [_falloffFractions] entry, so the *hue* stays constant across the
+  /// gradient (only how much of it shows through varies) while the
+  /// *shape* follows the shared falloff curve. Used for both the reveal
+  /// pass (`peak` = opaque-ish white scaled by `intensity`) and the
+  /// tint pass (`peak` = the light's own `colorArgb`), so a recolor of
+  /// either never has to touch the falloff math itself.
+  List<Color> _falloffColors(Color peak) => [
+        for (final fraction in _falloffFractions) peak.withValues(alpha: peak.a * fraction),
+      ];
+
+  /// A blur on shadow-casting/cone lights' reveal and tint paints
   /// softens the visibility polygon's straight, faceted edges (a
   /// side effect of approximating a curve with `shadowRayCount`
   /// straight segments) into a gentler gradient instead of a hard,
   /// jagged cutoff — purely cosmetic, applied once per light per frame
   /// (not per sampled ray), so it doesn't scale with `shadowRayCount`
-  /// the way the raycasting itself does. `null` (no blur at all) for
-  /// a plain circular light, which has no polygon edge to soften.
+  /// the way the raycasting itself does. Blur radius comes from
+  /// `Light2D.shadowEdgeSoftness` (scaled by `Camera.zoom`, so it stays
+  /// a consistent *screen*-space softness regardless of zoom level);
+  /// `null` (no blur at all) for a plain circular light, which has no
+  /// polygon edge to soften, or a light with `shadowEdgeSoftness <= 0`
+  /// (a deliberately hard edge).
   ui.MaskFilter? _shadowEdgeMaskFilter(_LightRenderInfo info) {
     if (info.clipPath == null) return null;
-    return const ui.MaskFilter.blur(ui.BlurStyle.normal, 3);
+    final softness = info.light.shadowEdgeSoftness * camera.zoom;
+    if (softness <= 0) return null;
+    return ui.MaskFilter.blur(ui.BlurStyle.normal, softness);
   }
 
   /// `null` for a plain full-circle light (the fast path — no
@@ -527,6 +585,15 @@ class _EnginePainter extends CustomPainter {
   /// `raycastTileMap` hit stops it short when [Light2D.castsShadows] is
   /// on, giving a real (if coarsely sampled) visibility polygon instead
   /// of a light shining through walls.
+  ///
+  /// When `light.shadowSmoothingSeconds > 0`, each ray's raw distance
+  /// is exponentially smoothed toward `light.smoothedShadowDistances`
+  /// (that light's own persisted per-ray cache, reused frame to frame)
+  /// instead of used directly — see `Light2D.shadowSmoothingSeconds`'s
+  /// doc comment for why: a light re-raycasting from scratch every
+  /// frame as it moves can have a ray's hit tile change in a small
+  /// discrete jump right as the light crosses a tile boundary, which
+  /// otherwise reads as the polygon's edge visibly popping.
   Path? _lightClipPath(Light2D light, Position worldPos, Size size) {
     final hasCone = light.coneAngle != null;
     if (!hasCone && !light.castsShadows) return null;
@@ -535,15 +602,35 @@ class _EnginePainter extends CustomPainter {
     final sweep = hasCone ? light.coneAngle! : 2 * pi;
     final startAngle = hasCone ? light.coneDirection - sweep / 2 : 0.0;
 
+    final smoothingSeconds = light.shadowSmoothingSeconds;
+    final smoothing = smoothingSeconds > 0 && frameDtSeconds > 0;
+    if (smoothing && light.smoothedShadowDistances.length != rayCount + 1) {
+      light.smoothedShadowDistances = List<double>.filled(rayCount + 1, light.radius);
+    }
+    // 1 - e^(-dt/tau): the fraction of the gap to the raw value closed
+    // this frame, framerate-independent (a slow frame catches up
+    // proportionally more than a fast one, instead of a fixed
+    // per-frame blend factor that would smooth more at high framerates
+    // and less at low ones for the same tau).
+    final smoothingAlpha = smoothing ? 1 - exp(-frameDtSeconds / smoothingSeconds) : 1.0;
+
     final path = Path();
     final centerScreen = camera.worldToScreen(worldPos.x, worldPos.y, size);
     path.moveTo(centerScreen.dx, centerScreen.dy);
 
     for (var i = 0; i <= rayCount; i++) {
       final angle = startAngle + sweep * i / rayCount;
-      final dist = light.castsShadows
+      final rawDist = light.castsShadows
           ? _raycastLightDistance(worldPos, angle, light.radius, light.blockOneWayPlatforms)
           : light.radius;
+      double dist;
+      if (smoothing) {
+        final prev = light.smoothedShadowDistances[i];
+        dist = prev + (rawDist - prev) * smoothingAlpha;
+        light.smoothedShadowDistances[i] = dist;
+      } else {
+        dist = rawDist;
+      }
       final worldPointX = worldPos.x + cos(angle) * dist;
       final worldPointY = worldPos.y + sin(angle) * dist;
       final screenPoint = camera.worldToScreen(worldPointX, worldPointY, size);

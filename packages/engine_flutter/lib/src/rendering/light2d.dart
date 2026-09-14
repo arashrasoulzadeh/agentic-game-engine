@@ -62,6 +62,19 @@ class Light2D {
   /// otherwise.
   bool blockOneWayPlatforms;
 
+  /// Blur radius (logical pixels, pre-`Camera.zoom`) `EngineView`
+  /// applies to this light's reveal/tint paints when [castsShadows] or
+  /// [coneAngle] gives it a visibility-polygon edge to soften — `3`
+  /// (the default) softens the polygon's straight, faceted edges (an
+  /// artifact of approximating a curve with [shadowRayCount] straight
+  /// segments) into a gentler gradient instead of a hard, jagged
+  /// cutoff. Raise it for a deliberately soft/diffuse light source (a
+  /// hazy torch, moonlight through leaves); `0` gives a fully hard,
+  /// unblurred polygon edge. Meaningless for a plain circular light,
+  /// which has no polygon edge to soften in the first place — the
+  /// gradient's own falloff already handles that case.
+  double shadowEdgeSoftness;
+
   /// Hz-ish oscillation speed for a flickering/guttering effect (a
   /// torch, a failing warning light) — `0` (default) disables
   /// flickering entirely, [intensity]/[radius] stay exactly as set.
@@ -100,6 +113,36 @@ class Light2D {
   /// rays than that can't describe a closed polygon.
   int shadowRayCount;
 
+  /// Time constant (seconds) `EngineView` exponentially smooths each
+  /// sampled shadow ray's hit distance toward its freshly-raycast value
+  /// by, instead of snapping to it every frame. `0` (default) disables
+  /// smoothing entirely — every ray uses its raw distance immediately,
+  /// the original behavior. A light attached to a moving entity
+  /// re-raycasts fresh from scratch every frame; as the entity crosses
+  /// a tile boundary, some rays' hit tile (and so their distance) can
+  /// change in a small, discrete jump rather than a smooth continuous
+  /// change, which reads as the shadow polygon's edge visibly popping/
+  /// flickering while the light moves — smoothing turns that jump into
+  /// a brief, smooth transition instead. Smaller values track the raw
+  /// value more closely (snappier, less smoothing); larger values lag
+  /// more but hide jumps more thoroughly. `0.08`–`0.15` is a reasonable
+  /// starting point for a light following a walking character.
+  /// Meaningless unless [castsShadows] or [coneAngle] is set — there's
+  /// no raycasting to smooth otherwise.
+  double shadowSmoothingSeconds;
+
+  /// Per-ray smoothed distances from the last frame `EngineView`
+  /// rendered this light — internal render-side cache maintained
+  /// entirely by `EngineView`, not meant to be read or set from game
+  /// code, and deliberately **not** included in [toJson]/[fromJson]:
+  /// it's sized to [shadowRayCount] and holds derived, per-frame
+  /// rendering state, not anything meaningful to persist in a save or
+  /// send over the agent-facing JSON API. Starts empty; `EngineView`
+  /// (re)allocates it (filled with [radius], i.e. "fully lit," so the
+  /// first frame doesn't smooth in *from* a shadowed state) the first
+  /// time it renders this light, or whenever [shadowRayCount] changes.
+  List<double> smoothedShadowDistances = <double>[];
+
   Light2D({
     this.radius = 100,
     this.intensity = 1,
@@ -114,6 +157,8 @@ class Light2D {
     double? baseRadius,
     this.flickerElapsed = 0,
     this.shadowRayCount = 48,
+    this.shadowSmoothingSeconds = 0,
+    this.shadowEdgeSoftness = 3,
   })  : baseIntensity = baseIntensity ?? intensity,
         baseRadius = baseRadius ?? radius;
 
@@ -131,6 +176,8 @@ class Light2D {
         'baseRadius': baseRadius,
         'flickerElapsed': flickerElapsed,
         'shadowRayCount': shadowRayCount,
+        'shadowSmoothingSeconds': shadowSmoothingSeconds,
+        'shadowEdgeSoftness': shadowEdgeSoftness,
       };
 
   factory Light2D.fromJson(Map<String, dynamic> json) => Light2D(
@@ -147,5 +194,7 @@ class Light2D {
         baseRadius: (json['baseRadius'] as num?)?.toDouble(),
         flickerElapsed: (json['flickerElapsed'] as num?)?.toDouble() ?? 0,
         shadowRayCount: (json['shadowRayCount'] as num?)?.toInt() ?? 48,
+        shadowSmoothingSeconds: (json['shadowSmoothingSeconds'] as num?)?.toDouble() ?? 0,
+        shadowEdgeSoftness: (json['shadowEdgeSoftness'] as num?)?.toDouble() ?? 3,
       );
 }

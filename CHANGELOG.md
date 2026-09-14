@@ -76,12 +76,30 @@ pubspec.yaml.
   shadow-casting raycast — a one-way platform renders as an opaque-
   looking surface but let light shine straight through by default;
   set it per light that's actually near one.
-- **Flat, artificial-looking light falloff + hard, faceted shadow
-  edges**: reveal/tint gradients now use a 3-stop falloff (bright core,
-  gentler tail) instead of a flat 2-stop linear dim, and a shadow-
-  casting/cone light's visibility-polygon edges get a small blur
-  (applied once per light per frame, not per sampled ray, so it costs
-  nothing extra as `shadowRayCount` scales) instead of a hard cutoff.
+- **Flat, artificial (and, after an intermediate attempt, "cartoony")
+  light falloff + hard, faceted shadow edges**: reveal/tint gradients
+  now use a 6-stop falloff approximating a quadratic `(1-t)²` curve —
+  a small, genuinely bright core with a quick initial drop and a long
+  dim tail — instead of a flat linear dim or a too-uniform "glowing
+  disc." A shadow-casting/cone light's visibility-polygon edges get a
+  blur (once per light per frame, not per sampled ray, so it costs
+  nothing extra as `shadowRayCount` scales) instead of a hard cutoff,
+  now driven by a new configurable `Light2D.shadowEdgeSoftness` (`3`
+  default) instead of a hardcoded constant.
+- **Shadow flicker while the light source moves**: new opt-in
+  `Light2D.shadowSmoothingSeconds` (`0` default) exponentially smooths
+  each sampled shadow ray's raycast distance toward its raw value over
+  time instead of snapping every frame — a light re-raycasting fresh
+  every frame as it moves can have a ray's hit tile change in a small
+  discrete jump right at a tile boundary, which otherwise reads as the
+  shadow polygon's edge visibly popping. Framerate-independent, using
+  the real wall-clock frame delta newly threaded into `EngineView`'s
+  render pass.
+- **Frame-rate cap**: new `EngineView.maxFps`/`GameConfig.maxFps`
+  (`null` default, uncapped) skips a ticker callback outright when it
+  arrives sooner than `1 / maxFps` since the last processed one — a
+  stable, platform-independent simulation/render rate instead of
+  however fast a given display happens to run.
 
 ### v1.0 release readiness
 

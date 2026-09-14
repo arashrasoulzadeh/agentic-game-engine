@@ -340,25 +340,64 @@ implementing.
       logged here rather than attempted inline.
 - [x] Softer, more natural falloff + soft shadow edges: the reveal/tint
       radial gradients went from a flat 2-stop linear falloff (uniform
-      dimming center-to-edge, which read as artificial) to a 3-stop
-      shape — full intensity out to 0, `intensity * 0.55` at 55% of the
-      radius, transparent at the edge — a brighter, more defined core
-      with a gentler tail, shared between both passes via one constant
-      stop list so they stay visually consistent. Separately, a
+      dimming center-to-edge, read as artificial) through an
+      intermediate 3-stop attempt (which over-corrected into a large,
+      uniformly-bright "glowing disc" — reported live as "cartoony") to
+      a 6-stop shape approximating a quadratic `(1-t)²` falloff: a
+      genuinely small, bright core that drops off quickly, then a long
+      dim tail — much closer to how a real point light actually looks.
+      Both the reveal and tint passes build their gradient colors from
+      one shared `_falloffColors`/`_falloffFractions` helper so a
+      recolor never has to touch the falloff math. Separately, a
       shadow-casting/cone light's visibility polygon (a `shadowRayCount`
       -sided approximation of a curve, so its edges are visibly
-      faceted/straight) now gets a small `MaskFilter.blur` on its
-      reveal and tint paints, applied once per light per frame — not
-      per sampled ray, so it doesn't scale with `shadowRayCount` the
-      way the raycasting itself does — softening the polygon boundary
-      into a gradient instead of a hard, jagged cutoff. `null` (no
-      blur) for a plain circular light, which has no polygon edge to
-      soften in the first place. Both changes are pure rendering-paint
-      tweaks — no new raycasts, no per-tile cost, same asymptotic cost
-      as before. Verified live in `test_game`: steady 120fps before and
-      after, no console errors; full `engine_flutter` suite (201
-      tests, all pre-existing "renders without crashing" lighting
-      tests still pass unchanged) confirms nothing broke.
+      faceted/straight) gets a `MaskFilter.blur` on its reveal/tint
+      paints, applied once per light per frame — not per sampled ray,
+      so it doesn't scale with `shadowRayCount` — now driven by a new
+      configurable `Light2D.shadowEdgeSoftness` (`3` default, screen-
+      space, scaled by `Camera.zoom`) instead of a hardcoded constant,
+      so a deliberately hazy/diffuse light can go softer and a crisp
+      one can go to `0` (hard edge). All pure rendering-paint tweaks —
+      no new raycasts, no per-tile cost.
+- [x] Shadow flicker while the light source moves (still visible after
+      the grid-raycast tie-break fix — reported live as "very very
+      noisy"): new opt-in `Light2D.shadowSmoothingSeconds` (`0` default,
+      off) exponentially smooths each sampled ray's raycast distance
+      toward its raw value over that many seconds instead of snapping
+      to it every frame, via a real per-ray cache
+      (`Light2D.smoothedShadowDistances`, deliberately excluded from
+      `toJson`/`fromJson` — derived render state, not anything worth
+      persisting). A light moving continuously re-raycasts from scratch
+      every frame, and as it crosses a tile boundary some rays' hit
+      tile (and so distance) can change in a small discrete jump rather
+      than smoothly — smoothing turns that jump into a brief transition
+      instead of a visible pop. Framerate-independent (`1 - e^(-dt/tau)`,
+      using the real wall-clock frame `dt`, newly threaded from
+      `_EngineViewState._onTick` into `_EnginePainter` as
+      `frameDtSeconds` — not the simulation's own tick rate, which can
+      differ). Verified: new widget tests in `light2d_test.dart` drive
+      `EngineView`'s real `Ticker` with explicit frame durations via
+      `tester.pump` and assert `Light2D.smoothedShadowDistances`
+      directly — a ray toward a solid wall stays close to the initial
+      radius after one frame (proving real lag with a large `tau`) and
+      converges close to the true raycast distance after many frames
+      (proving it actually converges, not just lags forever);
+      `shadowSmoothingSeconds: 0` confirmed to leave the cache unused
+      entirely (no smoothing overhead when disabled).
+- [x] Frame-rate cap: new `EngineView.maxFps`/`GameConfig.maxFps`
+      (`null` default, uncapped — runs at whatever the platform's raw
+      display callback delivers, same as before). A ticker callback
+      arriving sooner than `1 / maxFps` since the last *processed* one
+      is skipped outright (no world step, no repaint — a ceiling on
+      frequency, not a guaranteed rate on a slower device that can't
+      reach it). Verified: 3 new widget tests in `fixed_timestep_test.dart`
+      asserting `world.tick` directly — uncapped steps on every frame
+      of a fast (~120fps) burst; capped at `maxFps: 60` steps
+      meaningfully fewer times than the same burst; frames already
+      slower than the cap are never throttled. New `game_config_test.dart`
+      coverage for `maxFps`'s round-trip and its omitted-when-null
+      `toJson` shape. Full `engine_flutter` suite (211 tests) green,
+      `--fatal-infos` analyze clean.
 
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 

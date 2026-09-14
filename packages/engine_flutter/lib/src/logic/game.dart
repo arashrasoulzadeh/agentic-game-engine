@@ -206,6 +206,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           showFpsOverlay: widget.game.config.showFpsOverlay,
           showColliderDebug: widget.game.config.showColliderDebug,
           ambientBrightness: loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness,
+          maxFps: widget.game.config.maxFps,
           // No taps while an overlay is up -- it alone should be
           // interactive, so the paused scene underneath can't be
           // accidentally poked through it.
@@ -243,6 +244,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
               // only, so it never steals focus the base scene would
               // otherwise want back once resumed.
               backgroundColor: const Color(0x99101018),
+              maxFps: widget.game.config.maxFps,
               onWorldTap: (worldPosition) =>
                   overlay.scene.handleTap(overlay.world, _sceneController, worldPosition),
             ),

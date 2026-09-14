@@ -40,6 +40,12 @@ class GameConfig {
   /// scene, revealed again through each `Light2D` entity.
   final double ambientBrightness;
 
+  /// See `EngineView.maxFps`'s doc comment — `null` (default) runs at
+  /// however fast the platform's raw display callback fires; set `60`
+  /// for a stable, platform-independent rate instead of whatever a
+  /// given device's actual refresh rate happens to be.
+  final int? maxFps;
+
   const GameConfig({
     this.title = 'Game',
     this.orientation = GameOrientation.auto,
@@ -51,6 +57,7 @@ class GameConfig {
     this.pauseOnBackground = true,
     this.onScreenControls = OnScreenControlsMode.auto,
     this.ambientBrightness = 1.0,
+    this.maxFps,
   });
 
   Map<String, dynamic> toJson() => {
@@ -64,6 +71,7 @@ class GameConfig {
         'pauseOnBackground': pauseOnBackground,
         'onScreenControls': onScreenControls.name,
         'ambientBrightness': ambientBrightness,
+        if (maxFps != null) 'maxFps': maxFps,
       };
 
   factory GameConfig.fromJson(Map<String, dynamic> json) => GameConfig(
@@ -85,6 +93,7 @@ class GameConfig {
           orElse: () => OnScreenControlsMode.auto,
         ),
         ambientBrightness: (json['ambientBrightness'] as num?)?.toDouble() ?? 1.0,
+        maxFps: (json['maxFps'] as num?)?.toInt(),
       );
 
   /// Loads a `GameConfig` from a bundled JSON asset, e.g.

@@ -101,4 +101,72 @@ void main() {
     expect(find.byType(EngineView), findsOneWidget);
     expect(world.storeOf<Position>().get(id)!.x, greaterThan(50));
   });
+
+  group('maxFps', () {
+    testWidgets('null (default) steps on every rendered frame, uncapped', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(world: world, atlasRegistry: AtlasRegistry(), camera: Camera()),
+      ));
+
+      await tester.pump(const Duration(milliseconds: 16)); // baseline only
+      // Five frames at ~120fps (8ms apart) -- every one should step.
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+      }
+      expect(world.tick, 5);
+    });
+
+    testWidgets('caps how many of a burst of fast frames actually step the world',
+        (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          maxFps: 60, // minimum interval ~16.67ms
+        ),
+      ));
+
+      await tester.pump(const Duration(milliseconds: 16)); // baseline only
+      // Ten frames at ~120fps (8ms apart, well under the 60fps
+      // interval) -- roughly every other one should be skipped, so
+      // meaningfully fewer than 10 world.step calls, not all 10.
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+      }
+      expect(world.tick, lessThan(10));
+      expect(world.tick, greaterThan(0));
+    });
+
+    testWidgets('does not throttle frames already slower than the cap', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          maxFps: 60,
+        ),
+      ));
+
+      await tester.pump(const Duration(milliseconds: 16)); // baseline only
+      // Five frames well past the ~16.67ms minimum interval -- none of
+      // these should be skipped.
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 33));
+      }
+      expect(world.tick, 5);
+    });
+  });
 }
