@@ -25,6 +25,7 @@ void main() {
       'tileCollision',
       'jump',
       'ladder',
+      'ledgeGrab',
       'dash',
       'collision',
       'health',

@@ -9,6 +9,26 @@ Everything completed through the v1.0-release-readiness pass and the
 group) has been cleared from this file — see [CHANGELOG.md](CHANGELOG.md)
 for what shipped and git history for the full why behind each change.
 
+## Documentation
+
+- [ ] `engine_flutter`'s `README.md` doesn't document `Light2D`/
+      `EngineView.ambientBrightness` (basic 2D lighting, including
+      shadow casting/flicker/cone lights/viewport culling), `NineSliceSprite`,
+      `AnimationTransition`/crossfading, `EngineView.fixedTimestepSeconds`,
+      or `StringTable` at all — all shipped this project's "New engine
+      features (round 2)" streak with full code-level doc comments and
+      tests, but never made it into the package README's own feature
+      tour. `engine_platformer`'s README was brought up to date in the
+      same pass that added ledge grab (movement-feel fields, ladder/
+      conveyor/friction tiles, `AvoidanceBehavior`,
+      `PathFollowBehavior`, full system order, `damageEntity`'s
+      knockback/hitstun params) — `engine_flutter` and `engine_core`
+      need the equivalent pass. `engine_core`'s README should be
+      checked too (`entitiesWithAll`/`entitiesWithinRadius`,
+      `SaveGame` schema versioning, the `_MinHeap`-based pathfinding
+      rewrite, `StringTable`) — spot-checked lighter than
+      `engine_flutter`'s gap but not confirmed complete.
+
 ## Tooling / release
 
 - [ ] Publish `engine_core`/`engine_flutter`/`engine_cli` to pub.dev —
@@ -363,11 +383,57 @@ touching the render path.
       actual separation happen live hit the same simulated-input
       limitation noted elsewhere in this file, so the precise push-
       apart math is what the unit tests above assert directly instead.
-- [ ] Ledge grab / mantle: no way for an entity near the top of a wall
-      at the peak of a jump to grab on and climb up — every ledge has
-      to be cleared by a clean jump arc today, which is a common
-      "genuinely complete platformer" expectation this engine doesn't
-      meet yet.
+- [x] Ledge grab / mantle: new `PlatformerController.ledgeGrabEnabled`
+      (`false` default, opt-in) + new `LedgeGrabSystem`. Detection is a
+      tile-grid approximation in the same spirit as
+      `resolveSlopeCircleAabb`'s "walkable surface, not true polygon
+      physics": while airborne and touching a wall
+      (`touchingWallLeft`/`touchingWallRight`, already resolved by
+      `PlatformerSystem`/`TileCollisionSystem`), the tile beside the
+      entity in the wall's direction must be solid at the entity's own
+      row (the wall being touched), the tile one row above that must be
+      empty (open headroom — this is what makes it specifically the
+      wall's *top edge*, not an arbitrary point up a tall wall), and
+      the tile directly above the entity's own row must be empty too
+      (room for the entity's own head once it climbs up). On grab,
+      `Velocity` freezes to `(0, 0)` every tick (overriding gravity/
+      input — no sideways movement while hanging) until the player
+      mantles (hold up/jump — teleports to a target position/one tile
+      up, half a tile forward, precomputed once at grab time from the
+      tile geometry that triggered it) or drops (hold down, releasing
+      the grab and letting gravity resume). Runs after `JumpSystem`/
+      `LadderSystem` so a jump input that also satisfies the grab
+      condition results in a grab, not a jump — grabbing always takes
+      priority. A knockback hit (`hitstunSeconds > 0`) releases an
+      active grab outright rather than leaving the entity frozen
+      mid-air while being knocked back. Verified: 10 new tests in
+      `ledge_grab_system_test.dart` — grabs and freezes velocity at the
+      correct snapped position; does *not* grab while grounded, without
+      headroom above the wall (a tall solid face is not an edge),
+      or without headroom above the entity itself; mantles correctly on
+      both `up` and `jump` input, teleporting to the precomputed target
+      and standing grounded; drops on `down` input without
+      repositioning or touching velocity; keeps freezing velocity every
+      tick while just hanging; and releases the grab on hitstun without
+      re-freezing the resulting knockback velocity.
+      `ledgeGrabEnabled: false` (the default) is a confirmed no-op even
+      at an otherwise-grabbable position. Full `engine_platformer`
+      suite (177 tests) green, `--fatal-infos` analyze clean. Also
+      brought the package `README.md` up to date in the same pass — a
+      new "Movement feel" section documents every
+      `PlatformerController` opt-in field (several of which, like
+      `coyoteTimeSeconds`/`wallJumpPushSpeed`/`jumpCutMultiplier`/
+      `climbSpeed`, had never been documented in the README at all
+      despite shipping in earlier rounds), a new "Tile-based terrain
+      features" section covers ladders/conveyors/friction, the
+      Behaviors section now lists `PathFollowBehavior`/
+      `AvoidanceBehavior`, the system-order code block now matches
+      `system_pack.dart` exactly (it was missing `DashSystem`,
+      `LadderSystem`, `HitstunSystem`, `HealthHudSystem`,
+      `ProjectileSystem`, and `AnimationTransitionSystem` — five
+      previously undocumented systems), and the Damage/health/combat
+      section now documents `damageEntity`/`dealDamageOnTouch`'s
+      `knockbackSpeed`/`hitstunSeconds`/`source` parameters.
 - [ ] Swimming / water physics: no water-zone concept (altered gravity/
       max-fall-speed, buoyancy, a swim state distinct from walk/jump) —
       a `TriggerZone` can detect entering water, but nothing changes

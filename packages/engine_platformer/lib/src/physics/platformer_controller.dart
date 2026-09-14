@@ -135,6 +135,31 @@ class PlatformerController {
   /// before.
   double groundFriction;
 
+  /// `false` (default) disables ledge grab/mantle entirely —
+  /// `LedgeGrabSystem` is a no-op for a controller that doesn't set
+  /// this, same "off by default" convention as every other feel field
+  /// here. When `true`, an airborne entity touching a wall right at
+  /// the wall's top edge (open space directly above both the wall and
+  /// the entity itself) grabs on instead of sliding/falling past it —
+  /// see `LedgeGrabSystem`'s doc comment for exactly how the ledge is
+  /// detected and how mantling up onto it works.
+  bool ledgeGrabEnabled;
+
+  /// Whether this entity is currently hanging from a grabbed ledge —
+  /// maintained entirely by `LedgeGrabSystem`, not meant to be set from
+  /// game code. While `true`, `Velocity` is frozen in place each tick
+  /// until the entity mantles up (pressing jump/up) or drops
+  /// (pressing down).
+  bool ledgeGrabbing;
+
+  /// Where `LedgeGrabSystem` moves this entity to when it mantles up
+  /// off the currently grabbed ledge — computed once, at the moment
+  /// the grab starts, from the tile geometry that triggered it, so
+  /// mantling doesn't need to re-derive which wall/tile was grabbed.
+  /// Meaningless while [ledgeGrabbing] is `false`.
+  double ledgeMantleTargetX;
+  double ledgeMantleTargetY;
+
   PlatformerController({
     this.grounded = false,
     this.jumpSpeed = 300,
@@ -161,6 +186,10 @@ class PlatformerController {
     this.climbSpeed = 0,
     this.onLadder = false,
     this.groundFriction = 1.0,
+    this.ledgeGrabEnabled = false,
+    this.ledgeGrabbing = false,
+    this.ledgeMantleTargetX = 0,
+    this.ledgeMantleTargetY = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -189,6 +218,10 @@ class PlatformerController {
         'climbSpeed': climbSpeed,
         'onLadder': onLadder,
         'groundFriction': groundFriction,
+        'ledgeGrabEnabled': ledgeGrabEnabled,
+        'ledgeGrabbing': ledgeGrabbing,
+        'ledgeMantleTargetX': ledgeMantleTargetX,
+        'ledgeMantleTargetY': ledgeMantleTargetY,
       };
 
   factory PlatformerController.fromJson(Map<String, dynamic> json) =>
@@ -218,5 +251,9 @@ class PlatformerController {
         climbSpeed: (json['climbSpeed'] as num?)?.toDouble() ?? 0,
         onLadder: json['onLadder'] as bool? ?? false,
         groundFriction: (json['groundFriction'] as num?)?.toDouble() ?? 1.0,
+        ledgeGrabEnabled: json['ledgeGrabEnabled'] as bool? ?? false,
+        ledgeGrabbing: json['ledgeGrabbing'] as bool? ?? false,
+        ledgeMantleTargetX: (json['ledgeMantleTargetX'] as num?)?.toDouble() ?? 0,
+        ledgeMantleTargetY: (json['ledgeMantleTargetY'] as num?)?.toDouble() ?? 0,
       );
 }

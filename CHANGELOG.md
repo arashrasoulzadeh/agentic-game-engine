@@ -167,6 +167,16 @@ items in that section.
   instead of overriding it — packs of `PatrolBehavior`/`FollowBehavior`/
   `PathFollowBehavior` entities no longer overlap/stack when their
   paths cross.
+- **Ledge grab / mantle**: new `PlatformerController.ledgeGrabEnabled`
+  (opt-in) + new `LedgeGrabSystem` — an airborne entity touching a
+  wall right at its top edge grabs on instead of sliding/falling past
+  it, freezing in place until the player mantles up (hold up/jump) or
+  drops (hold down). `engine_platformer`'s `README.md` also brought up
+  to date in the same pass: a new "Movement feel" section documents
+  every `PlatformerController` field (several previously undocumented
+  entirely), a new "Tile-based terrain features" section covers
+  ladders/conveyors/friction, and the system-order/Behaviors/Damage
+  sections were corrected to match the current code.
 
 ### Fully-fledged platformer engine
 
