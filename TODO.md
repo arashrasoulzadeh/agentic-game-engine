@@ -332,9 +332,37 @@ touching the render path.
       tool don't reliably sustain held movement) — not attempted to
       fake, the physics itself is covered by the unit tests above
       instead.
-- [ ] Steering/avoidance among multiple AI: `PatrolBehavior`/
-      `FollowBehavior`/`PathFollowBehavior` don't avoid each other, so
-      packs of enemies overlap/stack.
+- [x] Steering/avoidance among multiple AI: new `AvoidanceBehavior`, a
+      decorator around any existing `Behavior`
+      (`AvoidanceBehavior(PatrolBehavior(...))`) that blends in a
+      horizontal separation push away from nearby `AIState`-carrying
+      entities (not literally everything within range — the player, a
+      coin, a projectile are left alone) on top of whatever the wrapped
+      behavior decides, rather than overriding it outright. A decorator
+      rather than logic added to each of `PatrolBehavior`/
+      `FollowBehavior`/`PathFollowBehavior` individually, since all
+      three would otherwise need the identical nearby-entity scan and
+      push-apart math duplicated three times. Uses
+      `WorldView.entitiesWithinRadius` (added earlier this round).
+      Verified: new `avoidance_behavior_test.dart` — two overlapping
+      patrol entities end up with different velocities (one pushed
+      back, one pushed further forward) rather than the identical
+      velocity `PatrolBehavior` alone would give both; a nearby
+      `AIState`-less entity (standing in for the player) causes no
+      push at all; no push beyond `avoidRadius`; delegates cleanly when
+      the wrapped behavior itself has nothing to do. Full
+      `engine_platformer` suite (167 tests) green, `--fatal-infos`
+      analyze clean. Wired into both of `test_game`'s existing
+      patrollers (`AvoidanceBehavior(PatrolBehavior(...))`) — harmless
+      as shipped, since their patrol bands don't currently overlap
+      (different platform tiers), but exercised directly: a temporary
+      third patroller spawned on top of the first (same band, same
+      behavior) loaded and ran with no crash/console error, confirming
+      the wiring itself (`spawnEnemy` + `AvoidanceBehavior` +
+      `AISystem`) works end to end in a real scene; watching the
+      actual separation happen live hit the same simulated-input
+      limitation noted elsewhere in this file, so the precise push-
+      apart math is what the unit tests above assert directly instead.
 - [ ] Ledge grab / mantle: no way for an entity near the top of a wall
       at the peak of a jump to grab on and climb up — every ledge has
       to be cleared by a clean jump arc today, which is a common

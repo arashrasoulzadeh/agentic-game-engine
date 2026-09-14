@@ -160,6 +160,13 @@ items in that section.
   nudges `Position.x` for an entity grounded on a conveyor tile. First
   item of the "Platformer (`engine_platformer`)" group of "New engine
   features (round 2)" — see TODO.md for the rest.
+- **AI steering/avoidance**: new `AvoidanceBehavior`, a decorator
+  around any `Behavior` (`AvoidanceBehavior(PatrolBehavior(...))`) that
+  blends a horizontal separation push away from nearby `AIState`-
+  carrying entities on top of the wrapped behavior's own decision,
+  instead of overriding it — packs of `PatrolBehavior`/`FollowBehavior`/
+  `PathFollowBehavior` entities no longer overlap/stack when their
+  paths cross.
 
 ### Fully-fledged platformer engine
 

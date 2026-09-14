@@ -1,3 +1,4 @@
+export 'src/ai/avoidance_behavior.dart';
 export 'src/ai/follow_behavior.dart';
 export 'src/ai/path_follow_behavior.dart';
 export 'src/ai/patrol_behavior.dart';
