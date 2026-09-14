@@ -796,6 +796,72 @@ void main() {
     });
   });
 
+  group('Light rendering under fixed-timestep interpolation', () {
+    testWidgets(
+        'a light attached to a moving entity renders at the interpolated position, not '
+        "the raw (one-fixed-step-stale) Position -- proves _drawLighting's worldPos "
+        'lookup actually goes through the same interpolation Sprite/Particle rendering '
+        'already gets, not just that nothing crashes', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+      world.addSystem(MovementSystem());
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(0, 0));
+      world.storeOf<Velocity>().set(id, Velocity(1000, 0));
+      world.storeOf<Light2D>().set(
+          id, Light2D(radius: 30, intensity: 1, colorArgb: 0xFFFF0000));
+
+      final boundaryKey = UniqueKey();
+      await tester.pumpWidget(MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            height: 300,
+            child: RepaintBoundary(
+              key: boundaryKey,
+              child: EngineView(
+                world: world,
+                atlasRegistry: AtlasRegistry(),
+                camera: Camera(),
+                ambientBrightness: 0,
+                fixedTimestepSeconds: 0.1,
+              ),
+            ),
+          ),
+        ),
+      ));
+
+      await tester.pump(const Duration(milliseconds: 16)); // baseline, dt==0, no step
+      // One whole 0.1s step: Position moves from (0,0) to (100,0);
+      // previousPositions snapshots (0,0) from just before this step.
+      await tester.pump(const Duration(milliseconds: 100));
+      // A further half-step's worth of elapsed time with no new whole
+      // step reached -- interpolationAlpha lands at 0.5, so the light
+      // should render at the halfway point between (0,0) and (100,0),
+      // i.e. world (50,0), not at the raw (already one full simulated
+      // step old-when-blended, but numerically current) Position (100,0).
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // World (0,0) -> screen (200,150) on a 400x300 viewport at
+      // Camera() default; world (50,0) -> screen (250,150); world
+      // (100,0) -> screen (300,150).
+      final interpolatedPixel = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(250, 150))))!;
+      final rawPositionPixel = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(300, 150))))!;
+
+      expect(interpolatedPixel.r, greaterThan(0.3),
+          reason: 'the interpolated position (world x=50) sits well inside the 30px '
+              'radius light, so the additive red tint should show here');
+      expect(rawPositionPixel.r, lessThan(0.05),
+          reason: 'the raw (uninterpolated) Position (world x=100) is 50px away from '
+              'the interpolated light center -- outside its 30px radius entirely, so '
+              'this pixel should be untouched black, not tinted red');
+    });
+  });
+
   group('Light2D.cacheShadowGeometry', () {
     testWidgets('off by default -- cachedShadowDistances stays null across frames', (tester) async {
       final world = World(width: 400, height: 300);

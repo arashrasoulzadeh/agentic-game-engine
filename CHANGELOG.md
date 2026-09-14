@@ -151,6 +151,12 @@ pubspec.yaml.
   configurable `Light2D.shadowEdgeSoftness` (default bumped from an
   initial `3` to `8` — reported live as too subtle to read as soft at
   all against a typical light radius).
+- **A light attached to a moving entity didn't follow fixed-timestep
+  interpolation**: `_drawLighting` now runs each light's position
+  through the same `_interpolated` blend `Sprite`/`Particle` rendering
+  already uses whenever `EngineView.fixedTimestepSeconds` is set — a
+  light used to visibly lag/step relative to its own entity's smoothly-
+  interpolated sprite; a no-op when fixed-timestep isn't in use.
 - **Shadow flicker while the light source moves**: root cause was the
   grid-raycast tie-break jitter (see above), already fixed there. A
   same-round attempt at an additional smoothing layer

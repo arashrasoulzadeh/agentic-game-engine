@@ -623,10 +623,18 @@ class _EnginePainter extends CustomPainter {
       final entity = lights.entityAt(i);
       final light = lights.denseAt(i);
       if (lightFilter != null && !lightFilter(light)) continue;
-      final worldPos = positions.get(entity);
-      if (worldPos == null) continue;
+      final rawPos = positions.get(entity);
+      if (rawPos == null) continue;
       if (light.radius <= 0) continue;
 
+      // Same interpolation `Sprite`/`Particle` rendering already gets
+      // -- without this, a light attached to a moving entity would
+      // visibly lag/step relative to that entity's own smoothly-
+      // interpolated sprite whenever fixedTimestepSeconds is set,
+      // since Position alone (the fixed-step *simulation* value) can
+      // be one whole fixed step behind the render frame.
+      final interpolated = _interpolated(entity, rawPos);
+      final worldPos = Position(interpolated.dx, interpolated.dy);
       final screenPos = camera.worldToScreen(worldPos.x, worldPos.y, size);
       final screenRadius = light.radius * camera.zoom;
       // Viewport culling: a light whose screen-space circle doesn't

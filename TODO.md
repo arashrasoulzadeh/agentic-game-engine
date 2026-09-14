@@ -741,21 +741,34 @@ implementing.
       floating-point noise alone. Full `engine_core` (176),
       `engine_flutter` (198), and `engine_platformer` (176) suites
       green, `--fatal-infos` analyze clean on all three.
-- [ ] Shadow/light position isn't run through `EngineView`'s
-      fixed-timestep interpolation: `_drawLighting` reads a light's
-      `Position` directly from the component store, while `Sprite`/
-      `Particle` rendering goes through `_interpolated` (blends toward
-      the current tick using `interpolationAlpha`) whenever
-      `fixedTimestepSeconds` is set (see this session's earlier fixed-
-      timestep work). A light attached to a moving entity (e.g. the
-      player, as `test_game` does) would visibly lag/step relative to
-      that entity's own smoothly-interpolated sprite instead of
-      tracking it exactly — `test_game` doesn't currently set
-      `fixedTimestepSeconds` so this isn't the cause of the flicker
-      just reported, but it's a real latent gap for any game that
-      does turn fixed-timestep on. Fix shape: thread `_interpolated`
-      through `_drawLighting`'s `worldPos` lookup the same way the
-      sprite/particle passes already do.
+- [x] Shadow/light position isn't run through `EngineView`'s
+      fixed-timestep interpolation: `_drawLighting` used to read a
+      light's `Position` directly from the component store, while
+      `Sprite`/`Particle` rendering goes through `_interpolated`
+      (blends toward the current tick using `interpolationAlpha`)
+      whenever `fixedTimestepSeconds` is set — a light attached to a
+      moving entity would visibly lag/step relative to that entity's
+      own smoothly-interpolated sprite instead of tracking it exactly.
+      Fixed exactly as scoped: `_drawLighting` now runs each light's
+      raw `Position` through the same `_interpolated` call
+      sprite/particle rendering already uses before building its
+      screen position/shadow raycasts/clip path — a pure no-op when
+      `fixedTimestepSeconds` is unset (`_previousPositions` stays
+      empty, so `_interpolated` always falls back to the raw
+      `Position` outright), so every existing lighting test/behavior
+      is unaffected. Verified: new widget test in `light2d_test.dart`
+      (`'Light rendering under fixed-timestep interpolation'`) — a
+      real pixel-sampling test (same `RenderRepaintBoundary.toImage`
+      technique as the z-banded-lighting test), not just "doesn't
+      crash": a light on a moving entity under `fixedTimestepSeconds:
+      0.1`, sampled mid-accumulation (`interpolationAlpha` at `0.5`),
+      renders its red tint centered on the *interpolated* world
+      position (halfway between the previous and current fixed-step
+      `Position`) rather than the raw, numerically-current-but-stale-
+      relative-to-render-time `Position` — a pixel at the interpolated
+      center is tinted, a pixel at the raw `Position` (50px away,
+      outside the light's 30px radius) is untouched black. Full
+      `engine_flutter` suite and `--fatal-infos` analyze clean.
 - [x] One-way platforms never block light/shadows: new opt-in
       `Light2D.blockOneWayPlatforms` (`false` default, matching
       `raycastTileMap`'s own default and today's unchanged behavior)
