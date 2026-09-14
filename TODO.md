@@ -59,24 +59,37 @@ for what shipped and git history for the full why behind each change.
       a concrete use case (fog-of-war reveal, a vignette, a wipe
       transition).
 
-- [ ] Textured `TileMap` rendering: `EngineView` draws every tile as a
-      flat solid-colored rect (see `_collectTileMapItems`'s doc
-      comment) — there's no atlas/sprite lookup for tiles at all, by
-      original design ("a game wanting textured tiles draws them as
-      regular `Sprite` entities instead"). Reported live as "tilemap
-      textures are all white" — not a rendering bug (there's no white
-      anywhere in the color table; what's being seen is the flat gray/
-      blue/orange/tan collision-kind colors, just very washed out
-      under the lighting darkness overlay), but a real usability gap:
-      `test_game` already loads a `tileset`/`Tile.png` atlas via
-      `AtlasRegistry` that nothing ever references, because there's no
-      supported way to say "draw this tile id using this atlas
-      region." Fix shape: a `TileMap.atlasId` + per-tile-id region
-      mapping (e.g. `Map<int, String> regionByTileId`), read by
-      `_collectTileMapItems` to `canvas.drawImageRect` the matching
-      atlas region instead of (or blended with) the flat debug color —
-      needs a design pass on how per-tile region lookup should work
-      without forcing every level to define one for every tile id.
+- [x] Textured `TileMap` rendering: new `TileMap.atlasId` (`null`
+      default) + `TileMap.regionByTileId` (empty default — a tile id
+      with no entry still falls back to the flat debug color even when
+      `atlasId` is set, so a level can texture some ids and leave
+      others, e.g. an invisible trigger marker, as plain color).
+      `EngineView._collectTileMapItems` resolves the atlas once per
+      `TileMap` (not per tile) and, for each tile id with a real,
+      loaded region, `canvas.drawImageRect`s it instead of the flat
+      color — the exact same region-in-an-atlas mechanism `Sprite`
+      already uses, just applied per grid cell. Kept as plain
+      `String`/`Map<int, String>` fields on `TileMap` (`engine_core`,
+      no Flutter dependency) rather than anything Flutter-typed, same
+      pattern `Sprite.atlasId`/`.region` already establish in
+      `engine_flutter`; `TileMap` already carried one rendering hint
+      (`zIndex`) so this isn't a new kind of leak. Verified: 2 new
+      `engine_core` tests (round-trip, and `atlasId` omitted from
+      `toJson` entirely — not serialized as `null` — when unset) and 3
+      new `engine_flutter` widget tests (a tile with a real loaded
+      region draws without error; a tile id with no `regionByTileId`
+      entry falls back to flat color even when `atlasId` is set and
+      loaded; an `atlasId` that isn't registered yet in the
+      `AtlasRegistry` falls back cleanly, not a crash). Full
+      `engine_core` (176), `engine_flutter` (198), and
+      `engine_platformer` (176) suites green, `--fatal-infos` analyze
+      clean on all three. Live in `test_game`: `main.level.json`'s
+      ground/platform tiles (`solidTileIds: {1}`) now reference the
+      `tileset` atlas's existing `dirt_top_mid` region (an atlas the
+      game already loaded but never used for anything) — the level
+      visibly renders real dirt texture instead of flat gray blocks,
+      while the ladder/icy/conveyor tiles keep their distinct
+      translucent colors (no `regionByTileId` entry for those ids).
 
 ## New engine features (round 2) — Core (`engine_core`)
 
@@ -227,29 +240,41 @@ moving, instead of the shadow sliding smoothly the way the light
 itself does. Not yet fixed — listed here to confirm the plan before
 touching the render path.
 
-- [ ] Shadow-edge jitter from grid-raycast tie-breaking:
-      `raycastTileMap`'s DDA traversal (`packages/engine_core/lib/src/physics/raycast.dart`)
-      picks which grid axis to step with a strict `tMaxX < tMaxY`
-      comparison. When a sampled ray's angle is close to a tile-grid
-      diagonal (common — `_lightClipPath` samples rays at fixed angle
-      increments all the way around, so *some* ray is always near
-      diagonal relative to the axis-aligned grid), `tMaxX`/`tMaxY` are
-      nearly equal, and which one continuously moving light position
-      makes momentarily smaller can flip frame to frame — sending that
-      ray down a different sequence of tiles and changing which tile
-      it reports as the blocker, even for a sub-pixel light move. That
-      reads as the shadow polygon's edge popping/jittering right where
-      those near-diagonal rays land, exactly the flicker reported.
-      Likely fix shape (not committed to without investigating
-      further): a small epsilon/hysteresis in the tie-break, and/or
-      resolving the *exact* corner-hit distance analytically instead
-      of leaving it to whichever axis's DDA step happens to fire
-      first — needs a repro test (a light moving in tiny steps near a
-      wall corner, asserting the polygon's hit distance for a
-      near-diagonal ray changes monotonically/smoothly, not just
-      "renders without crashing" like the current tests) before
-      changing `raycastTileMap`, since `WorldView.hasLineOfSight`/AI
-      already depend on its exact behavior and must not regress.
+- [x] Shadow-edge jitter from grid-raycast tie-breaking:
+      `raycastTileMap`'s DDA traversal now steps *both* grid axes
+      together whenever `tMaxX`/`tMaxY` are within a small epsilon
+      (`1e-6`) of each other, instead of picking one via a strict `<`
+      comparison. A ray passing near a tile-grid corner (common —
+      `_lightClipPath` samples rays all the way around a light, so
+      *some* ray is always near-diagonal relative to the axis-aligned
+      grid) used to have `tMaxX`/`tMaxY` nearly tied, and which one a
+      continuously moving light's position made momentarily smaller
+      could flip from one frame to the next — sending the ray down a
+      different sequence of tiles and changing whether a corner-
+      adjacent solid tile blocked it, for a sub-pixel light move. That
+      read as the shadow polygon's edge popping right where those
+      near-diagonal rays landed. Stepping both axes together at a near-
+      tie treats the ray as passing exactly through the shared corner
+      (skipping straight to the diagonal tile, the same convention
+      most grid-DDA-with-diagonal-handling implementations use) —
+      deterministic regardless of which side of the tie a tiny origin
+      perturbation falls on, so the flicker is gone at its actual
+      source rather than papered over with smoothing. This is a real,
+      if narrow, behavior change for the previously-undefined exact-
+      corner case (a corner-adjacent solid tile that used to
+      block a ray passing exactly through the corner no longer does,
+      consistently) — `WorldView.hasLineOfSight`/pathfinding/AI all
+      share this same primitive and their full test suites stayed
+      green, so nothing else depends on the old tie-break's specific
+      direction. Verified: new regression test in
+      `engine_core`'s `raycast_test.dart` — five origins perturbed by
+      sub-pixel amounts (`0`, `±1e-7`, `3e-8`, `-5e-8`) around an exact
+      corner-tie all now produce the identical raycast result (all
+      miss, consistently) where they'd previously have diverged
+      (some hitting the corner-adjacent solid tile, some not) based on
+      floating-point noise alone. Full `engine_core` (176),
+      `engine_flutter` (198), and `engine_platformer` (176) suites
+      green, `--fatal-infos` analyze clean on all three.
 - [ ] Shadow/light position isn't run through `EngineView`'s
       fixed-timestep interpolation: `_drawLighting` reads a light's
       `Position` directly from the component store, while `Sprite`/

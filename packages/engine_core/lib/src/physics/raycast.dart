@@ -86,7 +86,29 @@ RaycastHit? raycastTileMap(
       return RaycastHit(x: fromX + dx * t, y: fromY + dy * t, distance: totalDistance * t);
     }
     if (col == endCol && row == endRow) return null;
-    if (tMaxX < tMaxY) {
+    // A ray passing exactly (or nearly) through a grid corner has
+    // tMaxX == tMaxY — which axis "wins" a strict < comparison there
+    // is decided by float noise alone, and for a ray whose origin
+    // moves continuously (e.g. a Light2D following a walking entity)
+    // that noise flips sign from one call to the next, sending the
+    // traversal down a different sequence of tiles for a
+    // near-identical origin and producing a visibly jittering hit
+    // distance. Stepping *both* axes together whenever they're this
+    // close collapses the tie into one deterministic case instead of
+    // an unstable point comparison — the corner tile diagonally ahead
+    // gets tested either way, so this doesn't change which tile can
+    // block the ray, only removes the frame-to-frame instability in
+    // which of two equally-valid traversal orders gets there.
+    const cornerEpsilon = 1e-6;
+    final nearCorner = (tMaxX - tMaxY).abs() < cornerEpsilon;
+    if (nearCorner) {
+      t = tMaxX < tMaxY ? tMaxX : tMaxY;
+      if (t > 1) return null;
+      col += stepX;
+      row += stepY;
+      tMaxX += tDeltaX;
+      tMaxY += tDeltaY;
+    } else if (tMaxX < tMaxY) {
       t = tMaxX;
       if (t > 1) return null;
       col += stepX;

@@ -918,17 +918,20 @@ class _EnginePainter extends CustomPainter {
 
   /// Collects one `_DrawItem` per `TileMap`, grouped by `TileMap.zIndex`
   /// (defaults to before sprites/particles, same as before this became
-  /// z-sortable) — draws every non-empty tile as a solid-colored rect
-  /// (no atlas lookup, since tiles are level geometry, not sprites; a
-  /// game wanting textured tiles draws them as regular `Sprite`
-  /// entities instead, or a foreground `TileMap` with a higher `zIndex`
-  /// for a mask/overhang layer). One placeholder color per collision
-  /// kind — solid (opaque dark gray, the default/fallback), one-way
-  /// (translucent blue) and slope (orange) already had one;
-  /// `ladderTileIds` gets its own translucent tan rather than falling
-  /// through to the opaque solid-tile color, so a non-solid, walk-
-  /// through ladder doesn't visually read as a wall the player can't
-  /// actually pass through.
+  /// z-sortable). Each tile id with an entry in `TileMap.regionByTileId`
+  /// (and a loaded `TileMap.atlasId`) draws that atlas region as its
+  /// actual texture via `drawImageRect` — the same region-in-an-atlas
+  /// mechanism `Sprite` uses, just applied per grid cell instead of per
+  /// entity. Any tile id without one (including every tile in a level
+  /// that never sets `atlasId` at all, i.e. every level before this
+  /// existed) falls back to one placeholder color per collision kind —
+  /// solid (opaque dark gray, the default/fallback), one-way
+  /// (translucent blue), slope (orange), and ladder (translucent tan,
+  /// so a non-solid, walk-through ladder doesn't visually read as a
+  /// wall the player can't actually pass through) — so a level can mix
+  /// textured and flat-color tiles freely (texture the visible terrain,
+  /// leave an invisible trigger-marker id as plain color) rather than
+  /// needing to texture every tile id or none.
   int _collectTileMapItems(
     List<_DrawItem> items,
     int order,
@@ -965,6 +968,14 @@ class _EnginePainter extends CustomPainter {
         final maxRow = (((bottomRightWorld.dy - origin.y) / map.tileHeight).ceil() + 1)
             .clamp(0, map.rows - 1);
 
+        // Resolved once per TileMap (not per tile) -- a missing/
+        // not-yet-loaded atlas just means every tile in this map falls
+        // back to its flat debug color, same as a level authored with
+        // no atlasId at all.
+        final atlas = map.atlasId != null && atlasRegistry.has(map.atlasId!)
+            ? atlasRegistry.resolve(map.atlasId!)
+            : null;
+
         for (var row = minRow; row <= maxRow; row++) {
           for (var col = minCol; col <= maxCol; col++) {
             final tileId = map.tileAt(col, row);
@@ -973,6 +984,29 @@ class _EnginePainter extends CustomPainter {
             final left = origin.x + col * map.tileWidth;
             final top = origin.y + row * map.tileHeight;
             final screenPos = camera.worldToScreen(left, top, size);
+            final destRect = Rect.fromLTWH(
+              screenPos.dx,
+              screenPos.dy,
+              map.tileWidth * camera.zoom,
+              map.tileHeight * camera.zoom,
+            );
+
+            // A tile id with a real, loaded atlas region draws the
+            // actual texture; anything else (no atlasId set on this
+            // TileMap at all, the atlas hasn't loaded yet, or this
+            // particular tile id just has no region entry) falls back
+            // to the original flat debug color, so a level using
+            // textures for most tiles can still leave some ids
+            // (an invisible trigger marker, say) as plain color.
+            final regionName = map.regionByTileId[tileId];
+            final region = atlas != null && regionName != null
+                ? atlas.regions[regionName]
+                : null;
+            if (region != null) {
+              canvas.drawImageRect(atlas!.image, region, destRect, Paint());
+              continue;
+            }
+
             final color = map.oneWayTileIds.contains(tileId)
                 ? const Color(0x8899CCFF)
                 : (map.slopeUpRightTileIds.contains(tileId) || map.slopeUpLeftTileIds.contains(tileId))
@@ -981,15 +1015,7 @@ class _EnginePainter extends CustomPainter {
                         ? const Color(0x88C09050)
                         : const Color(0xFF4A4A4A);
 
-            canvas.drawRect(
-              Rect.fromLTWH(
-                screenPos.dx,
-                screenPos.dy,
-                map.tileWidth * camera.zoom,
-                map.tileHeight * camera.zoom,
-              ),
-              Paint()..color = color,
-            );
+            canvas.drawRect(destRect, Paint()..color = color);
           }
         }
       }));

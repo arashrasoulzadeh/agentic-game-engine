@@ -52,6 +52,22 @@ pubspec.yaml.
   unaffected, and letting go of up/down mid-climb now stops overriding
   `vel.y` (lets gravity/whatever else apply) instead of freezing in
   place.
+- **Shadow-casting lights flickered while moving**: `raycastTileMap`'s
+  grid DDA traversal picked which axis to step with a strict `<`
+  comparison between `tMaxX`/`tMaxY` — for a ray passing near a
+  tile-grid corner (always true for *some* ray, since shadow-casting
+  samples all the way around a light) those two values nearly tie, and
+  which one a continuously moving light's position made momentarily
+  smaller could flip from one frame to the next, changing whether a
+  corner-adjacent solid tile blocked the ray. Now steps both axes
+  together whenever they're within a small epsilon, treating the ray
+  as passing exactly through the shared corner — deterministic
+  regardless of a sub-pixel origin move.
+- **Tilemap tiles rendered as flat placeholder colors, with no way to
+  show real textures**: new `TileMap.atlasId`/`regionByTileId` let
+  `EngineView` draw a tile id's actual atlas region instead of its
+  debug color — `test_game`'s level now shows real dirt texture on its
+  ground/platforms instead of flat gray blocks.
 
 ### v1.0 release readiness
 

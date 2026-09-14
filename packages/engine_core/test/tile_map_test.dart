@@ -173,6 +173,34 @@ void main() {
     expect(map.frictionByTileId, isEmpty);
   });
 
+  test('atlasId/regionByTileId round-trip through toJson/fromJson', () {
+    final map = TileMap(
+      cols: 2,
+      rows: 1,
+      tileWidth: 10,
+      tileHeight: 10,
+      tiles: [1, 2],
+      atlasId: 'tileset',
+      regionByTileId: {1: 'grass', 2: 'dirt'},
+    );
+
+    final decoded = TileMap.fromJson(map.toJson());
+    expect(decoded.atlasId, 'tileset');
+    expect(decoded.regionByTileId, {1: 'grass', 2: 'dirt'});
+  });
+
+  test('atlasId/regionByTileId default to null/empty when unset, and atlasId is '
+      'omitted from toJson entirely rather than serialized as null', () {
+    final map = TileMap(cols: 1, rows: 1, tileWidth: 10, tileHeight: 10, tiles: [1]);
+    expect(map.atlasId, isNull);
+    expect(map.regionByTileId, isEmpty);
+    expect(map.toJson().containsKey('atlasId'), isFalse);
+
+    final decoded = TileMap.fromJson(map.toJson());
+    expect(decoded.atlasId, isNull);
+    expect(decoded.regionByTileId, isEmpty);
+  });
+
   test('TileMap.fromJson legend form rejects a character missing from the legend', () {
     expect(
       () => TileMap.fromJson({

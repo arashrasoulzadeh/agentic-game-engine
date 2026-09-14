@@ -90,6 +90,47 @@ void main() {
       expect(hit, isNotNull);
       expect(hit!.y, closeTo(40, 1e-9));
     });
+
+    test(
+        'a ray passing exactly through a grid corner gives the same result across tiny '
+        'origin perturbations (regression: a moving ray used to flicker between two '
+        'different traversal orders right at a corner tie, changing whether a '
+        'corner-adjacent solid tile blocked it)', () {
+      // 2x2 grid: only (col: 0, row: 1) is solid -- directly adjacent
+      // (by one axis each) to the tile the ray starts in, but not on
+      // the diagonal path itself.
+      final map = TileMap(
+        cols: 2,
+        rows: 2,
+        tileWidth: 10,
+        tileHeight: 10,
+        tiles: [
+          0, 0,
+          1, 0,
+        ],
+        solidTileIds: {1},
+      );
+
+      // A ray from (0, 0) toward (20, 20) passes exactly through the
+      // shared corner at (10, 10) -- tMaxX and tMaxY tie exactly.
+      // Perturbing the origin by a handful of sub-pixel amounts (the
+      // kind of movement a Light2D following a walking entity makes
+      // frame to frame) simulates the floating-point noise that used
+      // to flip which axis a strict `<` comparison preferred.
+      final perturbations = [0.0, 1e-7, -1e-7, 3e-8, -5e-8];
+      final results = perturbations
+          .map((e) => raycastTileMap(map, Position(0, 0), e, e, 20 + e, 20 + e))
+          .toList();
+
+      // Every perturbation must agree: either all hit the diagonal
+      // tile at the same distance, or all pass through -- not some
+      // hitting the corner-adjacent solid tile and others not,
+      // depending on which way the tie happened to lean.
+      final firstDistance = results.first?.distance;
+      for (final result in results) {
+        expect(result?.distance, firstDistance);
+      }
+    });
   });
 
   group('raycastEntities', () {

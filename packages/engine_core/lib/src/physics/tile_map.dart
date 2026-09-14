@@ -50,6 +50,24 @@ class TileMap {
   /// applied.
   final Map<int, double> frictionByTileId;
 
+  /// Which `AtlasRegistry`-registered atlas (see `engine_flutter`'s
+  /// `Sprite.atlasId`) `EngineView` draws tile faces from, for tiles
+  /// that have an entry in [regionByTileId]. `null` (the default)
+  /// means every tile renders as a flat debug-colored rect the way
+  /// this engine always has — set this to opt into real textures
+  /// instead. Kept as a plain `String` (not a Flutter type) the same
+  /// way `Sprite`/`ParallaxLayer` reference their atlas in
+  /// `engine_flutter`, so `TileMap` itself stays free of any Flutter
+  /// dependency.
+  final String? atlasId;
+
+  /// Which named region within [atlasId] to draw for a given tile id —
+  /// a tile id with no entry here (the default: empty) still falls
+  /// back to the flat debug color, even when [atlasId] is set, so a
+  /// level can texture some tile ids (visible terrain) while leaving
+  /// others (an invisible trigger/hazard marker id, say) as before.
+  final Map<int, String> regionByTileId;
+
   /// Draw order relative to every other renderable (`Sprite`,
   /// `ParallaxLayer`, another `TileMap`, `Particle`) — see
   /// `engine_flutter`'s `Sprite.zIndex` for the full rule. Useful for a
@@ -72,6 +90,8 @@ class TileMap {
     Set<int>? ladderTileIds,
     Map<int, double>? conveyorSpeedByTileId,
     Map<int, double>? frictionByTileId,
+    this.atlasId,
+    Map<int, String>? regionByTileId,
     this.zIndex = 0,
   })  : solidTileIds = solidTileIds ?? <int>{},
         oneWayTileIds = oneWayTileIds ?? <int>{},
@@ -79,7 +99,8 @@ class TileMap {
         slopeUpLeftTileIds = slopeUpLeftTileIds ?? <int>{},
         ladderTileIds = ladderTileIds ?? <int>{},
         conveyorSpeedByTileId = conveyorSpeedByTileId ?? <int, double>{},
-        frictionByTileId = frictionByTileId ?? <int, double>{} {
+        frictionByTileId = frictionByTileId ?? <int, double>{},
+        regionByTileId = regionByTileId ?? <int, String>{} {
     if (tiles.length != cols * rows) {
       throw ArgumentError(
           'tiles.length (${tiles.length}) must equal cols*rows (${cols * rows})');
@@ -110,6 +131,8 @@ class TileMap {
         'ladderTileIds': ladderTileIds.toList(),
         'conveyorSpeedByTileId': conveyorSpeedByTileId.map((k, v) => MapEntry(k.toString(), v)),
         'frictionByTileId': frictionByTileId.map((k, v) => MapEntry(k.toString(), v)),
+        if (atlasId != null) 'atlasId': atlasId,
+        'regionByTileId': regionByTileId.map((k, v) => MapEntry(k.toString(), v)),
         'zIndex': zIndex,
       };
 
@@ -137,6 +160,9 @@ class TileMap {
         .map((k, v) => MapEntry(int.parse(k as String), (v as num).toDouble()));
     final frictionByTileId = ((json['frictionByTileId'] as Map?) ?? const {})
         .map((k, v) => MapEntry(int.parse(k as String), (v as num).toDouble()));
+    final atlasId = json['atlasId'] as String?;
+    final regionByTileId = ((json['regionByTileId'] as Map?) ?? const {})
+        .map((k, v) => MapEntry(int.parse(k as String), v as String));
     if (legend != null) {
       return _fromLegend(
         legend: (legend as Map).cast<String, dynamic>(),
@@ -150,6 +176,8 @@ class TileMap {
         ladderTileIds: ladderTileIds,
         conveyorSpeedByTileId: conveyorSpeedByTileId,
         frictionByTileId: frictionByTileId,
+        atlasId: atlasId,
+        regionByTileId: regionByTileId,
         zIndex: zIndex,
       );
     }
@@ -166,6 +194,8 @@ class TileMap {
       ladderTileIds: ladderTileIds,
       conveyorSpeedByTileId: conveyorSpeedByTileId,
       frictionByTileId: frictionByTileId,
+      atlasId: atlasId,
+      regionByTileId: regionByTileId,
       zIndex: zIndex,
     );
   }
@@ -182,6 +212,8 @@ class TileMap {
     required Set<int> ladderTileIds,
     required Map<int, double> conveyorSpeedByTileId,
     required Map<int, double> frictionByTileId,
+    required String? atlasId,
+    required Map<int, String> regionByTileId,
     required int zIndex,
   }) {
     if (asciiRows.isEmpty) {
@@ -216,6 +248,8 @@ class TileMap {
       ladderTileIds: ladderTileIds,
       conveyorSpeedByTileId: conveyorSpeedByTileId,
       frictionByTileId: frictionByTileId,
+      atlasId: atlasId,
+      regionByTileId: regionByTileId,
       zIndex: zIndex,
     );
   }
