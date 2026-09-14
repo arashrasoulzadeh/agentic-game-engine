@@ -482,10 +482,30 @@ own note).
 - [ ] Multi-layer / animated tiles: `TileMap` is single-layer with no
       per-tile animation (torches, water) — most real levels want at
       least a background/foreground layer split.
-- [ ] Deterministic RNG + replay/record: no seeded RNG helper and no
-      input-replay capture exist yet, both of which matter for
-      reproducible testing/debugging of an agent-driven or
-      physics-heavy game.
+- [x] Deterministic RNG + replay/record: new `DeterministicRandom`
+      (`engine_core`) wraps a seeded `dart:math Random`, with `reset()`
+      replaying the identical sequence from the start (needed to
+      re-run a recorded replay deterministically) without callers
+      having to re-construct/re-share a new instance. New
+      `ReplayRecorder`/`ReplayPlayer` capture and play back a
+      timestamped sequence of arbitrary JSON snapshots — deliberately
+      generic (not tied to `InputState`, which lives in
+      `engine_flutter` and would be a backward dependency), so the
+      same mechanism replays recorded input, recorded agent actions,
+      or any other per-tick data a game wants to capture.
+      `ReplayPlayer.step` delivers every frame whose recorded `dt` has
+      elapsed within that step — a single large/stalled `dt` can
+      deliver multiple frames in one call, matching what a live run
+      under the same stall would have produced, rather than only ever
+      firing one frame per `step` call. Verified: 5 new
+      `deterministic_random_test.dart` tests (same-seed reproduces,
+      different seeds diverge, `reset()` replays identically,
+      `nextRange` bounds, `seed` readback) and 8 new
+      `replay_recorder_test.dart` tests (recording order/dt,
+      `clear()`, JSON round-trip, timed delivery, multi-frame delivery
+      in one stalled step, `reset()` rewinds, empty-recording
+      `isFinished`). Full `engine_core` suite and `dart analyze
+      --fatal-infos` both clean.
 - [ ] Content hot-reload: no way to re-load a level/`GameConfig` JSON
       file into a running `World` without a full app restart — this
       engine markets itself as agent-friendly/iteration-friendly, and

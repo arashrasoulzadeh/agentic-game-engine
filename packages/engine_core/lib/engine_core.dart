@@ -5,6 +5,8 @@ export 'src/ui/button_hit_test.dart';
 export 'src/content/cinematic.dart';
 export 'src/ecs/component_registry.dart';
 export 'src/ecs/component_store.dart';
+export 'src/ecs/deterministic_random.dart';
+export 'src/ecs/replay_recorder.dart';
 export 'src/ai/ai_state.dart';
 export 'src/ui/button.dart';
 export 'src/physics/collider.dart';
