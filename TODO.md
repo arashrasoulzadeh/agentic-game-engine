@@ -180,6 +180,53 @@ matter how small or large the light. Both closed out in one pass.
 Full `engine_flutter` suite green (194 tests, 5 new in
 `light2d_test.dart`), `dart analyze --fatal-infos` clean.
 
+## Lighting follow-ups (round 3) — not yet implemented
+
+Reported live: a shadow-casting light's shadow visibly *flickers*
+(edges popping/jittering frame to frame) while its light source is
+moving, instead of the shadow sliding smoothly the way the light
+itself does. Not yet fixed — listed here to confirm the plan before
+touching the render path.
+
+- [ ] Shadow-edge jitter from grid-raycast tie-breaking:
+      `raycastTileMap`'s DDA traversal (`packages/engine_core/lib/src/physics/raycast.dart`)
+      picks which grid axis to step with a strict `tMaxX < tMaxY`
+      comparison. When a sampled ray's angle is close to a tile-grid
+      diagonal (common — `_lightClipPath` samples rays at fixed angle
+      increments all the way around, so *some* ray is always near
+      diagonal relative to the axis-aligned grid), `tMaxX`/`tMaxY` are
+      nearly equal, and which one continuously moving light position
+      makes momentarily smaller can flip frame to frame — sending that
+      ray down a different sequence of tiles and changing which tile
+      it reports as the blocker, even for a sub-pixel light move. That
+      reads as the shadow polygon's edge popping/jittering right where
+      those near-diagonal rays land, exactly the flicker reported.
+      Likely fix shape (not committed to without investigating
+      further): a small epsilon/hysteresis in the tie-break, and/or
+      resolving the *exact* corner-hit distance analytically instead
+      of leaving it to whichever axis's DDA step happens to fire
+      first — needs a repro test (a light moving in tiny steps near a
+      wall corner, asserting the polygon's hit distance for a
+      near-diagonal ray changes monotonically/smoothly, not just
+      "renders without crashing" like the current tests) before
+      changing `raycastTileMap`, since `WorldView.hasLineOfSight`/AI
+      already depend on its exact behavior and must not regress.
+- [ ] Shadow/light position isn't run through `EngineView`'s
+      fixed-timestep interpolation: `_drawLighting` reads a light's
+      `Position` directly from the component store, while `Sprite`/
+      `Particle` rendering goes through `_interpolated` (blends toward
+      the current tick using `interpolationAlpha`) whenever
+      `fixedTimestepSeconds` is set (see this session's earlier fixed-
+      timestep work). A light attached to a moving entity (e.g. the
+      player, as `test_game` does) would visibly lag/step relative to
+      that entity's own smoothly-interpolated sprite instead of
+      tracking it exactly — `test_game` doesn't currently set
+      `fixedTimestepSeconds` so this isn't the cause of the flicker
+      just reported, but it's a real latent gap for any game that
+      does turn fixed-timestep on. Fix shape: thread `_interpolated`
+      through `_drawLighting`'s `worldPos` lookup the same way the
+      sprite/particle passes already do.
+
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
 - [x] Ladders/climbing, conveyors, per-tile friction: `TileMap` gained
