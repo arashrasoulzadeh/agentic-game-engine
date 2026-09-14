@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'camera.dart';
+import 'clip_shape.dart';
 import 'parallax_layer.dart';
 import 'sprite.dart';
 // Aliased -- `Text` collides with Flutter's own widget of the same
@@ -395,9 +396,43 @@ class _EnginePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final positions = world.storeOf<Position>();
+    final clipShapes = world.storeOf<ClipShape>();
+    final reveals = <_ClipShapeInfo>[];
+    final cutouts = <_ClipShapeInfo>[];
+    for (var i = 0; i < clipShapes.length; i++) {
+      final entity = clipShapes.entityAt(i);
+      final shape = clipShapes.denseAt(i);
+      final worldPos = positions.get(entity);
+      if (worldPos == null) continue;
+      final info = _ClipShapeInfo(shape, camera.worldToScreen(worldPos.x, worldPos.y, size));
+      (shape.mode == ClipShapeMode.reveal ? reveals : cutouts).add(info);
+    }
+
+    // "reveal" has to *clip drawing as it happens* (a real Canvas is
+    // immediate-mode -- there's no way to retroactively confine
+    // already-drawn pixels to a region after the fact), so it wraps
+    // the entire body below in a save/clipPath/restore, applied before
+    // a single pixel of it is drawn. "cutout" is the opposite problem
+    // -- it has to *erase* pixels the body below is about to draw, so
+    // it wraps that same body in an extra saveLayer, punching holes
+    // (`BlendMode.dstOut`, same technique `_drawLighting`'s own
+    // darkness pass already uses) once everything is on the layer,
+    // right before compositing it back. Both are skipped entirely
+    // (i.e. free) whenever no `ClipShape` of that mode exists.
+    if (cutouts.isNotEmpty) canvas.saveLayer(Offset.zero & size, Paint());
+
+    canvas.save();
+    if (reveals.isNotEmpty) {
+      final combined = Path();
+      for (final info in reveals) {
+        combined.addPath(_clipShapePath(info), Offset.zero);
+      }
+      canvas.clipPath(combined);
+    }
+
     canvas.drawRect(Offset.zero & size, Paint()..color = backgroundColor);
 
-    final positions = world.storeOf<Position>();
     final items = <_DrawItem>[];
     var order = 0;
     order = _collectParallaxItems(items, order, size, positions);
@@ -437,6 +472,39 @@ class _EnginePainter extends CustomPainter {
       _drawColliderDebug(canvas, size, positions);
       _drawTileMapDebug(canvas, size, positions);
     }
+
+    canvas.restore(); // undo the reveal clip (a no-op if none applied)
+
+    if (cutouts.isNotEmpty) {
+      for (final info in cutouts) {
+        final paint = Paint()..blendMode = BlendMode.dstOut;
+        if (info.shape.softness > 0) {
+          paint.maskFilter =
+              ui.MaskFilter.blur(ui.BlurStyle.normal, info.shape.softness * camera.zoom);
+        }
+        canvas.drawPath(_clipShapePath(info), paint);
+      }
+      canvas.restore(); // composite the holed layer back
+    }
+  }
+
+  /// The screen-space `Path` for one `ClipShape` — a circle
+  /// (`addOval`) or a rectangle (`addRect`) centered on
+  /// [_ClipShapeInfo.screenPos], scaled by `Camera.zoom` the same way
+  /// every other world-space size in this file is.
+  Path _clipShapePath(_ClipShapeInfo info) {
+    final shape = info.shape;
+    final path = Path();
+    if (shape.isCircle) {
+      path.addOval(Rect.fromCircle(center: info.screenPos, radius: shape.radius * camera.zoom));
+    } else {
+      path.addRect(Rect.fromCenter(
+        center: info.screenPos,
+        width: shape.width * camera.zoom,
+        height: shape.height * camera.zoom,
+      ));
+    }
+    return path;
   }
 
   /// Splits [items] into z-bands at every `Light2D.minZIndex`/
@@ -1508,6 +1576,14 @@ class _LightRenderInfo {
   final double screenRadius;
   final Path? clipPath;
   _LightRenderInfo(this.light, this.screenPos, this.screenRadius, this.clipPath);
+}
+
+/// One `ClipShape`'s precomputed screen position, alongside the shape
+/// itself — computed once in `paint()` and reused by `_clipShapePath`.
+class _ClipShapeInfo {
+  final ClipShape shape;
+  final Offset screenPos;
+  _ClipShapeInfo(this.shape, this.screenPos);
 }
 
 /// One `Canvas.drawAtlas` call's worth of sprites sharing a source

@@ -22,6 +22,32 @@ pubspec.yaml.
   decoded `ui.Image`, releasing its GPU texture — the registry
   previously had no way to release memory for an atlas a game is done
   with (e.g. after leaving a room for good).
+- `CollisionSystem` now reuses one `SpatialHash` instance across ticks
+  (rebuilt only when cell size or world width changes) instead of
+  constructing and discarding a fresh one every `update()`.
+  `SpatialHash` itself was rewritten with an active-key list + a
+  recycled-bucket pool so `clear()` no longer needs to drop and
+  reallocate its cell map every tick, while still bounding it to only
+  cells touched in the current cycle (an earlier "empty buckets in
+  place" attempt at this same fix regressed n=100 collision-tick cost
+  3-4x, caught by `collision_system_benchmark.dart`, because it let
+  every cell an entity had *ever* visited stay resident forever).
+- `pack-assets` gained a `--scales` flag: pack the same source images
+  at multiple resolution tiers (e.g. `--scales 0.5,1.0,2.0`), writing
+  each tier with Flutter's own `@<scale>x` asset-variant suffix
+  (`atlas@0.5x.png`) so a game can ship low/high-DPI variants without
+  a second packing pass.
+- `AudioManager.playSound` now pulls from a small pool of reused
+  `AudioPlayer`s instead of constructing a new one per call.
+- New opt-in `Light2D.cacheShadowGeometry`: when a shadow-casting
+  light's position/radius/cone/ray-count/etc. are all bit-identical to
+  the previous frame, `EngineView` reuses last frame's raycast-sweep
+  distances instead of re-running it — a cache hit is pixel-identical
+  to the uncached path, a miss invalidates completely and immediately
+  (no interpolated lag, unlike the reverted `shadowSmoothingSeconds`
+  approach). Off by default; doesn't detect `TileMap` content changes,
+  so a game enabling it near destructible geometry must force
+  invalidation itself.
 
 ### Asset packing
 
@@ -179,6 +205,17 @@ pubspec.yaml.
   `srcOver`, so it only darkens pixels that band already drew into,
   leaving the rest of its layer transparent (a no-op against whatever
   other bands composited before or after it).
+
+### Masking & clipping
+
+- New `ClipShape` component (`engine_flutter`): a circle or rect,
+  `reveal` mode (only show the scene through the shape — a spotlight/
+  peephole/wipe transition) or `cutout` mode (punch a hole through the
+  already-drawn scene — a vignette). `reveal` clips forward via
+  `Canvas.clipPath` around the whole draw body; `cutout` erases
+  backward via a `saveLayer` + `BlendMode.dstOut` pass, since a
+  `Canvas` is immediate-mode and can't retroactively mask pixels
+  outside a layer it still owns.
 
 ### Cinematic camera & screen effects
 

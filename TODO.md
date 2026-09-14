@@ -416,14 +416,34 @@ own note).
       reachable via a new "CINEMATIC DEMO" button on the main menu —
       and was used to find both bugs above live before they were fixed.
 
-- [ ] Real masking/clipping: z-index only reorders draw *calls*; it has
-      no clip-path or blend-mode primitive, so it can't express "this
-      shape cuts a hole in what's behind it" or "this layer only shows
-      through a mask shape." Would need its own API (e.g. a `Mask`/
-      `ClipShape` component and a `Canvas.clipPath`/`saveLayer`+
-      `BlendMode.dstIn` pass in `EngineView`) — worth doing once there's
-      a concrete use case (fog-of-war reveal, a vignette, a wipe
-      transition).
+- [x] Real masking/clipping: new `ClipShape` component
+      (`engine_flutter`, circle or rect centered on `Position`) with a
+      `ClipShapeMode`: `reveal` (only show the scene where at least one
+      reveal shape covers it — spotlight/peephole/wipe transition) or
+      `cutout` (punch a hole through the already-drawn scene — a
+      vignette). The two modes need genuinely different `Canvas`
+      mechanisms, not two branches of the same one: `Canvas` is
+      immediate-mode, so `reveal` has to clip drawing *as it happens*
+      (the whole draw body wrapped in `canvas.save()`/`clipPath`/
+      `restore()`), while `cutout` has to erase pixels *already*
+      drawn, which only works inside a layer you still control —
+      wrapped the draw body in `canvas.saveLayer()`, then after the
+      reveal-clip is restored, each cutout shape is stamped with
+      `BlendMode.dstOut` (blurred via `MaskFilter.blur` when
+      `softness` > 0) before the final `restore()` composites the
+      layer back. Both paths are skipped entirely (zero cost, not even
+      a `save()`) when no `ClipShape` of that mode exists in the
+      world. Verified: `clip_shape_test.dart` — `toJson`/`fromJson`
+      round-trip plus the unknown-mode-string fallback; two real
+      pixel-sampling widget tests (same `RenderRepaintBoundary.toImage`
+      technique as the z-banded-lighting test) proving `reveal`
+      actually clips a sprite outside the shape to fully transparent
+      while a sprite inside it still draws, and proving `cutout`
+      actually erases a sprite under the shape to fully transparent
+      while a sprite elsewhere is untouched — not just "renders
+      without crashing"; plus coexistence, rect-shape, no-`Position`,
+      and no-`ClipShape`-present crash-safety tests. Full
+      `engine_flutter` suite and `flutter analyze --fatal-infos` clean.
 
 - [x] Textured `TileMap` rendering: new `TileMap.atlasId` (`null`
       default) + `TileMap.regionByTileId` (empty default — a tile id

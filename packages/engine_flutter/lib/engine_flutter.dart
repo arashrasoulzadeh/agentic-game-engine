@@ -7,6 +7,7 @@ export 'src/rendering/light2d.dart';
 export 'src/rendering/nine_slice_sprite.dart';
 export 'src/rendering/parallax_layer.dart';
 export 'src/rendering/screen_tint.dart';
+export 'src/rendering/clip_shape.dart';
 export 'src/rendering/sprite.dart';
 export 'src/rendering/text.dart';
 export 'src/rendering/engine_view.dart';

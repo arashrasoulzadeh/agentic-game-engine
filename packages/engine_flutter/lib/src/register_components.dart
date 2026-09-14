@@ -2,6 +2,7 @@ import 'package:engine_core/engine_core.dart';
 
 import 'rendering/animation.dart';
 import 'rendering/animation_transition.dart';
+import 'rendering/clip_shape.dart';
 import 'rendering/hud_bar.dart';
 import 'rendering/light2d.dart';
 import 'rendering/nine_slice_sprite.dart';
@@ -64,5 +65,10 @@ void registerFlutterComponents(World world) {
     'screenTint',
     (s) => s.toJson(),
     ScreenTint.fromJson,
+  );
+  world.components.register<ClipShape>(
+    'clipShape',
+    (c) => c.toJson(),
+    ClipShape.fromJson,
   );
 }
