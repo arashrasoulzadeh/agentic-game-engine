@@ -82,6 +82,19 @@ Read each package's own README for its API — this file is about
   committing: `dart test`/`dart analyze --fatal-infos` for
   `engine_core`/`engine_cli`, `flutter test`/`flutter analyze
   --fatal-infos` for `engine_flutter`/`engine_platformer`.
+- **Documentation and test coverage are both non-negotiable, not
+  best-effort.** Every new public class/field/function gets a doc
+  comment (the *why*, per the no-unnecessary-comments rule above — not
+  a restatement of the signature) before it's committed, and every new
+  piece of *behavior* (not just "does it compile") gets a test that
+  would actually fail without the change — a "renders/runs without
+  crashing" test is acceptable only where this codebase already relies
+  on that pattern (rendering-heavy `engine_flutter` widget tests), not
+  a substitute for asserting real behavior wherever behavior can be
+  asserted directly. This applies equally to bug fixes (a regression
+  test) and new features — "add tests later" is not a valid state to
+  commit in. When touching an existing public API that's under-
+  documented, fix its doc comment too rather than leaving it as found.
 - **Verify end-to-end, not just unit tests, for anything touching the
   CLI or cross-package dependency wiring.** Several real bugs in this
   repo's history were only caught by actually running `game_agent
