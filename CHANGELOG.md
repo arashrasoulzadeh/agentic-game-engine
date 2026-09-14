@@ -97,6 +97,13 @@ This closes out the "Rendering (`engine_flutter`)" group of "New engine
 features (round 2)" — see TODO.md for the remaining Core/Platformer
 items in that section.
 
+- **Lighting: viewport culling + configurable shadow ray count**:
+  `EngineView` now skips a `Light2D` entirely (including its
+  shadow-casting raycasts) once its screen-space circle no longer
+  reaches the visible viewport, and the shadow-casting visibility
+  polygon's ray count is now `Light2D.shadowRayCount` (`48` default,
+  unchanged) instead of a hardcoded constant — both found from actually
+  running several shadow-casting lights together in `test_game`.
 - **Ladders, conveyors, per-tile friction**: `TileMap` gained
   `ladderTileIds`, `conveyorSpeedByTileId`, and `frictionByTileId`
   (all opt-in, empty by default, unchanged behavior for untagged

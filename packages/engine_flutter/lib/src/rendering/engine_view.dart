@@ -414,6 +414,15 @@ class _EnginePainter extends CustomPainter {
 
       final screenPos = camera.worldToScreen(worldPos.x, worldPos.y, size);
       final screenRadius = light.radius * camera.zoom;
+      // Viewport culling: a light whose screen-space circle doesn't
+      // reach the visible rect at all can't affect anything on screen
+      // this frame, so skip it before the expensive part -- shadow
+      // casting is a raycastTileMap call per sampled ray, and with
+      // several shadow-casting lights in a level only a few of which
+      // are ever on screen at once, this is a real cost avoided, not
+      // just a micro-optimization (same reasoning as
+      // _collectTileMapItems's tile culling above).
+      if (!_circleIntersectsRect(screenPos, screenRadius, fullRect)) continue;
       final clipPath = _lightClipPath(light, worldPos, size);
       infos.add(_LightRenderInfo(light, screenPos, screenRadius, clipPath));
     }
@@ -487,7 +496,7 @@ class _EnginePainter extends CustomPainter {
     final hasCone = light.coneAngle != null;
     if (!hasCone && !light.castsShadows) return null;
 
-    const rayCount = 48;
+    final rayCount = light.shadowRayCount < 3 ? 3 : light.shadowRayCount;
     final sweep = hasCone ? light.coneAngle! : 2 * pi;
     final startAngle = hasCone ? light.coneDirection - sweep / 2 : 0.0;
 
@@ -530,6 +539,19 @@ class _EnginePainter extends CustomPainter {
       }
     }
     return nearest;
+  }
+
+  /// Whether a circle at [center] with [radius] overlaps [rect] at all
+  /// — the closest point on the (clamped) rect to [center] is within
+  /// [radius]. Used to cull a `Light2D` whose screen-space circle
+  /// can't reach the visible viewport before doing any of the more
+  /// expensive per-light work (shadow raycasting in particular).
+  bool _circleIntersectsRect(Offset center, double radius, Rect rect) {
+    final closestX = center.dx.clamp(rect.left, rect.right);
+    final closestY = center.dy.clamp(rect.top, rect.bottom);
+    final dx = center.dx - closestX;
+    final dy = center.dy - closestY;
+    return dx * dx + dy * dy <= radius * radius;
   }
 
   /// A stroked circle at every `Collider`'s actual radius — see

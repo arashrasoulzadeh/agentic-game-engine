@@ -76,6 +76,18 @@ class Light2D {
   /// `LightFlickerSystem`, not meant to be set from game code.
   double flickerElapsed;
 
+  /// How many rays `EngineView` samples around this light when building
+  /// its visibility polygon — only meaningful while [castsShadows] is
+  /// on or [coneAngle] is set (the plain-circle fast path ignores it
+  /// entirely). `48` (the default, and this feature's original fixed
+  /// value) is a reasonable middle ground; raise it for one big,
+  /// prominent shadow-casting light where faceted polygon edges would
+  /// actually be visible, or lower it to cut cost when a level has many
+  /// small shadow-casting lights on screen at once (each ray is one
+  /// `raycastTileMap` call). Clamped to at least `3` when used — fewer
+  /// rays than that can't describe a closed polygon.
+  int shadowRayCount;
+
   Light2D({
     this.radius = 100,
     this.intensity = 1,
@@ -88,6 +100,7 @@ class Light2D {
     double? baseIntensity,
     double? baseRadius,
     this.flickerElapsed = 0,
+    this.shadowRayCount = 48,
   })  : baseIntensity = baseIntensity ?? intensity,
         baseRadius = baseRadius ?? radius;
 
@@ -103,6 +116,7 @@ class Light2D {
         'baseIntensity': baseIntensity,
         'baseRadius': baseRadius,
         'flickerElapsed': flickerElapsed,
+        'shadowRayCount': shadowRayCount,
       };
 
   factory Light2D.fromJson(Map<String, dynamic> json) => Light2D(
@@ -117,5 +131,6 @@ class Light2D {
         baseIntensity: (json['baseIntensity'] as num?)?.toDouble(),
         baseRadius: (json['baseRadius'] as num?)?.toDouble(),
         flickerElapsed: (json['flickerElapsed'] as num?)?.toDouble() ?? 0,
+        shadowRayCount: (json['shadowRayCount'] as num?)?.toInt() ?? 48,
       );
 }

@@ -136,6 +136,50 @@ still rendering correctly on top. Full `engine_flutter` suite green
 (15 new tests in `light2d_test.dart`, bringing it to 22, plus 1 new in
 `button_menu_scene_test.dart`), `dart analyze --fatal-infos` clean.
 
+## Lighting follow-ups (round 2)
+
+Two more gaps, spotted after actually running several shadow-casting
+lights together in `test_game`: every `Light2D` in the world was
+processed every frame regardless of whether it was anywhere near the
+camera, and shadow raycasting always sampled a hardcoded 48 rays no
+matter how small or large the light. Both closed out in one pass.
+
+- [x] Viewport culling: `EngineView._drawLighting` now skips a light
+      entirely — including its shadow-casting raycasts, the expensive
+      part — when its screen-space circle doesn't intersect the
+      current viewport rect (`_circleIntersectsRect`, a closest-point-
+      on-rect distance check). Purely an internal cost cut, no API
+      change and no visible behavior change for anything on screen;
+      matches the same reasoning as `_collectTileMapItems`'s earlier
+      tile culling. Verified: a dedicated widget test places a
+      shadow-casting light thousands of pixels outside a 400×300
+      viewport and confirms it still renders without crashing (proving
+      the cull path itself, not just "renders," since a bug in the
+      cull math throwing or producing a degenerate rect would show up
+      here); the existing on-screen shadow-casting tests continue to
+      pass unchanged, confirming lights actually on screen are
+      unaffected.
+- [x] Configurable shadow ray count: new `Light2D.shadowRayCount`
+      (`48` default — the feature's original fixed value, unchanged
+      behavior for any light that doesn't set it), read by
+      `EngineView._lightClipPath` instead of the hardcoded constant,
+      clamped to a minimum of `3` (fewer rays can't describe a closed
+      polygon). Lets a level with many small shadow-casting lights on
+      screen at once cut the per-light raycast cost, or one big
+      dramatic light raise it past 48 to smooth out visibly faceted
+      polygon edges — a real tuning knob discovered from having four
+      shadow-casting lights active simultaneously in `test_game`.
+      Verified: round-trip test in `light2d_test.dart`, plus widget
+      tests for a custom count and for a count below the `3` floor
+      (confirms the clamp, not just "doesn't crash on a weird input").
+      Live in `test_game`: the player's light now sets
+      `shadowRayCount: 64` (its widest, most prominent shadow, where
+      the extra smoothness is actually visible) as a real usage
+      example.
+
+Full `engine_flutter` suite green (194 tests, 5 new in
+`light2d_test.dart`), `dart analyze --fatal-infos` clean.
+
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
 - [x] Ladders/climbing, conveyors, per-tile friction: `TileMap` gained

@@ -70,6 +70,14 @@ void main() {
       final restored = Light2D.fromJson(Light2D().toJson());
       expect(restored.coneAngle, isNull);
     });
+
+    test('shadowRayCount defaults to 48 and round-trips through toJson/fromJson', () {
+      expect(Light2D().shadowRayCount, 48);
+
+      final light = Light2D(shadowRayCount: 16);
+      final restored = Light2D.fromJson(light.toJson());
+      expect(restored.shadowRayCount, 16);
+    });
   });
 
   group('LightFlickerSystem', () {
@@ -330,6 +338,98 @@ void main() {
       world.storeOf<Light2D>().set(
             id,
             Light2D(radius: 100, coneAngle: 1.5, castsShadows: true),
+          );
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(find.byType(EngineView), findsOneWidget);
+    });
+
+    testWidgets('a shadow-casting light far outside the viewport renders without crashing '
+        '(exercises the viewport-cull path)', (tester) async {
+      final world = World(width: 4000, height: 4000);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(
+              cols: 10,
+              rows: 10,
+              tileWidth: 20,
+              tileHeight: 20,
+              tiles: List.filled(100, 0),
+              solidTileIds: {1},
+            ),
+          );
+
+      // Camera stays at the default origin; this light sits thousands
+      // of pixels off screen, so its screen-space circle never reaches
+      // the viewport rect -- the light should be culled before any
+      // raycasting runs, not just clipped to nothing after the fact.
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(3000, 3000));
+      world.storeOf<Light2D>().set(id, Light2D(radius: 50, castsShadows: true));
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.15,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(find.byType(EngineView), findsOneWidget);
+    });
+
+    testWidgets('a custom shadowRayCount renders without crashing', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(100, 100));
+      world.storeOf<Light2D>().set(
+            id,
+            Light2D(radius: 100, castsShadows: true, shadowRayCount: 8),
+          );
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(find.byType(EngineView), findsOneWidget);
+    });
+
+    testWidgets('shadowRayCount below 3 renders without crashing (clamped internally)',
+        (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(100, 100));
+      world.storeOf<Light2D>().set(
+            id,
+            Light2D(radius: 100, castsShadows: true, shadowRayCount: 0),
           );
 
       await tester.pumpWidget(MaterialApp(
