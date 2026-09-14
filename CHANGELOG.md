@@ -38,6 +38,20 @@ pubspec.yaml.
   right next to the player. Ladder tiles now get their own translucent
   tan, matching the "translucent = passable" convention `oneWayTileIds`
   already established.
+- **`LadderSystem` zeroed a jump's `Velocity.y` just from touching a
+  ladder tile, even without pressing up/down**: it engaged climb
+  override — `vel.y = 0` (or a climb speed) and `grounded = false` —
+  on any `onLadder` overlap, regardless of input. A jump arc that
+  merely passed through or near a ladder tile (or, as in `test_game`,
+  a coin placed inside the ladder's own tile column, so jumping toward
+  the coin necessarily crosses it) had its vertical velocity silently
+  killed the instant the collider touched the tile, well before the
+  player ever meant to grab the ladder — read live as "jump/falling is
+  broken near the first coin." Now only engages while up or down is
+  actually held that tick; a jump through/near a ladder is completely
+  unaffected, and letting go of up/down mid-climb now stops overriding
+  `vel.y` (lets gravity/whatever else apply) instead of freezing in
+  place.
 
 ### v1.0 release readiness
 

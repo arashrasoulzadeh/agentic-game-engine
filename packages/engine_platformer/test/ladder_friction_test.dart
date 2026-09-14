@@ -108,12 +108,17 @@ void main() {
       expect(world.storeOf<Velocity>().get(id)!.y, -80);
     });
 
-    test('holding neither up nor down holds position on the ladder (vel.y = 0)', () {
+    test(
+        'holding neither up nor down leaves vel.y untouched — merely overlapping a '
+        'ladder tile must never by itself override velocity (regression: a jump arc '
+        'grazing a ladder tile used to have its vel.y silently zeroed here, reported '
+        'live as a "falling" bug when a coin placed inside a ladder column was jumped '
+        'at without pressing up/down)', () {
       final world = buildWithLadder();
       final id = world.spawn();
       final input = InputState();
       world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 999));
+      world.storeOf<Velocity>().set(id, Velocity(0, -300));
       world.storeOf<InputState>().set(id, input);
       final controller = PlatformerController(onLadder: true, climbSpeed: 80);
       world.storeOf<PlatformerController>().set(id, controller);
@@ -121,7 +126,30 @@ void main() {
 
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, 0);
+      expect(world.storeOf<Velocity>().get(id)!.y, -300);
+      expect(world.storeOf<PlatformerController>().get(id)!.grounded, isFalse);
+    });
+
+    test('releasing up/down mid-climb stops overriding vel.y (no longer holds in place)',
+        () {
+      final world = buildWithLadder();
+      final id = world.spawn();
+      final input = InputState();
+      world.storeOf<Position>().set(id, Position(0, 0));
+      world.storeOf<Velocity>().set(id, Velocity(0, -80));
+      world.storeOf<InputState>().set(id, input);
+      final controller = PlatformerController(onLadder: true, climbSpeed: 80);
+      world.storeOf<PlatformerController>().set(id, controller);
+      world.addSystem(LadderSystem(id));
+
+      input.pressedActions.add('up');
+      world.step(0.016);
+      expect(world.storeOf<Velocity>().get(id)!.y, -80);
+
+      input.pressedActions.remove('up');
+      world.storeOf<Velocity>().get(id)!.y = 42;
+      world.step(0.016);
+      expect(world.storeOf<Velocity>().get(id)!.y, 42);
     });
 
     test('not onLadder leaves velocity untouched (gravity still applies)', () {
