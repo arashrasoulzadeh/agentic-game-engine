@@ -218,17 +218,65 @@ own note).
       Revisit once there's a real level at that scale to benchmark, or a
       profiler trace showing this cull loop actually costing something —
       not before.
-- [ ] `World.step`'s system loop: profile whether iterating
-      `ComponentStore`s via their dense arrays (already the storage
-      layout — see each store's `denseAt`) versus the current per-system
-      access pattern is actually cache-friendly in practice for a
-      large entity count, and whether any hot-path system
-      (`TileCollisionSystem`, `CollisionSystem`) is doing avoidable
-      per-entity allocation (a `List`/record built fresh each tick
-      instead of a reused scratch buffer) that shows up under profiling
-      — no evidence yet this is actually a bottleneck at realistic
-      entity counts, purely a "worth measuring before dismissing"
-      candidate, not a confirmed win.
+- [x] `World.step`'s system loop, profiled: `world_step_benchmark.dart`
+      (movement-only, the cheapest possible system) shows clean linear
+      scaling with entity count (100 -> 1000 -> 5000 entities: ~7.6us ->
+      ~76us -> ~358us per step) and no evidence of cache-unfriendliness
+      or quadratic blowup from the dense-array-per-`ComponentStore`
+      iteration pattern — even at 5000 entities this is ~2% of a 60fps
+      frame budget. `TileCollisionSystem` and (pre-fix) `CollisionSystem`
+      were read specifically looking for avoidable per-tick allocation;
+      `TileCollisionSystem` has none, but `CollisionSystem` did have a
+      real one (see its own `[x]` entry immediately below) — found by
+      exactly this profiling pass, not purely speculative after all.
+      `TileCollisionSystem`/general system-loop iteration itself: no
+      confirmed bottleneck at realistic entity counts, closed as
+      measured rather than left an open guess.
+- [x] `CollisionSystem` was rebuilding a brand-new `SpatialHash` (a new
+      `Map` plus a fresh bucket `List` allocated for every occupied
+      cell) from scratch on *every single tick* — found via exactly the
+      profiling pass the item above called for, not a guess. Fixed by
+      reusing one `SpatialHash` instance across ticks (rebuilt only
+      when auto-sizing's `cellSize` or `world.width` actually changes —
+      a `SpatialHash`'s cell-hashing math is fixed at construction, so
+      reusing it across a real `cellSize` change would silently
+      misplace entities), with `SpatialHash.clear()` now recycling each
+      touched cell's bucket `List` into a pool instead of either
+      discarding it (allocates fresh again next tick) or leaving it
+      sitting in the map forever (a real regression an earlier version
+      of this fix actually introduced — see below). **A genuine mistake
+      caught by this engine's own benchmark, not just written and
+      assumed correct**: the first attempt just emptied every bucket
+      in place without ever removing map entries, which kept every
+      cell any entity had *ever* visited resident forever — harmless
+      at first, but `forEachNearbyPair` iterates every entry in that
+      map every tick, so a session with entities that keep moving
+      (any real game) would have that iteration cost grow *with total
+      play time*, not with current entity count. `collision_system_
+      benchmark.dart` caught this immediately as a 3-4x regression at
+      n=100 despite passing every correctness test (the benchmark's
+      own entities drift slightly each tick via `MovementSystem`,
+      accumulating touched cells over its many warmup iterations).
+      Fixed properly with an explicit `_activeKeys` list (only cells
+      touched *this* cycle) plus a bucket-`List` pool, bounded by the
+      largest number of simultaneously-active cells ever seen in one
+      cycle, not by total cells ever touched across the instance's
+      lifetime. Verified: 2 new regression tests in
+      `collision_system_test.dart` (a reused hash doesn't leak a stale
+      pair once entities move apart; a reused hash correctly rebuilds,
+      not silently keeps stale cell-hashing math, when auto-sizing's
+      cellSize legitimately changes between ticks) and 1 new
+      `spatial_hash_test.dart` test (repeated clear()+insert() cycles
+      into the same cells with different entity ids each time, proving
+      no cross-cycle leakage). Benchmarked before/after
+      (`collision_system_benchmark.dart`, 3 runs each): n=100 ~196us ->
+      ~174us, n=1000 ~1789us -> ~1730-1760us, n=5000 ~535ms -> ~475ms
+      (the n=5000 case is still dominated by that benchmark's
+      deliberately-packed O(n²)-per-cell density, unrelated to this
+      fix, per the class's own existing doc comment — the allocation
+      savings alone still shaved off real, measured time even there).
+      `engine_core` full suite (179 tests) and `engine_platformer` full
+      suite green, `--fatal-infos` analyze clean on both.
 - [x] `AtlasRegistry`/`SpriteAtlas` didn't support unloading at all —
       new `AtlasRegistry.unregister(String id)` removes the entry and
       calls `ui.Image.dispose()` on its decoded image, actually

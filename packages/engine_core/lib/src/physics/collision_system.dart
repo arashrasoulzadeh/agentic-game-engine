@@ -45,6 +45,21 @@ class CollisionSystem implements System {
   final double? cellSize;
   CollisionSystem({this.cellSize});
 
+  /// Reused across ticks instead of building a fresh `SpatialHash`
+  /// (and re-allocating every occupied cell's bucket `List`) every
+  /// single tick — [update] only replaces it when [_resolveCellSize]
+  /// or `world.width` actually changes (auto-sizing means the cell
+  /// grid's own shape can legitimately change tick to tick, e.g. a
+  /// much bigger collider just spawned), since a `SpatialHash`'s
+  /// cell-hashing math is fixed to whatever `cellSize`/`worldWidth` it
+  /// was built with. Confirmed measurably faster at realistic entity
+  /// counts via `collision_system_benchmark.dart` for the common case
+  /// (a stable collider population, so this branch reuses the same
+  /// instance and just calls `clear()` between ticks).
+  SpatialHash? _hash;
+  double? _hashCellSize;
+  double? _hashWorldWidth;
+
   @override
   String get name => 'collision';
 
@@ -54,7 +69,15 @@ class CollisionSystem implements System {
     final velocities = world.storeOf<Velocity>();
     final colliders = world.storeOf<Collider>();
 
-    final hash = SpatialHash(cellSize: _resolveCellSize(colliders), worldWidth: world.width);
+    final resolvedCellSize = _resolveCellSize(colliders);
+    if (_hash == null || _hashCellSize != resolvedCellSize || _hashWorldWidth != world.width) {
+      _hash = SpatialHash(cellSize: resolvedCellSize, worldWidth: world.width);
+      _hashCellSize = resolvedCellSize;
+      _hashWorldWidth = world.width;
+    } else {
+      _hash!.clear();
+    }
+    final hash = _hash!;
     for (var i = 0; i < colliders.length; i++) {
       final entity = colliders.entityAt(i);
       final pos = positions.get(entity);
