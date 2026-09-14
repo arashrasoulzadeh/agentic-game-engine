@@ -16,6 +16,7 @@ import 'physics/platformer_input_system.dart';
 import 'physics/platformer_system.dart';
 import 'logic/projectile_system.dart';
 import 'physics/tile_collision_system.dart';
+import 'physics/water_physics_system.dart';
 
 /// Registers every system a platformer needs, in the one order that's
 /// actually correct — the single call this package exists to make
@@ -68,6 +69,7 @@ void installPlatformerSystems(
   world.addSystem(MovementSystem());
   world.addSystem(PlatformerSystem());
   world.addSystem(TileCollisionSystem());
+  world.addSystem(WaterPhysicsSystem());
   world.addSystem(JumpSystem());
   if (player != null) {
     world.addSystem(LadderSystem(player));

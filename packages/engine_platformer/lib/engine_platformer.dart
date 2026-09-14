@@ -36,6 +36,8 @@ export 'src/physics/platformer_input_system.dart';
 export 'src/physics/platformer_system.dart';
 export 'src/logic/projectile_system.dart';
 export 'src/physics/tile_collision_system.dart';
+export 'src/physics/water_zone.dart';
+export 'src/physics/water_physics_system.dart';
 
 import 'package:engine_core/engine_core.dart';
 
@@ -50,6 +52,7 @@ import 'src/rendering/jump_animation_set.dart';
 import 'src/physics/platform_body.dart';
 import 'src/physics/platformer_controller.dart';
 import 'src/logic/projectile.dart';
+import 'src/physics/water_zone.dart';
 
 /// Registers this package's genre-specific components on [world],
 /// alongside `registerCoreComponents`/`registerFlutterComponents`.
@@ -116,5 +119,10 @@ void registerPlatformerComponents(World world) {
     'healthHudLink',
     (h) => h.toJson(),
     HealthHudLink.fromJson,
+  );
+  world.components.register<WaterZone>(
+    'waterZone',
+    (w) => w.toJson(),
+    WaterZone.fromJson,
   );
 }

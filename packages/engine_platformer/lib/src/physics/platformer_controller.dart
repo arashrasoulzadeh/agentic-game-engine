@@ -160,6 +160,15 @@ class PlatformerController {
   double ledgeMantleTargetX;
   double ledgeMantleTargetY;
 
+  /// Whether this entity is overlapping a `WaterZone` this tick — set
+  /// (and reset each tick, its one reset point) entirely by
+  /// `WaterPhysicsSystem`, not meant to be set from game code. A swim
+  /// state genuinely distinct from walk/jump: while `true`,
+  /// `Velocity.y` is buoyancy-capped instead of governed by normal
+  /// gravity, and `jumpRequested` becomes a repeatable upward "stroke"
+  /// instead of a single jump arc — see `WaterZone`'s doc comment.
+  bool inWater;
+
   PlatformerController({
     this.grounded = false,
     this.jumpSpeed = 300,
@@ -190,6 +199,7 @@ class PlatformerController {
     this.ledgeGrabbing = false,
     this.ledgeMantleTargetX = 0,
     this.ledgeMantleTargetY = 0,
+    this.inWater = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -222,6 +232,7 @@ class PlatformerController {
         'ledgeGrabbing': ledgeGrabbing,
         'ledgeMantleTargetX': ledgeMantleTargetX,
         'ledgeMantleTargetY': ledgeMantleTargetY,
+        'inWater': inWater,
       };
 
   factory PlatformerController.fromJson(Map<String, dynamic> json) =>
@@ -255,5 +266,6 @@ class PlatformerController {
         ledgeGrabbing: json['ledgeGrabbing'] as bool? ?? false,
         ledgeMantleTargetX: (json['ledgeMantleTargetX'] as num?)?.toDouble() ?? 0,
         ledgeMantleTargetY: (json['ledgeMantleTargetY'] as num?)?.toDouble() ?? 0,
+        inWater: json['inWater'] as bool? ?? false,
       );
 }

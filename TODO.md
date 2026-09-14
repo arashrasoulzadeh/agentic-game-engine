@@ -1063,10 +1063,34 @@ implementing.
       previously undocumented systems), and the Damage/health/combat
       section now documents `damageEntity`/`dealDamageOnTouch`'s
       `knockbackSpeed`/`hitstunSeconds`/`source` parameters.
-- [ ] Swimming / water physics: no water-zone concept (altered gravity/
-      max-fall-speed, buoyancy, a swim state distinct from walk/jump) —
-      a `TriggerZone` can detect entering water, but nothing changes
-      how the entity actually moves once it has.
+- [x] Swimming / water physics: new `WaterZone` component (rect,
+      `Position`-is-the-center like `PlatformBody`) + new
+      `WaterPhysicsSystem`, wired into `installPlatformerSystems` right
+      after `TileCollisionSystem` and before `JumpSystem`. While a
+      `PlatformerController` entity's collider overlaps a `WaterZone`,
+      `controller.inWater` is `true` (a genuine swim state, not a
+      walk/jump variant) and `Velocity.y` is buoyancy-capped to
+      `WaterZone.maxFallSpeed` — corrects the *result* of this tick's
+      already-applied gravity rather than needing to know
+      `GravitySystem`'s configured strength, so it works regardless of
+      a game's own gravity value. A `jumpRequested` press while
+      submerged becomes a repeatable upward "stroke"
+      (`WaterZone.swimUpSpeed`) instead of a single jump arc —
+      `WaterPhysicsSystem` consumes `jumpRequested` itself so
+      `JumpSystem` right after it doesn't also try to jump with the
+      same press. Verified: 10 new `water_physics_test.dart` tests
+      (`WaterZone`/`inWater` JSON round-trips and defaults; untouched
+      outside any zone; fall speed clamped/left-alone above/below the
+      cap; a stroke applies and consumes `jumpRequested`; repeated
+      presses give repeated strokes, not one arc; missing-component
+      entity skipped gracefully; a world with no `WaterZone` at all is
+      a no-op) plus one real end-to-end test — a player entity with a
+      live `Gravity` component run through 30 real ticks of
+      `installPlatformerSystems`'s actual system order, confirming
+      `Velocity.y` stays buoyancy-capped rather than accelerating past
+      it the way plain gravity would over that many ticks. Full
+      `engine_platformer`/`engine_flutter` suites and `--fatal-infos`
+      analyze clean.
 - [ ] Boss/enemy phase framework: `CinematicSystem` can script a
       one-shot sequence and `Health`/`damageEntity` cover generic
       combat, but there's no platformer-specific helper tying the two

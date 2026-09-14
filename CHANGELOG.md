@@ -312,6 +312,11 @@ item at a time.
   new `TileAnimationSystem` (base tile id cycles through a set of
   frames over time, resolved via `TileMap.currentTileId`) — collision
   always keys off the base id regardless of which frame is showing.
+- **Swimming / water physics**: new `WaterZone` component +
+  `WaterPhysicsSystem` (`engine_platformer`) — a `PlatformerController`
+  entity overlapping a water zone gets `controller.inWater = true`,
+  buoyancy-capped `Velocity.y`, and a repeatable upward "stroke" on
+  `jumpRequested` instead of a single jump arc.
 - **Save-schema versioning**: `SaveGame.save`/`load` take a `version`
   and wrap the saved snapshot in a `{schemaVersion, world}` envelope;
   `load` takes an optional `migrate` callback and throws a new
