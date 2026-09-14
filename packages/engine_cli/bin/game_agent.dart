@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:engine_cli/src/create_command.dart';
 import 'package:engine_cli/src/lint_command.dart';
+import 'package:engine_cli/src/pack_assets_command.dart';
 import 'package:engine_cli/src/upgrade_command.dart';
 
 Future<void> main(List<String> arguments) async {
@@ -12,7 +13,8 @@ Future<void> main(List<String> arguments) async {
   )
     ..addCommand(CreateCommand())
     ..addCommand(UpgradeCommand())
-    ..addCommand(LintCommand());
+    ..addCommand(LintCommand())
+    ..addCommand(PackAssetsCommand());
 
   // CommandRunner.run resolves the exit code but never applies it to the
   // process on its own — without this, every command "succeeds" from a

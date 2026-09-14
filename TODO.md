@@ -31,6 +31,59 @@ for what shipped and git history for the full why behind each change.
 
 ## Tooling / release
 
+- [x] `game_agent pack-assets` — explicit request: "add a pre build-run
+      hook that combines all image assets of levels into one sprite
+      pack, then refer to that with build flags in run/build time."
+      New CLI command (`engine_cli`, pure Dart — the `image` package
+      already a dependency for `lint --render`) recursively scans an
+      input directory, greedily row-packs every PNG/JPEG/BMP/GIF it
+      finds into one sheet, and writes a manifest in exactly the
+      `{"regions": {"name": {"x","y","w","h"}}}` shape
+      `SpriteAtlas.fromManifest` (`engine_flutter`) already reads for a
+      hand-authored atlas — no new parsing code needed on the consuming
+      side, only a place to point it at. Deterministic sort order (by
+      file path) so the same input directory always packs into the same
+      sheet, not something that churns on every run purely from
+      filesystem iteration order. `--padding` (default `2`) leaves
+      transparent gaps between regions to avoid texture-filtering bleed;
+      two source images resolving to the same region name (basename
+      without extension) is a hard error, not a silent overwrite.
+      Consumed at run/build time via three new opt-in `GameConfig`
+      fields (`packedAtlasId`/`packedAtlasImage`/`packedAtlasManifest`,
+      all `null` by default — zero behavior change for an existing
+      game): `GameRunner` auto-registers the packed atlas into every
+      loaded `Scene`'s `AtlasRegistry` under that id (skipped if a scene
+      already registered something there itself — a scene's own
+      `loadAssets` always wins), decoding it once and reusing that same
+      `SpriteAtlas` across every scene switch rather than re-decoding
+      per load. Gated by a new `usePackedAtlas` compile-time flag
+      (`bool.fromEnvironment('USE_PACKED_ATLAS', defaultValue: true)`)
+      — the actual "build flag" the request asked for: run
+      `flutter run --dart-define=USE_PACKED_ATLAS=false` to fall back
+      to per-scene individual atlas loading while iterating on art,
+      without re-running the packer or touching `game_config.json`.
+      Verified: 6 new `pack_assets_command_test.dart` tests (missing/
+      nonexistent/empty `--input`; real packing with nested
+      subdirectories, non-overlapping regions verified by sampling
+      actual composited pixel colors, not just checking the manifest
+      shape; `--padding` keeps adjacent regions apart; default manifest
+      path derivation; duplicate-name collision is an error) and 3 new
+      `packed_atlas_test.dart` `GameRunner` widget tests (unset config
+      never touches the asset bundle at all; set-but-unmocked never
+      resolves to a rendered `EngineView`, proving the load is actually
+      attempted; a scene's own atlas under the same id wins, which
+      — since no asset mock is installed for that test at all — also
+      proves the auto-registration is skipped entirely rather than
+      attempted and clobbering the result). Full `engine_cli` (21
+      tests) and `engine_flutter` suites green, `--fatal-infos` analyze
+      clean on both. **Known limitation, not attempted here**: the row
+      packer is a simple greedy shelf packer, not a true bin-packer
+      (e.g. MaxRects) — good enough since the sheet is a regenerated
+      build artifact, not hand-tuned/committed art, but leaves real
+      texture-memory savings on the table for an atlas with very
+      differently-sized sprites; a genuine MaxRects implementation is a
+      candidate follow-up if a real game's packed sheet turns out
+      meaningfully oversized.
 - [ ] Publish `engine_core`/`engine_flutter`/`engine_cli` to pub.dev —
       removes the git-ref-matching constraint entirely via normal semver
 - [ ] Test on a real Android/iOS device — **partial progress**:
@@ -47,6 +100,120 @@ for what shipped and git history for the full why behind each change.
       that's moot while the iOS build itself won't compile here.
       Orientation lock, lifecycle pause/resume, and real-world
       performance remain genuinely unverified outside Flutter web debug.
+
+## Performance optimizations
+
+Candidate follow-ups identified while adding `pack-assets`/packed-atlas
+support above — none started yet, listed here per this repo's
+"add newly discovered work rather than letting it go untracked" rule.
+Each needs its own before/after benchmark (`packages/engine_core/
+benchmark/`, `packages/engine_platformer/benchmark/`, or a new
+`engine_flutter` render-focused one) before/after landing, per this
+file's own Validation section and the code-quality-bar's "re-run the
+benchmark suite for anything on a hot path" rule — none of these should
+be believed faster just because they sound like they should be.
+
+- [ ] True bin-packing for `pack-assets` (MaxRects or similar) instead
+      of the current greedy shelf packer — the shelf packer can leave
+      real wasted space (and so a larger GPU texture than necessary,
+      and more VRAM) when source sprites have very mixed aspect ratios/
+      sizes, since a whole row is only as efficient as its tallest item.
+- [ ] `pack-assets --mipmaps`/multiple output resolutions — a packed
+      sheet is currently always full source resolution; a mobile game
+      showing sprites well under their native size pays full texture
+      bandwidth/memory for detail that never reaches the screen. Needs
+      a decision on how a `Sprite`/`TileMap` picks which resolution tier
+      to load at runtime (screen density? an explicit per-platform
+      config?) before implementing — not just a packer flag.
+- [ ] Batch `_drawTileMapDebug`/`_drawColliderDebug` (`engine_flutter`)
+      the same way `_collectSpriteItems` already batches regular sprite
+      rendering via `Canvas.drawAtlas` — these debug-only draw calls
+      currently issue one `drawRect`/`drawPath` per tile/collider, fine
+      for occasional use but a real per-frame cost if left on with a
+      large level while iterating with `showColliderDebug: true`.
+- [ ] Cache `_lightClipPath`'s (engine_view.dart) visibility-polygon
+      `Path` per shadow-casting light across frames when neither the
+      light's position nor the surrounding `TileMap` geometry actually
+      changed that tick, instead of rebuilding it via a fresh
+      `raycastTileMap` sweep unconditionally every frame regardless of
+      whether anything moved — a static shadow-casting light (a torch
+      on a wall, common in a level) currently re-does the full raycast
+      sweep every single frame for no reason. Needs care not to
+      reintroduce the exact "shadow lags/animates" complaint that got
+      `shadowSmoothingSeconds` walked back — the cache must invalidate
+      immediately (not smoothly) the instant the light or map changes,
+      never interpolate.
+- [ ] Spatial-hash-based light culling: `_drawLighting` already
+      viewport-culls each light via `_circleIntersectsRect` before its
+      expensive shadow-raycasting path, but still iterates *every*
+      `Light2D` in the `World` every frame to do that cheap check first
+      — fine at the scale tested so far, but a level with hundreds of
+      lights (most off-screen) would still pay a linear scan every
+      frame just to cull them. `CollisionSystem`'s existing spatial hash
+      (`engine_core`) is the natural precedent to reuse/adapt rather
+      than inventing a second spatial index.
+- [ ] `World.step`'s system loop: profile whether iterating
+      `ComponentStore`s via their dense arrays (already the storage
+      layout — see each store's `denseAt`) versus the current per-system
+      access pattern is actually cache-friendly in practice for a
+      large entity count, and whether any hot-path system
+      (`TileCollisionSystem`, `CollisionSystem`) is doing avoidable
+      per-entity allocation (a `List`/record built fresh each tick
+      instead of a reused scratch buffer) that shows up under profiling
+      — no evidence yet this is actually a bottleneck at realistic
+      entity counts, purely a "worth measuring before dismissing"
+      candidate, not a confirmed win.
+- [ ] `AtlasRegistry`/`SpriteAtlas` don't currently support unloading —
+      a game with many rooms, each with its own atlas, keeps every
+      atlas it has ever loaded resident in memory/GPU texture for the
+      whole run, even for a room the player left long ago and won't
+      revisit. Needs an explicit lifecycle decision (unload on
+      `loadScene`? reference-count across scenes sharing one atlas id?)
+      since the packed-atlas feature above makes this *less* urgent for
+      games that adopt it (one shared sheet instead of many small
+      per-room ones) but doesn't eliminate the need for a game that
+      deliberately keeps per-room atlases (e.g. very large, distinct art
+      sets per room that would make one shared sheet enormous).
+- [ ] `_collectTileMapItems`'s per-frame tile culling (engine_view.dart)
+      recomputes the visible tile range from the camera every frame,
+      correctly, but a `TileMap` that never scrolls out of view entirely
+      (fits fully on screen, or the camera never moves) could instead
+      cache its full `_DrawItem` list once and only invalidate on
+      camera movement/zoom change — worth measuring whether the culling
+      math itself is actually a meaningful per-frame cost at typical
+      map sizes before adding this complexity, since a wrong intuition
+      here could easily not be worth the added invalidation-tracking
+      bugs it risks (see the shadow-smoothing walkback above for what
+      a wrong "obviously helps" instinct here has already cost once).
+- [ ] `EngineView`'s draw-item list (`_DrawItem`, built fresh every
+      frame in `paint()` from every renderable component store) 
+      allocates a new `List`/closure per item every single frame
+      regardless of whether the scene's actual entity set changed since
+      the last frame — for a mostly-static scene (a puzzle room, a menu)
+      this is avoidable per-frame allocation pressure. A dirty-flag
+      (invalidate the cached list only when a relevant `ComponentStore`
+      actually changes) is the likely shape, but `ComponentStore`
+      doesn't currently expose a cheap "has anything changed since
+      version N" check — that would need to be added first, carefully,
+      without slowing down the write path every store's `set`/`get`
+      already sits on.
+- [ ] Audio: `AudioManager` (per its own file) doesn't currently pool/
+      reuse player instances for a rapidly-repeated short sound effect
+      (a coin pickup, a jump) — worth checking whether each play spins
+      up real overhead per call at typical SFX-trigger rates (a fast
+      platformer can trigger several pickups within one second) versus
+      whatever the underlying audio plugin already pools internally;
+      may turn out to be a non-issue once actually measured.
+- [ ] `World.toJson()`/full-state serialization (used for save/load and
+      the agent-facing API) walks every `ComponentStore` and rebuilds a
+      fresh `Map` per entity per component every call — fine for an
+      occasional save, but an agent polling world state frequently
+      (`WorldView`, live debugging) pays this full-serialization cost
+      every poll even when most of the world hasn't changed since the
+      last one. A diff/patch-since-last-poll API (distinct from the
+      existing `applyPatch`, which goes the other direction) is the
+      likely shape, but needs real agent-workload evidence this is
+      actually hit often enough to matter before building it.
 
 ## Features (engine_flutter)
 

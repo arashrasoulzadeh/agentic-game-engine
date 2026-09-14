@@ -8,6 +8,27 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Asset packing
+
+- New `game_agent pack-assets` command (`engine_cli`): recursively
+  scans a directory of level image assets and packs them into one
+  sprite sheet PNG + a region manifest, written in the exact
+  `{"regions": {"name": {"x","y","w","h"}}}` shape
+  `SpriteAtlas.fromManifest` (`engine_flutter`) already reads — no new
+  loading code needed on the consuming side. Run it as a pre-build step
+  ahead of `flutter run`/`flutter build` instead of loading one
+  `SpriteAtlas` per source sprite at runtime.
+- New `GameConfig.packedAtlasId`/`packedAtlasImage`/`packedAtlasManifest`
+  (all `null` by default — no behavior change for an existing game):
+  `GameRunner` auto-registers the packed atlas into every loaded
+  `Scene`, decoding it once and reusing that same `SpriteAtlas` across
+  scene switches rather than re-decoding per load; a scene that already
+  registers something under the same id wins over the auto-
+  registration, not clobbered by it. Gated by a new compile-time
+  `usePackedAtlas` flag (`--dart-define=USE_PACKED_ATLAS=false` to fall
+  back to per-scene loading while iterating on art) — the literal
+  "build flag" mechanism requested.
+
 ### Bug fixes
 
 - **`grounded` flickered false every other tick while resting on solid

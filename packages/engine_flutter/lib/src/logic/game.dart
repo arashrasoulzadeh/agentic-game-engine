@@ -148,6 +148,15 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     setState(() => _overlay = null);
   }
 
+  /// Lazily decoded once and reused for every scene load thereafter —
+  /// `GameConfig.packedAtlasId`'s whole point is *fewer* atlas image
+  /// decodes than one per source sprite, so re-decoding this same
+  /// packed image from bytes on every `loadScene`/`pushOverlay` call
+  /// would undermine that. `null` forever when packed-atlas config
+  /// isn't set or `usePackedAtlas` is off, at no cost beyond the one
+  /// null check in [_load].
+  Future<SpriteAtlas>? _packedAtlasFuture;
+
   /// Builds a brand-new `World` for [scene] rather than clearing the
   /// previous one — the previous scene's systems (added in its own
   /// `populate`) would otherwise keep running against the new scene's
@@ -162,9 +171,36 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     await scene.populate(world, _sceneController, _gameState);
 
     final atlasRegistry = await scene.loadAssets();
+    await _registerPackedAtlas(atlasRegistry);
     final camera = scene.createCamera(world);
     final inputController = widget.game.createInputController();
     return _LoadedGame(world, atlasRegistry, camera, inputController, scene);
+  }
+
+  /// Registers `GameConfig.packedAtlasId`'s packed sprite sheet into
+  /// [atlasRegistry], decoding it once (cached in [_packedAtlasFuture])
+  /// and reusing that same `SpriteAtlas` — the decoded `ui.Image` and
+  /// its region map — across every scene rather than re-decoding per
+  /// load. A no-op when packed-atlas config isn't fully set, when
+  /// [usePackedAtlas] is off, or when [atlasRegistry] already has
+  /// something registered under this id (a scene's own `loadAssets`
+  /// wins over the auto-registration, e.g. to override just this one
+  /// scene during development).
+  Future<void> _registerPackedAtlas(AtlasRegistry atlasRegistry) async {
+    final config = widget.game.config;
+    final id = config.packedAtlasId;
+    final imagePath = config.packedAtlasImage;
+    final manifestPath = config.packedAtlasManifest;
+    if (!usePackedAtlas || id == null || imagePath == null || manifestPath == null) {
+      return;
+    }
+    if (atlasRegistry.has(id)) return;
+
+    _packedAtlasFuture ??= SpriteAtlas.loadFromAssets(
+      imageAssetPath: imagePath,
+      manifestAssetPath: manifestPath,
+    );
+    atlasRegistry.register(id, await _packedAtlasFuture!);
   }
 
   @override
@@ -266,6 +302,18 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     }
   }
 }
+
+/// Whether `GameRunner` auto-registers `GameConfig.packedAtlasId`'s
+/// packed sprite sheet (see its doc comment) into every loaded `Scene`.
+/// `true` by default — a `--dart-define=USE_PACKED_ATLAS=false` build
+/// (or `flutter run`/`flutter test` invocation) flips it off without
+/// touching `game_config.json`, e.g. while iterating on art, where
+/// re-running `game_agent pack-assets` after every image change is more
+/// friction than just loading each image individually until the next
+/// packed build. Meaningless unless `GameConfig.packedAtlasId` is also
+/// set — this only gates *using* a packed atlas that's configured, it
+/// can't summon one that isn't.
+const bool usePackedAtlas = bool.fromEnvironment('USE_PACKED_ATLAS', defaultValue: true);
 
 /// One-line entry point: `void main() => runGame(MyGame());`. Wraps
 /// [GameRunner] in a `MaterialApp`/`Scaffold` sized to fill the screen —

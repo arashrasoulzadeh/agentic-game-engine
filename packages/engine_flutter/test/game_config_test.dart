@@ -100,4 +100,29 @@ void main() {
     const config = GameConfig(worldWidth: 1, worldHeight: 1);
     expect(config.toJson().containsKey('maxFps'), isFalse);
   });
+
+  test('packedAtlas* fields default to null and are omitted from toJson', () {
+    const config = GameConfig(worldWidth: 1, worldHeight: 1);
+    expect(config.packedAtlasId, isNull);
+    expect(config.packedAtlasImage, isNull);
+    expect(config.packedAtlasManifest, isNull);
+    final json = config.toJson();
+    expect(json.containsKey('packedAtlasId'), isFalse);
+    expect(json.containsKey('packedAtlasImage'), isFalse);
+    expect(json.containsKey('packedAtlasManifest'), isFalse);
+  });
+
+  test('packedAtlas* fields round-trip through toJson/fromJson', () {
+    const config = GameConfig(
+      worldWidth: 1,
+      worldHeight: 1,
+      packedAtlasId: 'packed',
+      packedAtlasImage: 'assets/packed/atlas.png',
+      packedAtlasManifest: 'assets/packed/atlas.json',
+    );
+    final restored = GameConfig.fromJson(config.toJson());
+    expect(restored.packedAtlasId, 'packed');
+    expect(restored.packedAtlasImage, 'assets/packed/atlas.png');
+    expect(restored.packedAtlasManifest, 'assets/packed/atlas.json');
+  });
 }

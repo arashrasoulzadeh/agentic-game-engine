@@ -46,6 +46,40 @@ class GameConfig {
   /// given device's actual refresh rate happens to be.
   final int? maxFps;
 
+  /// Atlas id under which `GameRunner` auto-registers a single packed
+  /// sprite sheet (see [packedAtlasImage]/[packedAtlasManifest]) into
+  /// *every* `Scene`'s `AtlasRegistry`, produced ahead of time by
+  /// `game_agent pack-assets` from a directory of individual level
+  /// image assets — fewer atlas image decodes and fewer texture binds
+  /// per frame than one atlas per source image. `null` (default, all
+  /// three fields) means no packed atlas is registered at all, the
+  /// original per-scene `loadAssets` behavior. All three fields are
+  /// meaningless unless set together; a `Scene` that already registers
+  /// something under this same id in its own `loadAssets` wins (the
+  /// auto-registration skips an id `AtlasRegistry.has` already, so an
+  /// individual scene can still opt out or override). Whether this
+  /// auto-registration actually runs is additionally gated by the
+  /// `USE_PACKED_ATLAS` compile-time flag (see `runGame`'s doc
+  /// comment) — set here so it's still data, not code, but overridable
+  /// per build without editing this file (e.g. `--dart-define
+  /// USE_PACKED_ATLAS=false` while iterating on art, where reloading
+  /// individual images per scene is more convenient than re-running
+  /// the packer on every change).
+  final String? packedAtlasId;
+
+  /// Bundled asset path to the packed image `game_agent pack-assets`
+  /// wrote (its `--output-image`, e.g. `assets/packed/atlas.png`) —
+  /// must be declared under `flutter.assets` in `pubspec.yaml` like any
+  /// other bundled asset. See [packedAtlasId].
+  final String? packedAtlasImage;
+
+  /// Bundled asset path to the packed manifest `game_agent pack-assets`
+  /// wrote (its `--output-manifest`) — the same
+  /// `{"regions": {"name": {"x","y","w","h"}}}` shape
+  /// `SpriteAtlas.fromManifest` already reads for a hand-authored atlas.
+  /// See [packedAtlasId].
+  final String? packedAtlasManifest;
+
   const GameConfig({
     this.title = 'Game',
     this.orientation = GameOrientation.auto,
@@ -58,6 +92,9 @@ class GameConfig {
     this.onScreenControls = OnScreenControlsMode.auto,
     this.ambientBrightness = 1.0,
     this.maxFps,
+    this.packedAtlasId,
+    this.packedAtlasImage,
+    this.packedAtlasManifest,
   });
 
   Map<String, dynamic> toJson() => {
@@ -72,6 +109,9 @@ class GameConfig {
         'onScreenControls': onScreenControls.name,
         'ambientBrightness': ambientBrightness,
         if (maxFps != null) 'maxFps': maxFps,
+        if (packedAtlasId != null) 'packedAtlasId': packedAtlasId,
+        if (packedAtlasImage != null) 'packedAtlasImage': packedAtlasImage,
+        if (packedAtlasManifest != null) 'packedAtlasManifest': packedAtlasManifest,
       };
 
   factory GameConfig.fromJson(Map<String, dynamic> json) => GameConfig(
@@ -94,6 +134,9 @@ class GameConfig {
         ),
         ambientBrightness: (json['ambientBrightness'] as num?)?.toDouble() ?? 1.0,
         maxFps: (json['maxFps'] as num?)?.toInt(),
+        packedAtlasId: json['packedAtlasId'] as String?,
+        packedAtlasImage: json['packedAtlasImage'] as String?,
+        packedAtlasManifest: json['packedAtlasManifest'] as String?,
       );
 
   /// Loads a `GameConfig` from a bundled JSON asset, e.g.
