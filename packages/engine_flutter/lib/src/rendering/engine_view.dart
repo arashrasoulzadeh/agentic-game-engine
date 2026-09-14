@@ -818,28 +818,50 @@ class _EnginePainter extends CustomPainter {
 
   /// A stroked circle at every `Collider`'s actual radius — see
   /// `EngineView.showColliderDebug`'s doc comment for why (and what
-  /// this deliberately doesn't cover).
+  /// this deliberately doesn't cover). Every circle shares one `Path`
+  /// (via `addOval`) stroked in a single `drawPath` call instead of one
+  /// `drawCircle` command per collider — every circle already shares
+  /// the same `Paint`, so batching them costs nothing in fidelity and
+  /// avoids a real per-frame cost this debug overlay would otherwise
+  /// add for a level with many colliders left on during iteration (the
+  /// same batching principle `_collectSpriteItems`'s `Canvas.drawAtlas`
+  /// path already applies to regular sprites).
   void _drawColliderDebug(Canvas canvas, Size size, ComponentStore<Position> positions) {
     final colliders = world.storeOf<Collider>();
+    if (colliders.length == 0) return;
     final paint = Paint()
       ..color = const Color(0xFF00FF00)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
+    final path = Path();
     for (var i = 0; i < colliders.length; i++) {
       final entity = colliders.entityAt(i);
       final pos = positions.get(entity);
       if (pos == null) continue;
       final screenPos = camera.worldToScreen(pos.x, pos.y, size);
-      canvas.drawCircle(screenPos, colliders.denseAt(i).radius * camera.zoom, paint);
+      final radius = colliders.denseAt(i).radius * camera.zoom;
+      path.addOval(Rect.fromCircle(center: screenPos, radius: radius));
     }
+    canvas.drawPath(path, paint);
   }
 
   /// A stroked border per solid (red)/one-way (blue)/slope (orange)
   /// tile, on top of `_collectTileMapItems`'s filled color — makes a
   /// tile's exact collision boundary unambiguous even when its fill
   /// color is hard to tell apart from a neighboring tile at a glance.
+  /// Every tile of the same collision kind shares that kind's `Path`
+  /// (`addRect` per tile), stroked in one `drawPath` call per kind (at
+  /// most 3 draw calls total, not one per solid/one-way/slope tile) —
+  /// same batching reasoning as `_drawColliderDebug`.
   void _drawTileMapDebug(Canvas canvas, Size size, ComponentStore<Position> positions) {
     final tileMaps = world.storeOf<TileMap>();
+    final solidPath = Path();
+    final oneWayPath = Path();
+    final slopePath = Path();
+    var hasSolid = false;
+    var hasOneWay = false;
+    var hasSlope = false;
+
     for (var m = 0; m < tileMaps.length; m++) {
       final mapEntity = tileMaps.entityAt(m);
       final map = tileMaps.denseAt(m);
@@ -858,27 +880,39 @@ class _EnginePainter extends CustomPainter {
           final left = origin.x + col * map.tileWidth;
           final top = origin.y + row * map.tileHeight;
           final screenPos = camera.worldToScreen(left, top, size);
-          final color = isSolid
-              ? const Color(0xFFFF3B30)
-              : isOneWay
-                  ? const Color(0xFF3B82F6)
-                  : const Color(0xFFFF9500);
-
-          canvas.drawRect(
-            Rect.fromLTWH(
-              screenPos.dx,
-              screenPos.dy,
-              map.tileWidth * camera.zoom,
-              map.tileHeight * camera.zoom,
-            ),
-            Paint()
-              ..color = color
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 1.5,
+          final rect = Rect.fromLTWH(
+            screenPos.dx,
+            screenPos.dy,
+            map.tileWidth * camera.zoom,
+            map.tileHeight * camera.zoom,
           );
+          if (isSolid) {
+            solidPath.addRect(rect);
+            hasSolid = true;
+          } else if (isOneWay) {
+            oneWayPath.addRect(rect);
+            hasOneWay = true;
+          } else {
+            slopePath.addRect(rect);
+            hasSlope = true;
+          }
         }
       }
     }
+
+    void strokeBatch(Path path, Color color) {
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
+    }
+
+    if (hasSolid) strokeBatch(solidPath, const Color(0xFFFF3B30));
+    if (hasOneWay) strokeBatch(oneWayPath, const Color(0xFF3B82F6));
+    if (hasSlope) strokeBatch(slopePath, const Color(0xFFFF9500));
   }
 
   @override

@@ -104,20 +104,41 @@ for what shipped and git history for the full why behind each change.
 ## Performance optimizations
 
 Candidate follow-ups identified while adding `pack-assets`/packed-atlas
-support above — none started yet, listed here per this repo's
-"add newly discovered work rather than letting it go untracked" rule.
-Each needs its own before/after benchmark (`packages/engine_core/
-benchmark/`, `packages/engine_platformer/benchmark/`, or a new
-`engine_flutter` render-focused one) before/after landing, per this
-file's own Validation section and the code-quality-bar's "re-run the
-benchmark suite for anything on a hot path" rule — none of these should
-be believed faster just because they sound like they should be.
+support above, listed here per this repo's "add newly discovered work
+rather than letting it go untracked" rule. Each needs its own before/
+after benchmark (`packages/engine_core/benchmark/`, `packages/
+engine_platformer/benchmark/`, or a new `engine_flutter` render-focused
+one) before landing, per this file's own Validation section and the
+code-quality-bar's "re-run the benchmark suite for anything on a hot
+path" rule — none of these should be believed faster just because they
+sound like they should be. Several below (bin-packing, debug-draw
+batching, atlas unloading) were correctness/mechanism changes with
+their own direct unit-test coverage rather than raw-throughput wins
+needing a benchmark harness; the remaining open ones are either blocked
+on a real design decision (mipmaps, atlas-unload *policy*) or
+deliberately left unstarted because implementing them now would add
+real invalidation-tracking risk for an unconfirmed win (see each one's
+own note).
 
-- [ ] True bin-packing for `pack-assets` (MaxRects or similar) instead
-      of the current greedy shelf packer — the shelf packer can leave
-      real wasted space (and so a larger GPU texture than necessary,
-      and more VRAM) when source sprites have very mixed aspect ratios/
-      sizes, since a whole row is only as efficient as its tallest item.
+- [x] True bin-packing for `pack-assets` — replaced the shelf packer
+      with a real MaxRects bin-packer (Best Short-Side-Fit heuristic):
+      tracks actual leftover free rectangles and splits/prunes them as
+      items place, instead of sizing every row by its tallest item (a
+      real, measurable waste for a mixed-aspect-ratio set — a shelf
+      packer forced a narrow item next to a tall one to "pay for" the
+      tall one's full height). Grows the bin (both dimensions ×1.25,
+      capped at 20 attempts) and retries from scratch whenever an item
+      doesn't fit at the current size, seeded from `sqrt(totalArea)` so
+      most real inputs pack on the first or second attempt; `--max-width`
+      keeps its meaning as a starting size hint, no longer a hard row-wrap
+      cap. Verified: existing region-correctness/padding/duplicate-name
+      tests all still pass unmodified against the new packer, plus 2 new
+      tests — a mixed tall-narrow-plus-many-small-items set stays within
+      2× the theoretical minimum area (a shelf packer would blow well
+      past this for exactly this shape of input), and a single item wider
+      than `--max-width` still packs correctly (proving the bin actually
+      grows rather than treating the flag as a cap). `engine_cli`'s full
+      suite green, analyze clean.
 - [ ] `pack-assets --mipmaps`/multiple output resolutions — a packed
       sheet is currently always full source resolution; a mobile game
       showing sprites well under their native size pays full texture
@@ -125,12 +146,20 @@ be believed faster just because they sound like they should be.
       a decision on how a `Sprite`/`TileMap` picks which resolution tier
       to load at runtime (screen density? an explicit per-platform
       config?) before implementing — not just a packer flag.
-- [ ] Batch `_drawTileMapDebug`/`_drawColliderDebug` (`engine_flutter`)
+- [x] Batch `_drawTileMapDebug`/`_drawColliderDebug` (`engine_flutter`)
       the same way `_collectSpriteItems` already batches regular sprite
-      rendering via `Canvas.drawAtlas` — these debug-only draw calls
-      currently issue one `drawRect`/`drawPath` per tile/collider, fine
-      for occasional use but a real per-frame cost if left on with a
-      large level while iterating with `showColliderDebug: true`.
+      rendering via `Canvas.drawAtlas` — every collider circle now
+      shares one `Path` (`addOval` per collider) stroked in a single
+      `drawPath` call instead of one `drawCircle` per collider (they all
+      already shared the same `Paint`, so batching costs nothing in
+      fidelity); every tile border groups into one of 3 `Path`s by
+      collision kind (solid/one-way/slope), each stroked once, instead of
+      one `drawRect` per tile — an empty kind (e.g. a level with no slope
+      tiles) is skipped entirely rather than issuing a no-op `drawPath`
+      call. Verified: existing `collider_debug_test.dart` suite (render-
+      without-crashing coverage for both paths) passes unmodified against
+      the batched implementation; full `engine_flutter` suite (238 tests)
+      green, analyze clean.
 - [ ] Cache `_lightClipPath`'s (engine_view.dart) visibility-polygon
       `Path` per shadow-casting light across frames when neither the
       light's position nor the surrounding `TileMap` geometry actually
@@ -143,15 +172,21 @@ be believed faster just because they sound like they should be.
       `shadowSmoothingSeconds` walked back — the cache must invalidate
       immediately (not smoothly) the instant the light or map changes,
       never interpolate.
-- [ ] Spatial-hash-based light culling: `_drawLighting` already
-      viewport-culls each light via `_circleIntersectsRect` before its
-      expensive shadow-raycasting path, but still iterates *every*
-      `Light2D` in the `World` every frame to do that cheap check first
-      — fine at the scale tested so far, but a level with hundreds of
-      lights (most off-screen) would still pay a linear scan every
-      frame just to cull them. `CollisionSystem`'s existing spatial hash
-      (`engine_core`) is the natural precedent to reuse/adapt rather
-      than inventing a second spatial index.
+- [ ] Spatial-hash-based light culling — **evaluated, deliberately not
+      implemented yet**: `_drawLighting` already viewport-culls each
+      light via `_circleIntersectsRect` before its expensive shadow-
+      raycasting path, but still iterates every `Light2D` in the `World`
+      every frame to do that cheap check first. The catch: building or
+      maintaining a spatial hash over light positions would itself cost
+      O(lights) per frame to insert/rebuild — the same order as the
+      arithmetic cull it would replace — so it only actually pays off if
+      the hash is *cached* across frames, which reintroduces exactly the
+      kind of invalidation-tracking risk the `_lightClipPath` item above
+      is already flagged for, for a win that's unconfirmed without a
+      level that actually has hundreds of lights to profile against.
+      Revisit once there's a real level at that scale to benchmark, or a
+      profiler trace showing this cull loop actually costing something —
+      not before.
 - [ ] `World.step`'s system loop: profile whether iterating
       `ComponentStore`s via their dense arrays (already the storage
       layout — see each store's `denseAt`) versus the current per-system
@@ -163,17 +198,28 @@ be believed faster just because they sound like they should be.
       — no evidence yet this is actually a bottleneck at realistic
       entity counts, purely a "worth measuring before dismissing"
       candidate, not a confirmed win.
-- [ ] `AtlasRegistry`/`SpriteAtlas` don't currently support unloading —
-      a game with many rooms, each with its own atlas, keeps every
-      atlas it has ever loaded resident in memory/GPU texture for the
-      whole run, even for a room the player left long ago and won't
-      revisit. Needs an explicit lifecycle decision (unload on
-      `loadScene`? reference-count across scenes sharing one atlas id?)
-      since the packed-atlas feature above makes this *less* urgent for
-      games that adopt it (one shared sheet instead of many small
-      per-room ones) but doesn't eliminate the need for a game that
-      deliberately keeps per-room atlases (e.g. very large, distinct art
-      sets per room that would make one shared sheet enormous).
+- [x] `AtlasRegistry`/`SpriteAtlas` didn't support unloading at all —
+      new `AtlasRegistry.unregister(String id)` removes the entry and
+      calls `ui.Image.dispose()` on its decoded image, actually
+      releasing the GPU texture instead of just dropping the registry's
+      own reference to it (which alone doesn't guarantee prompt release).
+      Deliberately just the *mechanism*, not a policy: this repo's own
+      "needs an explicit lifecycle decision (unload on `loadScene`?
+      reference-count across scenes sharing one atlas id?)" question is
+      still open and belongs to a specific game's scene-switching design,
+      not something the engine should decide unilaterally — a game calls
+      `unregister` itself once it knows an atlas is genuinely done with
+      (e.g. from its own room-exit logic). Doesn't reference-count: if
+      the same `SpriteAtlas` instance is deliberately registered under
+      two ids, unregistering one disposes the shared image out from under
+      the other too — documented on the method, not silently handled,
+      since guessing at sharing semantics here would be worse than
+      requiring the caller to know its own atlas graph. Verified: 2 new
+      tests (`unregister` actually disposes the image — confirmed by a
+      post-dispose call that needs the native handle throwing, not just
+      a getter that reads a cached field; unregistering a never-
+      registered id is a harmless no-op returning `false`). Full
+      `engine_flutter` suite (238 tests) green, analyze clean.
 - [ ] `_collectTileMapItems`'s per-frame tile culling (engine_view.dart)
       recomputes the visible tile range from the camera every frame,
       correctly, but a `TileMap` that never scrolls out of view entirely

@@ -79,4 +79,28 @@ void main() {
     expect(() => registry.resolve('missing'), throwsArgumentError);
     expect(registry.has('missing'), isFalse);
   });
+
+  test('AtlasRegistry.unregister removes the atlas and disposes its image', () async {
+    final registry = AtlasRegistry();
+    final atlas = SpriteAtlas.fromManifest(await _tinyImage(), {'regions': {}});
+    registry.register('room1', atlas);
+    expect(registry.has('room1'), isTrue);
+
+    expect(registry.unregister('room1'), isTrue);
+    expect(registry.has('room1'), isFalse);
+    expect(() => registry.resolve('room1'), throwsArgumentError);
+    // The underlying image is disposed -- touching its native handle
+    // after disposal throws, proving unregister actually released the
+    // GPU resource rather than just dropping the registry's own
+    // reference to it (plain getters like .width read a cached field
+    // and don't throw, so this checks a call that actually needs the
+    // handle).
+    expect(() => atlas.image.toByteData(), throwsA(anything));
+  });
+
+  test('AtlasRegistry.unregister on an id that was never registered is a harmless no-op',
+      () {
+    final registry = AtlasRegistry();
+    expect(registry.unregister('missing'), isFalse);
+  });
 }

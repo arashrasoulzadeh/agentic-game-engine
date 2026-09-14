@@ -8,6 +8,21 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Performance
+
+- `pack-assets` now bin-packs with a real MaxRects (Best Short-Side-Fit)
+  algorithm instead of a row/shelf packer — noticeably denser output for
+  a mixed-aspect-ratio sprite set, since a shelf packer wastes space
+  sizing every row by its tallest item.
+- `EngineView`'s debug overlays (`showColliderDebug`) now batch every
+  collider circle into one `Path`/`drawPath` call and every tile border
+  into one `Path` per collision kind (solid/one-way/slope), instead of
+  one `drawCircle`/`drawRect` per collider/tile.
+- New `AtlasRegistry.unregister(id)` actually disposes an atlas's
+  decoded `ui.Image`, releasing its GPU texture — the registry
+  previously had no way to release memory for an atlas a game is done
+  with (e.g. after leaving a room for good).
+
 ### Asset packing
 
 - New `game_agent pack-assets` command (`engine_cli`): recursively

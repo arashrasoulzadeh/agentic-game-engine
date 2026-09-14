@@ -112,6 +112,51 @@ void main() {
     expect(File('${tmp.path}/out/sheet.json').existsSync(), isTrue);
   });
 
+  test('MaxRects packing stays reasonably dense for a mixed-aspect-ratio set '
+      '(one tall/narrow item alongside many small ones) -- a shelf/row packer would '
+      'waste real space here, since every item sharing a row pays for the row\'s '
+      "tallest item's height even when it's a fraction of that height itself",
+      () async {
+    _writeSolidPng('${tmp.path}/src/tall.png', 10, 200, img.ColorRgba8(255, 0, 0, 255));
+    for (var i = 0; i < 30; i++) {
+      _writeSolidPng('${tmp.path}/src/small_$i.png', 10, 10, img.ColorRgba8(0, 255, 0, 255));
+    }
+
+    final outImage = '${tmp.path}/out/atlas.png';
+    await _runPack(['--input', '${tmp.path}/src', '--output-image', outImage, '--padding', '0']);
+
+    final sheet = img.decodeImage(File(outImage).readAsBytesSync())!;
+    final packedArea = sheet.width * sheet.height;
+    final itemArea = 10 * 200 + 30 * (10 * 10);
+
+    // A real bin-packer should land within a small constant factor of
+    // the theoretical minimum (sum of item areas) for a set this size;
+    // a naive shelf packer sizing every row by its tallest item would
+    // blow well past this for exactly this kind of mixed set.
+    expect(packedArea, lessThan(itemArea * 2),
+        reason: 'packed ${sheet.width}x${sheet.height}=$packedArea vs $itemArea of actual '
+            'sprite pixels -- too much wasted space for a real bin-packer');
+  });
+
+  test('a single item wider than --max-width still packs correctly (the packer grows '
+      'the bin instead of treating --max-width as a hard cap)', () async {
+    _writeSolidPng('${tmp.path}/src/wide.png', 100, 10, img.ColorRgba8(255, 0, 0, 255));
+
+    final outImage = '${tmp.path}/out/atlas.png';
+    final code = await _runPack([
+      '--input', '${tmp.path}/src',
+      '--output-image', outImage,
+      '--max-width', '10', // deliberately far too small
+    ]);
+
+    expect(code, 0);
+    final manifest =
+        jsonDecode(File('${tmp.path}/out/atlas.json').readAsStringSync()) as Map<String, dynamic>;
+    final wide = ((manifest['regions'] as Map)['wide'] as Map).cast<String, dynamic>();
+    expect(wide['w'], 100);
+    expect(wide['h'], 10);
+  });
+
   test('two images with the same basename in different subfolders is an error, not '
       'a silent overwrite', () async {
     _writeSolidPng('${tmp.path}/src/levels/1/coin.png', 4, 4, img.ColorRgba8(255, 0, 0, 255));

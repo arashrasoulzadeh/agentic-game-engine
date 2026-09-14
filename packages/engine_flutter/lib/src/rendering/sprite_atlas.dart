@@ -79,4 +79,26 @@ class AtlasRegistry {
   }
 
   bool has(String id) => _atlases.containsKey(id);
+
+  /// Releases the atlas registered under [id] and disposes its decoded
+  /// `ui.Image` — a game with many rooms, each with its own atlas,
+  /// otherwise keeps every atlas it has ever loaded resident in GPU
+  /// texture memory for the whole run, even for a room the player left
+  /// long ago and won't revisit. Does nothing (`false`) if nothing was
+  /// registered under [id]. Only call this once the atlas is genuinely
+  /// no longer in use anywhere in the current scene(s) — every `Sprite`
+  /// still referencing this atlas id will throw the next time
+  /// `EngineView` tries to render it (via [resolve]), and the disposed
+  /// `ui.Image` can't be un-disposed, so re-registering the same id
+  /// requires decoding a fresh `SpriteAtlas` from scratch, not reusing
+  /// this one. If the same `SpriteAtlas` instance (the same decoded
+  /// image) was deliberately registered under more than one id,
+  /// disposing it via one id's [unregister] invalidates it for the
+  /// others too — this doesn't reference-count.
+  bool unregister(String id) {
+    final atlas = _atlases.remove(id);
+    if (atlas == null) return false;
+    atlas.image.dispose();
+    return true;
+  }
 }
