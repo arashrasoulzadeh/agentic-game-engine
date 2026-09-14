@@ -796,6 +796,151 @@ void main() {
     });
   });
 
+  group('Light2D.cacheShadowGeometry', () {
+    testWidgets('off by default -- cachedShadowDistances stays null across frames', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final light = Light2D(radius: 100, castsShadows: true);
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(50, 50));
+      world.storeOf<Light2D>().set(id, light);
+      world.storeOf<TileMap>().set(
+            world.spawn(),
+            TileMap(cols: 5, rows: 5, tileWidth: 20, tileHeight: 20, tiles: List.filled(25, 0)),
+          );
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(light.cachedShadowDistances, isNull,
+          reason: 'no caching side effect at all unless explicitly opted in');
+    });
+
+    testWidgets(
+        'on: reuses the exact same distances list across frames for a light that '
+        "hasn't moved (the raycast sweep genuinely didn't re-run, not just that the "
+        'result happens to match)', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final light = Light2D(radius: 100, castsShadows: true, cacheShadowGeometry: true);
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(50, 50));
+      world.storeOf<Light2D>().set(id, light);
+      world.storeOf<TileMap>().set(
+            world.spawn(),
+            TileMap(cols: 5, rows: 5, tileWidth: 20, tileHeight: 20, tiles: List.filled(25, 0)),
+          );
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      final firstDistances = light.cachedShadowDistances;
+      expect(firstDistances, isNotNull);
+      expect(light.cachedShadowWorldX, 50);
+      expect(light.cachedShadowWorldY, 50);
+
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(
+        identical(light.cachedShadowDistances, firstDistances),
+        isTrue,
+        reason: 'a fresh recompute would allocate a new List every time; the exact '
+            'same instance surviving multiple frames proves the raycast sweep was '
+            'actually skipped, not just coincidentally equal',
+      );
+    });
+
+    testWidgets('on: invalidates immediately (same frame) when the light moves', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final light = Light2D(radius: 100, castsShadows: true, cacheShadowGeometry: true);
+      final id = world.spawn();
+      final pos = Position(50, 50);
+      world.storeOf<Position>().set(id, pos);
+      world.storeOf<Light2D>().set(id, light);
+      world.storeOf<TileMap>().set(
+            world.spawn(),
+            TileMap(cols: 5, rows: 5, tileWidth: 20, tileHeight: 20, tiles: List.filled(25, 0)),
+          );
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      final firstDistances = light.cachedShadowDistances;
+      expect(light.cachedShadowWorldX, 50);
+
+      pos.x = 90; // move the light -- next frame must recompute, not reuse
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(light.cachedShadowWorldX, 90,
+          reason: 'cache key updated to the new position');
+      expect(identical(light.cachedShadowDistances, firstDistances), isFalse,
+          reason: 'a moved light must not reuse the old position\'s distances even '
+              'for one frame -- invalidation has to be immediate, never a lagging '
+              'blend (see cacheShadowGeometry\'s own doc comment on why)');
+    });
+
+    testWidgets('on: invalidates when radius changes, not just position', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final light = Light2D(radius: 100, castsShadows: true, cacheShadowGeometry: true);
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(50, 50));
+      world.storeOf<Light2D>().set(id, light);
+      world.storeOf<TileMap>().set(
+            world.spawn(),
+            TileMap(cols: 5, rows: 5, tileWidth: 20, tileHeight: 20, tiles: List.filled(25, 0)),
+          );
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      final firstDistances = light.cachedShadowDistances;
+
+      light.radius = 150;
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(light.cachedShadowRadius, 150);
+      expect(identical(light.cachedShadowDistances, firstDistances), isFalse);
+    });
+  });
+
   group('Scene.ambientBrightness override', () {
     test('Scene defaults to null (use GameConfig\'s global setting)', () {
       // A minimal concrete Scene to read the default off of, without

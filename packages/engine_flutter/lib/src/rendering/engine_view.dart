@@ -745,15 +745,55 @@ class _EnginePainter extends CustomPainter {
     // and less at low ones for the same tau).
     final smoothingAlpha = smoothing ? 1 - exp(-frameDtSeconds / smoothingSeconds) : 1.0;
 
+    // See Light2D.cacheShadowGeometry's doc comment: this only ever
+    // skips the raycastTileMap sweep itself (world-space, camera-
+    // independent) -- the screen-space Path below is always rebuilt
+    // fresh every frame from whichever distances (cached or freshly
+    // raycast) end up in `rawDistances`, so panning/zooming the camera
+    // while a cache hit is in effect still looks correct.
+    final cacheHit = light.cacheShadowGeometry &&
+        light.cachedShadowDistances != null &&
+        light.cachedShadowDistances!.length == rayCount + 1 &&
+        light.cachedShadowWorldX == worldPos.x &&
+        light.cachedShadowWorldY == worldPos.y &&
+        light.cachedShadowRadius == light.radius &&
+        light.cachedShadowConeAngle == light.coneAngle &&
+        light.cachedShadowConeDirection == light.coneDirection &&
+        light.cachedShadowRayCount == rayCount &&
+        light.cachedShadowBlockOneWay == light.blockOneWayPlatforms &&
+        light.cachedShadowCastsShadows == light.castsShadows;
+
+    final List<double> rawDistances;
+    if (cacheHit) {
+      rawDistances = light.cachedShadowDistances!;
+    } else {
+      rawDistances = List<double>.filled(rayCount + 1, 0);
+      for (var i = 0; i <= rayCount; i++) {
+        final angle = startAngle + sweep * i / rayCount;
+        rawDistances[i] = light.castsShadows
+            ? _raycastLightDistance(worldPos, angle, light.radius, light.blockOneWayPlatforms)
+            : light.radius;
+      }
+      if (light.cacheShadowGeometry) {
+        light.cachedShadowDistances = rawDistances;
+        light.cachedShadowWorldX = worldPos.x;
+        light.cachedShadowWorldY = worldPos.y;
+        light.cachedShadowRadius = light.radius;
+        light.cachedShadowConeAngle = light.coneAngle;
+        light.cachedShadowConeDirection = light.coneDirection;
+        light.cachedShadowRayCount = rayCount;
+        light.cachedShadowBlockOneWay = light.blockOneWayPlatforms;
+        light.cachedShadowCastsShadows = light.castsShadows;
+      }
+    }
+
     final path = Path();
     final centerScreen = camera.worldToScreen(worldPos.x, worldPos.y, size);
     path.moveTo(centerScreen.dx, centerScreen.dy);
 
     for (var i = 0; i <= rayCount; i++) {
       final angle = startAngle + sweep * i / rayCount;
-      final rawDist = light.castsShadows
-          ? _raycastLightDistance(worldPos, angle, light.radius, light.blockOneWayPlatforms)
-          : light.radius;
+      final rawDist = rawDistances[i];
       double dist;
       if (smoothing) {
         final prev = light.smoothedShadowDistances[i];

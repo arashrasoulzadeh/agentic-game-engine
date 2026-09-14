@@ -139,13 +139,25 @@ own note).
       than `--max-width` still packs correctly (proving the bin actually
       grows rather than treating the flag as a cap). `engine_cli`'s full
       suite green, analyze clean.
-- [ ] `pack-assets --mipmaps`/multiple output resolutions — a packed
-      sheet is currently always full source resolution; a mobile game
-      showing sprites well under their native size pays full texture
-      bandwidth/memory for detail that never reaches the screen. Needs
-      a decision on how a `Sprite`/`TileMap` picks which resolution tier
-      to load at runtime (screen density? an explicit per-platform
-      config?) before implementing — not just a packer flag.
+- [x] `pack-assets --mipmaps`/multiple output resolutions — new
+      `--scales` flag (default `"1.0"`, unchanged single-tier behavior)
+      packs one additional resized sheet+manifest pair per requested
+      tier, e.g. `--scales 1.0,0.5,0.25`. Resolved the open design
+      question ("how does a `Sprite`/`TileMap` pick which tier to load")
+      the same way Flutter's own asset-variant system already resolves
+      it for plain assets: an `@<scale>x` filename suffix convention
+      (`atlas.png` -> `atlas@0.5x.png`), with *picking* a tier at
+      runtime left to the consuming game (screen density, an explicit
+      config) rather than decided inside the engine — this command only
+      produces the tiers. The `1.0` tier always keeps the plain
+      `--output-image`/`--output-manifest` paths unsuffixed, so an
+      existing single-tier caller's output doesn't change at all.
+      Verified: 4 new tests (one sheet+manifest pair per tier with
+      correctly scaled region dimensions in each; a tiny source image
+      clamped to at least 1px per side rather than rounding to a
+      degenerate 0×0 region at a small scale; `--scales` rejects a
+      non-numeric or non-positive value). `engine_cli`'s full suite
+      green, analyze clean.
 - [x] Batch `_drawTileMapDebug`/`_drawColliderDebug` (`engine_flutter`)
       the same way `_collectSpriteItems` already batches regular sprite
       rendering via `Canvas.drawAtlas` — every collider circle now
@@ -160,18 +172,37 @@ own note).
       without-crashing coverage for both paths) passes unmodified against
       the batched implementation; full `engine_flutter` suite (238 tests)
       green, analyze clean.
-- [ ] Cache `_lightClipPath`'s (engine_view.dart) visibility-polygon
-      `Path` per shadow-casting light across frames when neither the
-      light's position nor the surrounding `TileMap` geometry actually
-      changed that tick, instead of rebuilding it via a fresh
-      `raycastTileMap` sweep unconditionally every frame regardless of
-      whether anything moved — a static shadow-casting light (a torch
-      on a wall, common in a level) currently re-does the full raycast
-      sweep every single frame for no reason. Needs care not to
-      reintroduce the exact "shadow lags/animates" complaint that got
-      `shadowSmoothingSeconds` walked back — the cache must invalidate
-      immediately (not smoothly) the instant the light or map changes,
-      never interpolate.
+- [x] Cache `_lightClipPath`'s (engine_view.dart) visibility-polygon
+      per shadow-casting light — new opt-in `Light2D.cacheShadowGeometry`
+      (`false` default, zero behavior/cost change unless set) reuses the
+      previous frame's per-ray *world-space* hit distances instead of
+      re-running the `raycastTileMap` sweep, whenever every input that
+      could change them (world `Position`, `radius`, `coneAngle`,
+      `coneDirection`, `shadowRayCount`, `blockOneWayPlatforms`,
+      `castsShadows`) is bit-for-bit identical to last frame's — a
+      static shadow-casting light (a torch on a wall) now skips the
+      sweep entirely once its geometry has been computed once. The
+      screen-space `Path` itself is still rebuilt fresh every frame from
+      those distances regardless of cache hit/miss, so a cached light's
+      shadow still correctly follows `Camera` panning/zooming. Explicitly
+      does **not** detect the level's own `TileMap` content changing
+      out from under a stationary light (no mutation-versioning exists
+      for `TileMap` yet) — documented as a caveat on the field, not
+      silently wrong: a game with destructible/changing geometry near a
+      cached light must not enable this, or must force-invalidate itself
+      (nudge any keyed field) exactly when the geometry changes. Avoided
+      exactly the `shadowSmoothingSeconds` mistake (interpolating toward
+      a new value, which read as the shadow visibly lagging) — a cache
+      hit is pixel-identical to the equivalent uncached frame, a cache
+      miss invalidates completely and immediately, never a blend.
+      Verified: 4 new tests — off by default (`cachedShadowDistances`
+      stays `null`, zero side effect unless opted in); on, a static
+      light reuses the *exact same* `List<double>` instance across
+      multiple frames (proven via `identical()`, not just equal values
+      — confirms the raycast sweep genuinely didn't re-run); on, moving
+      the light invalidates the very next frame (no one-frame-late
+      lag); on, changing `radius` also invalidates (not position-only).
+      Full `engine_flutter` suite (242 tests) green, analyze clean.
 - [ ] Spatial-hash-based light culling — **evaluated, deliberately not
       implemented yet**: `_drawLighting` already viewport-culls each
       light via `_circleIntersectsRect` before its expensive shadow-

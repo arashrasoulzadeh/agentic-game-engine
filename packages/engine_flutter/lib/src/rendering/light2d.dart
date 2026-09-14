@@ -166,6 +166,54 @@ class Light2D {
   int? minZIndex;
   int? maxZIndex;
 
+  /// `false` (default) recomputes this light's shadow-casting visibility
+  /// polygon (a `raycastTileMap` sweep of [shadowRayCount] rays) fresh
+  /// every single frame — always correct, but real, measurable cost for
+  /// a light that in practice never moves relative to the level's
+  /// geometry (a torch mounted on a wall). `true` skips that sweep and
+  /// reuses the previous frame's per-ray *world-space* hit distances
+  /// whenever every input that could change them ([radius],
+  /// [coneAngle], [coneDirection], [shadowRayCount],
+  /// [blockOneWayPlatforms], [castsShadows], and this light's own world
+  /// `Position`) is bit-for-bit identical to last frame's — the
+  /// re-projection into *screen* space (so the polygon still correctly
+  /// follows `Camera` panning/zooming even while cached) always happens
+  /// fresh regardless. Invalidates immediately and completely the
+  /// instant any of those inputs changes, never blends/interpolates
+  /// toward the new value — deliberately not the same idea as
+  /// [shadowSmoothingSeconds] (which reads as the shadow visibly lagging
+  /// into place, rejected live earlier for exactly that reason): a
+  /// cache hit must look pixel-identical to the equivalent uncached
+  /// frame, only cheaper. Does **not** detect the level's own `TileMap`
+  /// geometry changing out from under a light that itself hasn't moved
+  /// (destroying a wall, opening a door) — nothing in this engine
+  /// versions `TileMap` mutations yet, so there's no cheap way to
+  /// detect that case. A game whose level geometry can change under a
+  /// stationary shadow-casting light must leave this `false` (the
+  /// default), or invalidate the cache itself by nudging [radius] (or
+  /// any other keyed field) to force a recompute right when the
+  /// geometry actually changes.
+  bool cacheShadowGeometry;
+
+  /// Internal render-side cache for [cacheShadowGeometry] — the world-
+  /// space per-ray hit distances from the last time this light's shadow
+  /// geometry was actually recomputed, plus every input that produced
+  /// them (so `EngineView` can tell in O(1) whether they're still
+  /// valid). Not meant to be read or set from game code, and
+  /// deliberately excluded from [toJson]/[fromJson] — same reasoning as
+  /// [smoothedShadowDistances]: derived, per-frame rendering state, not
+  /// anything meaningful to persist in a save or send over the
+  /// agent-facing JSON API.
+  List<double>? cachedShadowDistances;
+  double? cachedShadowWorldX;
+  double? cachedShadowWorldY;
+  double? cachedShadowRadius;
+  double? cachedShadowConeAngle;
+  double? cachedShadowConeDirection;
+  int? cachedShadowRayCount;
+  bool? cachedShadowBlockOneWay;
+  bool? cachedShadowCastsShadows;
+
   Light2D({
     this.radius = 100,
     this.intensity = 1,
@@ -184,6 +232,7 @@ class Light2D {
     this.shadowEdgeSoftness = 8,
     this.minZIndex,
     this.maxZIndex,
+    this.cacheShadowGeometry = false,
   })  : baseIntensity = baseIntensity ?? intensity,
         baseRadius = baseRadius ?? radius;
 
@@ -205,6 +254,7 @@ class Light2D {
         'shadowEdgeSoftness': shadowEdgeSoftness,
         if (minZIndex != null) 'minZIndex': minZIndex,
         if (maxZIndex != null) 'maxZIndex': maxZIndex,
+        'cacheShadowGeometry': cacheShadowGeometry,
       };
 
   factory Light2D.fromJson(Map<String, dynamic> json) => Light2D(
@@ -225,5 +275,6 @@ class Light2D {
         shadowEdgeSoftness: (json['shadowEdgeSoftness'] as num?)?.toDouble() ?? 8,
         minZIndex: (json['minZIndex'] as num?)?.toInt(),
         maxZIndex: (json['maxZIndex'] as num?)?.toInt(),
+        cacheShadowGeometry: json['cacheShadowGeometry'] as bool? ?? false,
       );
 }

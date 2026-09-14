@@ -112,6 +112,88 @@ void main() {
     expect(File('${tmp.path}/out/sheet.json').existsSync(), isTrue);
   });
 
+  test('--scales writes one sheet+manifest pair per tier, with the 1.0 tier keeping '
+      'the plain --output-image/--output-manifest paths unsuffixed', () async {
+    _writeSolidPng('${tmp.path}/src/coin.png', 20, 20, img.ColorRgba8(255, 0, 0, 255));
+
+    final code = await _runPack([
+      '--input', '${tmp.path}/src',
+      '--output-image', '${tmp.path}/out/atlas.png',
+      '--scales', '1.0,0.5,0.25',
+    ]);
+
+    expect(code, 0);
+    expect(File('${tmp.path}/out/atlas.png').existsSync(), isTrue,
+        reason: '1.0 tier keeps the unsuffixed path');
+    expect(File('${tmp.path}/out/atlas.json').existsSync(), isTrue);
+    expect(File('${tmp.path}/out/atlas@0.5x.png').existsSync(), isTrue);
+    expect(File('${tmp.path}/out/atlas@0.5x.json').existsSync(), isTrue);
+    expect(File('${tmp.path}/out/atlas@0.25x.png').existsSync(), isTrue);
+    expect(File('${tmp.path}/out/atlas@0.25x.json').existsSync(), isTrue);
+
+    final fullManifest = jsonDecode(File('${tmp.path}/out/atlas.json').readAsStringSync())
+        as Map<String, dynamic>;
+    final fullCoin =
+        ((fullManifest['regions'] as Map)['coin'] as Map).cast<String, dynamic>();
+    expect(fullCoin['w'], 20);
+    expect(fullCoin['h'], 20);
+
+    final halfManifest = jsonDecode(File('${tmp.path}/out/atlas@0.5x.json').readAsStringSync())
+        as Map<String, dynamic>;
+    final halfCoin =
+        ((halfManifest['regions'] as Map)['coin'] as Map).cast<String, dynamic>();
+    expect(halfCoin['w'], 10);
+    expect(halfCoin['h'], 10);
+
+    final quarterManifest =
+        jsonDecode(File('${tmp.path}/out/atlas@0.25x.json').readAsStringSync())
+            as Map<String, dynamic>;
+    final quarterCoin =
+        ((quarterManifest['regions'] as Map)['coin'] as Map).cast<String, dynamic>();
+    expect(quarterCoin['w'], 5);
+    expect(quarterCoin['h'], 5);
+  });
+
+  test('--scales tolerates a source image tiny enough that a small scale would round '
+      'to 0px -- clamped to at least 1px per side, not a degenerate empty region',
+      () async {
+    _writeSolidPng('${tmp.path}/src/tiny.png', 2, 2, img.ColorRgba8(255, 0, 0, 255));
+
+    final code = await _runPack([
+      '--input', '${tmp.path}/src',
+      '--output-image', '${tmp.path}/out/atlas.png',
+      '--scales', '1.0,0.1',
+    ]);
+
+    expect(code, 0);
+    final manifest = jsonDecode(File('${tmp.path}/out/atlas@0.1x.json').readAsStringSync())
+        as Map<String, dynamic>;
+    final tiny = ((manifest['regions'] as Map)['tiny'] as Map).cast<String, dynamic>();
+    expect(tiny['w'], greaterThanOrEqualTo(1));
+    expect(tiny['h'], greaterThanOrEqualTo(1));
+  });
+
+  test('--scales rejects a non-numeric or non-positive value', () async {
+    _writeSolidPng('${tmp.path}/src/a.png', 4, 4, img.ColorRgba8(255, 0, 0, 255));
+
+    expect(
+      await _runPack([
+        '--input', '${tmp.path}/src',
+        '--output-image', '${tmp.path}/out/atlas.png',
+        '--scales', 'not-a-number',
+      ]),
+      1,
+    );
+    expect(
+      await _runPack([
+        '--input', '${tmp.path}/src',
+        '--output-image', '${tmp.path}/out2/atlas.png',
+        '--scales', '0',
+      ]),
+      1,
+    );
+  });
+
   test('MaxRects packing stays reasonably dense for a mixed-aspect-ratio set '
       '(one tall/narrow item alongside many small ones) -- a shelf/row packer would '
       'waste real space here, since every item sharing a row pays for the row\'s '

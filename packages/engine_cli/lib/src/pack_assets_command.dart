@@ -28,6 +28,11 @@ class _PackItem {
 /// hand-authored atlas — `{"regions": {"name": {"x","y","w","h"}}}` —
 /// so no new parsing/loading code was needed on the consuming side at
 /// all, only a place to point it at.
+///
+/// `--scales` (default `1.0`, i.e. one tier, today's original behavior)
+/// packs one additional resized sheet+manifest pair per extra tier —
+/// see its own `--help` text for the naming convention and why
+/// *picking* a tier at runtime is left to the game, not decided here.
 class PackAssetsCommand extends Command<int> {
   @override
   final name = 'pack-assets';
@@ -67,6 +72,24 @@ class PackAssetsCommand extends Command<int> {
         help: 'Starting width hint for the packer (it grows the sheet as '
             'needed if this turns out too small for everything to fit) — '
             'not a hard cap on the final sheet width.',
+      )
+      ..addOption(
+        'scales',
+        defaultsTo: '1.0',
+        help: 'Comma-separated resolution tiers to pack, e.g. "1.0,0.5,0.25" '
+            '-- each source image is resized (before packing, so the packer '
+            'still sees real post-resize dimensions) and written to its own '
+            'sheet + manifest pair, letting a mobile game load a smaller '
+            'sheet when its sprites are shown well under native size instead '
+            'of always paying full source-resolution texture memory/'
+            'bandwidth. The 1.0 tier (always implied even if omitted) keeps '
+            'the plain --output-image/--output-manifest paths unchanged; '
+            'every other tier gets an "@<scale>x" suffix inserted before the '
+            'extension (e.g. atlas.png -> atlas@0.5x.png). Picking which '
+            'tier to load at runtime (screen density, an explicit config) '
+            'is the consuming game\'s decision, not this command\'s -- it '
+            'only produces the tiers, matching the same "@2x/@3x" naming '
+            'convention Flutter\'s own asset-variant system uses.',
       );
   }
 
@@ -92,6 +115,21 @@ class PackAssetsCommand extends Command<int> {
         (args['output-manifest'] as String?) ?? _defaultManifestPath(outputImagePath);
     final padding = int.parse(args['padding'] as String);
     final maxWidth = int.parse(args['max-width'] as String);
+    final List<double> scales;
+    try {
+      scales = (args['scales'] as String)
+          .split(',')
+          .map((s) => double.parse(s.trim()))
+          .toList();
+    } on FormatException {
+      stderr.writeln('Error: --scales must be a comma-separated list of numbers, '
+          'e.g. "1.0,0.5,0.25" (got "${args['scales']}").');
+      return 1;
+    }
+    if (scales.any((s) => s <= 0)) {
+      stderr.writeln('Error: --scales values must be > 0 (got "${args['scales']}").');
+      return 1;
+    }
 
     final items = _loadItems(inputDir);
     if (items.isEmpty) {
@@ -109,34 +147,75 @@ class PackAssetsCommand extends Command<int> {
       return 1;
     }
 
-    final packed = _pack(items, padding: padding, maxWidth: maxWidth);
+    for (final scale in scales) {
+      final scaledItems = scale == 1.0 ? items : _resized(items, scale);
+      final packed = _pack(scaledItems, padding: padding, maxWidth: maxWidth);
 
-    final outputImageFile = File(outputImagePath);
-    outputImageFile.parent.createSync(recursive: true);
-    outputImageFile.writeAsBytesSync(img.encodePng(packed.sheet));
+      final imagePath = _tieredPath(outputImagePath, scale);
+      final manifestPath = _tieredPath(outputManifestPath, scale);
 
-    final outputManifestFile = File(outputManifestPath);
-    outputManifestFile.parent.createSync(recursive: true);
-    outputManifestFile.writeAsStringSync(
-      const JsonEncoder.withIndent('  ').convert({
-        'regions': {
-          for (final entry in packed.regions.entries)
-            entry.key: {
-              'x': entry.value.x,
-              'y': entry.value.y,
-              'w': entry.value.w,
-              'h': entry.value.h,
-            },
-        },
-      }),
-    );
+      final outputImageFile = File(imagePath);
+      outputImageFile.parent.createSync(recursive: true);
+      outputImageFile.writeAsBytesSync(img.encodePng(packed.sheet));
 
-    stdout.writeln(
-      '$outputImagePath: packed ${items.length} images into '
-      '${packed.sheet.width}x${packed.sheet.height} '
-      '(manifest: $outputManifestPath)',
-    );
+      final outputManifestFile = File(manifestPath);
+      outputManifestFile.parent.createSync(recursive: true);
+      outputManifestFile.writeAsStringSync(
+        const JsonEncoder.withIndent('  ').convert({
+          'regions': {
+            for (final entry in packed.regions.entries)
+              entry.key: {
+                'x': entry.value.x,
+                'y': entry.value.y,
+                'w': entry.value.w,
+                'h': entry.value.h,
+              },
+          },
+        }),
+      );
+
+      stdout.writeln(
+        '$imagePath: packed ${scaledItems.length} images into '
+        '${packed.sheet.width}x${packed.sheet.height} '
+        '(manifest: $manifestPath)',
+      );
+    }
     return 0;
+  }
+
+  /// Resizes every item to [scale] of its original dimensions (at least
+  /// 1px per side, so a tiny source image at a small scale never
+  /// resolves to a degenerate 0x0 region) — a fresh list, the original
+  /// full-resolution `items` list (and its decoded images) is left
+  /// untouched for the next scale tier's own resize pass.
+  List<_PackItem> _resized(List<_PackItem> items, double scale) => [
+        for (final item in items)
+          _PackItem(
+            item.name,
+            img.copyResize(
+              item.image,
+              width: (item.image.width * scale).round().clamp(1, 1 << 20),
+              height: (item.image.height * scale).round().clamp(1, 1 << 20),
+            ),
+          ),
+      ];
+
+  /// `scale == 1.0` returns [path] unchanged (the plain, un-suffixed
+  /// tier every existing caller already expects); any other scale
+  /// inserts an `@<scale>x` suffix before the extension, e.g.
+  /// `atlas.png` + `0.5` -> `atlas@0.5x.png` — the same convention
+  /// Flutter's own `2.0x`/`3.0x` asset-variant folders use, just applied
+  /// to a filename instead of a directory since each tier here is a
+  /// whole separate sheet+manifest pair, not a same-named variant asset.
+  String _tieredPath(String path, double scale) {
+    if (scale == 1.0) return path;
+    final dir = p.dirname(path);
+    final ext = p.extension(path);
+    final base = p.basenameWithoutExtension(path);
+    final scaleLabel = scale == scale.roundToDouble()
+        ? scale.toStringAsFixed(0)
+        : scale.toString();
+    return p.join(dir, '$base@${scaleLabel}x$ext');
   }
 
   static const _imageExtensions = {'.png', '.jpg', '.jpeg', '.bmp', '.gif'};
