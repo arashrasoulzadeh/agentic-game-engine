@@ -30,4 +30,17 @@ void main() {
     final audio = AudioManager();
     audio.dispose();
   });
+
+  // Exercising playSound()'s new pooling path (a player actually
+  // completing, returning to the pool, and being reused) was tried
+  // here and reverted -- play() goes all the way through
+  // audioplayers' AudioCache to a real asset-bundle load before this
+  // mock (a bare method-channel stub with no asset/event-channel
+  // simulation) is ever reached, throwing "Unable to load asset" for
+  // any path that doesn't exist in the test bundle. Exactly the same
+  // rabbit hole this file's own top comment already flags for
+  // play/playMusic/stopMusic/setMusicVolume -- not worth chasing
+  // further than construction/disposal in a unit test; real playback
+  // (pooled or not) is verified on a device instead (tracked in
+  // TODO.md).
 }

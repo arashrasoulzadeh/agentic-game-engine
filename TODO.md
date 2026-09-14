@@ -304,41 +304,72 @@ own note).
       correctly, but a `TileMap` that never scrolls out of view entirely
       (fits fully on screen, or the camera never moves) could instead
       cache its full `_DrawItem` list once and only invalidate on
-      camera movement/zoom change — worth measuring whether the culling
-      math itself is actually a meaningful per-frame cost at typical
-      map sizes before adding this complexity, since a wrong intuition
-      here could easily not be worth the added invalidation-tracking
-      bugs it risks (see the shadow-smoothing walkback above for what
-      a wrong "obviously helps" instinct here has already cost once).
+      camera movement/zoom change — **evaluated, still deliberately not
+      implemented**: this repo's Flutter-dependent packages
+      (`engine_flutter`/`engine_platformer`) can't be run through plain
+      `dart run` in this environment (`package:flutter` isn't available
+      outside the Flutter SDK's own tooling — confirmed hitting real,
+      unrelated Dart/Flutter-SDK-internal compile errors attempting it
+      for this exact investigation), and there's no lighter-weight
+      render-focused benchmark harness set up for `engine_flutter` yet
+      (the TODO note that first flagged this candidate already named
+      that gap). Implementing a cache here blind, without the
+      measurement this file's own Validation section requires before
+      landing anything on a hot path, is exactly the risk this item's
+      own original note already warned against (see the
+      shadow-smoothing walkback). Revisit once an `engine_flutter`
+      render-benchmark harness exists to actually measure this against.
 - [ ] `EngineView`'s draw-item list (`_DrawItem`, built fresh every
-      frame in `paint()` from every renderable component store) 
-      allocates a new `List`/closure per item every single frame
-      regardless of whether the scene's actual entity set changed since
-      the last frame — for a mostly-static scene (a puzzle room, a menu)
-      this is avoidable per-frame allocation pressure. A dirty-flag
-      (invalidate the cached list only when a relevant `ComponentStore`
-      actually changes) is the likely shape, but `ComponentStore`
-      doesn't currently expose a cheap "has anything changed since
-      version N" check — that would need to be added first, carefully,
-      without slowing down the write path every store's `set`/`get`
-      already sits on.
-- [ ] Audio: `AudioManager` (per its own file) doesn't currently pool/
-      reuse player instances for a rapidly-repeated short sound effect
-      (a coin pickup, a jump) — worth checking whether each play spins
-      up real overhead per call at typical SFX-trigger rates (a fast
-      platformer can trigger several pickups within one second) versus
-      whatever the underlying audio plugin already pools internally;
-      may turn out to be a non-issue once actually measured.
+      frame in `paint()` from every renderable component store) —
+      **evaluated, still deliberately not implemented**, same reasoning
+      and same blocker as the tile-culling item immediately above: no
+      way to benchmark an `engine_flutter` rendering change in this
+      environment, and the fix's own likely shape (a `ComponentStore`
+      "changed since version N" check) would touch the write path
+      *every* store's `set`/`get` already sits on — not something to
+      add without being able to confirm it's actually worth that risk.
+      Revisit alongside the item above.
+- [x] Audio: `AudioManager` didn't pool/reuse player instances for a
+      rapidly-repeated short sound effect — `playSound` now reuses a
+      pooled, idle `AudioPlayer` (LIFO — most recently used first, up
+      to `_maxPoolSize` (`8`) idle players kept at once) instead of
+      constructing a fresh one per call and disposing it on completion;
+      constructing an `AudioPlayer` sets up real platform-channel/native
+      player state on every platform `audioplayers` supports, genuine
+      avoidable overhead at the trigger rates this item's own example
+      (several pickups within one second) implies. A burst past the
+      pool cap still gets its own short-lived player (disposed on
+      completion, not pooled), so overlapping SFX beyond `_maxPoolSize`
+      concurrent ones still all play correctly. Verified: existing
+      construct/disposal-only test coverage still passes; a deeper test
+      actually exercising `playSound`'s pooling path (a player
+      completing, returning to the pool, and being reused) was tried
+      and reverted — `play()` routes all the way through
+      `audioplayers`' `AudioCache` to a real asset-bundle load before
+      this package's existing platform-channel mock (no asset/event-
+      channel simulation) is ever reached, throwing "Unable to load
+      asset" for any path not in the test bundle — the exact same
+      rabbit hole `audio_manager_test.dart`'s own top comment already
+      flags for every other `AudioManager` method; not worth chasing
+      further in a unit test than this file's established construction/
+      disposal-only precedent. `engine_flutter` analyze clean.
 - [ ] `World.toJson()`/full-state serialization (used for save/load and
       the agent-facing API) walks every `ComponentStore` and rebuilds a
-      fresh `Map` per entity per component every call — fine for an
-      occasional save, but an agent polling world state frequently
-      (`WorldView`, live debugging) pays this full-serialization cost
-      every poll even when most of the world hasn't changed since the
-      last one. A diff/patch-since-last-poll API (distinct from the
-      existing `applyPatch`, which goes the other direction) is the
-      likely shape, but needs real agent-workload evidence this is
-      actually hit often enough to matter before building it.
+      fresh `Map` per entity per component every call — **evaluated,
+      deliberately not implemented**: this item's own original note
+      already said it "needs real agent-workload evidence this is
+      actually hit often enough to matter before building it," and no
+      such evidence exists yet — an agent-facing polling workload at a
+      rate where this would actually matter hasn't been observed, only
+      hypothesized. The likely shape (dirty-tracking per entity/
+      component, keyed by tick) would add write-path overhead to every
+      `ComponentStore.set` call in the engine to speed up a read path
+      with no confirmed frequent caller — building it now would be
+      designing for a hypothetical requirement against this repo's own
+      "don't add complexity for a hypothetical future requirement"
+      principle, not a measured win. Revisit if/when an actual agent
+      workload profile shows frequent `World.toJson()` polling costing
+      something real.
 
 ## Features (engine_flutter)
 
