@@ -94,3 +94,57 @@ class Level {
     return entities;
   }
 }
+
+/// Tracks every entity a single [Level.loadInto] call spawned, so that
+/// content can be hot-reloaded into a *running* `World` — an agent (or
+/// a human) editing a level JSON file wants to see the result without a
+/// full app restart, which otherwise means either leaking the old
+/// entities (spawning duplicates on top of them) or hand-tracking which
+/// ids belong to which level load. `Level.loadInto` itself only returns
+/// *named* entities (by design — that's the "find the player/door"
+/// contract other code depends on); `LevelHandle` additionally keeps
+/// every id, named or not, so [reload] can cleanly tear the old set
+/// down first.
+class LevelHandle {
+  final World _world;
+  List<EntityId> _entityIds;
+  Map<String, EntityId> _named;
+
+  LevelHandle._(this._world, this._entityIds, this._named);
+
+  /// Loads [json] into [world] via [Level.loadInto], returning a handle
+  /// that can later [reload] with new JSON.
+  factory LevelHandle.load(World world, Map<String, dynamic> json) {
+    final handle = LevelHandle._(world, const [], const {});
+    handle._loadFresh(json);
+    return handle;
+  }
+
+  /// Every entity currently alive from the last successful load —
+  /// named and unnamed alike.
+  List<EntityId> get entityIds => List.unmodifiable(_entityIds);
+
+  /// The named entities from the last successful load, same contract
+  /// as [Level.loadInto]'s return value.
+  Map<String, EntityId> get named => Map.unmodifiable(_named);
+
+  /// Destroys every entity from the current load, then loads [json] in
+  /// its place. Validates [json] *before* destroying anything — a
+  /// malformed edit (the common case while iterating on content)
+  /// throws [LevelLoadException] and leaves the previous level fully
+  /// intact rather than tearing it down for a load that was never
+  /// going to succeed.
+  void reload(Map<String, dynamic> json) {
+    Level.validate(json); // throws before anything is torn down
+    for (final id in _entityIds) {
+      _world.destroy(id);
+    }
+    _loadFresh(json);
+  }
+
+  void _loadFresh(Map<String, dynamic> json) {
+    final before = Set<EntityId>.from(_world.entities.all);
+    _named = Level.loadInto(_world, json);
+    _entityIds = _world.entities.all.where((id) => !before.contains(id)).toList();
+  }
+}

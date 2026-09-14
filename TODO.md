@@ -506,11 +506,26 @@ own note).
       in one stalled step, `reset()` rewinds, empty-recording
       `isFinished`). Full `engine_core` suite and `dart analyze
       --fatal-infos` both clean.
-- [ ] Content hot-reload: no way to re-load a level/`GameConfig` JSON
-      file into a running `World` without a full app restart — this
-      engine markets itself as agent-friendly/iteration-friendly, and
-      fast content-edit-see-result loops are a big part of that promise
-      that isn't delivered yet.
+- [x] Content hot-reload: new `LevelHandle` (`engine_core`) wraps
+      `Level.loadInto`/`reload` for a *running* `World` —
+      `LevelHandle.load` tracks every entity id a level spawned (named
+      and unnamed alike; `Level.loadInto`'s own return value is
+      deliberately only the named subset, so this needed its own
+      tracking rather than reusing that), and `reload(newJson)`
+      destroys exactly those tracked entities before spawning the new
+      set — entities that existed in the `World` before the level was
+      ever loaded (or that belong to a different `LevelHandle`) are
+      left untouched. `reload` validates the new JSON *before*
+      destroying anything, so a malformed edit — the common case while
+      iterating on content — throws and leaves the previous, working
+      level fully intact rather than tearing it down for a load that
+      was never going to succeed. Verified: 5 new
+      `level_handle_test.dart` tests (tracks named + unnamed ids on
+      load; reload tears down only its own tracked entities, not
+      pre-existing or other-handle ones; stale names drop out after a
+      reload; a malformed reload throws `LevelLoadException` and
+      leaves the prior level's entity count/ids/aliveness untouched).
+      Full `engine_core` suite and `dart analyze --fatal-infos` clean.
 
 ## Lighting follow-ups
 

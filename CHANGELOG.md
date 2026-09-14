@@ -301,6 +301,11 @@ item at a time.
   snapshots (input, agent actions, etc.) — both needed for
   reproducible testing/debugging of an agent-driven or physics-heavy
   game.
+- **Content hot-reload**: `LevelHandle` re-loads a level JSON file into
+  a running `World` — tracks every entity a level spawned and tears
+  down exactly those before applying an edited version, validating the
+  new JSON first so a malformed edit leaves the previous, working level
+  untouched instead of tearing it down for a load that fails.
 - **Save-schema versioning**: `SaveGame.save`/`load` take a `version`
   and wrap the saved snapshot in a `{schemaVersion, world}` envelope;
   `load` takes an optional `migrate` callback and throws a new
