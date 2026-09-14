@@ -71,6 +71,15 @@ void main() {
       expect(restored.coneAngle, isNull);
     });
 
+    test('blockOneWayPlatforms defaults to false and round-trips through toJson/fromJson',
+        () {
+      expect(Light2D().blockOneWayPlatforms, isFalse);
+
+      final light = Light2D(castsShadows: true, blockOneWayPlatforms: true);
+      final restored = Light2D.fromJson(light.toJson());
+      expect(restored.blockOneWayPlatforms, isTrue);
+    });
+
     test('shadowRayCount defaults to 48 and round-trips through toJson/fromJson', () {
       expect(Light2D().shadowRayCount, 48);
 
@@ -444,6 +453,46 @@ void main() {
 
       expect(find.byType(EngineView), findsOneWidget);
     });
+
+    testWidgets('a shadow-casting light with blockOneWayPlatforms true renders without '
+        'crashing, with a one-way TileMap tile present', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(
+              cols: 10,
+              rows: 10,
+              tileWidth: 20,
+              tileHeight: 20,
+              tiles: List.filled(100, 0),
+              oneWayTileIds: {2},
+            ),
+          );
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(100, 100));
+      world.storeOf<Light2D>().set(
+            id,
+            Light2D(radius: 100, castsShadows: true, blockOneWayPlatforms: true),
+          );
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.15,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(find.byType(EngineView), findsOneWidget);
+    });
   });
 
   group('Shadow casting occlusion math', () {
@@ -477,6 +526,29 @@ void main() {
       final hit = raycastTileMap(map, origin, 10, 10, 110, 10);
 
       expect(hit, isNull, reason: 'nothing blocks, so the ray reaches the target unobstructed');
+    });
+
+    test(
+        'a one-way tile blocks a raycast when blockOneWay is true (Light2D.blockOneWayPlatforms) '
+        'but not by default -- a torch under a platform would otherwise shine through '
+        'something that renders as an opaque surface', () {
+      final map = TileMap(
+        cols: 5,
+        rows: 1,
+        tileWidth: 20,
+        tileHeight: 20,
+        tiles: [0, 0, 2, 0, 0],
+        oneWayTileIds: {2},
+      );
+      final origin = Position(0, 0);
+
+      final defaultHit = raycastTileMap(map, origin, 10, 10, 110, 10);
+      expect(defaultHit, isNull, reason: 'matches Light2D.blockOneWayPlatforms default (false)');
+
+      final blockedHit =
+          raycastTileMap(map, origin, 10, 10, 110, 10, blockOneWay: true);
+      expect(blockedHit, isNotNull);
+      expect(blockedHit!.distance, closeTo(30, 0.001));
     });
   });
 

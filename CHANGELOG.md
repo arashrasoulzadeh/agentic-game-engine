@@ -69,6 +69,20 @@ pubspec.yaml.
   debug color — `test_game`'s level now shows real dirt texture on its
   ground/platforms instead of flat gray blocks.
 
+### Lighting quality
+
+- **One-way platforms never blocked light/shadows**: new opt-in
+  `Light2D.blockOneWayPlatforms` (`false` default) threaded into the
+  shadow-casting raycast — a one-way platform renders as an opaque-
+  looking surface but let light shine straight through by default;
+  set it per light that's actually near one.
+- **Flat, artificial-looking light falloff + hard, faceted shadow
+  edges**: reveal/tint gradients now use a 3-stop falloff (bright core,
+  gentler tail) instead of a flat 2-stop linear dim, and a shadow-
+  casting/cone light's visibility-polygon edges get a small blur
+  (applied once per light per frame, not per sampled ray, so it costs
+  nothing extra as `shadowRayCount` scales) instead of a hard cutoff.
+
 ### v1.0 release readiness
 
 - **`LICENSE`**: MIT, at the repo root and in each of the four

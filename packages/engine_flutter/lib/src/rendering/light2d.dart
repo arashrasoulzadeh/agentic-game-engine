@@ -50,6 +50,18 @@ class Light2D {
   /// that's actually near occluding geometry, not globally.
   bool castsShadows;
 
+  /// `false` (default, matching `raycastTileMap`'s own default) means
+  /// a one-way tile (landable from above only) never blocks this
+  /// light, same as `WorldView.hasLineOfSight`'s default — a one-way
+  /// platform is usually meant to be seen/shot through from below.
+  /// Set `true` for a light where that reads wrong: a one-way platform
+  /// still *renders* as an opaque-looking surface, so a torch placed
+  /// underneath one would otherwise visibly shine straight through
+  /// something that looks solid. Meaningless unless [castsShadows] or
+  /// [coneAngle] is also set — there's no raycasting to affect
+  /// otherwise.
+  bool blockOneWayPlatforms;
+
   /// Hz-ish oscillation speed for a flickering/guttering effect (a
   /// torch, a failing warning light) — `0` (default) disables
   /// flickering entirely, [intensity]/[radius] stay exactly as set.
@@ -95,6 +107,7 @@ class Light2D {
     this.coneAngle,
     this.coneDirection = 0,
     this.castsShadows = false,
+    this.blockOneWayPlatforms = false,
     this.flickerSpeed = 0,
     this.flickerAmount = 0.3,
     double? baseIntensity,
@@ -111,6 +124,7 @@ class Light2D {
         if (coneAngle != null) 'coneAngle': coneAngle,
         'coneDirection': coneDirection,
         'castsShadows': castsShadows,
+        'blockOneWayPlatforms': blockOneWayPlatforms,
         'flickerSpeed': flickerSpeed,
         'flickerAmount': flickerAmount,
         'baseIntensity': baseIntensity,
@@ -126,6 +140,7 @@ class Light2D {
         coneAngle: (json['coneAngle'] as num?)?.toDouble(),
         coneDirection: (json['coneDirection'] as num?)?.toDouble() ?? 0,
         castsShadows: json['castsShadows'] as bool? ?? false,
+        blockOneWayPlatforms: json['blockOneWayPlatforms'] as bool? ?? false,
         flickerSpeed: (json['flickerSpeed'] as num?)?.toDouble() ?? 0,
         flickerAmount: (json['flickerAmount'] as num?)?.toDouble() ?? 0.3,
         baseIntensity: (json['baseIntensity'] as num?)?.toDouble(),

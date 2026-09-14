@@ -434,16 +434,20 @@ class _EnginePainter extends CustomPainter {
     );
 
     for (final info in infos) {
+      final intensity = info.light.intensity.clamp(0.0, 1.0);
       final revealPaint = Paint()
         ..blendMode = BlendMode.dstOut
         ..shader = ui.Gradient.radial(
           info.screenPos,
           info.screenRadius,
           [
-            Color.fromRGBO(255, 255, 255, info.light.intensity.clamp(0, 1)),
+            Color.fromRGBO(255, 255, 255, intensity),
+            Color.fromRGBO(255, 255, 255, intensity * _falloffMidAlphaFraction),
             const Color(0x00FFFFFF),
           ],
-        );
+          _falloffStops,
+        )
+        ..maskFilter = _shadowEdgeMaskFilter(info);
       if (info.clipPath == null) {
         canvas.drawCircle(info.screenPos, info.screenRadius, revealPaint);
       } else {
@@ -470,8 +474,14 @@ class _EnginePainter extends CustomPainter {
         ..shader = ui.Gradient.radial(
           info.screenPos,
           info.screenRadius,
-          [tintColor, tintColor.withAlpha(0)],
-        );
+          [
+            tintColor,
+            tintColor.withValues(alpha: tintColor.a * _falloffMidAlphaFraction),
+            tintColor.withAlpha(0),
+          ],
+          _falloffStops,
+        )
+        ..maskFilter = _shadowEdgeMaskFilter(info);
       if (info.clipPath == null) {
         canvas.drawCircle(info.screenPos, info.screenRadius, tintPaint);
       } else {
@@ -481,6 +491,31 @@ class _EnginePainter extends CustomPainter {
         canvas.restore();
       }
     }
+  }
+
+  /// Radial-gradient stops shared by the reveal and tint passes: a
+  /// bright core out to 55% of the radius, then a softer tail to fully
+  /// faded at the edge, instead of the original two-stop linear
+  /// falloff (uniformly dimming from center to edge) that read as
+  /// flat/artificial compared to how light actually falls off.
+  /// [_falloffMidAlphaFraction] is the middle stop's alpha as a
+  /// fraction of the center's, applied to whatever color each pass
+  /// uses (plain white for reveal, the light's own tint color for the
+  /// tint pass) so both passes share one falloff shape.
+  static const List<double> _falloffStops = [0.0, 0.55, 1.0];
+  static const double _falloffMidAlphaFraction = 0.55;
+
+  /// A small blur on shadow-casting/cone lights' reveal and tint paints
+  /// softens the visibility polygon's straight, faceted edges (a
+  /// side effect of approximating a curve with `shadowRayCount`
+  /// straight segments) into a gentler gradient instead of a hard,
+  /// jagged cutoff — purely cosmetic, applied once per light per frame
+  /// (not per sampled ray), so it doesn't scale with `shadowRayCount`
+  /// the way the raycasting itself does. `null` (no blur at all) for
+  /// a plain circular light, which has no polygon edge to soften.
+  ui.MaskFilter? _shadowEdgeMaskFilter(_LightRenderInfo info) {
+    if (info.clipPath == null) return null;
+    return const ui.MaskFilter.blur(ui.BlurStyle.normal, 3);
   }
 
   /// `null` for a plain full-circle light (the fast path — no
@@ -507,7 +542,7 @@ class _EnginePainter extends CustomPainter {
     for (var i = 0; i <= rayCount; i++) {
       final angle = startAngle + sweep * i / rayCount;
       final dist = light.castsShadows
-          ? _raycastLightDistance(worldPos, angle, light.radius)
+          ? _raycastLightDistance(worldPos, angle, light.radius, light.blockOneWayPlatforms)
           : light.radius;
       final worldPointX = worldPos.x + cos(angle) * dist;
       final worldPointY = worldPos.y + sin(angle) * dist;
@@ -521,8 +556,16 @@ class _EnginePainter extends CustomPainter {
   /// How far a light at [worldPos] can see along [angle] before the
   /// nearest solid tile in any `TileMap` blocks it (via `raycastTileMap`
   /// — the same primitive AI line-of-sight already uses), capped at
-  /// [maxRadius] when nothing blocks it at all.
-  double _raycastLightDistance(Position worldPos, double angle, double maxRadius) {
+  /// [maxRadius] when nothing blocks it at all. [blockOneWay] forwards
+  /// straight to `raycastTileMap`'s own parameter of the same name
+  /// (see `Light2D.blockOneWayPlatforms`'s doc comment for why a light
+  /// would want this on).
+  double _raycastLightDistance(
+    Position worldPos,
+    double angle,
+    double maxRadius,
+    bool blockOneWay,
+  ) {
     final toX = worldPos.x + cos(angle) * maxRadius;
     final toY = worldPos.y + sin(angle) * maxRadius;
     var nearest = maxRadius;
@@ -533,7 +576,8 @@ class _EnginePainter extends CustomPainter {
       final mapEntity = tileMaps.entityAt(m);
       final map = tileMaps.denseAt(m);
       final origin = mapPositions.get(mapEntity) ?? Position(0, 0);
-      final hit = raycastTileMap(map, origin, worldPos.x, worldPos.y, toX, toY);
+      final hit = raycastTileMap(map, origin, worldPos.x, worldPos.y, toX, toY,
+          blockOneWay: blockOneWay);
       if (hit != null && hit.distance < nearest) {
         nearest = hit.distance;
       }

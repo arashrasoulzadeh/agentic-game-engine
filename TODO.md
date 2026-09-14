@@ -232,13 +232,17 @@ matter how small or large the light. Both closed out in one pass.
 Full `engine_flutter` suite green (194 tests, 5 new in
 `light2d_test.dart`), `dart analyze --fatal-infos` clean.
 
-## Lighting follow-ups (round 3) — not yet implemented
+## Lighting follow-ups (round 3)
 
 Reported live: a shadow-casting light's shadow visibly *flickers*
 (edges popping/jittering frame to frame) while its light source is
 moving, instead of the shadow sliding smoothly the way the light
-itself does. Not yet fixed — listed here to confirm the plan before
-touching the render path.
+itself does — fixed (see below). Also reported: lighting quality in
+general "not very good" — two visual-quality items closed out
+alongside the flicker fix and `blockOneWayPlatforms`, described below.
+Remaining open items (entity shadow casting, additive overlap,
+fixed-timestep interpolation) still need a design pass before
+implementing.
 
 - [x] Shadow-edge jitter from grid-raycast tie-breaking:
       `raycastTileMap`'s DDA traversal now steps *both* grid axes
@@ -290,21 +294,20 @@ touching the render path.
       does turn fixed-timestep on. Fix shape: thread `_interpolated`
       through `_drawLighting`'s `worldPos` lookup the same way the
       sprite/particle passes already do.
-- [ ] One-way platforms never block light/shadows: `_raycastLightDistance`
-      calls `raycastTileMap` without `blockOneWay: true`, so a
-      `castsShadows` light treats every `oneWayTileIds` tile as fully
-      transparent — matches `raycastTileMap`'s own default (see its
-      doc comment: a one-way platform is "meant to be seen/shot
-      through from below," so AI line-of-sight defaults the same way),
-      but a one-way platform still *renders* as an opaque-looking
-      surface. A torch placed under one (as `test_game`'s flashlight-
-      adjacent geometry could easily have) would visibly shine straight
-      through something that looks solid on screen — a real mismatch
-      between what's drawn and what the light respects, not merely a
-      raycast-semantics footnote once lighting is layered on top. Fix
-      shape: a new opt-in `Light2D` field (e.g. `blockOneWayPlatforms`,
-      `false` default to match today's unchanged behavior) threaded
-      into `_raycastLightDistance`'s `raycastTileMap` call.
+- [x] One-way platforms never block light/shadows: new opt-in
+      `Light2D.blockOneWayPlatforms` (`false` default, matching
+      `raycastTileMap`'s own default and today's unchanged behavior)
+      threaded straight into `_raycastLightDistance`'s `raycastTileMap`
+      call. Verified: new test in `light2d_test.dart`'s "Shadow
+      casting occlusion math" group asserts a one-way tile blocks a
+      raycast when `blockOneWay: true` but not at the default, at the
+      exact primitive `_raycastLightDistance` uses; a new widget test
+      exercises a shadow-casting light with `blockOneWayPlatforms:
+      true` against a real one-way `TileMap` tile end to end (renders
+      without crashing). Live in `test_game`: the player's light now
+      sets `blockOneWayPlatforms: true` (it's the one light actually
+      near the level's one-way platforms) — loads and plays normally,
+      steady 120fps, no console errors.
 - [ ] Only `TileMap` geometry casts shadows — a `castsShadows` light's
       visibility polygon is built purely from `raycastTileMap`, which
       only ever tests tile grid cells. Nothing with a `Collider` (a
@@ -335,6 +338,27 @@ touching the render path.
       reason (see `_drawLighting`'s doc comment on ordering), so this
       needs its own design pass, not a one-line blend-mode swap —
       logged here rather than attempted inline.
+- [x] Softer, more natural falloff + soft shadow edges: the reveal/tint
+      radial gradients went from a flat 2-stop linear falloff (uniform
+      dimming center-to-edge, which read as artificial) to a 3-stop
+      shape — full intensity out to 0, `intensity * 0.55` at 55% of the
+      radius, transparent at the edge — a brighter, more defined core
+      with a gentler tail, shared between both passes via one constant
+      stop list so they stay visually consistent. Separately, a
+      shadow-casting/cone light's visibility polygon (a `shadowRayCount`
+      -sided approximation of a curve, so its edges are visibly
+      faceted/straight) now gets a small `MaskFilter.blur` on its
+      reveal and tint paints, applied once per light per frame — not
+      per sampled ray, so it doesn't scale with `shadowRayCount` the
+      way the raycasting itself does — softening the polygon boundary
+      into a gradient instead of a hard, jagged cutoff. `null` (no
+      blur) for a plain circular light, which has no polygon edge to
+      soften in the first place. Both changes are pure rendering-paint
+      tweaks — no new raycasts, no per-tile cost, same asymptotic cost
+      as before. Verified live in `test_game`: steady 120fps before and
+      after, no console errors; full `engine_flutter` suite (201
+      tests, all pre-existing "renders without crashing" lighting
+      tests still pass unchanged) confirms nothing broke.
 
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
