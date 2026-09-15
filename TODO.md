@@ -14,6 +14,52 @@ its entire subtree on every drag-update event) — see the "Extend
 FrameStats..." and "Fix VirtualJoystick rebuilding..." commits for the
 full before/after on-device evidence.
 
+## Performance investigations
+
+- [ ] FPS still drops (to ~25-40fps, sustained, not a one-off blip)
+      while the camera is actually panning on a real Android device —
+      **the VirtualJoystick rebuild fix (see the intro note above) was
+      real and did help, but did not fully resolve this**; re-opened
+      after a fresh live report. Reproduced directly on-device
+      (`adb shell input swipe`, a real held drag, not the
+      `input keyevent` technique already known not to sustain
+      movement) with a temporary spike-catcher added to `test_game`'s
+      `MyGame` (`lib/main.dart`, kept — logs the instant any frame
+      exceeds 20ms via `debugPrint('SPIKE $_frameStats')`, tagged with
+      the same step/paint/light/speed context the existing 2s `DIAG`
+      line already has, since a transient spike between two 2s samples
+      was otherwise invisible). Two decisive findings from that spike
+      log: (1) a **static touch-hold** (swipe with identical start/end
+      coordinates, so the joystick registers a press but no direction)
+      produces **zero** spikes over a full 4s hold — clean 8.34ms the
+      entire time; (2) **actual camera movement** (a real swipe with
+      distinct start/end points) produces a *sustained* run of
+      25-33ms frames for as long as the camera keeps panning, not a
+      brief blip. In every single spiky frame, `step:`/`paint:`/
+      `light:` (this engine's own CPU-side Dart `Stopwatch` timers)
+      stayed under ~2.5ms combined out of the 25-33ms total — so
+      whatever is costing the other ~23ms is happening somewhere
+      those timers can't see: almost certainly Flutter's raster/GPU
+      thread or Android's own compositor, not `EngineView`'s own
+      step/paint/lighting pipeline (which the
+      `engine_platformer/benchmark/render_pipeline_benchmark_test.dart`
+      benchmark already confirmed costs about the same standing vs.
+      moving, in a `flutter test` environment — that environment's
+      software rasterizer evidently doesn't reproduce whatever this
+      is). Reproduces identically on **both** `test_game` levels
+      (`main.level.json` and the newly-reworked `prison.level.json`),
+      ruling out anything specific to this session's new prison-level
+      assets/`DayNightCycle` work. **Needs real GPU/raster-thread
+      profiling** (Flutter DevTools timeline, or `systrace`/Perfetto on
+      the device) to actually find the cause — this sandbox has no
+      such tooling, only the Dart-level `FrameStats` timers, which have
+      now been used about as far as they can go for this specific
+      question. Next session: connect Flutter DevTools' timeline view
+      to a real debug (not release) build on the device while
+      reproducing the same held-swipe-with-movement pattern, and look
+      specifically at raster-thread frame times, not just the UI
+      thread's.
+
 ## Tooling / release
 
 - [ ] Publish `engine_core`/`engine_flutter`/`engine_cli` to pub.dev —
