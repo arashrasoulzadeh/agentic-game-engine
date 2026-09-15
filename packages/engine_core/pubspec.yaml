@@ -3,7 +3,6 @@ description: Pure-Dart 2D game engine core (ECS, scheduler, spatial hash). No Fl
 version: 0.1.0
 homepage: https://github.com/arashrasoulzadeh/agentic-game-engine
 repository: https://github.com/arashrasoulzadeh/agentic-game-engine
-publish_to: none
 
 environment:
   sdk: ^3.9.0
