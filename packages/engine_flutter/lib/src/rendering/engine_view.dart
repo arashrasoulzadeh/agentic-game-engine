@@ -423,7 +423,17 @@ class _EngineViewState extends State<EngineView>
       'sprites: ${world.storeOf<Sprite>().length}',
       'particles: ${world.storeOf<Particle>().length}',
       if (_memoryBytes case final mem?) 'mem: ${(mem / (1024 * 1024)).toStringAsFixed(1)} MB',
-      _frameStats.toString(),
+      // One line per FrameStats field here (unlike FrameStats.toString()
+      // itself, which stays a single line -- that's also what the
+      // `debugPrint('DIAG $_frameStats')`-style console logging reads,
+      // where one line per log entry is what actually matters) --
+      // packed onto one line this overlay routinely ran past the
+      // viewport's right edge and overlapped the counters above it.
+      'frame: ${_frameStats.frameMs.toStringAsFixed(2)}ms',
+      'step: ${_frameStats.stepMs.toStringAsFixed(2)}ms',
+      'paint: ${_frameStats.paintMs.toStringAsFixed(2)}ms',
+      'light: ${_frameStats.lightingMs.toStringAsFixed(2)}ms',
+      'speed: ${_frameStats.followedSpeed == null ? 'n/a' : _frameStats.followedSpeed!.toStringAsFixed(1)}',
     ].join('\n');
   }
 
