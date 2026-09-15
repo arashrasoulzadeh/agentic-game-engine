@@ -16,49 +16,73 @@ full before/after on-device evidence.
 
 ## Performance investigations
 
-- [ ] FPS still drops (to ~25-40fps, sustained, not a one-off blip)
-      while the camera is actually panning on a real Android device —
-      **the VirtualJoystick rebuild fix (see the intro note above) was
-      real and did help, but did not fully resolve this**; re-opened
-      after a fresh live report. Reproduced directly on-device
-      (`adb shell input swipe`, a real held drag, not the
-      `input keyevent` technique already known not to sustain
-      movement) with a temporary spike-catcher added to `test_game`'s
-      `MyGame` (`lib/main.dart`, kept — logs the instant any frame
-      exceeds 20ms via `debugPrint('SPIKE $_frameStats')`, tagged with
-      the same step/paint/light/speed context the existing 2s `DIAG`
-      line already has, since a transient spike between two 2s samples
-      was otherwise invisible). Two decisive findings from that spike
-      log: (1) a **static touch-hold** (swipe with identical start/end
-      coordinates, so the joystick registers a press but no direction)
-      produces **zero** spikes over a full 4s hold — clean 8.34ms the
-      entire time; (2) **actual camera movement** (a real swipe with
-      distinct start/end points) produces a *sustained* run of
-      25-33ms frames for as long as the camera keeps panning, not a
-      brief blip. In every single spiky frame, `step:`/`paint:`/
-      `light:` (this engine's own CPU-side Dart `Stopwatch` timers)
-      stayed under ~2.5ms combined out of the 25-33ms total — so
-      whatever is costing the other ~23ms is happening somewhere
-      those timers can't see: almost certainly Flutter's raster/GPU
-      thread or Android's own compositor, not `EngineView`'s own
-      step/paint/lighting pipeline (which the
-      `engine_platformer/benchmark/render_pipeline_benchmark_test.dart`
-      benchmark already confirmed costs about the same standing vs.
-      moving, in a `flutter test` environment — that environment's
-      software rasterizer evidently doesn't reproduce whatever this
-      is). Reproduces identically on **both** `test_game` levels
-      (`main.level.json` and the newly-reworked `prison.level.json`),
-      ruling out anything specific to this session's new prison-level
-      assets/`DayNightCycle` work. **Needs real GPU/raster-thread
-      profiling** (Flutter DevTools timeline, or `systrace`/Perfetto on
-      the device) to actually find the cause — this sandbox has no
-      such tooling, only the Dart-level `FrameStats` timers, which have
-      now been used about as far as they can go for this specific
-      question. Next session: connect Flutter DevTools' timeline view
-      to a real debug (not release) build on the device while
-      reproducing the same held-swipe-with-movement pattern, and look
-      specifically at raster-thread frame times, not just the UI
-      thread's.
+- [ ] FPS still drops (sustained 25-40fps, not a one-off blip) while
+      the camera is actually panning on a real Android device — **root
+      cause now confirmed via real GPU/raster-thread profiling, not
+      just Dart-side timers; no fix landed yet.** Sequence: (1) a
+      spike-catcher added to `test_game`'s `MyGame` (`lib/main.dart`,
+      kept permanently — logs the instant any frame exceeds 20ms,
+      since the existing 2s `DIAG` line misses anything shorter)
+      showed a static touch-hold is perfectly clean (8.34ms for a full
+      4s hold) while actual camera movement produces a sustained spike
+      run, with `step:`/`paint:`/`light:` all staying under ~2.5ms in
+      every spiky frame — pointing outside `EngineView`'s own Dart-side
+      pipeline entirely. (2) Connected **Flutter DevTools/the VM
+      service directly** (`flutter run --profile -d <device>`, then a
+      small Python script — `websocket-client`, no `devtools` UI
+      needed — calling `setVMTimelineFlags`/`clearVMTimeline`/
+      `getVMTimeline` over the VM service's WebSocket JSON-RPC) to
+      capture a real engine-level timeline covering the exact same
+      held-swipe-with-movement repro, then reconstructed nested
+      B/E span durations per thread from the raw trace. **Found it**:
+      on the raster thread, `SurfaceFrame::Encode` (Skia/Impeller's
+      actual GPU command encoding — genuine GPU-side raster cost) is
+      the dominant cost, averaging ~5.5ms and peaking at 20+ms per
+      frame, with only ~0.05ms of *named* sub-spans inside it (the
+      remaining ~20ms is raw, unbroken-down GPU/driver work Flutter's
+      own tracing doesn't further label). `Canvas::saveLayer` itself
+      (the offscreen layer this engine's ambient-lighting overlay pass
+      allocates every frame — see `_drawLighting`'s doc comment) stays
+      constant at exactly 1 call/frame throughout (ruling out a
+      leak/growth bug on the app side), but `Encode` time still climbs
+      *within a single ~5s swipe*, from a ~7-9ms baseline up toward
+      20ms — too fast a climb to be pure ambient warming from hours of
+      testing, and `adb shell dumpsys thermalservice` showed the
+      device's SKIN sensor already at 39.1°C (right at the 40°C "light
+      throttling" threshold for this hardware), so GPU clock
+      throttling under sustained load is the leading hypothesis for
+      *why* the same per-frame GPU work keeps taking longer, on top of
+      a baseline (~7-9ms) that's already a real, non-trivial chunk of
+      an 8.33ms (120fps) frame budget by itself. **Attempted
+      mitigation, tested, reverted**: capped `GameConfig.maxFps` to 60
+      (halves total GPU throughput/thermal demand, doubles the
+      per-frame budget to 16.67ms) — rebuilt, reinstalled, re-measured
+      with the same spike-catcher: **did not help**, spikes were
+      equally or more severe (worse: a few 100+ms frames appeared,
+      though those may be cold-shader-compile jank from the fresh
+      process rather than steady state — even the warmed-up retest
+      stayed at a consistent 25-50ms, no improvement). Reverted
+      `maxFps` back to `120` rather than ship an unproven change.
+      Reproduces identically on **both** `test_game` levels
+      (`main.level.json` and `prison.level.json`), ruling out anything
+      specific to this session's prison-level assets/`DayNightCycle`
+      work. **Real next steps**, now that the actual bottleneck
+      (raster-thread GPU encode time, likely compounded by thermal
+      throttling on this specific mid-range device) is known instead of
+      guessed at: (a) reduce the ambient-lighting pass's own GPU cost
+      — the `saveLayer` + `dstOut` reveal technique forces an offscreen
+      render target allocation and composite every single frame
+      regardless of scene complexity; investigate whether a cheaper
+      technique (e.g. a shader-based approach avoiding the extra
+      composite, or only running the lighting pass when
+      `ambientBrightness`/`dayNightCycle` combined brightness is
+      meaningfully below 1.0 rather than any time it's below 1.0 at
+      all) reduces `SurfaceFrame::Encode` time; (b) let the device cool
+      down fully between test runs (or test on a second, different
+      device) to separate "inherent per-frame GPU cost" from "thermal
+      throttling compounding it," since this session's device had been
+      running continuously for over an hour of repeated builds/installs
+      before this profiling pass.
 
 ## Tooling / release
 
