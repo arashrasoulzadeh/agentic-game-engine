@@ -8,8 +8,36 @@
 // (tracked in TODO.md), not by faking three platform plugins' internals here.
 
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
+
+/// Volume/stereo-balance for a sound at [sourceX]/[sourceY] as heard from
+/// [listenerX]/[listenerY] (typically the camera's world position) —
+/// pure math, no `audioplayers` dependency, so it's directly unit-
+/// testable (unlike real playback, see this file's top comment).
+///
+/// Volume falls off linearly to `0` at [maxDistance] world units away
+/// (clamped, never negative) and scales [baseVolume]. Balance is the
+/// horizontal offset as a fraction of [maxDistance], clamped to
+/// `audioplayers`' `[-1.0, 1.0]` (full left/right) range — vertical
+/// offset doesn't affect stereo balance, since panning is left/right
+/// only.
+({double volume, double balance}) positionalAudioParams({
+  required double sourceX,
+  required double sourceY,
+  required double listenerX,
+  required double listenerY,
+  double maxDistance = 800,
+  double baseVolume = 1.0,
+}) {
+  final dx = sourceX - listenerX;
+  final dy = sourceY - listenerY;
+  final distance = math.sqrt(dx * dx + dy * dy);
+  final falloff = (1.0 - distance / maxDistance).clamp(0.0, 1.0);
+  final balance = (dx / maxDistance).clamp(-1.0, 1.0);
+  return (volume: baseVolume * falloff, balance: balance);
+}
 
 /// Sound effect + music playback. Kept out of engine_core the same way
 /// rendering/input are — it's a platform capability, not simulation
@@ -51,7 +79,37 @@ class AudioManager {
   /// actually overlaps at once," not a measured/tuned value.
   static const _maxPoolSize = 8;
 
-  Future<void> playSound(String assetPath, {double volume = 1.0}) async {
+  Future<void> playSound(String assetPath, {double volume = 1.0}) =>
+      _play(assetPath, volume: volume);
+
+  /// Plays a one-shot sound panned/attenuated by [sourceX]/[sourceY]'s
+  /// distance from [listenerX]/[listenerY] — see [positionalAudioParams]
+  /// for the (separately unit-tested) math. Computed once at trigger
+  /// time, not re-evaluated per frame — a short SFX has finished playing
+  /// long before its source or the listener could move meaningfully, so
+  /// there's nothing to gain from tracking it live, only per-frame cost
+  /// for every currently-playing sound (see TODO.md's note on this).
+  Future<void> playPositionalSound(
+    String assetPath, {
+    required double sourceX,
+    required double sourceY,
+    required double listenerX,
+    required double listenerY,
+    double maxDistance = 800,
+    double volume = 1.0,
+  }) {
+    final params = positionalAudioParams(
+      sourceX: sourceX,
+      sourceY: sourceY,
+      listenerX: listenerX,
+      listenerY: listenerY,
+      maxDistance: maxDistance,
+      baseVolume: volume,
+    );
+    return _play(assetPath, volume: params.volume, balance: params.balance);
+  }
+
+  Future<void> _play(String assetPath, {double volume = 1.0, double balance = 0.0}) async {
     final player = _pool.isNotEmpty ? _pool.removeLast() : AudioPlayer();
     late final StreamSubscription<void> subscription;
     subscription = player.onPlayerComplete.listen((_) {
@@ -62,7 +120,7 @@ class AudioManager {
         player.dispose();
       }
     });
-    await player.play(AssetSource(assetPath), volume: volume);
+    await player.play(AssetSource(assetPath), volume: volume, balance: balance);
   }
 
   Future<void> playMusic(

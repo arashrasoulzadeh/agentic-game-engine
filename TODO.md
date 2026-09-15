@@ -24,13 +24,6 @@ full why behind each change.
       repo's scope; the iOS Simulator control tool available in this
       environment is moot while the iOS build itself won't compile here
       regardless.
-- [ ] Particle system — data-driven emitter component (burst/continuous,
-      pooled particles, not one entity per particle) for hits/dust/
-      embers. Performance: must pool particle storage and update as a
-      single tight system pass (like existing `ComponentStore`s), not
-      spawn/despawn real ECS entities per particle — that would put
-      entity churn on the hot path this session's profiling already
-      showed is raster-bound.
 - [ ] Audio: positional/spatial sound — pan/volume by distance from
       camera for SFX. Performance: distance/pan calc is O(active
       sounds), trivial next to render cost; only real risk is doing it
