@@ -118,18 +118,34 @@ class VirtualJoystick extends StatefulWidget {
 }
 
 class _VirtualJoystickState extends State<VirtualJoystick> {
-  Offset _knobOffset = Offset.zero;
+  // A ValueNotifier, not a plain field rebuilt via setState -- onPanUpdate
+  // fires on every raw pointer-move event (tens of times/sec while
+  // dragging), and setState here would rebuild this whole subtree
+  // (GestureDetector, LayoutBuilder, the base/knob Stack, both
+  // BoxDecoration containers) every single time just to move one dot a
+  // few pixels. Measured live on a real device: frame times up to 75ms
+  // while holding the stick, with EngineView's own step/paint/light all
+  // under 1.5ms combined in the same frames -- proving the cost was
+  // entirely outside the engine's render pipeline, on exactly this
+  // input-handling path. A ValueListenableBuilder around only the
+  // knob's Transform.translate (see _joystickVisual) means a drag now
+  // repaints just that one translated circle instead of rebuilding and
+  // relaying-out the whole joystick every pointer-move event.
+  final ValueNotifier<Offset> _knobOffset = ValueNotifier(Offset.zero);
   Offset? _origin;
   final Set<String> _activeActions = {};
 
   void _onDragStart(Offset localPosition, Size bounds) {
     if (widget.floating) {
       // Clamp so the base circle stays fully within bounds even if the
-      // finger lands right at an edge.
-      _origin = Offset(
-        localPosition.dx.clamp(widget.baseRadius, bounds.width - widget.baseRadius),
-        localPosition.dy.clamp(widget.baseRadius, bounds.height - widget.baseRadius),
-      );
+      // finger lands right at an edge. setState here is fine -- this
+      // only runs once per drag (onPanStart), not on every move.
+      setState(() {
+        _origin = Offset(
+          localPosition.dx.clamp(widget.baseRadius, bounds.width - widget.baseRadius),
+          localPosition.dy.clamp(widget.baseRadius, bounds.height - widget.baseRadius),
+        );
+      });
     }
     _updateKnob(localPosition);
   }
@@ -141,7 +157,7 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
     if (distance > widget.baseRadius) {
       delta = delta * (widget.baseRadius / distance);
     }
-    setState(() => _knobOffset = delta);
+    _knobOffset.value = delta;
     _applyActions(delta);
   }
 
@@ -190,10 +206,13 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
 
   void _reset() {
     _clearActiveActions();
-    setState(() {
-      _knobOffset = Offset.zero;
-      if (widget.floating) _origin = null;
-    });
+    _knobOffset.value = Offset.zero;
+    if (widget.floating) {
+      // Structural change (the floating visual disappears entirely) --
+      // still needs setState, but this only runs once per drag
+      // (onPanEnd/onPanCancel), not on every move.
+      setState(() => _origin = null);
+    }
   }
 
   @override
@@ -202,6 +221,7 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
     // the controller side-effect (releasing any held direction) needs
     // to happen, not a rebuild.
     _clearActiveActions();
+    _knobOffset.dispose();
     super.dispose();
   }
 
@@ -232,8 +252,9 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
       alignment: Alignment.center,
       children: [
         _circle(size, const Color(0x33FFFFFF)),
-        Transform.translate(
-          offset: _knobOffset,
+        ValueListenableBuilder<Offset>(
+          valueListenable: _knobOffset,
+          builder: (context, offset, child) => Transform.translate(offset: offset, child: child),
           child: _circle(widget.knobRadius * 2, const Color(0x88FFFFFF)),
         ),
       ],

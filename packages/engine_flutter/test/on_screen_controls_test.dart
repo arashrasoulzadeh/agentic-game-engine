@@ -116,6 +116,77 @@ void main() {
       expect(controller.state.pressedActions, isEmpty);
       await gesture.up();
     });
+
+    testWidgets(
+        'dragging the knob does not rebuild the joystick subtree -- only the knob '
+        'repositions (regression test for a real ~75ms on-device frame spike traced '
+        'to setState firing on every onPanUpdate)', (tester) async {
+      final controller = InputController();
+      await tester.pumpWidget(_wrap(VirtualJoystick(controller: controller)));
+
+      final center = tester.getCenter(find.byType(VirtualJoystick));
+      final gesture = await tester.startGesture(center);
+      await tester.pump();
+
+      var rebuiltElementTypes = <Type>{};
+      debugOnRebuildDirtyWidget = (Element element, bool builtOnce) {
+        rebuiltElementTypes.add(element.widget.runtimeType);
+      };
+      addTearDown(() => debugOnRebuildDirtyWidget = null);
+
+      // Several drag-update events, exactly the pattern that fires
+      // onPanUpdate/_updateKnob repeatedly while a finger (or, on a real
+      // device, an adb "input swipe") stays down and moves.
+      await gesture.moveBy(const Offset(5, 0));
+      await tester.pump();
+      await gesture.moveBy(const Offset(5, 0));
+      await tester.pump();
+      await gesture.moveBy(const Offset(5, 0));
+      await tester.pump();
+
+      // GestureDetector/LayoutBuilder/Stack/Container -- the joystick's own
+      // build() output -- must NOT be in the rebuilt set: only the
+      // ValueListenableBuilder wrapping the knob's Transform.translate
+      // should react to a knob move.
+      expect(rebuiltElementTypes, isNot(contains(GestureDetector)));
+      expect(rebuiltElementTypes, isNot(contains(LayoutBuilder)));
+      expect(rebuiltElementTypes.any((t) => t.toString().contains('ValueListenableBuilder')),
+          isTrue,
+          reason: 'the knob itself should still be reacting to the drag');
+
+      await gesture.up();
+    });
+
+    testWidgets('starting/ending a floating drag still rebuilds (structural show/hide)',
+        (tester) async {
+      final controller = InputController();
+      await tester.pumpWidget(_wrap(VirtualJoystick(controller: controller)));
+
+      expect(
+        find.descendant(of: find.byType(VirtualJoystick), matching: find.byType(Container)),
+        findsNothing,
+        reason: 'floating joystick starts invisible',
+      );
+
+      final center = tester.getCenter(find.byType(VirtualJoystick));
+      final gesture = await tester.startGesture(center);
+      await tester.pump();
+
+      expect(
+        find.descendant(of: find.byType(VirtualJoystick), matching: find.byType(Container)),
+        findsWidgets,
+        reason: 'onPanStart still triggers the one setState that makes the base/knob appear',
+      );
+
+      await gesture.up();
+      await tester.pump();
+
+      expect(
+        find.descendant(of: find.byType(VirtualJoystick), matching: find.byType(Container)),
+        findsNothing,
+        reason: 'onPanEnd still triggers the one setState that hides it again',
+      );
+    });
   });
 
   group('VirtualButton', () {
