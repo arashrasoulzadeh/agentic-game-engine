@@ -33,6 +33,13 @@ class GameConfig {
   /// shipped `game_config.json`.
   final bool showColliderDebug;
 
+  /// See `EngineView.showPerformanceOverlay`'s doc comment — Flutter's
+  /// own UI-thread/raster-thread bar graphs. Off by default, same
+  /// reasoning as [showColliderDebug]: a real per-frame cost of its
+  /// own, so a shipped `game_config.json` typically leaves this off and
+  /// only flips it on locally while chasing a specific perf report.
+  final bool showPerformanceOverlay;
+
   /// `false` (default — the system status bar/navigation bar stay
   /// visible, unchanged from before this existed). `true` hides them
   /// (`SystemUiMode.immersiveSticky` on Android/iOS — a swipe from the
@@ -101,6 +108,7 @@ class GameConfig {
     this.backgroundColor = const Color(0xFF000000),
     this.showFpsOverlay = false,
     this.showColliderDebug = false,
+    this.showPerformanceOverlay = false,
     this.fullscreen = false,
     this.pauseOnBackground = true,
     this.onScreenControls = OnScreenControlsMode.auto,
@@ -119,6 +127,7 @@ class GameConfig {
         'backgroundColor': backgroundColor.toARGB32(),
         'showFpsOverlay': showFpsOverlay,
         'showColliderDebug': showColliderDebug,
+        'showPerformanceOverlay': showPerformanceOverlay,
         'fullscreen': fullscreen,
         'pauseOnBackground': pauseOnBackground,
         'onScreenControls': onScreenControls.name,
@@ -142,6 +151,7 @@ class GameConfig {
             : const Color(0xFF000000),
         showFpsOverlay: json['showFpsOverlay'] as bool? ?? false,
         showColliderDebug: json['showColliderDebug'] as bool? ?? false,
+        showPerformanceOverlay: json['showPerformanceOverlay'] as bool? ?? false,
         fullscreen: json['fullscreen'] as bool? ?? false,
         pauseOnBackground: json['pauseOnBackground'] as bool? ?? true,
         onScreenControls: OnScreenControlsMode.values.firstWhere(

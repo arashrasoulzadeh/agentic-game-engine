@@ -262,6 +262,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           paused: _paused || overlay != null,
           showFpsOverlay: widget.game.config.showFpsOverlay,
           showColliderDebug: widget.game.config.showColliderDebug,
+          showPerformanceOverlay: widget.game.config.showPerformanceOverlay,
           ambientBrightness: loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness,
           dayNightCycle: loaded.scene.dayNightCycle,
           maxFps: widget.game.config.maxFps,

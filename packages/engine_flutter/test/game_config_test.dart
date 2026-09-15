@@ -83,6 +83,7 @@ void main() {
       backgroundColor: Colors.red,
       showFpsOverlay: true,
       showColliderDebug: true,
+      showPerformanceOverlay: true,
       fullscreen: true,
       pauseOnBackground: false,
       onScreenControls: OnScreenControlsMode.on,
@@ -99,6 +100,7 @@ void main() {
     expect(restored.backgroundColor.toARGB32(), Colors.red.toARGB32());
     expect(restored.showFpsOverlay, isTrue);
     expect(restored.showColliderDebug, isTrue);
+    expect(restored.showPerformanceOverlay, isTrue);
     expect(restored.fullscreen, isTrue);
     expect(restored.pauseOnBackground, isFalse);
     expect(restored.onScreenControls, OnScreenControlsMode.on);
@@ -119,6 +121,7 @@ void main() {
     expect(config.worldHeight, 200);
     expect(config.showFpsOverlay, isFalse);
     expect(config.showColliderDebug, isFalse);
+    expect(config.showPerformanceOverlay, isFalse);
     expect(config.fullscreen, isFalse);
     expect(config.pauseOnBackground, isTrue);
     expect(config.onScreenControls, OnScreenControlsMode.auto);

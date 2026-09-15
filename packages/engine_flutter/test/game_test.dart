@@ -79,6 +79,12 @@ class _DayNightGame extends _TestGame {
   Scene createInitialScene() => scene;
 }
 
+class _PerformanceOverlayGame extends _TestGame {
+  @override
+  GameConfig get config =>
+      const GameConfig(worldWidth: 200, worldHeight: 100, showPerformanceOverlay: true);
+}
+
 void main() {
   testWidgets('Game.onPause/onResume default to no-ops', (tester) async {
     final game = _DefaultCallbacksGame();
@@ -102,6 +108,17 @@ void main() {
 
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(GameRunner), findsOneWidget);
+  });
+
+  testWidgets("GameConfig.showPerformanceOverlay reaches EngineView through GameRunner",
+      (tester) async {
+    final game = _PerformanceOverlayGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump();
+
+    final engineView = tester.widget<EngineView>(find.byType(EngineView));
+    expect(engineView.showPerformanceOverlay, isTrue);
   });
 
   testWidgets('Game.frameStats defaults to null and GameRunner does not require one',
