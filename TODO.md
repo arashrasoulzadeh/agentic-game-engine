@@ -219,21 +219,27 @@ own note).
       the light invalidates the very next frame (no one-frame-late
       lag); on, changing `radius` also invalidates (not position-only).
       Full `engine_flutter` suite (242 tests) green, analyze clean.
-- [ ] Spatial-hash-based light culling — **evaluated, deliberately not
-      implemented yet**: `_drawLighting` already viewport-culls each
-      light via `_circleIntersectsRect` before its expensive shadow-
-      raycasting path, but still iterates every `Light2D` in the `World`
-      every frame to do that cheap check first. The catch: building or
-      maintaining a spatial hash over light positions would itself cost
-      O(lights) per frame to insert/rebuild — the same order as the
-      arithmetic cull it would replace — so it only actually pays off if
-      the hash is *cached* across frames, which reintroduces exactly the
-      kind of invalidation-tracking risk the `_lightClipPath` item above
-      is already flagged for, for a win that's unconfirmed without a
-      level that actually has hundreds of lights to profile against.
-      Revisit once there's a real level at that scale to benchmark, or a
-      profiler trace showing this cull loop actually costing something —
-      not before.
+- [ ] Spatial-hash-based light culling — **re-evaluated with a real
+      measurement, still not implemented**: `_drawLighting` already
+      viewport-culls each light via `_circleIntersectsRect` before its
+      expensive shadow-raycasting path, but still iterates every
+      `Light2D` in the `World` every frame to do that cheap check first.
+      A throwaway probe (not committed — same `flutter test`+`Stopwatch`
+      technique used to re-evaluate the tile-culling/draw-item-list
+      items above, 300 pumped frames) scattered 300 lights across a
+      40000x40000 world with only a few landing near a static camera:
+      ~0.67ms/frame with all 300 plain (non-shadow-casting), ~0.47ms/
+      frame with all 300 `castsShadows: true` (most get culled before
+      the expensive raycast path even runs) — both comfortably under
+      3% of a 60fps frame budget at a light count (300) well past what
+      any real level in this repo has used. The O(lights) arithmetic
+      cull itself just isn't the bottleneck at counts that matter;
+      building/maintaining a spatial hash would itself cost O(lights)
+      per frame to insert/rebuild unless cached across frames, which
+      reintroduces the exact invalidation-tracking risk
+      `cacheShadowGeometry` already had to solve carefully — not worth
+      that complexity for an unconfirmed win. Revisit only if a real
+      level's profile ever shows this path actually costing something.
 - [x] `World.step`'s system loop, profiled: `world_step_benchmark.dart`
       (movement-only, the cheapest possible system) shows clean linear
       scaling with entity count (100 -> 1000 -> 5000 entities: ~7.6us ->
