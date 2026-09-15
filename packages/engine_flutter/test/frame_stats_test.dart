@@ -25,6 +25,8 @@ void main() {
       expect(text, contains('sprites:'));
       expect(text, contains('particles:'));
       expect(text, contains('speed: n/a'), reason: 'null speed reads as n/a, not "null"');
+      expect(stats.onSpike, isNull);
+      expect(stats.spikeThresholdMs, 20);
     });
   });
 
@@ -131,6 +133,64 @@ void main() {
       expect(stats.entities, 1);
       expect(stats.sprites, 1);
       expect(stats.particles, 0);
+    });
+
+    testWidgets('onSpike fires the instant frameMs exceeds spikeThresholdMs, with no '
+        'sampling gap', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final stats = FrameStats();
+      final spikes = <FrameStats>[];
+      stats.onSpike = spikes.add;
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          frameStats: stats,
+        ),
+      ));
+      // Baseline tick (dt == 0, first-ever callback) -- well under the
+      // default 20ms threshold, must not fire.
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(spikes, isEmpty, reason: 'a normal ~16ms frame is not a spike');
+
+      // A single pumped frame with a 50ms "elapsed" duration -- frameMs
+      // is derived directly from how much time the pump simulates
+      // passing, so this deterministically produces a real spike
+      // without needing to actually stall anything.
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(spikes, hasLength(1));
+      expect(spikes.single.frameMs, closeTo(50, 1));
+      expect(identical(spikes.single, stats), isTrue,
+          reason: 'onSpike is called with the exact same FrameStats instance, not a copy');
+    });
+
+    testWidgets('onSpike respects a custom spikeThresholdMs', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final stats = FrameStats()..spikeThresholdMs = 100;
+      var spikeCount = 0;
+      stats.onSpike = (_) => spikeCount++;
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          frameStats: stats,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      // 50ms would have fired the default 20ms threshold (proven
+      // above) but must not fire this raised 100ms one.
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(spikeCount, 0);
     });
 
     testWidgets('followedSpeed reflects cameraFollowEntity\'s real Velocity magnitude',

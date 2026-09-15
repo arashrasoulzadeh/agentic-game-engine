@@ -59,6 +59,34 @@ class FrameStats {
   /// happened at all was itself a real obstacle.
   double? followedSpeed;
 
+  /// Called synchronously, once per tick, the instant [frameMs] exceeds
+  /// [spikeThresholdMs] — `this` is passed so the callback can read
+  /// every field above without keeping its own reference. `null`
+  /// (default) means no callback, at no per-frame cost beyond the one
+  /// comparison already needed to check the threshold.
+  ///
+  /// Exists because the natural way to log [FrameStats] (a periodic
+  /// `Timer`, printing whatever the values happen to be right then) can
+  /// only ever sample — a spike lasting one or two frames between two
+  /// samples is invisible to it entirely. A real fps-while-moving
+  /// investigation hit exactly this: a 2-second-interval timer showed
+  /// nothing but clean frames while the game visibly lagged, because
+  /// every actual spike happened to land between two samples. Wiring
+  /// [onSpike] instead catches every single frame that crosses the
+  /// threshold, with zero sampling gap — `EngineView` calls it directly
+  /// from the same tick that computes [frameMs], before any `Timer` (or
+  /// even `setState`) would have run at all.
+  void Function(FrameStats stats)? onSpike;
+
+  /// [frameMs] above which [onSpike] fires. `20` by default — double a
+  /// healthy 60fps frame (16.67ms), chosen from a real investigation as
+  /// a threshold that reliably separates "a normal frame with a little
+  /// jitter" from "an actual dropped-frame-class spike," without firing
+  /// on harmless noise. Lower it for a more sensitive catch (e.g. on a
+  /// 120Hz target, where even one missed vsync is only ~8ms); raise it
+  /// to only catch more severe stalls.
+  double spikeThresholdMs = 20;
+
   @override
   String toString() => 'frame: ${frameMs.toStringAsFixed(2)}ms  '
       'step: ${stepMs.toStringAsFixed(2)}ms  '

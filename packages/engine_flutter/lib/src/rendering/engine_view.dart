@@ -58,6 +58,24 @@ class EngineView extends StatefulWidget {
   /// those specifically.
   final bool showColliderDebug;
 
+  /// Overlays Flutter's own built-in `PerformanceOverlay` — two live
+  /// bar graphs, UI thread and **raster thread**, each frame's actual
+  /// bar height. Exists specifically because [showFpsOverlay]/
+  /// [FrameStats] can only ever measure this engine's own Dart-side
+  /// work (`world.step`, `CustomPainter.paint` recording draw
+  /// commands) — a real investigation found a genuine, sustained
+  /// on-device lag whose cost was *entirely* on the raster thread
+  /// (Skia/Impeller's GPU command encoding, well past what any
+  /// Dart-side `Stopwatch` can see) and needed a raster-thread graph,
+  /// not another Dart timer, to actually spot. This is that graph,
+  /// exposed as a one-line opt-in instead of every game needing to
+  /// know Flutter's `PerformanceOverlay` widget exists or how to wire
+  /// it in above an `EngineView`. `false` by default (some real
+  /// per-frame cost of its own — Flutter has to actually measure and
+  /// draw the bars — so it stays opt-in, not part of
+  /// [showFpsOverlay]).
+  final bool showPerformanceOverlay;
+
   /// Called with the tap/click position converted to world coordinates
   /// via `camera.screenToWorld` — how a `Scene.handleTap` implementation
   /// (an ECS menu button, a door tapped in-world) learns where the
@@ -166,6 +184,7 @@ class EngineView extends StatefulWidget {
     this.paused = false,
     this.showFpsOverlay = false,
     this.showColliderDebug = false,
+    this.showPerformanceOverlay = false,
     this.onWorldTap,
     this.fixedTimestepSeconds,
     this.ambientBrightness = 1.0,
@@ -355,6 +374,14 @@ class _EngineViewState extends State<EngineView>
       _lastCameraY = widget.camera.y;
     }
 
+    // Fired last, once every field above has this tick's real value --
+    // see FrameStats.onSpike's own doc comment for why this exists
+    // (catches every spiking frame directly, with no sampling gap, as
+    // opposed to a periodic logging Timer that can miss one entirely).
+    if (_frameStats.frameMs > _frameStats.spikeThresholdMs) {
+      _frameStats.onSpike?.call(_frameStats);
+    }
+
     setState(() {});
   }
 
@@ -452,15 +479,38 @@ class _EngineViewState extends State<EngineView>
     }
 
     final onWorldTap = widget.onWorldTap;
-    if (onWorldTap == null) return child;
+    if (onWorldTap != null) {
+      child = GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTapUp: (details) {
+          final box = context.findRenderObject() as RenderBox?;
+          onWorldTap(widget.camera.screenToWorld(details.localPosition, box?.size ?? Size.zero));
+        },
+        child: child,
+      );
+    }
 
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTapUp: (details) {
-        final box = context.findRenderObject() as RenderBox?;
-        onWorldTap(widget.camera.screenToWorld(details.localPosition, box?.size ?? Size.zero));
-      },
-      child: child,
+    if (!widget.showPerformanceOverlay) return child;
+
+    // Flutter's own bar-graph widget, not this engine's -- see
+    // EngineView.showPerformanceOverlay's doc comment for why a raster-
+    // thread graph specifically (not another Dart-side FrameStats
+    // number) is what this adds. Needs an explicit height (Flutter's
+    // own convention -- see its docs/examples): tall enough for both
+    // bars to actually be readable, not so tall it eats the screen.
+    return Stack(
+      children: [
+        child,
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SizedBox(
+            height: 150,
+            child: PerformanceOverlay.allEnabled(),
+          ),
+        ),
+      ],
     );
   }
 }

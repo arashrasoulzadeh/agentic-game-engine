@@ -63,6 +63,41 @@ void main() {
     expect(text, contains('particles:'));
   });
 
+  testWidgets('showPerformanceOverlay renders Flutter\'s own raster/UI-thread bar graphs',
+      (tester) async {
+    final world = World(width: 400, height: 300);
+    registerCoreComponents(world);
+    registerFlutterComponents(world);
+
+    await tester.pumpWidget(MaterialApp(
+      home: EngineView(
+        world: world,
+        atlasRegistry: AtlasRegistry(),
+        camera: Camera(),
+        showPerformanceOverlay: true,
+      ),
+    ));
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(find.byType(PerformanceOverlay), findsOneWidget);
+    expect(find.byType(EngineView), findsOneWidget,
+        reason: 'the gameplay content underneath must still render, not get replaced');
+  });
+
+  testWidgets('showPerformanceOverlay off by default -- no extra widget, no extra cost',
+      (tester) async {
+    final world = World(width: 400, height: 300);
+    registerCoreComponents(world);
+    registerFlutterComponents(world);
+
+    await tester.pumpWidget(MaterialApp(
+      home: EngineView(world: world, atlasRegistry: AtlasRegistry(), camera: Camera()),
+    ));
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(find.byType(PerformanceOverlay), findsNothing);
+  });
+
   testWidgets('cameraFollowEntity moves the camera toward that entity\'s Position',
       (tester) async {
     final world = World(width: 2000, height: 2000);
