@@ -24,12 +24,6 @@ full why behind each change.
       repo's scope; the iOS Simulator control tool available in this
       environment is moot while the iOS build itself won't compile here
       regardless.
-- [ ] Input remapping / gamepad support — configurable key/button
-      bindings plus controller input alongside touch/on-screen
-      controls. Performance: input polling is already once-per-frame
-      and cheap; remapping is just an indirection table (button →
-      action) resolved on that same pass, no new per-frame cost.
-
 ## Performance
 
 - [ ] Avoid `saveLayer`+`dstOut` for the ambient-lighting overlay

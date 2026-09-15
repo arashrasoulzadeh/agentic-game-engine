@@ -16,6 +16,8 @@ export 'src/rendering/engine_view.dart';
 export 'src/logic/cinematic_camera_steps.dart';
 export 'src/logic/game.dart';
 export 'src/logic/game_config.dart';
+export 'src/input/gamepad_bindings_storage.dart';
+export 'src/input/gamepad_controller.dart';
 export 'src/input/input.dart';
 export 'src/input/input_bindings_storage.dart';
 export 'src/input/on_screen_controls.dart';
