@@ -251,6 +251,35 @@ class Light2D {
   /// circular light is unaffected regardless of this value.
   double openAirFalloffScale;
 
+  /// `false` (default, unchanged behavior): [castsShadows] runs the
+  /// standard CPU `raycastTileMap` sweep (one raycast per sampled
+  /// angle, sequentially). `true` **replaces that sweep** with a
+  /// real-time GPU-shader point light with per-pixel shadow occlusion
+  /// (`light_shadow.frag` — ray-vs-line-segment intersection tests run
+  /// in parallel across every pixel instead of sequentially on the
+  /// CPU) — the CPU-side darkness-reveal/tint pass still runs for this
+  /// light (so `ambientBrightness` darkness is still genuinely pushed
+  /// back the way every other light does), but as a plain circle/cone,
+  /// not a duplicated raycast sweep of its own; the GPU pass then
+  /// draws the real, shadow-shaped light additively (`BlendMode.plus`
+  /// against the real scene, the same composition
+  /// `overbrightIntensity` uses) on top of that plain reveal. This is
+  /// what makes several simultaneous shadow-casting lights affordable
+  /// where the CPU sweep starts costing real frame time — see
+  /// `light_shadow.frag`'s own doc comment for the technique and why
+  /// it's the standard approach other engines use at this scale.
+  /// Deliberately **not** a byte-for-byte reproduction of the CPU
+  /// path's darkness-mask semantics beyond that plain circle/cone
+  /// reveal (a v1 scoping choice — replicating the exact CPU
+  /// compositing on the GPU too is a larger, separate undertaking).
+  /// Meaningless unless [castsShadows] is also on. Experimental:
+  /// verified in this repo's own web/CanvasKit test environment, but
+  /// Flutter fragment-shader support has known gaps on some web
+  /// renderer/platform combinations this repo's CI can't exercise —
+  /// test on every platform you actually ship before relying on this
+  /// for a real game.
+  bool useGpuShadows;
+
   /// Internal render-side cache for [cacheShadowGeometry] — the world-
   /// space per-ray hit distances from the last time this light's shadow
   /// geometry was actually recomputed, plus every input that produced
@@ -293,6 +322,7 @@ class Light2D {
     this.cacheShadowGeometry = false,
     this.overbrightIntensity = 0,
     this.openAirFalloffScale = 1.0,
+    this.useGpuShadows = false,
   })  : baseIntensity = baseIntensity ?? intensity,
         baseRadius = baseRadius ?? radius;
 
@@ -318,6 +348,7 @@ class Light2D {
         'cacheShadowGeometry': cacheShadowGeometry,
         'overbrightIntensity': overbrightIntensity,
         'openAirFalloffScale': openAirFalloffScale,
+        'useGpuShadows': useGpuShadows,
       };
 
   factory Light2D.fromJson(Map<String, dynamic> json) => Light2D(
@@ -342,5 +373,6 @@ class Light2D {
         cacheShadowGeometry: json['cacheShadowGeometry'] as bool? ?? false,
         overbrightIntensity: (json['overbrightIntensity'] as num?)?.toDouble() ?? 0,
         openAirFalloffScale: (json['openAirFalloffScale'] as num?)?.toDouble() ?? 1.0,
+        useGpuShadows: json['useGpuShadows'] as bool? ?? false,
       );
 }

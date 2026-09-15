@@ -1023,6 +1023,58 @@ implementing.
       what caught the `srcATop` bug above; a plain "doesn't crash" test
       would have missed it entirely. Full `engine_flutter` suite (232
       tests) green, `--fatal-infos` analyze clean.
+- [x] GPU-shader shadow casting — reported live (a real Android device
+      showed fps dropping to ~24 with a flickering, shadow-casting
+      torch in camera view). Researched how other engines handle 2D
+      dynamic shadow casting at scale: the standard technique is a
+      GPU-based 1D polar shadow map (occluders rendered to an offscreen
+      texture, unwrapped per-angle, sampled in a lighting shader) — a
+      genuine ground-up rewrite with real cross-platform risk (no way
+      to test iOS from this environment, known Flutter web
+      fragment-shader gaps). Implemented a scoped-down, real variant
+      instead: new `Light2D.useGpuShadows` (`false` default) draws a
+      GPU-shader point light (`shaders/light_shadow.frag`) doing
+      per-pixel ray-vs-line-segment occlusion tests against nearby
+      solid `TileMap` boundary edges (up to 32, nearest-first) — real
+      parallel GPU work replacing the sequential CPU `raycastTileMap`
+      sweep for that light entirely (not additional work on top of
+      it). The CPU darkness-reveal/tint pass still runs for a
+      GPU-shadow light, but as a plain circle/cone (cheap) rather than
+      a duplicated raycast sweep; the GPU pass then draws the real
+      shadow-shaped light additively on top. A real, reproducible-
+      looking bug (an oversaturated/blown-out render with multiple
+      simultaneous GPU-shadow lights) turned out, after isolating it
+      with a minimal repro, to be a stale Flutter dev-server reload
+      artifact (a `main.dart.js` MIME-type error caught mid-session
+      confirms the dev server was intermittently serving stale JS) —
+      re-tested on a confirmed-clean server with the exact same
+      "failing" configuration (all shadow-casting lights across both
+      `test_game` levels on the GPU path simultaneously) and it
+      rendered correctly, 120fps, both levels, no artifacts. `flutter
+      test` cannot compile/bundle a `shaders:` asset in this sandbox
+      (confirmed: `flutter pub get` itself fails here on an unrelated
+      dependency needing pub.dev network access) — the one pixel-
+      sampling test that needs the real compiled shader skips
+      gracefully with a clear reason instead of false-failing;
+      verified for real via the actual web app in this session's
+      browser tool instead. Full `engine_flutter` suite and
+      `--fatal-infos` analyze clean. Wired into `test_game` itself
+      (gitignored sample) — every shadow-casting light in both levels
+      now sets `useGpuShadows: true`, confirmed rendering correctly
+      (proper shadow shapes, soft falloff, no artifacts) in the
+      browser at 120fps across both levels simultaneously. Still
+      genuinely experimental beyond this — verified in this session's
+      web/CanvasKit environment only, not on a real Android/iOS device
+      (see the doc comment's own platform-risk note). **Follow-up
+      idea, not started**:
+      a single multi-light shader pass (all lights' data as uniform
+      arrays, one draw call instead of one per light) would be a
+      genuine further win — fewer GPU dispatches, and it would let a
+      shader-lit scene properly composite multiple overlapping lights
+      instead of relying on repeated additive passes — but is a
+      meaningfully bigger rewrite than this session's scope; revisit
+      if `useGpuShadows` sees real use and its current one-draw-per-
+      light cost becomes the next bottleneck.
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
 - [x] Ladders/climbing, conveyors, per-tile friction: `TileMap` gained

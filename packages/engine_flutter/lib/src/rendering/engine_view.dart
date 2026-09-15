@@ -13,6 +13,7 @@ import 'sprite.dart';
 // name, which `package:flutter/widgets.dart` (imported above) already
 // brings into scope.
 import 'animation_transition.dart';
+import 'gpu_light_shader.dart';
 import 'hud_bar.dart';
 import 'light2d.dart';
 import 'nine_slice_sprite.dart';
@@ -647,7 +648,7 @@ class _EnginePainter extends CustomPainter {
       // _collectTileMapItems's tile culling above).
       if (!_circleIntersectsRect(screenPos, screenRadius, fullRect)) continue;
       final clipPath = _lightClipPath(light, worldPos, size, entity);
-      infos.add(_LightRenderInfo(light, screenPos, screenRadius, clipPath));
+      infos.add(_LightRenderInfo(light, screenPos, screenRadius, clipPath, worldPos));
     }
 
     canvas.saveLayer(
@@ -721,6 +722,147 @@ class _EnginePainter extends CustomPainter {
         ..maskFilter = _shadowEdgeMaskFilter(info);
       _drawLightGradientCircle(canvas, info, overbrightPaint);
     }
+
+    // GPU-shader shadow-casting pass -- see Light2D.useGpuShadows's doc
+    // comment for why this exists (a real per-pixel-parallel
+    // alternative to the CPU raycastTileMap sweep) and why it's
+    // additive rather than replicating the CPU path's darkness-mask
+    // semantics. Skipped per-light whenever useGpuShadows/castsShadows
+    // isn't set, and skipped entirely for a frame where the shader
+    // hasn't finished its one-time async compile yet.
+    for (final info in infos) {
+      if (!info.light.useGpuShadows || !info.light.castsShadows) continue;
+      // Defensive: a degenerate uRadius (0, negative, NaN/Infinity --
+      // shouldn't happen given the `light.radius <= 0` guard earlier in
+      // this method already filters those out, but a shader reading an
+      // out-of-range uniform is undefined behavior on the GPU, not a
+      // clean no-op the way CPU code would be) must never reach the
+      // shader; skip this light's GPU pass entirely rather than risk
+      // an unclipped full-rect draw.
+      if (!info.screenRadius.isFinite || info.screenRadius <= 0) continue;
+      if (!info.screenPos.dx.isFinite || !info.screenPos.dy.isFinite) continue;
+      final shader = GpuLightShader.shader();
+      if (shader == null) continue;
+
+      final segments = _gpuLightSegmentsFor(info, size);
+      final segmentCount = segments.length ~/ 2;
+
+      final rawColor = Color(info.light.colorArgb);
+      final tinted = rawColor.a > 0;
+      final color = tinted ? rawColor : const Color(0xFFFFFFFF);
+
+      var u = 0;
+      shader
+        ..setFloat(u++, size.width)
+        ..setFloat(u++, size.height)
+        ..setFloat(u++, info.screenPos.dx)
+        ..setFloat(u++, info.screenPos.dy)
+        ..setFloat(u++, info.screenRadius)
+        ..setFloat(u++, info.light.intensity.clamp(0.0, 1.0))
+        ..setFloat(u++, color.r)
+        ..setFloat(u++, color.g)
+        ..setFloat(u++, color.b)
+        ..setFloat(u++, tinted ? color.a : 1.0)
+        ..setFloat(u++, segmentCount.toDouble());
+      for (var i = 0; i < _gpuMaxSegments; i++) {
+        if (i < segmentCount) {
+          final a = segments[i * 2];
+          final b = segments[i * 2 + 1];
+          shader
+            ..setFloat(u++, a.dx)
+            ..setFloat(u++, a.dy)
+            ..setFloat(u++, b.dx)
+            ..setFloat(u++, b.dy);
+        } else {
+          shader
+            ..setFloat(u++, 0)
+            ..setFloat(u++, 0)
+            ..setFloat(u++, 0)
+            ..setFloat(u++, 0);
+        }
+      }
+
+      final lightRect = Rect.fromCircle(center: info.screenPos, radius: info.screenRadius);
+      canvas.drawRect(lightRect, Paint()..shader = shader..blendMode = BlendMode.plus);
+    }
+  }
+
+  static const int _gpuMaxSegments = 32;
+
+  /// Up to [_gpuMaxSegments] world-solid-tile *boundary* edges near
+  /// [info]'s light, as consecutive screen-space `(a, b)` `Offset`
+  /// pairs, for `Light2D.useGpuShadows`'s shader to test ray-segment
+  /// occlusion against. "Boundary" means a solid tile's edge is only
+  /// emitted when the neighboring cell across it is *not* solid (off
+  /// the map counts as not solid too) — skips the interior edges
+  /// shared between two adjacent solid tiles, which would otherwise
+  /// vastly over-count segments for a dense solid block (a light deep
+  /// inside a thick wall region would blow the segment budget on
+  /// interior edges nothing ever actually needs to occlude against).
+  /// Solid cells are visited nearest-to-the-light first so a light
+  /// whose local area has more boundary edges than the budget allows
+  /// still gets the closest, most visually-significant ones rather
+  /// than an arbitrary subset.
+  List<Offset> _gpuLightSegmentsFor(_LightRenderInfo info, Size size) {
+    final tileMaps = world.storeOf<TileMap>();
+    final mapPositions = world.storeOf<Position>();
+    final segments = <Offset>[];
+
+    for (var m = 0; m < tileMaps.length && segments.length < _gpuMaxSegments * 2; m++) {
+      final mapEntity = tileMaps.entityAt(m);
+      final map = tileMaps.denseAt(m);
+      final origin = mapPositions.get(mapEntity) ?? Position(0, 0);
+
+      final minCol = ((info.worldPos.x - info.light.radius - origin.x) / map.tileWidth)
+          .floor()
+          .clamp(0, map.cols - 1);
+      final maxCol = ((info.worldPos.x + info.light.radius - origin.x) / map.tileWidth)
+          .ceil()
+          .clamp(0, map.cols - 1);
+      final minRow = ((info.worldPos.y - info.light.radius - origin.y) / map.tileHeight)
+          .floor()
+          .clamp(0, map.rows - 1);
+      final maxRow = ((info.worldPos.y + info.light.radius - origin.y) / map.tileHeight)
+          .ceil()
+          .clamp(0, map.rows - 1);
+
+      final candidates = <_GpuSolidCell>[];
+      for (var row = minRow; row <= maxRow; row++) {
+        for (var col = minCol; col <= maxCol; col++) {
+          if (!map.isSolid(col, row)) continue;
+          final cx = origin.x + (col + 0.5) * map.tileWidth;
+          final cy = origin.y + (row + 0.5) * map.tileHeight;
+          final dx = cx - info.worldPos.x;
+          final dy = cy - info.worldPos.y;
+          candidates.add(_GpuSolidCell(col, row, dx * dx + dy * dy));
+        }
+      }
+      candidates.sort((a, b) => a.distSq.compareTo(b.distSq));
+
+      for (final cell in candidates) {
+        if (segments.length >= _gpuMaxSegments * 2) break;
+        final left = origin.x + cell.col * map.tileWidth;
+        final right = left + map.tileWidth;
+        final top = origin.y + cell.row * map.tileHeight;
+        final bottom = top + map.tileHeight;
+
+        void addIfBoundary(bool neighborSolid, Offset a, Offset b) {
+          if (neighborSolid || segments.length >= _gpuMaxSegments * 2) return;
+          segments
+            ..add(camera.worldToScreen(a.dx, a.dy, size))
+            ..add(camera.worldToScreen(b.dx, b.dy, size));
+        }
+
+        addIfBoundary(map.isSolid(cell.col, cell.row - 1), Offset(left, top), Offset(right, top));
+        addIfBoundary(
+            map.isSolid(cell.col, cell.row + 1), Offset(left, bottom), Offset(right, bottom));
+        addIfBoundary(map.isSolid(cell.col - 1, cell.row), Offset(left, top), Offset(left, bottom));
+        addIfBoundary(
+            map.isSolid(cell.col + 1, cell.row), Offset(right, top), Offset(right, bottom));
+      }
+    }
+
+    return segments;
   }
 
   /// Draws [paint] (already carrying its radial gradient/blend mode) as
@@ -882,13 +1024,20 @@ class _EnginePainter extends CustomPainter {
       // was on screen at once, even with zero entities actually tagged
       // blocksLight -- the short-circuiting `if (!blocksLight) continue`
       // still means walking the whole store that many times over.
-      final blockers = light.castsShadows
+      // useGpuShadows takes over the actual raycastTileMap sweep this
+      // light would otherwise run here (see the GPU-shadow pass in
+      // _drawLighting) -- the CPU reveal/tint path below still runs
+      // for it, but as a plain circle/cone, not a duplicated sweep of
+      // its own. Enabling useGpuShadows is meant to *replace* the CPU
+      // sweep's cost for that light, not add the GPU pass on top of it.
+      final skipCpuRaycast = light.useGpuShadows;
+      final blockers = light.castsShadows && !skipCpuRaycast
           ? _collectLightBlockingColliders(lightEntity)
           : const <_LightBlocker>[];
       rawDistances = List<double>.filled(rayCount + 1, 0);
       for (var i = 0; i <= rayCount; i++) {
         final angle = startAngle + sweep * i / rayCount;
-        if (!light.castsShadows) {
+        if (!light.castsShadows || skipCpuRaycast) {
           rawDistances[i] = light.radius;
           continue;
         }
@@ -1741,7 +1890,9 @@ class _LightRenderInfo {
   final Offset screenPos;
   final double screenRadius;
   final Path? clipPath;
-  _LightRenderInfo(this.light, this.screenPos, this.screenRadius, this.clipPath);
+  final Position worldPos;
+  _LightRenderInfo(
+      this.light, this.screenPos, this.screenRadius, this.clipPath, this.worldPos);
 }
 
 /// One `Collider(blocksLight: true)` entity's world-space position/
@@ -1754,6 +1905,15 @@ class _LightBlocker {
   final double y;
   final double radius;
   _LightBlocker(this.x, this.y, this.radius);
+}
+
+/// One solid `TileMap` cell candidate for `_gpuLightSegmentsFor`'s
+/// nearest-first boundary-edge walk.
+class _GpuSolidCell {
+  final int col;
+  final int row;
+  final double distSq;
+  _GpuSolidCell(this.col, this.row, this.distSq);
 }
 
 /// One `ClipShape`'s precomputed screen position, alongside the shape
