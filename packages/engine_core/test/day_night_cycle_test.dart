@@ -126,5 +126,31 @@ void main() {
           DayNightCycle(hour: 6.5, weather: Weather.rain, weatherIntensity: 0).ambientColorArgb;
       expect(rainAtZero, clear);
     });
+
+    test(
+        'color magnitude tracks timeOfDayBrightness, not just how far through the hue '
+        'ramp the hour is -- regression test for a real bug where the color and '
+        'brightness curves desynced', () {
+      // Hour 19 sits only halfway through the 18-22 *color* ramp
+      // (roughly 50% of the way from white to the dusk hue) while
+      // timeOfDayBrightness there is already well past its own halfway
+      // point (~0.8 -> ~0.2 of the way *down* from 1.0). Before this was
+      // fixed, ambientColorArgb returned that still-bright ~50% hue
+      // untouched, so a caller compositing it at the alpha
+      // (1 - brightness) implies would show a brighter-than-expected
+      // wash for how dark this hour actually is. Now the color itself
+      // is scaled toward black by timeOfDayBrightness, so its magnitude
+      // can never exceed "how lit this hour already is".
+      final cycle = DayNightCycle(hour: 19);
+      final color = cycle.ambientColorArgb;
+      final maxChannel = [
+        (color >> 16) & 0xFF,
+        (color >> 8) & 0xFF,
+        color & 0xFF,
+      ].reduce((a, b) => a > b ? a : b);
+      expect(maxChannel / 255, lessThanOrEqualTo(cycle.timeOfDayBrightness + 0.01),
+          reason: 'no channel of the tint should read brighter than timeOfDayBrightness '
+              'itself -- that is the whole point of scaling the hue by it');
+    });
   });
 }

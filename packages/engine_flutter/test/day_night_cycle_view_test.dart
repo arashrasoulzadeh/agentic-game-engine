@@ -165,5 +165,88 @@ void main() {
       // rather than exactly checking a fragile floating-point value.
       expect(cycle.hour, greaterThan(0));
     });
+
+    testWidgets(
+        "a shadow-casting light's revealed area reads brighter than the unrevealed "
+        'ambient around it -- regression test for a real on-screen report ("user '
+        'light darkens the GI") traced to DayNightCycle.ambientColorArgb/'
+        '_effectiveAmbientColorArgb returning a tint still bright enough, at the high '
+        'alpha dusk/night already has, to outshine an area a light had genuinely '
+        'revealed back to the true (but comparatively dim) scene colors',
+        (tester) async {
+      final world = World(width: 800, height: 600);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      // Open sky above a ground row -- same shape as test_game's prison
+      // level, whose player light (radius 220, castsShadows, 40 rays,
+      // blockOneWayPlatforms) this mirrors exactly.
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(
+              cols: 40,
+              rows: 30,
+              tileWidth: 20,
+              tileHeight: 20,
+              tiles: [
+                for (var row = 0; row < 30; row++)
+                  for (var col = 0; col < 40; col++) row == 28 ? 1 : 0,
+              ],
+              solidTileIds: {1},
+            ),
+          );
+
+      final player = world.spawn();
+      world.storeOf<Position>().set(player, Position(300, 500));
+      world.storeOf<Light2D>().set(
+          player,
+          Light2D(
+            radius: 220,
+            intensity: 1,
+            castsShadows: true,
+            shadowRayCount: 40,
+            blockOneWayPlatforms: true,
+            shadowEdgeSoftness: 12,
+          ));
+
+      final boundaryKey = UniqueKey();
+      await tester.pumpWidget(MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 800,
+            height: 600,
+            child: RepaintBoundary(
+              key: boundaryKey,
+              child: EngineView(
+                world: world,
+                atlasRegistry: AtlasRegistry(),
+                camera: Camera(x: 300, y: 300),
+                backgroundColor: const Color(0xFF807060),
+                ambientBrightness: 0.25,
+                dayNightCycle: DayNightCycle(hour: 19), // dusk
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // Camera centered at world (300,300) on an 800x600 viewport ->
+      // screen = world - (300,300) + (400,300). Directly above the
+      // player, well inside the 220 radius, open sky, unobstructed --
+      // should be the most-revealed point on screen. Far corner sits
+      // outside the light's radius entirely -- should stay at the
+      // plain (unrevealed) ambient wash.
+      final revealed = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(400, 350))))!;
+      final unrevealed = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(50, 50))))!;
+
+      expect(revealed.r, greaterThan(unrevealed.r));
+      expect(revealed.g, greaterThan(unrevealed.g));
+      expect(revealed.b, greaterThan(unrevealed.b));
+    });
   });
 }

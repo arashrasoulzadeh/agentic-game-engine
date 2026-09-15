@@ -505,10 +505,40 @@ class _EnginePainter extends CustomPainter {
   double get _effectiveAmbientBrightness =>
       ambientBrightness * (dayNightCycle?.ambientBrightness ?? 1.0);
 
-  /// [dayNightCycle]'s computed tint when set, else plain black (`0xFF000000`)
-  /// — matches the overlay's pre-`DayNightCycle` behavior exactly when no
-  /// cycle is given, so passing only [ambientBrightness] stays unchanged.
-  int get _effectiveAmbientColorArgb => dayNightCycle?.ambientColorArgb ?? 0xFF000000;
+  /// [dayNightCycle]'s computed tint when set (else plain black
+  /// `0xFF000000`, matching the overlay's pre-`DayNightCycle` behavior
+  /// exactly), further scaled toward black by [ambientBrightness].
+  ///
+  /// `DayNightCycle.ambientColorArgb` already scales its own hue by the
+  /// *cycle's* brightness (see that getter's doc comment) — but it has
+  /// no way to know about this scene's *own* [ambientBrightness]
+  /// ceiling, which [_effectiveAmbientBrightness] above also folds in.
+  /// Without this second scaling, color and the alpha actually used for
+  /// the overlay could still desync: e.g. a scene-tuned
+  /// `ambientBrightness: 0.25` combined with a cycle brightness of
+  /// ~0.8 gives a *combined* brightness of ~0.2 (correctly dark, per
+  /// `_effectiveAmbientBrightness`) — but the cycle's own tint, scaled
+  /// only by its own ~0.8, would still read as a fairly bright color.
+  /// Composited at the correctly-high alpha that ~0.2 combined
+  /// brightness produces, that still-bright tint could end up visibly
+  /// *brighter* than an area a light had actually revealed back to the
+  /// scene's true (but comparatively dim) colors — the same on-screen
+  /// inversion `DayNightCycle.ambientColorArgb`'s own fix addressed,
+  /// caught again here once a scene supplies both a `dayNightCycle`
+  /// *and* a non-default `ambientBrightness` together (prison.level.json's
+  /// combination, real DIAG evidence of the fix in
+  /// `day_night_cycle_view_test.dart`).
+  int get _effectiveAmbientColorArgb {
+    final cycle = dayNightCycle;
+    if (cycle == null) return 0xFF000000;
+    return (Color.lerp(
+              const Color(0xFF000000),
+              Color(cycle.ambientColorArgb),
+              ambientBrightness.clamp(0, 1),
+            ) ??
+            const Color(0xFF000000))
+        .toARGB32();
+  }
 
   /// Real wall-clock seconds since the last rendered frame — used only
   /// to advance `Light2D.shadowSmoothingSeconds`' exponential smoothing
