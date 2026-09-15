@@ -38,3 +38,15 @@ game_agent lint assets/level1.json
 
 Exits 0 with a summary on success, or 1 with the specific error (e.g.
 `entities[2].components["position"] must be an object`) on failure.
+
+Add `--render <path.png>` to also rasterize the level's `TileMap` (solid/
+one-way/slope tiles color-coded, entities marked as dots) so a human or
+an agent can see the level's shape without running the game.
+
+Add `--playable` to flood-fill the level's non-solid tiles from its
+spawn entity (a positioned entity named with "player" or "spawn" in
+it) and report any other entity that isn't reachable — catches a
+level authoring mistake like an item or exit accidentally sealed off
+behind solid tiles. This is tile connectivity, not physics: it can't
+tell a gap too wide to jump from one that's crossable, so it's not a
+substitute for actual playtesting.

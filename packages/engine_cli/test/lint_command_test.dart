@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
@@ -40,12 +41,43 @@ void main() {
     expect(await _runLint(['${tmp.path}/missing.json']), 1);
   });
 
+  test('throws a usage exception when no file path is given', () async {
+    expect(() => _runLint([]), throwsA(isA<UsageException>()));
+  });
+
   group('--render', () {
     test('returns 1 when the level has no tileMap component', () async {
       final file = File('${tmp.path}/level.json')
         ..writeAsStringSync('{"entities": [{"components": {"position": {"x": 1, "y": 2}}}]}');
 
       expect(await _runLint([file.path, '--render', '${tmp.path}/out.png']), 1);
+    });
+
+    test('draws one-way and slope tiles with their own colors', () async {
+      final file = File('${tmp.path}/level.json')..writeAsStringSync('''
+{
+  "entities": [
+    {
+      "name": "tileMap",
+      "components": {
+        "position": {"x": 0, "y": 0},
+        "tileMap": {
+          "tileWidth": 40, "tileHeight": 40,
+          "legend": {".": 0, "^": 1, "/": 2, "L": 3, "?": 4},
+          "rows": [".^/L?"],
+          "oneWayTileIds": [1],
+          "slopeUpRightTileIds": [2],
+          "slopeUpLeftTileIds": [3]
+        }
+      }
+    }
+  ]
+}
+''');
+      final outPath = '${tmp.path}/out.png';
+
+      expect(await _runLint([file.path, '--render', outPath]), 0);
+      expect(File(outPath).existsSync(), isTrue);
     });
 
     test('writes a PNG sized to the TileMap grid when one is present', () async {
@@ -69,7 +101,76 @@ void main() {
       expect(File('${tmp.path}/out.png').existsSync(), isFalse);
     });
   });
+
+  group('--playable', () {
+    test('returns 1 when the level has no tileMap component', () async {
+      final file = File('${tmp.path}/level.json')
+        ..writeAsStringSync('{"entities": [{"name": "player", "components": {"position": {"x": 1, "y": 2}}}]}');
+
+      expect(await _runLint([file.path, '--playable']), 1);
+    });
+
+    test('returns 1 when there is no spawn entity', () async {
+      final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
+        rows: ['...', '...'],
+        entities: '{"name": "coin", "components": {"position": {"x": 20, "y": 20}}}',
+      ));
+
+      expect(await _runLint([file.path, '--playable']), 1);
+    });
+
+    test('returns 1 when the spawn entity sits on a solid tile', () async {
+      final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
+        rows: ['###', '...'],
+        entities: '{"name": "player", "components": {"position": {"x": 20, "y": 20}}}',
+      ));
+
+      expect(await _runLint([file.path, '--playable']), 1);
+    });
+
+    test('returns 0 when every entity is reachable from spawn', () async {
+      final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
+        rows: ['....', '....'],
+        entities: '{"name": "player", "components": {"position": {"x": 20, "y": 20}}},'
+            '{"name": "coin", "components": {"position": {"x": 140, "y": 20}}}',
+      ));
+
+      expect(await _runLint([file.path, '--playable']), 0);
+    });
+
+    test('returns 1 when an entity is sealed off from spawn by solid tiles', () async {
+      final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
+        rows: ['....#....', '....#....'],
+        entities: '{"name": "player", "components": {"position": {"x": 20, "y": 20}}},'
+            '{"name": "coin", "components": {"position": {"x": 260, "y": 20}}}',
+      ));
+
+      expect(await _runLint([file.path, '--playable']), 1);
+    });
+  });
 }
+
+/// Builds a level JSON with a `tileMap` sized from [rows] (40px tiles,
+/// `.` empty / `#` solid) plus the given raw entity JSON objects.
+String _levelJson({required List<String> rows, required String entities}) => '''
+{
+  "entities": [
+    {
+      "name": "tileMap",
+      "components": {
+        "position": {"x": 0, "y": 0},
+        "tileMap": {
+          "tileWidth": 40, "tileHeight": 40,
+          "legend": {".": 0, "#": 1},
+          "rows": ${jsonEncode(rows)},
+          "solidTileIds": [1]
+        }
+      }
+    },
+    $entities
+  ]
+}
+''';
 
 const jsonEncodeLevel = '''
 {
