@@ -24,6 +24,34 @@ full why behind each change.
       repo's scope; the iOS Simulator control tool available in this
       environment is moot while the iOS build itself won't compile here
       regardless.
+- [ ] Particle system — data-driven emitter component (burst/continuous,
+      pooled particles, not one entity per particle) for hits/dust/
+      embers. Performance: must pool particle storage and update as a
+      single tight system pass (like existing `ComponentStore`s), not
+      spawn/despawn real ECS entities per particle — that would put
+      entity churn on the hot path this session's profiling already
+      showed is raster-bound.
+- [ ] Audio: positional/spatial sound — pan/volume by distance from
+      camera for SFX. Performance: distance/pan calc is O(active
+      sounds), trivial next to render cost; only real risk is doing it
+      naively every frame for every sound source instead of only active
+      (playing) ones — gate on that from the start.
+- [ ] Tilemap auto-tiling — bitmask neighbor-aware tile selection so one
+      placed "wall" type resolves to correct edge/corner sprites.
+      Performance: must resolve at author/load time (or on edit), not
+      per-frame — this is tile *selection*, wholly orthogonal to the
+      existing per-frame tile-culling path, must not be added to it.
+- [ ] Save/load slots UI + versioning — multiple save slots, a schema-
+      version field in `World.toJson()` output so old saves don't
+      silently break after a content-schema change. Performance: only
+      runs on explicit save/load, not a hot path — no frame-time
+      concern, but keep the version-migration step itself cheap
+      (one-time, not re-checked every load of an already-current save).
+- [ ] Input remapping / gamepad support — configurable key/button
+      bindings plus controller input alongside touch/on-screen
+      controls. Performance: input polling is already once-per-frame
+      and cheap; remapping is just an indirection table (button →
+      action) resolved on that same pass, no new per-frame cost.
 
 ## Performance
 
@@ -62,53 +90,6 @@ full why behind each change.
       thread timeline when the overlay's live numbers alone aren't
       enough — this combination is what found `shadowEdgeSoftness`
       (see CHANGELOG) as the previous dominant cost; use it again here.
-- [ ] Spatial-hash-based light culling — **re-evaluated with a real
-      measurement, still not implemented**: `_drawLighting` already
-      viewport-culls each light via `_circleIntersectsRect` before its
-      expensive shadow-raycasting path, but still iterates every
-      `Light2D` in the `World` every frame to do that cheap check first.
-      A throwaway probe (300 pumped frames) scattered 300 lights across
-      a 40000x40000 world with only a few landing near a static camera:
-      ~0.67ms/frame with all 300 plain, ~0.47ms/frame with all 300
-      `castsShadows: true` — both comfortably under 3% of a 60fps frame
-      budget at a light count well past what any real level here has
-      used. Building/maintaining a spatial hash would itself cost
-      O(lights) per frame to insert/rebuild unless cached across
-      frames, reintroducing the exact invalidation-tracking risk
-      `cacheShadowGeometry` already had to solve carefully — not worth
-      that complexity for an unconfirmed win. Revisit only if a real
-      level's profile ever shows this path actually costing something.
-- [ ] `_collectTileMapItems`'s per-frame tile culling (engine_view.dart)
-      recomputes the visible tile range from the camera every frame —
-      **re-evaluated with a real measurement, still not implemented**:
-      a throwaway probe (300 pumped frames, static camera, 200 sprites)
-      measured ~1.2ms/frame for a 40x40 `TileMap` fully on screen versus
-      ~1.0ms/frame for a 2000x2000 (4,000,000-tile) map culled to the
-      same visible count — statistically indistinguishable, confirming
-      the existing viewport culling already makes total map size a
-      non-factor. No evidence of an actual bottleneck to fix. Revisit
-      only if a real level's profile ever shows this path costing
-      something.
-- [ ] `EngineView`'s draw-item list (`_DrawItem`, built fresh every
-      frame in `paint()` from every renderable component store) —
-      **re-evaluated alongside the item above, same probe, still not
-      implemented**: no signal of a bottleneck. The fix's own likely
-      shape (a `ComponentStore` "changed since version N" check) would
-      touch the write path every store's `set`/`get` already sits on —
-      a real, ongoing cost for every future write, not a one-time cost
-      — so it stays unjustified without evidence it solves a real
-      problem. Revisit alongside the item above.
-- [ ] `World.toJson()`/full-state serialization (used for save/load and
-      the agent-facing API) walks every `ComponentStore` and rebuilds a
-      fresh `Map` per entity per component every call — **evaluated,
-      deliberately not implemented**: needs real agent-workload evidence
-      this is hit often enough to matter before building it, and no
-      such evidence exists yet. The likely shape (dirty-tracking per
-      entity/component) would add write-path overhead to every
-      `ComponentStore.set` call to speed up a read path with no
-      confirmed frequent caller. Revisit if/when an actual agent
-      workload profile shows frequent `World.toJson()` polling costing
-      something real.
 - [ ] GPU-shader shadow casting — **landed as opt-in engine
       infrastructure, but has a confirmed, unresolved real-device bug —
       NOT safe to enable, `test_game` does not use it.** Reported live
