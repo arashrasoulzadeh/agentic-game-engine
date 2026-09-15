@@ -590,6 +590,22 @@ class _EnginePainter extends CustomPainter {
         .toARGB32();
   }
 
+  /// [_effectiveAmbientBrightness] below this actually darkens
+  /// something visible; at or above it, the ambient overlay's alpha
+  /// (`(1 - brightness) * 255`, rounded to the nearest 8-bit channel
+  /// value Skia can even represent) rounds to exactly `0` — fully
+  /// transparent, pixel-identical to never having drawn it. `1.0` (a
+  /// plain `< 1.0` check) would still pay for the entire pass
+  /// (`saveLayer`, every light's reveal/tint/shadow-cast gradient —
+  /// real, measured GPU cost; see this repo's own on-device raster-
+  /// thread profiling in `TODO.md`) for brightness values indistinguishable
+  /// from `1.0` in the final image, e.g. `0.999` (common right at a
+  /// `DayNightCycle`'s dawn/dusk transition, or `EngineView.ambientBrightness`
+  /// combined with a cycle briefly near its own peak). `0.5 / 255`
+  /// below `1.0` is the exact boundary where that rounding starts to
+  /// matter, not a hand-tuned guess.
+  static const double _ambientBrightnessSkipThreshold = 1.0 - 0.5 / 255;
+
   /// Real wall-clock seconds since the last rendered frame — used only
   /// to advance `Light2D.shadowSmoothingSeconds`' exponential smoothing
   /// at the actual render frame rate (not the simulation's fixed/
@@ -714,7 +730,15 @@ class _EnginePainter extends CustomPainter {
       return byZ != 0 ? byZ : a.order.compareTo(b.order);
     });
 
-    if (_effectiveAmbientBrightness < 1.0) {
+    // Skip the whole ambient-darkness/lighting pass (a real, measured
+    // GPU cost -- see the doc comment on _ambientBrightnessSkipThreshold)
+    // whenever it would end up doing nothing visible anyway. A plain
+    // `< 1.0` would still run the full pass (saveLayer, reveal
+    // gradients, the works) for e.g. brightness 0.999, even though the
+    // resulting darkness overlay rounds to fully-transparent (alpha 0)
+    // once quantized to an 8-bit color channel -- pixel-identical to
+    // not drawing it at all, just paid for anyway.
+    if (_effectiveAmbientBrightness < _ambientBrightnessSkipThreshold) {
       _paintZBanded(canvas, size, positions, items);
     } else {
       for (final item in items) {

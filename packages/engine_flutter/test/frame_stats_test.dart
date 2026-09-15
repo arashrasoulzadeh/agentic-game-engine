@@ -107,6 +107,67 @@ void main() {
               'was actually written to, not left at its untouched default');
     });
 
+    testWidgets(
+        'lightingMs stays 0 for an ambientBrightness so close to 1.0 the darkness would '
+        'round to fully transparent anyway -- regression test for the GPU-cost skip', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(100, 100));
+      world.storeOf<Light2D>().set(id, Light2D(radius: 80, castsShadows: true));
+
+      final stats = FrameStats();
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          // Above the 1 - 0.5/255 skip threshold -- (1-brightness)*255
+          // rounds to alpha 0, pixel-identical to ambientBrightness: 1.0.
+          ambientBrightness: 0.9995,
+          frameStats: stats,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(stats.lightingMs, 0,
+          reason: 'the darkness overlay would be fully transparent either way, so the '
+              'whole pass (saveLayer, every light\'s reveal gradient) should be skipped '
+              'exactly like ambientBrightness: 1.0 already is, not paid for anyway');
+    });
+
+    testWidgets(
+        'lightingMs is still populated just below the skip threshold -- the skip is exact, '
+        'not overly broad', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(100, 100));
+      world.storeOf<Light2D>().set(id, Light2D(radius: 80, castsShadows: true));
+
+      final stats = FrameStats();
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          // Just below the skip threshold -- the darkness overlay is
+          // still (barely) visible, so the pass must still run.
+          ambientBrightness: 0.995,
+          frameStats: stats,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(stats.lightingMs, greaterThanOrEqualTo(0),
+          reason: '_drawLighting must still run just below the skip threshold, not be '
+              'skipped too broadly');
+    });
+
     testWidgets('frameMs and entity/sprite/particle counts populate after a frame',
         (tester) async {
       final world = World(width: 400, height: 300);
