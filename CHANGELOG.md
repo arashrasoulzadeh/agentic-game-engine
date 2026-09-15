@@ -8,6 +8,77 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### New engine features (round 4)
+
+- Positional/spatial audio: `AudioManager.playPositionalSound` pans and
+  attenuates a one-shot SFX by distance from a listener position (the
+  camera, typically), via a new pure `positionalAudioParams` helper —
+  computed once at trigger time, not tracked live per frame.
+- Tilemap auto-tiling: `TileMap.withAutotile` resolves a designer's
+  single placed "wall" tile id into the correct edge/corner sprite
+  variant per cell, via the standard 4-bit neighbor bitmask
+  (`autotileBitmask`) — a load-time transform, so `EngineView`'s
+  per-frame tile rendering needed zero changes.
+- `SaveGame.listSlots()` enumerates every slot with a save currently
+  stored, for a slot-picker UI that doesn't want to hardcode slot names
+  up front.
+- Gamepad support: `GamepadController` maps generic button/axis ids
+  (matching the W3C standard gamepad button order) to the same logical
+  actions keyboard and touch already write into `InputState` — the
+  transport-agnostic binding layer any gamepad plugin's raw callbacks
+  can wire into. `GamepadBindingsStorage` persists button bindings the
+  same way `InputBindingsStorage` does for the keyboard.
+- `game_agent lint --playable`: flood-fills a level's non-solid tiles
+  from its spawn entity and reports any other entity not reachable —
+  catches an item/exit sealed off behind solid tiles that plain
+  schema validation can't see.
+
+### Bug fixes (round 2)
+
+- **A dusk/night `DayNightCycle` scene rendered brighter than its
+  configured `ambientBrightness`**: `ambientColorArgb` held hand-
+  darkened hues on a schedule independent of `timeOfDayBrightness`,
+  so a still-bright color composited at a brightness-driven alpha —
+  visually confirmed as a dark dome that failed to actually darken the
+  revealed area around the player's own light. Fixed with two scaling
+  passes: `DayNightCycle.ambientColorArgb` now scales its hue toward
+  black by `timeOfDayBrightness` before weather blending, and
+  `EngineView._effectiveAmbientColorArgb` does a second pass toward
+  black by the scene's own `ambientBrightness` (a multiplier
+  `DayNightCycle` has no way to know about on its own). Verified via a
+  real pixel-sampling regression test mirroring dusk +
+  `ambientBrightness: 0.25`.
+
+### Performance (round 2)
+
+- `Light2D.shadowEdgeSoftness` defaults to `8`, not `0` — a torch with
+  no explicit value in its level JSON was still paying for a real
+  `MaskFilter.blur` on its shadow-casting reveal paint. Proven via a
+  controlled, screenshot-only on-device A/B (identical input recipe
+  both times) to be the dominant raster-thread cost for a scene with
+  several shadow-casting lights on screen at once: **raster avg
+  3.0ms→1.7ms, max 5.7ms→2.6ms** with it set to `0` — a ~45-55%
+  reduction. No engine code change; a level-authoring fix.
+- New diagnostics for finding costs like the one above without a full
+  DevTools session: `FrameStats.onSpike`/`spikeThresholdMs` (fires the
+  instant a frame exceeds a threshold) and
+  `EngineView.showPerformanceOverlay`/`GameConfig.showPerformanceOverlay`
+  (Flutter's own raster/UI-thread bar-graph widget, wired end to end
+  through `GameRunner`).
+- `EngineView`'s whole ambient-lighting pass is now skipped when the
+  resulting darkness would round away to fully transparent anyway
+  (`ambientBrightness` above a `1 - 0.5/255` threshold, the exact
+  8-bit alpha-rounding boundary) — zero visual risk, since the skipped
+  work would have been invisible regardless.
+- A concrete, mechanistically-explained (not yet device-confirmed)
+  hypothesis for the `Light2D.useGpuShadows` oversaturation bug is now
+  recorded on its own doc comment and in `TODO.md`: `light_shadow.frag`'s
+  `falloff()` is flat at full strength out to 60% of a light's radius,
+  drawing a fully opaque white disc there for an untinted light,
+  composited with unbounded `BlendMode.plus` — two such plateaus
+  overlapping (ordinary torch spacing) saturates the overlap to solid
+  white well before any third light contributes.
+
 ### Performance
 
 - `pack-assets` now bin-packs with a real MaxRects (Best Short-Side-Fit)
