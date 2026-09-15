@@ -106,6 +106,115 @@ void main() {
       expect(world.storeOf<Velocity>().get(id)!.x, 50,
           reason: 'speed falls back to the constructor default when memory omits it');
     });
+
+    group('avoidLedges', () {
+      World buildWorldWithGroundAndPit() {
+        final world = _buildWorld();
+        // Solid ground row across cols 0-4, a gap at col 5, solid again
+        // cols 6-9 -- tileWidth/Height 20, so the pit spans x=[100,120).
+        final mapEntity = world.spawn();
+        world.storeOf<Position>().set(mapEntity, Position(0, 0));
+        world.storeOf<TileMap>().set(
+              mapEntity,
+              TileMap(
+                cols: 10,
+                rows: 1,
+                tileWidth: 20,
+                tileHeight: 20,
+                tiles: [1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
+                solidTileIds: {1},
+              ),
+            );
+        return world;
+      }
+
+      test('off by default -- walks straight past a gap the range reaches, unaffected '
+          'by tile geometry', () {
+        final world = buildWorldWithGroundAndPit();
+        final registry = BehaviorRegistry()
+          ..register('patrol', PatrolBehavior(minX: 0, maxX: 200, speed: 50));
+        world.addSystem(AISystem(registry));
+
+        final id = world.spawn();
+        // Feet (Position.y + Collider.radius) sit right at the ground
+        // row's bottom edge (y=20), directly over the pit at col 5.
+        world.storeOf<Position>().set(id, Position(105, 0));
+        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.storeOf<Collider>().set(id, Collider(12));
+        world.storeOf<AIState>().set(id, AIState('patrol', memory: {'dir': 1.0}));
+
+        world.step(0.1);
+
+        expect(world.storeOf<Velocity>().get(id)!.x, 50,
+            reason: 'no ledge awareness -- keeps walking in the current direction '
+                'regardless of what is or isn\'t underneath it');
+      });
+
+      test('on: flips direction before walking off a ledge, ahead of the authored range',
+          () {
+        final world = buildWorldWithGroundAndPit();
+        final registry = BehaviorRegistry()
+          ..register('patrol',
+              PatrolBehavior(minX: 0, maxX: 200, speed: 50, avoidLedges: true));
+        world.addSystem(AISystem(registry));
+
+        final id = world.spawn();
+        // Just before the pit (col 5, x=[100,120)) -- ledgeCheckAheadDistance
+        // (default 24) looking ahead from x=90 reaches x=114, over the gap.
+        world.storeOf<Position>().set(id, Position(90, 0));
+        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.storeOf<Collider>().set(id, Collider(12));
+        world.storeOf<AIState>().set(id, AIState('patrol', memory: {'dir': 1.0}));
+
+        world.step(0.1);
+
+        final state = world.storeOf<AIState>().get(id)!;
+        expect(state.memory['dir'], -1.0,
+            reason: 'no ground ahead within ledgeCheckAheadDistance -- turns around '
+                'before reaching the pit, not just at minX/maxX');
+        expect(world.storeOf<Velocity>().get(id)!.x, -50);
+      });
+
+      test('on: does not flip while solid ground exists ahead, well clear of any pit',
+          () {
+        final world = buildWorldWithGroundAndPit();
+        final registry = BehaviorRegistry()
+          ..register('patrol',
+              PatrolBehavior(minX: 0, maxX: 200, speed: 50, avoidLedges: true));
+        world.addSystem(AISystem(registry));
+
+        final id = world.spawn();
+        world.storeOf<Position>().set(id, Position(20, 0));
+        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.storeOf<Collider>().set(id, Collider(12));
+        world.storeOf<AIState>().set(id, AIState('patrol', memory: {'dir': 1.0}));
+
+        world.step(0.1);
+
+        expect(world.storeOf<Velocity>().get(id)!.x, 50,
+            reason: 'solid ground the whole look-ahead distance -- no reason to flip');
+      });
+
+      test('on: still flips at minX/maxX over solid ground, same as when off', () {
+        final world = buildWorldWithGroundAndPit();
+        final registry = BehaviorRegistry()
+          ..register('patrol',
+              PatrolBehavior(minX: 0, maxX: 30, speed: 50, avoidLedges: true));
+        world.addSystem(AISystem(registry));
+
+        final id = world.spawn();
+        world.storeOf<Position>().set(id, Position(30, 0)); // at maxX, solid ground
+        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.storeOf<Collider>().set(id, Collider(12));
+        world.storeOf<AIState>().set(id, AIState('patrol', memory: {'dir': 1.0}));
+
+        world.step(0.1);
+
+        expect(world.storeOf<Velocity>().get(id)!.x, -50,
+            reason: 'the authored range still bounds it even when the ledge check '
+                'alone would have allowed continuing');
+      });
+    });
   });
 
   group('FollowBehavior', () {

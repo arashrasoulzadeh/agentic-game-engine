@@ -874,6 +874,17 @@ class _EnginePainter extends CustomPainter {
     if (cacheHit) {
       rawDistances = light.cachedShadowDistances!;
     } else {
+      // Collected once per light, not once per ray -- a per-ray scan
+      // of the *entire* Collider store (this repo's own test_game has
+      // ~15-20 of them: player, enemies, every coin) multiplied by
+      // shadowRayCount (up to 64) turned into a real, measured frame-
+      // rate regression the moment more than one shadow-casting light
+      // was on screen at once, even with zero entities actually tagged
+      // blocksLight -- the short-circuiting `if (!blocksLight) continue`
+      // still means walking the whole store that many times over.
+      final blockers = light.castsShadows
+          ? _collectLightBlockingColliders(lightEntity)
+          : const <_LightBlocker>[];
       rawDistances = List<double>.filled(rayCount + 1, 0);
       for (var i = 0; i <= rayCount; i++) {
         final angle = startAngle + sweep * i / rayCount;
@@ -882,7 +893,7 @@ class _EnginePainter extends CustomPainter {
           continue;
         }
         final hitDist = _raycastLightDistance(
-            worldPos, angle, light.radius, light.blockOneWayPlatforms, lightEntity);
+            worldPos, angle, light.radius, light.blockOneWayPlatforms, blockers);
         // A ray that reached the light's full radius without hitting
         // anything is genuinely open air along that direction -- pull
         // it in to openAirFalloffScale * radius instead. A ray that
@@ -930,22 +941,43 @@ class _EnginePainter extends CustomPainter {
     return path;
   }
 
+  /// Every `Collider(blocksLight: true)` entity's position/radius,
+  /// collected once per light per frame (not once per *ray* — see
+  /// `_raycastLightDistance`'s call site for why that distinction is
+  /// what actually matters) — [lightEntity] excluded so a light never
+  /// self-shadows at zero distance if it also happens to carry a
+  /// light-blocking `Collider` (e.g. a torch prop that's also solid).
+  /// Empty (allocates nothing but a `const []`, effectively) the
+  /// common case: no entity in the world is tagged at all.
+  List<_LightBlocker> _collectLightBlockingColliders(EntityId lightEntity) {
+    final colliders = world.storeOf<Collider>();
+    if (colliders.length == 0) return const [];
+    final positions = world.storeOf<Position>();
+    final blockers = <_LightBlocker>[];
+    for (var c = 0; c < colliders.length; c++) {
+      final entity = colliders.entityAt(c);
+      if (entity == lightEntity) continue;
+      final collider = colliders.denseAt(c);
+      if (!collider.blocksLight) continue;
+      final pos = positions.get(entity);
+      if (pos == null) continue;
+      blockers.add(_LightBlocker(pos.x, pos.y, collider.radius));
+    }
+    return blockers;
+  }
+
   /// How far a light at [worldPos] can see along [angle] before the
-  /// nearest solid tile in any `TileMap`, or the nearest
-  /// `Collider(blocksLight: true)` entity, blocks it — capped at
-  /// [maxRadius] when nothing blocks it at all. [blockOneWay] forwards
-  /// straight to `raycastTileMap`'s own parameter of the same name
-  /// (see `Light2D.blockOneWayPlatforms`'s doc comment for why a light
-  /// would want this on). [lightEntity], if the light itself also
-  /// happens to carry a light-blocking `Collider` (e.g. a torch prop
-  /// that's also solid), is excluded so a light never self-shadows at
-  /// zero distance.
+  /// nearest solid tile in any `TileMap`, or the nearest entry in
+  /// [blockers], blocks it — capped at [maxRadius] when nothing blocks
+  /// it at all. [blockOneWay] forwards straight to `raycastTileMap`'s
+  /// own parameter of the same name (see `Light2D.blockOneWayPlatforms`'s
+  /// doc comment for why a light would want this on).
   double _raycastLightDistance(
     Position worldPos,
     double angle,
     double maxRadius,
     bool blockOneWay,
-    EntityId lightEntity,
+    List<_LightBlocker> blockers,
   ) {
     final toX = worldPos.x + cos(angle) * maxRadius;
     final toY = worldPos.y + sin(angle) * maxRadius;
@@ -964,25 +996,12 @@ class _EnginePainter extends CustomPainter {
       }
     }
 
-    // Genre-general opt-in occlusion: nothing with a Collider blocks
-    // light at all unless it's explicitly tagged -- most colliders (a
-    // coin, an enemy's hurtbox) shouldn't cast a shadow just because
-    // they physically collide with something.
-    final colliders = world.storeOf<Collider>();
-    if (colliders.length > 0) {
-      final positions = world.storeOf<Position>();
+    if (blockers.isNotEmpty) {
       final dirX = cos(angle);
       final dirY = sin(angle);
-      for (var c = 0; c < colliders.length; c++) {
-        final entity = colliders.entityAt(c);
-        if (entity == lightEntity) continue;
-        final collider = colliders.denseAt(c);
-        if (!collider.blocksLight) continue;
-        final colliderPos = positions.get(entity);
-        if (colliderPos == null) continue;
-
+      for (final blocker in blockers) {
         final hitDist = _rayCircleDistance(
-          worldPos.x, worldPos.y, dirX, dirY, colliderPos.x, colliderPos.y, collider.radius);
+            worldPos.x, worldPos.y, dirX, dirY, blocker.x, blocker.y, blocker.radius);
         if (hitDist != null && hitDist < nearest) {
           nearest = hitDist;
         }
@@ -1723,6 +1742,18 @@ class _LightRenderInfo {
   final double screenRadius;
   final Path? clipPath;
   _LightRenderInfo(this.light, this.screenPos, this.screenRadius, this.clipPath);
+}
+
+/// One `Collider(blocksLight: true)` entity's world-space position/
+/// radius, snapshotted once per light per frame by
+/// `_collectLightBlockingColliders` — see that method's doc comment
+/// for why collecting these once per *light* instead of once per *ray*
+/// is what actually matters here.
+class _LightBlocker {
+  final double x;
+  final double y;
+  final double radius;
+  _LightBlocker(this.x, this.y, this.radius);
 }
 
 /// One `ClipShape`'s precomputed screen position, alongside the shape

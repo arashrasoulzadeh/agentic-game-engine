@@ -21,7 +21,37 @@ class PatrolBehavior implements Behavior {
   final double? maxX;
   final double speed;
 
-  PatrolBehavior({this.minX, this.maxX, this.speed = 60});
+  /// `false` (default, unchanged behavior): only [minX]/[maxX] bound
+  /// direction, so an entity with no `Gravity`/`PlatformerController`
+  /// (the common case for a simple ground patroller — see
+  /// `spawnEnemy`'s doc comment) can walk straight out over a gap in
+  /// the ground if its authored range reaches one, since nothing about
+  /// this behavior ever looks at the level's actual tile geometry.
+  /// `true` additionally checks, each tick, whether solid ground exists
+  /// [ledgeCheckAheadDistance] ahead in the direction of travel — if
+  /// not (a ledge/pit), flips direction *now* instead of only at the
+  /// authored [minX]/[maxX] bound, so a range that was accidentally
+  /// authored a little too wide (or a level edited later to add a new
+  /// gap) can't walk an entity off the edge. Purely a safety net on top
+  /// of [minX]/[maxX], not a replacement for them — a patroller still
+  /// won't wander past its authored range even over solid ground.
+  final bool avoidLedges;
+
+  /// How far ahead (world px, in the current direction of travel) to
+  /// probe for ground when [avoidLedges] is on. Meaningless otherwise.
+  /// Should comfortably cover how far the entity can move in the worst
+  /// realistic single tick (`speed * a slow frame's dt`) plus a margin,
+  /// so the ledge is detected with room to actually turn before
+  /// reaching it, not right as the last tick over solid ground ends.
+  final double ledgeCheckAheadDistance;
+
+  PatrolBehavior({
+    this.minX,
+    this.maxX,
+    this.speed = 60,
+    this.avoidLedges = false,
+    this.ledgeCheckAheadDistance = 24,
+  });
 
   @override
   Action decide(WorldView view, EntityId self) {
@@ -35,10 +65,35 @@ class PatrolBehavior implements Behavior {
     if (effectiveMinX == null || effectiveMaxX == null) return const NoOpAction();
 
     final dir = (state.memory['dir'] as num?)?.toDouble() ?? 1.0;
-    final shouldFlip =
+    var shouldFlip =
         (dir > 0 && pos.x >= effectiveMaxX) || (dir < 0 && pos.x <= effectiveMinX);
+
+    if (!shouldFlip && avoidLedges) {
+      final aheadX = pos.x + dir * ledgeCheckAheadDistance;
+      if (!_hasGroundBelow(view, self, aheadX, pos.y)) {
+        shouldFlip = true;
+      }
+    }
+
     final newDir = shouldFlip ? -dir : dir;
     return _PatrolStepAction(self, newDir * effectiveSpeed, shouldFlip ? newDir : null);
+  }
+
+  /// Whether any `TileMap` in the world has a solid tile directly below
+  /// ([x], [y]) — probed at the entity's own `Collider.radius` (or `12`
+  /// if it has none) plus a small margin below [y], so this checks the
+  /// ground actually under the entity's feet, not under its own center.
+  bool _hasGroundBelow(WorldView view, EntityId self, double x, double y) {
+    final radius = view.component<Collider>(self)?.radius ?? 12;
+    final probeY = y + radius + 4;
+    for (final mapEntity in view.entitiesWith<TileMap>()) {
+      final map = view.component<TileMap>(mapEntity)!;
+      final origin = view.component<Position>(mapEntity) ?? Position(0, 0);
+      final col = ((x - origin.x) / map.tileWidth).floor();
+      final row = ((probeY - origin.y) / map.tileHeight).floor();
+      if (map.isSolid(col, row)) return true;
+    }
+    return false;
   }
 }
 
