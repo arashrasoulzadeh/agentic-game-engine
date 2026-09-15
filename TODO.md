@@ -1086,6 +1086,33 @@ implementing.
       actually understood — building a bigger version of code with an
       unexplained defect on top of that same defect is how bugs
       multiply, not how they get fixed.
+- [ ] FPS drops while the player is moving, near 120 (the configured
+      `maxFps` cap) while standing still — reported live on the real
+      Android device, on the CPU-only lighting path (`useGpuShadows`
+      off, per the item above). **Not yet diagnosed** — no profiling
+      tooling available from this environment for a real device, and
+      this environment's simulated key-press input can't reliably
+      sustain "held movement" the way a live player does (a known,
+      previously-documented limitation elsewhere in this project's
+      history), so the symptom couldn't be reproduced/profiled
+      directly here. Candidate causes, **not confirmed, don't assume
+      any of these without profiling first**: (1) the player's own
+      `Light2D` (`castsShadows: true`, `shadowRayCount: 40`, no
+      `cacheShadowGeometry`) re-runs its full CPU `raycastTileMap`
+      sweep every single frame regardless of movement — doesn't
+      obviously explain a moving-vs-standing split on its own, since
+      it recomputes either way, but is still the single most expensive
+      known per-frame cost in the current lighting path and worth
+      measuring first; (2) `MovementAnimationSystem` switching to the
+      `walk` clip changes which sprite region draws each frame, versus
+      a static `idle` frame while standing — `Canvas.drawAtlas`
+      batches by atlas+zIndex regardless, so this is a weak candidate,
+      but untested; (3) camera panning while following a moving player
+      changes `_collectTileMapItems`'s visible-tile window every
+      frame, versus an unchanging window while standing still — also
+      unconfirmed. Needs either real GPU/CPU profiling on the actual
+      device, or a way to sustain real held-movement input from this
+      environment, neither of which is available right now.
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
 - [x] Ladders/climbing, conveyors, per-tile friction: `TileMap` gained
