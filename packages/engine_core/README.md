@@ -214,6 +214,59 @@ Define your own `Action` subclasses for game-specific effects — see
 `engine_platformer`'s `PatrolBehavior` for one that writes into the
 entity's own `AIState.memory` blackboard through its `Action`.
 
+`WorldView` also has query helpers beyond `nearestWithPosition` above:
+
+```dart
+for (final id in view.entitiesWithAll<AIState, Collider>()) { ... }
+for (final id in view.entitiesWithinRadius(x, y, 100, exclude: self)) { ... }
+if (view.hasLineOfSight(x, y, targetX, targetY)) { ... }
+```
+
+`entitiesWithAll<A, B>()` scans whichever of the two component stores
+is smaller and checks the other directly — for three or more, chain a
+`.where(...)` using `hasComponent<C>` on the result. `entitiesWithinRadius`
+is the "what's near this point" query (AI perception, an explosion's
+area of effect) — both this and `nearestWithPosition` are a linear scan,
+fine at the entity counts a single query needs; reach for `SpatialHash`
+directly in a `System` for scale across many simultaneous queriers per
+tick. `hasLineOfSight` is built on `raycastTileMap` — the primitive
+`engine_platformer`'s `FollowBehavior.requireLineOfSight` reads directly
+so "chasing" doesn't mean chasing through walls.
+
+### Pathfinding
+
+```dart
+final waypoints = findPath(tileMap, mapOrigin, fromX, fromY, toX, toY);
+for (final p in waypoints) { /* p.x, p.y -- world-space cell centers */ }
+```
+
+A* over a `TileMap`'s grid, 4-directional (no diagonal movement —
+avoids "can I actually fit through this diagonal gap" corner-cutting
+questions). Only `solidTileIds` block; one-way and slope tiles are
+walkable surfaces, not walls, same reasoning `raycastTileMap` uses.
+Returns waypoints from the step *after* the start cell through the goal
+cell — empty if the goal is already in the start cell, the goal cell is
+blocked, or no path exists. Uses a binary min-heap as its open set:
+O(log n) insert/extract-min per iteration.
+
+### Localized strings (`StringTable`)
+
+```dart
+final strings = StringTable({
+  'greeting': {'en': 'Hello, {name}!', 'es': '¡Hola, {name}!'},
+}, locale: 'es');
+strings.resolve('greeting', params: {'name': 'Ada'}); // '¡Hola, Ada!'
+```
+
+A small, standalone primitive for *what text to show*, independent of
+`Text`/anything that actually renders it. `resolve` falls back to
+`defaultLocale`'s string, then the raw key itself, for a locale/key with
+no translation yet — a missing translation reads as a visible,
+debuggable key in-game rather than silently blank or throwing. `params`
+does simple `{name}`-style substitution. JSON-authorable the same
+"content as data" way as `Level`:
+`{"greeting": {"en": "Hello, {name}!", "es": "¡Hola, {name}!"}}`.
+
 ## Testing
 
 ```bash

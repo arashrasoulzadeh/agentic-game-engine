@@ -85,9 +85,19 @@ JSON-serializable app settings, loaded from a bundled asset:
   "backgroundColor": 4278190080,
   "showFpsOverlay": false,
   "pauseOnBackground": true,
-  "onScreenControls": "auto"
+  "onScreenControls": "auto",
+  "maxFps": 60
 }
 ```
+
+`maxFps` (`null` default — uncapped, runs at whatever the platform's raw
+display callback delivers) caps how often the world steps/repaints — a
+ceiling on frequency, not a guaranteed rate on a device that can't reach
+it. Schedules against a virtual clock advancing by a fixed `1 / maxFps`
+each processed frame rather than the last raw callback's own timestamp,
+so a refresh rate that isn't an exact multiple of the cap (90Hz capped
+to 60fps, say) still gets a clean, consistent rate instead of
+alternating gaps.
 
 `showFpsOverlay` shows a top-left debug panel (not just fps despite the
 name): fps, tick count, live entity/sprite/particle counts, and
@@ -120,6 +130,23 @@ Building an `AnimationClip` from a sprite sheet's numbered frames
 (`walk_0`, `walk_1`, ...)? `AnimationClip.sequence('walk', 'walk', 8)`
 generates the region list for you instead of writing
 `List.generate(8, (i) => 'walk_$i')` at every call site.
+
+**Crossfading between clips**: set `AnimationState.crossfadeSeconds` (`0`
+default — an instant cut) on an entity, and the next time its clip
+changes, the outgoing frame fades out as a transient `AnimationTransition`
+(add `AnimationTransitionSystem()` to actually count it down/remove it)
+instead of popping instantly to the new one. Frozen-frame, not fully
+animated — the outgoing clip doesn't keep playing during the fade, it's
+just the one frame it was on, fading to transparent.
+
+**Resizable UI panels**: `NineSliceSprite(atlasId, region, width:, height:,
+insetLeft:, insetTop:, insetRight:, insetBottom:)` splits one atlas
+region into a 3x3 grid — corners drawn at native size, edges stretch
+along one axis, the center stretches both — so a dialog-box/panel
+background can resize to any `width`/`height` without its border art
+stretching into mush the way a plain scaled `Sprite` would. Always
+screen-space (`Position` is viewport pixels, ignoring the camera), same
+as `HudBar`.
 
 ## Sprites and atlases
 
@@ -326,9 +353,97 @@ they can't be interleaved with other kinds' draws otherwise.
 
 Note: this orders *draw calls*, not alpha compositing — two overlapping
 opaque sprites at different `zIndex` behave as you'd expect (the higher
-one fully covers the lower one where they overlap), but this isn't a
-clipping/masking primitive on its own (no clip paths, no blend modes).
-A true mask/clip feature is tracked separately in TODO.md if needed.
+one fully covers the lower one where they overlap), but z-index alone
+can't say "this shape cuts a hole in what's behind it" or "only show
+the scene through this shape" — see `ClipShape` below for that.
+
+## Masking/clipping (`ClipShape`)
+
+```dart
+final spotlight = world.spawn();
+world.storeOf<Position>().set(spotlight, Position(playerX, playerY));
+world.storeOf<ClipShape>().set(spotlight, ClipShape(radius: 80)); // reveal (default)
+
+final vignette = world.spawn();
+world.storeOf<Position>().set(vignette, Position(viewportCenterX, viewportCenterY));
+world.storeOf<ClipShape>().set(
+    vignette, ClipShape(radius: 400, mode: ClipShapeMode.cutout, softness: 40));
+```
+
+Circle (`isCircle: true`, the default, sized by `radius`) or rect
+(`width`/`height`), centered on the entity's own `Position`.
+`ClipShapeMode.reveal` (the default) shows the scene *only* where at
+least one reveal shape covers it — a hard-edged spotlight/peephole, or
+a growing/shrinking wipe transition; `ClipShapeMode.cutout` does the
+opposite, punching a hole through the already-drawn scene wherever it
+covers, showing nothing there at all — a vignette is a cutout shape
+sized to the screen's edges with the visible area left uncovered in
+the middle. `softness` (`0` default, hard edge) blurs the shape's
+boundary, same convention as `Light2D.shadowEdgeSoftness` below. Zero
+cost when no `ClipShape` of a given mode exists in the world.
+
+## Lighting (`Light2D`)
+
+```dart
+final torch = world.spawn();
+world.storeOf<Position>().set(torch, Position(torchX, torchY));
+world.storeOf<Light2D>().set(torch, Light2D(
+  radius: 160,
+  intensity: 0.9,
+  colorArgb: 0x88FF8800,   // warm orange tint; alpha is tint strength
+  castsShadows: true,       // TileMap walls actually block this light
+  flickerSpeed: 3, flickerAmount: 0.15, // gentle guttering
+));
+```
+
+Set `EngineView(ambientBrightness: 0.15)` (default `1.0` — no
+darkening at all, zero extra cost) to darken the whole scene and let
+`Light2D` entities reveal it back in a circle/cone around themselves.
+Everything below is opt-in and off by default — a plain `Light2D()`
+behaves exactly like the very first version of this component:
+
+- **`castsShadows`** (`false` default): samples `shadowRayCount` (`48`
+  default) rays via `raycastTileMap` — the same primitive AI line-of-
+  sight uses — to build a real visibility polygon, so `TileMap` walls
+  actually block light instead of it shining straight through them.
+  `blockOneWayPlatforms` (`false` default) additionally makes one-way
+  platforms opaque to light, matching how they *look* even though they
+  don't collide from below.
+- **`coneAngle`/`coneDirection`** (`null`/`0` default — full 360°
+  point light): a flashlight/directional beam instead, composing for
+  free with `castsShadows` since both go through the same polygon code.
+- **`colorArgb`** (`0x00FFFFFF` default — transparent, no tint pass at
+  all): an additive color tint layered on top of the brightness reveal,
+  strongest at the center. **`overbrightIntensity`** (`0` default) is a
+  separate, independent additive white glow — unlike the brightness
+  reveal alone (which can only ever erase darkness back to "fully
+  revealed," never past it), this genuinely stacks brighter where two
+  lights overlap.
+- **`flickerSpeed`/`flickerAmount`** (`0`/`0.3` default): a
+  `LightFlickerSystem` (add it once per `World`) oscillates
+  `intensity`/`radius` around `baseIntensity`/`baseRadius` for a
+  guttering torch/failing-bulb effect.
+- **`minZIndex`/`maxZIndex`** (`null` default — affects every
+  `zIndex`): scopes a light to one z-band, so a ground-level torch
+  doesn't dim/reveal a foreground overlay or background parallax layer
+  sitting at a different `zIndex`.
+- **`openAirFalloffScale`** (`1.0` default — no shrink): only with
+  `castsShadows` on, a ray that travels its *entire* radius
+  unobstructed (open sky above an outdoor level, say) is pulled in to
+  `radius * openAirFalloffScale` instead of reaching the full radius —
+  a ray that hits a real surface short of the radius is always left
+  untouched, so the light still fully illuminates whatever it's
+  actually next to.
+- **`shadowEdgeSoftness`**/**`shadowSmoothingSeconds`**/
+  **`cacheShadowGeometry`**: cosmetic/perf knobs for a shadow-casting
+  light's polygon — blurred edges, smoothed per-ray distances for a
+  moving light (reads as the shadow lagging into place — off by
+  default for exactly that reason), and reusing last frame's raycast
+  sweep for a light that hasn't moved, respectively.
+
+`EngineView` also viewport-culls a light whose screen-space circle
+never reaches the visible rect before doing any of the expensive
+per-ray work.
 
 ## Audio
 
@@ -355,6 +470,15 @@ entities into `newWorld` via `Level.loadInto` — call it on a freshly
 constructed `World`, not one `populateWorld` has already filled.
 Multiple save slots via the `slot` parameter.
 
+**Schema versioning**: pass `version:` (default `1`) to `save`/`load` —
+bump it whenever a save-affecting shape changes (a component's fields,
+which components a save cares about). A mismatched save throws
+`SaveVersionException` unless you pass a `migrate` callback to `load`,
+which receives the raw saved world JSON and the version it was written
+at, and returns JSON patched up to the current version. A save written
+before versioning existed has no envelope at all and is treated as
+version `1`.
+
 ## Camera
 
 ```dart
@@ -364,6 +488,24 @@ camera.follow(playerX, playerY, viewportSize: size, worldWidth: w, worldHeight: 
 
 `follow` clamps so the viewport never shows past world bounds (unless
 the world is smaller than the viewport, in which case it just centers).
+
+## Fixed timestep
+
+```dart
+EngineView(world: world, atlasRegistry: registry, camera: camera,
+    fixedTimestepSeconds: 1 / 60)
+```
+
+`null` (default) steps `world.step(dt)` once per rendered frame with
+whatever `dt` that frame actually took — simple, but ties simulation
+determinism to the display's refresh rate. Set `fixedTimestepSeconds`
+to instead accumulate real elapsed time and run `world.step` in fixed-
+size chunks (capped at 5 catch-up steps per rendered frame — a slow
+frame drops the backlog rather than spiraling into more and more
+simulation work). Rendered `Sprite`/`Particle`/`Light2D` positions are
+smoothly interpolated between the last two simulated states using the
+leftover fractional accumulator, so motion still reads smoothly on a
+display faster than the fixed step, instead of visibly stepping.
 
 ## Testing
 

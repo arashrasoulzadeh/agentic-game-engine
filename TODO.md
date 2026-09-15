@@ -11,23 +11,33 @@ for what shipped and git history for the full why behind each change.
 
 ## Documentation
 
-- [ ] `engine_flutter`'s `README.md` doesn't document `Light2D`/
-      `EngineView.ambientBrightness` (basic 2D lighting, including
-      shadow casting/flicker/cone lights/viewport culling), `NineSliceSprite`,
+- [x] `engine_flutter`'s `README.md` was missing `Light2D`/
+      `EngineView.ambientBrightness`, `NineSliceSprite`,
       `AnimationTransition`/crossfading, `EngineView.fixedTimestepSeconds`,
-      or `StringTable` at all — all shipped this project's "New engine
-      features (round 2)" streak with full code-level doc comments and
-      tests, but never made it into the package README's own feature
-      tour. `engine_platformer`'s README was brought up to date in the
-      same pass that added ledge grab (movement-feel fields, ladder/
-      conveyor/friction tiles, `AvoidanceBehavior`,
-      `PathFollowBehavior`, full system order, `damageEntity`'s
-      knockback/hitstun params) — `engine_flutter` and `engine_core`
-      need the equivalent pass. `engine_core`'s README should be
-      checked too (`entitiesWithAll`/`entitiesWithinRadius`,
-      `SaveGame` schema versioning, the `_MinHeap`-based pathfinding
-      rewrite, `StringTable`) — spot-checked lighter than
-      `engine_flutter`'s gap but not confirmed complete.
+      and its "mask/clip" note was stale (pointed at this same TODO
+      file for a feature that, by the time of this pass, already
+      shipped as `ClipShape`). Added: a full "Lighting (`Light2D`)"
+      section (`ambientBrightness`, `castsShadows`/`blockOneWayPlatforms`,
+      `coneAngle`/`coneDirection`, `colorArgb` tint vs. the newer
+      `overbrightIntensity` additive-stacking glow, `flickerSpeed`/
+      `flickerAmount`, `minZIndex`/`maxZIndex`, `openAirFalloffScale`,
+      and the cosmetic/perf knobs `shadowEdgeSoftness`/
+      `shadowSmoothingSeconds`/`cacheShadowGeometry`); a "Masking/
+      clipping (`ClipShape`)" section replacing the stale note;
+      crossfading + `NineSliceSprite` added to "Components/systems this
+      package adds"; a new "Fixed timestep" section; `maxFps` added to
+      the `GameConfig` JSON example with its virtual-clock-scheduling
+      explanation; `SaveGame`'s schema-versioning (`version`/`migrate`/
+      `SaveVersionException`) added to "Save/load". `engine_core`'s
+      README also brought up to date in the same pass (its own gap was
+      real, not just "spot-checked lighter" — none of these existed):
+      `entitiesWithAll`/`entitiesWithinRadius`/`hasLineOfSight` added
+      to the `WorldView`/`Behavior` section, plus new "Pathfinding"
+      (`findPath`, the `_MinHeap`-based A*) and "Localized strings
+      (`StringTable`)" sections. `StringTable` lives only in
+      `engine_core` (confirmed via `engine_core.dart`'s exports —
+      `engine_flutter` never re-exports it), so it's documented there
+      only, not duplicated into `engine_flutter`'s README.
 
 ## Tooling / release
 
@@ -86,20 +96,26 @@ for what shipped and git history for the full why behind each change.
       meaningfully oversized.
 - [ ] Publish `engine_core`/`engine_flutter`/`engine_cli` to pub.dev —
       removes the git-ref-matching constraint entirely via normal semver
-- [ ] Test on a real Android/iOS device — **partial progress**:
-      `flutter build apk --release` for `test_game` now succeeds
-      (43.1MB, real release build, not just web debug) — confirms
-      release-mode compilation/R8 minification doesn't break anything.
-      `flutter build ios --release --no-codesign` failed on this
-      environment's broken CocoaPods (Ruby/CocoaPods version mismatch)
-      — a local sandbox issue, not an engine bug, not attempted to fix
-      here since it'd mean touching system Ruby/CocoaPods outside this
-      repo's scope. Neither build has actually been *installed and run*
-      on a real device or emulator — no Android device/emulator tooling
-      available in this environment, only an iOS Simulator control tool
-      that's moot while the iOS build itself won't compile here.
-      Orientation lock, lifecycle pause/resume, and real-world
-      performance remain genuinely unverified outside Flutter web debug.
+- [ ] Test on a real Android/iOS device — **further progress**:
+      `flutter build apk --release --no-pub` for `test_game` succeeded
+      against a physically connected Android device (`SM S731B`,
+      Android 16, found via `flutter devices`) — 45.3MB release build,
+      confirms release-mode compilation/R8 minification doesn't break
+      anything (`--no-pub` needed since this sandbox blocks pub.dev
+      network access; a known, established limitation, not an engine
+      bug). `flutter install -d <device>` then actually installed that
+      APK onto the device successfully. That device is no longer
+      connected in the current environment, so launching and
+      interacting with the installed app to verify orientation lock,
+      lifecycle pause/resume, and real-world performance is still
+      outstanding — pick this back up next time a real Android device
+      is available. `flutter build ios --release --no-codesign` still
+      fails on this environment's broken CocoaPods (Ruby/CocoaPods
+      version mismatch) — a local sandbox issue, not an engine bug, not
+      attempted to fix here since it'd mean touching system Ruby/
+      CocoaPods outside this repo's scope; the iOS Simulator control
+      tool available in this environment is moot while the iOS build
+      itself won't compile here regardless.
 
 ## Performance optimizations
 
@@ -992,24 +1008,6 @@ implementing.
       what caught the `srcATop` bug above; a plain "doesn't crash" test
       would have missed it entirely. Full `engine_flutter` suite (232
       tests) green, `--fatal-infos` analyze clean.
-- [ ] A light reveals open air, not just surfaces — reported live
-      ("shouldn't light empty air"). This is inherent to the current
-      model, not a quick parameter fix: `_drawLighting` reveals every
-      direction out to `radius` unless a ray actually hits solid
-      geometry, so in a large open space above the ground (nothing
-      overhead to block it) the light keeps revealing upward through
-      empty sky, reading as a big blank lit circle floating with
-      nothing to actually illuminate — real light does travel through
-      open air the same way, but a game level's open volumes are
-      usually much bigger than what a torch would realistically brighten,
-      so it reads as fake at this scale. No design committed yet;
-      candidate directions: a secondary falloff purely by distance
-      from the *nearest solid surface* (not just the light source) so
-      open space dims faster than surface-hugging light; or just a
-      smaller default `radius` relative to typical level geometry.
-      Needs a decision before implementing, since either changes the
-      lighting model's actual shape, not just its paint parameters.
-
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
 - [x] Ladders/climbing, conveyors, per-tile friction: `TileMap` gained
