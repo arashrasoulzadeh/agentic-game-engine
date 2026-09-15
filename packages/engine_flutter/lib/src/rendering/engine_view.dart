@@ -94,15 +94,19 @@ class EngineView extends StatefulWidget {
   /// deliberately doesn't do (no colored tint, no shadow casting).
   final double ambientBrightness;
 
-  /// When set, drives the ambient-darkness pass's brightness/tint from
-  /// a looping time-of-day clock and current weather instead of the
-  /// plain static [ambientBrightness] — see `DayNightCycle`'s own doc
-  /// comment (`engine_core`) for the brightness curve/tint it computes.
-  /// `advance(dt)` is called once per tick automatically, the same way
-  /// `camera.update(dt)` already is. `null` (default) leaves
-  /// [ambientBrightness] as the sole source of ambient darkness, at no
-  /// per-frame cost beyond one comparison — fully backward compatible.
-  /// When both are set, [ambientBrightness] is ignored in favor of this.
+  /// When set, drives the ambient-darkness pass's tint, and *scales*
+  /// its brightness, from a looping time-of-day clock and current
+  /// weather — see `DayNightCycle`'s own doc comment (`engine_core`)
+  /// for the brightness curve/tint it computes. `advance(dt)` is called
+  /// once per tick automatically, the same way `camera.update(dt)`
+  /// already is. `null` (default) leaves [ambientBrightness] as the
+  /// sole source of ambient darkness, at no per-frame cost beyond one
+  /// comparison — fully backward compatible. When both are set, the
+  /// effective brightness is `ambientBrightness * dayNightCycle.ambientBrightness`
+  /// — [ambientBrightness] stays a real, participating ceiling (a
+  /// scene's own tuned baseline for its lights), never silently
+  /// discarded; full daylight (`dayNightCycle.ambientBrightness == 1.0`)
+  /// reproduces [ambientBrightness] exactly.
   final DayNightCycle? dayNightCycle;
 
   /// Caps how often a tick (world step + repaint) actually runs, in
@@ -425,10 +429,24 @@ class _EnginePainter extends CustomPainter {
   /// `EngineView.dayNightCycle`'s own doc comment.
   final DayNightCycle? dayNightCycle;
 
-  /// [dayNightCycle]'s computed brightness when set, else the plain
-  /// static [ambientBrightness] — what every ambient-darkness site below
-  /// should actually read.
-  double get _effectiveAmbientBrightness => dayNightCycle?.ambientBrightness ?? ambientBrightness;
+  /// [ambientBrightness] scaled by [dayNightCycle]'s own computed
+  /// brightness (`1.0`, a no-op multiplier, when no cycle is set) —
+  /// what every ambient-darkness site below should actually read.
+  /// Deliberately a *multiply*, not a full override: an earlier version
+  /// of this let [dayNightCycle] replace [ambientBrightness] outright,
+  /// which silently discarded a scene's own tuned baseline (found live
+  /// -- `test_game`'s prison level ships `ambientBrightness: 0.25`,
+  /// carefully tuned against its torches/lava-glow lights; a
+  /// `dayNightCycle` reaching deep night (brightness ~0.18, *brighter*
+  /// than 0.25) would have made the whole level lighter than its
+  /// authored baseline, not darker as intended, purely because 0.25 was
+  /// discarded rather than participating). Multiplying instead means
+  /// [ambientBrightness] acts as a scene-authored ceiling the cycle can
+  /// only ever dim *further*, in proportion — never silently replaced,
+  /// and full daylight (`dayNightCycle.ambientBrightness == 1.0`)
+  /// reproduces the original baseline exactly (`x * 1.0 == x`).
+  double get _effectiveAmbientBrightness =>
+      ambientBrightness * (dayNightCycle?.ambientBrightness ?? 1.0);
 
   /// [dayNightCycle]'s computed tint when set, else plain black (`0xFF000000`)
   /// — matches the overlay's pre-`DayNightCycle` behavior exactly when no

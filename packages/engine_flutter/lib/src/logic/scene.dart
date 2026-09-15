@@ -83,6 +83,13 @@ abstract class Scene {
   /// once per tick automatically. A menu/HUD-only scene typically
   /// leaves this `null` for the same reason it overrides
   /// [ambientBrightness] to `1.0` instead of inheriting one.
+  ///
+  /// Composes *with* [ambientBrightness] (`EngineView`'s effective
+  /// brightness is their product), not instead of it — a scene that
+  /// also sets [ambientBrightness] (its lights' own tuned baseline)
+  /// keeps that baseline as a real ceiling the cycle only ever dims
+  /// further, rather than having it silently discarded the moment a
+  /// cycle exists.
   DayNightCycle? get dayNightCycle => null;
 
   /// Called on every tap/click with its position already converted to

@@ -23,7 +23,7 @@ Future<Color> _pixelAt(WidgetTester tester, Key boundaryKey, Offset point) async
 }
 
 Future<Color> _renderAmbientPixel(WidgetTester tester, DayNightCycle? cycle,
-    {double? ambientBrightness}) async {
+    {double? ambientBrightness, Color? backgroundColor}) async {
   final world = World(width: 400, height: 300);
   registerCoreComponents(world);
   registerFlutterComponents(world);
@@ -40,6 +40,7 @@ Future<Color> _renderAmbientPixel(WidgetTester tester, DayNightCycle? cycle,
             world: world,
             atlasRegistry: AtlasRegistry(),
             camera: Camera(),
+            backgroundColor: backgroundColor ?? const Color(0xFF000000),
             ambientBrightness: ambientBrightness ?? 1.0,
             dayNightCycle: cycle,
           ),
@@ -110,6 +111,36 @@ void main() {
       // wash actually shows through as a visible non-black color.
       expect(clear.r + clear.g + clear.b, 0);
       expect(rain.r + rain.g + rain.b, greaterThan(0));
+    });
+
+    testWidgets(
+        'ambientBrightness composes with (scales) dayNightCycle instead of being '
+        'silently overridden by it -- regression test: a scene-tuned ambientBrightness '
+        "(e.g. 0.25, chosen so the scene's own Light2D lights read correctly) must "
+        'remain a real ceiling the cycle can only dim further, not get discarded the '
+        'moment a dayNightCycle exists', (tester) async {
+      // Deep night (dayNightCycle.ambientBrightness ~0.18) must darken
+      // FURTHER than the 0.25 baseline, not simply replace it with 0.18
+      // outright. A white background makes the direction unambiguous
+      // (black would already read as "fully dark" either way): total
+      // luminance must drop, not just land near wherever 0.18 alone
+      // would put it.
+      final baselineOnWhite = await _renderAmbientPixel(tester, null,
+          ambientBrightness: 0.25, backgroundColor: const Color(0xFFFFFFFF));
+      final nightOnWhite = await _renderAmbientPixel(
+        tester,
+        DayNightCycle(hour: 2),
+        ambientBrightness: 0.25,
+        backgroundColor: const Color(0xFFFFFFFF),
+      );
+      final baselineLuma = baselineOnWhite.r + baselineOnWhite.g + baselineOnWhite.b;
+      final nightLuma = nightOnWhite.r + nightOnWhite.g + nightOnWhite.b;
+      expect(nightLuma, lessThan(baselineLuma),
+          reason: 'combined brightness (0.25 * ~0.18 =~ 0.045) must read darker than '
+              "the 0.25 baseline alone -- if dayNightCycle silently overrides "
+              'ambientBrightness instead of scaling it, night (~0.18) would actually '
+              'read BRIGHTER than the tuned 0.25 baseline, the exact regression this '
+              'test catches');
     });
 
     testWidgets('advances hour every tick, the same way Camera.update already does',

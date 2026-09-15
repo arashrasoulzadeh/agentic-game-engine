@@ -1479,6 +1479,73 @@ void main() {
     });
   });
 
+  group('z-banded ambient darkness stays correct under a colored (DayNightCycle) tint', () {
+    testWidgets(
+        'an opaque sprite darkens identically whether or not some OTHER z-scoped light '
+        "elsewhere splits the scene into more bands -- the band-scoping fix "
+        '(BlendMode.srcATop, see _drawLighting\'s own doc comment) relies on Porter-Duff '
+        "premultiplied-alpha math working out to the exact same result as the unbanded "
+        "srcOver path for already-opaque content; this pins that down with a real "
+        "non-black tint (DayNightCycle), the one case where straight vs. premultiplied "
+        "color math could plausibly diverge", (tester) async {
+      Future<Color> renderSpritePixel({required bool withFarZScopedLight}) async {
+        final world = World(width: 400, height: 300);
+        registerCoreComponents(world);
+        registerFlutterComponents(world);
+
+        final registry = AtlasRegistry();
+        registry.register('atlas', SpriteAtlas(await _tinyImage(const Color(0xFFFFFFFF)), {
+          'white': const Rect.fromLTWH(0, 0, 4, 4),
+        }));
+        final sprite = world.spawn();
+        world.storeOf<Position>().set(sprite, Position(0, 0));
+        world.storeOf<Sprite>().set(sprite, Sprite('atlas', 'white', zIndex: 5, scaleX: 30, scaleY: 30));
+
+        if (withFarZScopedLight) {
+          // Scoped to band [0,0], far outside the sprite's own zIndex
+          // (5) -- its only effect is introducing z-band boundaries at
+          // {0, 1}, splitting what would otherwise be one unbanded pass
+          // into three. Positioned off-screen so its reveal never
+          // reaches the sprite either.
+          final light = world.spawn();
+          world.storeOf<Position>().set(light, Position(-10000, -10000));
+          world.storeOf<Light2D>().set(
+              light, Light2D(radius: 10, intensity: 1, minZIndex: 0, maxZIndex: 0));
+        }
+
+        final boundaryKey = UniqueKey();
+        await tester.pumpWidget(MaterialApp(
+          home: Center(
+            child: SizedBox(
+              width: 400,
+              height: 300,
+              child: RepaintBoundary(
+                key: boundaryKey,
+                child: EngineView(
+                  world: world,
+                  atlasRegistry: registry,
+                  camera: Camera(),
+                  backgroundColor: const Color(0xFF000000),
+                  dayNightCycle: DayNightCycle(hour: 2), // deep night -- a real blue tint
+                ),
+              ),
+            ),
+          ),
+        ));
+        await tester.pump(const Duration(milliseconds: 16));
+        return (await tester.runAsync(
+            () => _pixelAt(tester, boundaryKey, const Offset(200, 150))))!;
+      }
+
+      final unbanded = await renderSpritePixel(withFarZScopedLight: false);
+      final banded = await renderSpritePixel(withFarZScopedLight: true);
+
+      expect(banded.r, closeTo(unbanded.r, 0.01));
+      expect(banded.g, closeTo(unbanded.g, 0.01));
+      expect(banded.b, closeTo(unbanded.b, 0.01));
+    });
+  });
+
   group('Scene.ambientBrightness override', () {
     test('Scene defaults to null (use GameConfig\'s global setting)', () {
       // A minimal concrete Scene to read the default off of, without
