@@ -229,6 +229,46 @@ void main() {
         expect(light.radius, greaterThanOrEqualTo(0));
       }
     });
+
+    test('flickerAffectsRadius: false pins radius at baseRadius while intensity still '
+        'flickers normally -- lets a stationary castsShadows light\'s shadow geometry '
+        'stay stable enough for cacheShadowGeometry to actually hit', () {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+      world.addSystem(LightFlickerSystem());
+
+      final id = world.spawn();
+      world.storeOf<Light2D>().set(
+            id,
+            Light2D(
+              radius: 100,
+              intensity: 0.8,
+              flickerSpeed: 3,
+              flickerAmount: 0.5,
+              flickerAffectsRadius: false,
+            ),
+          );
+
+      for (var i = 0; i < 20; i++) {
+        world.step(0.05);
+        final light = world.storeOf<Light2D>().get(id)!;
+        expect(light.radius, 100, reason: 'radius pinned exactly at baseRadius every tick');
+      }
+      // Intensity still genuinely varies -- this isn't just "flicker
+      // fully disabled", only radius is exempted.
+      final finalIntensity = world.storeOf<Light2D>().get(id)!.intensity;
+      expect(finalIntensity, isNot(0.8));
+    });
+
+    test('flickerAffectsRadius defaults to true, matching the original flicker '
+        'behavior, and round-trips through toJson/fromJson', () {
+      expect(Light2D().flickerAffectsRadius, isTrue);
+
+      final light = Light2D(flickerAffectsRadius: false);
+      final restored = Light2D.fromJson(light.toJson());
+      expect(restored.flickerAffectsRadius, isFalse);
+    });
   });
 
   group('EngineView lighting', () {
@@ -1274,6 +1314,61 @@ void main() {
         reason: 'a fresh recompute would allocate a new List every time; the exact '
             'same instance surviving multiple frames proves the raycast sweep was '
             'actually skipped, not just coincidentally equal',
+      );
+    });
+
+    testWidgets(
+        'on + a flickering light with flickerAffectsRadius: false: still hits the cache '
+        'across frames despite intensity genuinely changing every tick -- the whole '
+        'point of decoupling flicker from radius for a stationary shadow-casting light',
+        (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+      world.addSystem(LightFlickerSystem());
+
+      final light = Light2D(
+        radius: 100,
+        castsShadows: true,
+        cacheShadowGeometry: true,
+        flickerSpeed: 3,
+        flickerAmount: 0.5,
+        flickerAffectsRadius: false,
+      );
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(50, 50));
+      world.storeOf<Light2D>().set(id, light);
+      world.storeOf<TileMap>().set(
+            world.spawn(),
+            TileMap(cols: 5, rows: 5, tileWidth: 20, tileHeight: 20, tiles: List.filled(25, 0)),
+          );
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      final firstDistances = light.cachedShadowDistances;
+      final firstIntensity = light.intensity;
+      expect(firstDistances, isNotNull);
+
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+
+      expect(light.intensity, isNot(firstIntensity),
+          reason: 'flicker is genuinely still running -- intensity keeps changing');
+      expect(light.radius, 100, reason: 'pinned at baseRadius the whole time');
+      expect(
+        identical(light.cachedShadowDistances, firstDistances),
+        isTrue,
+        reason: 'radius (and so the cache key) never changed across all those ticks, '
+            'so every one of them was a genuine cache hit -- this is the actual fps '
+            'win: a stationary flickering torch no longer re-raycasts every frame',
       );
     });
 

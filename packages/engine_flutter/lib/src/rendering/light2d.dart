@@ -93,6 +93,23 @@ class Light2D {
   /// roughly ±30%. Meaningless while [flickerSpeed] is `0`.
   double flickerAmount;
 
+  /// `true` (default, matching the original flicker behavior): [radius]
+  /// oscillates along with [intensity]. `false` pins [radius] exactly
+  /// at [baseRadius] every tick while [intensity] still flickers
+  /// normally — for a [castsShadows] light specifically, this matters
+  /// far beyond a visual choice: [radius] is part of the shadow
+  /// raycast geometry (and `Light2D.cacheShadowGeometry`'s own cache
+  /// key), so a flickering shadow-casting light with this left `true`
+  /// re-raycasts from scratch *every single tick* even while
+  /// completely stationary, since its geometry input is constantly
+  /// changing — `cacheShadowGeometry` can never get a cache hit.
+  /// Setting this `false` keeps the geometry perfectly stable frame to
+  /// frame for a light that doesn't move, so `cacheShadowGeometry` can
+  /// actually skip the raycast sweep almost every tick — a real,
+  /// measured fps win for something as common as a flickering torch
+  /// mounted on a wall. Meaningless while [flickerSpeed] is `0`.
+  bool flickerAffectsRadius;
+
   /// The steady values `LightFlickerSystem` oscillates [intensity]/
   /// [radius] around. Defaulted from the constructor's `intensity`/
   /// `radius` arguments so a game enabling flicker on an existing
@@ -264,6 +281,7 @@ class Light2D {
     this.blockOneWayPlatforms = false,
     this.flickerSpeed = 0,
     this.flickerAmount = 0.3,
+    this.flickerAffectsRadius = true,
     double? baseIntensity,
     double? baseRadius,
     this.flickerElapsed = 0,
@@ -288,6 +306,7 @@ class Light2D {
         'blockOneWayPlatforms': blockOneWayPlatforms,
         'flickerSpeed': flickerSpeed,
         'flickerAmount': flickerAmount,
+        'flickerAffectsRadius': flickerAffectsRadius,
         'baseIntensity': baseIntensity,
         'baseRadius': baseRadius,
         'flickerElapsed': flickerElapsed,
@@ -311,6 +330,7 @@ class Light2D {
         blockOneWayPlatforms: json['blockOneWayPlatforms'] as bool? ?? false,
         flickerSpeed: (json['flickerSpeed'] as num?)?.toDouble() ?? 0,
         flickerAmount: (json['flickerAmount'] as num?)?.toDouble() ?? 0.3,
+        flickerAffectsRadius: json['flickerAffectsRadius'] as bool? ?? true,
         baseIntensity: (json['baseIntensity'] as num?)?.toDouble(),
         baseRadius: (json['baseRadius'] as num?)?.toDouble(),
         flickerElapsed: (json['flickerElapsed'] as num?)?.toDouble() ?? 0,

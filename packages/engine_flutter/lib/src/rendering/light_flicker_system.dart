@@ -9,7 +9,10 @@ import 'light2d.dart';
 /// a failing warning light. A no-op (and near-zero cost — one
 /// comparison) for any light with `flickerSpeed == 0`, the default, so
 /// installing this system doesn't change anything for a game that
-/// hasn't opted into flicker.
+/// hasn't opted into flicker. `flickerAffectsRadius: false` pins
+/// `radius` at `baseRadius` instead of also varying it — see that
+/// field's own doc comment for why that matters well beyond a visual
+/// choice for a `castsShadows` light.
 ///
 /// Uses two layered sine waves at different frequencies/phases rather
 /// than real randomness — smoother frame-to-frame than raw noise would
@@ -34,7 +37,9 @@ class LightFlickerSystem implements System {
       final factor = 1 + noise * light.flickerAmount;
 
       light.intensity = (light.baseIntensity * factor).clamp(0, 1);
-      light.radius = (light.baseRadius * factor).clamp(0, double.infinity);
+      light.radius = light.flickerAffectsRadius
+          ? (light.baseRadius * factor).clamp(0, double.infinity)
+          : light.baseRadius;
     }
   }
 }
