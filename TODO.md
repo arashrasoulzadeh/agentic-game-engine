@@ -7,23 +7,6 @@ Everything completed has been cleared from this file — see
 [CHANGELOG.md](CHANGELOG.md) for what shipped and git history for the
 full why behind each change.
 
-## Features
-
-- [ ] Publish `engine_core`/`engine_flutter`/`engine_cli` to pub.dev —
-      removes the git-ref-matching constraint entirely via normal semver
-- [ ] Test on a real Android/iOS device — **further progress**:
-      `flutter build apk --release --no-pub` for `test_game` succeeded
-      against a physically connected Android device (`SM S731B`,
-      Android 16, found via `flutter devices`), and this session went
-      further — real installs, launches, and on-device gameplay/
-      profiling runs against that same device across multiple builds.
-      `flutter build ios --release --no-codesign` still fails on this
-      environment's broken CocoaPods (Ruby/CocoaPods version mismatch)
-      — a local sandbox issue, not an engine bug, not attempted to fix
-      here since it'd mean touching system Ruby/CocoaPods outside this
-      repo's scope; the iOS Simulator control tool available in this
-      environment is moot while the iOS build itself won't compile here
-      regardless.
 ## Performance
 
 - [ ] Avoid `saveLayer`+`dstOut` for the ambient-lighting overlay

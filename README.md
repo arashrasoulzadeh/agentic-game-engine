@@ -174,13 +174,6 @@ coverage across all four packages.
 
 ### Not done / in progress
 
-- **Publish to pub.dev** — prep complete (metadata, per-package
-  `CHANGELOG.md`s, dry-run validated); blocked on an interactive
-  `dart pub login` + `dart pub publish` run a human needs to do.
-- **Real-device verification** — extensively tested on Android;
-  orientation-lock and lifecycle pause/resume still unconfirmed, and
-  iOS is blocked by this project's sandbox environment (broken
-  CocoaPods), not the engine itself.
 - **`saveLayer`+`dstOut` ambient-lighting architecture** — works
   correctly today but costs an offscreen composite every frame a
   darkened scene renders; a shader-based single-pass rewrite would
