@@ -24,12 +24,6 @@ full why behind each change.
       repo's scope; the iOS Simulator control tool available in this
       environment is moot while the iOS build itself won't compile here
       regardless.
-- [ ] Save/load slots UI + versioning — multiple save slots, a schema-
-      version field in `World.toJson()` output so old saves don't
-      silently break after a content-schema change. Performance: only
-      runs on explicit save/load, not a hot path — no frame-time
-      concern, but keep the version-migration step itself cheap
-      (one-time, not re-checked every load of an already-current save).
 - [ ] Input remapping / gamepad support — configurable key/button
       bindings plus controller input alongside touch/on-screen
       controls. Performance: input polling is already once-per-frame

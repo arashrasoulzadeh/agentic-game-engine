@@ -60,6 +60,23 @@ void main() {
     expect(await SaveGame.hasSave(), isFalse);
   });
 
+  test('listSlots returns every slot with a stored save, and nothing else', () async {
+    expect(await SaveGame.listSlots(), isEmpty);
+
+    await SaveGame.save(_buildWorld()..spawn(), slot: 'a');
+    await SaveGame.save(_buildWorld()..spawn(), slot: 'b');
+
+    expect(await SaveGame.listSlots(), unorderedEquals(['a', 'b']));
+  });
+
+  test('listSlots omits a slot after it is deleted', () async {
+    await SaveGame.save(_buildWorld()..spawn(), slot: 'a');
+    await SaveGame.save(_buildWorld()..spawn(), slot: 'b');
+    await SaveGame.deleteSave(slot: 'a');
+
+    expect(await SaveGame.listSlots(), ['b']);
+  });
+
   test('load throws LevelLoadException on corrupted (non-object) save data', () async {
     SharedPreferences.setMockInitialValues({'engine_save_default': '"just a string"'});
     final world = _buildWorld();

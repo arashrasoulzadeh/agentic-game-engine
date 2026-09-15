@@ -114,5 +114,21 @@ class SaveGame {
     await prefs.remove(_key(slot));
   }
 
-  static String _key(String slot) => 'engine_save_$slot';
+  /// Every slot with a save currently stored, for a save-slot picker UI
+  /// (`SaveSlotMenuScene`) to list without the caller having to already
+  /// know every slot name up front — `shared_preferences` keys aren't
+  /// namespaced by prefix on their own, so this filters to just the ones
+  /// [save]/[load] use and strips the `_keyPrefix` back off.
+  static Future<List<String>> listSlots() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs
+        .getKeys()
+        .where((key) => key.startsWith(_keyPrefix))
+        .map((key) => key.substring(_keyPrefix.length))
+        .toList();
+  }
+
+  static const _keyPrefix = 'engine_save_';
+
+  static String _key(String slot) => '$_keyPrefix$slot';
 }
