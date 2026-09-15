@@ -5,7 +5,9 @@ they land; add new ones as they're discovered.
 
 Everything completed has been cleared from this file — see
 [CHANGELOG.md](CHANGELOG.md) for what shipped and git history for the
-full why behind each change.
+full why behind each change. [TODO_RENDER.md](TODO_RENDER.md) tracks
+parked rendering-architecture discussion points not yet scoped into
+actionable items here.
 
 ## Performance
 
