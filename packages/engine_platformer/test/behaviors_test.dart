@@ -46,6 +46,66 @@ void main() {
 
       expect(() => world.step(0.1), returnsNormally);
     });
+
+    test('AIState.memory minX/maxX/speed override the behavior\'s own constructor '
+        'defaults, so one registered behaviorId can drive different per-entity '
+        'ranges from level JSON', () {
+      final world = _buildWorld();
+      final registry = BehaviorRegistry()
+        ..register('patrol', PatrolBehavior(minX: 0, maxX: 100, speed: 50));
+      world.addSystem(AISystem(registry));
+
+      final id = world.spawn();
+      world.storeOf<Velocity>().set(id, Velocity(0, 0));
+      world.storeOf<Position>().set(id, Position(500, 0));
+      world.storeOf<AIState>().set(
+          id,
+          AIState('patrol',
+              memory: {'dir': 1.0, 'minX': 400, 'maxX': 500, 'speed': 20}));
+
+      world.step(0.1);
+
+      final state = world.storeOf<AIState>().get(id)!;
+      expect(state.memory['dir'], -1.0,
+          reason: 'at memory-overridden maxX (500), not the behavior default (100)');
+      expect(world.storeOf<Velocity>().get(id)!.x, -20,
+          reason: 'memory-overridden speed (20), not the behavior default (50)');
+    });
+
+    test('a behavior with no minX/maxX set (neither constructor nor memory) is a '
+        'harmless no-op, not a crash', () {
+      final world = _buildWorld();
+      final registry = BehaviorRegistry()..register('patrol', PatrolBehavior());
+      world.addSystem(AISystem(registry));
+      world.addSystem(MovementSystem());
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(50, 0));
+      world.storeOf<Velocity>().set(id, Velocity(0, 0));
+      world.storeOf<AIState>().set(id, AIState('patrol'));
+
+      expect(() => world.step(0.1), returnsNormally);
+      expect(world.storeOf<Velocity>().get(id)!.x, 0);
+    });
+
+    test('a memory override for only minX/maxX (speed omitted) still falls back to '
+        "the behavior's own default speed", () {
+      final world = _buildWorld();
+      final registry = BehaviorRegistry()
+        ..register('patrol', PatrolBehavior(minX: 0, maxX: 100, speed: 50));
+      world.addSystem(AISystem(registry));
+
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(10, 0));
+      world.storeOf<Velocity>().set(id, Velocity(0, 0));
+      world.storeOf<AIState>().set(
+          id, AIState('patrol', memory: {'dir': 1.0, 'minX': 400, 'maxX': 700}));
+
+      world.step(0.1);
+
+      expect(world.storeOf<Velocity>().get(id)!.x, 50,
+          reason: 'speed falls back to the constructor default when memory omits it');
+    });
   });
 
   group('FollowBehavior', () {
