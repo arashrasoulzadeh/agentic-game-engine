@@ -5,14 +5,26 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('FrameStats', () {
-    test('starts at zero, toString formats all three fields', () {
+    test('starts at zero/null, toString formats every field', () {
       final stats = FrameStats();
       expect(stats.stepMs, 0);
       expect(stats.paintMs, 0);
       expect(stats.lightingMs, 0);
-      expect(stats.toString(), contains('step:'));
-      expect(stats.toString(), contains('paint:'));
-      expect(stats.toString(), contains('light:'));
+      expect(stats.frameMs, 0);
+      expect(stats.entities, 0);
+      expect(stats.sprites, 0);
+      expect(stats.particles, 0);
+      expect(stats.followedSpeed, isNull);
+
+      final text = stats.toString();
+      expect(text, contains('frame:'));
+      expect(text, contains('step:'));
+      expect(text, contains('paint:'));
+      expect(text, contains('light:'));
+      expect(text, contains('entities:'));
+      expect(text, contains('sprites:'));
+      expect(text, contains('particles:'));
+      expect(text, contains('speed: n/a'), reason: 'null speed reads as n/a, not "null"');
     });
   });
 
@@ -91,6 +103,103 @@ void main() {
       expect(stats.lightingMs, greaterThanOrEqualTo(0),
           reason: '_drawLighting ran this time (ambientBrightness < 1.0), so this field '
               'was actually written to, not left at its untouched default');
+    });
+
+    testWidgets('frameMs and entity/sprite/particle counts populate after a frame',
+        (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final spriteEntity = world.spawn();
+      world.storeOf<Position>().set(spriteEntity, Position(10, 10));
+      world.storeOf<Sprite>().set(spriteEntity, Sprite('atlas', 'region'));
+
+      final stats = FrameStats();
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          frameStats: stats,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(stats.frameMs, closeTo(16, 5));
+      expect(stats.entities, 1);
+      expect(stats.sprites, 1);
+      expect(stats.particles, 0);
+    });
+
+    testWidgets('followedSpeed reflects cameraFollowEntity\'s real Velocity magnitude',
+        (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final player = world.spawn();
+      world.storeOf<Position>().set(player, Position(0, 0));
+      world.storeOf<Velocity>().set(player, Velocity(30, 40)); // 3-4-5 triangle -> speed 50
+
+      final stats = FrameStats();
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          cameraFollowEntity: player,
+          frameStats: stats,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(stats.followedSpeed, closeTo(50, 0.01));
+    });
+
+    testWidgets('followedSpeed is null with no cameraFollowEntity set', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final stats = FrameStats();
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          frameStats: stats,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(stats.followedSpeed, isNull);
+    });
+
+    testWidgets('followedSpeed is null when the followed entity has no Velocity',
+        (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final player = world.spawn();
+      world.storeOf<Position>().set(player, Position(0, 0)); // no Velocity
+
+      final stats = FrameStats();
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          cameraFollowEntity: player,
+          frameStats: stats,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(stats.followedSpeed, isNull);
     });
 
     testWidgets('showFpsOverlay works and shows timing even with no frameStats given '

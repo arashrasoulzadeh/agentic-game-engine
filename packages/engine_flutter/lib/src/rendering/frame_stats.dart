@@ -30,8 +30,40 @@ class FrameStats {
   /// direct subject of more than one live performance investigation.
   double lightingMs = 0;
 
+  /// Milliseconds between this and the previous *raw* ticker callback —
+  /// the actual, unsmoothed frame interval (unlike
+  /// `EngineView.showFpsOverlay`'s `fps` line, which averages over the
+  /// last 30 frames and so lags/smooths out a real spike). A frame
+  /// costing far more than [stepMs] + [paintMs] combined points at
+  /// something *outside* this engine's own step/paint — platform
+  /// input handling, GC, another widget's build/layout, the OS itself.
+  double frameMs = 0;
+
+  /// Live entity/sprite/particle counts at the moment this frame was
+  /// captured — the same numbers `showFpsOverlay`'s readout already
+  /// shows, mirrored here so a game logging just this object doesn't
+  /// need separate `World` access to correlate scene size with timing.
+  int entities = 0;
+  int sprites = 0;
+  int particles = 0;
+
+  /// Speed (world px/s) of `EngineView.cameraFollowEntity`'s `Velocity`
+  /// at the moment this frame was captured, or `null` if there's no
+  /// followed entity, it has no `Velocity`, or `EngineView` isn't
+  /// registered with `engine_core`'s core components (no `Velocity`
+  /// store to read at all). Exists specifically to answer "was the
+  /// player actually moving during this logged frame" from the log
+  /// alone, without needing to correlate it against a separate
+  /// screen recording — came up directly investigating a real
+  /// fps-while-moving report where confirming genuine movement
+  /// happened at all was itself a real obstacle.
+  double? followedSpeed;
+
   @override
-  String toString() => 'step: ${stepMs.toStringAsFixed(2)}ms  '
+  String toString() => 'frame: ${frameMs.toStringAsFixed(2)}ms  '
+      'step: ${stepMs.toStringAsFixed(2)}ms  '
       'paint: ${paintMs.toStringAsFixed(2)}ms  '
-      'light: ${lightingMs.toStringAsFixed(2)}ms';
+      'light: ${lightingMs.toStringAsFixed(2)}ms  '
+      'entities: $entities  sprites: $sprites  particles: $particles  '
+      'speed: ${followedSpeed == null ? 'n/a' : followedSpeed!.toStringAsFixed(1)}';
 }

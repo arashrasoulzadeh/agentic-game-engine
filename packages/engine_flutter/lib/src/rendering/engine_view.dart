@@ -2,7 +2,10 @@ import 'dart:math' show cos, exp, sin, pi, sqrt;
 import 'dart:ui' as ui;
 
 import 'package:engine_core/engine_core.dart';
-import 'package:flutter/widgets.dart';
+// Hidden -- flutter/widgets.dart's own Velocity (gesture fling
+// velocity) would otherwise collide with engine_core's component of
+// the same name; every use of the physics one below is unambiguous.
+import 'package:flutter/widgets.dart' hide Velocity;
 import 'package:flutter/scheduler.dart';
 
 import 'camera.dart';
@@ -238,6 +241,10 @@ class _EngineViewState extends State<EngineView>
     }
     stepStopwatch.stop();
     _frameStats.stepMs = stepStopwatch.elapsedMicroseconds / 1000;
+    _frameStats.frameMs = dt * 1000;
+    _frameStats.entities = widget.world.entities.count;
+    _frameStats.sprites = widget.world.storeOf<Sprite>().length;
+    _frameStats.particles = widget.world.storeOf<Particle>().length;
     // Decays/recomputes any active Camera.shake() offset -- called
     // unconditionally (not just when cameraFollowEntity is set), since
     // a static camera still needs to shake on e.g. an explosion.
@@ -272,6 +279,10 @@ class _EngineViewState extends State<EngineView>
           worldHeight: widget.world.height,
         );
       }
+      final vel = widget.world.storeOf<Velocity>().get(followId);
+      _frameStats.followedSpeed = vel == null ? null : sqrt(vel.x * vel.x + vel.y * vel.y);
+    } else {
+      _frameStats.followedSpeed = null;
     }
 
     setState(() {});
