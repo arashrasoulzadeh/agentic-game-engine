@@ -1089,40 +1089,61 @@ implementing.
 - [ ] FPS drops while the player is moving, near 120 (the configured
       `maxFps` cap) while standing still — reported live on the real
       Android device, on the CPU-only lighting path (`useGpuShadows`
-      off, per the item above). **Still not diagnosed, but candidate
-      (3) below is now ruled out with real evidence**, and real
-      diagnostic tooling now exists to test the rest (see
-      `FrameStats`, its own new item further down) — no profiling
-      tooling was available for a real device before that, and this
-      environment's simulated key-press input can't reliably sustain
-      "held movement" the way a live player does (a known, previously-
-      documented limitation elsewhere in this project's history), so
-      the symptom still can't be reproduced by *this* session directly
-      — but the user can now read `EngineView.showFpsOverlay`'s new
-      `step:`/`paint:`/`light:` breakdown straight off their own screen
-      while actually moving, which is the real unblock. Candidate
-      causes: (1) the player's own `Light2D` (`castsShadows: true`,
-      `shadowRayCount: 40`, no `cacheShadowGeometry`) re-runs its full
-      CPU `raycastTileMap` sweep every single frame regardless of
-      movement — doesn't obviously explain a moving-vs-standing split
-      on its own, since it recomputes either way, but is still the
-      single most expensive known per-frame cost in the current
-      lighting path and worth measuring first, now directly readable
-      via the `light:` overlay line; (2) `MovementAnimationSystem`
-      switching to the `walk` clip changes which sprite region draws
-      each frame, versus a static `idle` frame while standing —
-      `Canvas.drawAtlas` batches by atlas+zIndex regardless, so this is
-      a weak candidate, still untested; (3) **ruled out** — camera
-      panning while following a moving player changes
-      `_collectTileMapItems`'s visible-tile window every frame, versus
-      an unchanging window while standing still: re-benchmarked with a
-      real `flutter test`+`Stopwatch` probe (this repo's own real
-      `main.level.json` geometry, 300 frames, a camera moving 2px/frame
-      vs. a static one) and the moving-camera case measured *faster*
-      (~482us/frame vs. ~775us/frame static, well within noise either
-      way) — no meaningful cost from camera panning itself. Next step:
-      read the new overlay's three numbers on-device while actually
-      walking vs. standing, and report which one(s) actually change.
+      off, per the item above). **Candidates (1)/(2)/(3) below are all
+      now ruled out with real on-device evidence — the actual cause is
+      still unknown, but is proven NOT to be in this engine's own
+      step/paint/light costs at all.** Reproduced directly on the
+      connected device (`R5GYB4V7KVR`) this session using
+      `adb shell input swipe <x1> <y> <x2> <y> <duration_ms>` targeting
+      the bottom-left `VirtualJoystick` region — unlike
+      `adb shell input keyevent` (instant press+release, confirmed
+      useless for sustained movement in an earlier investigation), a
+      `swipe` is a real held drag with real intermediate MOVE events,
+      and genuinely moves the player (`speed:` read back `160.0` via
+      the new `FrameStats.followedSpeed`/`DIAG` logcat line while the
+      swipe was in progress). Captured real `DIAG` lines via
+      `adb logcat` (no screenshot/manual report needed — this is
+      exactly what this round of diagnostic tooling was built for):
+      multiple `frame:` spikes while `speed:` was non-zero (25ms,
+      another 25ms, and one 75ms — i.e. brief ~40fps and ~13fps dips),
+      while `step:`+`paint:`+`light:` combined stayed under ~1.5ms in
+      every single one of those same samples. **This rules out (1) and
+      (2) directly** — if the player's own shadow raycast sweep or the
+      walk-animation sprite region were the cause, it would show up in
+      `light:`/`paint:`, and it didn't, by a wide margin (a 75ms frame
+      with ~1ms of measured step+paint+light means ~74ms went
+      somewhere this engine doesn't measure at all). Real numbers,
+      via `adb logcat -v time flutter:D "*:S"` while
+      `adb shell input swipe` held the joystick:
+      `frame: 75.05ms  step: 0.19ms  paint: 0.98ms  light: 0.32ms  ...  speed: 160.0`
+      and `frame: 25.03ms  step: 0.09ms  paint: 0.34ms  light: 0.11ms  ...  speed: 160.0`,
+      versus a typical standing-still sample,
+      `frame: 8.34ms  step: 0.12ms  paint: 0.58ms  light: 0.17ms  ...  speed: 0.0`.
+      Standing-still samples never showed a spike in this same capture
+      run; every spike coincided with `speed: 160.0` (or `160.8`).
+      Next step: the cost is outside `EngineView`'s own step/paint
+      pipeline entirely — candidates now shift to Flutter-level causes
+      correlated with player movement specifically: the
+      `VirtualJoystick`'s `onPanUpdate` handler triggering a `setState`/
+      rebuild on every drag-update event (a real per-input-event cost
+      distinct from the engine's own fixed-timestep `world.step()`),
+      GC pauses from any per-frame allocation on the input path, or
+      Android's own input-dispatch/hit-test overhead while a pointer is
+      actively down and moving. Needs a Flutter `DevTools`/timeline
+      trace (not available in this sandbox) or further `adb`-only
+      probing (e.g. temporarily logging a timestamp at the very top of
+      `onPanUpdate` to see whether spike timing lines up with a drag
+      event) to narrow further — `(1)` the player's own `Light2D`
+      (`castsShadows: true`, `shadowRayCount: 40`, no
+      `cacheShadowGeometry`) re-running its full CPU `raycastTileMap`
+      sweep every frame — **ruled out**, `light:` stayed ≤0.32ms in
+      every spike sample; `(2)` `MovementAnimationSystem`'s walk-clip
+      sprite region churn — **ruled out**, `paint:` stayed ≤0.98ms in
+      every spike sample; `(3)` camera panning changing
+      `_collectTileMapItems`'s visible-tile window — **ruled out**
+      earlier via a `flutter test`+`Stopwatch` probe (moving camera
+      measured *faster* than static, ~482us vs ~775us/frame, well
+      within noise).
 - [x] Real, on-device diagnostic timing tools — this environment has no
       GPU/CPU profiler for a real device (the exact blocker the fps-
       while-moving item above kept hitting), so the fix is to let the
@@ -1131,23 +1152,46 @@ implementing.
       wall-clock milliseconds for `world.step()`, the full `paint()`
       pass, and `_drawLighting` alone (broken out separately since
       lighting has been the direct subject of more than one live
-      performance investigation this project). `EngineView.showFpsOverlay`'s
-      existing debug readout now includes a `step:`/`paint:`/`light:`
-      line automatically; `EngineView.frameStats` also accepts a
-      caller-supplied instance for a game that wants to read/log/export
-      the numbers itself instead of (or alongside) the on-screen text.
-      One frame of lag (same as the existing fps counter already has —
-      a frame's own paint pass hasn't run yet at the point its widget
-      tree is built). Verified: 5 new tests (`FrameStats` defaults/
-      `toString`; `stepMs`/`paintMs` populate with real non-negative
-      timing after a frame; `lightingMs` stays exactly `0` when
-      `ambientBrightness` is `1.0` — the lighting pass never runs at
-      all in that case, confirming this isn't just always non-zero by
-      construction; `lightingMs` is genuinely written to once
-      `ambientBrightness` actually enables the pass; `showFpsOverlay`
-      shows the new lines even with no `frameStats` given, confirming
-      the internal-instance fallback works). Full `engine_flutter`
-      suite and `--fatal-infos` analyze clean.
+      performance investigation this project), plus the raw unsmoothed
+      `frameMs` per-tick interval, live `entities`/`sprites`/`particles`
+      counts, and `followedSpeed` (world px/s of
+      `EngineView.cameraFollowEntity`'s `Velocity`, so a single log line
+      answers "was the player actually moving" without a synchronized
+      screen recording). `EngineView.showFpsOverlay`'s existing debug
+      readout now includes a `frame:`/`step:`/`paint:`/`light:`/
+      `entities:`/`sprites:`/`particles:`/`speed:` line automatically;
+      `EngineView.frameStats` and the new `Game.frameStats` getter also
+      accept/supply a caller-owned instance for a game that wants to
+      read/log/export the numbers itself instead of (or alongside) the
+      on-screen text. `test_game` wires this into a
+      `Timer.periodic(Duration(seconds: 2), ...)` that `debugPrint`s a
+      `DIAG <FrameStats>` line — visible via `adb logcat -v time
+      flutter:D "*:S"` on a real device with **zero manual
+      screenshotting or play-and-report needed** from the user, the
+      actual ask behind this item. One frame of lag (same as the
+      existing fps counter already has — a frame's own paint pass
+      hasn't run yet at the point its widget tree is built). Verified:
+      13 tests across `frame_stats_test.dart`/`game_test.dart`
+      (`FrameStats` defaults/`toString` for all 8 fields;
+      `stepMs`/`paintMs`/`frameMs`/counts populate with real timing/
+      counts after a frame; `lightingMs` stays exactly `0` when
+      `ambientBrightness` is `1.0` and is genuinely written to once it
+      isn't; `followedSpeed` reflects a real `Velocity` magnitude, is
+      `null` with no followed entity or no `Velocity` component;
+      `Game.frameStats` defaults to `null` and `GameRunner` keeps a
+      game-supplied instance updated every frame; `showFpsOverlay`
+      shows every new line even with no `frameStats` given). Full
+      `engine_flutter` suite (283 tests) and `--fatal-infos` analyze
+      clean. **Verified end-to-end on the real device**: built/
+      installed a release APK, used `adb shell input swipe` (a real
+      held drag on the touch joystick, unlike `input keyevent`'s
+      instant press+release — see the fps-while-moving item above) to
+      drive genuine sustained player movement, and pulled real `DIAG`
+      lines over `adb logcat` confirming `speed:` tracks actual
+      movement and every new field populates correctly — this data is
+      what let the fps-while-moving investigation above make real
+      progress this session without asking the user to play and report
+      back.
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
 - [x] Ladders/climbing, conveyors, per-tile friction: `TileMap` gained
