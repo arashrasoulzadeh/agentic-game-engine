@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:engine_flutter/engine_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -47,6 +49,31 @@ void main() {
     expect(requests.length, GameOrientation.values.length);
   });
 
+  test('applyFullscreen requests immersiveSticky when true, edgeToEdge when false',
+      () async {
+    final requests = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'SystemChrome.setEnabledSystemUIMode') {
+        requests.add(jsonEncode(call.arguments));
+      }
+      return null;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    await const GameConfig(fullscreen: true, worldWidth: 1, worldHeight: 1)
+        .applyFullscreen();
+    await const GameConfig(fullscreen: false, worldWidth: 1, worldHeight: 1)
+        .applyFullscreen();
+
+    expect(requests.length, 2);
+    expect(requests[0], contains('immersiveSticky'));
+    expect(requests[1], contains('edgeToEdge'));
+  });
+
   test('round-trips through toJson/fromJson', () {
     const config = GameConfig(
       title: 'My Game',
@@ -56,6 +83,7 @@ void main() {
       backgroundColor: Colors.red,
       showFpsOverlay: true,
       showColliderDebug: true,
+      fullscreen: true,
       pauseOnBackground: false,
       onScreenControls: OnScreenControlsMode.on,
       ambientBrightness: 0.3,
@@ -71,6 +99,7 @@ void main() {
     expect(restored.backgroundColor.toARGB32(), Colors.red.toARGB32());
     expect(restored.showFpsOverlay, isTrue);
     expect(restored.showColliderDebug, isTrue);
+    expect(restored.fullscreen, isTrue);
     expect(restored.pauseOnBackground, isFalse);
     expect(restored.onScreenControls, OnScreenControlsMode.on);
     expect(restored.ambientBrightness, 0.3);
@@ -90,6 +119,7 @@ void main() {
     expect(config.worldHeight, 200);
     expect(config.showFpsOverlay, isFalse);
     expect(config.showColliderDebug, isFalse);
+    expect(config.fullscreen, isFalse);
     expect(config.pauseOnBackground, isTrue);
     expect(config.onScreenControls, OnScreenControlsMode.auto);
     expect(config.ambientBrightness, 1.0);

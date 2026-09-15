@@ -110,6 +110,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     widget.game.config.applyOrientation();
+    widget.game.config.applyFullscreen();
     _sceneController.attach(
       loadScene: _loadScene,
       pushOverlay: _pushOverlay,
@@ -205,6 +206,16 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Android clears an immersive SystemUiMode the moment the app loses
+    // focus (backgrounded, a system dialog, etc.) -- re-applying it here
+    // is what makes `fullscreen` stick across a resume instead of only
+    // working until the very first interruption. Unconditional (not
+    // gated by pauseOnBackground below), since a game that doesn't pause
+    // in the background still needs this reapplied on resume.
+    if (state == AppLifecycleState.resumed) {
+      widget.game.config.applyFullscreen();
+    }
+
     if (!widget.game.config.pauseOnBackground) return;
     final shouldPause = state != AppLifecycleState.resumed;
     if (shouldPause == _paused) return;

@@ -32,6 +32,19 @@ class GameConfig {
   /// on for local development (e.g. via a debug build flag), not in a
   /// shipped `game_config.json`.
   final bool showColliderDebug;
+
+  /// `false` (default — the system status bar/navigation bar stay
+  /// visible, unchanged from before this existed). `true` hides them
+  /// (`SystemUiMode.immersiveSticky` on Android/iOS — a swipe from the
+  /// screen edge still temporarily reveals them, rather than locking
+  /// the user out of system gestures entirely) so the game draws under
+  /// the whole screen instead of the OS status bar visibly overlapping
+  /// the game's own UI — e.g. `showFpsOverlay`'s top-left readout or a
+  /// screen-space HUD sitting right underneath the clock/battery icons
+  /// on a real device. No effect on desktop/web, which don't have an
+  /// overlaid system status bar to hide in the first place.
+  final bool fullscreen;
+
   final bool pauseOnBackground;
   final OnScreenControlsMode onScreenControls;
 
@@ -88,6 +101,7 @@ class GameConfig {
     this.backgroundColor = const Color(0xFF000000),
     this.showFpsOverlay = false,
     this.showColliderDebug = false,
+    this.fullscreen = false,
     this.pauseOnBackground = true,
     this.onScreenControls = OnScreenControlsMode.auto,
     this.ambientBrightness = 1.0,
@@ -105,6 +119,7 @@ class GameConfig {
         'backgroundColor': backgroundColor.toARGB32(),
         'showFpsOverlay': showFpsOverlay,
         'showColliderDebug': showColliderDebug,
+        'fullscreen': fullscreen,
         'pauseOnBackground': pauseOnBackground,
         'onScreenControls': onScreenControls.name,
         'ambientBrightness': ambientBrightness,
@@ -127,6 +142,7 @@ class GameConfig {
             : const Color(0xFF000000),
         showFpsOverlay: json['showFpsOverlay'] as bool? ?? false,
         showColliderDebug: json['showColliderDebug'] as bool? ?? false,
+        fullscreen: json['fullscreen'] as bool? ?? false,
         pauseOnBackground: json['pauseOnBackground'] as bool? ?? true,
         onScreenControls: OnScreenControlsMode.values.firstWhere(
           (m) => m.name == json['onScreenControls'],
@@ -161,5 +177,15 @@ class GameConfig {
       case GameOrientation.auto:
         return SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     }
+  }
+
+  /// Applies [fullscreen] — `SystemUiMode.immersiveSticky` (status/
+  /// navigation bars hidden, revealed temporarily by a swipe from the
+  /// screen edge) when `true`, `SystemUiMode.edgeToEdge` (the platform
+  /// default — bars visible) when `false`.
+  Future<void> applyFullscreen() {
+    return SystemChrome.setEnabledSystemUIMode(
+      fullscreen ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+    );
   }
 }
