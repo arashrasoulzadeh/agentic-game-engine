@@ -19,7 +19,24 @@
 /// axis, so a single background strip covers arbitrarily wide/tall
 /// scrolling without the game needing to author a world-sized image.
 /// Leave one (or both) off for a layer meant to appear once (e.g. a
-/// fixed logo/vignette) rather than tiled.
+/// fixed logo/vignette) rather than tiled. Tiling only looks right for
+/// art actually authored as a seamless repeatable strip (a tileable
+/// ground/sky texture) — repeating a single painted vista (a full
+/// scene with its own sky-to-ground composition, e.g. cropped concept
+/// art) stacks duplicate copies of that whole scene, which reads as
+/// broken, not as "more of the same." For that kind of one-off vista
+/// art, use [fitHeight] instead of [tileY].
+///
+/// [fitHeight] stretches the region to exactly the viewport's height
+/// (ignoring its native pixel height and [scrollFactorY]/the entity's
+/// `Position.y`, forcing the top edge to the very top of the screen)
+/// instead of drawing it at native size — guarantees full vertical
+/// coverage regardless of window size for art that can't be tiled,
+/// at the cost of a non-uniform stretch (aspect ratio isn't
+/// preserved). [tileX]/[scrollFactorX] still apply normally on the
+/// horizontal axis, since a vista's sideways repetition (e.g. more
+/// pillars extending into the distance) usually reads fine even when
+/// its vertical sky-to-ground composition can't.
 class ParallaxLayer {
   String atlasId;
   String region;
@@ -27,6 +44,7 @@ class ParallaxLayer {
   double scrollFactorY;
   bool tileX;
   bool tileY;
+  bool fitHeight;
 
   /// Draw order relative to every other renderable — see `Sprite.zIndex`
   /// for the full rule. Left at the default (0, tying with everything
@@ -42,6 +60,7 @@ class ParallaxLayer {
     this.scrollFactorY = 0,
     this.tileX = true,
     this.tileY = false,
+    this.fitHeight = false,
     this.zIndex = 0,
   });
 
@@ -52,6 +71,7 @@ class ParallaxLayer {
         'scrollFactorY': scrollFactorY,
         'tileX': tileX,
         'tileY': tileY,
+        'fitHeight': fitHeight,
         'zIndex': zIndex,
       };
 
@@ -62,6 +82,7 @@ class ParallaxLayer {
         scrollFactorY: (json['scrollFactorY'] as num?)?.toDouble() ?? 0,
         tileX: json['tileX'] as bool? ?? true,
         tileY: json['tileY'] as bool? ?? false,
+        fitHeight: json['fitHeight'] as bool? ?? false,
         zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
       );
 }

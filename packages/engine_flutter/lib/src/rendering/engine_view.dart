@@ -1847,17 +1847,29 @@ class _EnginePainter extends CustomPainter {
         final atlas = atlasRegistry.resolve(layer.atlasId);
         final srcRect = atlas.regionFor(layer.region);
         final tileWidth = srcRect.width * camera.zoom;
-        final tileHeight = srcRect.height * camera.zoom;
+        // fitHeight stretches to exactly the viewport height instead of
+        // native size * zoom -- see ParallaxLayer.fitHeight's doc
+        // comment for why (a one-off vista image can't be tiled without
+        // stacking duplicate copies of its own sky-to-ground
+        // composition, so it needs guaranteed single-draw coverage
+        // instead).
+        final tileHeight = layer.fitHeight ? size.height : srcRect.height * camera.zoom;
         if (tileWidth <= 0 || tileHeight <= 0) return;
 
         final pos = positions.get(entity) ?? Position(0, 0);
         final anchorX =
             (pos.x - camera.x * layer.scrollFactorX) * camera.zoom + size.width / 2;
-        final anchorY =
-            (pos.y - camera.y * layer.scrollFactorY) * camera.zoom + size.height / 2;
+        // fitHeight also forces the top edge to the screen's top (0),
+        // ignoring Position.y/scrollFactorY -- a stretched-to-cover
+        // background has nothing meaningful left to scroll vertically.
+        final anchorY = layer.fitHeight
+            ? 0.0
+            : (pos.y - camera.y * layer.scrollFactorY) * camera.zoom + size.height / 2;
 
         final xs = layer.tileX ? _tileStarts(anchorX, tileWidth, size.width) : [anchorX];
-        final ys = layer.tileY ? _tileStarts(anchorY, tileHeight, size.height) : [anchorY];
+        final ys = layer.tileY && !layer.fitHeight
+            ? _tileStarts(anchorY, tileHeight, size.height)
+            : [anchorY];
 
         final paint = Paint();
         for (final y in ys) {

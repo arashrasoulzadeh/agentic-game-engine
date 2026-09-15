@@ -10,6 +10,17 @@ pubspec.yaml.
 
 ### New engine features (round 4)
 
+- `ParallaxLayer.fitHeight`: stretches a background region to exactly
+  the viewport's height instead of native size (optionally tiled).
+  Existing tiling (`tileY`) only looks right for art authored as a
+  seamless repeatable strip — repeating a one-off painted vista (its
+  own full sky-to-ground composition) stacks visibly duplicate copies
+  of the whole scene. `fitHeight` guarantees full coverage for that
+  kind of art regardless of viewport size, at the cost of a non-uniform
+  stretch. Found via a real content bug: a level's background mural,
+  native-sized and centered, only covered part of the viewport,
+  leaving a gap; naively enabling `tileY` "fixed" the gap but
+  duplicated the whole scene instead.
 - Melee (sword) and ranged (gun) combat: a new `Weapon` component
   (`WeaponKind.melee`/`ranged`, damage, cooldown, range/speed) plus
   `AttackSystem`, which fires on an `"attack"` input action or a
