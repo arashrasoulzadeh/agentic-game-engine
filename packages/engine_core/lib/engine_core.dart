@@ -9,6 +9,7 @@ export 'src/ecs/deterministic_random.dart';
 export 'src/ecs/replay_recorder.dart';
 export 'src/ai/ai_state.dart';
 export 'src/ui/button.dart';
+export 'src/ui/button_hit_box.dart';
 export 'src/physics/collider.dart';
 export 'src/rendering/day_night_cycle.dart';
 export 'src/rendering/particle.dart';
@@ -45,6 +46,7 @@ export 'src/ecs/world_view.dart';
 
 import 'src/ai/ai_state.dart';
 import 'src/ui/button.dart';
+import 'src/ui/button_hit_box.dart';
 import 'src/physics/collider.dart';
 import 'src/rendering/particle.dart';
 import 'src/rendering/particle_emitter.dart';
@@ -97,6 +99,11 @@ void registerCoreComponents(World world) {
     'button',
     (b) => b.toJson(),
     Button.fromJson,
+  );
+  world.components.register<ButtonHitBox>(
+    'buttonHitBox',
+    (b) => b.toJson(),
+    ButtonHitBox.fromJson,
   );
   world.components.register<RoomExit>(
     'roomExit',

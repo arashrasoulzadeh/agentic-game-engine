@@ -59,25 +59,52 @@ Future<SpriteAtlas> buildMenuButtonAtlas(
   return SpriteAtlas(image, regions);
 }
 
-/// Spawns one `Position`/`Collider`/`Sprite`/`Button` entity — the
-/// engine's canonical "tappable menu button" shape, sized to match
-/// `buildMenuButtonAtlas`'s [kMenuButtonWidth]/[kMenuButtonHeight] so a
-/// button's hit area (circular — see `hitTestButton`) sits within its
-/// drawn rounded rect rather than spilling past the corners. [label]
-/// must match a region name in the atlas registered under
-/// [kMenuButtonAtlasId] (`buildMenuButtonAtlas([label, ...])`).
-/// [actionId] is what a `Scene.handleTap`/`ButtonMenuScene.onButtonPressed`
-/// reads back via `Button.actionId` — free-form, chosen by the game.
+/// Spawns one `Position`/`Sprite`/`Button` entity plus a hit area — the
+/// engine's canonical "tappable menu button" shape. By default (leave
+/// [atlasId]/[region]/[width]/[height]/[scaleX]/[scaleY] `null`) draws
+/// from [kMenuButtonAtlasId] at [label]'s region (i.e. a
+/// `buildMenuButtonAtlas([label, ...])`-generated rect) sized to
+/// [kMenuButtonWidth]/[kMenuButtonHeight], with a circular `Collider`
+/// hit area — the original behavior, unchanged.
+///
+/// Pass [atlasId]/[region] to draw from real sprite-sheet art instead
+/// (already registered in the scene's `AtlasRegistry`). [scaleX]/
+/// [scaleY] (default `1`, i.e. native pixel size) scale that art the
+/// same way any other `Sprite` does; [width]/[height] independently
+/// size a `ButtonHitBox` (rectangular hit area — see its own doc
+/// comment for why a rectangle over a circle) so the tappable area can
+/// be told apart from the drawn size when they should differ (e.g. a
+/// button whose art has transparent padding around a smaller visible
+/// shape) — defaults to [kMenuButtonWidth]/[kMenuButtonHeight] if
+/// omitted, a reasonable guess when the caller doesn't care to be
+/// precise. [actionId] is what a `Scene.handleTap`/
+/// `ButtonMenuScene.onButtonPressed` reads back via `Button.actionId`
+/// — free-form, chosen by the game.
 EntityId spawnMenuButton(
   World world, {
   required Offset position,
   required String label,
   required String actionId,
+  String? atlasId,
+  String? region,
+  double? width,
+  double? height,
+  double scaleX = 1,
+  double scaleY = 1,
 }) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(position.dx, position.dy));
-  world.storeOf<Collider>().set(id, Collider(kMenuButtonHeight / 2));
-  world.storeOf<Sprite>().set(id, Sprite(kMenuButtonAtlasId, label));
   world.storeOf<Button>().set(id, Button(actionId));
+
+  if (atlasId != null && region != null) {
+    world.storeOf<ButtonHitBox>().set(
+          id,
+          ButtonHitBox(width ?? kMenuButtonWidth, height ?? kMenuButtonHeight),
+        );
+    world.storeOf<Sprite>().set(id, Sprite(atlasId, region, scaleX: scaleX, scaleY: scaleY));
+  } else {
+    world.storeOf<Collider>().set(id, Collider((height ?? kMenuButtonHeight) / 2));
+    world.storeOf<Sprite>().set(id, Sprite(kMenuButtonAtlasId, label));
+  }
   return id;
 }

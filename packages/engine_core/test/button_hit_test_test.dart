@@ -56,4 +56,56 @@ void main() {
     final decoded = Button.fromJson(Button('quit').toJson());
     expect(decoded.actionId, 'quit');
   });
+
+  test('ButtonHitBox round-trips through toJson/fromJson', () {
+    final decoded = ButtonHitBox.fromJson(ButtonHitBox(220, 64).toJson());
+    expect(decoded.width, 220);
+    expect(decoded.height, 64);
+  });
+
+  group('ButtonHitBox rectangular hit-testing', () {
+    test('a point inside the rectangle but outside an equivalent circle still hits', () {
+      final world = _buildWorld();
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(100, 100));
+      world.storeOf<ButtonHitBox>().set(id, ButtonHitBox(220, 64)); // wide, short
+      world.storeOf<Button>().set(id, Button('play'));
+
+      // 95px right of center: inside the 220-wide box (half-width 110),
+      // but well outside a circle sized to the short axis (radius 32).
+      expect(hitTestButton(world, 195, 100), id);
+    });
+
+    test('a point outside the rectangle on the long axis misses', () {
+      final world = _buildWorld();
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(100, 100));
+      world.storeOf<ButtonHitBox>().set(id, ButtonHitBox(220, 64));
+      world.storeOf<Button>().set(id, Button('play'));
+
+      expect(hitTestButton(world, 100 + 111, 100), isNull);
+    });
+
+    test('ButtonHitBox takes priority over a Collider on the same entity', () {
+      final world = _buildWorld();
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(0, 0));
+      world.storeOf<Collider>().set(id, Collider(999)); // would hit almost anywhere
+      world.storeOf<ButtonHitBox>().set(id, ButtonHitBox(10, 10)); // tiny
+      world.storeOf<Button>().set(id, Button('play'));
+
+      expect(hitTestButton(world, 500, 500), isNull,
+          reason: 'the tiny ButtonHitBox should be checked, not the huge Collider');
+      expect(hitTestButton(world, 0, 0), id);
+    });
+
+    test('a button with neither ButtonHitBox nor Collider is never hit', () {
+      final world = _buildWorld();
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(0, 0));
+      world.storeOf<Button>().set(id, Button('play'));
+
+      expect(hitTestButton(world, 0, 0), isNull);
+    });
+  });
 }

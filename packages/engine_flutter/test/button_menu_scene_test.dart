@@ -18,6 +18,28 @@ class _RecordingMenu extends ButtonMenuScene {
   }
 }
 
+class _AssetArtMenu extends ButtonMenuScene {
+  final List<String> pressed = [];
+
+  @override
+  List<MenuButtonSpec> buttons() => const [
+        MenuButtonSpec(label: 'PLAY', actionId: 'play'),
+        MenuButtonSpec(
+          label: 'QUIT',
+          actionId: 'quit',
+          atlasId: 'menuArt',
+          region: 'quitBar',
+          width: 300,
+          height: 40,
+        ),
+      ];
+
+  @override
+  void onButtonPressed(String actionId, SceneController scenes) {
+    pressed.add(actionId);
+  }
+}
+
 World _buildWorld() {
   final world = World(width: 800, height: 480);
   registerCoreComponents(world);
@@ -84,5 +106,81 @@ void main() {
 
   test('ambientBrightness overrides to 1.0 so a menu never darkens with gameplay lighting', () {
     expect(_RecordingMenu().ambientBrightness, 1.0);
+  });
+
+  test('a MenuButtonSpec with only one of atlasId/region set asserts', () {
+    expect(
+      () => MenuButtonSpec(label: 'X', actionId: 'x', atlasId: 'a'),
+      throwsA(isA<AssertionError>()),
+    );
+    expect(
+      () => MenuButtonSpec(label: 'X', actionId: 'x', region: 'r'),
+      throwsA(isA<AssertionError>()),
+    );
+  });
+
+  group('asset-backed buttons (MenuButtonSpec.atlasId/region)', () {
+    testWidgets('populate gives a custom-art spec a ButtonHitBox, not a Collider',
+        (tester) async {
+      final menu = _AssetArtMenu();
+      final world = _buildWorld();
+      await menu.populate(world, SceneController(), GameState());
+
+      final quitId = world.storeOf<Button>().entityAt(1);
+      expect(world.storeOf<ButtonHitBox>().get(quitId)?.width, 300);
+      expect(world.storeOf<ButtonHitBox>().get(quitId)?.height, 40);
+      expect(world.storeOf<Collider>().get(quitId), isNull);
+    });
+
+    testWidgets('populate still gives a plain spec its normal circular Collider',
+        (tester) async {
+      final menu = _AssetArtMenu();
+      final world = _buildWorld();
+      await menu.populate(world, SceneController(), GameState());
+
+      final playId = world.storeOf<Button>().entityAt(0);
+      expect(world.storeOf<Collider>().get(playId)?.radius, kMenuButtonHeight / 2);
+      expect(world.storeOf<ButtonHitBox>().get(playId), isNull);
+    });
+
+    testWidgets('a custom-art spec draws its own atlasId/region, not the generated one',
+        (tester) async {
+      final menu = _AssetArtMenu();
+      final world = _buildWorld();
+      await menu.populate(world, SceneController(), GameState());
+
+      final quitId = world.storeOf<Button>().entityAt(1);
+      final sprite = world.storeOf<Sprite>().get(quitId)!;
+      expect(sprite.atlasId, 'menuArt');
+      expect(sprite.region, 'quitBar');
+    });
+
+    testWidgets('loadAssets only generates atlas regions for specs without custom art',
+        (tester) async {
+      final menu = _AssetArtMenu();
+      final atlasRegistry = await menu.loadAssets();
+
+      final atlas = atlasRegistry.resolve(kMenuButtonAtlasId);
+      expect(() => atlas.regionFor('PLAY'), returnsNormally);
+      expect(() => atlas.regionFor('QUIT'), throwsA(anything),
+          reason: 'QUIT supplies its own art, so it should never land in the generated atlas');
+    });
+
+    testWidgets('a tap inside the custom-art button\'s rectangle (not a fitting circle) hits it',
+        (tester) async {
+      final menu = _AssetArtMenu();
+      final world = _buildWorld();
+      final scenes = SceneController();
+      await menu.populate(world, scenes, GameState());
+
+      final quitPos = world.storeOf<Position>().get(world.storeOf<Button>().entityAt(1))!;
+      // 140px right of center: inside the 300-wide hit box (half-width
+      // 150) but outside a circle sized to the 40-tall box's short axis
+      // (radius 20) -- proves the rectangular ButtonHitBox is actually
+      // being used, not a circle derived from height.
+      menu.handleTap(world, scenes, Offset(quitPos.x + 140, quitPos.y));
+
+      expect(menu.pressed, ['quit']);
+    });
   });
 }

@@ -11,10 +11,47 @@ import 'menu_button_atlas.dart';
 /// generating a new menu only ever needs to produce a list of these
 /// plus a `switch` over the ids, never touch `World`/`Sprite`/`Collider`
 /// directly.
+///
+/// By default (leave [atlasId]/[region] `null`) a button renders via
+/// the engine's own runtime-generated flat rounded-rect atlas (see
+/// `buildMenuButtonAtlas`) — no bundled art required, the original
+/// behavior. Set both [atlasId] and [region] to render from real
+/// sprite-sheet art instead (a game-loaded `AtlasRegistry` entry,
+/// registered the same way any other `Sprite` atlas is): [scaleX]/
+/// [scaleY] (default `1`, native pixel size) scale that art like any
+/// other `Sprite`; [width]/[height] independently size the button's
+/// rectangular hit area (`ButtonHitBox` — see its own doc comment for
+/// why a rectangle over a circle), defaulting to [kMenuButtonWidth]/
+/// [kMenuButtonHeight] if omitted. A spec with only one of [atlasId]/
+/// [region] set is a mistake `ButtonMenuScene.populate` asserts
+/// against rather than silently drawing nothing.
 class MenuButtonSpec {
   final String label;
   final String actionId;
-  const MenuButtonSpec({required this.label, required this.actionId});
+  final String? atlasId;
+  final String? region;
+  final double? width;
+  final double? height;
+  final double scaleX;
+  final double scaleY;
+
+  const MenuButtonSpec({
+    required this.label,
+    required this.actionId,
+    this.atlasId,
+    this.region,
+    this.width,
+    this.height,
+    this.scaleX = 1,
+    this.scaleY = 1,
+  }) : assert(
+          (atlasId == null) == (region == null),
+          'atlasId and region must be set together, or not at all',
+        );
+
+  /// Whether this spec supplies its own art instead of using the
+  /// engine's generated flat-rect button.
+  bool get hasCustomArt => atlasId != null;
 }
 
 /// A ready-made ECS menu: give it a list of buttons, handle one action
@@ -72,11 +109,18 @@ abstract class ButtonMenuScene extends Scene {
     final specs = buttons();
     final startY = world.height / 2 - (specs.length - 1) * buttonSpacing / 2;
     for (var i = 0; i < specs.length; i++) {
+      final spec = specs[i];
       spawnMenuButton(
         world,
         position: Offset(world.width / 2, startY + i * buttonSpacing),
-        label: specs[i].label,
-        actionId: specs[i].actionId,
+        label: spec.label,
+        actionId: spec.actionId,
+        atlasId: spec.atlasId,
+        region: spec.region,
+        width: spec.width,
+        height: spec.height,
+        scaleX: spec.scaleX,
+        scaleY: spec.scaleY,
       );
     }
   }
@@ -84,10 +128,16 @@ abstract class ButtonMenuScene extends Scene {
   @override
   Future<AtlasRegistry> loadAssets() async {
     final atlasRegistry = AtlasRegistry();
-    atlasRegistry.register(
-      kMenuButtonAtlasId,
-      await buildMenuButtonAtlas(buttons().map((b) => b.label).toList()),
-    );
+    // Only the specs still using the generated rect (no custom art)
+    // need a region in the runtime-built atlas -- a spec with its own
+    // atlasId/region draws from whatever the game itself registers
+    // (this method is meant to be overridden, calling super.loadAssets()
+    // first, to add that -- see MainMenuScene in the sample game).
+    final generatedLabels =
+        buttons().where((b) => !b.hasCustomArt).map((b) => b.label).toList();
+    if (generatedLabels.isNotEmpty) {
+      atlasRegistry.register(kMenuButtonAtlasId, await buildMenuButtonAtlas(generatedLabels));
+    }
     return atlasRegistry;
   }
 
