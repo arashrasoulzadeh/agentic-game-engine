@@ -272,12 +272,23 @@ class Light2D {
   /// path's darkness-mask semantics beyond that plain circle/cone
   /// reveal (a v1 scoping choice — replicating the exact CPU
   /// compositing on the GPU too is a larger, separate undertaking).
-  /// Meaningless unless [castsShadows] is also on. Experimental:
-  /// verified in this repo's own web/CanvasKit test environment, but
-  /// Flutter fragment-shader support has known gaps on some web
-  /// renderer/platform combinations this repo's CI can't exercise —
-  /// test on every platform you actually ship before relying on this
-  /// for a real game.
+  /// Meaningless unless [castsShadows] is also on.
+  ///
+  /// **KNOWN BUG, NOT YET FIXED — do not rely on this.** Verified
+  /// correct with a single light in a browser test environment, but a
+  /// real, reproducible rendering bug (an oversaturated/blown-out
+  /// render) appears once multiple lights use this simultaneously —
+  /// confirmed on a **real Android device with a genuine release APK**
+  /// (no dev server involved), so it is not a test-environment
+  /// artifact. An earlier, similar-looking failure in a dev-server
+  /// browser session *was* traced to a stale dev-server reload and
+  /// wrongly assumed to be the whole story — it wasn't; see TODO.md's
+  /// "GPU-shader shadow casting" entry for the full history before
+  /// touching this again, so the same false lead doesn't get retraced.
+  /// Root cause not yet isolated (ruled out so far: cone lights
+  /// specifically, light count specifically, degenerate/NaN uniform
+  /// values). `test_game` (this repo's own sample) does not enable
+  /// this for exactly that reason.
   bool useGpuShadows;
 
   /// Internal render-side cache for [cacheShadowGeometry] — the world-
