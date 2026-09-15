@@ -21,6 +21,7 @@ import 'gpu_light_shader.dart';
 import 'hud_bar.dart';
 import 'light2d.dart';
 import 'nine_slice_sprite.dart';
+import 'particle_dot_texture.dart';
 import 'screen_tint.dart';
 import 'text.dart' as txt;
 import 'debug_memory.dart';
@@ -1787,6 +1788,18 @@ class _EnginePainter extends CustomPainter {
   /// modulating the whole `drawImageRect` call, the standard Flutter
   /// trick for compositing an image at partial opacity without a
   /// `saveLayer` per particle.
+  ///
+  /// Plain-circle particles (no `Sprite`) batch into one
+  /// `Canvas.drawAtlas` call per `zIndex` via `ParticleDotTexture` —
+  /// meaningfully cheaper than one `drawCircle`/`Paint` pair per
+  /// particle once an emitter has more than a handful active at once
+  /// (a torch alone can easily have 30-50), the same reasoning
+  /// `_collectSpriteItems`'s own batching already applies to sprites.
+  /// Falls back to individual `drawCircle` calls for any particle whose
+  /// `zIndex` batch runs before `ParticleDotTexture.image()` has
+  /// finished its one-time async generation (typically resolved within
+  /// the first frame or two) — never blocks or skips a particle, just
+  /// draws it the slower way that one frame.
   int _collectParticleItems(
     List<_DrawItem> items,
     int order,
@@ -1796,45 +1809,110 @@ class _EnginePainter extends CustomPainter {
     final particles = world.storeOf<Particle>();
     if (particles.length == 0) return order;
 
+    // Skipped entirely (not just an empty per-particle lookup) when no
+    // particle in the world could possibly have a Sprite attached --
+    // the common case, since ParticleSystem itself never attaches one.
     final sprites = world.storeOf<Sprite>();
+    final anySpriteParticles = sprites.length > 0;
+
+    final indicesByZ = <int, List<int>>{};
     for (var i = 0; i < particles.length; i++) {
       final entity = particles.entityAt(i);
       final particle = particles.denseAt(i);
-      final pos = positions.get(entity);
-      if (pos == null) continue;
-
+      if (positions.get(entity) == null) continue;
       final alpha = particle.alpha.clamp(0.0, 1.0);
       if (alpha <= 0 || particle.scale <= 0) continue;
+      (indicesByZ[particle.zIndex] ??= []).add(i);
+    }
 
-      items.add(_DrawItem(particle.zIndex, order++, (canvas) {
+    final dot = ParticleDotTexture.image();
+
+    for (final zEntry in indicesByZ.entries) {
+      final z = zEntry.key;
+      final transforms = <RSTransform>[];
+      final rects = <Rect>[];
+      final colors = <Color>[];
+      final individual = <int>[];
+
+      for (final i in zEntry.value) {
+        final entity = particles.entityAt(i);
+        final sprite = anySpriteParticles ? sprites.get(entity) : null;
+        if (dot == null || (sprite != null && atlasRegistry.has(sprite.atlasId))) {
+          individual.add(i);
+          continue;
+        }
+
+        final particle = particles.denseAt(i);
+        final pos = positions.get(entity)!;
         final worldPos = _interpolated(entity, pos);
         final screenPos = camera.worldToScreen(worldPos.dx, worldPos.dy, size);
-        final sprite = sprites.get(entity);
-        if (sprite != null && atlasRegistry.has(sprite.atlasId)) {
-          final atlas = atlasRegistry.resolve(sprite.atlasId);
-          final srcRect = atlas.regionFor(sprite.region);
-          final destRect = ui.Rect.fromCenter(
-            center: screenPos,
-            width: srcRect.width * particle.scale * camera.zoom,
-            height: srcRect.height * particle.scale * camera.zoom,
-          );
-          canvas.drawImageRect(
-            atlas.image,
-            srcRect,
-            destRect,
-            Paint()..color = Color.fromRGBO(255, 255, 255, alpha),
-          );
-        } else {
-          final base = Color(particle.colorArgb);
-          canvas.drawCircle(
-            screenPos,
-            4 * particle.scale * camera.zoom,
-            Paint()..color = base.withValues(alpha: alpha * base.a),
-          );
-        }
-      }));
+        final alpha = particle.alpha.clamp(0.0, 1.0);
+        final base = Color(particle.colorArgb);
+        final radius = 4 * particle.scale * camera.zoom;
+
+        transforms.add(RSTransform.fromComponents(
+          rotation: 0,
+          scale: radius / (ParticleDotTexture.size / 2),
+          anchorX: ParticleDotTexture.size / 2,
+          anchorY: ParticleDotTexture.size / 2,
+          translateX: screenPos.dx,
+          translateY: screenPos.dy,
+        ));
+        rects.add(Rect.fromLTWH(0, 0, ParticleDotTexture.size.toDouble(), ParticleDotTexture.size.toDouble()));
+        colors.add(base.withValues(alpha: alpha * base.a));
+      }
+
+      if (transforms.isNotEmpty) {
+        items.add(_DrawItem(z, order++, (canvas) {
+          canvas.drawAtlas(dot!, transforms, rects, colors, BlendMode.modulate, null, Paint());
+        }));
+      }
+      for (final i in individual) {
+        items.add(_DrawItem(z, order++,
+            (canvas) => _paintParticleIndividually(canvas, size, positions, particles, sprites, i)));
+      }
     }
     return order;
+  }
+
+  void _paintParticleIndividually(
+    Canvas canvas,
+    Size size,
+    ComponentStore<Position> positions,
+    ComponentStore<Particle> particles,
+    ComponentStore<Sprite> sprites,
+    int i,
+  ) {
+    final entity = particles.entityAt(i);
+    final particle = particles.denseAt(i);
+    final pos = positions.get(entity)!;
+    final worldPos = _interpolated(entity, pos);
+    final screenPos = camera.worldToScreen(worldPos.dx, worldPos.dy, size);
+    final alpha = particle.alpha.clamp(0.0, 1.0);
+
+    final sprite = sprites.get(entity);
+    if (sprite != null && atlasRegistry.has(sprite.atlasId)) {
+      final atlas = atlasRegistry.resolve(sprite.atlasId);
+      final srcRect = atlas.regionFor(sprite.region);
+      final destRect = ui.Rect.fromCenter(
+        center: screenPos,
+        width: srcRect.width * particle.scale * camera.zoom,
+        height: srcRect.height * particle.scale * camera.zoom,
+      );
+      canvas.drawImageRect(
+        atlas.image,
+        srcRect,
+        destRect,
+        Paint()..color = Color.fromRGBO(255, 255, 255, alpha),
+      );
+    } else {
+      final base = Color(particle.colorArgb);
+      canvas.drawCircle(
+        screenPos,
+        4 * particle.scale * camera.zoom,
+        Paint()..color = base.withValues(alpha: alpha * base.a),
+      );
+    }
   }
 
   /// Collects one `_DrawItem` per `ParallaxLayer`, defaulting to before

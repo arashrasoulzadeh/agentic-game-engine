@@ -5,6 +5,7 @@ export 'src/rendering/animation_transition.dart';
 export 'src/rendering/hud_bar.dart';
 export 'src/rendering/frame_stats.dart';
 export 'src/rendering/gpu_light_shader.dart';
+export 'src/rendering/particle_dot_texture.dart';
 export 'src/rendering/light2d.dart';
 export 'src/rendering/nine_slice_sprite.dart';
 export 'src/rendering/parallax_layer.dart';

@@ -8,6 +8,31 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Performance (round 4)
+
+- Particle rendering: plain (spriteless) particles now batch through
+  one `Canvas.drawAtlas` call per `zIndex` via a new tiny cached
+  `ParticleDotTexture`, instead of one `drawCircle`/`Paint` pair per
+  particle — the same win `_collectSpriteItems`'s existing sprite
+  batching already gets, now applied to the same shape of problem for
+  particles (a single torch alone can have 30-50 active at once).
+  Falls back per-particle to the original `drawCircle` path for any
+  frame before the texture's one-time async generation resolves
+  (typically within the first frame or two) or for a particle that
+  carries its own registered `Sprite`. A real pixel-sampling test
+  proves multiple batched particles still render at their own distinct
+  position/color, not just "doesn't crash."
+- `_collectParticleItems` no longer does a `Sprite` component-store
+  lookup per particle when nothing in the world has a `Sprite`
+  attached to a particle entity at all (the common case, since
+  `ParticleSystem` itself never attaches one) — checked once per frame
+  instead of once per particle.
+- `AnimationClip.sequence` is now memoized by its full argument set —
+  a call site that rebuilds the same sequence repeatedly (e.g. from
+  `Scene.populate`, which reruns on every scene reload/room
+  transition) gets the same cached instance back instead of
+  re-running `List.generate`/reallocating a fresh clip every time.
+
 ### Performance (round 3, unverified — see TODO.md)
 
 - `Light2D.useGpuShadows`'s GPU shadow pass now composites with
