@@ -102,15 +102,16 @@ world.addSystem(HealthSystem());                   // ticks Health.invincibleSec
 world.addSystem(HitstunSystem());                  // ticks PlatformerController.hitstunSeconds down
 world.addSystem(HealthHudSystem());                // syncs any HudBar wired to a Health via spawnHealthHudBar
 world.addSystem(ProjectileSystem());                // ages/expires Projectiles
+world.addSystem(AttackSystem());                   // fires a Weapon on its attack action/attackRequested
 world.addSystem(FacingSystem());
 world.addSystem(MovementAnimationSystem());
 world.addSystem(AnimationSystem());                // from engine_flutter, must run after MovementAnimationSystem
 world.addSystem(AnimationTransitionSystem());      // fades out AnimationTransition ghosts from a crossfaded clip swap
 ```
 
-The last four (`HealthSystem` through `ProjectileSystem`) are
-harmless no-ops for a game that doesn't use `Health`/hitstun/the HUD
-helpers/`Projectile` yet — they're included unconditionally so you
+The last five (`HealthSystem` through `AttackSystem`) are harmless
+no-ops for a game that doesn't use `Health`/hitstun/the HUD helpers/
+`Projectile`/`Weapon` yet — they're included unconditionally so you
 don't have to remember to add them later when you do.
 
 **Why `JumpSystem` goes after both `PlatformerSystem` and
@@ -311,6 +312,50 @@ stay explicit calls you make yourself, not hidden system behavior:
   knockback source. For anything more specific (conditional damage,
   different amounts per hazard), call `damageEntity` directly from your
   own collision listener instead.
+
+## Weapons: melee (sword) and ranged (gun) combat
+
+```dart
+final player = spawnPlayer(world, x: 40, y: 40, input: input.state, maxHealth: 100);
+world.storeOf<Weapon>().set(player, Weapon(kind: WeaponKind.melee, damage: 15));
+installProjectileDamage(world); // needed for melee *and* ranged Weapons -- see below
+
+// Elsewhere, bind an action name (defaults to "attack") in your InputController:
+// InputController(bindings: {..., LogicalKeyboardKey.keyJ: 'attack'})
+```
+
+Attach a `Weapon` to any entity with a `Position` (an `InputState` too,
+if the attack should be player-controlled — an AI enemy can instead set
+`weapon.attackRequested = true` directly from its own logic).
+`AttackSystem` (part of `installPlatformerSystems`) reads the `"attack"`
+action every tick, cooldown-gates on `Weapon.cooldownSeconds`, and fires
+in the entity's facing direction (`PlatformerController.facingSign`,
+`1` with no controller):
+
+- **`WeaponKind.melee`** — spawns a *stationary* hitbox
+  (`Weapon.meleeRange` ahead of the attacker, `meleeRadius` wide) alive
+  for the short `meleeDurationSeconds` before disappearing — reads as
+  an instant swing.
+- **`WeaponKind.ranged`** — spawns a projectile moving at
+  `Weapon.projectileSpeed`, alive for `projectileLifetimeSeconds`.
+
+Both reuse `spawnProjectile`/`installProjectileDamage` under the hood
+(a melee hitbox is just a zero-velocity, short-lived projectile) — the
+same helpers a game can call directly for anything `Weapon` doesn't
+cover (a thrown grenade, a boss's telegraphed shot):
+
+- **`spawnProjectile(world, {x, y, vx, vy, damage, radius,
+  lifetimeSeconds, owner, atlasId, spriteRegion})`** — the "shoot one"
+  helper; `owner` excludes that entity from its own projectile's
+  damage. Movement comes from the ordinary `MovementSystem`, not
+  anything projectile-specific.
+- **`installProjectileDamage(world)`** — call once (e.g. from
+  `Scene.populate`) to wire "a `Projectile` hitting anything with
+  `Health` (other than its `owner`) deals damage and is destroyed" for
+  the whole world. Required for `Weapon` to actually deal damage on
+  hit — `AttackSystem` only spawns the hitbox/projectile itself,
+  matching this package's "damage is an explicit call, not automatic"
+  convention.
 
 ## Checkpoints and respawn
 

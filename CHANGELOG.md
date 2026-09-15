@@ -10,6 +10,14 @@ pubspec.yaml.
 
 ### New engine features (round 4)
 
+- Melee (sword) and ranged (gun) combat: a new `Weapon` component
+  (`WeaponKind.melee`/`ranged`, damage, cooldown, range/speed) plus
+  `AttackSystem`, which fires on an `"attack"` input action or a
+  directly-set `attackRequested` (for AI/touch-button use). Both kinds
+  reuse the already-shipped `spawnProjectile`/`installProjectileDamage`
+  — a melee swing is a zero-velocity, short-lived projectile positioned
+  ahead of the attacker, so no new hitbox/collision machinery was
+  needed.
 - Positional/spatial audio: `AudioManager.playPositionalSound` pans and
   attenuates a one-shot SFX by distance from a listener position (the
   camera, typically), via a new pure `positionalAudioParams` helper —

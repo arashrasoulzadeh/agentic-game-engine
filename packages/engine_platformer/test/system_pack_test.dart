@@ -33,6 +33,7 @@ void main() {
       'hitstun',
       'healthHud',
       'projectile',
+      'attack',
       'facing',
       'movementAnimation',
       'jumpAnimation',
@@ -58,6 +59,7 @@ void main() {
       'hitstun',
       'healthHud',
       'projectile',
+      'attack',
       'facing',
       'movementAnimation',
       'jumpAnimation',
@@ -83,6 +85,7 @@ void main() {
       'hitstun',
       'healthHud',
       'projectile',
+      'attack',
     ]);
   });
 

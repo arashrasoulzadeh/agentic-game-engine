@@ -1,6 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 
+import 'physics/attack_system.dart';
 import 'physics/dash_system.dart';
 import 'rendering/facing_system.dart';
 import 'physics/gravity_system.dart';
@@ -41,12 +42,17 @@ import 'physics/water_physics_system.dart';
 /// `HitstunSystem` (ticks down `PlatformerController.hitstunSeconds`,
 /// same reasoning), `HealthHudSystem` (syncs any `HudBar` wired up via
 /// `spawnHealthHudBar`/`HealthHudLink` — same "harmless if unused"
-/// reasoning), and `ProjectileSystem` (ages/expires `Projectile`s, same
-/// reasoning again). Damage/death/respawn themselves, and
-/// projectile-vs-target damage (`installProjectileDamage`), are helpers
-/// you call explicitly (`damageEntity`, `dealDamageOnTouch`,
-/// `respawnOnDeath`, `installProjectileDamage`), not part of this pack,
-/// so *when*/*what* takes damage stays visible in game code.
+/// reasoning), `ProjectileSystem` (ages/expires `Projectile`s, same
+/// reasoning again), and `AttackSystem` (fires any entity's `Weapon` on
+/// its `"attack"` action or a directly-set `Weapon.attackRequested` --
+/// harmless with no `Weapon` components in the world, same reasoning).
+/// Damage/death/respawn themselves, and projectile-vs-target damage
+/// (`installProjectileDamage`, needed for melee and ranged `Weapon`s
+/// since both spawn a `Projectile` under the hood -- see
+/// `AttackSystem`'s doc comment), are helpers you call explicitly
+/// (`damageEntity`, `dealDamageOnTouch`, `respawnOnDeath`,
+/// `installProjectileDamage`), not part of this pack, so *when*/*what*
+/// takes damage stays visible in game code.
 ///
 /// If you need a system not covered here (a custom input system, a
 /// score system, whatever your game needs), just call
@@ -81,6 +87,7 @@ void installPlatformerSystems(
   world.addSystem(HitstunSystem());
   world.addSystem(HealthHudSystem());
   world.addSystem(ProjectileSystem());
+  world.addSystem(AttackSystem());
   if (includeAnimation) {
     world.addSystem(FacingSystem());
     world.addSystem(MovementAnimationSystem());

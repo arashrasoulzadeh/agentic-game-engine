@@ -20,8 +20,10 @@ export 'src/logic/projectile.dart';
 export 'src/ui/hud_helpers.dart';
 export 'src/logic/pickup_helpers.dart';
 export 'src/logic/projectile_helpers.dart';
+export 'src/logic/weapon.dart';
 export 'src/spawn_helpers.dart';
 export 'src/system_pack.dart';
+export 'src/physics/attack_system.dart';
 export 'src/physics/dash_system.dart';
 export 'src/rendering/facing_system.dart';
 export 'src/physics/gravity_system.dart';
@@ -53,6 +55,7 @@ import 'src/rendering/jump_animation_set.dart';
 import 'src/physics/platform_body.dart';
 import 'src/physics/platformer_controller.dart';
 import 'src/logic/projectile.dart';
+import 'src/logic/weapon.dart';
 import 'src/physics/water_zone.dart';
 
 /// Registers this package's genre-specific components on [world],
@@ -125,5 +128,10 @@ void registerPlatformerComponents(World world) {
     'waterZone',
     (w) => w.toJson(),
     WaterZone.fromJson,
+  );
+  world.components.register<Weapon>(
+    'weapon',
+    (w) => w.toJson(),
+    Weapon.fromJson,
   );
 }
