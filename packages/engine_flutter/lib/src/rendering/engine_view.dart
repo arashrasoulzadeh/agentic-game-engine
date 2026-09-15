@@ -134,6 +134,27 @@ class EngineView extends StatefulWidget {
   /// e.g. print it every N frames, or send it to your own telemetry.
   final FrameStats? frameStats;
 
+  /// Extra margin (screen pixels, before `camera.zoom`) `_collectTileMapItems`
+  /// pads its visible-tile culling rect with on all 4 sides, beyond the
+  /// existing 1-tile safety margin — `96.0` by default. Exists for two
+  /// reasons: (1) a moving camera reveals tiles right at the viewport
+  /// edge exactly on the frame they'd otherwise pop in; a buffer keeps
+  /// them drawn (harmlessly, just off-screen) slightly before they're
+  /// needed. (2) it's what makes the *caching* below actually pay off —
+  /// a buffered range is recomputed only when the camera's real visible
+  /// rect would no longer fit inside the last-computed buffered one, so
+  /// normal-speed panning reuses the same cached tile range across many
+  /// frames instead of recomputing it every single one. The recompute,
+  /// when it does happen, also extends further in whichever direction
+  /// the camera is currently moving (its own real velocity, sampled
+  /// once per tick) — a small predictive look-ahead so a fast pan is
+  /// less likely to immediately outrun the buffer it just got. `0`
+  /// disables both the visual buffer and the caching (recomputes every
+  /// frame using just the existing 1-tile margin, the original
+  /// behavior). Real ingredients benchmarked together in
+  /// `engine_platformer/benchmark/render_pipeline_benchmark_test.dart`.
+  final double cullBufferPx;
+
   const EngineView({
     super.key,
     required this.world,
@@ -151,6 +172,7 @@ class EngineView extends StatefulWidget {
     this.dayNightCycle,
     this.maxFps,
     this.frameStats,
+    this.cullBufferPx = 96.0,
   });
 
   @override
@@ -182,6 +204,23 @@ class _EngineViewState extends State<EngineView>
   double _accumulator = 0;
   Map<EntityId, Position> _previousPositions = const {};
   double _interpolationAlpha = 1;
+
+  // Camera-velocity tracking (world units/sec) -- used only to give
+  // _collectTileMapItems's culling buffer a little predictive
+  // look-ahead in whichever direction the camera is actually moving
+  // (see EngineView.cullBufferPx's doc comment). Recomputed once per
+  // tick from how far camera.x/y actually moved since last tick, after
+  // cameraFollowEntity (if any) has already updated it this frame.
+  double? _lastCameraX;
+  double? _lastCameraY;
+  double _cameraVelocityX = 0;
+  double _cameraVelocityY = 0;
+
+  /// Per-`TileMap` cached, buffered visible-tile range -- same `Map`
+  /// instance reused every frame (like `_previousPositions` above), so
+  /// a fresh `_EnginePainter` each build can still read/update what the
+  /// previous frame computed. See `_collectTileMapItems`'s doc comment.
+  final Map<EntityId, _TileCullCache> _tileCullCache = {};
 
   static const _maxStepsPerFrame = 5;
 
@@ -302,6 +341,20 @@ class _EngineViewState extends State<EngineView>
       _frameStats.followedSpeed = null;
     }
 
+    // After camera.follow() above has settled this tick's real
+    // position -- so a followed player's own speed doesn't get
+    // double-counted as camera lag on top of its own motion.
+    if (dt > 0) {
+      final lastX = _lastCameraX;
+      final lastY = _lastCameraY;
+      if (lastX != null && lastY != null) {
+        _cameraVelocityX = (widget.camera.x - lastX) / dt;
+        _cameraVelocityY = (widget.camera.y - lastY) / dt;
+      }
+      _lastCameraX = widget.camera.x;
+      _lastCameraY = widget.camera.y;
+    }
+
     setState(() {});
   }
 
@@ -361,6 +414,10 @@ class _EngineViewState extends State<EngineView>
       dayNightCycle: widget.dayNightCycle,
       frameDtSeconds: _lastDt,
       frameStats: _frameStats,
+      cullBufferPx: widget.cullBufferPx,
+      cameraVelocityX: _cameraVelocityX,
+      cameraVelocityY: _cameraVelocityY,
+      tileCullCache: _tileCullCache,
     );
 
     Widget child = CustomPaint(painter: painter, size: Size.infinite);
@@ -468,6 +525,19 @@ class _EnginePainter extends CustomPainter {
   /// test) doesn't need to fabricate one just to satisfy this field.
   final FrameStats? frameStats;
 
+  /// See `EngineView.cullBufferPx`'s own doc comment.
+  final double cullBufferPx;
+
+  /// World units/sec, sampled once per tick by `_EngineViewState` — see
+  /// `EngineView.cullBufferPx`'s doc comment on the predictive
+  /// look-ahead these drive.
+  final double cameraVelocityX;
+  final double cameraVelocityY;
+
+  /// Same `Map` instance across every frame's fresh `_EnginePainter` —
+  /// see `EngineView.cullBufferPx`'s doc comment and `_TileCullCache`.
+  final Map<EntityId, _TileCullCache> tileCullCache;
+
   _EnginePainter({
     required this.world,
     required this.atlasRegistry,
@@ -480,7 +550,12 @@ class _EnginePainter extends CustomPainter {
     this.dayNightCycle,
     this.frameDtSeconds = 0,
     this.frameStats,
-  }) : super(repaint: null);
+    this.cullBufferPx = 96.0,
+    this.cameraVelocityX = 0,
+    this.cameraVelocityY = 0,
+    Map<EntityId, _TileCullCache>? tileCullCache,
+  })  : tileCullCache = tileCullCache ?? {},
+        super(repaint: null);
 
   /// [current]'s position blended with wherever that entity was just
   /// before the last fixed step, by [interpolationAlpha] — smooths
@@ -1753,21 +1828,65 @@ class _EnginePainter extends CustomPainter {
         // the viewport (the common case once a level has any real
         // size) would otherwise walk every single tile every frame
         // regardless of how few are visible. `screenToWorld` gives the
-        // world-space rect the viewport currently shows; converting
-        // that into tile-grid indices (with a 1-tile margin so a tile
-        // straddling the edge still gets drawn, and clamped to the
-        // map's actual bounds) turns an O(rows*cols) walk into
-        // O(visible tiles).
+        // world-space rect the viewport currently shows.
         final topLeftWorld = camera.screenToWorld(Offset.zero, size);
         final bottomRightWorld = camera.screenToWorld(Offset(size.width, size.height), size);
-        final minCol = (((topLeftWorld.dx - origin.x) / map.tileWidth).floor() - 1)
-            .clamp(0, map.cols - 1);
-        final maxCol = (((bottomRightWorld.dx - origin.x) / map.tileWidth).ceil() + 1)
-            .clamp(0, map.cols - 1);
-        final minRow = (((topLeftWorld.dy - origin.y) / map.tileHeight).floor() - 1)
-            .clamp(0, map.rows - 1);
-        final maxRow = (((bottomRightWorld.dy - origin.y) / map.tileHeight).ceil() + 1)
-            .clamp(0, map.rows - 1);
+        final realRect = Rect.fromPoints(topLeftWorld, bottomRightWorld);
+
+        // Reuse the last computed range outright when it's still valid
+        // -- same zoom, same map origin (a moving-platform TileMap
+        // would otherwise reuse a stale range), and the real visible
+        // rect still fits entirely inside the buffered rect that range
+        // was computed for. This is what turns "recompute the visible
+        // tile range every single frame" into "recompute it only when
+        // the camera's pan/zoom has actually outrun its buffer" --
+        // see EngineView.cullBufferPx's doc comment.
+        final cached = tileCullCache[mapEntity];
+        final int minCol, maxCol, minRow, maxRow;
+        if (cached != null &&
+            cached.zoom == camera.zoom &&
+            cached.originX == origin.x &&
+            cached.originY == origin.y &&
+            cached.bufferedWorldRect.left <= realRect.left &&
+            cached.bufferedWorldRect.top <= realRect.top &&
+            cached.bufferedWorldRect.right >= realRect.right &&
+            cached.bufferedWorldRect.bottom >= realRect.bottom) {
+          minCol = cached.minCol;
+          maxCol = cached.maxCol;
+          minRow = cached.minRow;
+          maxRow = cached.maxRow;
+        } else {
+          // World-space buffer -- cullBufferPx is a *screen*-pixel
+          // margin, so it's divided by zoom to stay a consistent
+          // on-screen size regardless of how zoomed in/out the camera
+          // is. Extended further in whichever direction the camera is
+          // currently moving (its real per-tick velocity) as a small
+          // predictive look-ahead, so a fast, sustained pan is less
+          // likely to immediately outrun the buffer it was just given.
+          final bufferWorld = cullBufferPx / camera.zoom;
+          const predictSeconds = 0.25;
+          final aheadX = (cameraVelocityX * predictSeconds).abs();
+          final aheadY = (cameraVelocityY * predictSeconds).abs();
+          final buffered = Rect.fromLTRB(
+            realRect.left - bufferWorld - (cameraVelocityX < 0 ? aheadX : 0),
+            realRect.top - bufferWorld - (cameraVelocityY < 0 ? aheadY : 0),
+            realRect.right + bufferWorld + (cameraVelocityX > 0 ? aheadX : 0),
+            realRect.bottom + bufferWorld + (cameraVelocityY > 0 ? aheadY : 0),
+          );
+          // Plus the original 1-tile safety margin, same reasoning as
+          // before this cache existed: a tile straddling the buffered
+          // rect's own edge should still get drawn.
+          minCol = (((buffered.left - origin.x) / map.tileWidth).floor() - 1)
+              .clamp(0, map.cols - 1);
+          maxCol = (((buffered.right - origin.x) / map.tileWidth).ceil() + 1)
+              .clamp(0, map.cols - 1);
+          minRow = (((buffered.top - origin.y) / map.tileHeight).floor() - 1)
+              .clamp(0, map.rows - 1);
+          maxRow = (((buffered.bottom - origin.y) / map.tileHeight).ceil() + 1)
+              .clamp(0, map.rows - 1);
+          tileCullCache[mapEntity] = _TileCullCache(
+              buffered, camera.zoom, origin.x, origin.y, minCol, maxCol, minRow, maxRow);
+        }
 
         // Resolved once per TileMap (not per tile) -- a missing/
         // not-yet-loaded atlas just means every tile in this map falls
@@ -1997,6 +2116,35 @@ class _DrawItem {
 /// — [clipPath] is computed once (raycasting, if the light casts
 /// shadows, included) and reused for both the brightness-reveal and
 /// color-tint passes.
+/// One `TileMap` entity's cached, buffered visible-tile range — see
+/// `EngineView.cullBufferPx`'s doc comment. [bufferedWorldRect] is the
+/// padded world-space rect this range was computed against; a later
+/// frame reuses [minCol]/[maxCol]/[minRow]/[maxRow] outright as long as
+/// its own real (unbuffered) visible rect still fits entirely inside
+/// [bufferedWorldRect] at the same [zoom] and map [origin] — recomputes
+/// (a fresh, re-buffered rect) the moment any of those stop holding.
+class _TileCullCache {
+  final Rect bufferedWorldRect;
+  final double zoom;
+  final double originX;
+  final double originY;
+  final int minCol;
+  final int maxCol;
+  final int minRow;
+  final int maxRow;
+
+  _TileCullCache(
+    this.bufferedWorldRect,
+    this.zoom,
+    this.originX,
+    this.originY,
+    this.minCol,
+    this.maxCol,
+    this.minRow,
+    this.maxRow,
+  );
+}
+
 class _LightRenderInfo {
   final Light2D light;
   final Offset screenPos;
