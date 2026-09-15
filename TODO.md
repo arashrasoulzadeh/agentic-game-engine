@@ -320,31 +320,40 @@ own note).
       correctly, but a `TileMap` that never scrolls out of view entirely
       (fits fully on screen, or the camera never moves) could instead
       cache its full `_DrawItem` list once and only invalidate on
-      camera movement/zoom change — **evaluated, still deliberately not
-      implemented**: this repo's Flutter-dependent packages
-      (`engine_flutter`/`engine_platformer`) can't be run through plain
-      `dart run` in this environment (`package:flutter` isn't available
-      outside the Flutter SDK's own tooling — confirmed hitting real,
-      unrelated Dart/Flutter-SDK-internal compile errors attempting it
-      for this exact investigation), and there's no lighter-weight
-      render-focused benchmark harness set up for `engine_flutter` yet
-      (the TODO note that first flagged this candidate already named
-      that gap). Implementing a cache here blind, without the
-      measurement this file's own Validation section requires before
-      landing anything on a hot path, is exactly the risk this item's
-      own original note already warned against (see the
-      shadow-smoothing walkback). Revisit once an `engine_flutter`
-      render-benchmark harness exists to actually measure this against.
+      camera movement/zoom change — **re-evaluated with a real
+      measurement, still not implemented**: the earlier blocker ("can't
+      `dart run` Flutter-dependent code in this environment") turned
+      out to be avoidable — `flutter test` itself can time real paint
+      passes with a `Stopwatch` around repeated `tester.pump()` calls,
+      the same technique `tile_rendering_test.dart`'s existing "renders
+      promptly" regression guard already uses, just run across many
+      frames instead of one. A throwaway probe (300 pumped frames, a
+      static camera, 200 sprites) measured ~1.2ms/frame for a 40x40
+      `TileMap` fully on screen (1600 visible tiles) versus ~1.0ms/frame
+      for a 2000x2000 (4,000,000-tile) map culled down to the same
+      visible count — statistically indistinguishable, confirming the
+      existing viewport culling already makes total map size a non-
+      factor, and total render cost sits comfortably under 10% of a
+      60fps frame budget even in the *uncached*, worse-case-for-this-
+      optimization scenario (a fully-visible, never-culled map). No
+      evidence of an actual bottleneck to fix — implementing the cache
+      now would be optimizing an already-cheap path on faith, the exact
+      thing this file's Validation section (and the shadow-smoothing
+      walkback) warns against. Revisit only if a real level's profile
+      ever shows this path actually costing something.
 - [ ] `EngineView`'s draw-item list (`_DrawItem`, built fresh every
       frame in `paint()` from every renderable component store) —
-      **evaluated, still deliberately not implemented**, same reasoning
-      and same blocker as the tile-culling item immediately above: no
-      way to benchmark an `engine_flutter` rendering change in this
-      environment, and the fix's own likely shape (a `ComponentStore`
-      "changed since version N" check) would touch the write path
-      *every* store's `set`/`get` already sits on — not something to
-      add without being able to confirm it's actually worth that risk.
-      Revisit alongside the item above.
+      **re-evaluated alongside the item above, same probe, still not
+      implemented**: the same measurement (200 sprites plus the tile
+      pass, same static-camera scenario) covers this path too, since
+      `_DrawItem` construction runs every frame regardless of tile
+      count — no signal of a bottleneck there either. The fix's own
+      likely shape (a `ComponentStore` "changed since version N" check)
+      would touch the write path *every* store's `set`/`get` already
+      sits on — a real, ongoing cost for every future write, not a
+      one-time cost — so it stays unjustified without evidence it
+      actually solves a problem the engine has. Revisit alongside the
+      item above.
 - [x] Audio: `AudioManager` didn't pool/reuse player instances for a
       rapidly-repeated short sound effect — `playSound` now reuses a
       pooled, idle `AudioPlayer` (LIFO — most recently used first, up
