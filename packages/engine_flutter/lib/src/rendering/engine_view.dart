@@ -13,6 +13,7 @@ import 'sprite.dart';
 // name, which `package:flutter/widgets.dart` (imported above) already
 // brings into scope.
 import 'animation_transition.dart';
+import 'frame_stats.dart';
 import 'gpu_light_shader.dart';
 import 'hud_bar.dart';
 import 'light2d.dart';
@@ -103,6 +104,18 @@ class EngineView extends StatefulWidget {
   /// display happens to run.
   final int? maxFps;
 
+  /// When set, filled in with real wall-clock per-phase timing
+  /// (`world.step`, paint, lighting) for the most recently rendered
+  /// frame — see `FrameStats`'s own doc comment for why this exists.
+  /// The timing itself (a couple of `Stopwatch` calls) always runs at
+  /// negligible cost regardless; `null` (default) just means nowhere
+  /// keeps the result *unless* [showFpsOverlay] is also on, which
+  /// needs it for its own readout and uses an internal instance in
+  /// that case. Pass your own instance to read/log/export the numbers
+  /// yourself instead of (or in addition to) the on-screen overlay —
+  /// e.g. print it every N frames, or send it to your own telemetry.
+  final FrameStats? frameStats;
+
   const EngineView({
     super.key,
     required this.world,
@@ -118,6 +131,7 @@ class EngineView extends StatefulWidget {
     this.fixedTimestepSeconds,
     this.ambientBrightness = 1.0,
     this.maxFps,
+    this.frameStats,
   });
 
   @override
@@ -136,6 +150,13 @@ class _EngineViewState extends State<EngineView>
   final List<double> _recentDts = [];
   double _lastDt = 0;
 
+  /// `widget.frameStats` when given, otherwise an internal instance
+  /// used only by [showFpsOverlay]'s own readout -- either way, one
+  /// stable object per `State` (not recreated each build), so a
+  /// `FrameStats` the painter writes into during `paint()` is still
+  /// the same instance the next `build()` reads from.
+  late FrameStats _frameStats;
+
   // Fixed-timestep bookkeeping -- unused (stays at defaults, at no
   // per-frame cost beyond a null check) when `fixedTimestepSeconds` is
   // null.
@@ -148,7 +169,16 @@ class _EngineViewState extends State<EngineView>
   @override
   void initState() {
     super.initState();
+    _frameStats = widget.frameStats ?? FrameStats();
     _ticker = createTicker(_onTick)..start();
+  }
+
+  @override
+  void didUpdateWidget(EngineView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.frameStats != oldWidget.frameStats) {
+      _frameStats = widget.frameStats ?? FrameStats();
+    }
   }
 
   void _onTick(Duration elapsed) {
@@ -184,6 +214,7 @@ class _EngineViewState extends State<EngineView>
     _lastDt = dt;
     if (widget.paused) return;
 
+    final stepStopwatch = Stopwatch()..start();
     final fixedDt = widget.fixedTimestepSeconds;
     if (fixedDt == null || fixedDt <= 0) {
       widget.world.step(dt);
@@ -205,6 +236,8 @@ class _EngineViewState extends State<EngineView>
       if (steps == _maxStepsPerFrame) _accumulator = 0;
       _interpolationAlpha = (_accumulator / fixedDt).clamp(0, 1);
     }
+    stepStopwatch.stop();
+    _frameStats.stepMs = stepStopwatch.elapsedMicroseconds / 1000;
     // Decays/recomputes any active Camera.shake() offset -- called
     // unconditionally (not just when cameraFollowEntity is set), since
     // a static camera still needs to shake on e.g. an explosion.
@@ -281,6 +314,7 @@ class _EngineViewState extends State<EngineView>
       'sprites: ${world.storeOf<Sprite>().length}',
       'particles: ${world.storeOf<Particle>().length}',
       if (_memoryBytes case final mem?) 'mem: ${(mem / (1024 * 1024)).toStringAsFixed(1)} MB',
+      _frameStats.toString(),
     ].join('\n');
   }
 
@@ -297,6 +331,7 @@ class _EngineViewState extends State<EngineView>
       interpolationAlpha: _interpolationAlpha,
       ambientBrightness: widget.ambientBrightness,
       frameDtSeconds: _lastDt,
+      frameStats: _frameStats,
     );
 
     Widget child = CustomPaint(painter: painter, size: Size.infinite);
@@ -368,6 +403,13 @@ class _EnginePainter extends CustomPainter {
   /// it's read, same as smoothing being off.
   final double frameDtSeconds;
 
+  /// Written into (not read from) during [paint] — see `FrameStats`'s
+  /// own doc comment. Never null in practice (`_EngineViewState`
+  /// always supplies at least its own internal instance), but kept
+  /// nullable so a painter built without one (e.g. directly in a
+  /// test) doesn't need to fabricate one just to satisfy this field.
+  final FrameStats? frameStats;
+
   _EnginePainter({
     required this.world,
     required this.atlasRegistry,
@@ -378,6 +420,7 @@ class _EnginePainter extends CustomPainter {
     this.interpolationAlpha = 1,
     this.ambientBrightness = 1.0,
     this.frameDtSeconds = 0,
+    this.frameStats,
   }) : super(repaint: null);
 
   /// [current]'s position blended with wherever that entity was just
@@ -397,6 +440,8 @@ class _EnginePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final paintStopwatch = Stopwatch()..start();
+    frameStats?.lightingMs = 0; // accumulated across every _drawLighting call this frame
     final positions = world.storeOf<Position>();
     final clipShapes = world.storeOf<ClipShape>();
     final reveals = <_ClipShapeInfo>[];
@@ -487,6 +532,8 @@ class _EnginePainter extends CustomPainter {
       }
       canvas.restore(); // composite the holed layer back
     }
+    paintStopwatch.stop();
+    frameStats?.paintMs = paintStopwatch.elapsedMicroseconds / 1000;
   }
 
   /// The screen-space `Path` for one `ClipShape` — a circle
@@ -613,6 +660,7 @@ class _EnginePainter extends CustomPainter {
     ComponentStore<Position> positions, {
     bool Function(Light2D)? lightFilter,
   }) {
+    final lightingStopwatch = Stopwatch()..start();
     final lights = world.storeOf<Light2D>();
     final fullRect = Offset.zero & size;
 
@@ -785,6 +833,9 @@ class _EnginePainter extends CustomPainter {
       final lightRect = Rect.fromCircle(center: info.screenPos, radius: info.screenRadius);
       canvas.drawRect(lightRect, Paint()..shader = shader..blendMode = BlendMode.plus);
     }
+    lightingStopwatch.stop();
+    final stats = frameStats;
+    if (stats != null) stats.lightingMs += lightingStopwatch.elapsedMicroseconds / 1000;
   }
 
   static const int _gpuMaxSegments = 32;

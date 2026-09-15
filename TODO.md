@@ -1089,30 +1089,65 @@ implementing.
 - [ ] FPS drops while the player is moving, near 120 (the configured
       `maxFps` cap) while standing still — reported live on the real
       Android device, on the CPU-only lighting path (`useGpuShadows`
-      off, per the item above). **Not yet diagnosed** — no profiling
-      tooling available from this environment for a real device, and
-      this environment's simulated key-press input can't reliably
-      sustain "held movement" the way a live player does (a known,
-      previously-documented limitation elsewhere in this project's
-      history), so the symptom couldn't be reproduced/profiled
-      directly here. Candidate causes, **not confirmed, don't assume
-      any of these without profiling first**: (1) the player's own
-      `Light2D` (`castsShadows: true`, `shadowRayCount: 40`, no
-      `cacheShadowGeometry`) re-runs its full CPU `raycastTileMap`
-      sweep every single frame regardless of movement — doesn't
-      obviously explain a moving-vs-standing split on its own, since
-      it recomputes either way, but is still the single most expensive
-      known per-frame cost in the current lighting path and worth
-      measuring first; (2) `MovementAnimationSystem` switching to the
-      `walk` clip changes which sprite region draws each frame, versus
-      a static `idle` frame while standing — `Canvas.drawAtlas`
-      batches by atlas+zIndex regardless, so this is a weak candidate,
-      but untested; (3) camera panning while following a moving player
-      changes `_collectTileMapItems`'s visible-tile window every
-      frame, versus an unchanging window while standing still — also
-      unconfirmed. Needs either real GPU/CPU profiling on the actual
-      device, or a way to sustain real held-movement input from this
-      environment, neither of which is available right now.
+      off, per the item above). **Still not diagnosed, but candidate
+      (3) below is now ruled out with real evidence**, and real
+      diagnostic tooling now exists to test the rest (see
+      `FrameStats`, its own new item further down) — no profiling
+      tooling was available for a real device before that, and this
+      environment's simulated key-press input can't reliably sustain
+      "held movement" the way a live player does (a known, previously-
+      documented limitation elsewhere in this project's history), so
+      the symptom still can't be reproduced by *this* session directly
+      — but the user can now read `EngineView.showFpsOverlay`'s new
+      `step:`/`paint:`/`light:` breakdown straight off their own screen
+      while actually moving, which is the real unblock. Candidate
+      causes: (1) the player's own `Light2D` (`castsShadows: true`,
+      `shadowRayCount: 40`, no `cacheShadowGeometry`) re-runs its full
+      CPU `raycastTileMap` sweep every single frame regardless of
+      movement — doesn't obviously explain a moving-vs-standing split
+      on its own, since it recomputes either way, but is still the
+      single most expensive known per-frame cost in the current
+      lighting path and worth measuring first, now directly readable
+      via the `light:` overlay line; (2) `MovementAnimationSystem`
+      switching to the `walk` clip changes which sprite region draws
+      each frame, versus a static `idle` frame while standing —
+      `Canvas.drawAtlas` batches by atlas+zIndex regardless, so this is
+      a weak candidate, still untested; (3) **ruled out** — camera
+      panning while following a moving player changes
+      `_collectTileMapItems`'s visible-tile window every frame, versus
+      an unchanging window while standing still: re-benchmarked with a
+      real `flutter test`+`Stopwatch` probe (this repo's own real
+      `main.level.json` geometry, 300 frames, a camera moving 2px/frame
+      vs. a static one) and the moving-camera case measured *faster*
+      (~482us/frame vs. ~775us/frame static, well within noise either
+      way) — no meaningful cost from camera panning itself. Next step:
+      read the new overlay's three numbers on-device while actually
+      walking vs. standing, and report which one(s) actually change.
+- [x] Real, on-device diagnostic timing tools — this environment has no
+      GPU/CPU profiler for a real device (the exact blocker the fps-
+      while-moving item above kept hitting), so the fix is to let the
+      device report its own timing instead of needing an external
+      profiler. New `FrameStats` (`engine_flutter`) carries real
+      wall-clock milliseconds for `world.step()`, the full `paint()`
+      pass, and `_drawLighting` alone (broken out separately since
+      lighting has been the direct subject of more than one live
+      performance investigation this project). `EngineView.showFpsOverlay`'s
+      existing debug readout now includes a `step:`/`paint:`/`light:`
+      line automatically; `EngineView.frameStats` also accepts a
+      caller-supplied instance for a game that wants to read/log/export
+      the numbers itself instead of (or alongside) the on-screen text.
+      One frame of lag (same as the existing fps counter already has —
+      a frame's own paint pass hasn't run yet at the point its widget
+      tree is built). Verified: 5 new tests (`FrameStats` defaults/
+      `toString`; `stepMs`/`paintMs` populate with real non-negative
+      timing after a frame; `lightingMs` stays exactly `0` when
+      `ambientBrightness` is `1.0` — the lighting pass never runs at
+      all in that case, confirming this isn't just always non-zero by
+      construction; `lightingMs` is genuinely written to once
+      `ambientBrightness` actually enables the pass; `showFpsOverlay`
+      shows the new lines even with no `frameStats` given, confirming
+      the internal-instance fallback works). Full `engine_flutter`
+      suite and `--fatal-infos` analyze clean.
 ## New engine features (round 2) — Platformer (`engine_platformer`)
 
 - [x] Ladders/climbing, conveyors, per-tile friction: `TileMap` gained
