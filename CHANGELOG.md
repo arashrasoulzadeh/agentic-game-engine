@@ -163,6 +163,19 @@ pubspec.yaml.
   (crates, pillars, closed doors — any solid prop not baked into the
   tile grid), taking whichever hit (tile or collider) is nearer, the
   same way multiple `TileMap`s already merge.
+- **Overlapping lights didn't add brightness**: new opt-in
+  `Light2D.overbrightIntensity` (`0` default) — a separate, plain-white
+  additive (`BlendMode.plus`) glow pass against the real scene colors,
+  independent of the brightness-reveal pass (which alone can only ever
+  erase darkness back to "fully revealed," never past it). Two
+  overlapping lights with this set now genuinely stack brighter.
+- **A light revealed open air, not just surfaces**: new
+  `Light2D.openAirFalloffScale` (`1.0` default) — for a shadow-casting
+  light, any ray that travels its *entire* radius unobstructed
+  (genuinely open air, e.g. sky above an outdoor level) is pulled in to
+  `radius * openAirFalloffScale`; a ray that hits a real surface short
+  of the radius is left untouched either way, so a light still fully
+  illuminates whatever it's actually next to.
 - **Shadow flicker while the light source moves**: root cause was the
   grid-raycast tie-break jitter (see above), already fixed there. A
   same-round attempt at an additional smoothing layer

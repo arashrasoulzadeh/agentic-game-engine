@@ -149,6 +149,22 @@ void main() {
       final restored = Light2D.fromJson(light.toJson());
       expect(restored.shadowRayCount, 16);
     });
+
+    test('overbrightIntensity defaults to 0 and round-trips through toJson/fromJson', () {
+      expect(Light2D().overbrightIntensity, 0);
+
+      final light = Light2D(overbrightIntensity: 0.2);
+      final restored = Light2D.fromJson(light.toJson());
+      expect(restored.overbrightIntensity, 0.2);
+    });
+
+    test('openAirFalloffScale defaults to 1.0 and round-trips through toJson/fromJson', () {
+      expect(Light2D().openAirFalloffScale, 1.0);
+
+      final light = Light2D(openAirFalloffScale: 0.4);
+      final restored = Light2D.fromJson(light.toJson());
+      expect(restored.openAirFalloffScale, 0.4);
+    });
   });
 
   group('LightFlickerSystem', () {
@@ -974,6 +990,219 @@ void main() {
     });
   });
 
+  group('Light2D.overbrightIntensity (overlapping lights stack brighter)', () {
+    testWidgets('off by default -- two overlapping lights read no brighter than one, '
+        'proving the darkness-reveal pass alone caps at "fully revealed"', (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final oneLight = world.spawn();
+      world.storeOf<Position>().set(oneLight, Position(0, 0));
+      world.storeOf<Light2D>().set(oneLight, Light2D(radius: 100, intensity: 1));
+
+      final boundaryKey = UniqueKey();
+      await tester.pumpWidget(MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            height: 300,
+            child: RepaintBoundary(
+              key: boundaryKey,
+              child: EngineView(
+                world: world,
+                atlasRegistry: AtlasRegistry(),
+                camera: Camera(),
+                ambientBrightness: 0.2,
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      final onePixel = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(200, 150))))!;
+
+      // A second, fully overlapping light at the exact same spot --
+      // the reveal pass alone (BlendMode.dstOut) can't push brightness
+      // past what one light already achieves, since alpha floors at 0.
+      final twoLights = world.spawn();
+      world.storeOf<Position>().set(twoLights, Position(0, 0));
+      world.storeOf<Light2D>().set(twoLights, Light2D(radius: 100, intensity: 1));
+      await tester.pump(const Duration(milliseconds: 16));
+      final twoPixel = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(200, 150))))!;
+
+      expect(twoPixel.r, closeTo(onePixel.r, 0.02),
+          reason: 'without overbrightIntensity, a second overlapping light adds no '
+              'extra brightness at all');
+    });
+
+    testWidgets('> 0: two overlapping lights genuinely stack brighter than either alone',
+        (tester) async {
+      final worldOne = World(width: 400, height: 300);
+      registerCoreComponents(worldOne);
+      registerFlutterComponents(worldOne);
+      final singleLight = worldOne.spawn();
+      worldOne.storeOf<Position>().set(singleLight, Position(0, 0));
+      worldOne.storeOf<Light2D>().set(
+          singleLight, Light2D(radius: 100, intensity: 1, overbrightIntensity: 0.3));
+
+      final singleKey = UniqueKey();
+      await tester.pumpWidget(MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            height: 300,
+            child: RepaintBoundary(
+              key: singleKey,
+              child: EngineView(
+                world: worldOne,
+                atlasRegistry: AtlasRegistry(),
+                camera: Camera(),
+                ambientBrightness: 0.2,
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      final singlePixel = (await tester.runAsync(
+          () => _pixelAt(tester, singleKey, const Offset(200, 150))))!;
+
+      final worldTwo = World(width: 400, height: 300);
+      registerCoreComponents(worldTwo);
+      registerFlutterComponents(worldTwo);
+      for (var i = 0; i < 2; i++) {
+        final id = worldTwo.spawn();
+        worldTwo.storeOf<Position>().set(id, Position(0, 0));
+        worldTwo.storeOf<Light2D>().set(
+            id, Light2D(radius: 100, intensity: 1, overbrightIntensity: 0.3));
+      }
+
+      final doubleKey = UniqueKey();
+      await tester.pumpWidget(MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            height: 300,
+            child: RepaintBoundary(
+              key: doubleKey,
+              child: EngineView(
+                world: worldTwo,
+                atlasRegistry: AtlasRegistry(),
+                camera: Camera(),
+                ambientBrightness: 0.2,
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      final doublePixel = (await tester.runAsync(
+          () => _pixelAt(tester, doubleKey, const Offset(200, 150))))!;
+
+      expect(doublePixel.r, greaterThan(singlePixel.r),
+          reason: 'two overlapping lights with overbrightIntensity set must read '
+              'brighter than either light manages alone -- real additive stacking, '
+              'not just "renders without crashing"');
+    });
+  });
+
+  group('Light2D.openAirFalloffScale (open-air rays pulled in, surface hits untouched)', () {
+    testWidgets(
+        'an unobstructed ray is pulled in to openAirFalloffScale * radius, while a ray '
+        'that hits a real solid tile is left at its raycast distance unchanged',
+        (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(
+              // Solid tile at col 2, row 2 (x=[40,60], y=[40,60]) --
+              // directly in the path of ray index 0 (always +x) from a
+              // light at (10,50), same convention the other shadow
+              // tests in this file use.
+              cols: 5,
+              rows: 5,
+              tileWidth: 20,
+              tileHeight: 20,
+              tiles: [
+                for (var row = 0; row < 5; row++)
+                  for (var col = 0; col < 5; col++) (col == 2 && row == 2) ? 1 : 0,
+              ],
+              solidTileIds: {1},
+            ),
+          );
+
+      final lightEntity = world.spawn();
+      world.storeOf<Position>().set(lightEntity, Position(10, 50));
+      final light = Light2D(
+        radius: 100,
+        castsShadows: true,
+        shadowRayCount: 4,
+        openAirFalloffScale: 0.3,
+        cacheShadowGeometry: true,
+      );
+      world.storeOf<Light2D>().set(lightEntity, light);
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // Ray 0 (+x, angle 0) hits the wall's near edge at x=40, distance
+      // 30 from the light -- unaffected by openAirFalloffScale since it
+      // didn't reach the full radius.
+      expect(light.cachedShadowDistances![0], closeTo(30, 0.5));
+      // Ray 2 (angle pi, -x direction, exactly opposite ray 0 with
+      // shadowRayCount 4) has nothing in its path at all -- genuinely
+      // open air, so it's pulled in to 100 * 0.3 = 30 instead of
+      // reaching the full 100 radius.
+      expect(light.cachedShadowDistances![2], closeTo(30, 0.5));
+    });
+
+    testWidgets('1.0 (default) leaves every unobstructed ray at the full radius, unchanged',
+        (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final lightEntity = world.spawn();
+      world.storeOf<Position>().set(lightEntity, Position(50, 50));
+      final light = Light2D(
+        radius: 100,
+        castsShadows: true,
+        shadowRayCount: 4,
+        cacheShadowGeometry: true,
+      );
+      world.storeOf<Light2D>().set(lightEntity, light);
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      for (final dist in light.cachedShadowDistances!) {
+        expect(dist, closeTo(100, 0.001));
+      }
+    });
+  });
+
   group('Light2D.cacheShadowGeometry', () {
     testWidgets('off by default -- cachedShadowDistances stays null across frames', (tester) async {
       final world = World(width: 400, height: 300);
@@ -1116,6 +1345,42 @@ void main() {
 
       expect(light.cachedShadowRadius, 150);
       expect(identical(light.cachedShadowDistances, firstDistances), isFalse);
+    });
+
+    testWidgets('on: invalidates when openAirFalloffScale changes, not just radius/position',
+        (tester) async {
+      final world = World(width: 400, height: 300);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final light = Light2D(radius: 100, castsShadows: true, cacheShadowGeometry: true);
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(50, 50));
+      world.storeOf<Light2D>().set(id, light);
+      world.storeOf<TileMap>().set(
+            world.spawn(),
+            TileMap(cols: 5, rows: 5, tileWidth: 20, tileHeight: 20, tiles: List.filled(25, 0)),
+          );
+
+      await tester.pumpWidget(MaterialApp(
+        home: EngineView(
+          world: world,
+          atlasRegistry: AtlasRegistry(),
+          camera: Camera(),
+          ambientBrightness: 0.2,
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      final firstDistances = light.cachedShadowDistances;
+
+      light.openAirFalloffScale = 0.5;
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(light.cachedShadowOpenAirFalloffScale, 0.5);
+      expect(identical(light.cachedShadowDistances, firstDistances), isFalse,
+          reason: 'a cached open-air-unaware sweep must not be reused once '
+              'openAirFalloffScale changes what those same raw hit distances should '
+              'become');
     });
   });
 

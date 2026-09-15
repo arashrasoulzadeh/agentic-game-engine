@@ -811,21 +811,65 @@ implementing.
       a tagged collider entirely off the ray path doesn't affect it.
       Full `engine_core`/`engine_flutter`/`engine_platformer` suites
       and `--fatal-infos` analyze clean across all three.
-- [ ] Overlapping lights don't add brightness: the reveal pass punches
-      holes in the darkness mask via `BlendMode.dstOut`, which only
-      ever *erases* alpha — a second light's circle overlapping a
-      first's can't push the shared region any brighter than whichever
-      single light's `intensity` erases the most, since alpha has
-      nowhere to go below `0`. Real light is additive: two torches
-      standing close together should visibly brighten the ground
-      between them beyond what either manages alone, and right now
-      that area looks identical to just the stronger of the two. Not
-      simply a matter of switching blend modes — reveal (dstOut,
-      operating on the darkness mask's alpha) and tint (`BlendMode.plus`,
-      operating on real scene color) are different passes for a
-      reason (see `_drawLighting`'s doc comment on ordering), so this
-      needs its own design pass, not a one-line blend-mode swap —
-      logged here rather than attempted inline.
+- [x] Overlapping lights don't add brightness: the reveal pass (`BlendMode.dstOut`
+      on the darkness mask's alpha) can only ever *erase*, so it floors
+      at "fully revealed" and can't push a shared region brighter than
+      one light alone already manages — not a one-line blend-mode swap,
+      since dstOut has to stay exactly what it is for the darkness
+      mask itself to work at all. Design chosen: a new, separate,
+      opt-in `Light2D.overbrightIntensity` (`0` default, no extra draw
+      cost when unset) — a third pass per light, plain white,
+      `BlendMode.plus` against the *real scene colors* (same
+      composited-after-the-mask ordering the color-tint pass already
+      established, and reuses its exact clip/mask-filter plumbing via
+      a new shared `_drawLightGradientCircle` helper — factored out
+      once a third pass would otherwise have triplicated that
+      save/clipPath/drawCircle/restore shape). Independent of
+      `colorArgb`: a light can overbrighten without recoloring, or tint
+      without overbrightening, or both. Because it's additive against
+      real scene colors rather than an alpha-erase of a mask, two
+      overlapping lights' glows genuinely stack — the exact effect
+      asked for. Verified: 2 new widget tests in
+      `light2d_test.dart` — with `overbrightIntensity` off (default),
+      two exactly-overlapping lights read no brighter than one, proving
+      the reveal pass alone really does cap there; with it set, two
+      overlapping lights read strictly brighter than either light
+      alone, a genuine before/after pixel comparison via
+      `RenderRepaintBoundary.toImage`, not just "renders without
+      crashing." Round-trip/default test included too. Full
+      `engine_flutter` suite and `--fatal-infos` analyze clean.
+- [x] A light reveals open air, not just surfaces — design chosen from
+      the two candidates logged here: a secondary falloff by distance
+      from the *nearest solid surface* was rejected as needing a real
+      per-pixel SDF (a meaningfully bigger, riskier feature); "just use
+      a smaller default radius" doesn't actually fix anything since a
+      big level's open volumes still dwarf any reasonable default. Went
+      with a targeted version of the surface-distance idea instead,
+      scoped to what a shadow-casting light *already computes*: new
+      `Light2D.openAirFalloffScale` (`1.0` default — every ray at its
+      full raycast distance, unchanged behavior). Only meaningful with
+      `castsShadows` on, since only then does `EngineView` have real
+      per-ray hit data to tell "this ray struck a surface" from "this
+      ray reached the full configured radius because nothing was
+      there." A ray that hit something short of the radius is left
+      exactly as raycast either way — a light still fully illuminates
+      whatever surface it's actually next to; only a ray that traveled
+      the *entire* radius unobstructed (genuinely open air) gets pulled
+      in to `radius * openAirFalloffScale` instead. Threaded into
+      `Light2D.cacheShadowGeometry`'s cache key too (a new
+      `cachedShadowOpenAirFalloffScale` field) — missed, this would
+      have let a stale, wrongly-scaled sweep survive a scale change.
+      Verified: 2 new `light2d_test.dart` tests reading
+      `cachedShadowDistances` directly (same technique the shadow-
+      smoothing tests already use) — a ray toward a real solid tile
+      keeps its raycast distance untouched by the scale, while a
+      genuinely open ray in the same sweep is pulled in to the expected
+      `radius * scale`; a separate test confirms the `1.0` default
+      leaves every open ray at the full radius. Plus a new
+      cache-invalidation regression test (changing
+      `openAirFalloffScale` alone invalidates a cached sweep, mirroring
+      the existing radius-change test). Full `engine_flutter` suite and
+      `--fatal-infos` analyze clean.
 - [x] Softer, more natural falloff + soft shadow edges: three attempts
       to get this right, in order — a flat 2-stop linear falloff
       (uniform dimming center-to-edge, read as artificial); a 3-stop

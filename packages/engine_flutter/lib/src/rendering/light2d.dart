@@ -174,8 +174,9 @@ class Light2D {
   /// reuses the previous frame's per-ray *world-space* hit distances
   /// whenever every input that could change them ([radius],
   /// [coneAngle], [coneDirection], [shadowRayCount],
-  /// [blockOneWayPlatforms], [castsShadows], and this light's own world
-  /// `Position`) is bit-for-bit identical to last frame's — the
+  /// [blockOneWayPlatforms], [castsShadows], [openAirFalloffScale], and
+  /// this light's own world `Position`) is bit-for-bit identical to
+  /// last frame's — the
   /// re-projection into *screen* space (so the polygon still correctly
   /// follows `Camera` panning/zooming even while cached) always happens
   /// fresh regardless. Invalidates immediately and completely the
@@ -195,6 +196,44 @@ class Light2D {
   /// geometry actually changes.
   bool cacheShadowGeometry;
 
+  /// Peak alpha (`0`–`1`) of an additional plain-white additive glow
+  /// drawn on top of the brightness reveal — `0` (default) draws
+  /// nothing extra, the original behavior. Distinct from [colorArgb]'s
+  /// tint (which recolors, and is skipped entirely while transparent):
+  /// the brightness-reveal pass alone can only ever erase darkness back
+  /// to the scene's *original* brightness (an alpha-erase floors at
+  /// "fully revealed," it can never go past it), so two overlapping
+  /// lights' reveals can't make the shared area brighter than either
+  /// manages alone — real light is additive, and two torches standing
+  /// close together should visibly brighten the ground between them
+  /// beyond what either does by itself. This pass exists purely to
+  /// supply that: like [colorArgb]'s tint, it uses `BlendMode.plus`
+  /// against the real scene colors underneath, so overlapping lights'
+  /// glows genuinely stack instead of capping at one light's own
+  /// strength. A typical value is small (`0.1`–`0.25`) — this is meant
+  /// to read as "brighter," not to wash out or recolor the scene the
+  /// way a strong [colorArgb] tint would.
+  double overbrightIntensity;
+
+  /// Scales down the reveal radius, but *only* along a shadow-casting
+  /// ray that travels its full length without hitting anything —
+  /// `1.0` (default) leaves every ray's real distance untouched, the
+  /// original behavior. A ray that *does* hit a solid surface short of
+  /// [radius] is never affected regardless of this value, so a light
+  /// still fully illuminates whatever surface/wall it's actually next
+  /// to — only genuinely open, unobstructed directions (open sky above
+  /// an outdoor level, say) get pulled in, addressing "a light reveals
+  /// open air, not just surfaces": real light does travel through open
+  /// air the same way it does anywhere else, but a game level's open
+  /// volumes are usually far bigger than what a torch would
+  /// realistically brighten, so an unshortened full-radius reveal into
+  /// empty space above the ground reads as an artificial floating disc
+  /// rather than a light actually illuminating something. Meaningless
+  /// unless [castsShadows] is also on — there's no per-ray hit data to
+  /// distinguish "open" from "surface-adjacent" without it, so a plain
+  /// circular light is unaffected regardless of this value.
+  double openAirFalloffScale;
+
   /// Internal render-side cache for [cacheShadowGeometry] — the world-
   /// space per-ray hit distances from the last time this light's shadow
   /// geometry was actually recomputed, plus every input that produced
@@ -213,6 +252,7 @@ class Light2D {
   int? cachedShadowRayCount;
   bool? cachedShadowBlockOneWay;
   bool? cachedShadowCastsShadows;
+  double? cachedShadowOpenAirFalloffScale;
 
   Light2D({
     this.radius = 100,
@@ -233,6 +273,8 @@ class Light2D {
     this.minZIndex,
     this.maxZIndex,
     this.cacheShadowGeometry = false,
+    this.overbrightIntensity = 0,
+    this.openAirFalloffScale = 1.0,
   })  : baseIntensity = baseIntensity ?? intensity,
         baseRadius = baseRadius ?? radius;
 
@@ -255,6 +297,8 @@ class Light2D {
         if (minZIndex != null) 'minZIndex': minZIndex,
         if (maxZIndex != null) 'maxZIndex': maxZIndex,
         'cacheShadowGeometry': cacheShadowGeometry,
+        'overbrightIntensity': overbrightIntensity,
+        'openAirFalloffScale': openAirFalloffScale,
       };
 
   factory Light2D.fromJson(Map<String, dynamic> json) => Light2D(
@@ -276,5 +320,7 @@ class Light2D {
         minZIndex: (json['minZIndex'] as num?)?.toInt(),
         maxZIndex: (json['maxZIndex'] as num?)?.toInt(),
         cacheShadowGeometry: json['cacheShadowGeometry'] as bool? ?? false,
+        overbrightIntensity: (json['overbrightIntensity'] as num?)?.toDouble() ?? 0,
+        openAirFalloffScale: (json['openAirFalloffScale'] as num?)?.toDouble() ?? 1.0,
       );
 }

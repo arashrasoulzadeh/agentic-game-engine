@@ -670,14 +670,7 @@ class _EnginePainter extends CustomPainter {
           _falloffStops,
         )
         ..maskFilter = _shadowEdgeMaskFilter(info);
-      if (info.clipPath == null) {
-        canvas.drawCircle(info.screenPos, info.screenRadius, revealPaint);
-      } else {
-        canvas.save();
-        canvas.clipPath(info.clipPath!);
-        canvas.drawCircle(info.screenPos, info.screenRadius, revealPaint);
-        canvas.restore();
-      }
+      _drawLightGradientCircle(canvas, info, revealPaint);
     }
 
     canvas.restore();
@@ -700,14 +693,51 @@ class _EnginePainter extends CustomPainter {
           _falloffStops,
         )
         ..maskFilter = _shadowEdgeMaskFilter(info);
-      if (info.clipPath == null) {
-        canvas.drawCircle(info.screenPos, info.screenRadius, tintPaint);
-      } else {
-        canvas.save();
-        canvas.clipPath(info.clipPath!);
-        canvas.drawCircle(info.screenPos, info.screenRadius, tintPaint);
-        canvas.restore();
-      }
+      _drawLightGradientCircle(canvas, info, tintPaint);
+    }
+
+    // Overbright glow: also additive (BlendMode.plus, same reasoning
+    // as the tint pass above -- needs the real scene colors
+    // underneath), but plain white and independent of colorArgb, so
+    // overlapping lights' glows genuinely stack past what the
+    // brightness-reveal pass alone can reach (that pass only ever
+    // erases darkness back to the scene's *original* brightness, which
+    // can't make an overlap area brighter than either light manages
+    // alone -- see Light2D.overbrightIntensity's doc comment). Skipped
+    // per-light whenever overbrightIntensity is 0 (the default), so a
+    // game that never sets it pays nothing extra.
+    for (final info in infos) {
+      final peak = info.light.overbrightIntensity.clamp(0.0, 1.0);
+      if (peak == 0) continue;
+
+      final overbrightPaint = Paint()
+        ..blendMode = BlendMode.plus
+        ..shader = ui.Gradient.radial(
+          info.screenPos,
+          info.screenRadius,
+          _falloffColors(Color.fromRGBO(255, 255, 255, peak)),
+          _falloffStops,
+        )
+        ..maskFilter = _shadowEdgeMaskFilter(info);
+      _drawLightGradientCircle(canvas, info, overbrightPaint);
+    }
+  }
+
+  /// Draws [paint] (already carrying its radial gradient/blend mode) as
+  /// a circle at [info]'s screen position/radius, clipped to
+  /// [info.clipPath] first when one exists (a shadow-casting/cone
+  /// light's visibility polygon) -- the exact same
+  /// save/clipPath/drawCircle/restore-or-not shape the reveal, tint,
+  /// and overbright passes all need, factored out so a third
+  /// (overbright) pass didn't triplicate it.
+  void _drawLightGradientCircle(Canvas canvas, _LightRenderInfo info, Paint paint) {
+    if (info.clipPath == null) {
+      canvas.drawCircle(info.screenPos, info.screenRadius, paint);
+    } else {
+      canvas.save();
+      canvas.clipPath(info.clipPath!);
+      canvas.drawCircle(info.screenPos, info.screenRadius, paint);
+      canvas.restore();
     }
   }
 
@@ -837,7 +867,8 @@ class _EnginePainter extends CustomPainter {
         light.cachedShadowConeDirection == light.coneDirection &&
         light.cachedShadowRayCount == rayCount &&
         light.cachedShadowBlockOneWay == light.blockOneWayPlatforms &&
-        light.cachedShadowCastsShadows == light.castsShadows;
+        light.cachedShadowCastsShadows == light.castsShadows &&
+        light.cachedShadowOpenAirFalloffScale == light.openAirFalloffScale;
 
     final List<double> rawDistances;
     if (cacheHit) {
@@ -846,10 +877,20 @@ class _EnginePainter extends CustomPainter {
       rawDistances = List<double>.filled(rayCount + 1, 0);
       for (var i = 0; i <= rayCount; i++) {
         final angle = startAngle + sweep * i / rayCount;
-        rawDistances[i] = light.castsShadows
-            ? _raycastLightDistance(
-                worldPos, angle, light.radius, light.blockOneWayPlatforms, lightEntity)
-            : light.radius;
+        if (!light.castsShadows) {
+          rawDistances[i] = light.radius;
+          continue;
+        }
+        final hitDist = _raycastLightDistance(
+            worldPos, angle, light.radius, light.blockOneWayPlatforms, lightEntity);
+        // A ray that reached the light's full radius without hitting
+        // anything is genuinely open air along that direction -- pull
+        // it in to openAirFalloffScale * radius instead. A ray that
+        // *did* hit a surface short of the radius is left exactly as
+        // raycast, so the light still fully reaches whatever it's
+        // actually illuminating.
+        rawDistances[i] =
+            hitDist >= light.radius ? light.radius * light.openAirFalloffScale : hitDist;
       }
       if (light.cacheShadowGeometry) {
         light.cachedShadowDistances = rawDistances;
@@ -861,6 +902,7 @@ class _EnginePainter extends CustomPainter {
         light.cachedShadowRayCount = rayCount;
         light.cachedShadowBlockOneWay = light.blockOneWayPlatforms;
         light.cachedShadowCastsShadows = light.castsShadows;
+        light.cachedShadowOpenAirFalloffScale = light.openAirFalloffScale;
       }
     }
 
