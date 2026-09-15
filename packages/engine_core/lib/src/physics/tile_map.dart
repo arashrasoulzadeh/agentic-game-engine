@@ -1,3 +1,5 @@
+import 'autotile.dart';
+
 /// A grid of tile ids (0 = empty) plus which ids are solid/one-way for
 /// collision — distinct from per-entity `PlatformBody` rectangles, since
 /// most 2D levels are authored as a tile grid rather than one entity
@@ -195,6 +197,84 @@ class TileMap {
   bool isSlopeUpRight(int col, int row) => slopeUpRightTileIds.contains(tileAt(col, row));
   bool isSlopeUpLeft(int col, int row) => slopeUpLeftTileIds.contains(tileAt(col, row));
   bool isLadder(int col, int row) => ladderTileIds.contains(tileAt(col, row));
+
+  /// Returns a new `TileMap` with every cell holding [baseTileId]
+  /// replaced by a synthetic per-neighbor-bitmask id (see
+  /// [autotileSyntheticId]) whose [regionByTileId] entry is
+  /// [autotileRegionName]`(regionPrefix, bitmask)` — so a designer
+  /// places one "wall" id everywhere and gets correct edge/corner
+  /// sprites automatically, instead of hand-placing 16 visually-distinct
+  /// tile ids. Resolved once, here, at authoring/load time — never
+  /// per-frame; the renderer's per-tile `regionByTileId[id]` lookup
+  /// (`EngineView._collectTileMapItems`) needs no change at all, since
+  /// every synthetic id is a normal tile id once this returns.
+  ///
+  /// [baseTileId] is treated as a wall for its own bitmask computation
+  /// (that's the whole point — same-type neighbors join up into a
+  /// contiguous wall shape) but [wallTileIds] can list other ids too,
+  /// for a level with multiple visually-different "wall" tile types
+  /// that should still connect to each other.
+  ///
+  /// Every `*TileIds` set (and `conveyorSpeedByTileId`/
+  /// `frictionByTileId`) [baseTileId] belonged to gets all 16 of its
+  /// synthetic variants added too, so collision/gameplay behavior is
+  /// completely unchanged by this purely-visual substitution — a solid
+  /// wall stays solid in every bitmask variant, not just bitmask 0.
+  TileMap withAutotile({
+    required int baseTileId,
+    required String regionPrefix,
+    Set<int>? wallTileIds,
+  }) {
+    final walls = wallTileIds ?? {baseTileId};
+    final newTiles = List<int>.from(tiles);
+    final usedBitmasks = <int>{};
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        if (tileAt(col, row) != baseTileId) continue;
+        final bitmask = autotileBitmask(this, col, row, walls);
+        usedBitmasks.add(bitmask);
+        newTiles[row * cols + col] = autotileSyntheticId(baseTileId, bitmask);
+      }
+    }
+
+    Set<int> withVariants(Set<int> ids) => ids.contains(baseTileId)
+        ? {...ids, for (final b in usedBitmasks) autotileSyntheticId(baseTileId, b)}
+        : ids;
+    Map<int, double> withVariantValues(Map<int, double> byId) {
+      final base = byId[baseTileId];
+      if (base == null) return byId;
+      return {
+        ...byId,
+        for (final b in usedBitmasks) autotileSyntheticId(baseTileId, b): base,
+      };
+    }
+
+    return TileMap(
+      cols: cols,
+      rows: rows,
+      tileWidth: tileWidth,
+      tileHeight: tileHeight,
+      tiles: newTiles,
+      solidTileIds: withVariants(solidTileIds),
+      oneWayTileIds: withVariants(oneWayTileIds),
+      slopeUpRightTileIds: withVariants(slopeUpRightTileIds),
+      slopeUpLeftTileIds: withVariants(slopeUpLeftTileIds),
+      ladderTileIds: withVariants(ladderTileIds),
+      conveyorSpeedByTileId: withVariantValues(conveyorSpeedByTileId),
+      frictionByTileId: withVariantValues(frictionByTileId),
+      atlasId: atlasId,
+      regionByTileId: {
+        ...regionByTileId,
+        for (final b in usedBitmasks)
+          autotileSyntheticId(baseTileId, b): autotileRegionName(regionPrefix, b),
+      },
+      zIndex: zIndex,
+      backgroundTiles: backgroundTiles,
+      foregroundTiles: foregroundTiles,
+      tileAnimations: tileAnimations,
+      tileAnimationFps: tileAnimationFps,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'cols': cols,

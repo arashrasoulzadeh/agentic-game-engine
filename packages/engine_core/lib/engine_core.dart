@@ -17,6 +17,7 @@ export 'src/physics/position.dart';
 export 'src/physics/pushable.dart';
 export 'src/ui/room_exit.dart';
 export 'src/physics/tile_animation_system.dart';
+export 'src/physics/autotile.dart';
 export 'src/physics/tile_map.dart';
 export 'src/ui/trigger_zone.dart';
 export 'src/rendering/tween.dart';

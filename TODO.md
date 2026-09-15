@@ -24,16 +24,6 @@ full why behind each change.
       repo's scope; the iOS Simulator control tool available in this
       environment is moot while the iOS build itself won't compile here
       regardless.
-- [ ] Audio: positional/spatial sound — pan/volume by distance from
-      camera for SFX. Performance: distance/pan calc is O(active
-      sounds), trivial next to render cost; only real risk is doing it
-      naively every frame for every sound source instead of only active
-      (playing) ones — gate on that from the start.
-- [ ] Tilemap auto-tiling — bitmask neighbor-aware tile selection so one
-      placed "wall" type resolves to correct edge/corner sprites.
-      Performance: must resolve at author/load time (or on edit), not
-      per-frame — this is tile *selection*, wholly orthogonal to the
-      existing per-frame tile-culling path, must not be added to it.
 - [ ] Save/load slots UI + versioning — multiple save slots, a schema-
       version field in `World.toJson()` output so old saves don't
       silently break after a content-schema change. Performance: only
