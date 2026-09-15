@@ -125,3 +125,68 @@ CI runs all three suites separately on every push — see
 Contributing to this repo (including as an AI agent)? Read
 [CLAUDE.md](CLAUDE.md) first — it covers the non-obvious constraints
 and working conventions this codebase relies on.
+
+## TODO: feature status
+
+A snapshot summary — see [TODO.md](TODO.md) for the live, detailed
+list and [CHANGELOG.md](CHANGELOG.md) for the full history behind
+every item below.
+
+### Done
+
+**Core (`engine_core`)** — ECS (`World`/`ComponentStore`/systems),
+spatial-hash collision, `TileMap` (+ `.tmx` import, slopes, ladders,
+conveyors, per-tile friction, multi-layer/animated tiles, auto-tiling),
+raycasting (tile + entity), A* pathfinding (binary-heap), deterministic
+RNG + replay/record, content DSL (`Level`) + hot-reload
+(`LevelHandle`), localization (`StringTable`), the agent-facing
+`WorldView`/`Behavior`/`AISystem` sandbox, particle system, tweening,
+triggers/pushables.
+
+**Rendering (`engine_flutter`)** — sprite atlases + `Canvas.drawAtlas`
+batching, z-index draw ordering, parallax backgrounds (tiled or
+viewport-fit), 9-slice UI panels, text (single/multi-line, world- or
+screen-space), 2D lighting (`Light2D`: soft falloff, color tint, real
+shadow casting, cone/flashlight, flicker, day/night ambient cycle,
+opt-in GPU-shader shadows), screen shake, cinematic camera, fixed-
+timestep + render interpolation, on-screen debug overlay
+(fps/tick/entity/sprite/particle counts, `showPerformanceOverlay`,
+`FrameStats.onSpike`).
+
+**Platformer (`engine_platformer`)** — gravity (+ asymmetric fast-
+fall), jump (coyote time, buffering, double/wall jump, wall slide,
+variable height, dash), tile/platform collision (incl. moving
+platforms, one-way, slopes), ledge grab/mantle, water/swimming
+physics, patrol/follow/avoidance AI, melee + ranged combat (`Weapon`/
+`AttackSystem`, `Projectile`), health/damage/knockback/hitstun,
+checkpoints + respawn, collectibles/inventory, boss-phase framework,
+HUD bars, movement-driven + crossfaded animation.
+
+**Input/audio/save** — keyboard + on-screen touch controls +
+gamepad (button/axis bindings), remappable controls (persisted),
+positional/spatial audio, pooled SFX playback, save/load with named
+slots + schema versioning + migration.
+
+**Tooling** — `game_agent` CLI (`create`/`upgrade`/`lint --render`/
+`lint --playable`/`pack-assets` with MaxRects bin-packing + multi-
+resolution `--scales`), a performance benchmark suite, 100% test
+coverage across all four packages.
+
+### Not done / in progress
+
+- **Publish to pub.dev** — prep complete (metadata, per-package
+  `CHANGELOG.md`s, dry-run validated); blocked on an interactive
+  `dart pub login` + `dart pub publish` run a human needs to do.
+- **Real-device verification** — extensively tested on Android;
+  orientation-lock and lifecycle pause/resume still unconfirmed, and
+  iOS is blocked by this project's sandbox environment (broken
+  CocoaPods), not the engine itself.
+- **`saveLayer`+`dstOut` ambient-lighting architecture** — works
+  correctly today but costs an offscreen composite every frame a
+  darkened scene renders; a shader-based single-pass rewrite would
+  avoid that structurally but is real cross-platform risk, not
+  started.
+- **GPU-shader shadow casting (`Light2D.useGpuShadows`)** — real
+  per-pixel-parallel shadows exist and are wired up, but a multi-light
+  oversaturation bug is only candidate-fixed, not yet confirmed on a
+  real device; stays off by default until it is.
