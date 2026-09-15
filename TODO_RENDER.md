@@ -35,9 +35,31 @@ ambient-lighting overlay (see [TODO.md](TODO.md)'s Performance
 section) is a separate, already-tracked cost specific to the lighting
 pass, not the same issue as this one.
 
-**Revisit later**: if a real, measured case ever shows this
-mattering (not a hypothesis — the same rule the GPU-shadow
-investigation already established for this codebase), worth exploring
-whether a bounded/partial approach makes sense for a specific
-sub-case (e.g. a mostly-static scene with a small HUD-only update),
-rather than a general dirty-rect system for the whole renderer.
+**Measured, not just reasoned about (2026-09-16)**: real
+`debugPrint('DIAG $frameStats')` output from `test_game`'s prison
+level, a genuine **release APK on a real Android device**
+(`SM S731B`), captured via `adb logcat` over ~25s of actual gameplay
+(camera panning, ~24 sprites, ~45-50 active particles, the full
+lighting pass all live):
+
+```
+DIAG frame: 8.34ms  step: 0.11ms  paint: 0.88ms  light: 0.11ms  ...
+DIAG frame: 8.28ms  step: 0.09ms  paint: 0.93ms  light: 0.10ms  ...
+DIAG frame: 8.32ms  step: 0.07ms  paint: 1.28ms  light: 0.19ms  ...
+DIAG frame: 8.34ms  step: 0.09ms  paint: 1.05ms  light: 0.33ms  ...
+```
+
+`paint` — the *entire* full-screen repaint this section is about,
+tiles/sprites/particles/lighting all included — consistently costs
+**0.85-1.3ms**, against an ~8.3ms total frame budget (this build runs
+capped near 120fps). That's ~10-16% of budget spent fully redrawing
+everything from scratch every tick, comfortably inside it, with
+`light` (the ambient/shadow pass — the actual tracked cost in
+`TODO.md`'s Performance section) a further ~0.1-0.3ms on top.
+
+**Conclusion**: this is not a bottleneck in this game, full stop —
+confirmed by measurement, not just the reasoning above. No dirty-rect
+work is justified here. Re-open only if a future scene profile (many
+more entities, a much larger visible tile area, etc.) shows `paint`
+itself becoming a real fraction of a frame that's actually over
+budget — not before.
