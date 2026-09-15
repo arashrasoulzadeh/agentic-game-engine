@@ -10,6 +10,7 @@ export 'src/ecs/replay_recorder.dart';
 export 'src/ai/ai_state.dart';
 export 'src/ui/button.dart';
 export 'src/physics/collider.dart';
+export 'src/rendering/day_night_cycle.dart';
 export 'src/rendering/particle.dart';
 export 'src/rendering/particle_emitter.dart';
 export 'src/physics/position.dart';

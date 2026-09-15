@@ -94,6 +94,17 @@ class EngineView extends StatefulWidget {
   /// deliberately doesn't do (no colored tint, no shadow casting).
   final double ambientBrightness;
 
+  /// When set, drives the ambient-darkness pass's brightness/tint from
+  /// a looping time-of-day clock and current weather instead of the
+  /// plain static [ambientBrightness] — see `DayNightCycle`'s own doc
+  /// comment (`engine_core`) for the brightness curve/tint it computes.
+  /// `advance(dt)` is called once per tick automatically, the same way
+  /// `camera.update(dt)` already is. `null` (default) leaves
+  /// [ambientBrightness] as the sole source of ambient darkness, at no
+  /// per-frame cost beyond one comparison — fully backward compatible.
+  /// When both are set, [ambientBrightness] is ignored in favor of this.
+  final DayNightCycle? dayNightCycle;
+
   /// Caps how often a tick (world step + repaint) actually runs, in
   /// frames per second — `null` (default) runs one tick per raw
   /// display callback, whatever the platform's actual refresh rate is
@@ -133,6 +144,7 @@ class EngineView extends StatefulWidget {
     this.onWorldTap,
     this.fixedTimestepSeconds,
     this.ambientBrightness = 1.0,
+    this.dayNightCycle,
     this.maxFps,
     this.frameStats,
   });
@@ -249,6 +261,7 @@ class _EngineViewState extends State<EngineView>
     // unconditionally (not just when cameraFollowEntity is set), since
     // a static camera still needs to shake on e.g. an explosion.
     widget.camera.update(dt);
+    widget.dayNightCycle?.advance(dt);
 
     if (widget.showFpsOverlay) {
       _recentDts.add(dt);
@@ -341,6 +354,7 @@ class _EngineViewState extends State<EngineView>
       previousPositions: _previousPositions,
       interpolationAlpha: _interpolationAlpha,
       ambientBrightness: widget.ambientBrightness,
+      dayNightCycle: widget.dayNightCycle,
       frameDtSeconds: _lastDt,
       frameStats: _frameStats,
     );
@@ -406,6 +420,21 @@ class _EnginePainter extends CustomPainter {
   final double interpolationAlpha;
   final double ambientBrightness;
 
+  /// When set, overrides [ambientBrightness]/a plain black overlay with
+  /// this clock's computed brightness and ARGB tint — see
+  /// `EngineView.dayNightCycle`'s own doc comment.
+  final DayNightCycle? dayNightCycle;
+
+  /// [dayNightCycle]'s computed brightness when set, else the plain
+  /// static [ambientBrightness] — what every ambient-darkness site below
+  /// should actually read.
+  double get _effectiveAmbientBrightness => dayNightCycle?.ambientBrightness ?? ambientBrightness;
+
+  /// [dayNightCycle]'s computed tint when set, else plain black (`0xFF000000`)
+  /// — matches the overlay's pre-`DayNightCycle` behavior exactly when no
+  /// cycle is given, so passing only [ambientBrightness] stays unchanged.
+  int get _effectiveAmbientColorArgb => dayNightCycle?.ambientColorArgb ?? 0xFF000000;
+
   /// Real wall-clock seconds since the last rendered frame — used only
   /// to advance `Light2D.shadowSmoothingSeconds`' exponential smoothing
   /// at the actual render frame rate (not the simulation's fixed/
@@ -430,6 +459,7 @@ class _EnginePainter extends CustomPainter {
     this.previousPositions = const {},
     this.interpolationAlpha = 1,
     this.ambientBrightness = 1.0,
+    this.dayNightCycle,
     this.frameDtSeconds = 0,
     this.frameStats,
   }) : super(repaint: null);
@@ -511,7 +541,7 @@ class _EnginePainter extends CustomPainter {
       return byZ != 0 ? byZ : a.order.compareTo(b.order);
     });
 
-    if (ambientBrightness < 1.0) {
+    if (_effectiveAmbientBrightness < 1.0) {
       _paintZBanded(canvas, size, positions, items);
     } else {
       for (final item in items) {
@@ -716,7 +746,9 @@ class _EnginePainter extends CustomPainter {
     );
     canvas.drawRect(
       fullRect,
-      Paint()..color = Color.fromRGBO(0, 0, 0, (1 - ambientBrightness).clamp(0, 1)),
+      Paint()..color = Color(_effectiveAmbientColorArgb).withValues(
+        alpha: (1 - _effectiveAmbientBrightness).clamp(0, 1),
+      ),
     );
 
     for (final info in infos) {
