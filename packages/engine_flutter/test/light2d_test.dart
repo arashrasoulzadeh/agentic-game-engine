@@ -1486,6 +1486,12 @@ void main() {
       expect(_TestScene().ambientBrightness, isNull);
     });
   });
+
+  group('Scene.dayNightCycle override', () {
+    test('Scene defaults to null (no time-of-day/weather lighting)', () {
+      expect(_TestScene().dayNightCycle, isNull);
+    });
+  });
 }
 
 class _TestScene extends Scene {

@@ -263,6 +263,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           showFpsOverlay: widget.game.config.showFpsOverlay,
           showColliderDebug: widget.game.config.showColliderDebug,
           ambientBrightness: loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness,
+          dayNightCycle: loaded.scene.dayNightCycle,
           maxFps: widget.game.config.maxFps,
           frameStats: widget.game.frameStats,
           // No taps while an overlay is up -- it alone should be

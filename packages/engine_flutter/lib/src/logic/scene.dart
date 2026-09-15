@@ -74,6 +74,17 @@ abstract class Scene {
   /// no way to be "off" for one specific scene.
   double? get ambientBrightness => null;
 
+  /// Drives `EngineView.dayNightCycle` for just this scene — `null`
+  /// (default) means "no time-of-day/weather lighting," identical to
+  /// how this engine behaved before `DayNightCycle` existed. A
+  /// gameplay scene that wants a living, cyclical sky (unlike the
+  /// fixed, scene-authored [ambientBrightness] override above) returns
+  /// its own `DayNightCycle` instance here — `EngineView` advances it
+  /// once per tick automatically. A menu/HUD-only scene typically
+  /// leaves this `null` for the same reason it overrides
+  /// [ambientBrightness] to `1.0` instead of inheriting one.
+  DayNightCycle? get dayNightCycle => null;
+
   /// Called on every tap/click with its position already converted to
   /// world coordinates (see `Camera.screenToWorld`) — how an ECS menu
   /// (`Button`-tagged entities) or an in-world tap target (a door)

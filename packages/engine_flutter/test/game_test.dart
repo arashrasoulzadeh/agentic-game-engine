@@ -62,6 +62,23 @@ class _FrameStatsGame extends _TestGame {
   FrameStats get frameStats => stats;
 }
 
+class _DayNightScene extends Scene {
+  final DayNightCycle cycle = DayNightCycle(hour: 2);
+
+  @override
+  Future<void> populate(World world, SceneController scenes, GameState state) async {}
+
+  @override
+  DayNightCycle? get dayNightCycle => cycle;
+}
+
+class _DayNightGame extends _TestGame {
+  final _DayNightScene scene = _DayNightScene();
+
+  @override
+  Scene createInitialScene() => scene;
+}
+
 void main() {
   testWidgets('Game.onPause/onResume default to no-ops', (tester) async {
     final game = _DefaultCallbacksGame();
@@ -109,6 +126,20 @@ void main() {
         reason: 'the exact same instance returned by frameStats was passed into '
             'EngineView and actually written to by a real rendered frame');
     expect(game.stats.paintMs, greaterThanOrEqualTo(0));
+  });
+
+  testWidgets("GameRunner advances a Scene's own DayNightCycle every frame",
+      (tester) async {
+    final game = _DayNightGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    final engineView = tester.widget<EngineView>(find.byType(EngineView));
+    expect(identical(engineView.dayNightCycle, game.scene.cycle), isTrue,
+        reason: 'the exact same instance the Scene returns was passed into EngineView, '
+            'not a copy -- so a game reading scene.dayNightCycle back later sees the '
+            'live-advanced value');
   });
 
   testWidgets('GameRunner loads the game and renders EngineView', (tester) async {
