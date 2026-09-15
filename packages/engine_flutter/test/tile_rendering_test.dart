@@ -249,6 +249,140 @@ void main() {
     },
   );
 
+  group('EngineView.cullBufferPx (buffered/cached tile culling)', () {
+    // Flat-color fallback for a solid tile with no atlasId -- distinct
+    // from the default black backgroundColor, so "did this cell draw a
+    // tile at all" is a plain non-black pixel check.
+    const tileFallbackR = 0x4A / 255;
+
+    Future<World> buildWorld() async {
+      final world = World(width: 4000, height: 100);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+            mapEntity,
+            TileMap(
+              cols: 100,
+              rows: 1,
+              tileWidth: 20,
+              tileHeight: 20,
+              tiles: List.filled(100, 1),
+              solidTileIds: {1},
+            ),
+          );
+      return world;
+    }
+
+    testWidgets(
+        'a small pan (within cullBufferPx) reveals a newly-visible tile correctly, '
+        'proving the cached buffered range still covers it', (tester) async {
+      final world = await buildWorld();
+      final camera = Camera(x: 300);
+      final boundaryKey = UniqueKey();
+      await tester.pumpWidget(MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            height: 300,
+            child: RepaintBoundary(
+              key: boundaryKey,
+              child: EngineView(world: world, atlasRegistry: AtlasRegistry(), camera: camera),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+      // Camera x=300, viewport 400 wide -> visible world x is [100,500).
+      // World x=520 (tile col 26) sits just outside the raw view but
+      // well within the default 96px buffer -- already cached, just not
+      // drawn on screen yet at this camera position.
+
+      // Pan by 40 world units (well under the 96px buffer) -- the real
+      // visible rect [140,540) still fits inside the buffered rect
+      // cached last frame, so the cache is reused outright.
+      camera.x = 340;
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // World x=520 -> screen x = (520-340)*1 + 200 = 380; world y=0 ->
+      // screen y = 150 (centered, 100-tall viewport... actually camera
+      // centers vertically on y=0 by default with a 300-tall viewport,
+      // so world y=10 (tile center) -> screen y=150+10=160).
+      final pixel = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(380, 160))))!;
+      expect(pixel.r, closeTo(tileFallbackR, 0.02),
+          reason: 'tile col 26 is now on screen after a small pan, and must still be '
+              'drawn correctly even though the cached buffered range (from before the '
+              'pan) was reused rather than recomputed');
+    });
+
+    testWidgets(
+        'a large jump (far beyond cullBufferPx) still correctly recomputes and draws '
+        'the newly-visible tiles -- no stale/empty range left over', (tester) async {
+      final world = await buildWorld();
+      final camera = Camera(x: 300);
+      final boundaryKey = UniqueKey();
+      await tester.pumpWidget(MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            height: 300,
+            child: RepaintBoundary(
+              key: boundaryKey,
+              child: EngineView(world: world, atlasRegistry: AtlasRegistry(), camera: camera),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // Jump far past the buffered range entirely (tile col 90, world
+      // x=1800-1820, nowhere near the original [100,500]-ish cached
+      // range) -- the cache must be invalidated and recomputed, not
+      // reused (which would incorrectly leave this area undrawn).
+      camera.x = 1800;
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // World x=1810 -> screen x = (1810-1800)*1+200 = 210.
+      final pixel = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(210, 160))))!;
+      expect(pixel.r, closeTo(tileFallbackR, 0.02),
+          reason: 'tile col 90 must draw correctly after a large camera jump -- proves '
+              'the cache was invalidated and recomputed, not incorrectly reused');
+    });
+
+    testWidgets('cullBufferPx: 0 still renders correctly (buffer/cache fully disabled)',
+        (tester) async {
+      final world = await buildWorld();
+      final boundaryKey = UniqueKey();
+      await tester.pumpWidget(MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            height: 300,
+            child: RepaintBoundary(
+              key: boundaryKey,
+              child: EngineView(
+                world: world,
+                atlasRegistry: AtlasRegistry(),
+                camera: Camera(x: 300),
+                cullBufferPx: 0,
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // World x=300 (tile col 15) is dead center of the viewport --
+      // must still draw with no buffer at all.
+      final pixel = (await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(200, 160))))!;
+      expect(pixel.r, closeTo(tileFallbackR, 0.02));
+    });
+  });
+
   testWidgets(
       'backgroundTiles draws under the main layer -- a background-only cell shows its '
       'texture, and a cell with both layers shows the main (foreground of the two) '

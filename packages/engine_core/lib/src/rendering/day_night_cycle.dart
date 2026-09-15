@@ -72,11 +72,34 @@ class DayNightCycle {
     return timeOfDayBrightness * multiplier;
   }
 
-  /// ARGB tint for the ambient wash -- warm orange at dawn/dusk, deep
+  /// ARGB tint for the ambient wash -- warm amber at dawn/dusk, deep
   /// blue at night, neutral white (no visible tint) at midday, then
   /// further desaturated toward grey/blue-grey by [weather].
+  ///
+  /// [_colorStops] hold pure *hues* (a dawn/dusk stop can be a full-
+  /// brightness amber, not a hand-darkened one) -- this getter scales
+  /// that hue's own magnitude toward black by [timeOfDayBrightness]
+  /// before anything else touches it. That scaling is what keeps color
+  /// and brightness from ever desyncing: without it, a hue stop timed
+  /// independently of the brightness curve could still read as *bright*
+  /// at an hour where the ambient overlay's alpha is already high (very
+  /// dark) -- e.g. hour 19 sits only halfway through the 18-22 dusk
+  /// *color* ramp (still ~50% white) while the *brightness* ramp is
+  /// already well past its own halfway point, so the resulting overlay
+  /// was a fairly bright warm wash composited at high alpha. On an
+  /// unlit background that wash could end up visibly *brighter* than an
+  /// area a light had actually revealed back to the scene's true (but
+  /// comparatively dim) colors -- a real on-screen report of a player
+  /// light that appeared to darken the scene relative to its unlit
+  /// surroundings, caught by a real `EngineView` pixel-sampling test
+  /// (`engine_flutter`'s `day_night_cycle_view_test.dart`). Scaling by
+  /// [timeOfDayBrightness] instead means the tint can never be brighter
+  /// than "how lit this hour already is," so it can't have this
+  /// inversion regardless of exactly how the hue stops happen to be
+  /// timed.
   int get ambientColorArgb {
-    final timeColor = _lerpColorStops(hour, _colorStops);
+    final hue = _lerpColorStops(hour, _colorStops);
+    final timeColor = _lerpColor(0xFF000000, hue, timeOfDayBrightness.clamp(0, 1));
     final weatherTarget = switch (weather) {
       Weather.clear => null,
       Weather.overcast => 0xFF8A8A8A,
@@ -102,15 +125,21 @@ class DayNightCycle {
     (24, 0.18),
   ];
 
+  // Pure hues -- a full-brightness amber/blue is fine here even though
+  // they represent dawn/dusk/night, because [ambientColorArgb] always
+  // scales whatever this resolves to by [timeOfDayBrightness] before
+  // using it. See that getter's own doc comment for why the scaling
+  // (not hand-picking already-dark stop colors) is what actually keeps
+  // color and brightness from desyncing.
   static const _colorStops = <(double, int)>[
-    (0, 0xFF1A2340), // deep night blue
-    (5, 0xFF1A2340),
-    (6.5, 0xFFFF9E57), // dawn orange
+    (0, 0xFF3A5580), // night -- moonlight blue hue
+    (5, 0xFF3A5580),
+    (6.5, 0xFFFFAA55), // dawn -- warm amber hue
     (8, 0xFFFFFFFF), // full daylight, no tint
     (18, 0xFFFFFFFF),
-    (20, 0xFFFF9E57), // dusk orange
-    (22, 0xFF1A2340),
-    (24, 0xFF1A2340),
+    (20, 0xFFFFAA55), // dusk -- same warm amber hue
+    (22, 0xFF3A5580),
+    (24, 0xFF3A5580),
   ];
 
   static double _lerp(double a, double b, double t) => a + (b - a) * t;
