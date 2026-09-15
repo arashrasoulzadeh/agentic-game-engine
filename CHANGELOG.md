@@ -10,6 +10,12 @@ pubspec.yaml.
 
 ### New engine features (round 4)
 
+- `Gravity.fallMultiplier`: an extra gravity multiplier `GravitySystem`
+  applies only while an entity is already falling (`Velocity.y > 0`),
+  independent of `Gravity.scale` (which speeds up rise and fall
+  equally, changing jump height/reach too). The standard "floaty rise,
+  snappy fall" platformer feel — `1` (default) is no asymmetry,
+  identical to every jump before this field existed.
 - `ParallaxLayer.fitHeight`: stretches a background region to exactly
   the viewport's height instead of native size (optionally tiled).
   Existing tiling (`tileY`) only looks right for art authored as a

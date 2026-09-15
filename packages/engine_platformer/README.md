@@ -163,6 +163,12 @@ controller.ledgeGrabEnabled = true;      // LedgeGrabSystem: grab a wall's top e
 - **Jump cut** (`jumpCutMultiplier`) — a one-shot `Velocity.y` clamp
   applied the tick the jump button is released while still ascending,
   for variable jump height from a single input.
+- **Asymmetric gravity / fast fall** (`Gravity.fallMultiplier`, `1` by
+  default — no asymmetry) — multiplies gravity on top of `Gravity.scale`
+  only while already falling (`Velocity.y > 0`), the standard "floaty
+  rise, snappy fall" platformer feel without changing jump height/reach
+  (which `Gravity.scale` alone would, since it applies equally to both):
+  `world.storeOf<Gravity>().get(player)!.fallMultiplier = 1.6;`.
 - **Dash** (`dashSpeed`/`dashDurationSeconds`, plus
   `dashRequested`/`DashSystem`) — one dash per ground contact by
   default; set `dashRequested = true` from your own input code (or use
