@@ -261,9 +261,10 @@ class Light2D {
   /// light (so `ambientBrightness` darkness is still genuinely pushed
   /// back the way every other light does), but as a plain circle/cone,
   /// not a duplicated raycast sweep of its own; the GPU pass then
-  /// draws the real, shadow-shaped light additively (`BlendMode.plus`
-  /// against the real scene, the same composition
-  /// `overbrightIntensity` uses) on top of that plain reveal. This is
+  /// draws the real, shadow-shaped light additively (`BlendMode.screen`
+  /// against the real scene — bounded, unlike the `BlendMode.plus`
+  /// `overbrightIntensity` uses, see the **KNOWN BUG** note below for
+  /// why) on top of that plain reveal. This is
   /// what makes several simultaneous shadow-casting lights affordable
   /// where the CPU sweep starts costing real frame time — see
   /// `light_shadow.frag`'s own doc comment for the technique and why
@@ -274,28 +275,32 @@ class Light2D {
   /// compositing on the GPU too is a larger, separate undertaking).
   /// Meaningless unless [castsShadows] is also on.
   ///
-  /// **KNOWN BUG, NOT YET FIXED — do not rely on this.** Verified
-  /// correct with a single light in a browser test environment, but a
-  /// real, reproducible rendering bug (an oversaturated/blown-out
-  /// render) appears once multiple lights use this simultaneously —
-  /// confirmed on a **real Android device with a genuine release APK**
-  /// (no dev server involved), so it is not a test-environment
-  /// artifact. An earlier, similar-looking failure in a dev-server
-  /// browser session *was* traced to a stale dev-server reload and
-  /// wrongly assumed to be the whole story — it wasn't; see TODO.md's
-  /// "GPU-shader shadow casting" entry for the full history before
-  /// touching this again, so the same false lead doesn't get retraced.
-  /// Root cause not yet confirmed on-device, but TODO.md's entry also
-  /// records a concrete, mechanistically-explained hypothesis found via
-  /// code review (not yet device-verified): `light_shadow.frag`'s
-  /// `falloff()` is flat at full strength out to 60% of the light's
-  /// radius, so an untinted light draws a fully opaque white disc over
-  /// that inner 60% via unbounded `BlendMode.plus` — two overlapping
-  /// plateaus alone can saturate their overlap to solid white, no NaN
-  /// or cone-light involvement required. Read TODO.md before acting on
-  /// this — it explains why this still needs real device confirmation
-  /// rather than a blind shader edit. `test_game` (this repo's own
-  /// sample) does not enable this for exactly that reason.
+  /// **KNOWN BUG, NOT YET CONFIRMED FIXED — do not rely on this.**
+  /// Verified correct with a single light in a browser test
+  /// environment, but a real, reproducible rendering bug (an
+  /// oversaturated/blown-out render) appeared once multiple lights used
+  /// this simultaneously — confirmed on a **real Android device with a
+  /// genuine release APK** (no dev server involved), so it wasn't a
+  /// test-environment artifact. An earlier, similar-looking failure in
+  /// a dev-server browser session *was* traced to a stale dev-server
+  /// reload and wrongly assumed to be the whole story — it wasn't; see
+  /// TODO.md's "GPU-shader shadow casting" entry for the full history
+  /// before touching this again, so the same false lead doesn't get
+  /// retraced. A concrete, mechanistically-explained hypothesis was
+  /// found via code review: `light_shadow.frag`'s `falloff()` is flat
+  /// at full strength out to 60% of the light's radius, so an untinted
+  /// light drew a fully opaque white disc over that inner 60%; combined
+  /// with the unbounded `BlendMode.plus` this pass used to draw with
+  /// (`src + dst`, clamped only *after* summing), two overlapping
+  /// plateaus alone could saturate their overlap to solid white, no NaN
+  /// or cone-light involvement required. This pass now uses
+  /// `BlendMode.screen` instead (`src + dst - src*dst`, mathematically
+  /// bounded to never exceed full white regardless of how many lights'
+  /// draws overlap) as the candidate fix — **implemented but not yet
+  /// verified on a real device**, so this field still defaults to
+  /// `false` and `test_game` (this repo's own sample) still doesn't
+  /// enable it. Read TODO.md before flipping this on anywhere — it
+  /// explains exactly what still needs confirming.
   bool useGpuShadows;
 
   /// Internal render-side cache for [cacheShadowGeometry] — the world-

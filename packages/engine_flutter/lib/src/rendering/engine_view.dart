@@ -1018,6 +1018,22 @@ class _EnginePainter extends CustomPainter {
     // semantics. Skipped per-light whenever useGpuShadows/castsShadows
     // isn't set, and skipped entirely for a frame where the shader
     // hasn't finished its one-time async compile yet.
+    //
+    // Uses BlendMode.screen (bounded: src + dst - src*dst, mathematically
+    // can never exceed full white no matter how many lights' draws
+    // stack) rather than BlendMode.plus (unbounded: src + dst, clamped
+    // only *after* summing) -- see TODO.md's "GPU-shader shadow casting"
+    // entry and Light2D.useGpuShadows's doc comment for the specific,
+    // mechanistically-explained hypothesis this addresses (the shader's
+    // falloff() plateau draws a fully opaque disc over 60% of a light's
+    // radius; two such discs overlapping under `plus` saturated to solid
+    // white in one draw pair). **Not yet confirmed on a real device** --
+    // useGpuShadows still defaults to `false` and `test_game` still
+    // doesn't enable it, so this changes nothing for anyone today; it's
+    // here so the fix is immediately testable the next time a device is
+    // available, instead of needing to be written first. Do not flip
+    // useGpuShadows on anywhere (or remove this note) until that
+    // real-device verification has actually happened.
     for (final info in infos) {
       if (!info.light.useGpuShadows || !info.light.castsShadows) continue;
       // Defensive: a degenerate uRadius (0, negative, NaN/Infinity --
@@ -1071,7 +1087,7 @@ class _EnginePainter extends CustomPainter {
       }
 
       final lightRect = Rect.fromCircle(center: info.screenPos, radius: info.screenRadius);
-      canvas.drawRect(lightRect, Paint()..shader = shader..blendMode = BlendMode.plus);
+      canvas.drawRect(lightRect, Paint()..shader = shader..blendMode = BlendMode.screen);
     }
     lightingStopwatch.stop();
     final stats = frameStats;

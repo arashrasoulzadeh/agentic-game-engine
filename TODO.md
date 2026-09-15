@@ -112,25 +112,30 @@ full why behind each change.
       also using `BlendMode.plus`, since those are driven by
       `colorArgb`'s alpha / `overbrightIntensity` — values a level
       author sets deliberately low for a subtle glow — not a hardcoded
-      `1.0`. Two candidate fixes, low-risk since `useGpuShadows`
-      defaults `false` and nothing live depends on today's output:
-      shrink/lower the plateau (make `falloff`'s flat region peak
-      below `1.0`, or shrink the `t <= 0.6` flat range), or replace
-      `BlendMode.plus` with a bounded blend (`BlendMode.screen`,
-      `1-(1-a)(1-b)`, mathematically can't exceed `1.0` no matter how
-      many lights overlap) for this pass specifically. **Still don't
-      implement blind** — this hypothesis needs a real GPU/Skia
-      frame-capture (or at minimum a real device screenshot A/B) to
-      confirm before touching the shader, per the standing rule below;
-      it explains the *mechanism* well enough to be worth trying first,
-      but "well-reasoned" isn't the same as "confirmed," and this
-      exact TODO item already has one false-lead history (the stale-
-      dev-server misdiagnosis) worth not repeating. `Light2D.useGpuShadows`
-      stays in the engine, default `false`, with this history preserved
-      on the field's own doc comment. **Before touching this again**:
-      get a real GPU/Skia frame-capture from the device rather than
-      guessing further from screenshots. The single-multi-light-shader-
+      `1.0`.
+      **Candidate fix now implemented, NOT YET VERIFIED**: the GPU pass
+      in `EngineView._drawLighting` switched from `BlendMode.plus`
+      (unbounded: `src + dst`, clamped only *after* summing) to
+      `BlendMode.screen` (`src + dst - src*dst`, mathematically bounded
+      — can never exceed full white regardless of how many lights'
+      draws overlap). Zero risk to ship as-is: `useGpuShadows` still
+      defaults `false` and `test_game` still doesn't enable it, so
+      nothing live changed — this just means the fix is immediately
+      testable the next time a device is available, instead of needing
+      to be written first. **Still needs real-device confirmation
+      before this bug is considered resolved** — "mathematically
+      bounded" rules out this *specific* saturation mechanism but
+      hasn't been checked against a real screenshot A/B or GPU frame
+      capture yet, and this exact TODO item already has one false-lead
+      history (the stale-dev-server misdiagnosis) worth not repeating
+      by declaring victory early. If confirmed: flip `useGpuShadows` on
+      in `test_game`'s torches, remove the "KNOWN BUG" language from
+      `Light2D.useGpuShadows`'s doc comment, and check this item off.
+      If NOT fixed: the shrink-the-`falloff`-plateau alternative
+      (`light_shadow.frag`'s flat region below `1.0`, or shrinking the
+      `t <= 0.6` range) is still on the table, and worth trying next
+      rather than reverting to `plus`. The single-multi-light-shader-
       pass idea (one draw call for every light via uniform arrays) is
       still worth doing eventually for both performance and potentially
-      fixing this by construction, but shouldn't be started until the
-      current bug is actually understood.
+      fixing this by construction, but shouldn't be started until this
+      is actually confirmed either way.

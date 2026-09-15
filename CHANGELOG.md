@@ -8,6 +8,19 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Performance (round 3, unverified — see TODO.md)
+
+- `Light2D.useGpuShadows`'s GPU shadow pass now composites with
+  `BlendMode.screen` instead of `BlendMode.plus` — a candidate fix for
+  the known multi-light oversaturation bug (a mechanistically-explained
+  hypothesis: the shader's `falloff()` plateau draws a fully opaque
+  disc over 60% of a light's radius, and unbounded `plus` let two such
+  discs overlapping saturate to solid white). `screen` is bounded and
+  mathematically can't do that. Zero live risk — `useGpuShadows`
+  still defaults `false`, `test_game` still doesn't enable it — but
+  **not yet confirmed fixed on a real device**; see TODO.md before
+  relying on this.
+
 ### New engine features (round 4)
 
 - `Gravity.fallMultiplier`: an extra gravity multiplier `GravitySystem`
