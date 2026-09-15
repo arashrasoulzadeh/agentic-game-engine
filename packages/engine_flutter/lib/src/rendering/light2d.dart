@@ -285,10 +285,17 @@ class Light2D {
   /// wrongly assumed to be the whole story — it wasn't; see TODO.md's
   /// "GPU-shader shadow casting" entry for the full history before
   /// touching this again, so the same false lead doesn't get retraced.
-  /// Root cause not yet isolated (ruled out so far: cone lights
-  /// specifically, light count specifically, degenerate/NaN uniform
-  /// values). `test_game` (this repo's own sample) does not enable
-  /// this for exactly that reason.
+  /// Root cause not yet confirmed on-device, but TODO.md's entry also
+  /// records a concrete, mechanistically-explained hypothesis found via
+  /// code review (not yet device-verified): `light_shadow.frag`'s
+  /// `falloff()` is flat at full strength out to 60% of the light's
+  /// radius, so an untinted light draws a fully opaque white disc over
+  /// that inner 60% via unbounded `BlendMode.plus` — two overlapping
+  /// plateaus alone can saturate their overlap to solid white, no NaN
+  /// or cone-light involvement required. Read TODO.md before acting on
+  /// this — it explains why this still needs real device confirmation
+  /// rather than a blind shader edit. `test_game` (this repo's own
+  /// sample) does not enable this for exactly that reason.
   bool useGpuShadows;
 
   /// Internal render-side cache for [cacheShadowGeometry] — the world-

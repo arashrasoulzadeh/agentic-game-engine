@@ -84,14 +84,53 @@ full why behind each change.
       immediately and reliably, conclusively ruling out "just a stale
       dev server." Reverted `test_game`'s lights to `useGpuShadows:
       false` and confirmed via a fresh release-APK install that this
-      restores correct rendering. **Root cause not yet found** — ruled
-      out: cone lights specifically, light count specifically,
-      degenerate/NaN uniform values. `Light2D.useGpuShadows` stays in
-      the engine, default `false`, with this history preserved on the
-      field's own doc comment. **Before touching this again**: get a
-      real GPU/Skia frame-capture from the device rather than guessing
-      further from screenshots. The single-multi-light-shader-pass idea
-      (one draw call for every light via uniform arrays) is still worth
-      doing eventually for both performance and potentially fixing this
-      by construction, but shouldn't be started until the current bug
-      is actually understood.
+      restores correct rendering. **Root cause not yet confirmed on
+      device, but a concrete, mechanistically-explained hypothesis now
+      exists** (found via code review, not yet device-verified — no
+      device was connected to test it, and this sandbox cannot even
+      compile/bundle the shader to check via `flutter test`, confirmed
+      by `gpu_light_shader_test.dart`'s own `markTestSkipped` path):
+      `light_shadow.frag`'s `falloff(t)` is *flat at full strength
+      (`1.0`) out to 60% of the light's radius* (`if (t <= 0.6) return
+      1.0;`), and for an untinted light the shader's output alpha at
+      that plateau is `uColor.a * strength` = `1.0 * intensity` — i.e.
+      a **fully opaque white disc covering the inner 60% of every
+      shadow-casting light's radius**, composited with unbounded
+      `BlendMode.plus` (`src + dst`, clamped only *after* summing).
+      Two such opaque plateaus overlapping — trivial for
+      torches spaced for a readable corridor, e.g. this repo's own
+      prison level — saturates that whole overlap region to solid
+      white in one draw pair, before any third light even needs to
+      contribute; every additional overlapping light only grows the
+      saturated area. A single light's own opaque core is fine and
+      expected (matches "verified correct with a single light"); the
+      bug is this plateau being large (60% of radius, not just a small
+      hot center) combined with `plus` having no ceiling across
+      multiple draws — categorically different from "NaN uniforms" or
+      "cone lights specifically," both already ruled out. This doesn't
+      affect the CPU-path tint/overbright passes the same way despite
+      also using `BlendMode.plus`, since those are driven by
+      `colorArgb`'s alpha / `overbrightIntensity` — values a level
+      author sets deliberately low for a subtle glow — not a hardcoded
+      `1.0`. Two candidate fixes, low-risk since `useGpuShadows`
+      defaults `false` and nothing live depends on today's output:
+      shrink/lower the plateau (make `falloff`'s flat region peak
+      below `1.0`, or shrink the `t <= 0.6` flat range), or replace
+      `BlendMode.plus` with a bounded blend (`BlendMode.screen`,
+      `1-(1-a)(1-b)`, mathematically can't exceed `1.0` no matter how
+      many lights overlap) for this pass specifically. **Still don't
+      implement blind** — this hypothesis needs a real GPU/Skia
+      frame-capture (or at minimum a real device screenshot A/B) to
+      confirm before touching the shader, per the standing rule below;
+      it explains the *mechanism* well enough to be worth trying first,
+      but "well-reasoned" isn't the same as "confirmed," and this
+      exact TODO item already has one false-lead history (the stale-
+      dev-server misdiagnosis) worth not repeating. `Light2D.useGpuShadows`
+      stays in the engine, default `false`, with this history preserved
+      on the field's own doc comment. **Before touching this again**:
+      get a real GPU/Skia frame-capture from the device rather than
+      guessing further from screenshots. The single-multi-light-shader-
+      pass idea (one draw call for every light via uniform arrays) is
+      still worth doing eventually for both performance and potentially
+      fixing this by construction, but shouldn't be started until the
+      current bug is actually understood.
