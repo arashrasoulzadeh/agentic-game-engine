@@ -55,6 +55,13 @@ class _DefaultCallbacksGame extends Game {
   Scene createInitialScene() => _EmptyScene();
 }
 
+class _FrameStatsGame extends _TestGame {
+  final FrameStats stats = FrameStats();
+
+  @override
+  FrameStats get frameStats => stats;
+}
+
 void main() {
   testWidgets('Game.onPause/onResume default to no-ops', (tester) async {
     final game = _DefaultCallbacksGame();
@@ -78,6 +85,30 @@ void main() {
 
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(GameRunner), findsOneWidget);
+  });
+
+  testWidgets('Game.frameStats defaults to null and GameRunner does not require one',
+      (tester) async {
+    final game = _TestGame();
+    expect(game.frameStats, isNull);
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(EngineView), findsOneWidget);
+  });
+
+  testWidgets("GameRunner keeps a Game's own FrameStats instance updated every frame",
+      (tester) async {
+    final game = _FrameStatsGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(game.stats.stepMs, greaterThanOrEqualTo(0),
+        reason: 'the exact same instance returned by frameStats was passed into '
+            'EngineView and actually written to by a real rendered frame');
+    expect(game.stats.paintMs, greaterThanOrEqualTo(0));
   });
 
   testWidgets('GameRunner loads the game and renders EngineView', (tester) async {

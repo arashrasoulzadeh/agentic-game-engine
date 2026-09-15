@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../rendering/camera.dart';
 import '../rendering/engine_view.dart';
+import '../rendering/frame_stats.dart';
 import 'game_config.dart';
 import '../input/input.dart';
 import '../input/on_screen_controls.dart';
@@ -53,6 +54,15 @@ abstract class Game {
   /// Returns null (static camera) by default — override to make the
   /// camera follow a specific entity (typically the player) each frame.
   EntityId? cameraFollowEntity(World world) => null;
+
+  /// `null` (default) — override to supply your own `FrameStats`
+  /// instance, which `GameRunner` then keeps updated every frame (the
+  /// same object passed to `EngineView.frameStats`, see its own doc
+  /// comment) — read it yourself (e.g. log it periodically to a device
+  /// you can `adb logcat`/console-attach to, when `EngineView.showFpsOverlay`'s
+  /// on-screen readout isn't reachable) instead of relying only on the
+  /// overlay text.
+  FrameStats? get frameStats => null;
 
   /// Called when the app is backgrounded/inactive, if
   /// `config.pauseOnBackground` is true. Override for save-on-pause etc.
@@ -254,6 +264,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           showColliderDebug: widget.game.config.showColliderDebug,
           ambientBrightness: loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness,
           maxFps: widget.game.config.maxFps,
+          frameStats: widget.game.frameStats,
           // No taps while an overlay is up -- it alone should be
           // interactive, so the paused scene underneath can't be
           // accidentally poked through it.
