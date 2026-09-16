@@ -1,5 +1,6 @@
 import 'package:engine_core/engine_core.dart';
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kReleaseMode;
 import 'package:flutter/material.dart';
 
 import '../rendering/camera.dart';
@@ -260,9 +261,18 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           cameraFollowEntity: loaded.scene.cameraFollowEntity(loaded.world),
           backgroundColor: widget.game.config.backgroundColor,
           paused: _paused || overlay != null,
-          showFpsOverlay: widget.game.config.showFpsOverlay,
-          showColliderDebug: widget.game.config.showColliderDebug,
-          showPerformanceOverlay: widget.game.config.showPerformanceOverlay,
+          // Forced off in a real release build regardless of what
+          // game_config.json says -- these are debugging aids, not
+          // something a shipped build should ever be able to leak
+          // (a config file left with one of these true by accident,
+          // the common way this actually happens, otherwise ships
+          // fps/tick/entity-count text or collider outlines to real
+          // players). kReleaseMode is a compile-time constant Dart
+          // tree-shakes the disabled branch from entirely in a release
+          // build, not a runtime check with any cost.
+          showFpsOverlay: !kReleaseMode && widget.game.config.showFpsOverlay,
+          showColliderDebug: !kReleaseMode && widget.game.config.showColliderDebug,
+          showPerformanceOverlay: !kReleaseMode && widget.game.config.showPerformanceOverlay,
           ambientBrightness: loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness,
           dayNightCycle: loaded.scene.dayNightCycle,
           maxFps: widget.game.config.maxFps,
