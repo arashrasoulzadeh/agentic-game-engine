@@ -1,6 +1,5 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
-import 'package:flutter/material.dart' hide Action;
 import 'package:flutter_test/flutter_test.dart';
 
 class _RecordingMenu extends ButtonMenuScene {
@@ -38,6 +37,21 @@ class _AssetArtMenu extends ButtonMenuScene {
   void onButtonPressed(String actionId, SceneController scenes) {
     pressed.add(actionId);
   }
+}
+
+class _UnlabeledAssetArtMenu extends ButtonMenuScene {
+  @override
+  List<MenuButtonSpec> buttons() => const [
+        MenuButtonSpec(
+          label: '',
+          actionId: 'icon',
+          atlasId: 'menuArt',
+          region: 'iconBar',
+        ),
+      ];
+
+  @override
+  void onButtonPressed(String actionId, SceneController scenes) {}
 }
 
 World _buildWorld() {
@@ -181,6 +195,39 @@ void main() {
       menu.handleTap(world, scenes, Offset(quitPos.x + 140, quitPos.y));
 
       expect(menu.pressed, ['quit']);
+    });
+
+    testWidgets('a custom-art spec spawns a companion Text label centered on the button',
+        (tester) async {
+      final menu = _AssetArtMenu();
+      final world = _buildWorld();
+      await menu.populate(world, SceneController(), GameState());
+
+      final quitId = world.storeOf<Button>().entityAt(1);
+      final quitPos = world.storeOf<Position>().get(quitId)!;
+
+      final texts = world.storeOf<Text>();
+      EntityId? labelId;
+      for (var i = 0; i < texts.length; i++) {
+        if (texts.denseAt(i).text == 'QUIT') labelId = texts.entityAt(i);
+      }
+      expect(labelId, isNotNull, reason: 'expected a Text entity showing the button label');
+
+      final labelPos = world.storeOf<Position>().get(labelId!)!;
+      expect(labelPos.x, quitPos.x);
+      expect(labelPos.y, quitPos.y);
+      expect(texts.get(labelId)!.screenSpace, isFalse,
+          reason: 'must be world-space to stay aligned with the world-space button Sprite '
+              'under camera zoom/pan');
+    });
+
+    testWidgets('a custom-art spec with an empty label spawns no Text entity',
+        (tester) async {
+      final menu = _UnlabeledAssetArtMenu();
+      final world = _buildWorld();
+      await menu.populate(world, SceneController(), GameState());
+
+      expect(world.storeOf<Text>().length, 0);
     });
   });
 }

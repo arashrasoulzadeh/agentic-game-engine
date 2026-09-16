@@ -5,6 +5,7 @@ import 'package:flutter/painting.dart';
 
 import '../rendering/sprite.dart';
 import '../rendering/sprite_atlas.dart';
+import '../rendering/text.dart' as txt;
 
 /// Layout every engine-generated menu button shares — both
 /// `buildMenuButtonAtlas` (what's drawn) and `spawnMenuButton` (the
@@ -77,9 +78,28 @@ Future<SpriteAtlas> buildMenuButtonAtlas(
 /// button whose art has transparent padding around a smaller visible
 /// shape) — defaults to [kMenuButtonWidth]/[kMenuButtonHeight] if
 /// omitted, a reasonable guess when the caller doesn't care to be
-/// precise. [actionId] is what a `Scene.handleTap`/
-/// `ButtonMenuScene.onButtonPressed` reads back via `Button.actionId`
-/// — free-form, chosen by the game.
+/// precise.
+///
+/// Real art (unlike [buildMenuButtonAtlas]'s generated rect) has no
+/// way to know [label]'s text ahead of time, so this also spawns a
+/// `Text` entity centered on the button showing [label] — skipped
+/// when [label] is empty, for art that's already self-explanatory (an
+/// icon-only button) or bakes its own text in. World-space, not
+/// screen-space, matching the button's own `Sprite`/`Position` (both
+/// go through `Camera.worldToScreen` identically), so the label stays
+/// exactly centered on the button regardless of camera zoom/pan — a
+/// screen-space label at the same raw `position` values would only
+/// happen to line up by coincidence (default `Camera()` maps world
+/// `(0,0)` to the viewport's own center, so world and "screen minus an
+/// offset" aren't the same coordinate space in general).
+/// [labelColorArgb]/[labelFontSize] style it; spawned *after* the
+/// button's own `Sprite` entity, but that's not actually why it
+/// layers on top — `EngineView` collects every `Text` after every
+/// `Sprite` regardless of spawn order, so a same-`zIndex` `Text`
+/// always draws over a same-`zIndex` `Sprite`.
+///
+/// [actionId] is what a `Scene.handleTap`/`ButtonMenuScene.onButtonPressed`
+/// reads back via `Button.actionId` — free-form, chosen by the game.
 EntityId spawnMenuButton(
   World world, {
   required Offset position,
@@ -91,6 +111,8 @@ EntityId spawnMenuButton(
   double? height,
   double scaleX = 1,
   double scaleY = 1,
+  int labelColorArgb = 0xFFFFFFFF,
+  double labelFontSize = 20,
 }) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(position.dx, position.dy));
@@ -102,6 +124,18 @@ EntityId spawnMenuButton(
           ButtonHitBox(width ?? kMenuButtonWidth, height ?? kMenuButtonHeight),
         );
     world.storeOf<Sprite>().set(id, Sprite(atlasId, region, scaleX: scaleX, scaleY: scaleY));
+    if (label.isNotEmpty) {
+      final labelId = world.spawn();
+      world.storeOf<Position>().set(labelId, Position(position.dx, position.dy));
+      world.storeOf<txt.Text>().set(
+            labelId,
+            txt.Text(
+              label,
+              fontSize: labelFontSize,
+              colorArgb: labelColorArgb,
+            ),
+          );
+    }
   } else {
     world.storeOf<Collider>().set(id, Collider((height ?? kMenuButtonHeight) / 2));
     world.storeOf<Sprite>().set(id, Sprite(kMenuButtonAtlasId, label));

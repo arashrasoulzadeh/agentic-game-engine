@@ -24,7 +24,12 @@ import 'menu_button_atlas.dart';
 /// why a rectangle over a circle), defaulting to [kMenuButtonWidth]/
 /// [kMenuButtonHeight] if omitted. A spec with only one of [atlasId]/
 /// [region] set is a mistake `ButtonMenuScene.populate` asserts
-/// against rather than silently drawing nothing.
+/// against rather than silently drawing nothing. Real art can't bake
+/// in [label]'s text ahead of time the way the generated rect does, so
+/// a custom-art button also gets its own `Text` entity (skipped if
+/// [label] is empty) styled by [labelColorArgb]/[labelFontSize] — see
+/// `spawnMenuButton`'s doc comment for why it's centered correctly
+/// regardless of camera zoom/pan.
 class MenuButtonSpec {
   final String label;
   final String actionId;
@@ -34,6 +39,8 @@ class MenuButtonSpec {
   final double? height;
   final double scaleX;
   final double scaleY;
+  final int labelColorArgb;
+  final double labelFontSize;
 
   const MenuButtonSpec({
     required this.label,
@@ -44,6 +51,8 @@ class MenuButtonSpec {
     this.height,
     this.scaleX = 1,
     this.scaleY = 1,
+    this.labelColorArgb = 0xFFFFFFFF,
+    this.labelFontSize = 20,
   }) : assert(
           (atlasId == null) == (region == null),
           'atlasId and region must be set together, or not at all',
@@ -121,6 +130,8 @@ abstract class ButtonMenuScene extends Scene {
         height: spec.height,
         scaleX: spec.scaleX,
         scaleY: spec.scaleY,
+        labelColorArgb: spec.labelColorArgb,
+        labelFontSize: spec.labelFontSize,
       );
     }
   }
