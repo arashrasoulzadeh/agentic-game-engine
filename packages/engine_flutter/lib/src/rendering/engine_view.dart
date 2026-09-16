@@ -1672,12 +1672,15 @@ class _EnginePainter extends CustomPainter {
         final atlas = atlasRegistry.resolve(sprite.atlasId);
         final srcRect = atlas.regionFor(sprite.region);
         final worldPos = _interpolated(entity, pos);
-        final screenPos = camera.worldToScreen(worldPos.dx, worldPos.dy, size);
+        final screenPos = sprite.screenSpace
+            ? Offset(worldPos.dx, worldPos.dy)
+            : camera.worldToScreen(worldPos.dx, worldPos.dy, size);
+        final zoom = sprite.screenSpace ? 1.0 : camera.zoom;
 
         final batch = batchesByImage.putIfAbsent(atlas.image, () => _SpriteBatch());
         batch.transforms.add(RSTransform.fromComponents(
           rotation: sprite.rotation,
-          scale: sprite.scaleX * camera.zoom,
+          scale: sprite.scaleX * zoom,
           anchorX: srcRect.width / 2,
           anchorY: srcRect.height / 2,
           translateX: screenPos.dx,
@@ -1718,14 +1721,17 @@ class _EnginePainter extends CustomPainter {
     final atlas = atlasRegistry.resolve(sprite.atlasId);
     final srcRect = atlas.regionFor(sprite.region);
     final worldPos = _interpolated(entity, pos);
-    final screenPos = camera.worldToScreen(worldPos.dx, worldPos.dy, size);
+    final screenPos = sprite.screenSpace
+        ? Offset(worldPos.dx, worldPos.dy)
+        : camera.worldToScreen(worldPos.dx, worldPos.dy, size);
+    final zoom = sprite.screenSpace ? 1.0 : camera.zoom;
 
     canvas.save();
     canvas.translate(screenPos.dx, screenPos.dy);
     if (sprite.rotation != 0) canvas.rotate(sprite.rotation);
     canvas.scale(
-      sprite.scaleX * camera.zoom,
-      sprite.scaleY * camera.zoom,
+      sprite.scaleX * zoom,
+      sprite.scaleY * zoom,
     );
     final destRect = ui.Rect.fromCenter(
       center: Offset.zero,

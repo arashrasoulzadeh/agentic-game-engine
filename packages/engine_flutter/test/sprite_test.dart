@@ -11,6 +11,12 @@ void main() {
     expect(decoded.rotation, 0);
     expect(decoded.scaleX, 1);
     expect(decoded.scaleY, 1);
+    expect(decoded.screenSpace, isFalse);
+  });
+
+  test('Sprite.fromJson honors explicit screenSpace', () {
+    final decoded = Sprite.fromJson(Sprite('atlas', 'idle', screenSpace: true).toJson());
+    expect(decoded.screenSpace, isTrue);
   });
 
   test('Sprite.fromJson honors explicit rotation/scale', () {
