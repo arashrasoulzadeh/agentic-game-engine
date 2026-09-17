@@ -37,13 +37,24 @@ hand-writing ~10 `world.addSystem(...)` calls in the right order, call
 `installPlatformerSystems` once:
 
 ```dart
-final input = InputController();
+class MyGame extends Game {
+  final input = InputController();
 
-@override
-InputController createInputController() => input;
+  @override
+  InputController createInputController() => input;
 
-@override
-void populateWorld(World world) {
+  @override
+  Scene createInitialScene() => MainScene(input.state);
+}
+
+class MainScene extends Scene {
+  MainScene(this.input);
+  final InputState input;
+
+  @override
+  Future<void> populate(
+    World world, SceneController scenes, GameState state,
+  ) async {
   registerPlatformerComponents(world); // alongside registerCoreComponents/registerFlutterComponents, which GameRunner already calls
 
   final player = spawnPlayer(
@@ -72,6 +83,7 @@ void populateWorld(World world) {
     behaviorId: 'patrol',
     atlasId: 'atlas', spriteRegion: 'enemy_idle',
   );
+  }
 }
 ```
 

@@ -1,5 +1,14 @@
 # agentic-game-engine
 
+[![engine_core](https://img.shields.io/badge/pub-engine__core%20v0.1.0-blue?logo=dart)](packages/engine_core)
+[![engine_flutter](https://img.shields.io/badge/pub-engine__flutter%20v0.1.0-blue?logo=flutter)](packages/engine_flutter)
+[![engine_platformer](https://img.shields.io/badge/pub-engine__platformer%20v0.1.0-blue?logo=dart)](packages/engine_platformer)
+[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+> Badges above are placeholders (`v0.1.0`, pre-1.0, not yet published to
+> pub.dev — see [API stability](#api-stability)). Once published, these
+> should point at real pub.dev version badges instead of static text.
+
 A pure-Dart 2D game engine for building platformers (ECS, fixed-timestep
 simulation, spatial-hash collision, tile-based and entity-based
 platformer physics, patrol/follow AI, movement-driven animation) built
@@ -58,10 +67,37 @@ game_agent lint assets/level1.json
 See [packages/engine_cli/README.md](packages/engine_cli/README.md) for
 all CLI options.
 
+## Learn more: docs and tutorials
+
+[`docs/`](docs/README.md) has a tutorial series and concept guides on
+top of each package's API-reference README — written for both a human
+developer and an AI coding agent to work from directly:
+
+- [docs/getting-started.md](docs/getting-started.md) — install, scaffold, run, folder layout.
+- [docs/concepts/](docs/concepts) — ECS, content-as-data, the agent API, rendering, platformer gameplay.
+- [docs/tutorials/](docs/tutorials) — build a tiny real game step by step.
+- [docs/examples/](docs/examples) — focused, copy-pasteable recipes.
+
+## Why not Flame/Unity/Godot?
+
+This engine exists for a specific thesis those don't optimize for:
+**agent-drivable by design**. World state is plain JSON an agent can
+read/patch (`World.toJson()`/`applyPatch()`), content is authored as
+data rather than code (`Level`), and runtime NPC/agent logic is
+sandboxed behind a read-only `WorldView` so a `Behavior` — hand-written
+or LLM-backed — can never corrupt simulation state, only propose an
+`Action` for the engine to apply. Flame is a fine general-purpose
+Flutter game engine but doesn't share this design goal; Unity/Godot
+aren't Dart/Flutter-native and don't run in this repo's
+pure-simulation-core-plus-thin-shell shape. See
+[docs/concepts/agent-api.md](docs/concepts/agent-api.md) for the
+mechanism this actually produces.
+
 ## How a generated game is structured
 
 `game_agent create` produces a normal Flutter project whose `main.dart`
-extends `Game` and calls `runGame`:
+extends `Game`, provides an initial `Scene`, and calls `runGame`.
+The following sketch shows where world setup belongs:
 
 ```dart
 class MyGame extends Game {
@@ -69,7 +105,14 @@ class MyGame extends Game {
   GameConfig get config => _config; // orientation, world size, etc. — JSON
 
   @override
-  void populateWorld(World world) {
+  Scene createInitialScene() => MainScene();
+}
+
+class MainScene extends Scene {
+  @override
+  Future<void> populate(
+    World world, SceneController scenes, GameState state,
+  ) async {
     // World already built + core/Flutter components registered for you.
     world.addSystem(MovementSystem());
     world.storeOf<Position>().set(world.spawn(), Position(0, 0));
@@ -114,17 +157,19 @@ through 1.0 and beyond.
 Each package is tested independently:
 
 ```bash
-cd packages/engine_core && dart test && dart analyze --fatal-infos
-cd packages/engine_flutter && flutter test && flutter analyze --fatal-infos
-cd packages/engine_cli && dart test && dart analyze --fatal-infos
+(cd packages/engine_core && dart test && dart analyze --fatal-infos)
+(cd packages/engine_flutter && flutter test && flutter analyze --fatal-infos)
+(cd packages/engine_platformer && flutter test && flutter analyze --fatal-infos)
+(cd packages/engine_cli && dart test && dart analyze --fatal-infos)
 ```
 
-CI runs all three suites separately on every push — see
+CI defines four package suites with path-based triggers — see
 [.github/workflows](.github/workflows).
 
-Contributing to this repo (including as an AI agent)? Read
-[CLAUDE.md](CLAUDE.md) first — it covers the non-obvious constraints
-and working conventions this codebase relies on.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and validation and
+[ARCHITECTURE.md](ARCHITECTURE.md) for package boundaries and runtime flow.
+AI agents should start with [AGENTS.md](AGENTS.md), which points to the
+existing constraints and working conventions in [CLAUDE.md](CLAUDE.md).
 
 ## TODO: feature status
 
@@ -183,3 +228,14 @@ coverage across all four packages.
   per-pixel-parallel shadows exist and are wired up, but a multi-light
   oversaturation bug is only candidate-fixed, not yet confirmed on a
   real device; stays off by default until it is.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup and validation,
+and [CLAUDE.md](CLAUDE.md) for the established engineering conventions
+(package DAG, no-unnecessary-comments, doc-comment/test requirements)
+any change — human or AI-agent-authored — is expected to follow.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

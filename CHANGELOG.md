@@ -8,6 +8,31 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Documentation
+
+- Added a top-level `docs/` tutorial/concept layer (`docs/README.md`,
+  `docs/getting-started.md`, `docs/concepts/{ecs,content-as-data,
+  agent-api,rendering,platformer}.md`, `docs/tutorials/01-hello-world.md`,
+  `docs/examples/{README,spawn-enemy-with-patrol-ai,health-bar,
+  save-load,custom-behavior}.md`), written for both human developers and
+  AI coding agents, with every code sample checked against current
+  signatures under `packages/*/lib/src/` rather than reconstructed from
+  memory of similar engines.
+- Root `README.md`: added badges (placeholder pending a pub.dev
+  publish), a "Why not Flame/Unity/Godot" section, a License section,
+  and links into the new `docs/` tree.
+- Fixed stale `Game.populateWorld`/single-scene quickstart examples in
+  `packages/engine_flutter/README.md` and
+  `packages/engine_platformer/README.md` — that API was replaced by
+  `Game.createInitialScene()` + `Scene.populate(world, scenes, state)`
+  a while ago (see `Scene`'s doc comment, which already referenced the
+  old name only to explain the rename), but both READMEs' quick-start
+  code samples hadn't been updated to match and would not have
+  compiled against current source.
+- Documented `game_agent pack-assets` in `packages/engine_cli/README.md`
+  (previously undocumented there despite being referenced from the
+  root README and used by real projects).
+
 ### Performance (round 4)
 
 - Particle rendering: plain (spriteless) particles now batch through

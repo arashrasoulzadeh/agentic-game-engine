@@ -21,30 +21,35 @@ dependencies:
 (Normally you don't add this directly — `game_agent create` wires it up
 for you. See [engine_cli](../engine_cli/README.md).)
 
-## Quick start: the `Game` API
+## Quick start: `Game` + `Scene`
 
-This is the intended way to build a game — extend `Game`, call `runGame`:
+This is the intended way to build a game — extend `Game`, implement one
+or more `Scene`s (a `Scene` is one level/room), call `runGame`. `Game`
+itself only configures the app and picks the first `Scene`; each
+`Scene` owns populating its own `World`, loading its own assets, and
+its own starting camera:
 
 ```dart
 import 'package:engine_core/engine_core.dart';
-import 'package:engine_flutter/engine_flutter.dart';
-import 'package:flutter/material.dart' hide Velocity;
+import 'package:engine_flutter/engine_flutter.dart' hide Velocity, Text;
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final config = await GameConfig.loadFromAsset('assets/game_config.json');
-  runGame(MyGame(config));
+  runGame(MyGame());
 }
 
 class MyGame extends Game {
-  MyGame(this._config);
-  final GameConfig _config;
+  @override
+  GameConfig get config => const GameConfig(worldWidth: 800, worldHeight: 600);
 
   @override
-  GameConfig get config => _config;
+  Scene createInitialScene() => MainScene();
+}
 
+class MainScene extends Scene {
   @override
-  void populateWorld(World world) {
+  Future<void> populate(
+    World world, SceneController scenes, GameState state,
+  ) async {
     // GameRunner already built `world` (sized from config) and called
     // registerCoreComponents/registerFlutterComponents for you — just
     // add your own systems and spawn entities.
@@ -55,18 +60,32 @@ class MyGame extends Game {
 }
 ```
 
-`Game` also has optional overrides you'll commonly want:
+`Game` has optional overrides you'll commonly want:
 
 | Method | Default | Override for |
 |---|---|---|
-| `loadAssets()` | empty `AtlasRegistry` | Loading sprite atlases before the first frame |
-| `createCamera(world)` | centered on the world | Following the player from frame one |
+| `createInitialScene()` | (required) | The first `Scene` `GameRunner` loads |
+| `createInitialState()` | empty `GameState` | Seeding starting values (coins collected, etc.) that survive scene switches |
 | `createInputController()` | `null` (no keyboard/touch input) | Custom key bindings — also drives on-screen touch controls, see below |
 | `cameraFollowEntity(world)` | `null` (static camera) | Camera-follow target (usually the player) |
-| `buildLoadingScreen(context)` | centered spinner | A branded splash screen |
 | `onPause()` / `onResume()` | no-op | Save-on-pause, pausing audio, etc. |
 | `onScreenButtons()` | one `"jump"` button | Which touch buttons to show and what action each sets |
 | `onScreenJoystickVertical` | `false` | Set `true` if the joystick should also drive `"up"`/`"down"` (top-down games) |
+
+`Scene` has its own overrides:
+
+| Method | Default | Override for |
+|---|---|---|
+| `populate(world, scenes, state)` | (required) | Adding systems, spawning entities |
+| `loadAssets()` | empty `AtlasRegistry` | Loading sprite atlases before the first frame |
+| `createCamera(world)` | centered on the world | Starting camera position/zoom for this scene |
+
+A game with rooms/doors implements one `Scene` per room and calls
+`scenes.loadScene(NextRoomScene())` from inside `populate` (typically
+from a collision handler) to switch — `GameRunner` always builds a
+fresh `World` for the new scene, but the `GameState` your `Game`
+created is passed through unchanged, so it's the one place to stash
+anything that must survive the switch.
 
 `GameRunner` (what `runGame` wraps in a `MaterialApp`/`Scaffold`) also
 handles app-lifecycle pause/resume automatically (`config.pauseOnBackground`)
@@ -180,7 +199,7 @@ Default bindings: arrow keys → `"left"`/`"right"`/`"up"`/`"down"`,
 space → `"jump"`. Pass a custom `bindings` map to `InputController` for
 your own scheme. To let a system read input, attach the *same*
 `InputState` instance (`controller.state`) as a component on the
-player entity in `populateWorld` (`engine_platformer`'s `spawnPlayer`
+player entity in `Scene.populate` (`engine_platformer`'s `spawnPlayer`
 does this for you — see its README).
 
 ### Mobile touch controls
@@ -467,7 +486,7 @@ final restored = await SaveGame.load(newWorld); // returns false if none
 Uses `shared_preferences` (works identically on Android/iOS/web/desktop
 — raw `File` I/O doesn't exist on web at all). `load` spawns fresh
 entities into `newWorld` via `Level.loadInto` — call it on a freshly
-constructed `World`, not one `populateWorld` has already filled.
+constructed `World`, not one `Scene.populate` has already filled.
 Multiple save slots via the `slot` parameter.
 
 **Schema versioning**: pass `version:` (default `1`) to `save`/`load` —
