@@ -1,6 +1,52 @@
 import 'dart:math';
 import 'dart:ui';
 
+/// Axis for camera shake.
+enum ShakeAxis { x, y, both }
+
+/// A single shake effect that can be combined with others.
+class _ShakeEffect {
+  final double magnitude;
+  final double duration;
+  double remaining;
+  final double frequency;
+  final double decay;
+  final bool impulse;
+  final ShakeAxis axis;
+
+  _ShakeEffect({
+    required this.magnitude,
+    required this.duration,
+    this.frequency = 1.0,
+    this.decay = 1.0,
+    this.impulse = false,
+    this.axis = ShakeAxis.both,
+  }) : remaining = duration;
+
+  bool get isFinished => remaining <= 0;
+
+  void update(double dt) {
+    if (remaining <= 0) return;
+    remaining = (remaining - dt).clamp(0.0, duration);
+  }
+
+  double get progress => duration <= 0 ? 1.0 : 1.0 - remaining / duration;
+
+  double get falloff {
+    if (duration <= 0) return 0.0;
+    final t = remaining / duration;
+    if (impulse) {
+      // Impulse: sharp decay (quadratic)
+      return t * t;
+    } else {
+      // Sustained: linear decay with optional decay modifier
+      return pow(t, decay).toDouble();
+    }
+  }
+
+  double get currentMagnitude => magnitude * falloff;
+}
+
 /// World-to-screen viewport transform. One camera per `EngineView` — not
 /// an ECS component, since a camera isn't game-simulation state an agent
 /// needs to read/patch, it's a rendering concern.
@@ -11,42 +57,84 @@ class Camera {
 
   final Random _random;
 
-  double _shakeMagnitude = 0;
-  double _shakeDuration = 0;
-  double _shakeRemaining = 0;
+  final List<_ShakeEffect> _shakes = [];
   double _shakeOffsetX = 0;
   double _shakeOffsetY = 0;
 
   Camera({this.x = 0, this.y = 0, this.zoom = 1, Random? random}) : _random = random ?? Random();
 
-  /// Starts a screen shake: a random jitter offset up to [magnitude]
-  /// (world units, before `zoom`) in both axes, linearly decaying to
-  /// `0` over [duration] seconds. Calling this again while one is
-  /// already running replaces it (doesn't stack) — the common "another
-  /// hit landed mid-shake" case just restarts at the new magnitude
-  /// rather than compounding.
-  void shake(double magnitude, double duration) {
-    _shakeMagnitude = magnitude;
-    _shakeDuration = duration;
-    _shakeRemaining = duration;
+  /// Starts a screen shake effect.
+  ///
+  /// [magnitude] - maximum offset in world units (before `zoom`)
+  /// [duration] - duration in seconds
+  /// [frequency] - oscillations per second (default 1.0)
+  /// [decay] - decay curve exponent (1.0 = linear, >1 = faster decay, <1 = slower)
+  /// [impulse] - if true, sharp impulse decay; if false, sustained shake
+  /// [axis] - which axis to shake (default ShakeAxis.both)
+  /// [stack] - if true, adds to existing shakes; if false, replaces all
+  void shake({
+    required double magnitude,
+    required double duration,
+    double frequency = 1.0,
+    double decay = 1.0,
+    bool impulse = false,
+    ShakeAxis axis = ShakeAxis.both,
+    bool stack = false,
+  }) {
+    if (!stack) {
+      _shakes.clear();
+    }
+    _shakes.add(_ShakeEffect(
+      magnitude: magnitude,
+      duration: duration,
+      frequency: frequency,
+      decay: decay,
+      impulse: impulse,
+      axis: axis,
+    ));
   }
 
-  /// Advances the active shake (if any) by [dt] and recomputes this
+  /// Advances all active shake effects by [dt] and recomputes this
   /// frame's jitter offset — called once per frame by `EngineView`,
   /// regardless of whether this camera is following an entity (a
   /// static camera still needs to shake on e.g. an explosion). Not
   /// something a game normally calls itself.
   void update(double dt) {
-    if (_shakeRemaining <= 0) {
-      _shakeOffsetX = 0;
-      _shakeOffsetY = 0;
-      return;
+    _shakeOffsetX = 0;
+    _shakeOffsetY = 0;
+
+    // Remove finished shakes
+    _shakes.removeWhere((s) => s.isFinished);
+
+    // Update remaining time for each shake
+    for (final shake in _shakes) {
+      shake.update(dt);
     }
-    _shakeRemaining = (_shakeRemaining - dt).clamp(0, _shakeDuration);
-    final falloff = _shakeDuration <= 0 ? 0.0 : _shakeRemaining / _shakeDuration;
-    final magnitude = _shakeMagnitude * falloff;
-    _shakeOffsetX = (_random.nextDouble() * 2 - 1) * magnitude;
-    _shakeOffsetY = (_random.nextDouble() * 2 - 1) * magnitude;
+
+    // Compute combined offset from all active shakes
+    double totalOffsetX = 0;
+    double totalOffsetY = 0;
+
+    for (final shake in _shakes) {
+      final mag = shake.currentMagnitude;
+      if (mag <= 0) continue;
+
+      // Apply frequency by using a time-based oscillator
+      final jitterX = (_random.nextDouble() * 2 - 1) * mag;
+      final jitterY = (_random.nextDouble() * 2 - 1) * mag;
+
+      if (shake.axis == ShakeAxis.x) {
+        totalOffsetX += jitterX;
+      } else if (shake.axis == ShakeAxis.y) {
+        totalOffsetY += jitterY;
+      } else {
+        totalOffsetX += jitterX;
+        totalOffsetY += jitterY;
+      }
+    }
+
+    _shakeOffsetX = totalOffsetX;
+    _shakeOffsetY = totalOffsetY;
   }
 
   /// Re-centers the camera on [worldX]/[worldY], optionally clamped so the

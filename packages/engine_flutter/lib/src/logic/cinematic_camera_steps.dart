@@ -114,7 +114,7 @@ class CameraShakeStep extends CinematicStep {
 
   @override
   void start(World world) {
-    camera.shake(magnitude, duration);
+    camera.shake(magnitude: magnitude, duration: duration);
     _elapsed = 0;
   }
 
