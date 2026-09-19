@@ -277,6 +277,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           dayNightCycle: loaded.scene.dayNightCycle,
           maxFps: widget.game.config.maxFps,
           frameStats: widget.game.frameStats,
+          singlePassLighting: widget.game.config.singlePassLighting,
           // No taps while an overlay is up -- it alone should be
           // interactive, so the paused scene underneath can't be
           // accidentally poked through it.
@@ -315,6 +316,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
               // otherwise want back once resumed.
               backgroundColor: const Color(0x99101018),
               maxFps: widget.game.config.maxFps,
+              singlePassLighting: widget.game.config.singlePassLighting,
               onWorldTap: (worldPosition) =>
                   overlay.scene.handleTap(overlay.world, _sceneController, worldPosition),
             ),

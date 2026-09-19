@@ -16,5 +16,19 @@ void main() {
       final restored = Collider.fromJson({'radius': 5});
       expect(restored.blocksLight, isFalse);
     });
+
+    test('pushable defaults to true and round-trips through toJson/fromJson', () {
+      expect(Collider(10).pushable, isTrue);
+
+      final unpushable = Collider(20, pushable: false);
+      final restored = Collider.fromJson(unpushable.toJson());
+      expect(restored.radius, 20);
+      expect(restored.pushable, isFalse);
+    });
+
+    test('fromJson defaults pushable to true when absent', () {
+      final restored = Collider.fromJson({'radius': 5});
+      expect(restored.pushable, isTrue);
+    });
   });
 }

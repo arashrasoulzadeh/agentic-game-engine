@@ -5,8 +5,9 @@ import 'dart:io';
 /// activation (`dart pub global activate --source git ...`) — in both
 /// cases `Platform.script` points at this package's own `bin/` file, so
 /// walking up two directories reaches the package root.
-Directory templateRoot(String templateName) {
-  final scriptFile = File(Platform.script.toFilePath());
+/// [scriptUri] allows testing that layout without launching another isolate.
+Directory templateRoot(String templateName, {Uri? scriptUri}) {
+  final scriptFile = File((scriptUri ?? Platform.script).toFilePath());
   final packageRoot = scriptFile.parent.parent;
   final dir = Directory('${packageRoot.path}/templates/$templateName');
   if (!dir.existsSync()) {

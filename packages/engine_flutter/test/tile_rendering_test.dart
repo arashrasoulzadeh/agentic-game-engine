@@ -492,14 +492,6 @@ void main() {
     world.addSystem(TileAnimationSystem());
 
     final registry = AtlasRegistry();
-    final frame0Image = await _tinyImage(const Color(0xFFFF0000));
-    final frame1Image = await _tinyImage(const Color(0xFF00FF00));
-    registry.register('anim', SpriteAtlas(frame0Image, {'frame0': const Rect.fromLTWH(0, 0, 8, 8)}));
-    // A second registered atlas supplies frame 1's region -- TileMap
-    // itself only carries one atlasId, so both frame ids map into
-    // regions of that same atlas image in a real game; splitting the
-    // image in two here only serves to make the two frames visually
-    // distinguishable in this test.
     final combined = await _tinyImage();
     registry.register('anim', SpriteAtlas(combined, {
       'frame0': const Rect.fromLTWH(0, 0, 4, 8),

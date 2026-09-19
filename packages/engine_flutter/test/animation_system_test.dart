@@ -77,4 +77,47 @@ void main() {
     expect(restored.frameIndex, 1);
     expect(restored.elapsed, 0.05);
   });
+
+  test('writes each frame\'s offsetX/offsetY onto Sprite as it advances', () {
+    final world = buildWorld();
+    final id = world.spawn();
+    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.storeOf<AnimationState>().set(
+          id,
+          AnimationState(
+            AnimationClip(
+              'walk',
+              ['frame0', 'frame1'],
+              frameDurationSeconds: 0.1,
+              frameOffsetsX: [2, -3],
+              frameOffsetsY: [10, 25],
+            ),
+          ),
+        );
+
+    world.step(0); // AnimationSystem only writes region/offset on a step
+    final sprite = world.storeOf<Sprite>().get(id)!;
+    expect(sprite.offsetX, 2);
+    expect(sprite.offsetY, 10);
+
+    world.step(0.1);
+    expect(sprite.offsetX, -3);
+    expect(sprite.offsetY, 25);
+  });
+
+  test('offsetX/offsetY default to 0 for a clip with no frameOffsets', () {
+    final world = buildWorld();
+    final id = world.spawn();
+    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0', offsetY: 99));
+    world.storeOf<AnimationState>().set(
+          id,
+          AnimationState(AnimationClip('idle', ['frame0'], frameDurationSeconds: 0.1)),
+        );
+
+    // A clip with null frameOffsets resets a Sprite's offset back to 0
+    // every tick it's driven, same as it always wrote `region` outright
+    // -- AnimationSystem owns both once an AnimationState is attached.
+    world.step(0);
+    expect(world.storeOf<Sprite>().get(id)!.offsetY, 0);
+  });
 }

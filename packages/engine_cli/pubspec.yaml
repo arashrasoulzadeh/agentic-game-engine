@@ -1,6 +1,7 @@
 name: engine_cli
 description: CLI for scaffolding and updating Flutter games built on engine_core.
 version: 0.1.0
+publish_to: none
 homepage: https://github.com/arashrasoulzadeh/agentic-game-engine
 repository: https://github.com/arashrasoulzadeh/agentic-game-engine
 

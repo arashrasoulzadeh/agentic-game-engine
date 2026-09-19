@@ -113,7 +113,8 @@ void main() {
         'ladder tile must never by itself override velocity (regression: a jump arc '
         'grazing a ladder tile used to have its vel.y silently zeroed here, reported '
         'live as a "falling" bug when a coin placed inside a ladder column was jumped '
-        'at without pressing up/down)', () {
+        'at without pressing up/down)',
+        tags: ['regression'], () {
       final world = buildWithLadder();
       final id = world.spawn();
       final input = InputState();

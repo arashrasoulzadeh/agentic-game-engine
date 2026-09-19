@@ -12,6 +12,14 @@ void main() {
     expect(decoded.scaleX, 1);
     expect(decoded.scaleY, 1);
     expect(decoded.screenSpace, isFalse);
+    expect(decoded.offsetX, 0);
+    expect(decoded.offsetY, 0);
+  });
+
+  test('Sprite.fromJson honors explicit offsetX/offsetY', () {
+    final decoded = Sprite.fromJson(Sprite('atlas', 'idle', offsetX: -4, offsetY: 12).toJson());
+    expect(decoded.offsetX, -4);
+    expect(decoded.offsetY, 12);
   });
 
   test('Sprite.fromJson honors explicit screenSpace', () {

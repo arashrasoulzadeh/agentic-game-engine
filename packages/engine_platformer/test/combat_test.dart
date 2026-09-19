@@ -44,6 +44,55 @@ void main() {
     expect(damageEntity(world, id, 4), isFalse);
   });
 
+  test('damageEntity emits DamageEvent with the amount and source', () {
+    final world = _buildWorld();
+    final source = world.spawn();
+    final id = world.spawn();
+    world.storeOf<Health>().set(id, Health(current: 10, max: 10));
+
+    DamageEvent? seen;
+    world.events.on<DamageEvent>((e) => seen = e);
+
+    damageEntity(world, id, 4, source: source, invincibilitySeconds: 0);
+    world.step(0);
+
+    expect(seen, isNotNull);
+    expect(seen!.entity, id);
+    expect(seen!.amount, 4);
+    expect(seen!.source, source);
+  });
+
+  test('damageEntity does not emit DamageEvent when the hit is a no-op (invincible)', () {
+    final world = _buildWorld();
+    final id = world.spawn();
+    world.storeOf<Health>().set(id, Health(current: 10, max: 10, invincibleSeconds: 0.5));
+
+    var damageEvents = 0;
+    world.events.on<DamageEvent>((e) => damageEvents++);
+
+    damageEntity(world, id, 4);
+    world.step(0);
+
+    expect(damageEvents, 0);
+  });
+
+  test('a killing blow emits both DamageEvent and DeathEvent', () {
+    final world = _buildWorld();
+    final id = world.spawn();
+    world.storeOf<Health>().set(id, Health(current: 5, max: 10));
+
+    var damageEvents = 0;
+    var deathEvents = 0;
+    world.events.on<DamageEvent>((e) => damageEvents++);
+    world.events.on<DeathEvent>((e) => deathEvents++);
+
+    damageEntity(world, id, 10, invincibilitySeconds: 0);
+    world.step(0);
+
+    expect(damageEvents, 1);
+    expect(deathEvents, 1);
+  });
+
   test('damageEntity emits DeathEvent exactly once when health drops to 0', () {
     final world = _buildWorld();
     final id = world.spawn();

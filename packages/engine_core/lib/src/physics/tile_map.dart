@@ -15,6 +15,13 @@ class TileMap {
   final Set<int> solidTileIds;
   final Set<int> oneWayTileIds;
 
+  /// Collision group for each tile id (bitmask). Default group is 1.
+  /// A tile's collision group determines which entities can collide with it.
+  /// Entities only collide with this tile if `(entity.collisionGroup & this.collisionMask) != 0`
+  /// AND `(this.collisionGroup & entity.collisionMask) != 0`.
+  /// Tile collision mask defaults to all groups (-1).
+  final Map<int, int> collisionGroups;
+
   /// Ramp tiles a `TileCollisionSystem` walks an entity up/down instead
   /// of blocking it — [slopeUpRightTileIds] rise as `x` increases
   /// within the tile (low on the tile's left edge, high on its right:
@@ -116,6 +123,24 @@ class TileMap {
   /// never round-trips through a save file or a level JSON edit.
   double animationElapsed = 0;
 
+  Map<int, int> _defaultCollisionGroups(Set<int> solidTileIds) {
+    final map = <int, int>{};
+    for (final id in solidTileIds) {
+      map[id] = 1; // default group 1 for solid tiles
+    }
+    return map;
+  }
+
+  static Map<int, int> _computeDefaultCollisionGroups(Set<int>? solidTileIds) {
+    final map = <int, int>{};
+    if (solidTileIds != null) {
+      for (final id in solidTileIds) {
+        map[id] = 1; // default group 1 for solid tiles
+      }
+    }
+    return map;
+  }
+
   TileMap({
     required this.cols,
     required this.rows,
@@ -136,6 +161,7 @@ class TileMap {
     this.foregroundTiles,
     Map<int, List<int>>? tileAnimations,
     this.tileAnimationFps = 6,
+    Map<int, int>? collisionGroups,
   })  : solidTileIds = solidTileIds ?? <int>{},
         oneWayTileIds = oneWayTileIds ?? <int>{},
         slopeUpRightTileIds = slopeUpRightTileIds ?? <int>{},
@@ -144,7 +170,8 @@ class TileMap {
         conveyorSpeedByTileId = conveyorSpeedByTileId ?? <int, double>{},
         frictionByTileId = frictionByTileId ?? <int, double>{},
         regionByTileId = regionByTileId ?? <int, String>{},
-        tileAnimations = tileAnimations ?? <int, List<int>>{} {
+        tileAnimations = tileAnimations ?? <int, List<int>>{},
+        collisionGroups = collisionGroups ?? _computeDefaultCollisionGroups(solidTileIds) {
     if (tiles.length != cols * rows) {
       throw ArgumentError(
           'tiles.length (${tiles.length}) must equal cols*rows (${cols * rows})');
@@ -190,6 +217,16 @@ class TileMap {
     if (frames == null || frames.isEmpty) return tileId;
     final frame = (animationElapsed * tileAnimationFps).floor() % frames.length;
     return frames[frame];
+  }
+
+  /// Returns the collision group for the tile at [col], [row].
+  /// Returns 1 (default group) for empty tiles or tiles without explicit group.
+  /// Returns 0 for out-of-bounds.
+  int collisionGroupAt(int col, int row) {
+    if (col < 0 || col >= cols || row < 0 || row >= rows) return 0;
+    final tileId = tileAt(col, row);
+    if (tileId == 0) return 0; // empty tile has no collision
+    return collisionGroups[tileId] ?? 1; // default group 1 for solid tiles
   }
 
   bool isSolid(int col, int row) => solidTileIds.contains(tileAt(col, row));
@@ -273,6 +310,7 @@ class TileMap {
       foregroundTiles: foregroundTiles,
       tileAnimations: tileAnimations,
       tileAnimationFps: tileAnimationFps,
+      collisionGroups: collisionGroups,
     );
   }
 
@@ -297,6 +335,8 @@ class TileMap {
         if (tileAnimations.isNotEmpty)
           'tileAnimations': tileAnimations.map((k, v) => MapEntry(k.toString(), v)),
         'tileAnimationFps': tileAnimationFps,
+        if (collisionGroups.isNotEmpty)
+          'collisionGroups': collisionGroups.map((k, v) => MapEntry(k.toString(), v)),
       };
 
   /// Accepts either the raw `cols`/`rows`/`tiles` (flat id array) shape
@@ -331,6 +371,8 @@ class TileMap {
     final tileAnimations = ((json['tileAnimations'] as Map?) ?? const {}).map(
         (k, v) => MapEntry(int.parse(k as String), (v as List).cast<int>()));
     final tileAnimationFps = (json['tileAnimationFps'] as num?)?.toDouble() ?? 6;
+    final collisionGroups = ((json['collisionGroups'] as Map?) ?? const {}).map(
+        (k, v) => MapEntry(int.parse(k as String), (v as num).toInt()));
     if (legend != null) {
       return _fromLegend(
         legend: (legend as Map).cast<String, dynamic>(),
@@ -369,6 +411,7 @@ class TileMap {
       foregroundTiles: foregroundTiles,
       tileAnimations: tileAnimations,
       tileAnimationFps: tileAnimationFps,
+      collisionGroups: collisionGroups,
     );
   }
 

@@ -23,5 +23,5 @@ Future<void> main(List<String> arguments) async {
   // crash the process) but would have silently broken `lint`, whose
   // entire purpose is a scriptable pass/fail exit code.
   final code = await runner.run(arguments);
-  exit(code ?? 0);
+  exitCode = code ?? 0;
 }

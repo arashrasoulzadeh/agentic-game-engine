@@ -14,7 +14,14 @@ class CreateCommand extends Command<int> {
   @override
   final description = 'Scaffold a new Flutter game wired to engine_core.';
 
-  CreateCommand() {
+  final CommandProcessRunner _runProcess;
+  final Directory Function(String) _findTemplate;
+
+  /// Inject process execution and template lookup for isolated command tests.
+  CreateCommand({
+    CommandProcessRunner runProcess = runStreamed,
+    Directory Function(String) findTemplate = templateRoot,
+  }) : _runProcess = runProcess, _findTemplate = findTemplate {
     argParser
       ..addOption('org',
           defaultsTo: 'com.example',
@@ -51,7 +58,7 @@ class CreateCommand extends Command<int> {
     }
 
     stdout.writeln('Running flutter create...');
-    await runStreamed(
+    await _runProcess(
       'flutter',
       [
         'create',
@@ -65,7 +72,7 @@ class CreateCommand extends Command<int> {
 
     stdout.writeln('Wiring up engine_core...');
     copyTemplate(
-      templateRoot('default_game'),
+      _findTemplate('default_game'),
       projectDir,
       {
         'PROJECT_NAME': projectName,
@@ -75,7 +82,7 @@ class CreateCommand extends Command<int> {
     );
 
     stdout.writeln('Fetching packages...');
-    await runStreamed('flutter', ['pub', 'get'],
+    await _runProcess('flutter', ['pub', 'get'],
         workingDirectory: projectDir.path);
 
     stdout.writeln('''

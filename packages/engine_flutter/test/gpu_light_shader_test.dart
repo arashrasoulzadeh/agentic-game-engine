@@ -5,6 +5,7 @@ import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import 'package:flutter/material.dart' hide Velocity;
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:engine_flutter/src/rendering/gpu_light_shader.dart';
 
 Future<Color> _pixelAt(WidgetTester tester, Key boundaryKey, Offset point) async {
   final boundary =
@@ -105,25 +106,11 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 20));
         }
       });
-      if (GpuLightShader.shader() == null) {
-        // `flutter test` for a bare package (as opposed to a real app
-        // run/build) doesn't compile/bundle a `shaders:` asset the way
-        // `flutter run`/`flutter build` do -- confirmed by every other
-        // asset-loading test in this suite going through a *mocked*
-        // 'flutter/assets' channel handler rather than real bundle
-        // loading, and by `flutter pub get` itself failing outright in
-        // this sandbox (blocked pub.dev network access, an established
-        // limitation elsewhere in this project). Skip rather than
-        // false-fail: this assertion is real and meaningful on a
-        // machine that can actually resolve packages/build shaders
-        // (a real dev machine, CI with network access), just not
-        // executable inside this specific sandboxed environment.
-        markTestSkipped(
-            'GPU shader did not load -- this sandbox cannot pub get/bundle shaders; '
-            'run on a machine with real pub.dev access to verify this test');
-        return;
-      }
-
+      final shader = GpuLightShader.shader();
+      expect(shader, isNotNull,
+          reason: 'flutter_test_config must expose the compiled package shader');
+      shader!.dispose();
+      await tester.pump(const Duration(milliseconds: 16));
       await tester.pump(const Duration(milliseconds: 16));
 
       // Camera() default on a 400x300 viewport maps world (0,0) to
@@ -174,6 +161,26 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
 
       expect(find.byType(EngineView), findsOneWidget);
+    });
+
+    test(
+      'shader() returns null and swallows error when asset load fails',
+      tags: ['regression'],
+      () async {
+      GpuLightShader.resetForTesting();
+      GpuLightShader.setAssetKeyForTesting('packages/engine_flutter/shaders/nonexistent.frag');
+
+      final shader = GpuLightShader.shader();
+      expect(shader, isNull);
+
+      // Wait for the async error to be caught
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // Calling again should still return null (error was swallowed, _loading completed)
+      expect(GpuLightShader.shader(), isNull);
+
+      // Reset for other tests
+      GpuLightShader.resetForTesting();
     });
   });
 }

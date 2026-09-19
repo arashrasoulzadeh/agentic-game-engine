@@ -181,3 +181,37 @@ bool resolveOneWayCircleAabb({
   }
   return false;
 }
+
+/// Checks whether solid ground exists ahead of the entity at the given
+/// horizontal distance and within the vertical search range.
+/// Used by AI behaviors (e.g. FollowBehavior with jumpAcrossGaps) to
+/// determine if a jump can clear a gap.
+/// Returns true if solid ground (solidTileIds or oneWayTileIds) is found
+/// at [aheadX] within [verticalRange] rows below the entity's feet.
+bool hasGroundAhead(
+  TileMap map,
+  Position mapOrigin,
+  double entityX,
+  double entityY,
+  double radius,
+  double aheadX,
+  int maxRowsDown,
+  Set<int> solidTileIds,
+  Set<int> oneWayTileIds,
+) {
+  final col = ((aheadX - mapOrigin.x) / map.tileWidth).floor();
+  if (col < 0 || col >= map.cols) return false;
+
+  final entityFootY = entityY + radius;
+  final startRow = ((entityFootY - mapOrigin.y) / map.tileHeight).floor();
+
+  for (int row = startRow; row <= startRow + maxRowsDown && row < map.rows; row++) {
+    if (row < 0) continue;
+    final tileId = map.tileAt(col, row);
+    if (tileId == 0) continue;
+    if (solidTileIds.contains(tileId) || oneWayTileIds.contains(tileId)) {
+      return true;
+    }
+  }
+  return false;
+}

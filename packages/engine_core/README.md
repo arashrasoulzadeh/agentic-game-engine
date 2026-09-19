@@ -233,6 +233,29 @@ tick. `hasLineOfSight` is built on `raycastTileMap` — the primitive
 `engine_platformer`'s `FollowBehavior.requireLineOfSight` reads directly
 so "chasing" doesn't mean chasing through walls.
 
+### Built-in Behaviors
+
+`engine_core` ships with a few ready-to-use `Behavior` implementations:
+
+#### `FleeBehavior`
+
+```dart
+final behaviors = BehaviorRegistry()
+  ..register('flee', FleeBehavior(
+    target: playerEntityId,
+    speed: 100,
+    minDistance: 80,         // stop fleeing once this far from target
+    stopDistance: 5,         // avoid jitter at the boundary
+    requireLineOfSight: true, // don't flee through walls
+  ));
+world.addSystem(AISystem(behaviors));
+world.storeOf<AIState>().set(enemyId, AIState('flee'));
+```
+
+Flees horizontally from `target` at `speed`. Only touches `Velocity.x` (leaves `.y` alone so it doesn't fight gravity/jump). `minDistance` stops the flee once the entity is far enough; `requireLineOfSight` makes it pause when a `TileMap` wall blocks the view to the target.
+
+Additional platformer-specific behaviors (`PatrolBehavior`, `FollowBehavior`, `PathFollowBehavior`, `AvoidanceBehavior`) live in `engine_platformer`.
+
 ### Pathfinding
 
 ```dart

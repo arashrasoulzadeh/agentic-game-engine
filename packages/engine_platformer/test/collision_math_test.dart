@@ -103,7 +103,7 @@ void main() {
         'an entity resting exactly at the top boundary (distSq == radius*radius) '
         'keeps resolving as top, every call, not just the one that landed it '
         '(regression: grounded used to flicker false every other tick at rest)',
-        () {
+        tags: ['regression'], () {
       // Exactly the position resolveSolidCircleAabb itself snaps an
       // entity to the instant it lands: pos.y == top - radius, i.e.
       // sitting precisely on the boundary rather than overlapping it.

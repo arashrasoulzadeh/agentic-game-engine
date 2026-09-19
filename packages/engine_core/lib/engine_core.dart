@@ -1,8 +1,12 @@
 export 'src/ecs/action.dart';
 export 'src/ai/set_velocity_action.dart';
+export 'src/ai/flee_behavior.dart';
+export 'src/ai/steering.dart';
+export 'src/ai/hearing.dart';
 export 'src/ecs/behavior.dart';
 export 'src/ui/button_hit_test.dart';
 export 'src/content/cinematic.dart';
+export 'src/content/dialogue.dart';
 export 'src/ecs/component_registry.dart';
 export 'src/ecs/component_store.dart';
 export 'src/ecs/deterministic_random.dart';
@@ -48,6 +52,8 @@ import 'src/ai/ai_state.dart';
 import 'src/ui/button.dart';
 import 'src/ui/button_hit_box.dart';
 import 'src/physics/collider.dart';
+import 'src/content/dialogue.dart';
+import 'src/ai/hearing.dart';
 import 'src/rendering/particle.dart';
 import 'src/rendering/particle_emitter.dart';
 import 'src/physics/position.dart';
@@ -58,6 +64,7 @@ import 'src/ui/trigger_zone.dart';
 import 'src/rendering/tween.dart';
 import 'src/physics/velocity.dart';
 import 'src/ecs/world.dart';
+import 'src/content/game_state.dart';
 
 /// Registers the engine's built-in components on [world]. Games/agents
 /// register their own additional component types the same way via
@@ -139,5 +146,25 @@ void registerCoreComponents(World world) {
     'pushable',
     (p) => p.toJson(),
     Pushable.fromJson,
+  );
+  world.components.register<DialogueGraph>(
+    'dialogueGraph',
+    (d) => d.toJson(),
+    DialogueGraph.fromJson,
+  );
+  world.components.register<GameState>(
+    'gameState',
+    (g) => g.toJson(),
+    GameState.fromJson,
+  );
+  world.components.register<HearingComponent>(
+    'hearing',
+    (h) => h.toJson(),
+    HearingComponent.fromJson,
+  );
+  world.components.register<SoundEvent>(
+    'soundEvent',
+    (s) => s.toJson(),
+    SoundEvent.fromJson,
   );
 }

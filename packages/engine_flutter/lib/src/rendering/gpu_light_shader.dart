@@ -25,7 +25,11 @@ class GpuLightShader {
   /// consuming app's isolate — a package's own declared assets/shaders
   /// live under `packages/<package name>/<path>` in the merged asset
   /// bundle, not the bare path the package's `pubspec.yaml` lists.
-  static const _assetKey = 'packages/engine_flutter/shaders/light_shadow.frag';
+  static const String _defaultAssetKey = 'packages/engine_flutter/shaders/light_shadow.frag';
+
+  /// Override the asset key for testing (e.g., to trigger the error path).
+  /// Only for testing — production code should never call this.
+  static String _assetKey = _defaultAssetKey;
 
   /// A fresh `FragmentShader` instance ready to have its uniforms set,
   /// or `null` if the program hasn't finished compiling yet (kicks off
@@ -49,5 +53,19 @@ class GpuLightShader {
       },
     );
     return null;
+  }
+
+  /// Resets the cached shader program and loading future.
+  /// Only for testing — allows simulating a fresh load or an error.
+  static void resetForTesting() {
+    _program = null;
+    _loading = null;
+    _assetKey = _defaultAssetKey;
+  }
+
+  /// Overrides the asset key for testing (e.g., to trigger the error path).
+  /// Only for testing — production code should never call this.
+  static void setAssetKeyForTesting(String key) {
+    _assetKey = key;
   }
 }

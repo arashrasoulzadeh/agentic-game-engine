@@ -63,6 +63,13 @@ class TileCollisionSystem implements System {
             final tileId = map.tileAt(col, row);
             if (tileId == 0) continue;
 
+            // Check collision groups before resolving tile collision
+            final tileCollisionGroup = map.collisionGroups[tileId] ?? 1;
+            if ((collider.collisionGroup & tileCollisionGroup) == 0 ||
+                (tileCollisionGroup & collider.collisionMask) == 0) {
+              continue;
+            }
+
             if (map.ladderTileIds.contains(tileId)) {
               controller.onLadder = true;
             }

@@ -18,6 +18,7 @@ import 'sprite.dart';
 import 'animation_transition.dart';
 import 'frame_stats.dart';
 import 'gpu_light_shader.dart';
+import 'ambient_lighting_shader.dart';
 import 'hud_bar.dart';
 import 'light2d.dart';
 import 'nine_slice_sprite.dart';
@@ -174,6 +175,19 @@ class EngineView extends StatefulWidget {
   /// `engine_platformer/benchmark/render_pipeline_benchmark_test.dart`.
   final double cullBufferPx;
 
+  /// `false` (default) uses the legacy multi-pass ambient lighting
+  /// approach (saveLayer + dark rect + N light hole draws with
+  /// BlendMode.dstOut). `true` enables the single-pass shader approach
+  /// (`ambient_lighting.frag`) which computes the combined darkness mask
+  /// for all lights in one fragment shader invocation — one full-screen
+  /// quad draw instead of 1+N draws inside a saveLayer. This avoids the
+  /// offscreen render target allocation and composite cost of the
+  /// legacy approach. Lights with `castsShadows=true` or `coneAngle!=null`
+  /// are NOT supported in the single-pass shader and will fall back to
+  /// the legacy path for those specific lights (or be skipped in the
+  /// shader pass). The legacy path remains the default for compatibility.
+  final bool singlePassLighting;
+
   const EngineView({
     super.key,
     required this.world,
@@ -193,6 +207,7 @@ class EngineView extends StatefulWidget {
     this.maxFps,
     this.frameStats,
     this.cullBufferPx = 96.0,
+    this.singlePassLighting = false,
   });
 
   @override
@@ -456,6 +471,7 @@ class _EngineViewState extends State<EngineView>
       cameraVelocityX: _cameraVelocityX,
       cameraVelocityY: _cameraVelocityY,
       tileCullCache: _tileCullCache,
+      singlePassLighting: widget.singlePassLighting,
     );
 
     Widget child = CustomPaint(painter: painter, size: Size.infinite);
@@ -645,6 +661,12 @@ class _EnginePainter extends CustomPainter {
   /// see `EngineView.cullBufferPx`'s doc comment and `_TileCullCache`.
   final Map<EntityId, _TileCullCache> tileCullCache;
 
+  /// `true` enables the single-pass shader approach for ambient lighting
+  /// (see `EngineView.singlePassLighting`). When enabled, the legacy
+  /// multi-pass approach is skipped and `ambient_lighting.frag` computes
+  /// the combined darkness mask in one fragment shader pass.
+  final bool singlePassLighting;
+
   _EnginePainter({
     required this.world,
     required this.atlasRegistry,
@@ -660,9 +682,9 @@ class _EnginePainter extends CustomPainter {
     this.cullBufferPx = 96.0,
     this.cameraVelocityX = 0,
     this.cameraVelocityY = 0,
-    Map<EntityId, _TileCullCache>? tileCullCache,
-  })  : tileCullCache = tileCullCache ?? {},
-        super(repaint: null);
+    required this.tileCullCache,
+    this.singlePassLighting = false,
+  }) : super(repaint: null);
 
   /// [current]'s position blended with wherever that entity was just
   /// before the last fixed step, by [interpolationAlpha] — smooths
@@ -728,7 +750,7 @@ class _EnginePainter extends CustomPainter {
     order = _collectSpriteItems(items, order, size, positions);
     order = _collectParticleItems(items, order, size, positions);
     order = _collectTextItems(items, order, size, positions);
-    order = _collectHudBarItems(items, order, positions);
+    order = _collectHudBarItems(items, order, size, positions);
     _collectNineSliceItems(items, order, positions);
 
     // Stable by construction (`order` is a strictly increasing
@@ -913,6 +935,22 @@ class _EnginePainter extends CustomPainter {
     final lights = world.storeOf<Light2D>();
     final fullRect = Offset.zero & size;
 
+    // Single-pass shader path: enabled when singlePassLighting=true,
+    // not z-banded (lightFilter==null), and no lights use features the
+    // shader doesn't support (castsShadows, coneAngle, useGpuShadows).
+    // Falls back to legacy multi-pass otherwise.
+    final bool useSinglePass = singlePassLighting &&
+        lightFilter == null &&
+        !_hasUnsupportedLights(lights, lightFilter);
+
+    if (useSinglePass) {
+      _drawLightingSinglePass(canvas, size, positions, lights, lightFilter);
+      lightingStopwatch.stop();
+      final stats = frameStats;
+      if (stats != null) stats.lightingMs += lightingStopwatch.elapsedMicroseconds / 1000;
+      return;
+    }
+
     // Computed once per light, reused for both the darkness-reveal
     // pass and the (optional) color-tint pass below, so a
     // shadow-casting light's raycasts don't run twice.
@@ -960,6 +998,9 @@ class _EnginePainter extends CustomPainter {
     );
 
     for (final info in infos) {
+      // GPU lights apply occlusion in their own pass. An unshadowed CPU
+      // reveal here would illuminate the pixels their shader blocks.
+      if (info.light.useGpuShadows && info.light.castsShadows) continue;
       final intensity = info.light.intensity.clamp(0.0, 1.0);
       final revealPaint = Paint()
         ..blendMode = BlendMode.dstOut
@@ -981,6 +1022,7 @@ class _EnginePainter extends CustomPainter {
     // skipped per-light whenever colorArgb's alpha is 0 (the default),
     // so a game that never sets a tint pays nothing for this pass.
     for (final info in infos) {
+      if (info.light.useGpuShadows && info.light.castsShadows) continue;
       final tintColor = Color(info.light.colorArgb);
       if (tintColor.a == 0) continue;
 
@@ -1007,6 +1049,7 @@ class _EnginePainter extends CustomPainter {
     // per-light whenever overbrightIntensity is 0 (the default), so a
     // game that never sets it pays nothing extra.
     for (final info in infos) {
+      if (info.light.useGpuShadows && info.light.castsShadows) continue;
       final peak = info.light.overbrightIntensity.clamp(0.0, 1.0);
       if (peak == 0) continue;
 
@@ -1103,6 +1146,154 @@ class _EnginePainter extends CustomPainter {
     lightingStopwatch.stop();
     final stats = frameStats;
     if (stats != null) stats.lightingMs += lightingStopwatch.elapsedMicroseconds / 1000;
+  }
+
+  /// Returns true if any light in [lights] uses features not supported
+  /// by the single-pass shader (castsShadows, coneAngle, useGpuShadows).
+  /// Such lights require the legacy multi-pass path.
+  bool _hasUnsupportedLights(
+      ComponentStore<Light2D> lights, bool Function(Light2D)? lightFilter) {
+    for (var i = 0; i < lights.length; i++) {
+      final light = lights.denseAt(i);
+      if (lightFilter != null && !lightFilter(light)) continue;
+      if (light.castsShadows || light.coneAngle != null || light.useGpuShadows) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Single-pass ambient lighting using `ambient_lighting.frag` shader.
+  /// Computes the combined darkness mask for all lights in one fragment
+  /// shader invocation, drawing a single full-screen quad instead of
+  /// 1 (dark rect) + N (light holes) draws inside a saveLayer.
+  void _drawLightingSinglePass(
+    Canvas canvas,
+    Size size,
+    ComponentStore<Position> positions,
+    ComponentStore<Light2D> lights,
+    bool Function(Light2D)? lightFilter,
+  ) {
+    final shader = AmbientLightingShader.shader();
+    if (shader == null) {
+      // Shader not ready yet — silently skip this frame, legacy path
+      // would have been used if singlePassLighting was false.
+      return;
+    }
+
+    final fullRect = Offset.zero & size;
+    const int maxLights = 32;
+
+    // Pack light data into uniform arrays
+    final List<double> lightData = List.filled(maxLights * 4, 0.0);
+    final List<double> lightColorData = List.filled(maxLights * 4, 0.0);
+    final List<double> lightFlagData = List.filled(maxLights * 4, 0.0);
+    final List<double> lightConeDirData = List.filled(maxLights, 0.0);
+
+    int lightCount = 0;
+    for (var i = 0; i < lights.length && lightCount < maxLights; i++) {
+      final entity = lights.entityAt(i);
+      final light = lights.denseAt(i);
+      if (lightFilter != null && !lightFilter(light)) continue;
+      final rawPos = positions.get(entity);
+      if (rawPos == null) continue;
+      if (light.radius <= 0 || light.intensity <= 0) continue;
+
+      // Same interpolation as legacy path
+      final interpolated = _interpolated(entity, rawPos);
+      final worldPos = Position(interpolated.dx, interpolated.dy);
+      final screenPos = camera.worldToScreen(worldPos.x, worldPos.y, size);
+      final screenRadius = light.radius * camera.zoom;
+
+      // Viewport culling
+      if (!_circleIntersectsRect(screenPos, screenRadius, fullRect)) continue;
+
+      final baseIdx = lightCount * 4;
+      lightData[baseIdx] = screenPos.dx;
+      lightData[baseIdx + 1] = screenPos.dy;
+      lightData[baseIdx + 2] = screenRadius;
+      lightData[baseIdx + 3] = light.intensity.clamp(0.0, 1.0);
+
+      final color = Color(light.colorArgb);
+      lightColorData[baseIdx] = color.r / 255.0;
+      lightColorData[baseIdx + 1] = color.g / 255.0;
+      lightColorData[baseIdx + 2] = color.b / 255.0;
+      lightColorData[baseIdx + 3] = color.a / 255.0;
+
+      // Flags: x=castsShadows (unsupported, always 0 here), y=hasCone, z=coneAngle, w=reserved
+      // Since we filtered out castsShadows and coneAngle, these are all 0.
+      // But we keep the structure for future extension.
+      lightFlagData[baseIdx] = 0.0; // castsShadows
+      lightFlagData[baseIdx + 1] = 0.0; // hasCone
+      lightFlagData[baseIdx + 2] = 0.0; // coneAngle
+      lightFlagData[baseIdx + 3] = 0.0; // reserved
+
+      lightConeDirData[lightCount] = 0.0; // coneDirection
+
+      lightCount++;
+    }
+
+    if (lightCount == 0) {
+      // No visible lights — draw plain ambient darkness
+      canvas.drawRect(
+        fullRect,
+        Paint()..color = Color(_effectiveAmbientColorArgb).withValues(
+          alpha: (1 - _effectiveAmbientBrightness).clamp(0, 1),
+        ),
+      );
+      return;
+    }
+
+    // Set shader uniforms
+    final ambientColor = Color(_effectiveAmbientColorArgb);
+    var u = 0;
+    shader
+      ..setFloat(u++, size.width)
+      ..setFloat(u++, size.height)
+      ..setFloat(u++, ambientColor.r / 255.0)
+      ..setFloat(u++, ambientColor.g / 255.0)
+      ..setFloat(u++, ambientColor.b / 255.0)
+      ..setFloat(u++, ambientColor.a / 255.0)
+      ..setFloat(u++, _effectiveAmbientBrightness.clamp(0.0, 1.0))
+      ..setFloat(u++, lightCount.toDouble());
+
+    // uLights[32] - vec4(pos.x, pos.y, radius, intensity)
+    for (int i = 0; i < maxLights; i++) {
+      final base = i * 4;
+      shader
+        ..setFloat(u++, lightData[base])
+        ..setFloat(u++, lightData[base + 1])
+        ..setFloat(u++, lightData[base + 2])
+        ..setFloat(u++, lightData[base + 3]);
+    }
+
+    // uLightColors[32] - vec4(r, g, b, a)
+    for (int i = 0; i < maxLights; i++) {
+      final base = i * 4;
+      shader
+        ..setFloat(u++, lightColorData[base])
+        ..setFloat(u++, lightColorData[base + 1])
+        ..setFloat(u++, lightColorData[base + 2])
+        ..setFloat(u++, lightColorData[base + 3]);
+    }
+
+    // uLightFlags[32] - vec4(castsShadows, hasCone, coneAngle, reserved)
+    for (int i = 0; i < maxLights; i++) {
+      final base = i * 4;
+      shader
+        ..setFloat(u++, lightFlagData[base])
+        ..setFloat(u++, lightFlagData[base + 1])
+        ..setFloat(u++, lightFlagData[base + 2])
+        ..setFloat(u++, lightFlagData[base + 3]);
+    }
+
+    // uLightConeDirs[32] - float
+    for (int i = 0; i < maxLights; i++) {
+      shader.setFloat(u++, lightConeDirData[i]);
+    }
+
+    // Draw full-screen quad with the shader
+    canvas.drawRect(fullRect, Paint()..shader = shader);
   }
 
   static const int _gpuMaxSegments = 32;
@@ -1672,9 +1863,13 @@ class _EnginePainter extends CustomPainter {
         final atlas = atlasRegistry.resolve(sprite.atlasId);
         final srcRect = atlas.regionFor(sprite.region);
         final worldPos = _interpolated(entity, pos);
+        final anchorPos = Offset(
+          worldPos.dx + sprite.offsetX * sprite.scaleX,
+          worldPos.dy + sprite.offsetY * sprite.scaleY,
+        );
         final screenPos = sprite.screenSpace
-            ? Offset(worldPos.dx, worldPos.dy)
-            : camera.worldToScreen(worldPos.dx, worldPos.dy, size);
+            ? anchorPos
+            : camera.worldToScreen(anchorPos.dx, anchorPos.dy, size);
         final zoom = sprite.screenSpace ? 1.0 : camera.zoom;
 
         final batch = batchesByImage.putIfAbsent(atlas.image, () => _SpriteBatch());
@@ -1721,9 +1916,13 @@ class _EnginePainter extends CustomPainter {
     final atlas = atlasRegistry.resolve(sprite.atlasId);
     final srcRect = atlas.regionFor(sprite.region);
     final worldPos = _interpolated(entity, pos);
+    final anchorPos = Offset(
+      worldPos.dx + sprite.offsetX * sprite.scaleX,
+      worldPos.dy + sprite.offsetY * sprite.scaleY,
+    );
     final screenPos = sprite.screenSpace
-        ? Offset(worldPos.dx, worldPos.dy)
-        : camera.worldToScreen(worldPos.dx, worldPos.dy, size);
+        ? anchorPos
+        : camera.worldToScreen(anchorPos.dx, anchorPos.dy, size);
     final zoom = sprite.screenSpace ? 1.0 : camera.zoom;
 
     canvas.save();
@@ -2244,13 +2443,17 @@ class _EnginePainter extends CustomPainter {
     return order;
   }
 
-  /// Collects one `_DrawItem` per `HudBar` — always screen space
-  /// (`Position` is viewport pixels, never transformed by the camera;
-  /// see `HudBar`'s doc comment for why), a background rect at [HudBar.width]/
-  /// `.height` plus a foreground rect scaled to `HudBar.fraction`.
+  /// Collects one `_DrawItem` per `HudBar`. `screenSpace` (default
+  /// `true`, unchanged behavior) draws at raw viewport pixels, never
+  /// transformed by the camera; `false` goes through
+  /// `camera.worldToScreen` like a world-space `Sprite`, scaled by
+  /// `camera.zoom` — see `HudBar.screenSpace`'s doc comment. Either
+  /// way: a background rect at [HudBar.width]/`.height` plus a
+  /// foreground rect scaled to `HudBar.fraction`.
   int _collectHudBarItems(
     List<_DrawItem> items,
     int order,
+    Size size,
     ComponentStore<Position> positions,
   ) {
     final bars = world.storeOf<HudBar>();
@@ -2259,11 +2462,16 @@ class _EnginePainter extends CustomPainter {
       final bar = bars.denseAt(i);
       final pos = positions.get(entity);
       if (pos == null) continue;
+      final worldPos = _interpolated(entity, pos);
+      final screenPos =
+          bar.screenSpace ? worldPos : camera.worldToScreen(worldPos.dx, worldPos.dy, size);
+      final zoom = bar.screenSpace ? 1.0 : camera.zoom;
 
       items.add(_DrawItem(bar.zIndex, order++, (canvas) {
-        final rect = Rect.fromLTWH(pos.x, pos.y, bar.width, bar.height);
+        final rect = Rect.fromLTWH(screenPos.dx, screenPos.dy, bar.width * zoom, bar.height * zoom);
         canvas.drawRect(rect, Paint()..color = Color(bar.backgroundColorArgb));
-        final fillRect = Rect.fromLTWH(pos.x, pos.y, bar.width * bar.fraction, bar.height);
+        final fillRect =
+            Rect.fromLTWH(screenPos.dx, screenPos.dy, bar.width * bar.fraction * zoom, bar.height * zoom);
         canvas.drawRect(fillRect, Paint()..color = Color(bar.fillColorArgb));
       }));
     }

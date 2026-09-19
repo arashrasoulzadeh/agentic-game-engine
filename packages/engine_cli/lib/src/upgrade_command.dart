@@ -26,7 +26,11 @@ class UpgradeCommand extends Command<int> {
   final description =
       'Point this project\'s engine package dependencies at a new git ref and refetch.';
 
-  UpgradeCommand() {
+  final CommandProcessRunner _runProcess;
+
+  /// Inject process execution to validate upgrades without fetching packages.
+  UpgradeCommand({CommandProcessRunner runProcess = runStreamed})
+      : _runProcess = runProcess {
     argParser.addOption('ref',
         defaultsTo: 'v0.1.0',
         help: 'Git ref (branch or tag) to upgrade engine packages to.');
@@ -73,7 +77,7 @@ class UpgradeCommand extends Command<int> {
     pubspecFile.writeAsStringSync(content);
 
     stdout.writeln('Refetching packages...');
-    await runStreamed('flutter', ['pub', 'upgrade']);
+    await _runProcess('flutter', ['pub', 'upgrade']);
     stdout.writeln('Done.');
     return 0;
   }

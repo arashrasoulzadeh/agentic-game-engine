@@ -78,7 +78,8 @@ void main() {
   test(
       'grounded stays true on every tick while resting on solid ground, not just the '
       'landing tick (regression: used to flicker false every other tick once settled '
-      'exactly at the boundary — see resolveSolidCircleAabb)', () {
+      'exactly at the boundary — see resolveSolidCircleAabb)',
+      tags: ['regression'], () {
     final world = _buildWorld();
     final mapEntity = world.spawn();
     world.storeOf<Position>().set(mapEntity, Position(0, 0));
@@ -159,7 +160,7 @@ void main() {
   test(
       'jump fires off tile-only ground contact within the same tick '
       '(regression: jump used to be checked before tile grounding was resolved)',
-      () {
+      tags: ['regression'], () {
     final world = _buildWorld();
     final mapEntity = world.spawn();
     world.storeOf<Position>().set(mapEntity, Position(0, 0));

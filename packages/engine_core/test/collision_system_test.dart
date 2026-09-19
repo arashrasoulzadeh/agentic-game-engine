@@ -164,4 +164,62 @@ void main() {
             "using tick 1's cellSize (20) would miss this pair the same way the "
             '"explicit cellSize can reproduce the miss" test demonstrates');
   });
+
+  test('a colliding pair with both Colliders pushable (the default) swaps velocities', () {
+    final world = _buildWorld();
+    final a = world.spawn();
+    final b = world.spawn();
+    world.storeOf<Position>().set(a, Position(0, 0));
+    world.storeOf<Collider>().set(a, Collider(10));
+    world.storeOf<Velocity>().set(a, Velocity(5, 0));
+    world.storeOf<Position>().set(b, Position(5, 0));
+    world.storeOf<Collider>().set(b, Collider(10));
+    world.storeOf<Velocity>().set(b, Velocity(-3, 2));
+
+    world.step(0);
+
+    final velA = world.storeOf<Velocity>().get(a)!;
+    final velB = world.storeOf<Velocity>().get(b)!;
+    expect(velA.x, -3);
+    expect(velA.y, 2);
+    expect(velB.x, 5);
+    expect(velB.y, 0);
+  });
+
+  test('a colliding pair still emits CollisionEvent when one side is pushable: false', () {
+    final world = _buildWorld();
+    final a = world.spawn();
+    final b = world.spawn();
+    world.storeOf<Position>().set(a, Position(0, 0));
+    world.storeOf<Collider>().set(a, Collider(10, pushable: false));
+    world.storeOf<Position>().set(b, Position(5, 0));
+    world.storeOf<Collider>().set(b, Collider(10));
+
+    var collided = false;
+    world.events.on<CollisionEvent>((e) => collided = true);
+    world.step(0);
+
+    expect(collided, isTrue);
+  });
+
+  test('pushable: false on either side of a colliding pair skips the velocity swap', () {
+    final world = _buildWorld();
+    final a = world.spawn();
+    final b = world.spawn();
+    world.storeOf<Position>().set(a, Position(0, 0));
+    world.storeOf<Collider>().set(a, Collider(10, pushable: false));
+    world.storeOf<Velocity>().set(a, Velocity(5, 0));
+    world.storeOf<Position>().set(b, Position(5, 0));
+    world.storeOf<Collider>().set(b, Collider(10));
+    world.storeOf<Velocity>().set(b, Velocity(-3, 2));
+
+    world.step(0);
+
+    final velA = world.storeOf<Velocity>().get(a)!;
+    final velB = world.storeOf<Velocity>().get(b)!;
+    expect(velA.x, 5, reason: 'a opted out via pushable: false -- neither side should be swapped');
+    expect(velA.y, 0);
+    expect(velB.x, -3);
+    expect(velB.y, 2);
+  });
 }

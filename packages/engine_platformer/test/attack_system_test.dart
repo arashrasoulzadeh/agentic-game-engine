@@ -18,6 +18,19 @@ World _buildWorld() {
   return world;
 }
 
+/// Builds a world without the default AttackSystem, for tests that
+/// want to configure their own AttackSystem (e.g. with requireLineOfSight).
+World _buildWorldNoAttackSystem() {
+  final world = World(width: 2000, height: 2000);
+  registerCoreComponents(world);
+  registerFlutterComponents(world);
+  registerPlatformerComponents(world);
+  world.addSystem(MovementSystem());
+  world.addSystem(ProjectileSystem());
+  // NOTE: AttackSystem is NOT added here - tests must add their own
+  return world;
+}
+
 EntityId _spawnAttacker(World world, Weapon weapon, {double facingSign = 1}) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(100, 100));
@@ -179,5 +192,202 @@ void main() {
     world.step(0.016);
 
     expect(world.storeOf<Health>().get(enemy)!.current, 10);
+  });
+
+  group('requireLineOfSight', () {
+    World _buildWorldWithWall() {
+      final world = _buildWorldNoAttackSystem();
+      // Wall at x=120 (between attacker at 100 and attack range)
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+        mapEntity,
+        TileMap(
+          cols: 10,
+          rows: 5,
+          tileWidth: 40,
+          tileHeight: 40,
+          tiles: [
+            for (var row = 0; row < 5; row++)
+              for (var col = 0; col < 10; col++) (col == 3) ? 1 : 0,
+          ],
+          solidTileIds: {1},
+        ),
+      );
+      return world;
+    }
+
+    test('melee: blocks attack when wall between attacker and target', () {
+      final world = _buildWorldWithWall();
+      // Attacker at x=100, wall at x=120-160 (col 3), meleeRange=30
+      // Target would be at x=130, behind the wall
+      final weapon = Weapon(kind: WeaponKind.melee, damage: 15, meleeRange: 30, meleeRadius: 10);
+      final attacker = _spawnAttacker(world, weapon, facingSign: 1);
+
+      // Add AttackSystem with line of sight required
+      world.addSystem(AttackSystem(requireLineOfSight: true));
+
+      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.step(0.016);
+
+      // Should not fire because wall blocks line of sight
+      expect(world.storeOf<Projectile>().length, 0);
+    });
+
+    test('melee: allows attack when no wall blocks line of sight', () {
+      final world = _buildWorldWithWall();
+      // Attacker at x=100, wall at x=120-160, but attacker facing LEFT (-1)
+      // So attack goes toward x=70, no wall in that direction
+      final weapon = Weapon(kind: WeaponKind.melee, damage: 15, meleeRange: 30, meleeRadius: 10);
+      final attacker = _spawnAttacker(world, weapon, facingSign: -1);
+
+      world.addSystem(AttackSystem(requireLineOfSight: true));
+
+      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.step(0.016);
+
+      // Should fire because no wall in the attack direction
+      expect(world.storeOf<Projectile>().length, 1);
+      final projectiles = world.storeOf<Projectile>();
+      final pos = world.storeOf<Position>().get(projectiles.entityAt(0))!;
+      expect(pos.x, 70); // 100 + 30 * -1
+    });
+
+    test('ranged: blocks attack when wall between attacker and max range', () {
+      final world = _buildWorldWithWall();
+      // Attacker at x=100, wall at x=120-160, projectileSpeed=500, lifetime=2s = max range 1000
+      // Target would be far beyond the wall
+      final weapon = Weapon(kind: WeaponKind.ranged, damage: 8, projectileSpeed: 500, projectileLifetimeSeconds: 2);
+      final attacker = _spawnAttacker(world, weapon, facingSign: 1);
+
+      world.addSystem(AttackSystem(requireLineOfSight: true));
+
+      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.step(0.016);
+
+      // Should not fire because wall blocks line of sight to max range
+      expect(world.storeOf<Projectile>().length, 0);
+    });
+
+    test('ranged: allows attack when no wall in direction', () {
+      final world = _buildWorldWithWall();
+      // Attacker at x=100, wall at x=120-160, but attacker facing LEFT
+      final weapon = Weapon(kind: WeaponKind.ranged, damage: 8, projectileSpeed: 500, projectileLifetimeSeconds: 2);
+      final attacker = _spawnAttacker(world, weapon, facingSign: -1);
+
+      world.addSystem(AttackSystem(requireLineOfSight: true));
+
+      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.step(0.016);
+
+      // Should fire because no wall in the attack direction
+      expect(world.storeOf<Projectile>().length, 1);
+      final projectiles = world.storeOf<Projectile>();
+      final vel = world.storeOf<Velocity>().get(projectiles.entityAt(0))!;
+      expect(vel.x, -500);
+    });
+
+    test('default (requireLineOfSight: false) ignores walls', () {
+      final world = _buildWorldWithWall();
+      final weapon = Weapon(kind: WeaponKind.melee, damage: 15, meleeRange: 30, meleeRadius: 10);
+      final attacker = _spawnAttacker(world, weapon, facingSign: 1);
+
+      // Default: requireLineOfSight = false
+      world.addSystem(AttackSystem());
+
+      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.step(0.016);
+
+      // Should fire even through wall
+      expect(world.storeOf<Projectile>().length, 1);
+    });
+
+    test('one-way platforms do not block line of sight by default', () {
+      final world = _buildWorld();
+      // One-way platform at col 3 (x=120-160)
+      final mapEntity = world.spawn();
+      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.storeOf<TileMap>().set(
+        mapEntity,
+        TileMap(
+          cols: 10,
+          rows: 5,
+          tileWidth: 40,
+          tileHeight: 40,
+          tiles: [
+            for (var row = 0; row < 5; row++)
+              for (var col = 0; col < 10; col++) (col == 3) ? 1 : 0,
+          ],
+          oneWayTileIds: {1}, // NOT in solidTileIds
+        ),
+      );
+
+      final weapon = Weapon(kind: WeaponKind.melee, damage: 15, meleeRange: 50, meleeRadius: 10);
+      final attacker = _spawnAttacker(world, weapon, facingSign: 1);
+
+      world.addSystem(AttackSystem(requireLineOfSight: true));
+
+      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.step(0.016);
+
+      // Should fire because one-way tiles don't block line of sight by default
+      expect(world.storeOf<Projectile>().length, 1);
+    });
+  });
+
+  group('InputState cooldown integration', () {
+    test('attack action from InputState respects cooldown - does not double fire', () {
+      final world = _buildWorld();
+      final attacker = world.spawn();
+      world.storeOf<Position>().set(attacker, Position(0, 0));
+      world.storeOf<PlatformerController>().set(attacker, PlatformerController());
+      final weapon = Weapon(kind: WeaponKind.melee, cooldownSeconds: 0.5);
+      world.storeOf<Weapon>().set(attacker, weapon);
+      final input = InputState();
+      world.storeOf<InputState>().set(attacker, input);
+
+      // Press attack
+      input.pressedActions.add('attack');
+      world.step(0.016);
+      expect(world.storeOf<Projectile>().length, 1, reason: 'first attack fires');
+
+      // Keep attack pressed - should NOT fire again due to cooldown
+      world.step(0.016);
+      expect(world.storeOf<Projectile>().length, 1, reason: 'still on cooldown');
+
+      // Release and press again within cooldown - should NOT fire
+      input.pressedActions.remove('attack');
+      input.pressedActions.add('attack');
+      world.step(0.016);
+      expect(world.storeOf<Projectile>().length, 1, reason: 're-press within cooldown blocked');
+
+      // Wait for cooldown to expire
+      world.step(0.5);
+      input.pressedActions.add('attack');
+      world.step(0.016);
+      expect(world.storeOf<Projectile>().length, 2, reason: 'fires after cooldown expires');
+    });
+
+    test('rapid press/release of attack does not bypass cooldown', () {
+      final world = _buildWorld();
+      final attacker = world.spawn();
+      world.storeOf<Position>().set(attacker, Position(0, 0));
+      world.storeOf<PlatformerController>().set(attacker, PlatformerController());
+      final weapon = Weapon(kind: WeaponKind.melee, cooldownSeconds: 0.3);
+      world.storeOf<Weapon>().set(attacker, weapon);
+      final input = InputState();
+      world.storeOf<InputState>().set(attacker, input);
+
+      // Rapid press/release cycle
+      for (int i = 0; i < 10; i++) {
+        input.pressedActions.add('attack');
+        world.step(0.01);
+        input.pressedActions.remove('attack');
+        world.step(0.01);
+      }
+
+      // Should only have fired once (first press)
+      expect(world.storeOf<Projectile>().length, 1);
+    });
   });
 }

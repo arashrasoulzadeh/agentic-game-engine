@@ -66,6 +66,13 @@ class GameConfig {
   /// given device's actual refresh rate happens to be.
   final int? maxFps;
 
+  /// See `EngineView.singlePassLighting`'s doc comment — `false` (default)
+  /// uses the legacy multi-pass lighting (saveLayer + dark rect + N light
+  /// holes). `true` enables the single-pass shader approach
+  /// (`ambient_lighting.frag`) which computes the combined darkness mask
+  /// for all lights in one fragment shader invocation.
+  final bool singlePassLighting;
+
   /// Atlas id under which `GameRunner` auto-registers a single packed
   /// sprite sheet (see [packedAtlasImage]/[packedAtlasManifest]) into
   /// *every* `Scene`'s `AtlasRegistry`, produced ahead of time by
@@ -114,6 +121,7 @@ class GameConfig {
     this.onScreenControls = OnScreenControlsMode.auto,
     this.ambientBrightness = 1.0,
     this.maxFps,
+    this.singlePassLighting = false,
     this.packedAtlasId,
     this.packedAtlasImage,
     this.packedAtlasManifest,
@@ -132,6 +140,7 @@ class GameConfig {
         'pauseOnBackground': pauseOnBackground,
         'onScreenControls': onScreenControls.name,
         'ambientBrightness': ambientBrightness,
+        'singlePassLighting': singlePassLighting,
         if (maxFps != null) 'maxFps': maxFps,
         if (packedAtlasId != null) 'packedAtlasId': packedAtlasId,
         if (packedAtlasImage != null) 'packedAtlasImage': packedAtlasImage,
@@ -160,6 +169,7 @@ class GameConfig {
         ),
         ambientBrightness: (json['ambientBrightness'] as num?)?.toDouble() ?? 1.0,
         maxFps: (json['maxFps'] as num?)?.toInt(),
+        singlePassLighting: json['singlePassLighting'] as bool? ?? false,
         packedAtlasId: json['packedAtlasId'] as String?,
         packedAtlasImage: json['packedAtlasImage'] as String?,
         packedAtlasManifest: json['packedAtlasManifest'] as String?,

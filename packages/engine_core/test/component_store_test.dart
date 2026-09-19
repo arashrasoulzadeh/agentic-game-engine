@@ -14,7 +14,8 @@ void main() {
   test(
       'removing the only (last) entry does not leave a dangling entityToDense '
       'mapping for a later set() on a recycled id (regression: found via a '
-      'spawn/destroy churn benchmark that crashed with a RangeError)', () {
+      'spawn/destroy churn benchmark that crashed with a RangeError)',
+      tags: ['regression'], () {
     final store = ComponentStore<Position>();
     store.set(1, Position(1, 1));
     store.remove(1); // 1 was the only entry -- idx == lastIdx == 0

@@ -29,7 +29,8 @@ void main() {
       'the same SpatialHash instance works correctly across repeated clear()+insert() '
       'cycles into the same cells -- regression for clear() now emptying buckets in '
       'place (reusing their List objects, for CollisionSystem to reuse one SpatialHash '
-      'across ticks) instead of dropping map entries entirely', () {
+      'across ticks) instead of dropping map entries entirely',
+      tags: ['regression'], () {
     final hash = SpatialHash(cellSize: 10, worldWidth: 100);
 
     hash.insert(1, 0, 0);

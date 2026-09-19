@@ -5,6 +5,23 @@ import 'package:engine_core/engine_core.dart';
 import '../physics/platformer_controller.dart';
 import 'health.dart';
 
+/// Emitted by [damageEntity] every time it actually applies damage —
+/// regardless of whether the hit was lethal (see [DeathEvent] for
+/// that specific case, which fires *in addition to* this one on a
+/// killing blow, not instead of it). The generic "something just got
+/// hit" signal a game reacts to for anything that cares about damage
+/// itself rather than death specifically: a blood/spark particle
+/// burst, a hit-flash tint, a floating damage number, a screen shake,
+/// a sound effect. Carries [amount] and [source] (the attacker, if
+/// [damageEntity] was given one) so a listener doesn't have to
+/// re-derive them.
+class DamageEvent {
+  final EntityId entity;
+  final double amount;
+  final EntityId? source;
+  DamageEvent(this.entity, this.amount, {this.source});
+}
+
 /// Emitted by [damageEntity] the tick an entity's `Health.current`
 /// first drops to 0 or below — fires exactly once per death (repeated
 /// damage against an already-dead entity doesn't re-emit). Listen for
@@ -19,8 +36,10 @@ class DeathEvent {
 /// Applies [amount] damage to [entity]'s `Health`, respecting
 /// `isInvincible` (a no-op while invincible — returns `false`) and
 /// starting a new invincibility window of [invincibilitySeconds] once
-/// the hit lands. Emits [DeathEvent] the moment `current` crosses to
-/// zero or below. Returns `true` if damage was actually applied.
+/// the hit lands. Emits [DamageEvent] every time it actually applies
+/// damage, plus [DeathEvent] the moment `current` crosses to zero or
+/// below (both fire on a killing blow — [DamageEvent] first). Returns
+/// `true` if damage was actually applied.
 ///
 /// A no-op (returns `false`) if [entity] has no `Health` component —
 /// safe to call from a collision handler without checking first.
@@ -49,6 +68,7 @@ bool damageEntity(
 
   health.current -= amount;
   health.invincibleSeconds = invincibilitySeconds;
+  world.events.emit(DamageEvent(entity, amount, source: source));
   if (health.isDead) {
     world.events.emit(DeathEvent(entity));
   }

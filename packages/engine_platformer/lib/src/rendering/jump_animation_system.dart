@@ -4,6 +4,8 @@ import 'package:engine_flutter/engine_flutter.dart';
 import 'jump_animation_set.dart';
 import '../physics/platformer_controller.dart';
 
+enum _JumpPhase { start, rising, peak, falling, landing, completed }
+
 /// Drives `JumpAnimationSet`'s phase clips from the entity's actual jump
 /// mechanics (`Velocity.y` and `PlatformerController.grounded`
 /// transitions) instead of a fixed timer — see `JumpAnimationSet`'s doc
@@ -45,8 +47,8 @@ class JumpAnimationSystem implements System {
       }
 
       final nextPhase = _nextPhase(set, phaseState, controller, vel, dt);
-      if (nextPhase != phaseState.phase) {
-        phaseState.phase = nextPhase;
+      if (nextPhase?.name != phaseState.phase) {
+        phaseState.phase = nextPhase?.name;
         phaseState.elapsed = 0;
       } else {
         phaseState.elapsed += dt;
@@ -66,7 +68,7 @@ class JumpAnimationSystem implements System {
   /// start/rising/peak/falling by [PlatformerController.grounded] and
   /// `Velocity.y`; grounded picks among landing/completed/null (fully
   /// done) by how long the entity has held each since touching down.
-  String? _nextPhase(
+  _JumpPhase? _nextPhase(
     JumpAnimationSet set,
     JumpAnimationPhaseState phaseState,
     PlatformerController controller,
@@ -78,14 +80,14 @@ class JumpAnimationSystem implements System {
       if (phase == null || phase == 'landing' || phase == 'completed') {
         // Just left the ground (including a fresh jump fired during a
         // landing/completed hold -- e.g. a buffered jump).
-        return 'start';
+        return _JumpPhase.start;
       }
       if (phase == 'start' && phaseState.elapsed < set.startHoldSeconds) {
-        return 'start';
+        return _JumpPhase.start;
       }
-      if (vel.y < -set.peakVelocityThreshold) return 'rising';
-      if (vel.y > set.peakVelocityThreshold) return 'falling';
-      return 'peak';
+      if (vel.y < -set.peakVelocityThreshold) return _JumpPhase.rising;
+      if (vel.y > set.peakVelocityThreshold) return _JumpPhase.falling;
+      return _JumpPhase.peak;
     }
 
     // Grounded.
@@ -93,32 +95,22 @@ class JumpAnimationSystem implements System {
     final movingNow = vel.x.abs() > set.moveInterruptThreshold;
     if (phase == 'landing') {
       if (movingNow) return null; // player wants to move -- don't sit through the recovery beat
-      return phaseState.elapsed < set.landingHoldSeconds ? 'landing' : 'completed';
+      return phaseState.elapsed < set.landingHoldSeconds ? _JumpPhase.landing : _JumpPhase.completed;
     }
     if (phase == 'completed') {
       if (movingNow) return null;
-      return phaseState.elapsed < set.completedHoldSeconds ? 'completed' : null;
+      return phaseState.elapsed < set.completedHoldSeconds ? _JumpPhase.completed : null;
     }
     // Was airborne (start/rising/peak/falling) last tick, just touched down.
-    return 'landing';
+    return _JumpPhase.landing;
   }
 
-  AnimationClip _clipFor(JumpAnimationSet set, String phase) {
-    switch (phase) {
-      case 'start':
-        return set.start;
-      case 'rising':
-        return set.rising;
-      case 'peak':
-        return set.peak;
-      case 'falling':
-        return set.falling;
-      case 'landing':
-        return set.landing;
-      case 'completed':
-        return set.completed;
-      default:
-        throw StateError('Unknown JumpAnimationSet phase "$phase"');
-    }
-  }
+  AnimationClip _clipFor(JumpAnimationSet set, _JumpPhase phase) => switch (phase) {
+    _JumpPhase.start => set.start,
+    _JumpPhase.rising => set.rising,
+    _JumpPhase.peak => set.peak,
+    _JumpPhase.falling => set.falling,
+    _JumpPhase.landing => set.landing,
+    _JumpPhase.completed => set.completed,
+  };
 }

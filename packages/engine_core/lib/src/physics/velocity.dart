@@ -1,6 +1,10 @@
+import 'dart:math' as math;
+
 class Velocity {
   double x, y;
   Velocity(this.x, this.y);
+
+  double get magnitude => math.sqrt(x * x + y * y);
 
   Map<String, dynamic> toJson() => {'x': x, 'y': y};
   factory Velocity.fromJson(Map<String, dynamic> json) =>

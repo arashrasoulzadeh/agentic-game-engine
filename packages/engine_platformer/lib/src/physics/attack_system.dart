@@ -40,7 +40,20 @@ import 'platformer_controller.dart';
 class AttackSystem implements System {
   final String attackAction;
 
-  AttackSystem({this.attackAction = 'attack'});
+  /// When `true` (default `false`), the attack will only fire if there
+  /// is a clear line of sight from the attacker to the attack's max
+  /// range in the facing direction. Uses `WorldView.hasLineOfSight`
+  /// against `TileMap` solid/one-way tiles. A wall between the attacker
+  /// and the attack's max range will block the attack.
+  ///
+  /// The max range is:
+  /// - [Weapon.meleeRange] for [WeaponKind.melee]
+  /// - [Weapon.projectileSpeed] * [Weapon.projectileLifetimeSeconds] for [WeaponKind.ranged]
+  ///
+  /// Note: this does NOT check for entities in the way, only tile geometry.
+  final bool requireLineOfSight;
+
+  AttackSystem({this.attackAction = 'attack', this.requireLineOfSight = false});
 
   @override
   String get name => 'attack';
@@ -51,6 +64,9 @@ class AttackSystem implements System {
     final positions = world.storeOf<Position>();
     final inputs = world.storeOf<InputState>();
     final controllers = world.storeOf<PlatformerController>();
+
+    // Create WorldView once for line-of-sight checks
+    final view = requireLineOfSight ? WorldView(world) : null;
 
     for (var i = 0; i < weapons.length; i++) {
       final entity = weapons.entityAt(i);
@@ -67,12 +83,32 @@ class AttackSystem implements System {
         final pos = positions.get(entity);
         if (pos != null) {
           final facing = controllers.get(entity)?.facingSign ?? 1.0;
-          _fire(world, entity, weapon, pos, facing);
-          weapon.cooldownRemaining = weapon.cooldownSeconds;
+
+          // Check line of sight if required
+          if (!requireLineOfSight || _hasLineOfSight(world, view!, pos, weapon, facing)) {
+            _fire(world, entity, weapon, pos, facing);
+            weapon.cooldownRemaining = weapon.cooldownSeconds;
+          }
         }
+        weapon.attackRequested = false;
       }
-      weapon.attackRequested = false;
     }
+  }
+
+  /// Checks if there's a clear line of sight from [pos] to the attack's
+  /// max range in the [facing] direction.
+  bool _hasLineOfSight(World world, WorldView view, Position pos, Weapon weapon, double facing) {
+    double maxRange;
+    if (weapon.kind == WeaponKind.melee) {
+      maxRange = weapon.meleeRange;
+    } else {
+      maxRange = weapon.projectileSpeed * weapon.projectileLifetimeSeconds;
+    }
+
+    final targetX = pos.x + maxRange * facing;
+    final targetY = pos.y;
+
+    return view.hasLineOfSight(pos.x, pos.y, targetX, targetY);
   }
 
   void _fire(World world, EntityId entity, Weapon weapon, Position pos, double facing) {

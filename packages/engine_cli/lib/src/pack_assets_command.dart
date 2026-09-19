@@ -41,7 +41,11 @@ class PackAssetsCommand extends Command<int> {
       'Pack every image under a directory into one sprite sheet + manifest, '
       'for GameConfig.packedAtlasId (run before flutter run/build).';
 
-  PackAssetsCommand() {
+  /// Bounds packing retries; injectable so exhaustion can be tested with
+  /// small images instead of allocating an impractically large atlas.
+  final int maxPackingAttempts;
+
+  PackAssetsCommand({this.maxPackingAttempts = 20}) {
     argParser
       ..addOption(
         'input',
@@ -290,7 +294,7 @@ class PackAssetsCommand extends Command<int> {
     // Grow-and-retry: an initial size estimate can still be too tight
     // for a particular mix of aspect ratios: capped, not unbounded, so
     // a genuine bug elsewhere can't spin forever.
-    for (var attempt = 0; attempt < 20 && placements == null; attempt++) {
+    for (var attempt = 0; attempt < maxPackingAttempts && placements == null; attempt++) {
       placements = _tryPack(sorted, padding, binWidth, binHeight);
       if (placements == null) {
         binWidth = (binWidth * 1.25).ceil();
@@ -298,7 +302,7 @@ class PackAssetsCommand extends Command<int> {
       }
     }
     if (placements == null) {
-      throw StateError('pack-assets: failed to fit ${sorted.length} images after 20 grow '
+      throw StateError('pack-assets: failed to fit ${sorted.length} images after $maxPackingAttempts grow '
           'attempts (last tried ${binWidth}x$binHeight) -- this should not happen; '
           'please report it.');
     }

@@ -130,7 +130,8 @@ void main() {
     test(
         'color magnitude tracks timeOfDayBrightness, not just how far through the hue '
         'ramp the hour is -- regression test for a real bug where the color and '
-        'brightness curves desynced', () {
+        'brightness curves desynced',
+        tags: ['regression'], () {
       // Hour 19 sits only halfway through the 18-22 *color* ramp
       // (roughly 50% of the way from white to the dusk hue) while
       // timeOfDayBrightness there is already well past its own halfway

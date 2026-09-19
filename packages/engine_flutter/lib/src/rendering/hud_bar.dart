@@ -1,10 +1,21 @@
 /// A filled rectangle bar — a health bar, a stamina/mana meter, a boss
 /// bar — drawn fresh every frame at this entity's `Position`, the same
 /// "doesn't hide how it works" primitive `Text` is for HUD numbers.
-/// Always screen space (a bar pinned to the viewport is the only case
-/// that's come up — a world-space bar floating over an enemy's head is
-/// just a `Sprite`/`Text` pair, not this): `Position.x`/`.y` are pixels
-/// from the viewport's top-left, top-left corner of the bar.
+///
+/// [screenSpace] mirrors `Text.screenSpace`/`Sprite.screenSpace`, but
+/// defaults `true` here (opposite of those two): a HUD bar pinned to
+/// the viewport was the only case that came up when this class was
+/// written, so screen space *was* the only behavior, unconditionally —
+/// `true` keeps every existing `HudBar` (including anything already
+/// serialized without this field) rendering exactly as before. `true`:
+/// `Position.x`/`.y` are pixels from the viewport's top-left, top-left
+/// corner of the bar, ignoring the camera. `false`: world space —
+/// `Position` scrolls/zooms with the `Camera` like a `Sprite`'s does,
+/// for a bar that should float over a specific world entity (an
+/// enemy's health bar tracking it around the level) — a game still
+/// has to update `Position` to follow that entity each tick (this
+/// component doesn't do that itself, the same way it doesn't update
+/// `value`/`maxValue` itself either).
 ///
 /// [value]/[maxValue] drive the filled fraction (`value / maxValue`,
 /// clamped to `[0, 1]`); nothing here updates them — a game syncs
@@ -19,6 +30,7 @@ class HudBar {
   double height;
   int fillColorArgb;
   int backgroundColorArgb;
+  bool screenSpace;
 
   /// Draw order relative to every other renderable — see `Sprite.zIndex`.
   int zIndex;
@@ -30,6 +42,7 @@ class HudBar {
     this.height = 12,
     this.fillColorArgb = 0xFFE0304C,
     this.backgroundColorArgb = 0x80000000,
+    this.screenSpace = true,
     this.zIndex = 0,
   });
 
@@ -42,6 +55,7 @@ class HudBar {
         'height': height,
         'fillColorArgb': fillColorArgb,
         'backgroundColorArgb': backgroundColorArgb,
+        'screenSpace': screenSpace,
         'zIndex': zIndex,
       };
 
@@ -52,6 +66,7 @@ class HudBar {
         height: (json['height'] as num?)?.toDouble() ?? 12,
         fillColorArgb: (json['fillColorArgb'] as num?)?.toInt() ?? 0xFFE0304C,
         backgroundColorArgb: (json['backgroundColorArgb'] as num?)?.toInt() ?? 0x80000000,
+        screenSpace: json['screenSpace'] as bool? ?? true,
         zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
       );
 }

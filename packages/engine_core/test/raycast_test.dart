@@ -95,7 +95,8 @@ void main() {
         'a ray passing exactly through a grid corner gives the same result across tiny '
         'origin perturbations (regression: a moving ray used to flicker between two '
         'different traversal orders right at a corner tie, changing whether a '
-        'corner-adjacent solid tile blocked it)', () {
+        'corner-adjacent solid tile blocked it)',
+        tags: ['regression'], () {
       // 2x2 grid: only (col: 0, row: 1) is solid -- directly adjacent
       // (by one axis each) to the tile the ray starts in, but not on
       // the diagonal path itself.

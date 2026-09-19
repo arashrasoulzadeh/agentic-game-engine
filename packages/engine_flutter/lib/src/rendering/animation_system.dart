@@ -4,9 +4,11 @@ import 'animation.dart';
 import 'sprite.dart';
 
 /// Advances each entity's `AnimationState` by `dt` and writes the current
-/// frame's region name onto its `Sprite`. Lives in engine_flutter (not
-/// engine_core) because it operates on Sprite/AnimationState, which are
-/// themselves Flutter-adjacent (atlas-based) components.
+/// frame's region name — and, when the clip specifies one (see
+/// `AnimationClip.frameOffsetsX`/`frameOffsetsY`), that frame's pivot
+/// offset — onto its `Sprite`. Lives in engine_flutter (not engine_core)
+/// because it operates on Sprite/AnimationState, which are themselves
+/// Flutter-adjacent (atlas-based) components.
 class AnimationSystem implements System {
   @override
   String get name => 'animation';
@@ -43,6 +45,8 @@ class AnimationSystem implements System {
       }
 
       sprite.region = clip.frameRegions[state.frameIndex];
+      sprite.offsetX = clip.frameOffsetsX?[state.frameIndex] ?? 0;
+      sprite.offsetY = clip.frameOffsetsY?[state.frameIndex] ?? 0;
     }
   }
 }

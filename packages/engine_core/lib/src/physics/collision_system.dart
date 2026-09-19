@@ -19,9 +19,12 @@ class CollisionEvent {
 }
 
 /// Broad-phase via spatial hash, narrow-phase via circle distance check.
-/// On overlap: swaps velocities (cheap elastic-ish response) and emits a
-/// CollisionEvent so other systems (damage, sfx) can react without this
-/// system knowing about them.
+/// On overlap: swaps velocities (cheap elastic-ish response — skipped
+/// if either side's `Collider.pushable` is `false`, see its own doc
+/// comment for why a body might opt out) and emits a CollisionEvent so
+/// other systems (damage, sfx) can react without this system knowing
+/// about them. `CollisionEvent` itself always fires regardless of
+/// `pushable` — only the velocity swap is gated by it.
 class CollisionSystem implements System {
   /// Fixed cell size, if given. Leave `null` (the default) to auto-size
   /// it every tick instead, from `2 * ` the largest `Collider.radius`
@@ -94,6 +97,13 @@ class CollisionSystem implements System {
         return;
       }
 
+      // Check collision groups/masks before doing collision detection
+      // Entity A can collide with B if A's group matches B's mask AND B's group matches A's mask
+      if ((colA.collisionGroup & colB.collisionMask) == 0 ||
+          (colB.collisionGroup & colA.collisionMask) == 0) {
+        return;
+      }
+
       final dx = posB.x - posA.x;
       final dy = posB.y - posA.y;
       final minDist = colA.radius + colB.radius;
@@ -102,7 +112,7 @@ class CollisionSystem implements System {
 
       final velA = velocities.get(a);
       final velB = velocities.get(b);
-      if (velA != null && velB != null) {
+      if (velA != null && velB != null && colA.pushable && colB.pushable) {
         final tmpX = velA.x, tmpY = velA.y;
         velA.x = velB.x;
         velA.y = velB.y;
