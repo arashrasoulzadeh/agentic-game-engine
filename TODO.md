@@ -101,7 +101,7 @@ actionable items here.
 
 ## New engine features
 
-- [ ] **Dialogue / branching-conversation system.**
+- [x] **Dialogue / branching-conversation system.**
       New file `packages/engine_core/lib/src/content/dialogue.dart`:
       - `DialogueChoice { String textKey; String? conditionEventFlag;
         Object onSelectEvent; String? nextNodeId }` — `conditionEventFlag`
@@ -146,7 +146,7 @@ actionable items here.
       (the JSON-content contract this must follow) and
       `docs/concepts/ecs.md` (event/component registration).
 
-- [ ] **Steering-behavior primitives (`seek`/`arrive`/`wander`).**
+- [x] **Steering-behavior primitives (`seek`/`arrive`/`wander`).**
       New file `packages/engine_core/lib/src/ai/steering.dart` (sibling
       to `ai/flee_behavior.dart`), plain functions, not `Behavior`
       classes — `flee_behavior.dart`/`avoidance_behavior.dart` (the
@@ -180,7 +180,7 @@ actionable items here.
       `physics/collision_math.dart` (shared-math precedent to follow),
       `ecs/deterministic_random.dart`; doc `docs/concepts/ecs.md`.
 
-- [ ] **NPC jump-to-reach-player.**
+- [x] **NPC jump-to-reach-player.**
       Add an opt-in `jumpAcrossGaps` flag to
       `packages/engine_platformer/lib/src/ai/follow_behavior.dart`'s
       `FollowBehavior` (same "off by default, existing behavior
@@ -222,7 +222,7 @@ actionable items here.
       `jumpRequested`, to mirror for AI-set input),
       `ai/follow_behavior.dart`; doc `docs/concepts/platformer.md`.
 
-- [ ] **Attack/follow gated on line-of-sight, not just range.**
+- [x] **Attack/follow gated on line-of-sight, not just range.**
       Smallest of the five — `WorldView.hasLineOfSight` and the
       `requireLineOfSight` convention already exist
       (`ecs/world_view.dart:124`, used by `FollowBehavior`/
@@ -253,7 +253,7 @@ actionable items here.
       `physics/attack_system.dart`, `logic/weapon.dart`; doc
       `docs/concepts/agent-api.md`.
 
-- [ ] **Hearing / sound-propagation system.**
+- [x] **Hearing / sound-propagation system.**
       New files in `packages/engine_core/lib/src/ai/`:
       - `hearing.dart`: `SoundEvent { double x; double y; double
         loudness; }` (an `EventBus` event type, emitted via
@@ -304,9 +304,7 @@ actionable items here.
       `ai/follow_behavior.dart` (structural template for
       `InvestigateBehavior`); doc `docs/concepts/agent-api.md`.
 
-## New engine features (v2 — suggested, not yet scoped)
-
-- [ ] **TileMap collision layers / collision groups** — Different entities collide with different tile sets (player vs enemies vs projectiles). Extends `TileMap` with per-tile collision group bitmasks and adds `Collider.collisionGroup` / `collisionMask`.
+- [x] **TileMap collision layers / collision groups** — Different entities collide with different tile sets (player vs enemies vs projectiles). Extends `TileMap` with per-tile collision group bitmasks and adds `Collider.collisionGroup` / `collisionMask`. Implemented in `Collider`, `TileMap`, `CollisionSystem`, `TileCollisionSystem`.
 
 - [ ] **Platformer-aware NavMesh / A* pathfinding** — Current pathfinding is tile-based (basic A* in `pathfinding.dart`, `PathFollowBehavior` exists); need a platformer-aware pathfinder that handles jumps, one-way platforms, ladders, and moving platforms. Output: sequence of `PathPoint` with `jumpRequired` flags consumable by a `PathFollowBehavior`.
 
@@ -326,7 +324,7 @@ actionable items here.
 
 - [ ] **Audio: Spatial audio / Occlusion** — Distance attenuation (inverse square / linear), low-pass filter behind walls (reuse `hasLineOfSight`), reverb zones, Doppler for moving sources.
 
-- [ ] **Camera shake enhancements** — One-time impulse (explosion) vs sustained (earthquake), frequency/amplitude/decay params, per-axis control, additive stacking. (Basic `camera.shake(magnitude, duration)` exists.)
+- [x] **Camera shake enhancements** — One-time impulse (explosion) vs sustained (earthquake), frequency/amplitude/decay params, per-axis control, additive stacking. (Basic `camera.shake(magnitude, duration)` exists.) Implemented in `Camera.shake` with named params, `_ShakeEffect` class, additive stacking via `stack` param.
 
 - [ ] **TileMap auto-tile bitmask preview** — Debug overlay showing computed bitmask per cell, hover tooltip with neighbor mask. (Bitmask logic `autotileBitmask` exists.)
 
