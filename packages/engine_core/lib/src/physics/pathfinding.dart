@@ -1,12 +1,28 @@
 import 'position.dart';
 import 'tile_map.dart';
 
-/// One waypoint of a path from `findPath` — a tile cell's world-space
-/// center.
+/// One waypoint of a path from `findPath` / `findPlatformerPath` — a
+/// tile cell's world-space center.
 class PathPoint {
   final double x;
   final double y;
-  PathPoint(this.x, this.y);
+
+  /// True if reaching this point requires a jump from the previous point.
+  final bool jumpRequired;
+
+  /// True if reaching this point requires climbing (ladder).
+  final bool climbRequired;
+
+  PathPoint(this.x, this.y, {this.jumpRequired = false, this.climbRequired = false});
+
+  PathPoint copyWith({double? x, double? y, bool? jumpRequired, bool? climbRequired}) {
+    return PathPoint(
+      x ?? this.x,
+      y ?? this.y,
+      jumpRequired: jumpRequired ?? this.jumpRequired,
+      climbRequired: climbRequired ?? this.climbRequired,
+    );
+  }
 }
 
 /// A* pathfinding over [map]'s grid, 4-directional (no diagonal
@@ -162,7 +178,7 @@ class _MinHeap {
     return min;
   }
 
-  void _swap(int a, int b) {
+void _swap(int a, int b) {
     final tmp = _items[a];
     _items[a] = _items[b];
     _items[b] = tmp;
