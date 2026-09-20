@@ -188,6 +188,15 @@ class EngineView extends StatefulWidget {
   /// shader pass). The legacy path remains the default for compatibility.
   final bool singlePassLighting;
 
+  /// `false` (default) hides the auto-tile bitmask debug overlay. `true`
+  /// shows the computed 4-direction bitmask (1=N, 2=E, 4=S, 8=W) for
+  /// each solid tile cell, drawn as text on top of the tile. Only works
+  /// for tiles in `TileMap.solidTileIds` that have autotile variants
+  /// generated via `TileMap.withAutotile`. Useful for debugging
+  /// autotiling logic and verifying bitmask computation. Text is drawn
+  /// in white with black stroke for readability at any zoom.
+  final bool showAutoTileBitmask;
+
   const EngineView({
     super.key,
     required this.world,
@@ -208,6 +217,7 @@ class EngineView extends StatefulWidget {
     this.frameStats,
     this.cullBufferPx = 96.0,
     this.singlePassLighting = false,
+    this.showAutoTileBitmask = false,
   });
 
   @override
@@ -472,6 +482,7 @@ class _EngineViewState extends State<EngineView>
       cameraVelocityY: _cameraVelocityY,
       tileCullCache: _tileCullCache,
       singlePassLighting: widget.singlePassLighting,
+      showAutoTileBitmask: widget.showAutoTileBitmask,
     );
 
     Widget child = CustomPaint(painter: painter, size: Size.infinite);
@@ -667,6 +678,14 @@ class _EnginePainter extends CustomPainter {
   /// the combined darkness mask in one fragment shader pass.
   final bool singlePassLighting;
 
+  /// `true` enables the auto-tile bitmask debug overlay, showing the
+  /// computed 4-direction bitmask (1=N, 2=E, 4=S, 8=W) for each solid
+  /// tile cell as text on top of the tile. Only works for tiles in
+  /// `TileMap.solidTileIds` that have autotile variants generated via
+  /// `TileMap.withAutotile`. Text is drawn in white with black stroke
+  /// for readability at any zoom.
+  final bool showAutoTileBitmask;
+
   _EnginePainter({
     required this.world,
     required this.atlasRegistry,
@@ -684,6 +703,7 @@ class _EnginePainter extends CustomPainter {
     this.cameraVelocityY = 0,
     required this.tileCullCache,
     this.singlePassLighting = false,
+    this.showAutoTileBitmask = false,
   }) : super(repaint: null);
 
   /// [current]'s position blended with wherever that entity was just
@@ -1808,6 +1828,62 @@ class _EnginePainter extends CustomPainter {
     if (hasSlope) strokeBatch(slopePath, const Color(0xFFFF9500));
   }
 
+  /// Draws the auto-tile bitmask debug overlay on top of tiles.
+  /// Shows the 4-direction bitmask (1=N, 2=E, 4=S, 8=W) as text
+  /// centered on each solid tile that has autotile variants.
+  void _drawAutoTileBitmaskOverlay(
+    Canvas canvas,
+    Size size,
+    TileMap map,
+    Position origin,
+    int minCol,
+    int maxCol,
+    int minRow,
+    int maxRow,
+  ) {
+    if (!showAutoTileBitmask) return;
+
+    for (var row = minRow; row <= maxRow; row++) {
+      for (var col = minCol; col <= maxCol; col++) {
+        final tileId = map.tileAt(col, row);
+        if (tileId == 0) continue;
+
+        // Only show bitmask for solid tiles that have autotile variants
+        if (!map.solidTileIds.contains(tileId)) continue;
+
+        final bitmask = map.collisionGroupAt(col, row);
+        if (bitmask <= 0) continue; // 0 means no collision / empty
+
+        final left = origin.x + col * map.tileWidth;
+        final top = origin.y + row * map.tileHeight;
+        final screenPos = camera.worldToScreen(left, top, size);
+
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: bitmask.toString(),
+            style: TextStyle(
+              color: const Color(0xFFFFFFFF),
+              fontSize: 10 / camera.zoom,
+              fontWeight: FontWeight.bold,
+              shadows: [
+                const Shadow(
+                  color: Color(0xFF000000),
+                  offset: Offset(0.5, 0.5),
+                  blurRadius: 1.0,
+                ),
+              ],
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+
+        final dx = screenPos.dx - textPainter.width / 2;
+        final dy = screenPos.dy - textPainter.height / 2;
+        textPainter.paint(canvas, Offset(dx, dy));
+      }
+    }
+  }
+
   @override
   bool shouldRepaint(covariant _EnginePainter oldDelegate) => true;
 
@@ -2371,25 +2447,30 @@ class _EnginePainter extends CustomPainter {
           }
         }
 
-        for (var row = minRow; row <= maxRow; row++) {
-          for (var col = minCol; col <= maxCol; col++) {
-            final tileId = map.tileAt(col, row);
-            drawTile(tileId, col, row, () {
-              return map.oneWayTileIds.contains(tileId)
-                  ? const Color(0x8899CCFF)
-                  : (map.slopeUpRightTileIds.contains(tileId) ||
-                          map.slopeUpLeftTileIds.contains(tileId))
-                      ? const Color(0xFFC08040)
-                      : map.ladderTileIds.contains(tileId)
-                          ? const Color(0x88C09050)
-                          : const Color(0xFF4A4A4A);
-            });
+for (var row = minRow; row <= maxRow; row++) {
+            for (var col = minCol; col <= maxCol; col++) {
+              final tileId = map.tileAt(col, row);
+              drawTile(tileId, col, row, () {
+                return map.oneWayTileIds.contains(tileId)
+                    ? const Color(0x8899CCFF)
+                    : (map.slopeUpRightTileIds.contains(tileId) ||
+                            map.slopeUpLeftTileIds.contains(tileId))
+                        ? const Color(0xFFC08040)
+                        : map.ladderTileIds.contains(tileId)
+                            ? const Color(0x88C09050)
+                            : const Color(0xFF4A4A4A);
+              });
+            }
           }
-        }
 
-        for (var row = minRow; row <= maxRow; row++) {
-          for (var col = minCol; col <= maxCol; col++) {
-            drawTile(map.foregroundTileAt(col, row), col, row,
+          // Draw auto-tile bitmask debug overlay on top of main tiles
+          if (showAutoTileBitmask) {
+            _drawAutoTileBitmaskOverlay(canvas, size, map, origin, minCol, maxCol, minRow, maxRow);
+          }
+
+          for (var row = minRow; row <= maxRow; row++) {
+            for (var col = minCol; col <= maxCol; col++) {
+              drawTile(map.foregroundTileAt(col, row), col, row,
                 () => backgroundForegroundFallback);
           }
         }

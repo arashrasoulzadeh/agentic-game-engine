@@ -326,7 +326,7 @@ actionable items here.
 
 - [x] **Camera shake enhancements** — One-time impulse (explosion) vs sustained (earthquake), frequency/amplitude/decay params, per-axis control, additive stacking. (Basic `camera.shake(magnitude, duration)` exists.) Implemented in `Camera.shake` with named params, `_ShakeEffect` class, additive stacking via `stack` param.
 
-- [ ] **TileMap auto-tile bitmask preview** — Debug overlay showing computed bitmask per cell, hover tooltip with neighbor mask. (Bitmask logic `autotileBitmask` exists.)
+- [x] **TileMap auto-tile bitmask preview** — Debug overlay showing computed bitmask per cell, hover tooltip with neighbor mask. (Bitmask logic `autotileBitmask` exists.) Implemented `EngineView.showAutoTileBitmask` and `_drawAutoTileBitmaskOverlay`.
 
 - [ ] **ECS query caching / Archetypes** — Hot loops (`MovementSystem`, `CollisionSystem`) iterate archetype tables instead of sparse sets. Cache invalidation on component add/remove.
 
