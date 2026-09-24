@@ -295,7 +295,6 @@ world.onCollisionWithAny(coins, (coin, _) {
 
 See [engine_core's README](../engine_core/README.md#events) for the
 full set.
-
 ## Damage/health/combat
 
 ```dart
@@ -321,7 +320,9 @@ stay explicit calls you make yourself, not hidden system behavior:
   handling until `HitstunSystem` counts it down — both no-ops unless
   set, and `hitstunSeconds` is itself a no-op for an entity with no
   `PlatformerController` (e.g. an AI-only enemy).
+
 - **`healEntity(world, id, amount)`** — restores health, clamped to max.
+
 - **`dealDamageOnTouch(world, hazards, amount, {invincibilitySeconds,
   knockbackSpeed, hitstunSeconds})`** — the common case (spikes, enemy
   contact damage) in one call, via `World.onCollisionWithAny` under the
@@ -330,6 +331,49 @@ stay explicit calls you make yourself, not hidden system behavior:
   knockback source. For anything more specific (conditional damage,
   different amounts per hazard), call `damageEntity` directly from your
   own collision listener instead.
+
+## Guard/block, stability (poise), and parry
+
+The `Health` component now supports a full guard/block system with a
+stability/poise meter, and a precise-deflect (parry) mechanic:
+
+```dart
+// Guarding: set isGuarding = true to block incoming hits
+final health = world.storeOf<Health>().get(enemy)!;
+health.isGuarding = true;
+health.guardDamageReduction = 1.0; // 1.0 = fully block, 0.5 = 50% reduction
+health.stability = 100;
+health.maxStability = 100;
+health.guardBreakStunSeconds = 1.0; // stun duration on guard break
+
+// Parrying: add Parry component, call requestParry() on parry input
+world.storeOf<Parry>().set(player, Parry(
+  parryWindowSeconds: 0.15,
+  parryStunSeconds: 0.5,
+  parryCooldownSeconds: 0.5,
+));
+// In your input handling:
+world.storeOf<Parry>().get(player)!.requestParry();
+```
+
+- **Guarding**: When `isGuarding` is true and `canGuard` (not dead,
+  not invincible, not guard-broken, stability > 0), incoming damage is
+  reduced by `guardDamageReduction` (default 1.0 = full block) and
+  stability is depleted instead of health. When stability reaches 0,
+  `GuardBreakEvent` fires, the entity is stunned for
+  `guardBreakStunSeconds`, and takes full damage from the breaking hit.
+  Stability regenerates at `stabilityRegenPerSecond` when not guarding
+  and not guard-broken.
+
+- **Parry**: A short timing window (`parryWindowSeconds`, default
+  0.15s). If an incoming hit lands while the window is active,
+  `ParrySuccessEvent` fires, the hit is negated, and the *attacker* is
+  stunned for `parryStunSeconds` (default 0.5s). Cooldown
+  (`parryCooldownSeconds`, default 0.5s) prevents spamming. Managed by
+  `ParrySystem` (included in `installPlatformerSystems`).
+
+All of this is opt-in — the original "just take damage" behavior is
+preserved when `isGuarding = false` and no `Parry` component exists.
 
 ## Weapons: melee (sword) and ranged (gun) combat
 
@@ -375,8 +419,95 @@ cover (a thrown grenade, a boss's telegraphed shot):
   matching this package's "damage is an explicit call, not automatic"
   convention.
 
-## Checkpoints and respawn
+### Multi-hit melee combo chains
 
+```dart
+world.storeOf<Weapon>().set(player, Weapon(
+  kind: WeaponKind.melee,
+  damage: 10,
+  comboCount: 3,
+  comboWindowSeconds: 0.5,
+  comboDamageMultipliers: [1.0, 1.2, 1.5], // each hit stronger
+  comboCooldowns: [0.3, 0.35, 0.4],        // each hit has own cooldown
+  comboMeleeRanges: [24, 28, 32],          // each hit has own range
+));
+```
+
+When `comboCount > 1` and the weapon is melee, a successful hit starts a
+`comboWindowSeconds` timer. Pressing attack again within the window
+advances to the next combo step (bypassing normal cooldown). Missing the
+window or a whiff (hitbox not connecting) resets the combo to step 0.
+Per-step overrides for damage, cooldown, range, radius, and duration
+are optional arrays in `comboDamageMultipliers`, `comboCooldowns`,
+`comboMeleeRanges`, `comboMeleeRadii`, `comboMeleeDurations`.
+
+## Enemy combat AI with telegraph states
+
+```dart
+world.storeOf<EnemyCombat>().set(enemy, EnemyCombat(
+  state: EnemyCombatState.idle,
+  detectionRange: 300,
+  engageRange: 200,
+  attackRange: 48,
+  telegraphDuration: 0.5,  // wind-up time (player can see/react)
+  attackDuration: 0.2,
+  recoveryDuration: 0.5,
+  repositionDuration: 1.0,
+  // optional per-entity overrides via AIState.memory
+));
+world.storeOf<AIState>().set(enemy, AIState('enemyCombat'));
+// Behavior runs via EnemyCombatBehavior (register in BehaviorRegistry)
+```
+
+The state machine: **Idle → Patrol → Alert → Approach → Telegraph → Attack → Recovery → Reposition**
+plus **Stagger, Guard, Retreat**.
+
+- **Telegraph**: Wind-up before attack — emits `EnemyTelegraphEvent`
+  with duration so you can show a visual tell (flash, particle,
+  animation) letting the player parry/dodge.
+- **Attack**: Hitbox active — emits `EnemyAttackEvent`.
+- **Recovery/Reposition**: Vulnerable after attack, then moves to new
+  position.
+- **Retreat**: Triggers at low health (`retreatHealthFraction`, default 25%).
+
+All ranges/durations/speeds are configurable and overridable per-entity
+via `AIState.memory`. See `EnemyCombat` for the full field list.
+
+## Platformer-aware pathfinding
+
+```dart
+final path = world.findPlatformerPath(
+  map: tileMap,
+  origin: tileMapPosition,
+  fromX: playerX, fromY: playerY,
+  toX: targetX, toY: targetY,
+  ladderTileIds: {2},           // tiles climbable via LadderSystem
+  oneWayTileIds: {3},           // one-way platform tile ids
+  config: PlatformerPathfinderConfig(
+    maxJumpHorizontalTiles: 6,
+    maxJumpHeightTiles: 4,
+    maxJumpHeight: 200,
+  ),
+);
+```
+
+Extends the tile-based A* (`engine_core` `findPath`) with platformer
+movement capabilities:
+
+- **Walk**: horizontal with step up/down (1 tile)
+- **Jump**: configurable horizontal distance/height with arc clearance check
+- **Climb**: vertical on ladder tiles, can step off horizontally
+- **Fall/ledge drop**: walks off ledges and finds landing spots
+- **Drop through one-way**: intentional "press down" to fall through
+
+Returns `PlatformerPathPoint` sequence with flags:
+- `jumpRequired` — next segment needs a jump
+- `climbRequired` — next segment needs ladder climbing
+- `fallRequired` — next segment is a fall/ledge drop
+- `dropThroughOneWay` — specifically dropping through one-way platform
+
+Configurable via `PlatformerPathfinderConfig` (jump distance/height,
+arc clearance).
 ```dart
 trackCheckpoints(world, player);
 respawnOnDeath(world, player, fallbackX: 40, fallbackY: 40);

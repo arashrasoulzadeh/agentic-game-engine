@@ -254,6 +254,59 @@ world.storeOf<AIState>().set(enemyId, AIState('flee'));
 
 Flees horizontally from `target` at `speed`. Only touches `Velocity.x` (leaves `.y` alone so it doesn't fight gravity/jump). `minDistance` stops the flee once the entity is far enough; `requireLineOfSight` makes it pause when a `TileMap` wall blocks the view to the target.
 
+#### Behavior Trees (serializable, visual-editor-friendly)
+
+```dart
+final registry = BehaviorRegistry()
+  ..register('moveToPlayer', MoveToPlayerBehavior())
+  ..register('attack', AttackBehavior());
+
+final tree = BTSequence(id: 'root', children: [
+  BTSelector(id: 'combat', children: [
+    BTLeaf(id: 'attack', behaviorId: 'attack'),
+    BTSequence(id: 'chase', children: [
+      BTWait(id: 'windup', duration: 0.3),
+      BTLeaf(id: 'move', behaviorId: 'moveToPlayer'),
+    ]),
+  ]),
+  BTRepeater(count: null, child: BTWait(id: 'idle', duration: 2.0)),
+]);
+
+world.storeOf<AIState>().set(enemyId, AIState(
+  'behaviorTree',
+  memory: {'_bt_root': tree.toJson()},
+));
+world.addSystem(BehaviorTreeSystem());
+```
+
+A **Behavior Tree** replaces ad-hoc `Behavior` implementations with a
+serializable, composable structure:
+
+- **Composite nodes**: `Sequence` (all succeed), `Selector` (first succeeds), `Parallel` (N of M)
+- **Decorators**: `Inverter` (flip success/failure), `Repeater` (repeat N times or forever), `Succeeder`/`Failer` (force result)
+- **Leaf nodes**: `BTLeaf` (executes a registered `Behavior`), `BTWait` (succeeds after N seconds)
+
+**Key features**:
+- **Serializable**: `toJson()`/`fromJson()` round-trips the entire tree — export from a visual node-graph editor, load at runtime
+- **Blackboard**: Per-entity state stored in `AIState.memory['_bt_blackboard']` — persists across ticks, survives save/load
+- **No custom code**: Game logic stays in registered `Behavior` implementations; the tree only *orchestrates* them
+- **AI-agent-friendly**: An LLM can output the JSON tree; a visual editor can drag-drop nodes
+
+**Nodes** (all in `engine_core/src/ai/behavior_tree.dart`):
+| Node | Type | Behavior |
+|---|---|---|
+| `BTSequence` | Composite | Ticks children in order; fails on first failure; succeeds if all succeed |
+| `BTSelector` | Composite | Ticks children in order; succeeds on first success; fails if all fail |
+| `BTParallel` | Composite | Ticks all children; needs `requiredSuccess` successes |
+| `BTInverter` | Decorator | Flips child's success ↔ failure |
+| `BTRepeater` | Decorator | Repeats child `count` times (or forever if null) |
+| `BTSucceeder` | Decorator | Always returns success |
+| `BTFailer` | Decorator | Always returns failure |
+| `BTLeaf` | Leaf | Executes a `Behavior` by `behaviorId` from registry |
+| `BTWait` | Leaf | Returns running for `duration` seconds, then success |
+
+Register the tree in `AIState.memory['_bt_root']` and add `BehaviorTreeSystem()` to your world (or call `BehaviorTreeBehavior(root, registry).decide(...)` manually for single-entity control).
+
 Additional platformer-specific behaviors (`PatrolBehavior`, `FollowBehavior`, `PathFollowBehavior`, `AvoidanceBehavior`) live in `engine_platformer`.
 
 ### Pathfinding

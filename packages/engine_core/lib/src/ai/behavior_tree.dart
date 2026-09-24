@@ -5,6 +5,7 @@ import '../ecs/action.dart';
 import '../ecs/entity.dart';
 import '../ecs/world_view.dart';
 import '../ecs/world.dart';
+import '../ecs/system.dart';
 import '../ai/ai_state.dart';
 
 /// Base class for all behavior tree nodes.
@@ -409,6 +410,40 @@ class BehaviorTreeBehavior implements Behavior {
     // Store registry and dt in context for nodes to access
     // We use a custom action that runs the tree
     return _RunTreeAction(root, registry, view, self);
+  }
+}
+
+/// System that runs behavior trees stored in AIState.memory['_bt_root'].
+/// For each entity with AIState and a '_bt_root' key, it executes the tree.
+class BehaviorTreeSystem implements System {
+  final BehaviorRegistry registry;
+
+  BehaviorTreeSystem(this.registry);
+
+  @override
+  String get name => 'behaviorTree';
+
+  @override
+  void update(World world, double dt) {
+    final states = world.storeOf<AIState>();
+    for (var i = 0; i < states.length; i++) {
+      final entity = states.entityAt(i);
+      final state = states.denseAt(i);
+
+      final rootJson = state.memory['_bt_root'] as Map<String, dynamic>?;
+      if (rootJson == null) continue;
+
+      final root = BTNode.fromJson(rootJson);
+
+      final blackboard = state.memory['_bt_blackboard'] as Map<String, dynamic>? ?? <String, dynamic>{};
+      state.memory['_bt_blackboard'] = blackboard;
+
+      final view = WorldView(world);
+      final context = BTContext(view, entity, blackboard: blackboard)
+        ..set('_bt_registry', registry);
+
+      root.tick(context);
+    }
   }
 }
 
