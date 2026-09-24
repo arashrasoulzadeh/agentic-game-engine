@@ -40,6 +40,14 @@ class GameConfig {
   /// only flips it on locally while chasing a specific perf report.
   final bool showPerformanceOverlay;
 
+  /// See `EngineView.showAutoTileBitmask`'s doc comment — the debug
+  /// overlay showing each auto-tiled cell's computed bitmask. Off by
+  /// default, same reasoning as [showColliderDebug]. Composes with
+  /// `Scene.showAutoTileBitmask` via OR in `GameRunner` — set this
+  /// globally for a level-authoring build, or leave it off here and
+  /// flip it per-scene instead.
+  final bool showAutoTileBitmask;
+
   /// `false` (default — the system status bar/navigation bar stay
   /// visible, unchanged from before this existed). `true` hides them
   /// (`SystemUiMode.immersiveSticky` on Android/iOS — a swipe from the
@@ -116,6 +124,7 @@ class GameConfig {
     this.showFpsOverlay = false,
     this.showColliderDebug = false,
     this.showPerformanceOverlay = false,
+    this.showAutoTileBitmask = false,
     this.fullscreen = false,
     this.pauseOnBackground = true,
     this.onScreenControls = OnScreenControlsMode.auto,
@@ -136,6 +145,7 @@ class GameConfig {
         'showFpsOverlay': showFpsOverlay,
         'showColliderDebug': showColliderDebug,
         'showPerformanceOverlay': showPerformanceOverlay,
+        'showAutoTileBitmask': showAutoTileBitmask,
         'fullscreen': fullscreen,
         'pauseOnBackground': pauseOnBackground,
         'onScreenControls': onScreenControls.name,
@@ -161,6 +171,7 @@ class GameConfig {
         showFpsOverlay: json['showFpsOverlay'] as bool? ?? false,
         showColliderDebug: json['showColliderDebug'] as bool? ?? false,
         showPerformanceOverlay: json['showPerformanceOverlay'] as bool? ?? false,
+        showAutoTileBitmask: json['showAutoTileBitmask'] as bool? ?? false,
         fullscreen: json['fullscreen'] as bool? ?? false,
         pauseOnBackground: json['pauseOnBackground'] as bool? ?? true,
         onScreenControls: OnScreenControlsMode.values.firstWhere(

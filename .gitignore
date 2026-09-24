@@ -58,3 +58,4 @@ packages/**/coverage/
 # dev/testing scratch — never committed.
 /test_game/
 /examples/
+/zahaak/

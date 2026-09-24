@@ -19,6 +19,21 @@ class _SlowLoadingScene extends Scene {
   }
 }
 
+class _FailingScene extends Scene {
+  @override
+  Future<void> populate(World world, SceneController scenes, GameState state) async {
+    throw StateError('populate failed on purpose');
+  }
+}
+
+class _FailingSceneGame extends Game {
+  @override
+  GameConfig get config => const GameConfig(worldWidth: 100, worldHeight: 100);
+
+  @override
+  Scene createInitialScene() => _FailingScene();
+}
+
 class _TestGame extends Game {
   bool paused = false;
   bool resumed = false;
@@ -85,6 +100,25 @@ class _PerformanceOverlayGame extends _TestGame {
       const GameConfig(worldWidth: 200, worldHeight: 100, showPerformanceOverlay: true);
 }
 
+class _AutoTileBitmaskConfigGame extends _TestGame {
+  @override
+  GameConfig get config =>
+      const GameConfig(worldWidth: 200, worldHeight: 100, showAutoTileBitmask: true);
+}
+
+class _AutoTileBitmaskScene extends Scene {
+  @override
+  Future<void> populate(World world, SceneController scenes, GameState state) async {}
+
+  @override
+  bool get showAutoTileBitmask => true;
+}
+
+class _AutoTileBitmaskSceneGame extends _TestGame {
+  @override
+  Scene createInitialScene() => _AutoTileBitmaskScene();
+}
+
 void main() {
   testWidgets('Game.onPause/onResume default to no-ops', (tester) async {
     final game = _DefaultCallbacksGame();
@@ -119,6 +153,57 @@ void main() {
 
     final engineView = tester.widget<EngineView>(find.byType(EngineView));
     expect(engineView.showPerformanceOverlay, isTrue);
+  });
+
+  testWidgets("GameConfig.showAutoTileBitmask reaches EngineView through GameRunner",
+      (tester) async {
+    final game = _AutoTileBitmaskConfigGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump();
+
+    final engineView = tester.widget<EngineView>(find.byType(EngineView));
+    expect(engineView.showAutoTileBitmask, isTrue);
+  });
+
+  testWidgets(
+      "Scene.showAutoTileBitmask reaches EngineView through GameRunner even when "
+      "GameConfig.showAutoTileBitmask is false", (tester) async {
+    final game = _AutoTileBitmaskSceneGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump();
+
+    expect(game.config.showAutoTileBitmask, isFalse);
+    final engineView = tester.widget<EngineView>(find.byType(EngineView));
+    expect(engineView.showAutoTileBitmask, isTrue);
+  });
+
+  testWidgets(
+      'a Scene.populate exception is reported via FlutterError.reportError, not silently '
+      'swallowed -- GameRunner would otherwise just hang on the loading screen forever '
+      'with no diagnostic at all', (tester) async {
+    final reported = <FlutterErrorDetails>[];
+    final previousOnError = FlutterError.onError;
+    FlutterError.onError = reported.add;
+    addTearDown(() => FlutterError.onError = previousOnError);
+
+    final game = _FailingSceneGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump();
+    // Several more rebuilds (the loading screen's own spinner animates,
+    // so `build` keeps re-running) -- the same failed load must only
+    // ever be reported once, not once per frame.
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+
+    expect(reported, hasLength(1));
+    expect(reported.first.exception, isA<StateError>());
+    // Still shows the loading screen, not a crash -- the fix is making
+    // the failure observable, not changing what the UI does with it.
+    expect(find.byType(EngineView), findsNothing);
   });
 
   testWidgets('Game.frameStats defaults to null and GameRunner does not require one',

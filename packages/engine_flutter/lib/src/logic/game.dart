@@ -116,6 +116,13 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   bool _paused = false;
   _LoadedGame? _overlay;
 
+  /// The `_future` a load error was already reported for -- `build`
+  /// re-runs every frame while the loading screen's own spinner
+  /// animates, and without this a single load failure would spam
+  /// `FlutterError.reportError` once per frame for as long as it stays
+  /// on screen instead of once, the moment it happens.
+  Future<_LoadedGame>? _reportedErrorFor;
+
   @override
   void initState() {
     super.initState();
@@ -245,6 +252,27 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     return FutureBuilder<_LoadedGame>(
       future: _future,
       builder: (context, snapshot) {
+        // A `Scene.populate`/`loadAssets` exception otherwise vanishes
+        // completely -- `FutureBuilder` only exposes it via
+        // `snapshot.error`, and the `loaded == null` branch below can't
+        // tell "still loading" apart from "failed to load" without this,
+        // so a broken scene (a malformed level asset, a null-asserted
+        // component that isn't actually present) just hangs on the
+        // loading screen forever with zero diagnostic -- found live
+        // debugging exactly that hang, which cost real time to track
+        // down blind before adding this. `FlutterError.reportError`
+        // (not a bare `print`) so it goes through whatever error
+        // reporting the embedding app has already configured, the same
+        // as a framework-caught build error would.
+        if (snapshot.hasError && !identical(_reportedErrorFor, _future)) {
+          _reportedErrorFor = _future;
+          FlutterError.reportError(FlutterErrorDetails(
+            exception: snapshot.error!,
+            stack: snapshot.stackTrace,
+            library: 'engine_flutter',
+            context: ErrorDescription('while loading a Scene in GameRunner'),
+          ));
+        }
         final loaded = snapshot.data;
         if (loaded == null) {
           return ColoredBox(
@@ -273,6 +301,8 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           showFpsOverlay: !kReleaseMode && widget.game.config.showFpsOverlay,
           showColliderDebug: !kReleaseMode && widget.game.config.showColliderDebug,
           showPerformanceOverlay: !kReleaseMode && widget.game.config.showPerformanceOverlay,
+          showAutoTileBitmask: !kReleaseMode &&
+              (widget.game.config.showAutoTileBitmask || loaded.scene.showAutoTileBitmask),
           ambientBrightness: loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness,
           dayNightCycle: loaded.scene.dayNightCycle,
           maxFps: widget.game.config.maxFps,

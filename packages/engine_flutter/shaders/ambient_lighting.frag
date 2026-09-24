@@ -24,7 +24,7 @@
 uniform vec2 uSize;
 uniform vec4 uAmbientColor;
 uniform float uAmbientBrightness;
-uniform int uLightCount;
+uniform float uLightCount;
 uniform vec4 uLights[32];
 uniform vec4 uLightColors[32];
 uniform vec4 uLightFlags[32];

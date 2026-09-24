@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../ecs/world_view.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
@@ -119,8 +121,16 @@ class HearingSystem implements System {
       if (distanceSq > maxDistance * maxDistance) continue;
 
       // Check line of sight (tile occlusion only, not entity occlusion)
-      // Using WorldView.hasLineOfSight which checks tile occlusion
-      if (!view.hasLineOfSight(pos.x, pos.y, sound.x, sound.y)) continue;
+      // Offset the ray start slightly toward the sound to avoid hitting the
+      // tile the entity is standing on (common when entity is on the ground).
+      const offset = 2.0;
+      final dirX = sound.x - pos.x;
+      final dirY = sound.y - pos.y;
+      final dist = sqrt(dirX * dirX + dirY * dirY);
+      final fromX = pos.x + (dist > 0 ? dirX / dist * offset : 0);
+      final fromY = pos.y + (dist > 0 ? dirY / dist * offset : 0);
+
+      if (!view.hasLineOfSight(fromX, fromY, sound.x, sound.y)) continue;
 
       // Sound is heard! Update AIState.memory
       final aiState = aiStates.get(entity);

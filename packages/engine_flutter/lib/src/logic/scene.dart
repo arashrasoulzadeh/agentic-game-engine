@@ -92,6 +92,18 @@ abstract class Scene {
   /// cycle exists.
   DayNightCycle? get dayNightCycle => null;
 
+  /// Drives `EngineView.showAutoTileBitmask` for just this scene —
+  /// `false` (default) means "no overlay," identical to how this
+  /// engine behaved before the feature existed. A gameplay scene stays
+  /// `false`; a level-authoring/debug scene overrides this to `true`
+  /// so the auto-tile bitmask overlay only ever appears where an author
+  /// actually wants it, not across the whole game the way flipping
+  /// `GameConfig.showAutoTileBitmask` globally would. Composes with
+  /// that global setting via OR in `GameRunner` (either one being
+  /// `true` turns the overlay on), the same relationship
+  /// [showOnScreenControls]'s scene-vs-global peers already use.
+  bool get showAutoTileBitmask => false;
+
   /// Called on every tap/click with its position already converted to
   /// world coordinates (see `Camera.screenToWorld`) — how an ECS menu
   /// (`Button`-tagged entities) or an in-world tap target (a door)

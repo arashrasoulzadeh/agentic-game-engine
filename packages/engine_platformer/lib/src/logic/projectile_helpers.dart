@@ -4,6 +4,15 @@ import 'package:engine_flutter/engine_flutter.dart';
 import 'combat_helpers.dart';
 import 'projectile.dart';
 
+/// Emitted when a melee projectile (zero-velocity, short-lived) hits an
+/// entity with `Health`. Allows [AttackSystem] to track combo chains.
+class MeleeHitEvent {
+  final EntityId attacker;
+  final EntityId target;
+  final double damage;
+  MeleeHitEvent(this.attacker, this.target, this.damage);
+}
+
 /// Spawns a `Position`/`Velocity`/`Collider`/`Projectile` entity moving
 /// at ([vx], [vy]) — the "shoot one" helper, matching `spawnPlayer`/
 /// `spawnEnemy`'s "replaces the hand-spawned entity + component
@@ -61,7 +70,13 @@ void installProjectileDamage(World world) {
 void _handleHit(World world, EntityId maybeProjectile, EntityId other) {
   final projectile = world.storeOf<Projectile>().get(maybeProjectile);
   if (projectile == null || other == projectile.owner) return;
-  if (damageEntity(world, other, projectile.damage)) {
+  if (damageEntity(world, other, projectile.damage, source: projectile.owner)) {
+    // Emit MeleeHitEvent for melee attacks (zero velocity, short lifetime)
+    // to enable combo chain tracking in AttackSystem
+    final vel = world.storeOf<Velocity>().get(maybeProjectile);
+    if (vel != null && vel.x == 0 && vel.y == 0 && projectile.owner != null) {
+      world.events.emit(MeleeHitEvent(projectile.owner!, other, projectile.damage));
+    }
     world.destroy(maybeProjectile);
   }
 }

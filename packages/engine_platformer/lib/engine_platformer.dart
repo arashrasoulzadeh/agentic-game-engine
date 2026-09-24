@@ -1,4 +1,6 @@
+export 'src/physics/platformer_pathfinding.dart';
 export 'src/ai/avoidance_behavior.dart';
+export 'src/ai/enemy_combat.dart';
 export 'src/ai/follow_behavior.dart';
 export 'src/ai/investigate_behavior.dart';
 export 'src/ai/path_follow_behavior.dart';
@@ -10,6 +12,7 @@ export 'src/logic/combat_helpers.dart';
 export 'src/logic/checkpoint.dart';
 export 'src/physics/gravity.dart';
 export 'src/logic/health.dart';
+export 'src/logic/parry.dart';
 export 'src/ui/health_hud_link.dart';
 export 'src/logic/inventory.dart';
 export 'src/logic/last_checkpoint.dart';
@@ -48,7 +51,9 @@ import 'package:engine_core/engine_core.dart';
 import 'src/logic/checkpoint.dart';
 import 'src/physics/gravity.dart';
 import 'src/logic/health.dart';
+import 'src/logic/parry.dart';
 import 'src/ui/health_hud_link.dart';
+import 'src/ai/enemy_combat.dart';
 import 'src/logic/inventory.dart';
 import 'src/logic/last_checkpoint.dart';
 import 'src/rendering/movement_animation_set.dart';
@@ -134,5 +139,15 @@ void registerPlatformerComponents(World world) {
     'weapon',
     (w) => w.toJson(),
     Weapon.fromJson,
+  );
+  world.components.register<EnemyCombat>(
+    'enemyCombat',
+    (e) => e.toJson(),
+    EnemyCombat.fromJson,
+  );
+  world.components.register<Parry>(
+    'parry',
+    (p) => p.toJson(),
+    Parry.fromJson,
   );
 }

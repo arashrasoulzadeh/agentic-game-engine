@@ -84,6 +84,7 @@ void main() {
       showFpsOverlay: true,
       showColliderDebug: true,
       showPerformanceOverlay: true,
+      showAutoTileBitmask: true,
       fullscreen: true,
       pauseOnBackground: false,
       onScreenControls: OnScreenControlsMode.on,
@@ -101,6 +102,7 @@ void main() {
     expect(restored.showFpsOverlay, isTrue);
     expect(restored.showColliderDebug, isTrue);
     expect(restored.showPerformanceOverlay, isTrue);
+    expect(restored.showAutoTileBitmask, isTrue);
     expect(restored.fullscreen, isTrue);
     expect(restored.pauseOnBackground, isFalse);
     expect(restored.onScreenControls, OnScreenControlsMode.on);
@@ -122,6 +124,7 @@ void main() {
     expect(config.showFpsOverlay, isFalse);
     expect(config.showColliderDebug, isFalse);
     expect(config.showPerformanceOverlay, isFalse);
+    expect(config.showAutoTileBitmask, isFalse);
     expect(config.fullscreen, isFalse);
     expect(config.pauseOnBackground, isTrue);
     expect(config.onScreenControls, OnScreenControlsMode.auto);

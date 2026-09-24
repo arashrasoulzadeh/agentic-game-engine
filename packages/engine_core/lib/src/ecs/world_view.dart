@@ -14,6 +14,9 @@ class WorldView {
 
   WorldView(this._world);
 
+  /// Access to the underlying World (for systems that need to apply actions).
+  World get world => _world;
+
   double get width => _world.width;
   double get height => _world.height;
   int get tick => _world.tick;

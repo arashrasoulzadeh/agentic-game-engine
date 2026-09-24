@@ -31,6 +31,12 @@ import 'platformer_controller.dart';
 ///   as an instantaneous swing hitbox, with zero new collision/damage
 ///   code needed.
 ///
+/// For melee weapons with [Weapon.comboCount] > 1, a successful hit
+/// starts a [Weapon.comboWindowSeconds] timer. If the attack action is
+/// pressed again before the timer expires, the next combo step fires
+/// immediately (bypassing normal cooldown). Missing the window or a whiff
+/// (hitbox not connecting) resets the combo to step 0.
+///
 /// A game must still call `installProjectileDamage(world)` once (the
 /// same call ranged combat already needs) for either weapon kind to
 /// actually deal damage on hit — this system only spawns the
@@ -39,19 +45,9 @@ import 'platformer_controller.dart';
 /// `installPlatformerSystems`'s doc comment).
 class AttackSystem implements System {
   final String attackAction;
-
-  /// When `true` (default `false`), the attack will only fire if there
-  /// is a clear line of sight from the attacker to the attack's max
-  /// range in the facing direction. Uses `WorldView.hasLineOfSight`
-  /// against `TileMap` solid/one-way tiles. A wall between the attacker
-  /// and the attack's max range will block the attack.
-  ///
-  /// The max range is:
-  /// - [Weapon.meleeRange] for [WeaponKind.melee]
-  /// - [Weapon.projectileSpeed] * [Weapon.projectileLifetimeSeconds] for [WeaponKind.ranged]
-  ///
-  /// Note: this does NOT check for entities in the way, only tile geometry.
   final bool requireLineOfSight;
+
+  bool _listenersRegistered = false;
 
   AttackSystem({this.attackAction = 'attack', this.requireLineOfSight = false});
 
@@ -68,18 +64,52 @@ class AttackSystem implements System {
     // Create WorldView once for line-of-sight checks
     final view = requireLineOfSight ? WorldView(world) : null;
 
+    // Register melee hit listener once (for combo windows)
+    if (!_listenersRegistered) {
+      world.events.on<MeleeHitEvent>((event) {
+        final weapon = weapons.get(event.attacker);
+        if (weapon != null && weapon.kind == WeaponKind.melee && weapon.comboCount > 1) {
+          // Start combo window for next hit
+          weapon.comboTimer = weapon.comboWindowSeconds;
+          weapon.advanceCombo();
+        }
+      });
+      _listenersRegistered = true;
+    }
+
     for (var i = 0; i < weapons.length; i++) {
       final entity = weapons.entityAt(i);
       final weapon = weapons.denseAt(i);
 
+      // Count down cooldown
       if (weapon.cooldownRemaining > 0) weapon.cooldownRemaining -= dt;
+
+      // Count down combo window
+      if (weapon.comboTimer > 0) {
+        weapon.comboTimer -= dt;
+        if (weapon.comboTimer <= 0) {
+          // Combo window expired - reset combo
+          weapon.resetCombo();
+        }
+      }
 
       final input = inputs.get(entity);
       if (input != null && input.isPressed(attackAction)) {
         weapon.attackRequested = true;
       }
 
-      if (weapon.attackRequested && weapon.isReady) {
+      // Check if we can fire: either normal ready, or in combo window with attack buffered
+      final requested = weapon.attackRequested;
+      final canFireNormal = requested && weapon.isReady;
+      final canFireCombo = requested &&
+          weapon.comboTimer > 0 &&
+          weapon.currentComboStep > 0 &&
+          weapon.currentComboStep < weapon.comboCount;
+
+      // Always consume attack request each tick (matches original behavior)
+      weapon.attackRequested = false;
+
+      if (canFireNormal || canFireCombo) {
         final pos = positions.get(entity);
         if (pos != null) {
           final facing = controllers.get(entity)?.facingSign ?? 1.0;
@@ -87,10 +117,9 @@ class AttackSystem implements System {
           // Check line of sight if required
           if (!requireLineOfSight || _hasLineOfSight(world, view!, pos, weapon, facing)) {
             _fire(world, entity, weapon, pos, facing);
-            weapon.cooldownRemaining = weapon.cooldownSeconds;
+            weapon.cooldownRemaining = weapon.currentCooldown;
           }
         }
-        weapon.attackRequested = false;
       }
     }
   }
@@ -100,7 +129,7 @@ class AttackSystem implements System {
   bool _hasLineOfSight(World world, WorldView view, Position pos, Weapon weapon, double facing) {
     double maxRange;
     if (weapon.kind == WeaponKind.melee) {
-      maxRange = weapon.meleeRange;
+      maxRange = weapon.currentMeleeRange;
     } else {
       maxRange = weapon.projectileSpeed * weapon.projectileLifetimeSeconds;
     }
@@ -130,13 +159,13 @@ class AttackSystem implements System {
       case WeaponKind.melee:
         spawnProjectile(
           world,
-          x: pos.x + weapon.meleeRange * facing,
+          x: pos.x + weapon.currentMeleeRange * facing,
           y: pos.y,
           vx: 0,
           vy: 0,
-          damage: weapon.damage,
-          radius: weapon.meleeRadius,
-          lifetimeSeconds: weapon.meleeDurationSeconds,
+          damage: weapon.currentDamage,
+          radius: weapon.currentMeleeRadius,
+          lifetimeSeconds: weapon.currentMeleeDuration,
           owner: entity,
         );
     }

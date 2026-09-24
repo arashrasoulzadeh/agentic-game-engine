@@ -341,7 +341,8 @@ void main() {
       final attacker = world.spawn();
       world.storeOf<Position>().set(attacker, Position(0, 0));
       world.storeOf<PlatformerController>().set(attacker, PlatformerController());
-      final weapon = Weapon(kind: WeaponKind.melee, cooldownSeconds: 0.5);
+      // Use long meleeDuration so projectiles survive the test duration
+      final weapon = Weapon(kind: WeaponKind.melee, cooldownSeconds: 0.5, meleeDurationSeconds: 10.0);
       world.storeOf<Weapon>().set(attacker, weapon);
       final input = InputState();
       world.storeOf<InputState>().set(attacker, input);
@@ -373,7 +374,8 @@ void main() {
       final attacker = world.spawn();
       world.storeOf<Position>().set(attacker, Position(0, 0));
       world.storeOf<PlatformerController>().set(attacker, PlatformerController());
-      final weapon = Weapon(kind: WeaponKind.melee, cooldownSeconds: 0.3);
+      // Use long meleeDuration so projectile survives the test duration
+      final weapon = Weapon(kind: WeaponKind.melee, cooldownSeconds: 0.3, meleeDurationSeconds: 10.0);
       world.storeOf<Weapon>().set(attacker, weapon);
       final input = InputState();
       world.storeOf<InputState>().set(attacker, input);

@@ -8,6 +8,66 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### New engine features (round 5)
+
+- Dialogue / branching-conversation system: `DialogueGraph`/
+  `DialogueNode`/`DialogueChoice` (`content/dialogue.dart`, plain-JSON
+  round-trip like `Level`/`Cinematic`) plus a `DialogueRunner` driven
+  on demand (not a `System`) that resolves choices through
+  `StringTable` and emits each choice's event onto `EventBus`.
+  `DialogueBoxScene` (`ui/dialogue_box_scene.dart`) renders it.
+- AI steering primitives: `seek`/`arrive`/`wander`
+  (`ai/steering.dart`) — plain functions, not `Behavior`s, meant as
+  shared math for `FollowBehavior`/`AvoidanceBehavior` to call into,
+  the same relationship `collision_math.dart` has to
+  `PlatformerSystem`/`TileCollisionSystem`. `arrive` in particular
+  gives a decelerating approach instead of `FollowBehavior`'s existing
+  hard stop/start at `stopDistance`.
+- `FollowBehavior.jumpAcrossGaps`: an NPC blocked by a gap it's
+  physically capable of clearing now requests a real jump (via
+  `PlatformerController.jumpRequested`, the same field player input
+  sets) computed from the same arc math `JumpSystem` uses, instead of
+  just walking up to the edge and stopping.
+- `AttackSystem.requireLineOfSight`: gates melee/ranged attacks on
+  `WorldView.hasLineOfSight`, the same convention
+  `FollowBehavior`/`FleeBehavior` already use — an attacker behind a
+  wall from its target no longer fires through it. Cooldown still
+  ticks down while blocked.
+- Hearing / sound propagation: `SoundEvent` (`ai/hearing.dart`) is an
+  `EventBus` event any system can emit; `HearingSystem` matches it
+  against every `HearingComponent`-bearing entity's range and tile
+  occlusion (reusing `raycastTileMap`'s traversal) and writes a heard
+  position into that entity's `AIState.memory` blackboard.
+  `InvestigateBehavior` (`engine_platformer`) consumes it to walk the
+  NPC toward the last-heard sound.
+- TileMap collision layers/groups: `Collider.collisionGroup`/
+  `collisionMask` and a matching per-tile-id `TileMap.collisionGroups`
+  bitmask, checked by both `CollisionSystem` and
+  `TileCollisionSystem` — lets a level or spawn helper put player,
+  enemies, and projectiles in different collision groups (e.g. so
+  enemies stop colliding with each other) without affecting who still
+  collides with solid tiles.
+- Camera shake enhancements: `Camera.shake` grew named params
+  (`frequency`, `decay`, `impulse` for a sharp one-time hit vs.
+  sustained, `axis` for per-axis shake, `stack` for additive multiple
+  shakes) on top of the original `shake(magnitude, duration)`.
+- TileMap auto-tile bitmask debug overlay:
+  `EngineView.showAutoTileBitmask` draws each auto-tiled cell's
+  computed neighbor bitmask with a hover tooltip, now also wired
+  through `GameConfig.showAutoTileBitmask`/`Scene.showAutoTileBitmask`
+  so a game can actually turn it on (previously implemented only in
+  `EngineView` itself, unreachable from any real app).
+
+### Performance (round 5)
+
+- Single-pass ambient-lighting shader (`ambient_lighting.frag`):
+  computes the combined darkness mask for every light in one fragment
+  shader invocation instead of the legacy `saveLayer` + per-light draw
+  path (1 draw instead of 1+N). Opt-in via
+  `EngineView.singlePassLighting`/`GameConfig.singlePassLighting`
+  (default `false`); falls back to the legacy path for any light using
+  `castsShadows`, `coneAngle`, or `useGpuShadows`.
+
 ### Documentation
 
 - Added a top-level `docs/` tutorial/concept layer (`docs/README.md`,

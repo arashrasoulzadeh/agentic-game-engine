@@ -3,6 +3,9 @@ import 'package:engine_flutter/engine_flutter.dart';
 import 'package:engine_platformer/engine_platformer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:engine_core/src/ecs/behavior.dart';
+import 'package:engine_core/src/ai/ai_system.dart';
+
 World _buildWorld() {
   final world = World(width: 500, height: 500);
   registerCoreComponents(world);
@@ -13,6 +16,9 @@ World _buildWorld() {
   world.addSystem(PlatformerSystem());
   world.addSystem(TileCollisionSystem());
   world.addSystem(HearingSystem());
+  final registry = BehaviorRegistry();
+  registry.register('investigate', InvestigateBehavior(speed: 60));
+  world.addSystem(AISystem(registry));
   return world;
 }
 
@@ -76,7 +82,7 @@ void main() {
     });
 
     test('defaults for optional fields', () {
-      const behavior = InvestigateBehavior(speed: 60);
+      final behavior = InvestigateBehavior(speed: 60);
       expect(behavior.arriveDistance, 10);
       expect(behavior.timeout, isNull);
       expect(behavior.avoidGaps, isTrue);

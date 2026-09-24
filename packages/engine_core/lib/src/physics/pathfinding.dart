@@ -1,8 +1,8 @@
 import 'position.dart';
 import 'tile_map.dart';
 
-/// One waypoint of a path from `findPath` / `findPlatformerPath` — a
-/// tile cell's world-space center.
+/// One waypoint of a path from `findPath` -- a tile cell's world-space
+/// center.
 class PathPoint {
   final double x;
   final double y;
@@ -26,24 +26,24 @@ class PathPoint {
 }
 
 /// A* pathfinding over [map]'s grid, 4-directional (no diagonal
-/// movement — simplest to reason about for a platformer's mostly-flat
+/// movement -- simplest to reason about for a platformer's mostly-flat
 /// tile grids, and avoids "can I actually fit through this diagonal
-/// gap" corner-cutting questions). Only `solidTileIds` block — one-way
+/// gap" corner-cutting questions). Only `solidTileIds` block -- one-way
 /// and slope tiles don't (they're walkable surfaces, not walls, same
 /// reasoning `raycastTileMap` uses).
 ///
 /// Returns waypoints from the step *after* the start cell through the
-/// goal cell (inclusive), as world-space cell centers — empty if
+/// goal cell (inclusive), as world-space cell centers -- empty if
 /// [toX]/[toY] is already in the same cell as [fromX]/[fromY], if the
 /// goal cell is blocked, or if no path exists at all.
 ///
-/// Uses a binary min-heap (`_MinHeap`, private to this file — a small
+/// Uses a binary min-heap (`_MinHeap`, private to this file -- a small
 /// enough data structure that a `package:collection` dependency wasn't
 /// worth adding just for this) as its open set: O(log n) insert/
 /// extract-min instead of the O(n log n) sort-then-take-first a plain
 /// list previously did every iteration. Doesn't implement decrease-key
 /// (a node can be pushed more than once if a cheaper path to it is
-/// found later) — the existing `closed` set already discards a stale
+/// found later) -- the existing `closed` set already discards a stale
 /// duplicate the moment it's popped a second time, so this stays
 /// correct without the extra bookkeeping a full decrease-key would
 /// need.
@@ -137,7 +137,7 @@ class _Node {
   _Node(this.col, this.row, this.f);
 }
 
-/// A plain binary min-heap on `_Node.f`, array-backed — the standard
+/// A plain binary min-heap on `_Node.f`, array-backed -- the standard
 /// shape (parent at `i`, children at `2i+1`/`2i+2`), nothing fancier.
 /// No decrease-key: see `findPath`'s doc comment for why that's fine
 /// here.
@@ -178,7 +178,7 @@ class _MinHeap {
     return min;
   }
 
-void _swap(int a, int b) {
+  void _swap(int a, int b) {
     final tmp = _items[a];
     _items[a] = _items[b];
     _items[b] = tmp;
