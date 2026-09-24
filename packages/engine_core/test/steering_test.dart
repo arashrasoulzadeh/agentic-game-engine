@@ -5,11 +5,6 @@ import 'package:test/test.dart';
 
 void main() {
   group('Steering primitives', () {
-    late DeterministicRandom rng;
-
-    setUp(() {
-      rng = DeterministicRandom(42);
-    });
 
     group('seek', () {
       test('returns velocity directly toward target at maxSpeed', () {
@@ -62,7 +57,6 @@ void main() {
 
       test('scales speed down linearly inside slowRadius', () {
         final from = Position(0, 0);
-        final to = Position(100, 0);
         final slowRadius = 100.0;
 
         // At 50% of slowRadius, speed should be 50% of maxSpeed

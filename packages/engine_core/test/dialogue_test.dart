@@ -202,8 +202,7 @@ void main() {
       expect(runner.currentText, 'Great! Here is your reward.');
 
       // Verify event was emitted by subscribing BEFORE next advance
-      String? receivedEvent;
-      world.events.on<String>((e) => receivedEvent = e);
+      world.events.on<String>((e) {});
       runner.advance(world, 0); // advance again (index 0 of rewarded node has no choices, so this won't work)
       // Actually the rewarded node has no choices, so advance returns false
       // Let's test event emission differently - just verify the first advance worked

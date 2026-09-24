@@ -123,14 +123,6 @@ class TileMap {
   /// never round-trips through a save file or a level JSON edit.
   double animationElapsed = 0;
 
-  Map<int, int> _defaultCollisionGroups(Set<int> solidTileIds) {
-    final map = <int, int>{};
-    for (final id in solidTileIds) {
-      map[id] = 1; // default group 1 for solid tiles
-    }
-    return map;
-  }
-
   static Map<int, int> _computeDefaultCollisionGroups(Set<int>? solidTileIds) {
     final map = <int, int>{};
     if (solidTileIds != null) {

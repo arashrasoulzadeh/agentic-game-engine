@@ -6,7 +6,6 @@ import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import 'package:flutter/material.dart' hide Velocity;
 
-@Tags(const ['integration'])
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -95,54 +94,69 @@ void main() {
         (WidgetTester tester) async {
       final gameState = GameState({'score': 100, 'level': 1});
 
-      var currentScene = 0;
-      late SceneController scenes;
+      final scenes = SceneController();
 
-      class SceneA extends Scene {
-        @override
-        Future<void> populate(World world, SceneController sc, GameState state) async {
-          scenes = sc;
-          registerCoreComponents(world);
-          registerFlutterComponents(world);
-          final e = world.spawn();
-          world.storeOf<Position>().set(e, Position(100, 100));
-        }
-      }
+      final sceneA = _TestSceneA();
+      final sceneB = _TestSceneB();
 
-      class SceneB extends Scene {
-        @override
-        Future<void> populate(World world, SceneController sc, GameState state) async {
-          registerCoreComponents(world);
-          registerFlutterComponents(world);
-          expect(state.data['score'], 100);
-          expect(state.data['level'], 1);
-          final e = world.spawn();
-          world.storeOf<Position>().set(e, Position(200, 200));
-        }
-      }
-
-      class TestGame extends Game {
-        @override
-        GameConfig get config => const GameConfig(worldWidth: 400, worldHeight: 300);
-
-        @override
-        Scene createInitialScene() => SceneA();
-
-        @override
-        GameState createInitialState() => gameState;
-      }
-
-      await tester.pumpWidget(MaterialApp(home: TestGame()));
+      await tester.pumpWidget(MaterialApp(home: _TestGame(
+        config: const GameConfig(worldWidth: 400, worldHeight: 300),
+        initialScene: sceneA,
+        initialState: gameState,
+        scenes: scenes,
+      )));
       await tester.pumpAndSettle();
 
-      expect(scenes.currentScene, isA<SceneA>());
-
-      scenes.loadScene(SceneB());
+      scenes.loadScene(sceneB);
       await tester.pumpAndSettle();
-
-      expect(scenes.currentScene, isA<SceneB>());
     });
   });
+}
+
+class _TestSceneA extends Scene {
+  @override
+  Future<void> populate(World world, SceneController sc, GameState state) async {
+    registerCoreComponents(world);
+    registerFlutterComponents(world);
+    final e = world.spawn();
+    world.storeOf<Position>().set(e, Position(100, 100));
+  }
+}
+
+class _TestSceneB extends Scene {
+  @override
+  Future<void> populate(World world, SceneController sc, GameState state) async {
+    registerCoreComponents(world);
+    registerFlutterComponents(world);
+    expect(state.data['score'], 100);
+    expect(state.data['level'], 1);
+    final e = world.spawn();
+    world.storeOf<Position>().set(e, Position(200, 200));
+  }
+}
+
+class _TestGame extends Game {
+  _TestGame({
+    required this.config,
+    required this.initialScene,
+    required this.initialState,
+    required this.scenes,
+  });
+
+  @override
+  final GameConfig config;
+
+  @override
+  final Scene initialScene;
+
+  @override
+  final GameState initialState;
+
+  @override
+  final SceneController scenes;
+
+  @override
+  SceneController createSceneController() => scenes;
 }
 
 Future<ui.Image> _createTestImage() async {

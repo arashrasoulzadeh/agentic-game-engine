@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import '../ecs/behavior.dart';
 import '../ecs/action.dart';
 import '../ecs/entity.dart';

@@ -1,7 +1,6 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:test/test.dart';
 
-@Tags(const ['integration'])
 void main() {
   group('ECS integration', () {
     test('full simulation tick: MovementSystem + CollisionSystem + ParticleSystem + TweenSystem', () {
@@ -41,8 +40,6 @@ void main() {
       }
 
       // Entities should have collided and bounced
-      final posA = world.storeOf<Position>().get(a)!;
-      final posB = world.storeOf<Position>().get(b)!;
       final velA = world.storeOf<Velocity>().get(a)!;
       final velB = world.storeOf<Velocity>().get(b)!;
 

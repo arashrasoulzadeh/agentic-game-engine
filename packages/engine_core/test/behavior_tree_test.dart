@@ -83,10 +83,9 @@ void main() {
       registry.register('succeed', _TestBehavior(setValue: 1));
 
       // Invert a success -> should be failure
-      final tree = BTInverter(child: BTLeaf(behaviorId: 'succeed'));
-
       // We can't easily test the inverted result through the Behavior interface
       // since it always returns an action. Let's test node directly.
+      BTInverter(child: BTLeaf(behaviorId: 'succeed'));
     });
 
     test('BTRepeater repeats child N times', () {
@@ -211,7 +210,6 @@ class _TestValue {
   int value;
   _TestValue({required this.value});
   Map<String, dynamic> toJson() => {'value': value};
-  factory _TestValue.fromJson(Map<String, dynamic> json) => _TestValue(value: json['value'] as int);
 }
 
 class _TestBehavior implements Behavior {
