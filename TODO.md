@@ -99,7 +99,7 @@ actionable items here.
 
 - [ ] **Dialogue system enhancements** — Variables/conditions in dialogue (`{if has_sword}...`), branching by inventory/flags, localized audio per line, portrait sprites, typewriter effect, skip/replay.
 
-- [ ] **Particle system upgrades** — Emitters attached to entities (follow Position), attractors/repellers (gravity wells, wind), GPU instanced particles via single draw call, emission shapes (circle, rect, edge), collision with TileMap.
+- [x] **Particle system upgrades** — Emitters attached to entities (follow Position), attractors/repellers (gravity wells, wind), emission shapes (circle, rect, edge). GPU instanced particles and TileMap collision remain for future work.
 
 - [ ] **Save/load system enhancements** — Version migration (`GameState.migrationVersion`), screenshot thumbnails, checksum validation, cloud sync hook. (Base `SaveGame`, `SaveSlotMenuScene` exist.)
 
@@ -128,33 +128,12 @@ engine doesn't have yet — surfaced by
 implementation started. Not scoped/sequenced yet; revisit once the
 GDD's combat/dialogue scope is locked down.
 
-- [ ] **Multi-hit melee combo chains** — `Weapon` currently fires one
-      attack per cooldown; no input-buffered chain of N attacks
-      (light-light-light) with per-hit timing windows and combo reset
-      on miss/delay.
-- [ ] **Guard/block + breakable stability meter** — neither `Health`
-      nor `Weapon` models blocking an incoming hit or a stability/
-      poise value that depletes on blocked hits and breaks guard when
-      exhausted.
-- [ ] **Parry / precise-deflect** — a short input-timing window (not
-      `DashSystem`, not `Health`'s invincibility window) that, on a hit
-      landing inside it, opens the attacker up instead of damaging the
-      defender.
-- [ ] **Enemy combat state machine with explicit telegraph** — `AISystem`
-      only has patrol/follow/path-follow/avoidance `Behavior`s; no
-      `Idle→Patrol→Alert→Approach→Telegraph→Attack→Recovery→Reposition`
-      state machine (plus `Stagger`/`Guard`/`Retreat`) for a melee
-      enemy that visibly winds up before attacking.
-- [ ] **Multi-phase boss encounters** — no component/system for a boss
-      with distinct attack-pattern phases and phase-transition
-      conditions (health thresholds, scripted triggers).
-- [ ] **Dialogue system with speaker + trigger conditions** — only
-      `StringTable` (key → localized string, `{param}` substitution)
-      exists; no turn-based dialogue flow, speaker portraits, or
-      condition-gated lines (`DialogueBoxScene` in engine_flutter is a
-      display widget, not a dialogue-authoring/branching system — check
-      whether "Dialogue system enhancements" above already covers this
-      before starting new work).
+- [x] **Multi-hit melee combo chains** — `Weapon` supports combo chains with per-step damage/cooldown/range multipliers and combo window.
+- [x] **Guard/block + breakable stability meter** — `Health` supports guarding, stability/poise meter, guard break stun.
+- [x] **Parry / precise-deflect** — `Parry` component with timing window, stuns attacker on success.
+- [x] **Enemy combat state machine with explicit telegraph** — `EnemyCombat` component + `EnemyCombatBehavior` with Idle→Patrol→Alert→Approach→Telegraph→Attack→Recovery→Reposition + Stagger/Guard/Retreat.
+- [ ] **Multi-phase boss encounters** — no component/system for a boss with distinct attack-pattern phases and phase-transition conditions.
+- [x] **Dialogue system with speaker + trigger conditions** — `DialogueRunner`/`DialogueGraph`/`DialogueNode`/`DialogueChoice` with variables/conditions (`{if flag}...`), inventory conditions, typewriter effect, skip/replay, portrait/audio support.
 
 ## Shipping a full game
 
