@@ -1,7 +1,5 @@
 import 'package:engine_core/engine_core.dart';
 
-import 'inventory.dart';
-
 /// Emitted by [collectItem] whenever it actually adds to an
 /// `Inventory` — a no-op call (no `Inventory` on [holder]) never fires
 /// this, the same "only fires on a real change" guarantee `DeathEvent`

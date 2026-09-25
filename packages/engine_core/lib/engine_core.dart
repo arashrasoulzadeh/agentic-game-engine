@@ -7,6 +7,7 @@ export 'src/ai/hearing.dart';
 export 'src/ecs/behavior.dart';
 export 'src/ui/button_hit_test.dart';
 export 'src/content/cinematic.dart';
+export 'src/content/inventory.dart';
 export 'src/content/dialogue.dart';
 export 'src/ecs/component_registry.dart';
 export 'src/ecs/component_store.dart';
@@ -31,7 +32,9 @@ export 'src/physics/velocity.dart';
 export 'src/ecs/entity.dart';
 export 'src/ecs/event_bus.dart';
 export 'src/ecs/event_helpers.dart';
+import 'src/content/inventory.dart';
 export 'src/content/game_state.dart';
+export 'src/content/inventory.dart';
 export 'src/content/level.dart';
 export 'src/content/string_table.dart';
 export 'src/physics/pathfinding.dart';
@@ -157,6 +160,11 @@ void registerCoreComponents(World world) {
     'gameState',
     (g) => g.toJson(),
     GameState.fromJson,
+  );
+  world.components.register<Inventory>(
+    'inventory',
+    (i) => i.toJson(),
+    Inventory.fromJson,
   );
   world.components.register<HearingComponent>(
     'hearing',

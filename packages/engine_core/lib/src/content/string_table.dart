@@ -51,6 +51,9 @@ class StringTable {
     return text;
   }
 
+  /// Whether [key] has any entry in the table (for any locale).
+  bool hasKey(String key) => _entries.containsKey(key);
+
   /// Whether [key] has an entry for the active [locale] specifically
   /// (not counting a [defaultLocale] fallback) — lets a game flag
   /// missing translations (e.g. in a debug overlay) instead of only

@@ -116,14 +116,18 @@ void main() {
     });
 
     test('DialogueRunner starts at startNodeId and resolves text', () {
-      final runner = DialogueRunner(graph, stringTable);
+      final runner = DialogueRunner(graph: graph, stringTable: stringTable);
+      final world = World(width: 100, height: 100);
+      registerCoreComponents(world);
+      final gs = world.spawn();
+      world.storeOf<GameState>().set(gs, GameState({'name': 'Test'}));
 
       expect(runner.currentNode!.id, 'start');
-      expect(runner.currentText, 'Hello, {name}!');
+      expect(runner.currentText(WorldView(world)), 'Hello, Test!');
     });
 
     test('DialogueRunner.availableChoices returns all choices when no conditions', () {
-      final runner = DialogueRunner(graph, stringTable);
+      final runner = DialogueRunner(graph: graph, stringTable: stringTable);
       final world = World(width: 100, height: 100);
       registerCoreComponents(world);
 
@@ -165,7 +169,7 @@ void main() {
         startNodeId: 'start',
       );
 
-      final runner = DialogueRunner(graphWithFlag, stringTable);
+      final runner = DialogueRunner(graph: graphWithFlag, stringTable: stringTable);
       final world = World(width: 100, height: 100);
       registerCoreComponents(world);
 
@@ -187,7 +191,7 @@ void main() {
     });
 
     test('DialogueRunner.advance emits event and moves to next node', () {
-      final runner = DialogueRunner(graph, stringTable);
+      final runner = DialogueRunner(graph: graph, stringTable: stringTable);
       final world = World(width: 100, height: 100);
       registerCoreComponents(world);
 
@@ -199,7 +203,7 @@ void main() {
 
       expect(continued, isTrue);
       expect(runner.currentNode!.id, 'rewarded');
-      expect(runner.currentText, 'Great! Here is your reward.');
+      expect(runner.currentText(WorldView(world)), 'Great! Here is your reward.');
 
       // Verify event was emitted by subscribing BEFORE next advance
       world.events.on<String>((e) {});
@@ -227,7 +231,7 @@ void main() {
         startNodeId: 'start',
       );
 
-      final runner = DialogueRunner(endGraph, stringTable);
+      final runner = DialogueRunner(graph: endGraph, stringTable: stringTable);
       final world = World(width: 100, height: 100);
       registerCoreComponents(world);
 
@@ -238,11 +242,11 @@ void main() {
 
       expect(continued, isFalse);
       expect(runner.currentNode, isNull);
-      expect(runner.currentText, isNull);
+      expect(runner.currentText(WorldView(world)), isNull);
     });
 
     test('DialogueRunner.reset returns to start node', () {
-      final runner = DialogueRunner(graph, stringTable);
+      final runner = DialogueRunner(graph: graph, stringTable: stringTable);
       final world = World(width: 100, height: 100);
       registerCoreComponents(world);
 
@@ -311,7 +315,7 @@ void main() {
         startNodeId: 'start',
       );
 
-      final runner = DialogueRunner(graphWithFlag, stringTable);
+      final runner = DialogueRunner(graph: graphWithFlag, stringTable: stringTable);
       final world = World(width: 100, height: 100);
       registerCoreComponents(world);
 

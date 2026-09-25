@@ -101,7 +101,7 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     final textEntity = world.spawn();
     world.storeOf<Position>().set(textEntity, Position(400, 100));
     world.storeOf<Text>().set(textEntity, Text(
-      runner.currentText ?? '',
+      runner.visibleText(WorldView(world)) ?? '',
       colorArgb: 0xFFFFFFFF,
       fontSize: 24,
       align: TextAlignment.center,

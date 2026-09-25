@@ -3,7 +3,6 @@ import 'package:engine_flutter/engine_flutter.dart';
 
 import 'physics/gravity.dart';
 import 'logic/health.dart';
-import 'logic/inventory.dart';
 import 'logic/last_checkpoint.dart';
 import 'rendering/movement_animation_set.dart';
 import 'physics/platformer_controller.dart';
