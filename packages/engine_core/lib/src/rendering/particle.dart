@@ -5,6 +5,10 @@
 /// so this stays usable from pure-Dart code — `engine_core` has no
 /// Flutter dependency. Spawned and aged by `ParticleSystem`; a game
 /// doesn't normally construct these directly (see `ParticleEmitter`).
+///
+/// Can optionally follow its parent emitter (see [ParticleEmitter.followEmitter])
+/// and be affected by force fields (see [ParticleForces]).
+import '../ecs/entity.dart';
 class Particle {
   double age;
   final double lifetime;
@@ -19,6 +23,18 @@ class Particle {
   /// `engine_flutter`'s `Sprite.zIndex` for the full rule. Copied from
   /// the spawning `ParticleEmitter.zIndex` by `ParticleSystem`.
   final int zIndex;
+
+  /// Accumulated force to apply this frame (from attractors/repellers/wind).
+  /// Applied by [ParticleSystem] before velocity integration.
+  double forceX = 0;
+  double forceY = 0;
+
+  /// If true, this particle will follow its emitter entity's position.
+  /// Set by [ParticleEmitter.followEmitter] when the particle is spawned.
+  bool followEmitter = false;
+
+  /// The entity ID of the emitter this particle follows (if [followEmitter]).
+  EntityId? emitterEntityId;
 
   Particle({
     this.age = 0,
@@ -36,6 +52,15 @@ class Particle {
   double get alpha => startAlpha + (endAlpha - startAlpha) * progress;
   bool get isExpired => age >= lifetime;
 
+  void applyForce(double dt) {
+    // Apply accumulated force to velocity (handled by ParticleSystem)
+  }
+
+  void clearForce() {
+    forceX = 0;
+    forceY = 0;
+  }
+
   Map<String, dynamic> toJson() => {
         'age': age,
         'lifetime': lifetime,
@@ -45,6 +70,8 @@ class Particle {
         'endAlpha': endAlpha,
         'colorArgb': colorArgb,
         'zIndex': zIndex,
+        'followEmitter': followEmitter,
+        'emitterEntityId': emitterEntityId,
       };
 
   factory Particle.fromJson(Map<String, dynamic> json) => Particle(
@@ -56,5 +83,6 @@ class Particle {
         endAlpha: (json['endAlpha'] as num?)?.toDouble() ?? 0,
         colorArgb: (json['colorArgb'] as num?)?.toInt() ?? 0xFFFFFFFF,
         zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
-      );
+      )..followEmitter = json['followEmitter'] as bool? ?? false
+        ..emitterEntityId = json['emitterEntityId'] != null ? (json['emitterEntityId'] as int) : null;
 }

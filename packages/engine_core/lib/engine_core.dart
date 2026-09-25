@@ -1,3 +1,5 @@
+import 'src/rendering/particle_forces.dart';
+
 export 'src/ecs/action.dart';
 export 'src/ai/set_velocity_action.dart';
 export 'src/ai/flee_behavior.dart';
@@ -20,6 +22,7 @@ export 'src/physics/collider.dart';
 export 'src/rendering/day_night_cycle.dart';
 export 'src/rendering/particle.dart';
 export 'src/rendering/particle_emitter.dart';
+export 'src/rendering/particle_forces.dart';
 export 'src/physics/position.dart';
 export 'src/physics/pushable.dart';
 export 'src/ui/room_exit.dart';
@@ -165,6 +168,11 @@ void registerCoreComponents(World world) {
     'inventory',
     (i) => i.toJson(),
     Inventory.fromJson,
+  );
+  world.components.register<ParticleForces>(
+    'particleForces',
+    (p) => p.toJson(),
+    ParticleForces.fromJson,
   );
   world.components.register<HearingComponent>(
     'hearing',
