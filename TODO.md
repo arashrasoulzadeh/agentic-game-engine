@@ -101,7 +101,7 @@ actionable items here.
 
 - [x] **Particle system upgrades** — Emitters attached to entities (follow Position), attractors/repellers (gravity wells, wind), emission shapes (circle, rect, edge). GPU instanced particles and TileMap collision remain for future work.
 
-- [ ] **Save/load system enhancements** — Version migration (`GameState.migrationVersion`), screenshot thumbnails, checksum validation, cloud sync hook. (Base `SaveGame`, `SaveSlotMenuScene` exist.)
+- [x] **Save/load system enhancements** — Version migration (`GameState.migrationVersion`), screenshot thumbnails, checksum validation, cloud sync hook. (Base `SaveGame`, `SaveSlotMenuScene` exist.)
 
 - [ ] **Cutscene / Timeline system enhancements** — Visual editor, more step types (`MoveCamera`, `SpawnEntity`, `PlaySound`, `SetFlag`). Base `CinematicSystem` with `WaitStep`, `CallbackStep`, `TweenStep`, skip support exists.
 

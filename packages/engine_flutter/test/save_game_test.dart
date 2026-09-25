@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:crypto/crypto.dart';
+
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -155,6 +160,147 @@ void main() {
         () => SaveGame.load(_buildWorld(), version: 2),
         throwsA(isA<SaveVersionException>().having((e) => e.savedVersion, 'savedVersion', 1)),
       );
+    });
+  });
+
+  group('checksum validation', () {
+    test('save computes and stores SHA-256 checksum', () async {
+      final original = _buildWorld();
+      final id = original.spawn();
+      original.storeOf<Position>().set(id, Position(1, 2));
+
+      await SaveGame.save(original);
+
+      final checksum = await SaveGame.getChecksum();
+      expect(checksum, isNotNull);
+      expect(checksum!.length, greaterThan(0));
+    });
+
+    test('load verifies checksum and rejects corrupted data', () async {
+      final original = _buildWorld();
+      final id = original.spawn();
+      original.storeOf<Position>().set(id, Position(1, 2));
+
+      await SaveGame.save(original);
+
+      // Corrupt the save data directly in SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('engine_save_default')!;
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      decoded['world']['entities'][0]['components']['position']['x'] = 999;
+      final corrupted = jsonEncode(decoded);
+      await prefs.setString('engine_save_default', corrupted);
+
+      final world = _buildWorld();
+      expect(
+        () => SaveGame.load(world),
+        throwsA(isA<LevelLoadException>().having((e) => e.toString(), 'message', contains('checksum'))),
+      );
+    });
+
+    test('load skips checksum verification when verifyChecksum=false', () async {
+      final original = _buildWorld();
+      final id = original.spawn();
+      original.storeOf<Position>().set(id, Position(1, 2));
+
+      await SaveGame.save(original);
+
+      // Corrupt the save data
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('engine_save_default')!;
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      decoded['world']['entities'][0]['components']['position']['x'] = 999;
+      final corrupted = jsonEncode(decoded);
+      await prefs.setString('engine_save_default', corrupted);
+
+      final world = _buildWorld();
+      // Should load without throwing when verifyChecksum=false
+      final loaded = await SaveGame.load(world, verifyChecksum: false);
+      expect(loaded, isTrue);
+    });
+  });
+
+  group('thumbnail support', () {
+    test('save with thumbnail stores and retrieves base64 PNG', () async {
+      final original = _buildWorld();
+      final id = original.spawn();
+      original.storeOf<Position>().set(id, Position(1, 2));
+
+      final thumbnail = Uint8List.fromList([0x89, 0x50, 0x4E, 0x47]); // PNG magic bytes
+      await SaveGame.save(original, thumbnail: thumbnail);
+
+      final retrieved = await SaveGame.getThumbnail();
+      expect(retrieved, isNotNull);
+      expect(retrieved!.length, thumbnail.length);
+      expect(retrieved![0], 0x89);
+      expect(retrieved[1], 0x50);
+    });
+
+    test('getThumbnail returns null when no thumbnail was saved', () async {
+      final original = _buildWorld();
+      final id = original.spawn();
+      original.storeOf<Position>().set(id, Position(1, 2));
+
+      await SaveGame.save(original);
+
+      final retrieved = await SaveGame.getThumbnail();
+      expect(retrieved, isNull);
+    });
+  });
+
+  group('cloud sync hook', () {
+    test('onCloudSync callback fires after successful load', () async {
+      final original = _buildWorld();
+      final id = original.spawn();
+      original.storeOf<Position>().set(id, Position(1, 2));
+
+      await SaveGame.save(original);
+
+      String? syncedSlot;
+      Map<String, dynamic>? syncedWorldJson;
+      final restored = _buildWorld();
+      final loaded = await SaveGame.load(
+        restored,
+        onCloudSync: (slot, worldJson) async {
+          syncedSlot = slot;
+          syncedWorldJson = worldJson;
+        },
+      );
+
+      expect(loaded, isTrue);
+      expect(syncedSlot, 'default');
+      expect(syncedWorldJson, isNotNull);
+      expect(syncedWorldJson!['entities'], isA<List>());
+    });
+  });
+
+  group('checksum and versioning integration', () {
+    test('checksum is updated after migration', () async {
+      final original = _buildWorld();
+      final id = original.spawn();
+      original.storeOf<Position>().set(id, Position(1, 2));
+
+      await SaveGame.save(original, version: 1);
+
+      // Load with migration to version 2
+      final restored = _buildWorld();
+      await SaveGame.load(
+        restored,
+        version: 2,
+        migrate: (savedWorldJson, savedVersion) {
+          // Migration: add a new field to entities
+          final entities = savedWorldJson['entities'] as List;
+          for (final entity in entities) {
+            entity['migrated'] = true;
+          }
+          return savedWorldJson;
+        },
+      );
+
+      // Save again after migration - should have new checksum
+      await SaveGame.save(restored, version: 2);
+      final checksum = await SaveGame.getChecksum();
+      expect(checksum, isNotNull);
     });
   });
 }

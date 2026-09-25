@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:engine_core/engine_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -33,6 +35,12 @@ class SaveVersionException implements Exception {
 /// snapshot/patch machinery the agent-facing API already uses — saving
 /// a game and an agent reading/writing world state are the same
 /// underlying operation.
+///
+/// Supports:
+/// - Schema version migration via [migrate] callback
+/// - SHA-256 checksum validation for data integrity
+/// - Optional screenshot thumbnail (base64-encoded PNG)
+/// - Optional cloud sync hook for cross-device save sync
 class SaveGame {
   /// Serializes [world] and stores it under [slot], tagged with
   /// [version] — bump this whenever a save-affecting shape changes (a
@@ -41,9 +49,25 @@ class SaveGame {
   /// to `1`, the implicit version of every save written before this
   /// parameter existed. Multiple slots let a game support more than one
   /// save file.
-  static Future<void> save(World world, {String slot = 'default', int version = 1}) async {
+  ///
+  /// Optionally accepts [thumbnail] (base64-encoded PNG) for a save slot
+  /// preview image.
+  static Future<void> save(
+    World world, {
+    String slot = 'default',
+    int version = 1,
+    Uint8List? thumbnail,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    final envelope = {'schemaVersion': version, 'world': world.toJson()};
+    final worldJson = world.toJson();
+    final checksum = _computeChecksum(worldJson);
+    final thumbnailB64 = thumbnail != null ? base64Encode(thumbnail) : null;
+    final envelope = {
+      'schemaVersion': version,
+      'world': worldJson,
+      'checksum': checksum,
+      if (thumbnailB64 != null) 'thumbnail': thumbnailB64,
+    };
     await prefs.setString(_key(slot), jsonEncode(envelope));
   }
 
@@ -64,6 +88,14 @@ class SaveGame {
   /// (potentially wrong-shaped) data anyway. A save written before
   /// `version` existed on [save] is treated as version `1`.
   ///
+  /// If [verifyChecksum] is true (default), verifies the stored SHA-256
+  /// checksum matches the loaded data. Set to false to skip for
+  /// backwards compatibility with saves written before checksum support.
+  ///
+  /// If [onCloudSync] is provided, it's called after a successful load
+  /// with the slot name and world JSON, allowing cloud sync integration
+  /// (e.g. pushing to cloud storage, checking for newer cloud version).
+  ///
   /// Throws [LevelLoadException] if the stored data isn't a JSON object
   /// at all (corrupted storage, or a save written by something else
   /// entirely) — `Level.loadInto` itself already throws that same
@@ -74,6 +106,8 @@ class SaveGame {
     String slot = 'default',
     int version = 1,
     Map<String, dynamic> Function(Map<String, dynamic> savedWorldJson, int savedVersion)? migrate,
+    bool verifyChecksum = true,
+    Future<void> Function(String slot, Map<String, dynamic> worldJson)? onCloudSync,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key(slot));
@@ -93,6 +127,17 @@ class SaveGame {
     final savedVersion = hasEnvelope ? (decoded['schemaVersion'] as num?)?.toInt() ?? 1 : 1;
     var worldJson = hasEnvelope ? decoded['world'] as Map<String, dynamic> : decoded;
 
+    if (verifyChecksum && hasEnvelope) {
+      final storedChecksum = decoded['checksum'] as String?;
+      final computedChecksum = _computeChecksum(worldJson);
+      if (storedChecksum != null && storedChecksum != computedChecksum) {
+        throw LevelLoadException(
+          'Save data for slot "$slot" failed checksum verification: '
+          'data may be corrupted or tampered with',
+        );
+      }
+    }
+
     if (savedVersion != version) {
       if (migrate == null) {
         throw SaveVersionException(savedVersion, version);
@@ -101,12 +146,30 @@ class SaveGame {
     }
 
     Level.loadInto(world, worldJson);
+
+    if (onCloudSync != null) {
+      await onCloudSync(slot, worldJson);
+    }
+
     return true;
   }
 
   static Future<bool> hasSave({String slot = 'default'}) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey(_key(slot));
+  }
+
+  /// Returns the thumbnail for a save slot if available.
+  /// Returns null if no save exists or no thumbnail was saved.
+  static Future<Uint8List?> getThumbnail({String slot = 'default'}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_key(slot));
+    if (raw == null) return null;
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) return null;
+    final thumbnailB64 = decoded['thumbnail'] as String?;
+    if (thumbnailB64 == null) return null;
+    return base64Decode(thumbnailB64);
   }
 
   static Future<void> deleteSave({String slot = 'default'}) async {
@@ -128,7 +191,25 @@ class SaveGame {
         .toList();
   }
 
+  /// Returns the checksum of a save slot for verification.
+  /// Returns null if no save exists or no checksum was stored.
+  static Future<String?> getChecksum({String slot = 'default'}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_key(slot));
+    if (raw == null) return null;
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) return null;
+    return decoded['checksum'] as String?;
+  }
+
   static const _keyPrefix = 'engine_save_';
 
   static String _key(String slot) => '$_keyPrefix$slot';
+
+  /// Computes SHA-256 checksum of world JSON for integrity verification.
+  static String _computeChecksum(Map<String, dynamic> worldJson) {
+    final bytes = Uint8List.fromList(utf8.encode(jsonEncode(worldJson)));
+    final digest = sha256.convert(bytes);
+    return base64Encode(digest.bytes);
+  }
 }

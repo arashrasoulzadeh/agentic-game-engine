@@ -16,10 +16,24 @@
 class GameState {
   final Map<String, dynamic> data;
 
-  GameState([Map<String, dynamic>? data]) : data = data ?? <String, dynamic>{};
+  /// Schema migration version for save/load. Increment this when
+  /// [data] changes shape in a way that breaks old saves.
+  /// [SaveGame.load] will call [migrate] if the save's version differs
+  /// from this value.
+  final int migrationVersion;
 
-  Map<String, dynamic> toJson() => data;
+  GameState([Map<String, dynamic>? data, this.migrationVersion = 1])
+      : data = data ?? <String, dynamic>{};
 
-  factory GameState.fromJson(Map<String, dynamic> json) =>
-      GameState(Map<String, dynamic>.from(json));
+  Map<String, dynamic> toJson() => {
+        'data': data,
+        'migrationVersion': migrationVersion,
+      };
+
+  factory GameState.fromJson(Map<String, dynamic> json) {
+    return GameState(
+      Map<String, dynamic>.from(json['data'] as Map? ?? {}),
+      json['migrationVersion'] as int? ?? 1,
+    );
+  }
 }
