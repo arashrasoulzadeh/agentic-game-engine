@@ -20,21 +20,7 @@ import 'input.dart';
 class GamepadController {
   final InputController input;
   final Map<int, String> buttonBindings;
-
-  /// Which logical action an axis's *positive* (` >0`) and *negative*
-  /// (`<0`) direction each set, alongside reporting the raw analog
-  /// value via [InputState.axisValues] — e.g. a left-stick X axis
-  /// bound to `('right', 'left')` sets action `"right"` pressed while
-  /// its value is positive past [deadzone], `"left"` while negative
-  /// past it, and neither inside the deadzone (stick recentered).
   final Map<int, (String positive, String negative)> axisBindings;
-
-  /// Which `InputState.axisValues` name an axis id reports its raw
-  /// value under (e.g. axis id `0` -> `"moveX"`), independent of
-  /// [axisBindings]'s discrete action mapping for the same id — a
-  /// system that wants magnitude (`InputState.axis('moveX')`) and one
-  /// that only wants direction (`InputState.isPressed('right')`) are
-  /// both served from the same [handleAxis] call.
   final Map<int, String> axisNames;
 
   /// How far past `0` an axis value must move before it's treated as
@@ -43,12 +29,24 @@ class GamepadController {
   /// resting stick spuriously holding an action pressed.
   final double deadzone;
 
+  /// Vibration/haptic feedback support — returns a [GamepadHaptics]
+  /// handle if the underlying platform/plugin supports vibration.
+  /// Null if the current platform/plugin doesn't support vibration.
+  final GamepadHaptics? haptics;
+
+  /// Set to capture the next button press as a binding for a specific
+  /// action. When set, the next call to [handleButtonDown] will consume
+  /// the button press and assign it to the action, rather than
+  /// triggering the action normally. Clears itself after use.
+  void Function(int buttonId)? captureNextButtonDown;
+
   GamepadController({
     required this.input,
     Map<int, String>? buttonBindings,
     Map<int, (String, String)>? axisBindings,
     Map<int, String>? axisNames,
     this.deadzone = 0.2,
+    this.haptics,
   })  : buttonBindings = buttonBindings ?? defaultButtonBindings(),
         axisBindings = axisBindings ?? defaultAxisBindings(),
         axisNames = axisNames ?? defaultAxisNames();
@@ -81,6 +79,12 @@ class GamepadController {
       };
 
   void handleButtonDown(int buttonId) {
+    final capture = captureNextButtonDown;
+    if (capture != null) {
+      captureNextButtonDown = null;
+      capture(buttonId);
+      return;
+    }
     final action = buttonBindings[buttonId];
     if (action != null) input.setAction(action, true);
   }
@@ -106,4 +110,91 @@ class GamepadController {
     input.setAction(positive, value > deadzone);
     input.setAction(negative, value < -deadzone);
   }
+}
+
+/// Abstract handle for gamepad vibration/haptic feedback.
+/// Implementations are provided by platform-specific plugins (e.g.
+/// Flutter's `gamepad_vibration`, Android's `Vibrator`, iOS's
+/// `CoreHaptics`, etc.). The engine core doesn't depend on any
+/// specific plugin — this is the transport-agnostic interface.
+abstract class GamepadHaptics {
+  /// Triggers a simple "rumble" with [strongMagnitude] (low-freq) and
+  /// [weakMagnitude] (high-freq) for [duration]. Values are `0.0..1.0`.
+  /// Returns a [Future] that completes when the effect finishes or is
+  /// cancelled. Implementations should be idempotent: calling again
+  /// while already vibrating restarts the effect.
+  Future<void> rumble({
+    double strongMagnitude = 1.0,
+    double weakMagnitude = 1.0,
+    Duration duration = const Duration(milliseconds: 200),
+  });
+
+  /// Triggers a more complex haptic pattern defined by [pattern]
+  /// (pairs of [Duration, Intensity]). See [HapticPattern] for details.
+  Future<void> playPattern(HapticPattern pattern);
+
+  /// Stops any ongoing vibration/haptic effect immediately.
+  Future<void> stop();
+}
+
+/// A reusable haptic pattern definition — sequence of (duration, intensity)
+/// pairs. Intensity is `0.0..1.0` representing combined strong/weak.
+class HapticPattern {
+  final List<(Duration, double)> steps;
+
+  HapticPattern(this.steps);
+
+  static HapticPattern sharpClick() => HapticPattern([
+    (Duration(milliseconds: 10), 1.0),
+    (Duration(milliseconds: 50), 0.0),
+  ]);
+
+  static HapticPattern doubleClick() => HapticPattern([
+    (Duration(milliseconds: 10), 1.0),
+    (Duration(milliseconds: 40), 0.0),
+    (Duration(milliseconds: 10), 1.0),
+    (Duration(milliseconds: 50), 0.0),
+  ]);
+
+  static HapticPattern heavyImpact() => HapticPattern([
+    (Duration(milliseconds: 100), 1.0),
+    (Duration(milliseconds: 300), 0.5),
+    (Duration(milliseconds: 200), 0.0),
+  ]);
+
+  static HapticPattern heartbeat() => HapticPattern([
+    (Duration(milliseconds: 50), 0.8),
+    (Duration(milliseconds: 100), 0.0),
+    (Duration(milliseconds: 50), 0.8),
+    (Duration(milliseconds: 400), 0.0),
+  ]);
+}
+
+/// A no-op [GamepadHaptics] implementation for platforms/tests that
+/// don't support vibration. All methods complete immediately.
+class NoOpHaptics implements GamepadHaptics {
+  const NoOpHaptics();
+
+  @override
+  Future<void> rumble({
+    double strongMagnitude = 1.0,
+    double weakMagnitude = 1.0,
+    Duration duration = const Duration(milliseconds: 200),
+  }) async {}
+
+  @override
+  Future<void> playPattern(HapticPattern pattern) async {}
+
+  @override
+  Future<void> stop() async {}
+}
+
+/// A no-op [GamepadController] with no haptics — useful for tests
+/// or headless environments where no gamepad plugin is available.
+class NoOpGamepadController extends GamepadController {
+  NoOpGamepadController()
+      : super(
+          input: InputController(),
+          haptics: const NoOpHaptics(),
+        );
 }

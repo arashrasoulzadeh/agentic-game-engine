@@ -132,7 +132,7 @@ GDD's combat/dialogue scope is locked down.
 - [x] **Guard/block + breakable stability meter** — `Health` supports guarding, stability/poise meter, guard break stun.
 - [x] **Parry / precise-deflect** — `Parry` component with timing window, stuns attacker on success.
 - [x] **Enemy combat state machine with explicit telegraph** — `EnemyCombat` component + `EnemyCombatBehavior` with Idle→Patrol→Alert→Approach→Telegraph→Attack→Recovery→Reposition + Stagger/Guard/Retreat.
-- [ ] **Multi-phase boss encounters** — no component/system for a boss with distinct attack-pattern phases and phase-transition conditions.
+- [x] **Multi-phase boss encounters** — `BossPhaseSystem` with `BossPhase` (health thresholds, pattern IDs, optional cinematic beats via `CinematicStep` factory), fires `BossPhaseChangedEvent`, supports cinematic beats per phase.
 - [x] **Dialogue system with speaker + trigger conditions** — `DialogueRunner`/`DialogueGraph`/`DialogueNode`/`DialogueChoice` with variables/conditions (`{if flag}...`), inventory conditions, typewriter effect, skip/replay, portrait/audio support.
 
 ## Shipping a full game
