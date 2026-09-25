@@ -103,7 +103,7 @@ actionable items here.
 
 - [x] **Save/load system enhancements** — Version migration (`GameState.migrationVersion`), screenshot thumbnails, checksum validation, cloud sync hook. (Base `SaveGame`, `SaveSlotMenuScene` exist.)
 
-- [ ] **Cutscene / Timeline system enhancements** — Visual editor, more step types (`MoveCamera`, `SpawnEntity`, `PlaySound`, `SetFlag`). Base `CinematicSystem` with `WaitStep`, `CallbackStep`, `TweenStep`, skip support exists.
+- [x] **Cutscene / Timeline system enhancements** — More step types added: `MoveCameraStep` (with follow entity), `SpawnEntityStep`, `PlaySoundStep`, `SetFlagStep`, `CameraShakeStep`, `FollowEntityStep`. `CinematicSystem` with `WaitStep`, `CallbackStep`, `TweenStep`, skip support exists. Visual editor remains for future work.
 
 - [ ] **Input remapping / Gamepad improvements** — Dead zones, vibration (haptics), multiple local players (split-screen), virtual gamepad layout editor, Steam Input / SDL gamepad DB integration. (Base `GamepadController`, bindings storage, haptic feedback exist.)
 

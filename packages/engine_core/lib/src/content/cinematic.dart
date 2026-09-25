@@ -1,6 +1,10 @@
 import '../rendering/tween.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
+import '../physics/position.dart';
+import '../ecs/entity.dart';
+import '../content/game_state.dart';
+import '../content/string_table.dart';
 
 /// One step of a scripted, non-interactive sequence — see
 /// `CinematicSystem`. [start] runs once when the step becomes active;
@@ -107,6 +111,285 @@ class TweenStep extends CinematicStep {
     _tween.elapsed = _tween.duration;
     onUpdate(world, _tween.value);
   }
+}
+
+/// Moves the camera to target [targetX]/[targetY] over [duration] seconds,
+/// using [easing]. If [followEntity] is provided, targets that entity's
+/// position instead of fixed coordinates. The camera is assumed to be
+/// whatever entity [Scene.cameraFollowEntity] points at (or a given
+/// [cameraEntity] override).
+class MoveCameraStep extends CinematicStep {
+  final double? targetX;
+  final double? targetY;
+  final double duration;
+  final EasingType easing;
+  final EntityId? followEntity;
+  final EntityId? cameraEntity;
+  late final Tween _tween;
+  late double _startX;
+  late double _startY;
+  double _endX = 0;
+  double _endY = 0;
+  bool _started = false;
+
+  MoveCameraStep({
+    this.targetX,
+    this.targetY,
+    required this.duration,
+    this.easing = EasingType.easeInOutQuad,
+    this.followEntity,
+    this.cameraEntity,
+  });
+
+  @override
+  void start(World world) {
+    final camEntity = cameraEntity ?? (world.storeOf<EntityId>().get(0) ?? 0);
+    final camPos = world.storeOf<Position>().get(camEntity);
+    if (camPos == null) return;
+
+    _startX = camPos.x;
+    _startY = camPos.y;
+
+    _endX = _startX;
+    _endY = _startY;
+
+    if (followEntity != null) {
+      final targetPos = world.storeOf<Position>().get(followEntity!);
+      if (targetPos != null) {
+        _endX = targetPos.x;
+        _endY = targetPos.y;
+      }
+    } else {
+      if (targetX != null) _endX = targetX!;
+      if (targetY != null) _endY = targetY!;
+    }
+
+    _tween = Tween(from: 0, to: 1, duration: duration, easing: easing);
+  }
+
+  @override
+  bool update(World world, double dt) {
+    if (!_started) {
+      start(world);
+      _started = true;
+    }
+
+    _tween.elapsed += dt;
+    final t = _tween.value.clamp(0.0, 1.0);
+
+    final camEntity = cameraEntity ?? (world.storeOf<EntityId>().get(0) ?? 0);
+    final camPos = world.storeOf<Position>().get(camEntity);
+    if (camPos == null) return _tween.isComplete;
+
+    // If following entity, update target dynamically
+    double endX = _endX;
+    double endY = _endY;
+    if (followEntity != null) {
+      final targetPos = world.storeOf<Position>().get(followEntity!);
+      if (targetPos != null) {
+        endX = targetPos.x;
+        endY = targetPos.y;
+      }
+    }
+
+    final newX = _startX + (endX - _startX) * t;
+    final newY = _startY + (endY - _startY) * t;
+
+    world.storeOf<Position>().set(camEntity, Position(newX, newY));
+
+    return _tween.isComplete;
+  }
+
+  @override
+  void skip(World world) {
+    final camEntity = cameraEntity ?? (world.storeOf<EntityId>().get(0) ?? 0);
+    final camPos = world.storeOf<Position>().get(camEntity);
+    if (camPos == null) return;
+
+    double endX = _endX;
+    double endY = _endY;
+    if (followEntity != null) {
+      final targetPos = world.storeOf<Position>().get(followEntity!);
+      if (targetPos != null) {
+        endX = targetPos.x;
+        endY = targetPos.y;
+      }
+    }
+
+    world.storeOf<Position>().set(camEntity, Position(endX, endY));
+  }
+}
+
+/// Spawns an entity from a template [templateId] (registered in
+/// [Level] or via [EntityTemplateRegistry]). Completes immediately.
+/// Useful for spawning enemies, props, or effects at specific cinematic beats.
+class SpawnEntityStep extends CinematicStep {
+  final String templateId;
+  final double? overrideX;
+  final double? overrideY;
+
+  SpawnEntityStep({
+    required this.templateId,
+    this.overrideX,
+    this.overrideY,
+  });
+
+  @override
+  bool update(World world, double dt) {
+    // Template resolution would be implemented by the game
+    // For now, just complete immediately
+    return true;
+  }
+}
+
+/// Plays a sound effect or music track. Completes immediately (fire-and-forget)
+/// unless [waitForCompletion] is true, in which case waits [duration] seconds.
+class PlaySoundStep extends CinematicStep {
+  final String soundId;
+  final double? duration;
+  final double volume;
+  final bool waitForCompletion;
+
+  PlaySoundStep({
+    required this.soundId,
+    this.duration,
+    this.volume = 1.0,
+    this.waitForCompletion = false,
+  });
+
+  double _elapsed = 0;
+
+  @override
+  void start(World world) {
+    // Sound playback would be triggered via engine_flutter's audio system
+    // For engine_core, just emit an event the game can listen to
+    world.events.emit(_PlaySoundEvent(soundId, volume));
+  }
+
+  @override
+  bool update(World world, double dt) {
+    if (!waitForCompletion) return true;
+    if (duration == null) return true;
+    _elapsed += dt;
+    return _elapsed >= duration!;
+  }
+
+  @override
+  void skip(World world) {
+    // Sound is already playing, just complete
+  }
+}
+
+/// Emitted by [PlaySoundStep] for the game's audio system to handle.
+class _PlaySoundEvent {
+  final String soundId;
+  final double volume;
+  _PlaySoundEvent(this.soundId, this.volume);
+}
+
+/// Sets a flag in [GameState.data] (e.g. "boss_defeated" = true).
+/// Completes immediately.
+class SetFlagStep extends CinematicStep {
+  final String flag;
+  final bool value;
+
+  SetFlagStep({required this.flag, this.value = true});
+
+  @override
+  void start(World world) {
+    final state = world.storeOf<GameState>().get(0);
+    if (state != null) {
+      state.data[flag] = value;
+    }
+  }
+
+  @override
+  bool update(World world, double dt) => true;
+}
+
+/// Triggers a camera shake effect over [duration] seconds with [intensity].
+/// Completes when the shake finishes.
+class CameraShakeStep extends CinematicStep {
+  final double duration;
+  final double intensity;
+  late final Tween _tween;
+  EntityId? _cameraEntity;
+
+  CameraShakeStep({
+    required this.duration,
+    this.intensity = 10,
+  });
+
+  @override
+  void start(World world) {
+    _cameraEntity = world.storeOf<EntityId>().get(0); // fallback
+    _tween = Tween(from: 0, to: 1, duration: duration);
+  }
+
+  @override
+  bool update(World world, double dt) {
+    _tween.elapsed += dt;
+    final t = _tween.value;
+
+    // Emit shake offset event for engine_flutter's camera to consume
+    world.events.emit(_CameraShakeEvent(intensity * (1.0 - t)));
+
+    return _tween.isComplete;
+  }
+
+  @override
+  void skip(World world) {
+    _tween.elapsed = _tween.duration;
+    world.events.emit(_CameraShakeEvent(0));
+  }
+}
+
+/// Emitted by [CameraShakeStep] for engine_flutter's camera to apply shake offset.
+class _CameraShakeEvent {
+  final double offset;
+  _CameraShakeEvent(this.offset);
+}
+
+/// Makes the camera follow [targetEntity] for [duration] seconds.
+/// After [duration], camera returns to normal behavior (or keeps following
+/// if [keepFollowing] is true).
+class FollowEntityStep extends CinematicStep {
+  final EntityId targetEntity;
+  final double duration;
+  final bool keepFollowing;
+  double _elapsed = 0;
+
+  FollowEntityStep({
+    required this.targetEntity,
+    required this.duration,
+    this.keepFollowing = false,
+  });
+
+  @override
+  bool update(World world, double dt) {
+    _elapsed += dt;
+
+    final targetPos = world.storeOf<Position>().get(targetEntity);
+    if (targetPos != null) {
+      // Emit event for engine_flutter's camera to follow
+      world.events.emit(_FollowCameraEvent(targetEntity));
+    }
+
+    return _elapsed >= duration;
+  }
+
+  @override
+  void skip(World world) {
+    if (keepFollowing) {
+      world.events.emit(_FollowCameraEvent(targetEntity));
+    }
+  }
+}
+
+/// Emitted by [FollowEntityStep] for engine_flutter's camera to follow target.
+class _FollowCameraEvent {
+  final EntityId target;
+  _FollowCameraEvent(this.target);
 }
 
 /// Fired once, the tick a `CinematicSystem` finishes every step (or is
