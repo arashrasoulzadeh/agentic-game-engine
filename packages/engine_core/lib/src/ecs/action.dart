@@ -18,3 +18,12 @@ class NoOpAction implements Action {
   @override
   void apply(World world) {}
 }
+
+/// Special action that signals the behavior failed.
+/// Used by BTLeaf to return BTStatus.failure instead of success.
+class FailureAction implements Action {
+  const FailureAction();
+
+  @override
+  void apply(World world) {}
+}

@@ -23,16 +23,19 @@ class GamepadController {
   final Map<int, (String positive, String negative)> axisBindings;
   final Map<int, String> axisNames;
 
-  /// How far past `0` an axis value must move before it's treated as
-  /// pressed in either direction — real analog sticks rarely rest at
-  /// exactly `0.0`, so a deadzone this small (not `0`) avoids a
-  /// resting stick spuriously holding an action pressed.
-  final double deadzone;
+  /// Per-axis deadzones. If an axis id is not present, [defaultDeadzone] is used.
+  /// Real analog sticks rarely rest at exactly `0.0`, so a deadzone
+  /// this small (not `0`) avoids a resting stick spuriously holding an
+  /// action pressed.
+  final Map<int, double> axisDeadzones;
+
+  /// Default deadzone used when an axis id is not in [axisDeadzones].
+  final double defaultDeadzone;
 
   /// Vibration/haptic feedback support — returns a [GamepadHaptics]
   /// handle if the underlying platform/plugin supports vibration.
   /// Null if the current platform/plugin doesn't support vibration.
-  final GamepadHaptics? haptics;
+  GamepadHaptics? haptics;
 
   /// Set to capture the next button press as a binding for a specific
   /// action. When set, the next call to [handleButtonDown] will consume
@@ -45,11 +48,13 @@ class GamepadController {
     Map<int, String>? buttonBindings,
     Map<int, (String, String)>? axisBindings,
     Map<int, String>? axisNames,
-    this.deadzone = 0.2,
+    Map<int, double>? axisDeadzones,
+    this.defaultDeadzone = 0.2,
     this.haptics,
   })  : buttonBindings = buttonBindings ?? defaultButtonBindings(),
         axisBindings = axisBindings ?? defaultAxisBindings(),
-        axisNames = axisNames ?? defaultAxisNames();
+        axisNames = axisNames ?? defaultAxisNames(),
+        axisDeadzones = axisDeadzones ?? {};
 
   /// A standard-layout gamepad's face/d-pad buttons — `0`-`3` the
   /// four face buttons (A/B/X/Y or ✕/○/□/△ depending on platform),
@@ -60,6 +65,9 @@ class GamepadController {
   /// remapped into.
   static Map<int, String> defaultButtonBindings() => {
         0: 'jump',
+        1: 'attack',
+        2: 'interact',
+        3: 'pause',
         12: 'up',
         13: 'down',
         14: 'left',
@@ -77,6 +85,19 @@ class GamepadController {
         0: 'moveX',
         1: 'moveY',
       };
+
+  /// Returns the deadzone for a specific axis id.
+  double getDeadzone(int axisId) => axisDeadzones[axisId] ?? defaultDeadzone;
+
+  /// Sets the deadzone for a specific axis id.
+  void setDeadzone(int axisId, double deadzone) {
+    axisDeadzones[axisId] = deadzone.clamp(0.0, 1.0);
+  }
+
+  /// Removes a custom deadzone for an axis, reverting to [defaultDeadzone].
+  void removeDeadzone(int axisId) {
+    axisDeadzones.remove(axisId);
+  }
 
   void handleButtonDown(int buttonId) {
     final capture = captureNextButtonDown;
@@ -107,6 +128,7 @@ class GamepadController {
     final actions = axisBindings[axisId];
     if (actions == null) return;
     final (positive, negative) = actions;
+    final deadzone = getDeadzone(axisId);
     input.setAction(positive, value > deadzone);
     input.setAction(negative, value < -deadzone);
   }

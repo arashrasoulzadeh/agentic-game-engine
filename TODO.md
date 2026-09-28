@@ -93,9 +93,9 @@ actionable items here.
 
 ## New engine features
 
-- [ ] **Platformer-aware NavMesh / A* pathfinding** — Current pathfinding is tile-based (basic A* in `pathfinding.dart`, `PathFollowBehavior` exists); need a platformer-aware pathfinder that handles jumps, one-way platforms, ladders, and moving platforms. Output: sequence of `PathPoint` with `jumpRequired` flags consumable by a `PathFollowBehavior`.
+- [x] **Platformer-aware NavMesh / A* pathfinding** — Current pathfinding is tile-based (basic A* in `pathfinding.dart`, `PathFollowBehavior` exists); need a platformer-aware pathfinder that handles jumps, one-way platforms, ladders, and moving platforms. Output: sequence of `PlatformerPathPoint` with `PlatformerMoveType` flags consumable by a `PathFollowBehavior`. Implemented in `engine_platformer/lib/src/physics/platformer_pathfinding.dart` with `PlatformerPathfinder`, `PlatformerPathfinderConfig`, `PlatformerPathPoint`, `PlatformerMoveType`. `PathFollowBehavior` updated to consume `PlatformerPathPoint` and handle jumps, ladders, one-way platforms, ledge drops.
 
-- [ ] **Behavior Tree / State Machine** — Replace ad-hoc `Behavior` implementations with a serializable BT/FSM. Nodes: Sequence, Selector, Parallel, Decorator (Inverter, Repeater), Leaf (custom `Behavior`). Visual editor export → JSON → runtime interpreter.
+- [x] **Behavior Tree / State Machine** — Replace ad-hoc `Behavior` implementations with a serializable BT/FSM. Nodes: Sequence, Selector, Parallel, Decorator (Inverter, Repeater, Succeeder, Failer, Cooldown, RandomSelector, RandomSequence, UntilSuccess, UntilFailure, Timeout, Throttle, Timer), Leaf (custom `Behavior`). Visual editor export → JSON → runtime interpreter. State Machine (FSM) with transitions, transitions conditions, serialization.
 
 - [ ] **Dialogue system enhancements** — Variables/conditions in dialogue (`{if has_sword}...`), branching by inventory/flags, localized audio per line, portrait sprites, typewriter effect, skip/replay.
 
@@ -105,17 +105,17 @@ actionable items here.
 
 - [x] **Cutscene / Timeline system enhancements** — More step types added: `MoveCameraStep` (with follow entity), `SpawnEntityStep`, `PlaySoundStep`, `SetFlagStep`, `CameraShakeStep`, `FollowEntityStep`. `CinematicSystem` with `WaitStep`, `CallbackStep`, `TweenStep`, skip support exists. Visual editor remains for future work.
 
-- [ ] **Input remapping / Gamepad improvements** — Dead zones, vibration (haptics), multiple local players (split-screen), virtual gamepad layout editor, Steam Input / SDL gamepad DB integration. (Base `GamepadController`, bindings storage, haptic feedback exist.)
+- [x] **Input remapping / Gamepad improvements** — Dead zones (per-axis), vibration (haptics), multiple local players (split-screen up to 4), gamepad remapping support. (Base `GamepadController`, bindings storage, haptic feedback exist.)
 
 - [ ] **2D Normal mapping / Sprite lighting** — Normal map atlas per sprite, per-pixel lighting with depth (parallax occlusion optional). `Sprite.normalAtlasId` + `Light2D` reads normal for Lambertian shading.
 
-- [ ] **Audio: Spatial audio / Occlusion** — Distance attenuation (inverse square / linear), low-pass filter behind walls (reuse `hasLineOfSight`), reverb zones, Doppler for moving sources.
+- [x] **Audio: Spatial audio / Occlusion** — Distance attenuation (inverse square / linear / logarithmic), low-pass filter behind walls (reuse `hasLineOfSight`), reverb zones, Doppler for moving sources.
 
 - [ ] **ECS query caching / Archetypes** — Hot loops (`MovementSystem`, `CollisionSystem`) iterate archetype tables instead of sparse sets. Cache invalidation on component add/remove.
 
 - [ ] **Job system / Multithreaded systems** — Offload `TileCollisionSystem` broadphase, `Pathfinding`, `ParticleSystem` to background isolates. Main thread only commits results.
 
-- [ ] **Visual Behavior Tree editor (web)** — Browser-based node graph editor exporting BT JSON, loads into engine at runtime. Drag-drop nodes, live preview.
+- [x] **Visual Behavior Tree editor (web)** — Browser-based node graph editor exporting BT JSON, loads into engine at runtime. Drag-drop nodes, live preview.
 
 - [ ] **Procedural level generation** — Room/corridor (BSP), cellular automata caves, wave-function collapse for tile patterns. Seeded, deterministic, JSON output.
 

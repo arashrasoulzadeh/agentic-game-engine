@@ -1,0 +1,21 @@
+name: bt_editor_web
+description: Visual Behavior Tree Editor for the game engine - browser-based node graph editor
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  engine_core:
+    path: ../engine_core
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

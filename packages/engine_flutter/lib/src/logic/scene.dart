@@ -112,6 +112,11 @@ abstract class Scene {
   /// `hitTestButton(world, worldPosition.dx, worldPosition.dy)` for the
   /// common "which button did they tap" case.
   void handleTap(World world, SceneController scenes, Offset worldPosition) {}
+
+  /// Optional per-frame update for scene-specific logic (e.g. dialogue typewriter).
+  /// Called once per frame with the time delta and current world.
+  /// Default implementation does nothing.
+  void update(double dt, World world) {}
 }
 
 /// Handed to every `Scene.populate` call so in-scene logic can switch to

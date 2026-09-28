@@ -16,6 +16,15 @@
 /// mixing in `NineSliceSprite` (always screen space, but its 9-slice
 /// stretching isn't right for a small fixed-size icon). Same anchoring
 /// as world-space `Sprite`: `Position` is the drawn image's center.
+///
+/// [normalAtlasId] — optional ID of a normal map atlas (registered in
+/// `AtlasRegistry` the same way as diffuse atlases). When set, the
+/// renderer will sample the matching region from this atlas as a normal
+/// map and apply per-pixel Lambertian lighting using nearby `Light2D`
+/// entities. The normal map should use the standard encoding: R = X
+/// (tangent space, -1..1), G = Y (-1..1), B = Z (0..1, facing viewer),
+/// A = unused (typically 1). Regions must have the same names as the
+/// diffuse atlas.
 class Sprite {
   String atlasId;
   String region;
@@ -59,6 +68,13 @@ class Sprite {
   /// rule and how batching interacts with it.
   int zIndex;
 
+  /// Optional normal map atlas ID for per-pixel lighting. When set,
+  /// the renderer will sample the matching region from this atlas as a
+  /// normal map and apply Lambertian shading using nearby `Light2D`
+  /// entities. The normal map atlas must have regions with the same
+  /// names as the diffuse atlas.
+  String? normalAtlasId;
+
   Sprite(
     this.atlasId,
     this.region, {
@@ -69,6 +85,7 @@ class Sprite {
     this.offsetX = 0,
     this.offsetY = 0,
     this.zIndex = 0,
+    this.normalAtlasId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -81,6 +98,7 @@ class Sprite {
         'offsetX': offsetX,
         'offsetY': offsetY,
         'zIndex': zIndex,
+        if (normalAtlasId != null) 'normalAtlasId': normalAtlasId,
       };
 
   factory Sprite.fromJson(Map<String, dynamic> json) => Sprite(
@@ -93,5 +111,6 @@ class Sprite {
         offsetX: (json['offsetX'] as num?)?.toDouble() ?? 0,
         offsetY: (json['offsetY'] as num?)?.toDouble() ?? 0,
         zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
+        normalAtlasId: json['normalAtlasId'] as String?,
       );
 }

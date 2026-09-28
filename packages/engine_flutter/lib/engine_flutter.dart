@@ -1,4 +1,8 @@
 export 'src/audio/audio_manager.dart';
+export 'src/audio/reverb_zone.dart';
+export 'src/input/gamepad_controller.dart';
+export 'src/input/gamepad_manager.dart';
+export 'src/input/gamepad_vibration_haptics.dart';
 export 'src/rendering/camera.dart';
 export 'src/rendering/animation.dart';
 export 'src/rendering/animation_transition.dart';

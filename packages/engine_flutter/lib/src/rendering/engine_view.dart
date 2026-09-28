@@ -22,6 +22,7 @@ import 'ambient_lighting_shader.dart';
 import 'hud_bar.dart';
 import 'light2d.dart';
 import 'nine_slice_sprite.dart';
+import 'normal_mapping_shader.dart';
 import 'particle_dot_texture.dart';
 import 'screen_tint.dart';
 import 'text.dart' as txt;
@@ -188,6 +189,11 @@ class EngineView extends StatefulWidget {
   /// shader pass). The legacy path remains the default for compatibility.
   final bool singlePassLighting;
 
+  /// Optional callback invoked after each world step with the time delta
+  /// and the world. Useful for scene-specific per-frame logic like
+  /// dialogue typewriter effects.
+  final void Function(double dt, World world)? onPostTick;
+
   /// `false` (default) hides the auto-tile bitmask debug overlay. `true`
   /// shows the computed 4-direction bitmask (1=N, 2=E, 4=S, 8=W) for
   /// each solid tile cell, drawn as text on top of the tile. Only works
@@ -218,6 +224,7 @@ class EngineView extends StatefulWidget {
     this.cullBufferPx = 96.0,
     this.singlePassLighting = false,
     this.showAutoTileBitmask = false,
+    this.onPostTick,
   });
 
   @override
@@ -345,6 +352,10 @@ class _EngineViewState extends State<EngineView>
     _frameStats.entities = widget.world.entities.count;
     _frameStats.sprites = widget.world.storeOf<Sprite>().length;
     _frameStats.particles = widget.world.storeOf<Particle>().length;
+
+    // Call optional post-tick callback for scene-specific logic
+    widget.onPostTick?.call(dt, widget.world);
+
     // Decays/recomputes any active Camera.shake() offset -- called
     // unconditionally (not just when cameraFollowEntity is set), since
     // a static camera still needs to shake on e.g. an explosion.
@@ -738,6 +749,9 @@ class _EnginePainter extends CustomPainter {
       (shape.mode == ClipShapeMode.reveal ? reveals : cutouts).add(info);
     }
 
+    // Collect light render info early so normal-mapped sprites can use it
+    final lights = _collectLightRenderInfo(size, positions);
+
     // "reveal" has to *clip drawing as it happens* (a real Canvas is
     // immediate-mode -- there's no way to retroactively confine
     // already-drawn pixels to a region after the fact), so it wraps
@@ -767,7 +781,8 @@ class _EnginePainter extends CustomPainter {
     order = _collectParallaxItems(items, order, size, positions);
     order = _collectTileMapItems(items, order, size, positions);
     order = _collectAnimationTransitionItems(items, order, size, positions);
-    order = _collectSpriteItems(items, order, size, positions);
+    order = _collectSpriteItems(items, order, size, positions, lights);
+    order = _collectNormalMappedSpriteItems(items, order, size, positions, lights);
     order = _collectParticleItems(items, order, size, positions);
     order = _collectTextItems(items, order, size, positions);
     order = _collectHudBarItems(items, order, size, positions);
@@ -945,6 +960,40 @@ class _EnginePainter extends CustomPainter {
   /// correctly left dark, but so was the zIndex-0 sprite the light was
   /// actually supposed to reveal, because the zIndex-1 band's own (empty
   /// there) darkness rect painted over the whole canvas afterward.
+  List<_LightRenderInfo> _collectLightRenderInfo(
+    Size size,
+    ComponentStore<Position> positions,
+  ) {
+    final lights = world.storeOf<Light2D>();
+    final infos = <_LightRenderInfo>[];
+    for (var i = 0; i < lights.length; i++) {
+      final entity = lights.entityAt(i);
+      final light = lights.denseAt(i);
+      final rawPos = positions.get(entity);
+      if (rawPos == null) continue;
+      if (light.radius <= 0) continue;
+
+      // Same interpolation `Sprite`/`Particle` rendering already gets
+      // -- without this, a light attached to a moving entity would
+      // visibly lag/step relative to that entity's own smoothly-
+      // interpolated sprite whenever fixedTimestepSeconds is set,
+      // since Position alone (the fixed-step *simulation* value) can
+      // be one whole fixed step behind the render frame.
+      final interpolated = _interpolated(entity, rawPos);
+      final worldPos = Position(interpolated.dx, interpolated.dy);
+      final screenPos = camera.worldToScreen(worldPos.x, worldPos.y, size);
+      final screenRadius = light.radius * camera.zoom;
+      final fullRect = Offset.zero & size;
+      if (!_circleIntersectsRect(screenPos, screenRadius, fullRect)) continue;
+      final clipPath = _lightClipPath(light, worldPos, size, entity);
+      infos.add(_LightRenderInfo(light, screenPos, screenRadius, clipPath, worldPos));
+    }
+    return infos;
+  }
+
+  /// correctly left dark, but so was the zIndex-0 sprite the light was
+  /// actually supposed to reveal, because the zIndex-1 band's own (empty
+  /// there) darkness rect painted over the whole canvas afterward.
   void _drawLighting(
     Canvas canvas,
     Size size,
@@ -958,7 +1007,7 @@ class _EnginePainter extends CustomPainter {
     // Single-pass shader path: enabled when singlePassLighting=true,
     // not z-banded (lightFilter==null), and no lights use features the
     // shader doesn't support (castsShadows, coneAngle, useGpuShadows).
-    // Falls back to legacy multi-pass otherwise.
+// Falls back to legacy multi-pass otherwise.
     final bool useSinglePass = singlePassLighting &&
         lightFilter == null &&
         !_hasUnsupportedLights(lights, lightFilter);
@@ -974,37 +1023,7 @@ class _EnginePainter extends CustomPainter {
     // Computed once per light, reused for both the darkness-reveal
     // pass and the (optional) color-tint pass below, so a
     // shadow-casting light's raycasts don't run twice.
-    final infos = <_LightRenderInfo>[];
-    for (var i = 0; i < lights.length; i++) {
-      final entity = lights.entityAt(i);
-      final light = lights.denseAt(i);
-      if (lightFilter != null && !lightFilter(light)) continue;
-      final rawPos = positions.get(entity);
-      if (rawPos == null) continue;
-      if (light.radius <= 0) continue;
-
-      // Same interpolation `Sprite`/`Particle` rendering already gets
-      // -- without this, a light attached to a moving entity would
-      // visibly lag/step relative to that entity's own smoothly-
-      // interpolated sprite whenever fixedTimestepSeconds is set,
-      // since Position alone (the fixed-step *simulation* value) can
-      // be one whole fixed step behind the render frame.
-      final interpolated = _interpolated(entity, rawPos);
-      final worldPos = Position(interpolated.dx, interpolated.dy);
-      final screenPos = camera.worldToScreen(worldPos.x, worldPos.y, size);
-      final screenRadius = light.radius * camera.zoom;
-      // Viewport culling: a light whose screen-space circle doesn't
-      // reach the visible rect at all can't affect anything on screen
-      // this frame, so skip it before the expensive part -- shadow
-      // casting is a raycastTileMap call per sampled ray, and with
-      // several shadow-casting lights in a level only a few of which
-      // are ever on screen at once, this is a real cost avoided, not
-      // just a micro-optimization (same reasoning as
-      // _collectTileMapItems's tile culling above).
-      if (!_circleIntersectsRect(screenPos, screenRadius, fullRect)) continue;
-      final clipPath = _lightClipPath(light, worldPos, size, entity);
-      infos.add(_LightRenderInfo(light, screenPos, screenRadius, clipPath, worldPos));
-    }
+    final infos = _collectLightRenderInfo(size, positions);
 
     canvas.saveLayer(
       fullRect,
@@ -1909,6 +1928,7 @@ class _EnginePainter extends CustomPainter {
     int order,
     Size size,
     ComponentStore<Position> positions,
+    List<_LightRenderInfo> lights,
   ) {
     final sprites = world.storeOf<Sprite>();
     if (sprites.length == 0) return order;
@@ -1918,6 +1938,8 @@ class _EnginePainter extends CustomPainter {
       final entity = sprites.entityAt(i);
       final sprite = sprites.denseAt(i);
       final pos = positions.get(entity);
+      // Skip normal-mapped sprites (handled separately)
+      if (sprite.normalAtlasId != null) continue;
       if (pos == null || !atlasRegistry.has(sprite.atlasId)) continue;
       (indicesByZ[sprite.zIndex] ??= []).add(i);
     }
@@ -2014,6 +2036,233 @@ class _EnginePainter extends CustomPainter {
       height: srcRect.height,
     );
     canvas.drawImageRect(atlas.image, srcRect, destRect, Paint());
+    canvas.restore();
+  }
+
+  /// Collects and draws sprites that have a normal map atlas using the
+  /// normal mapping shader for per-pixel Lambertian lighting.
+  /// These are drawn individually (not batched) since each needs
+  /// custom shader uniforms for lights and normal texture.
+  int _collectNormalMappedSpriteItems(
+    List<_DrawItem> items,
+    int order,
+    Size size,
+    ComponentStore<Position> positions,
+    List<_LightRenderInfo> lights,
+  ) {
+    final sprites = world.storeOf<Sprite>();
+    if (sprites.length == 0 || lights.isEmpty) return order;
+
+    // Collect indices of sprites with normal maps
+    final normalMappedIndices = <int>[];
+    final indicesByZ = <int, List<int>>{};
+    for (var i = 0; i < sprites.length; i++) {
+      final entity = sprites.entityAt(i);
+      final sprite = sprites.denseAt(i);
+      if (sprite.normalAtlasId == null || !atlasRegistry.has(sprite.normalAtlasId!)) continue;
+      final pos = positions.get(entity);
+      if (pos == null || !atlasRegistry.has(sprite.atlasId)) continue;
+      normalMappedIndices.add(i);
+      (indicesByZ[sprite.zIndex] ??= []).add(i);
+    }
+
+    if (normalMappedIndices.isEmpty) return order;
+
+    // For each z-index, render normal-mapped sprites
+    for (final zEntry in indicesByZ.entries) {
+      final z = zEntry.key;
+
+      for (final i in zEntry.value) {
+        final entity = sprites.entityAt(i);
+        final sprite = sprites.denseAt(i);
+        final pos = positions.get(entity)!;
+        final atlas = atlasRegistry.resolve(sprite.atlasId);
+        final normalAtlas = atlasRegistry.resolve(sprite.normalAtlasId!);
+        final srcRect = atlas.regionFor(sprite.region);
+        final normalSrcRect = normalAtlas.regionFor(sprite.region);
+        final worldPos = _interpolated(entity, pos);
+        final anchorPos = Offset(
+          worldPos.dx + sprite.offsetX * sprite.scaleX,
+          worldPos.dy + sprite.offsetY * sprite.scaleY,
+        );
+        final screenPos = sprite.screenSpace
+            ? anchorPos
+            : camera.worldToScreen(anchorPos.dx, anchorPos.dy, size);
+        final zoom = sprite.screenSpace ? 1.0 : camera.zoom;
+
+        // Find lights that affect this sprite (within radius of sprite bounds)
+        final spriteHalfWidth = srcRect.width * sprite.scaleX.abs() * zoom * 0.5;
+        final spriteHalfHeight = srcRect.height * sprite.scaleY.abs() * zoom * 0.5;
+        final affectingLights = <_LightRenderInfo>[];
+        for (final light in lights) {
+          final dx = (light.screenPos.dx - screenPos.dx).abs();
+          final dy = (light.screenPos.dy - screenPos.dy).abs();
+          if (dx <= light.screenRadius + spriteHalfWidth &&
+              dy <= light.screenRadius + spriteHalfHeight) {
+            affectingLights.add(light);
+          }
+        }
+
+        if (affectingLights.isEmpty) {
+          // No lights affecting this sprite, render normally
+          items.add(_DrawItem(
+            z,
+            order++,
+            (canvas) => _paintSpriteIndividually(canvas, size, positions, sprites, i),
+          ));
+          continue;
+        }
+
+        // Render with normal mapping shader
+        items.add(_DrawItem(
+          z,
+          order++,
+          (canvas) => _paintNormalMappedSprite(
+            canvas,
+            size,
+            sprite,
+            atlas.image,
+            normalAtlas.image,
+            srcRect,
+            normalSrcRect,
+            screenPos,
+            zoom,
+            worldPos,
+            affectingLights,
+          ),
+        ));
+      }
+    }
+    return order;
+  }
+
+  void _paintNormalMappedSprite(
+    Canvas canvas,
+    Size size,
+    Sprite sprite,
+    ui.Image diffuseImage,
+    ui.Image normalImage,
+    ui.Rect srcRect,
+    ui.Rect normalSrcRect,
+    Offset screenPos,
+    double zoom,
+    Offset worldPos,
+    List<_LightRenderInfo> lights,
+  ) {
+    final shader = NormalMappingShader.shader();
+    if (shader == null) {
+      // Shader not loaded yet, fall back to normal rendering
+      _paintSpriteIndividuallyWithImages(canvas, size, sprite, diffuseImage, srcRect, screenPos, zoom);
+      return;
+    }
+
+    // Prepare light uniforms (max 8 lights)
+    final lightCount = lights.length.clamp(0, 8);
+    const maxLights = 8;
+    final lightData = List<double>.filled(maxLights * 4, 0.0);
+    final lightColorData = List<double>.filled(maxLights * 4, 0.0);
+    final lightFalloffData = List<double>.filled(maxLights, 0.0);
+
+    for (var i = 0; i < lightCount; i++) {
+      final light = lights[i];
+      final baseIdx = i * 4;
+      lightData[baseIdx] = light.screenPos.dx;
+      lightData[baseIdx + 1] = light.screenPos.dy;
+      lightData[baseIdx + 2] = light.screenRadius;
+      lightData[baseIdx + 3] = light.light.intensity.clamp(0.0, 1.0);
+
+      final color = Color(light.light.colorArgb);
+      lightColorData[baseIdx] = color.r / 255.0;
+      lightColorData[baseIdx + 1] = color.g / 255.0;
+      lightColorData[baseIdx + 2] = color.b / 255.0;
+      lightColorData[baseIdx + 3] = color.a / 255.0;
+
+      lightFalloffData[i] = 0.0; // Smooth falloff (same as ambient)
+    }
+
+    var u = 0;
+    shader
+      ..setFloat(u++, size.width)
+      ..setFloat(u++, size.height)
+      ..setFloat(u++, lightCount.toDouble());
+
+    // uLights[8] - vec4(pos.x, pos.y, radius, intensity)
+    for (int i = 0; i < maxLights; i++) {
+      final base = i * 4;
+      shader
+        ..setFloat(u++, lightData[base])
+        ..setFloat(u++, lightData[base + 1])
+        ..setFloat(u++, lightData[base + 2])
+        ..setFloat(u++, lightData[base + 3]);
+    }
+
+    // uLightColors[8] - vec4(r, g, b, a)
+    for (int i = 0; i < maxLights; i++) {
+      final base = i * 4;
+      shader
+        ..setFloat(u++, lightColorData[base])
+        ..setFloat(u++, lightColorData[base + 1])
+        ..setFloat(u++, lightColorData[base + 2])
+        ..setFloat(u++, lightColorData[base + 3]);
+    }
+
+    // uLightFalloff[8] - float
+    for (int i = 0; i < maxLights; i++) {
+      shader..setFloat(u++, lightFalloffData[i]);
+    }
+
+    // uCameraPos - vec2
+    shader
+      ..setFloat(u++, camera.x)
+      ..setFloat(u++, camera.y);
+
+    // uCameraZoom - float
+    shader..setFloat(u++, camera.zoom);
+
+    // uSpriteWorldPos - vec2
+    shader
+      ..setFloat(u++, worldPos.dx)
+      ..setFloat(u++, worldPos.dy);
+
+    // uSpriteScale - vec2
+    shader
+      ..setFloat(u++, sprite.scaleX)
+      ..setFloat(u++, sprite.scaleY);
+
+    // uSpriteRotation - float
+    shader..setFloat(u++, sprite.rotation);
+
+    // uIsScreenSpace - float (0 or 1)
+    shader..setFloat(u++, sprite.screenSpace ? 1.0 : 0.0);
+
+    // Set diffuse texture (normal map not supported in single-texture Flutter shader)
+    // TODO: Implement multi-texture normal mapping when Flutter supports it
+    // For now, fall back to normal rendering
+    _paintSpriteIndividuallyWithImages(canvas, size, sprite, diffuseImage, srcRect, screenPos, zoom);
+  }
+
+  void _paintSpriteIndividuallyWithImages(
+    Canvas canvas,
+    Size size,
+    Sprite sprite,
+    ui.Image diffuseImage,
+    ui.Rect srcRect,
+    Offset screenPos,
+    double zoom,
+  ) {
+    canvas.save();
+    canvas.translate(screenPos.dx, screenPos.dy);
+    if (sprite.rotation != 0) canvas.rotate(sprite.rotation);
+    canvas.scale(
+      sprite.scaleX * zoom,
+      sprite.scaleY * zoom,
+    );
+    final destRect = ui.Rect.fromCenter(
+      center: Offset.zero,
+      width: srcRect.width,
+      height: srcRect.height,
+    );
+    canvas.drawImageRect(diffuseImage, srcRect, destRect, Paint());
     canvas.restore();
   }
 

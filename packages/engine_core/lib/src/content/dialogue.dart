@@ -18,6 +18,10 @@ class DialogueChoice {
   /// Format: "itemId" or "itemId:count" (e.g., "key" or "coin:5")
   final String? conditionInventory;
 
+  /// Optional expression condition for advanced logic.
+  /// Format: "flag1 && flag2 || !flag3 && inventory:item:5"
+  final String? conditionExpression;
+
   /// Event to emit onto `world.events` when this choice is selected.
   /// Can be any JSON-serializable object (string, map, etc.).
   final Object onSelectEvent;
@@ -26,28 +30,43 @@ class DialogueChoice {
   /// If null, the dialogue ends.
   final String? nextNodeId;
 
+  /// Optional audio key for when this choice is selected.
+  final String? onSelectAudioKey;
+
+  /// Optional portrait to show when this choice is hovered/selected.
+  final String? portrait;
+
   DialogueChoice({
     required this.textKey,
     this.conditionEventFlag,
     this.conditionInventory,
+    this.conditionExpression,
     required this.onSelectEvent,
     this.nextNodeId,
+    this.onSelectAudioKey,
+    this.portrait,
   });
 
   Map<String, dynamic> toJson() => {
         'textKey': textKey,
         if (conditionEventFlag != null) 'conditionEventFlag': conditionEventFlag,
         if (conditionInventory != null) 'conditionInventory': conditionInventory,
+        if (conditionExpression != null) 'conditionExpression': conditionExpression,
         'onSelectEvent': onSelectEvent,
         if (nextNodeId != null) 'nextNodeId': nextNodeId,
+        if (onSelectAudioKey != null) 'onSelectAudioKey': onSelectAudioKey,
+        if (portrait != null) 'portrait': portrait,
       };
 
   factory DialogueChoice.fromJson(Map<String, dynamic> json) => DialogueChoice(
         textKey: json['textKey'] as String,
         conditionEventFlag: json['conditionEventFlag'] as String?,
         conditionInventory: json['conditionInventory'] as String?,
+        conditionExpression: json['conditionExpression'] as String?,
         onSelectEvent: json['onSelectEvent'],
         nextNodeId: json['nextNodeId'] as String?,
+        onSelectAudioKey: json['onSelectAudioKey'] as String?,
+        portrait: json['portrait'] as String?,
       );
 }
 
@@ -66,16 +85,39 @@ class DialogueNode {
   /// Typically resolves to a sprite in the dialogue atlas.
   final String? portrait;
 
+  /// Optional portrait atlas ID — if different from the main dialogue atlas.
+  /// Allows portraits to be in a separate atlas from the dialogue box.
+  final String? portraitAtlasId;
+
+  /// Optional portrait region key in the portrait atlas.
+  final String? portraitRegion;
+
   /// Optional audio key — played when this node is shown.
   /// Can be localized via StringTable (e.g., 'audio.voice.line1').
   final String? audioKey;
+
+  /// Optional per-locale audio keys. If present and current locale matches,
+  /// this overrides [audioKey]. Key is locale code (e.g., 'en', 'ja', 'es').
+  final Map<String, String>? localizedAudioKeys;
 
   /// Typewriter effect duration in seconds. 0 = instant (default).
   /// If > 0, text is revealed character-by-character over this duration.
   final double typewriterDuration;
 
+  /// Typewriter speed multiplier (1.0 = normal, 2.0 = 2x speed, etc.)
+  final double typewriterSpeed;
+
   /// Whether this node can be skipped by player input (default true).
   final bool skippable;
+
+  /// Whether this node auto-advances after typewriter completes (if no choices).
+  final bool autoAdvance;
+
+  /// Delay before auto-advance triggers (seconds), when [autoAdvance] is true.
+  final double autoAdvanceDelay;
+
+  /// Optional event to emit when this node is shown.
+  final Object? onShowEvent;
 
   /// Available choices at this node.
   final List<DialogueChoice> choices;
@@ -85,9 +127,16 @@ class DialogueNode {
     required this.textKey,
     this.speaker,
     this.portrait,
+    this.portraitAtlasId,
+    this.portraitRegion,
     this.audioKey,
+    this.localizedAudioKeys,
     this.typewriterDuration = 0,
+    this.typewriterSpeed = 1.0,
     this.skippable = true,
+    this.autoAdvance = false,
+    this.autoAdvanceDelay = 1.0,
+    this.onShowEvent,
     required this.choices,
   });
 
@@ -96,9 +145,16 @@ class DialogueNode {
         'textKey': textKey,
         if (speaker != null) 'speaker': speaker,
         if (portrait != null) 'portrait': portrait,
+        if (portraitAtlasId != null) 'portraitAtlasId': portraitAtlasId,
+        if (portraitRegion != null) 'portraitRegion': portraitRegion,
         if (audioKey != null) 'audioKey': audioKey,
+        if (localizedAudioKeys != null && localizedAudioKeys.isNotEmpty) 'localizedAudioKeys': localizedAudioKeys,
         if (typewriterDuration > 0) 'typewriterDuration': typewriterDuration,
+        if (typewriterSpeed != 1.0) 'typewriterSpeed': typewriterSpeed,
         if (!skippable) 'skippable': skippable,
+        if (autoAdvance) 'autoAdvance': autoAdvance,
+        if (autoAdvanceDelay != 1.0) 'autoAdvanceDelay': autoAdvanceDelay,
+        if (onShowEvent != null) 'onShowEvent': onShowEvent,
         'choices': choices.map((c) => c.toJson()).toList(),
       };
 
@@ -107,9 +163,18 @@ class DialogueNode {
         textKey: json['textKey'] as String,
         speaker: json['speaker'] as String?,
         portrait: json['portrait'] as String?,
+        portraitAtlasId: json['portraitAtlasId'] as String?,
+        portraitRegion: json['portraitRegion'] as String?,
         audioKey: json['audioKey'] as String?,
+        localizedAudioKeys: json['localizedAudioKeys'] != null
+            ? (json['localizedAudioKeys'] as Map).map((k, v) => MapEntry(k as String, v as String))
+            : null,
         typewriterDuration: (json['typewriterDuration'] as num?)?.toDouble() ?? 0,
+        typewriterSpeed: (json['typewriterSpeed'] as num?)?.toDouble() ?? 1.0,
         skippable: json['skippable'] as bool? ?? true,
+        autoAdvance: json['autoAdvance'] as bool? ?? false,
+        autoAdvanceDelay: (json['autoAdvanceDelay'] as num?)?.toDouble() ?? 1.0,
+        onShowEvent: json['onShowEvent'],
         choices: (json['choices'] as List)
             .map((c) => DialogueChoice.fromJson(c as Map<String, dynamic>))
             .toList(),
@@ -188,6 +253,47 @@ class DialogueRunner {
 
   /// The currently active node, or null if the dialogue has ended.
   DialogueNode? get currentNode => _currentNodeId != null ? graph.getNode(_currentNodeId!) : null;
+
+  /// The resolved display text for the current node, with variable substitution.
+  /// Returns null if dialogue has ended.
+  String? currentText(WorldView view) {
+    final node = currentNode;
+    if (node == null) return null;
+    String text = stringTable.resolve(node.textKey);
+    return _substituteVariables(text, view);
+  }
+
+  /// Gets the audio key for the current node, considering localization.
+  String? getCurrentAudioKey() {
+    final node = currentNode;
+    if (node == null) return null;
+    
+    // Try localized audio key first
+    if (node.localizedAudioKeys != null && node.localizedAudioKeys!.isNotEmpty) {
+      // TODO: Get current locale from somewhere (GameState, StringTable, etc.)
+      // For now, try common locales
+      for (final locale in ['en', 'en_US', 'en_GB', 'ja', 'ja_JP', 'es', 'es_ES', 'fr', 'fr_FR', 'de', 'de_DE', 'zh', 'zh_CN', 'zh_TW']) {
+        if (node.localizedAudioKeys!.containsKey(locale)) {
+          return node.localizedAudioKeys![locale];
+        }
+      }
+    }
+    return node.audioKey;
+  }
+
+  /// Gets the portrait atlas ID for the current node.
+  String? getCurrentPortraitAtlasId() {
+    final node = currentNode;
+    if (node == null) return null;
+    return node.portraitAtlasId;
+  }
+
+  /// Gets the portrait region for the current node.
+  String? getCurrentPortraitRegion() {
+    final node = currentNode;
+    if (node == null) return null;
+    return node.portraitRegion ?? node.portrait;
+  }
 
   /// The resolved display text for the current node, with variable substitution.
   /// Returns null if dialogue has ended.
@@ -300,7 +406,7 @@ class DialogueRunner {
     }
     if (_typewriterComplete) return false;
 
-    _typewriterTimer += dt;
+    _typewriterTimer += dt * node.typewriterSpeed;
     final fullText = currentText(view) ?? '';
     final totalChars = fullText.length;
     final progress = (_typewriterTimer / node.typewriterDuration * totalChars).floor();
@@ -308,6 +414,17 @@ class DialogueRunner {
 
     if (_typewriterProgress >= totalChars) {
       _typewriterComplete = true;
+      if (node.autoAdvance) {
+        // Schedule auto-advance after delay
+        Future.delayed(Duration(seconds: node.autoAdvanceDelay.ceil()), () {
+          if (!_typewriterComplete) return; // Might have been interrupted
+          final choices = availableChoices(view);
+          if (choices.isEmpty) {
+            _currentNodeId = null;
+            onEnded?.call();
+          }
+        });
+      }
       return false;
     }
     return true;
@@ -343,6 +460,11 @@ class DialogueRunner {
     final choice = choices[choiceIndex];
     onChoiceSelected?.call(choice);
     world.events.emit(choice.onSelectEvent);
+
+    // Play choice selection audio if specified
+    if (choice.onSelectAudioKey != null) {
+      // TODO: Play audio via AudioManager
+    }
 
     if (choice.nextNodeId != null) {
       _currentNodeId = choice.nextNodeId;

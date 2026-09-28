@@ -315,6 +315,8 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
               ? (worldPosition) =>
                   loaded.scene.handleTap(loaded.world, _sceneController, worldPosition)
               : null,
+          // Call scene's update method after each world step for per-frame logic
+          onPostTick: (dt, world) => loaded.scene.update(dt, world),
         );
 
         final controller = loaded.inputController;
@@ -349,6 +351,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
               singlePassLighting: widget.game.config.singlePassLighting,
               onWorldTap: (worldPosition) =>
                   overlay.scene.handleTap(overlay.world, _sceneController, worldPosition),
+              onPostTick: (dt, world) => overlay.scene.update(dt, world),
             ),
         ];
         return children.length == 1 ? engineView : Stack(children: children);

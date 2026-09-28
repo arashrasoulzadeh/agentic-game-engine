@@ -4,6 +4,11 @@ import 'package:test/test.dart';
 World _buildWorld() {
   final world = World(width: 500, height: 500);
   registerCoreComponents(world);
+  world.components.register<_TestValue>(
+    '_TestValue',
+    (v) => v.toJson(),
+    _TestValue.fromJson,
+  );
   return world;
 }
 
@@ -97,12 +102,24 @@ void main() {
       final registry = BehaviorRegistry();
       registry.register('increment', _IncrementBehavior());
 
-      // Repeat 3 times
+      // Repeat 3 times (one per tick)
       final tree = BTRepeater(count: 3, child: BTLeaf(behaviorId: 'increment'));
+      final behavior = BehaviorTreeBehavior(root: tree, registry: registry);
 
-      final action = BehaviorTreeBehavior(root: tree, registry: registry).decide(WorldView(world), entity);
-      action.apply(world);
+      // Tick 1
+      behavior.decide(WorldView(world), entity).apply(world);
+      expect(world.storeOf<_TestValue>().get(entity)?.value, 1);
 
+      // Tick 2
+      behavior.decide(WorldView(world), entity).apply(world);
+      expect(world.storeOf<_TestValue>().get(entity)?.value, 2);
+
+      // Tick 3
+      behavior.decide(WorldView(world), entity).apply(world);
+      expect(world.storeOf<_TestValue>().get(entity)?.value, 3);
+
+      // Tick 4 - should be done (repeater returns success, no more increments)
+      behavior.decide(WorldView(world), entity).apply(world);
       expect(world.storeOf<_TestValue>().get(entity)?.value, 3);
     });
 
@@ -210,6 +227,9 @@ class _TestValue {
   int value;
   _TestValue({required this.value});
   Map<String, dynamic> toJson() => {'value': value};
+
+  factory _TestValue.fromJson(Map<String, dynamic> json) =>
+      _TestValue(value: json['value'] as int);
 }
 
 class _TestBehavior implements Behavior {
@@ -217,49 +237,44 @@ class _TestBehavior implements Behavior {
   _TestBehavior({required this.setValue});
 
   @override
-  Action decide(WorldView view, EntityId self) => _TestAction(setValue);
+  Action decide(WorldView view, EntityId self) => _TestAction(self, setValue);
 }
 
 class _TestAction implements Action {
+  final EntityId entity;
   final int value;
-  _TestAction(this.value);
+  _TestAction(this.entity, this.value);
   @override
   void apply(World world) {
-    // Store value in a test component
-    world.storeOf<_TestValue>().set(world.entities.create(), _TestValue(value: value));
+    // Store value in a test component on the entity
+    world.storeOf<_TestValue>().set(entity, _TestValue(value: value));
   }
 }
 
 class _IncrementBehavior implements Behavior {
   @override
-  Action decide(WorldView view, EntityId self) => _IncrementAction();
+  Action decide(WorldView view, EntityId self) => _IncrementAction(self);
 }
 
 class _IncrementAction implements Action {
+  final EntityId entity;
+  _IncrementAction(this.entity);
   @override
   void apply(World world) {
     // Find existing test value and increment
     final stores = world.storeOf<_TestValue>();
-    if (stores.length > 0) {
-      final entity = stores.entityAt(0);
-      final existing = stores.get(entity)!;
+    final existing = stores.get(entity);
+    if (existing != null) {
       stores.set(entity, _TestValue(value: existing.value + 1));
     } else {
-      world.storeOf<_TestValue>().set(world.entities.create(), _TestValue(value: 1));
+      stores.set(entity, _TestValue(value: 1));
     }
   }
 }
 
 class _FailingBehavior implements Behavior {
   @override
-  Action decide(WorldView view, EntityId self) => _FailAction();
-}
-
-class _FailAction implements Action {
-  @override
-  void apply(World world) {
-    // Does nothing - represents failure
-  }
+  Action decide(WorldView view, EntityId self) => const FailureAction();
 }
 
 class _FailAfterBehavior implements Behavior {
@@ -267,26 +282,30 @@ class _FailAfterBehavior implements Behavior {
   _FailAfterBehavior({required this.failAfter});
 
   @override
-  Action decide(WorldView view, EntityId self) => _FailAfterAction(failAfter);
+  Action decide(WorldView view, EntityId self) {
+    // Check current value to decide if we should fail
+    // Fail when value reaches failAfter (after failAfter successful increments)
+    final stores = view.world.storeOf<_TestValue>();
+    final existing = stores.get(self);
+    if (existing != null && existing.value >= failAfter) {
+      return const FailureAction();
+    }
+    return _FailAfterAction(self);
+  }
 }
 
 class _FailAfterAction implements Action {
-  final int failAfter;
-  _FailAfterAction(this.failAfter);
+  final EntityId entity;
+  _FailAfterAction(this.entity);
 
   @override
   void apply(World world) {
     final stores = world.storeOf<_TestValue>();
-    if (stores.length > 0) {
-      final entity = stores.entityAt(0);
-      final existing = stores.get(entity)!;
-      if (existing.value + 1 >= failAfter) {
-        // Don't apply - represents failure
-        return;
-      }
+    final existing = stores.get(entity);
+    if (existing != null) {
       stores.set(entity, _TestValue(value: existing.value + 1));
     } else {
-      world.storeOf<_TestValue>().set(world.entities.create(), _TestValue(value: 1));
+      stores.set(entity, _TestValue(value: 1));
     }
   }
 }

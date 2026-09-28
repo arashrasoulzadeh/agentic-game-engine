@@ -5,6 +5,7 @@ export 'src/ai/set_velocity_action.dart';
 export 'src/ai/flee_behavior.dart';
 export 'src/ai/steering.dart';
 export 'src/ai/behavior_tree.dart';
+export 'src/ai/state_machine.dart';
 export 'src/ai/hearing.dart';
 export 'src/ecs/behavior.dart';
 export 'src/ui/button_hit_test.dart';

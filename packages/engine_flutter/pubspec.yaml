@@ -50,3 +50,4 @@ flutter:
   shaders:
     - shaders/light_shadow.frag
     - shaders/ambient_lighting.frag
+    - shaders/normal_mapping.frag
