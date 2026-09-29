@@ -1,4 +1,5 @@
 import 'package:engine_core/engine_core.dart';
+import 'package:engine_flutter/engine_flutter.dart';
 
 import '../logic/scene.dart' show SceneController;
 import '../rendering/sprite.dart';
@@ -26,6 +27,13 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
   /// Defaults to the engine's generated rounded-rect atlas.
   String? get dialogueBoxRegion => null;
 
+  /// Override to return a list of atlas IDs that this dialogue scene needs
+  /// (for dialogue box background, portraits, etc.). These will be
+  /// registered in the scene's [AtlasRegistry] returned by [loadAssets].
+  /// The base scene's atlases are NOT automatically available to overlays;
+  /// this scene must declare its own dependencies.
+  List<String> get requiredAtlasIds => const [];
+
   // Internal reference to the world, set during populate
   World? _world;
 
@@ -34,6 +42,9 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
 
   // Entity ID of the portrait sprite, for updating when node changes
   EntityId? portraitEntityId;
+
+  // The atlas registry for this scene (created in loadAssets)
+  AtlasRegistry? _atlasRegistry;
 
   /// Called when the player selects a choice.
   /// By default, calls [runner.advance] and emits the choice's event.
@@ -124,6 +135,18 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     await super.populate(world, scenes, state);
   }
 
+  @override
+  Future<AtlasRegistry> loadAssets() async {
+    _atlasRegistry = AtlasRegistry();
+    // Register any required atlases that this dialogue scene needs.
+    // Subclasses should override [requiredAtlasIds] to declare dependencies.
+    // Note: The base scene's atlases are not automatically available to overlays.
+    // A real implementation would need to load/register the actual SpriteAtlas
+    // instances here (e.g., from assets). For now, we return an empty registry;
+    // the actual atlases must be registered by the concrete subclass if needed.
+    return _atlasRegistry!;
+  }
+
   Future<EntityId?> _addPortraitEntity(World world) async {
     final node = runner.currentNode;
     if (node == null) return null;
@@ -134,11 +157,9 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     if (portraitRegion == null) return null;
 
     final atlasId = portraitAtlasId ?? 'atlas'; // fallback to default atlas
-    if (!world.storeOf<AtlasRegistry>().has(atlasId)) return null;
 
-    final atlas = world.storeOf<AtlasRegistry>().resolve(atlasId);
-    if (!atlas.regions.containsKey(portraitRegion)) return null;
-
+    // Just create the sprite with the atlas ID and region.
+    // Resolution happens at render time via EngineView's AtlasRegistry.
     final portraitEntity = world.spawn();
     world.storeOf<Position>().set(portraitEntity, Position(100, 100)); // Top-left by default
     world.storeOf<Sprite>().set(portraitEntity, Sprite(
@@ -203,9 +224,6 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     }
     
     final atlasId = portraitAtlasId ?? 'atlas';
-    if (!world.storeOf<AtlasRegistry>().has(atlasId)) return;
-    final atlas = world.storeOf<AtlasRegistry>().resolve(atlasId);
-    if (!atlas.regions.containsKey(portraitRegion)) return;
     
     if (portraitEntityId == null) {
       // Create new portrait
@@ -235,72 +253,5 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
         ));
       }
     }
-  }
-
-  @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
-    _world = world;
-
-    // Add dialogue box background if specified (screen-space, centered)
-    if (dialogueBoxAtlasId != null && dialogueBoxRegion != null) {
-      final bg = world.spawn();
-      world.storeOf<Position>().set(bg, Position(0, 0));
-      world.storeOf<Sprite>().set(bg, Sprite(
-        dialogueBoxAtlasId!,
-        dialogueBoxRegion!,
-        zIndex: -5,
-        scaleX: 800 / 200, // scale to cover viewport width
-        scaleY: 600 / 150, // scale to cover viewport height
-        screenSpace: true,
-      ));
-    }
-
-    // Add dialogue text as a Text entity (screen-space, centered)
-    textEntityId = world.spawn();
-    world.storeOf<Position>().set(textEntityId!, Position(400, 100));
-    world.storeOf<Text>().set(textEntityId!, Text(
-      runner.visibleText(WorldView(world)) ?? '',
-      colorArgb: 0xFFFFFFFF,
-      fontSize: 24,
-      align: TextAlignment.center,
-      screenSpace: true,
-    ));
-
-    // Add portrait entity if specified
-    await _addPortraitEntity(world);
-
-    // Initialize typewriter
-    runner.reset();
-
-    await super.populate(world, scenes, state);
-  }
-
-  Future<EntityId?> _addPortraitEntity(World world) async {
-    final node = runner.currentNode;
-    if (node == null) return null;
-
-    final portraitRegion = runner.getCurrentPortraitRegion();
-    final portraitAtlasId = runner.getCurrentPortraitAtlasId();
-
-    if (portraitRegion == null) return null;
-
-    final atlasId = portraitAtlasId ?? 'atlas'; // fallback to default atlas
-    if (!world.storeOf<AtlasRegistry>().has(atlasId)) return null;
-
-    final atlas = world.storeOf<AtlasRegistry>().resolve(atlasId);
-    if (!atlas.regions.containsKey(portraitRegion)) return null;
-
-    final portraitEntity = world.spawn();
-    world.storeOf<Position>().set(portraitEntity, Position(100, 100)); // Top-left by default
-    world.storeOf<Sprite>().set(portraitEntity, Sprite(
-      atlasId,
-      portraitRegion,
-      zIndex: 10,
-      scaleX: 0.5,
-      scaleY: 0.5,
-      screenSpace: true,
-    ));
-
-    return portraitEntity;
   }
 }

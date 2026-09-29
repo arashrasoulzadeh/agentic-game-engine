@@ -148,7 +148,7 @@ class DialogueNode {
         if (portraitAtlasId != null) 'portraitAtlasId': portraitAtlasId,
         if (portraitRegion != null) 'portraitRegion': portraitRegion,
         if (audioKey != null) 'audioKey': audioKey,
-        if (localizedAudioKeys != null && localizedAudioKeys.isNotEmpty) 'localizedAudioKeys': localizedAudioKeys,
+        if (localizedAudioKeys != null && localizedAudioKeys!.isNotEmpty) 'localizedAudioKeys': localizedAudioKeys,
         if (typewriterDuration > 0) 'typewriterDuration': typewriterDuration,
         if (typewriterSpeed != 1.0) 'typewriterSpeed': typewriterSpeed,
         if (!skippable) 'skippable': skippable,
@@ -293,15 +293,6 @@ class DialogueRunner {
     final node = currentNode;
     if (node == null) return null;
     return node.portraitRegion ?? node.portrait;
-  }
-
-  /// The resolved display text for the current node, with variable substitution.
-  /// Returns null if dialogue has ended.
-  String? currentText(WorldView view) {
-    final node = currentNode;
-    if (node == null) return null;
-    String text = stringTable.resolve(node.textKey);
-    return _substituteVariables(text, view);
   }
 
   /// The text currently visible (respects typewriter effect).
