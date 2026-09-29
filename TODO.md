@@ -97,7 +97,7 @@ actionable items here.
 
 - [x] **Behavior Tree / State Machine** — Replace ad-hoc `Behavior` implementations with a serializable BT/FSM. Nodes: Sequence, Selector, Parallel, Decorator (Inverter, Repeater, Succeeder, Failer, Cooldown, RandomSelector, RandomSequence, UntilSuccess, UntilFailure, Timeout, Throttle, Timer), Leaf (custom `Behavior`). Visual editor export → JSON → runtime interpreter. State Machine (FSM) with transitions, transitions conditions, serialization.
 
-- [ ] **Dialogue system enhancements** — Variables/conditions in dialogue (`{if has_sword}...`), branching by inventory/flags, localized audio per line, portrait sprites, typewriter effect, skip/replay.
+- [x] **Dialogue system enhancements** — Variables/conditions in dialogue (`{if has_sword}...`), branching by inventory/flags, localized audio per line, portrait sprites, typewriter effect with speed/auto-advance, skip/replay.
 
 - [x] **Particle system upgrades** — Emitters attached to entities (follow Position), attractors/repellers (gravity wells, wind), emission shapes (circle, rect, edge). GPU instanced particles and TileMap collision remain for future work.
 
