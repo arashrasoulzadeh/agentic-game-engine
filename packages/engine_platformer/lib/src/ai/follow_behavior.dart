@@ -200,7 +200,6 @@ class _FollowWithJumpAction implements Action {
   bool _isOnGround(World world) {
     final pos = world.storeOf<Position>().get(self);
     final collider = world.storeOf<Collider>().get(self);
-    final vel = world.storeOf<Velocity>().get(self);
     if (pos == null || collider == null) return false;
 
     final footY = pos.y + collider.radius;

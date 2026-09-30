@@ -213,7 +213,7 @@ class EnemyCombatBehavior implements Behavior {
 
     final target = combat.target;
     final hasTarget = target != null;
-    final targetPos = hasTarget ? view.component<Position>(target!) : null;
+    final targetPos = hasTarget ? view.component<Position>(target) : null;
     final distToTarget = (hasTarget && targetPos != null)
         ? (pos.x - targetPos.x).abs()
         : double.infinity;

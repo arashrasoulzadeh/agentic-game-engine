@@ -44,7 +44,6 @@ class InvestigateBehavior implements Behavior {
     if (soundData == null) return const NoOpAction();
 
     final soundX = (soundData['x'] as num).toDouble();
-    final soundY = (soundData['y'] as num).toDouble();
 
     final dx = soundX - pos.x;
     final distance = dx.abs();

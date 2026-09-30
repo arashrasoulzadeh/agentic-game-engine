@@ -1,4 +1,5 @@
 import 'src/rendering/particle_forces.dart';
+import 'src/content/inventory.dart';
 
 export 'src/ecs/action.dart';
 export 'src/ai/set_velocity_action.dart';
@@ -36,9 +37,7 @@ export 'src/physics/velocity.dart';
 export 'src/ecs/entity.dart';
 export 'src/ecs/event_bus.dart';
 export 'src/ecs/event_helpers.dart';
-import 'src/content/inventory.dart';
 export 'src/content/game_state.dart';
-export 'src/content/inventory.dart';
 export 'src/content/level.dart';
 export 'src/content/string_table.dart';
 export 'src/physics/pathfinding.dart';

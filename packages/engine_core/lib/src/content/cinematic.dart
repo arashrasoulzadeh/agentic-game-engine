@@ -4,7 +4,6 @@ import '../ecs/world.dart';
 import '../physics/position.dart';
 import '../ecs/entity.dart';
 import '../content/game_state.dart';
-import '../content/string_table.dart';
 
 /// One step of a scripted, non-interactive sequence — see
 /// `CinematicSystem`. [start] runs once when the step becomes active;
@@ -313,7 +312,6 @@ class CameraShakeStep extends CinematicStep {
   final double duration;
   final double intensity;
   late final Tween _tween;
-  EntityId? _cameraEntity;
 
   CameraShakeStep({
     required this.duration,
@@ -322,7 +320,6 @@ class CameraShakeStep extends CinematicStep {
 
   @override
   void start(World world) {
-    _cameraEntity = world.storeOf<EntityId>().get(0); // fallback
     _tween = Tween(from: 0, to: 1, duration: duration);
   }
 

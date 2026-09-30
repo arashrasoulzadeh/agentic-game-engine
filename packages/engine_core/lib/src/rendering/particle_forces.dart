@@ -1,5 +1,3 @@
-import '../ecs/entity.dart';
-
 /// Force field affecting particles in a radius.
 /// Can attract (positive strength), repel (negative), or create directional wind.
 /// Add to an entity with a [Position] to create a force field.

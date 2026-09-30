@@ -22,7 +22,6 @@ import 'ambient_lighting_shader.dart';
 import 'hud_bar.dart';
 import 'light2d.dart';
 import 'nine_slice_sprite.dart';
-import 'normal_mapping_shader.dart';
 import 'normal_mapping_combined_shader.dart';
 import 'particle_dot_texture.dart';
 import 'screen_tint.dart';

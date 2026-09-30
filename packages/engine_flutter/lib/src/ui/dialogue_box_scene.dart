@@ -1,11 +1,6 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 
-import '../logic/scene.dart' show SceneController;
-import '../rendering/sprite.dart';
-import '../rendering/text.dart' show Text, TextAlignment;
-import 'button_menu_scene.dart';
-
 /// A ready-made dialogue box scene that renders a [DialogueRunner]'s
 /// current node text and choices as vertically-stacked buttons.
 /// Subclass to provide the runner and handle choice events.

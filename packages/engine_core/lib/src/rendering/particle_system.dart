@@ -127,7 +127,6 @@ class ParticleSystem implements System {
     final velocities = world.storeOf<Velocity>();
 
     for (var i = 0; i < particles.length; i++) {
-      final particle = particles.denseAt(i);
       final entity = particles.entityAt(i);
       final pos = positions.get(entity);
       final vel = velocities.get(entity);

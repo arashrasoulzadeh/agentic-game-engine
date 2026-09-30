@@ -731,20 +731,6 @@ class BTTimer extends BTNode {
       );
 }
 
-/// Updates the context's time and dt values.
-/// Should be called at the start of each tick by BehaviorTreeSystem.
-class _UpdateTimeAction implements Action {
-  final double time;
-  final double dt;
-
-  _UpdateTimeAction(this.time, this.dt);
-
-  @override
-  void apply(World world) {
-    // No-op - time is set in context by BehaviorTreeSystem
-  }
-}
-
 /// Behavior that executes a behavior tree.
 /// This wraps a BTNode and implements the standard Behavior interface.
 class BehaviorTreeBehavior implements Behavior {
