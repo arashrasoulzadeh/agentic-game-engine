@@ -40,3 +40,4 @@ export 'src/ui/menu_button_atlas.dart';
 export 'src/ui/remap_menu_scene.dart';
 export 'src/ui/save_slot_menu_scene.dart';
 export 'src/ui/dialogue_box_scene.dart';
+export 'src/ui/credits_scene.dart';
