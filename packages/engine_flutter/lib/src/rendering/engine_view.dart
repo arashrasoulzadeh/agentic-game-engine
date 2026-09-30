@@ -11,6 +11,7 @@ import 'package:flutter/scheduler.dart';
 import 'camera.dart';
 import 'clip_shape.dart';
 import 'parallax_layer.dart';
+import 'viewport.dart';
 import 'sprite.dart';
 // Aliased -- `Text` collides with Flutter's own widget of the same
 // name, which `package:flutter/widgets.dart` (imported above) already
@@ -203,6 +204,10 @@ class EngineView extends StatefulWidget {
   /// in white with black stroke for readability at any zoom.
   final bool showAutoTileBitmask;
 
+  /// Configuration for aspect-ratio and safe-area handling.
+  /// When null (default), the game renders full-screen with no letterboxing.
+  final ViewportConfig? viewportConfig;
+
   const EngineView({
     super.key,
     required this.world,
@@ -225,6 +230,7 @@ class EngineView extends StatefulWidget {
     this.singlePassLighting = false,
     this.showAutoTileBitmask = false,
     this.onPostTick,
+    this.viewportConfig,
   });
 
   @override
@@ -278,6 +284,9 @@ class _EngineViewState extends State<EngineView>
   /// Key is "${diffuseAtlasId}:${normalAtlasId}".
   final Map<String, ui.Image> _combinedTextureCache = {};
 
+  /// Viewport manager for aspect-ratio and safe-area handling.
+  ViewportManager? _viewportManager;
+
   static const _maxStepsPerFrame = 5;
 
   @override
@@ -285,6 +294,11 @@ class _EngineViewState extends State<EngineView>
     super.initState();
     _frameStats = widget.frameStats ?? FrameStats();
     _ticker = createTicker(_onTick)..start();
+
+    if (widget.viewportConfig != null) {
+      _viewportManager = ViewportManager(widget.viewportConfig!);
+      widget.camera.viewportManager = _viewportManager;
+    }
   }
 
   @override
@@ -292,6 +306,15 @@ class _EngineViewState extends State<EngineView>
     super.didUpdateWidget(oldWidget);
     if (widget.frameStats != oldWidget.frameStats) {
       _frameStats = widget.frameStats ?? FrameStats();
+    }
+    if (widget.viewportConfig != oldWidget.viewportConfig) {
+      if (widget.viewportConfig != null) {
+        _viewportManager = ViewportManager(widget.viewportConfig!);
+        widget.camera.viewportManager = _viewportManager;
+      } else {
+        _viewportManager = null;
+        widget.camera.viewportManager = null;
+      }
     }
   }
 
@@ -499,9 +522,71 @@ class _EngineViewState extends State<EngineView>
       singlePassLighting: widget.singlePassLighting,
       showAutoTileBitmask: widget.showAutoTileBitmask,
       combinedTextureCache: _combinedTextureCache,
+      viewportManager: _viewportManager,
     );
 
-    Widget child = CustomPaint(painter: painter, size: Size.infinite);
+    Widget child;
+
+    if (_viewportManager != null) {
+      // Use LayoutBuilder to get screen size and apply viewport layout
+      child = LayoutBuilder(
+        builder: (context, constraints) {
+          final screenSize = Size(constraints.maxWidth, constraints.maxHeight);
+          final safeArea = MediaQuery.of(context).padding;
+          final safeAreaRRect = ui.RRect.fromLTRBAndCorners(
+            safeArea.left,
+            safeArea.top,
+            constraints.maxWidth - safeArea.right,
+            constraints.maxHeight - safeArea.bottom,
+          );
+
+          final layout = _viewportManager!.computeLayout(
+            screenSize,
+            safeAreaRRect,
+          );
+
+          // Build the game content with letterboxing
+          return Stack(
+            children: [
+              // Letterbox/pillarbox background
+              if (layout.isLetterboxed || layout.isPillarboxed)
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: Color(widget.viewportConfig!.letterboxColorArgb),
+                  ),
+                ),
+              // Game content clipped to viewport
+              Positioned(
+                left: layout.contentRect.left,
+                top: layout.contentRect.top,
+                width: layout.contentRect.width,
+                height: layout.contentRect.height,
+                child: ClipRect(
+                  child: CustomPaint(painter: painter, size: layout.contentRect.size),
+                ),
+              ),
+              // FPS overlay (on top of everything)
+if (widget.showFpsOverlay)
+                Positioned(
+                  left: layout.contentRect.left + 4,
+                  top: layout.contentRect.top + 4,
+                  child: Text(
+                    _debugText(),
+                    style: const TextStyle(
+                      color: Color(0xFF00FF00),
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      );
+    } else {
+      // No viewport config - original behavior
+      child = CustomPaint(painter: painter, size: Size.infinite);
+    }
 
     if (widget.showFpsOverlay) {
       child = Stack(
@@ -706,6 +791,8 @@ class _EnginePainter extends CustomPainter {
   /// Key is "${diffuseAtlasId}:${normalAtlasId}".
   final Map<String, ui.Image> combinedTextureCache;
 
+  final ViewportManager? viewportManager;
+
   _EnginePainter({
     required this.world,
     required this.atlasRegistry,
@@ -725,6 +812,7 @@ class _EnginePainter extends CustomPainter {
     this.singlePassLighting = false,
     this.showAutoTileBitmask = false,
     required this.combinedTextureCache,
+    this.viewportManager,
   }) : super(repaint: null);
 
   /// [current]'s position blended with wherever that entity was just
