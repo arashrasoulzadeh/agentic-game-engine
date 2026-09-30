@@ -44,6 +44,7 @@ export 'src/physics/pathfinding.dart';
 export 'src/physics/raycast.dart';
 export 'src/physics/spatial_hash.dart';
 export 'src/ecs/system.dart';
+export 'src/ecs/job_system.dart' hide PathPoint;
 export 'src/ai/ai_system.dart';
 export 'src/physics/collision_system.dart';
 export 'src/physics/movement_system.dart';

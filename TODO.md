@@ -93,7 +93,7 @@ actionable items here.
 
 ## New engine features
 
-- [ ] **ECS query caching / Archetypes** — Hot loops (`MovementSystem`, `CollisionSystem`) iterate archetype tables instead of sparse sets. Cache invalidation on component add/remove.
+- [x] **ECS query caching / Archetypes** — Hot loops (`MovementSystem`, `CollisionSystem`) iterate archetype tables instead of sparse sets. Cache invalidation on component add/remove. Implemented in `engine_core/lib/src/ecs/archetype.dart` with `Archetype`, `ArchetypeManager`, `ArchetypeEntity`.
 
 - [ ] **Job system / Multithreaded systems** — Offload `TileCollisionSystem` broadphase, `Pathfinding`, `ParticleSystem` to background isolates. Main thread only commits results.
 

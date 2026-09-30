@@ -4,6 +4,7 @@ import 'entity.dart';
 import 'event_bus.dart';
 import 'system.dart';
 import 'archetype.dart';
+import 'job_system.dart';
 
 /// Thrown by [World.applyPatch] when the patch's own shape is wrong —
 /// `entities` not a list, an entry not an object, a missing/malformed
@@ -31,6 +32,14 @@ class World {
   final ComponentRegistry components = ComponentRegistry();
   final EventBus events = EventBus();
   final List<System> _systems = [];
+
+  /// Job system for multithreaded work (collision broadphase, pathfinding, etc.).
+  /// Lazy-initialized on first access.
+  JobSystem? _jobSystem;
+  JobSystem get jobSystem {
+    _jobSystem ??= JobSystem();
+    return _jobSystem!;
+  }
 
   int _tick = 0;
   int get tick => _tick;
@@ -112,5 +121,12 @@ class World {
       }
       components.applyToEntity(rawId, rawComponents.cast<String, dynamic>());
     }
+  }
+
+  /// Shuts down the job system and releases isolate resources.
+  /// Call this when the world is no longer needed (e.g., scene change).
+  void dispose() {
+    _jobSystem?.shutdown();
+    _jobSystem = null;
   }
 }
