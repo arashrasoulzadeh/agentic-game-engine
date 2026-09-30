@@ -45,3 +45,4 @@ export 'src/ui/save_slot_menu_scene.dart';
 export 'src/ui/dialogue_box_scene.dart';
 export 'src/ui/credits_scene.dart';
 export 'src/ui/settings_menu.dart';
+export 'src/rendering/video_player.dart';

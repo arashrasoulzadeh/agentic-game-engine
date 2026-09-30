@@ -473,6 +473,12 @@ class CinematicSystem implements System {
     _complete(world);
   }
 
+  /// Adds a step to the end of the cinematic sequence.
+  /// Can be called during playback to dynamically extend the cinematic.
+  void addStep(CinematicStep step) {
+    steps.add(step);
+  }
+
   void _complete(World world) {
     if (_done) return;
     _done = true;
