@@ -1,4 +1,4 @@
-import 'dart:math' show cos, exp, sin, pi, sqrt;
+import 'dart:math' show cos, exp, sin, pi, sqrt, max;
 import 'dart:ui' as ui;
 
 import 'package:engine_core/engine_core.dart';
@@ -23,6 +23,7 @@ import 'hud_bar.dart';
 import 'light2d.dart';
 import 'nine_slice_sprite.dart';
 import 'normal_mapping_shader.dart';
+import 'normal_mapping_combined_shader.dart';
 import 'particle_dot_texture.dart';
 import 'screen_tint.dart';
 import 'text.dart' as txt;
@@ -274,6 +275,10 @@ class _EngineViewState extends State<EngineView>
   /// previous frame computed. See `_collectTileMapItems`'s doc comment.
   final Map<EntityId, _TileCullCache> _tileCullCache = {};
 
+  /// Cache of combined normal mapping textures (diffuse left half, normal right half).
+  /// Key is "${diffuseAtlasId}:${normalAtlasId}".
+  final Map<String, ui.Image> _combinedTextureCache = {};
+
   static const _maxStepsPerFrame = 5;
 
   @override
@@ -494,6 +499,7 @@ class _EngineViewState extends State<EngineView>
       tileCullCache: _tileCullCache,
       singlePassLighting: widget.singlePassLighting,
       showAutoTileBitmask: widget.showAutoTileBitmask,
+      combinedTextureCache: _combinedTextureCache,
     );
 
     Widget child = CustomPaint(painter: painter, size: Size.infinite);
@@ -697,6 +703,10 @@ class _EnginePainter extends CustomPainter {
   /// for readability at any zoom.
   final bool showAutoTileBitmask;
 
+  /// Cache of combined normal mapping textures (diffuse left half, normal right half).
+  /// Key is "${diffuseAtlasId}:${normalAtlasId}".
+  final Map<String, ui.Image> combinedTextureCache;
+
   _EnginePainter({
     required this.world,
     required this.atlasRegistry,
@@ -715,6 +725,7 @@ class _EnginePainter extends CustomPainter {
     required this.tileCullCache,
     this.singlePassLighting = false,
     this.showAutoTileBitmask = false,
+    required this.combinedTextureCache,
   }) : super(repaint: null);
 
   /// [current]'s position blended with wherever that entity was just
@@ -2113,6 +2124,14 @@ class _EnginePainter extends CustomPainter {
           continue;
         }
 
+        // Create combined texture (diffuse left half, normal map right half)
+        final combinedImage = _getCombinedTexture(
+          sprite.atlasId,
+          sprite.normalAtlasId!,
+          atlas.image,
+          normalAtlas.image,
+        );
+
         // Render with normal mapping shader
         items.add(_DrawItem(
           z,
@@ -2121,8 +2140,7 @@ class _EnginePainter extends CustomPainter {
             canvas,
             size,
             sprite,
-            atlas.image,
-            normalAtlas.image,
+            combinedImage,
             srcRect,
             normalSrcRect,
             screenPos,
@@ -2140,8 +2158,7 @@ class _EnginePainter extends CustomPainter {
     Canvas canvas,
     Size size,
     Sprite sprite,
-    ui.Image diffuseImage,
-    ui.Image normalImage,
+    ui.Image combinedImage,
     ui.Rect srcRect,
     ui.Rect normalSrcRect,
     Offset screenPos,
@@ -2149,10 +2166,10 @@ class _EnginePainter extends CustomPainter {
     Offset worldPos,
     List<_LightRenderInfo> lights,
   ) {
-    final shader = NormalMappingShader.shader();
+    final shader = NormalMappingCombinedShader.shader();
     if (shader == null) {
       // Shader not loaded yet, fall back to normal rendering
-      _paintSpriteIndividuallyWithImages(canvas, size, sprite, diffuseImage, srcRect, screenPos, zoom);
+      _paintSpriteIndividuallyWithImages(canvas, size, sprite, combinedImage, srcRect, screenPos, zoom);
       return;
     }
 
@@ -2235,10 +2252,86 @@ class _EnginePainter extends CustomPainter {
     // uIsScreenSpace - float (0 or 1)
     shader..setFloat(u++, sprite.screenSpace ? 1.0 : 0.0);
 
-    // Set diffuse texture (normal map not supported in single-texture Flutter shader)
-    // TODO: Implement multi-texture normal mapping when Flutter supports it
-    // For now, fall back to normal rendering
-    _paintSpriteIndividuallyWithImages(canvas, size, sprite, diffuseImage, srcRect, screenPos, zoom);
+    // uSpriteScreenRect - vec4 (left, top, right, bottom)
+    final destRect = ui.Rect.fromCenter(
+      center: Offset.zero,
+      width: srcRect.width * sprite.scaleX.abs() * zoom,
+      height: srcRect.height * sprite.scaleY.abs() * zoom,
+    );
+    final left = screenPos.dx + destRect.left;
+    final top = screenPos.dy + destRect.top;
+    final right = screenPos.dx + destRect.right;
+    final bottom = screenPos.dy + destRect.bottom;
+    shader
+      ..setFloat(u++, left)
+      ..setFloat(u++, top)
+      ..setFloat(u++, right)
+      ..setFloat(u++, bottom);
+
+    // Set combined texture (diffuse in left half, normal map in right half)
+    shader.setImageSampler(0, combinedImage);
+
+    // Draw a rect covering the sprite area with the shader
+    canvas.save();
+    canvas.translate(screenPos.dx, screenPos.dy);
+    if (sprite.rotation != 0) canvas.rotate(sprite.rotation);
+    canvas.scale(
+      sprite.scaleX * zoom,
+      sprite.scaleY * zoom,
+    );
+    canvas.drawRect(
+      ui.Rect.fromCenter(
+        center: Offset.zero,
+        width: srcRect.width,
+        height: srcRect.height,
+      ),
+      Paint()..shader = shader,
+    );
+    canvas.restore();
+  }
+
+  /// Creates or retrieves a combined texture for normal mapping.
+  /// The combined texture has the diffuse map in the LEFT HALF and the
+  /// normal map in the RIGHT HALF. This works around Flutter's
+  /// single-texture FragmentShader limitation.
+  ui.Image _getCombinedTexture(
+    String diffuseAtlasId,
+    String normalAtlasId,
+    ui.Image diffuseImage,
+    ui.Image normalImage,
+  ) {
+    final key = '$diffuseAtlasId:$normalAtlasId';
+    final cached = combinedTextureCache[key];
+    if (cached != null) return cached;
+
+    // Create combined image: diffuse on left, normal on right
+    final width = max(diffuseImage.width, normalImage.width) * 2;
+    final height = max(diffuseImage.height, normalImage.height);
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final halfWidth = (width / 2).toDouble();
+    final heightD = height.toDouble();
+
+    // Draw diffuse in left half
+    canvas.drawImageRect(
+      diffuseImage,
+      ui.Rect.fromLTWH(0, 0, diffuseImage.width.toDouble(), diffuseImage.height.toDouble()),
+      ui.Rect.fromLTWH(0, 0, halfWidth, heightD),
+      Paint(),
+    );
+
+    // Draw normal map in right half
+    canvas.drawImageRect(
+      normalImage,
+      ui.Rect.fromLTWH(0, 0, normalImage.width.toDouble(), normalImage.height.toDouble()),
+      ui.Rect.fromLTWH(halfWidth, 0, halfWidth, heightD),
+      Paint(),
+    );
+
+    final picture = recorder.endRecording();
+    final combinedImage = picture.toImageSync(width, height);
+    combinedTextureCache[key] = combinedImage;
+    return combinedImage;
   }
 
   void _paintSpriteIndividuallyWithImages(
