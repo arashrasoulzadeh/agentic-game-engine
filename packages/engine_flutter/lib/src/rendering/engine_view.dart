@@ -912,6 +912,9 @@ class _EnginePainter extends CustomPainter {
       }
     }
 
+    // Apply colorblind simulation if enabled
+    _drawColorblind(canvas, size);
+
     _drawScreenTint(canvas, size);
 
     // Drawn last (on top of everything else) and outside the z-sorted
@@ -1545,6 +1548,13 @@ class _EnginePainter extends CustomPainter {
       if (color.a == 0) continue;
       canvas.drawRect(fullRect, Paint()..color = color);
     }
+  }
+
+  /// Draws colorblind simulation overlay if enabled in PlayerOptions.
+void _drawColorblind(Canvas canvas, Size size) {
+    // TODO: Implement colorblind simulation shader
+    // Requires render-to-texture support for full-screen post-processing
+    // For now, this is a placeholder
   }
 
   /// Radial-gradient stop positions shared by the reveal and tint
@@ -2931,12 +2941,13 @@ for (var row = minRow; row <= maxRow; row++) {
         final screenPos =
             text.screenSpace ? Offset(pos.x, pos.y) : camera.worldToScreen(pos.x, pos.y, size);
         final scale = text.screenSpace ? 1.0 : camera.zoom;
+        final effectiveFontSize = text.fontSize * scale * text.textScale;
         final painter = TextPainter(
           text: TextSpan(
             text: text.text,
             style: TextStyle(
               color: Color(text.colorArgb),
-              fontSize: text.fontSize * scale,
+              fontSize: effectiveFontSize,
             ),
           ),
           textDirection: TextDirection.ltr,

@@ -52,3 +52,4 @@ flutter:
     - shaders/ambient_lighting.frag
     - shaders/normal_mapping.frag
     - shaders/normal_mapping_combined.frag
+    - shaders/colorblind.frag

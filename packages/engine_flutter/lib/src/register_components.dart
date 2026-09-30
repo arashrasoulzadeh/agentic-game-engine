@@ -71,4 +71,9 @@ void registerFlutterComponents(World world) {
     (c) => c.toJson(),
     ClipShape.fromJson,
   );
+  world.components.register<PlayerOptions>(
+    'playerOptions',
+    (o) => o.toJson(),
+    PlayerOptions.fromJson,
+  );
 }

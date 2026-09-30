@@ -42,6 +42,10 @@ class Text {
   /// above world content regardless of that content's own `zIndex`.
   int zIndex;
 
+  /// Accessibility text scale multiplier (1.0 = normal, >1 = larger text).
+  /// Applied on top of [fontSize] at render time.
+  double textScale;
+
   Text(
     this.text, {
     this.fontSize = 16,
@@ -50,6 +54,7 @@ class Text {
     this.screenSpace = false,
     this.zIndex = 0,
     this.maxWidth,
+    this.textScale = 1.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -59,6 +64,7 @@ class Text {
         'align': align.name,
         'screenSpace': screenSpace,
         'zIndex': zIndex,
+        'textScale': textScale,
         if (maxWidth != null) 'maxWidth': maxWidth,
       };
 
@@ -73,5 +79,6 @@ class Text {
         screenSpace: json['screenSpace'] as bool? ?? false,
         zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
         maxWidth: (json['maxWidth'] as num?)?.toDouble(),
+        textScale: (json['textScale'] as num?)?.toDouble() ?? 1.0,
       );
 }

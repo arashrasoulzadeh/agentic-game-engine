@@ -26,6 +26,9 @@ class PlayerOptions {
   /// Gamepad button bindings (action -> button index).
   Map<String, int> gamepadBindings;
 
+  /// Touch control bindings (action -> virtual button ID).
+  Map<String, String> touchBindings;
+
   /// Text scale factor (1.0 = normal, >1 = larger text).
   double textScale;
 
@@ -60,6 +63,7 @@ class PlayerOptions {
     this.controlScheme = 'keyboard',
     Map<String, int>? keyboardBindings,
     Map<String, int>? gamepadBindings,
+    Map<String, String>? touchBindings,
     this.textScale = 1.0,
     this.highContrast = false,
     this.colorblindMode = 'none',
@@ -71,6 +75,7 @@ class PlayerOptions {
     Map<String, dynamic>? custom,
   })  : keyboardBindings = keyboardBindings ?? const {},
         gamepadBindings = gamepadBindings ?? const {},
+        touchBindings = touchBindings ?? const {},
         custom = custom ?? {};
 
   /// Creates a copy with modified fields.
@@ -81,6 +86,7 @@ class PlayerOptions {
     String? controlScheme,
     Map<String, int>? keyboardBindings,
     Map<String, int>? gamepadBindings,
+    Map<String, String>? touchBindings,
     double? textScale,
     bool? highContrast,
     String? colorblindMode,
@@ -98,6 +104,7 @@ class PlayerOptions {
       controlScheme: controlScheme ?? this.controlScheme,
       keyboardBindings: keyboardBindings ?? this.keyboardBindings,
       gamepadBindings: gamepadBindings ?? this.gamepadBindings,
+      touchBindings: touchBindings ?? this.touchBindings,
       textScale: textScale ?? this.textScale,
       highContrast: highContrast ?? this.highContrast,
       colorblindMode: colorblindMode ?? this.colorblindMode,
@@ -117,6 +124,7 @@ class PlayerOptions {
         'controlScheme': controlScheme,
         'keyboardBindings': keyboardBindings,
         'gamepadBindings': gamepadBindings,
+        'touchBindings': touchBindings,
         'textScale': textScale,
         'highContrast': highContrast,
         'colorblindMode': colorblindMode,
@@ -138,6 +146,9 @@ class PlayerOptions {
             ?? {},
         gamepadBindings: (json['gamepadBindings'] as Map<String, dynamic>?)
             ?.map((k, v) => MapEntry(k, v as int))
+            ?? {},
+        touchBindings: (json['touchBindings'] as Map<String, dynamic>?)
+            ?.map((k, v) => MapEntry(k, v as String))
             ?? {},
         textScale: (json['textScale'] as num?)?.toDouble() ?? 1.0,
         highContrast: json['highContrast'] as bool? ?? false,
@@ -246,6 +257,8 @@ class PlayerOptionsManager {
           opts.keyboardBindings = Map<String, int>.from(value as Map);
         case 'gamepadBindings':
           opts.gamepadBindings = Map<String, int>.from(value as Map);
+        case 'touchBindings':
+          opts.touchBindings = Map<String, String>.from(value as Map);
         case 'textScale':
           opts.textScale = (value as num).toDouble();
         case 'highContrast':
@@ -284,6 +297,8 @@ class PlayerOptionsManager {
         return _options.keyboardBindings;
       case 'gamepadBindings':
         return _options.gamepadBindings;
+      case 'touchBindings':
+        return _options.touchBindings;
       case 'textScale':
         return _options.textScale;
       case 'highContrast':
