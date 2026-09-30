@@ -74,4 +74,9 @@ class ComponentStore<T> {
   int get length => _dense.length;
   T denseAt(int i) => _dense[i];
   EntityId entityAt(int i) => _denseToEntity[i];
+
+  /// Package-private accessors for archetype iteration.
+  /// These expose the internal dense arrays for archetype-based queries.
+  List<dynamic> get _denseArray => _dense;
+  List<EntityId> get _denseEntities => _denseToEntity;
 }

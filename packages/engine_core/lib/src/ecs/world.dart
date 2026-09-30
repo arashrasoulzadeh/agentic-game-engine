@@ -3,6 +3,7 @@ import 'component_store.dart';
 import 'entity.dart';
 import 'event_bus.dart';
 import 'system.dart';
+import 'archetype.dart';
 
 /// Thrown by [World.applyPatch] when the patch's own shape is wrong —
 /// `entities` not a list, an entry not an object, a missing/malformed
@@ -36,6 +37,9 @@ class World {
 
   World({required this.width, required this.height});
 
+  /// Returns the archetype manager for optimized queries.
+  ArchetypeManager get archetypes => components.archetypeManager;
+
   void addSystem(System system) => _systems.add(system);
 
   List<String> get systemOrder => _systems.map((s) => s.name).toList();
@@ -49,6 +53,7 @@ class World {
       reg.removeEntity(id);
     }
     entities.destroy(id);
+    components.archetypeManager.onEntityDestroyed(id);
   }
 
   /// Runs every registered system once, in registration order, then

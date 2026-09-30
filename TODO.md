@@ -93,29 +93,9 @@ actionable items here.
 
 ## New engine features
 
-- [x] **Platformer-aware NavMesh / A* pathfinding** — Current pathfinding is tile-based (basic A* in `pathfinding.dart`, `PathFollowBehavior` exists); need a platformer-aware pathfinder that handles jumps, one-way platforms, ladders, and moving platforms. Output: sequence of `PlatformerPathPoint` with `PlatformerMoveType` flags consumable by a `PathFollowBehavior`. Implemented in `engine_platformer/lib/src/physics/platformer_pathfinding.dart` with `PlatformerPathfinder`, `PlatformerPathfinderConfig`, `PlatformerPathPoint`, `PlatformerMoveType`. `PathFollowBehavior` updated to consume `PlatformerPathPoint` and handle jumps, ladders, one-way platforms, ledge drops.
-
-- [x] **Behavior Tree / State Machine** — Replace ad-hoc `Behavior` implementations with a serializable BT/FSM. Nodes: Sequence, Selector, Parallel, Decorator (Inverter, Repeater, Succeeder, Failer, Cooldown, RandomSelector, RandomSequence, UntilSuccess, UntilFailure, Timeout, Throttle, Timer), Leaf (custom `Behavior`). Visual editor export → JSON → runtime interpreter. State Machine (FSM) with transitions, transitions conditions, serialization.
-
-- [x] **Dialogue system enhancements** — Variables/conditions in dialogue (`{if has_sword}...`), branching by inventory/flags, localized audio per line, portrait sprites, typewriter effect with speed/auto-advance, skip/replay.
-
-- [x] **Particle system upgrades** — Emitters attached to entities (follow Position), attractors/repellers (gravity wells, wind), emission shapes (circle, rect, edge). GPU instanced particles and TileMap collision remain for future work.
-
-- [x] **Save/load system enhancements** — Version migration (`GameState.migrationVersion`), screenshot thumbnails, checksum validation, cloud sync hook. (Base `SaveGame`, `SaveSlotMenuScene` exist.)
-
-- [x] **Cutscene / Timeline system enhancements** — More step types added: `MoveCameraStep` (with follow entity), `SpawnEntityStep`, `PlaySoundStep`, `SetFlagStep`, `CameraShakeStep`, `FollowEntityStep`. `CinematicSystem` with `WaitStep`, `CallbackStep`, `TweenStep`, skip support exists. Visual editor remains for future work.
-
-- [x] **Input remapping / Gamepad improvements** — Dead zones (per-axis), vibration (haptics), multiple local players (split-screen up to 4), gamepad remapping support. (Base `GamepadController`, bindings storage, haptic feedback exist.)
-
-- [ ] **2D Normal mapping / Sprite lighting** — Normal map atlas per sprite, per-pixel lighting with depth (parallax occlusion optional). `Sprite.normalAtlasId` + `Light2D` reads normal for Lambertian shading.
-
-- [x] **Audio: Spatial audio / Occlusion** — Distance attenuation (inverse square / linear / logarithmic), low-pass filter behind walls (reuse `hasLineOfSight`), reverb zones, Doppler for moving sources.
-
 - [ ] **ECS query caching / Archetypes** — Hot loops (`MovementSystem`, `CollisionSystem`) iterate archetype tables instead of sparse sets. Cache invalidation on component add/remove.
 
 - [ ] **Job system / Multithreaded systems** — Offload `TileCollisionSystem` broadphase, `Pathfinding`, `ParticleSystem` to background isolates. Main thread only commits results.
-
-- [x] **Visual Behavior Tree editor (web)** — Browser-based node graph editor exporting BT JSON, loads into engine at runtime. Drag-drop nodes, live preview.
 
 - [ ] **Procedural level generation** — Room/corridor (BSP), cellular automata caves, wave-function collapse for tile patterns. Seeded, deterministic, JSON output.
 
@@ -127,13 +107,6 @@ engine doesn't have yet — surfaced by
 `zahaak/docs/engine-gap-analysis.md` while writing the GDD, before any
 implementation started. Not scoped/sequenced yet; revisit once the
 GDD's combat/dialogue scope is locked down.
-
-- [x] **Multi-hit melee combo chains** — `Weapon` supports combo chains with per-step damage/cooldown/range multipliers and combo window.
-- [x] **Guard/block + breakable stability meter** — `Health` supports guarding, stability/poise meter, guard break stun.
-- [x] **Parry / precise-deflect** — `Parry` component with timing window, stuns attacker on success.
-- [x] **Enemy combat state machine with explicit telegraph** — `EnemyCombat` component + `EnemyCombatBehavior` with Idle→Patrol→Alert→Approach→Telegraph→Attack→Recovery→Reposition + Stagger/Guard/Retreat.
-- [x] **Multi-phase boss encounters** — `BossPhaseSystem` with `BossPhase` (health thresholds, pattern IDs, optional cinematic beats via `CinematicStep` factory), fires `BossPhaseChangedEvent`, supports cinematic beats per phase.
-- [x] **Dialogue system with speaker + trigger conditions** — `DialogueRunner`/`DialogueGraph`/`DialogueNode`/`DialogueChoice` with variables/conditions (`{if flag}...`), inventory conditions, typewriter effect, skip/replay, portrait/audio support.
 
 ## Shipping a full game
 
