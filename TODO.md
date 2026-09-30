@@ -95,9 +95,9 @@ actionable items here.
 
 - [x] **ECS query caching / Archetypes** — Hot loops (`MovementSystem`, `CollisionSystem`) iterate archetype tables instead of sparse sets. Cache invalidation on component add/remove. Implemented in `engine_core/lib/src/ecs/archetype.dart` with `Archetype`, `ArchetypeManager`, `ArchetypeEntity`.
 
-- [ ] **Job system / Multithreaded systems** — Offload `TileCollisionSystem` broadphase, `Pathfinding`, `ParticleSystem` to background isolates. Main thread only commits results.
+- [x] **Job system / Multithreaded systems** — Offload `TileCollisionSystem` broadphase, `Pathfinding`, `ParticleSystem` to background isolates. Main thread only commits results. Implemented in `engine_core/lib/src/ecs/job_system.dart` with `JobSystem`, `Job`, `CollisionBroadphaseJob`, `PathfindingJob`.
 
-- [ ] **Procedural level generation** — Room/corridor (BSP), cellular automata caves, wave-function collapse for tile patterns. Seeded, deterministic, JSON output.
+- [x] **Procedural level generation** — Room/corridor (BSP), cellular automata caves, wave-function collapse for tile patterns. Seeded, deterministic, JSON output. Implemented in `engine_core/lib/src/physics/procedural_generation.dart` with `BSPGenerator`, `CellularAutomataGenerator`, `WFCGenerator`, `ProceduralLevelGenerator`.
 
 ## For zahaak
 
