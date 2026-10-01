@@ -32,7 +32,7 @@ void main() {
     final world = buildWorld();
     final id = world.spawn();
     world.storeOf<Velocity>().set(id, Velocity(50, 17));
-    final behavior = PathFollowBehavior([PathPoint(100, 100)]);
+    final behavior = PathFollowBehavior([PlatformerPathPoint(x: 100, y: 100, moveType: PlatformerMoveType.walk)]);
     behavior.decide(WorldView(world), id).apply(world);
     expect(world.storeOf<Velocity>().get(id)!.x, 0);
     expect(world.storeOf<Velocity>().get(id)!.y, 17);

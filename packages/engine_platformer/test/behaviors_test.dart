@@ -520,7 +520,7 @@ void main() {
   group('PathFollowBehavior', () {
     test('walks toward the first waypoint, then advances once arrived', () {
       final world = _buildWorld();
-      final path = [PathPoint(50, 0), PathPoint(100, 0)];
+      final path = [PlatformerPathPoint(x: 50, y: 0, moveType: PlatformerMoveType.walk), PlatformerPathPoint(x: 100, y: 0, moveType: PlatformerMoveType.walk)];
       final registry = BehaviorRegistry()
         ..register('pathFollow', PathFollowBehavior(path, speed: 40, arriveDistance: 5));
       world.addSystem(AISystem(registry));
@@ -529,6 +529,12 @@ void main() {
       world.storeOf<Position>().set(id, Position(0, 0));
       world.storeOf<Velocity>().set(id, Velocity(0, 0));
       world.storeOf<AIState>().set(id, AIState('pathFollow'));
+      // PathFollowBehavior's movement decisions (jump/ladder/drop-through
+      // checks) all read PlatformerController, so it bails out to a no-op
+      // without one -- a PlatformerPathPoint path is inherently a
+      // platformer character's route, so this is as real a test fixture
+      // requirement as Position/Velocity.
+      world.storeOf<PlatformerController>().set(id, PlatformerController());
 
       world.step(0.016);
       expect(world.storeOf<Velocity>().get(id)!.x, 40, reason: 'heading toward the first waypoint');
@@ -536,7 +542,7 @@ void main() {
 
     test('advances to the next waypoint once within arriveDistance', () {
       final world = _buildWorld();
-      final path = [PathPoint(2, 0), PathPoint(100, 0)];
+      final path = [PlatformerPathPoint(x: 2, y: 0, moveType: PlatformerMoveType.walk), PlatformerPathPoint(x: 100, y: 0, moveType: PlatformerMoveType.walk)];
       final behavior = PathFollowBehavior(path, speed: 40, arriveDistance: 5);
       final registry = BehaviorRegistry()..register('pathFollow', behavior);
       world.addSystem(AISystem(registry));
@@ -545,6 +551,7 @@ void main() {
       world.storeOf<Position>().set(id, Position(0, 0)); // already within arriveDistance of waypoint 1
       world.storeOf<Velocity>().set(id, Velocity(0, 0));
       world.storeOf<AIState>().set(id, AIState('pathFollow'));
+      world.storeOf<PlatformerController>().set(id, PlatformerController());
 
       world.step(0.016);
       expect(behavior.currentTarget, path[1]);
@@ -553,7 +560,7 @@ void main() {
 
     test('stops once the last waypoint is reached', () {
       final world = _buildWorld();
-      final path = [PathPoint(2, 0)];
+      final path = [PlatformerPathPoint(x: 2, y: 0, moveType: PlatformerMoveType.walk)];
       final behavior = PathFollowBehavior(path, speed: 40, arriveDistance: 5);
       final registry = BehaviorRegistry()..register('pathFollow', behavior);
       world.addSystem(AISystem(registry));

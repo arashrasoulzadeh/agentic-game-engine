@@ -2,8 +2,6 @@ import 'package:engine_core/engine_core.dart';
 import 'package:engine_platformer/engine_platformer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:engine_core/src/physics/pathfinding.dart' show PathPoint;
-
 World _buildWorld() {
   final world = World(width: 1000, height: 1000);
   registerCoreComponents(world);

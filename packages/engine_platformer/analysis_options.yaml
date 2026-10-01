@@ -1,0 +1,14 @@
+# integration_test/ depends on the `integration_test` SDK package,
+# which pulls in `flutter_driver` -> `webdriver`. Adding that
+# dependency to pubspec.yaml (it's deliberately left commented out
+# there, with the same explanation) fails `pub get` in network-
+# restricted environments: `webdriver` isn't on this environment's
+# pub.dev mirror allowlist ("Insufficient permissions to the resource
+# at https://pub.dev"), even though engine_flutter's own
+# integration_test/ (which *does* depend on `integration_test`)
+# resolves fine elsewhere. Until that dependency can actually be
+# added, analyzing integration_test/ here would just fail on an
+# unresolvable import rather than surface a real code issue.
+analyzer:
+  exclude:
+    - integration_test/**
