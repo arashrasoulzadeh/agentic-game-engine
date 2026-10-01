@@ -126,3 +126,26 @@ team releasing a real 2D game needs that nothing above already covers.
 - [ ] **Local split-screen multiplayer** — gamepad TODO above only covers per-player input bindings; there's no viewport-splitting or multi-camera/multi-`WorldView` simulation support to actually render and drive split-screen play. Viewport split in `engine_flutter`, multi-context support in `engine_core`.
 
 - [x] **Credits/attribution scene** — Scrolling credits/attribution scene implemented in `engine_flutter/lib/src/ui/credits_scene.dart`. Supports styled entries, auto-scroll, tap-to-skip, and optional skip hint.
+
+## Engine Polish / Quality of Life
+
+- [ ] **Save slot thumbnails** — Screenshot capture when saving, display in SaveSlotMenuScene. Uses existing rendering pipeline to capture viewport.
+- [ ] **Input action aliases** — Friendly names for actions (e.g., "Jump" vs "action_0") shown in remap menus and debug overlay.
+- [ ] **Debug overlay improvements** — FPS graph, memory graph, entity inspector with component values.
+- [ ] **Localization system** — Language switching, RTL support, pluralization, date/number formatting. JSON/CSV/ARB resource files.
+- [ ] **Asset hot-reload** — Watch assets folder, reload textures/atlases/levels without restart. Invalidate caches on file change.
+- [ ] **Scene transition effects** — Fade, slide, crossfade, iris, pixel-dissolve between scenes. Configurable duration/easing.
+- [ ] **Local split-screen multiplayer** — Viewport splitting, multi-camera/multi-`WorldView` simulation support. Viewport split in `engine_flutter`, multi-context support in `engine_core`.
+- [ ] **Network multiplayer foundation** — ECS state serialization, rollback networking, lag compensation, state sync.
+- [ ] **Visual scripting / node editor** — Extend BT/FSM visual editor to general logic (dialogue, cutscenes, AI, quests).
+- [ ] **Level editor integration** — TileMap editor, entity placement, autotile painting, prefab brushes. Export to level JSON.
+- [ ] **Documentation site** — Auto-generated from doc comments, versioned, searchable. Host on GitHub Pages.
+- [ ] **Example game** — Complete small game showing all features (platformer, RPG, puzzle). Playable in browser.
+- [ ] **Performance profiling tools** — Frame time breakdown, GPU/CPU timers, allocation tracker, shader compile time.
+- [ ] **Input action aliases** — Friendly names for actions (e.g., "Jump" vs "action_0") shown in remap menus and debug overlay.
+- [ ] **Debug overlay improvements** — FPS graph, memory graph, entity inspector with component values.
+- [ ] **Asset hot-reload** — Watch assets folder, reload textures/atlases/levels without restart. Invalidate caches on file change.
+- [ ] **Scene transition effects** — Fade, slide, crossfade, iris, pixel-dissolve between scenes. Configurable duration/easing.
+- [ ] **Localization system** — Language switching, RTL support, pluralization, date/number formatting. JSON/CSV/ARB resource files.
+
+(End of file)
