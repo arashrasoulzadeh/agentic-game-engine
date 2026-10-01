@@ -3,8 +3,6 @@ import 'package:engine_flutter/engine_flutter.dart';
 import 'package:engine_platformer/engine_platformer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:engine_core/src/ecs/behavior.dart';
-import 'package:engine_core/src/ai/ai_system.dart';
 
 World _buildWorld() {
   final world = World(width: 500, height: 500);
@@ -49,9 +47,7 @@ EntityId _spawnInvestigator(World world, {
   required double y,
   double speed = 60,
   double arriveDistance = 10,
-  double? timeout,
   bool avoidGaps = true,
-  double gapCheckAheadDistance = 64,
 }) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(x, y));
@@ -96,10 +92,10 @@ void main() {
 
         final investigator = _spawnInvestigator(world, x: 100, y: 200);
         // Let it fall to floor
-        for (int i = 0; i < 30; i++) world.step(0.016);
+        for (int i = 0; i < 50; i++) world.step(0.016);
 
         // Emit sound to the right
-        world.events.emit(SoundEvent(x: 300, y: 400, loudness: 250, tag: 'footstep'));
+        world.events.emit(SoundEvent(x: 300, y: 388, loudness: 250, tag: 'footstep'));
         world.step(0.016);
 
         // Check AIState.memory was updated
@@ -107,9 +103,17 @@ void main() {
         final soundData = aiState.memory['lastHeardSound'];
         expect(soundData, isNotNull);
         expect(soundData['x'], 300);
-        expect(soundData['y'], 400);
+        expect(soundData['y'], 388);
         expect(soundData['loudness'], 250);
         expect(soundData['tag'], 'footstep');
+
+        // AISystem reads `AIState.memory` as it was at the *start* of the
+        // tick, but `HearingSystem`'s event handler only updates it when
+        // `World.step` flushes events at the *end* of the tick (see
+        // `World.step`) — so the tick that hears the sound hasn't yet
+        // acted on it; one more tick is needed for InvestigateBehavior to
+        // see the updated memory and set a velocity toward it.
+        world.step(0.016);
 
         // InvestigateBehavior should now move toward the sound
         final vel = world.storeOf<Velocity>().get(investigator)!;
@@ -121,7 +125,7 @@ void main() {
         _createFloorMap(world, y: 400);
 
         final investigator = _spawnInvestigator(world, x: 100, y: 200, speed: 60);
-        for (int i = 0; i < 30; i++) world.step(0.016);
+        for (int i = 0; i < 50; i++) world.step(0.016);
 
         // Emit sound far outside hearing range (HearingComponent.range = 300)
         world.events.emit(SoundEvent(x: 500, y: 400, loudness: 100));
@@ -136,7 +140,7 @@ void main() {
         _createFloorMap(world, y: 400);
 
         final investigator = _spawnInvestigator(world, x: 100, y: 200);
-        for (int i = 0; i < 30; i++) world.step(0.016);
+        for (int i = 0; i < 50; i++) world.step(0.016);
 
         // Sound loudness 50, distance 200
         world.events.emit(SoundEvent(x: 300, y: 400, loudness: 50));
@@ -161,7 +165,7 @@ void main() {
         ));
 
         final investigator = _spawnInvestigator(world, x: 100, y: 200);
-        for (int i = 0; i < 30; i++) world.step(0.016);
+        for (int i = 0; i < 50; i++) world.step(0.016);
 
         // Sound behind wall at x=220
         world.events.emit(SoundEvent(x: 220, y: 200, loudness: 200));
@@ -176,14 +180,17 @@ void main() {
         _createFloorMap(world, y: 400);
 
         final investigator = _spawnInvestigator(world, x: 100, y: 200, arriveDistance: 20);
-        for (int i = 0; i < 30; i++) world.step(0.016);
+        for (int i = 0; i < 50; i++) world.step(0.016);
 
         // Emit sound at x=300
-        world.events.emit(SoundEvent(x: 300, y: 400, loudness: 200));
+        world.events.emit(SoundEvent(x: 300, y: 388, loudness: 200));
         world.step(0.016);
 
-        // Move toward sound
-        for (int i = 0; i < 50; i++) world.step(0.016);
+        // Move toward sound. At `speed: 60` (the registry's fixed
+        // InvestigateBehavior) and dt 0.016, each step covers under 1px,
+        // so closing a 200px gap down to within `arriveDistance` needs on
+        // the order of 200 steps, not a handful.
+        for (int i = 0; i < 300; i++) world.step(0.016);
 
         final pos = world.storeOf<Position>().get(investigator)!;
         final vel = world.storeOf<Velocity>().get(investigator)!;
@@ -218,10 +225,10 @@ void main() {
         ));
 
         final investigator = _spawnInvestigator(world, x: 100, y: 200, speed: 60, avoidGaps: true);
-        for (int i = 0; i < 30; i++) world.step(0.016);
+        for (int i = 0; i < 50; i++) world.step(0.016);
 
         // Emit sound on the other side of the gap
-        world.events.emit(SoundEvent(x: 350, y: 400, loudness: 250));
+        world.events.emit(SoundEvent(x: 350, y: 348, loudness: 250));
         world.step(0.016);
 
         // Move toward sound
@@ -253,10 +260,10 @@ void main() {
         ));
 
         final investigator = _spawnInvestigator(world, x: 100, y: 200, speed: 60, avoidGaps: false);
-        for (int i = 0; i < 30; i++) world.step(0.016);
+        for (int i = 0; i < 50; i++) world.step(0.016);
 
         // Emit sound on the other side of the gap
-        world.events.emit(SoundEvent(x: 350, y: 400, loudness: 250));
+        world.events.emit(SoundEvent(x: 350, y: 348, loudness: 250));
         world.step(0.016);
 
         // Move toward sound
@@ -272,16 +279,21 @@ void main() {
         _createFloorMap(world, y: 400);
 
         final investigator = _spawnInvestigator(world, x: 100, y: 200);
-        for (int i = 0; i < 30; i++) world.step(0.016);
+        for (int i = 0; i < 50; i++) world.step(0.016);
 
         // First sound
-        world.events.emit(SoundEvent(x: 200, y: 400, loudness: 100, tag: 'first'));
+        world.events.emit(SoundEvent(x: 200, y: 388, loudness: 100, tag: 'first'));
         world.step(0.016);
         var aiState = world.storeOf<AIState>().get(investigator)!;
         expect(aiState.memory['lastHeardSound']['tag'], 'first');
 
         // Second sound
-        world.events.emit(SoundEvent(x: 300, y: 400, loudness: 100, tag: 'second'));
+        // Within loudness 100 of the investigator's starting position
+        // (still ~x=100 — the AISystem reaction to the first sound only
+        // sets velocity this tick; actual movement lags a tick behind,
+        // see `World.step`), unlike the first sound's x: 200 case this
+        // isn't right at the edge of audibility.
+        world.events.emit(SoundEvent(x: 150, y: 388, loudness: 100, tag: 'second'));
         world.step(0.016);
         aiState = world.storeOf<AIState>().get(investigator)!;
         expect(aiState.memory['lastHeardSound']['tag'], 'second');
