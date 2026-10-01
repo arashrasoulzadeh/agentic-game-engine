@@ -68,6 +68,11 @@ class Camera {
   double _shakeOffsetX = 0;
   double _shakeOffsetY = 0;
 
+  /// This frame's combined shake jitter, in world units (before `zoom`) —
+  /// the same offset `worldToScreen`/`screenToWorld` apply internally.
+  /// Recomputed each [update] call; zero when no shake is active.
+  Offset get shakeOffset => Offset(_shakeOffsetX, _shakeOffsetY);
+
   Camera({this.x = 0, this.y = 0, this.zoom = 1, Random? random, this.viewportManager})
       : _random = random ?? Random();
 

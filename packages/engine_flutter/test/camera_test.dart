@@ -54,7 +54,7 @@ void main() {
 
     test('an active shake perturbs worldToScreen by a bounded jitter', () {
       final camera = Camera(x: 0, y: 0, zoom: 1, random: Random(1));
-      camera.shake(20, 1);
+      camera.shake(magnitude: 20, duration: 1);
       camera.update(0.016);
 
       final screen = camera.worldToScreen(0, 0, const Size(800, 600));
@@ -67,7 +67,7 @@ void main() {
 
     test('shake magnitude decays to zero once duration has fully elapsed', () {
       final camera = Camera(x: 0, y: 0, zoom: 1, random: Random(1));
-      camera.shake(20, 1);
+      camera.shake(magnitude: 20, duration: 1);
       camera.update(1.5); // past the full 1-second duration
 
       expect(camera.worldToScreen(0, 0, const Size(800, 600)), const Offset(400, 300));
@@ -75,9 +75,9 @@ void main() {
 
     test('calling shake again replaces the running shake instead of stacking', () {
       final camera = Camera(x: 0, y: 0, zoom: 1, random: Random(1));
-      camera.shake(5, 10); // long-running, small magnitude
+      camera.shake(magnitude: 5, duration: 10); // long-running, small magnitude
       camera.update(0.016);
-      camera.shake(50, 1); // a bigger hit lands mid-shake
+      camera.shake(magnitude: 50, duration: 1); // a bigger hit lands mid-shake
       camera.update(0.016);
 
       final screen = camera.worldToScreen(0, 0, const Size(800, 600));
@@ -88,7 +88,7 @@ void main() {
 
     test('screenToWorld remains the exact inverse of worldToScreen during an active shake', () {
       final camera = Camera(x: 120, y: -40, zoom: 1.5, random: Random(7));
-      camera.shake(30, 1);
+      camera.shake(magnitude: 30, duration: 1);
       camera.update(0.016);
       const viewport = Size(800, 600);
       const worldPoint = Offset(37, 210);

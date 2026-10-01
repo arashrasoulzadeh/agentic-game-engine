@@ -1,50 +1,64 @@
-import 'package:engine_core/engine_core.dart';
+import 'dart:math';
+
 import 'package:engine_flutter/engine_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Camera shake enhancements', () {
-    test('Camera.shake with impulse applies single jolt', () {
-      final camera = Camera();
+    // Camera.shake's per-frame jitter is `magnitude * (random * 2 - 1)` —
+    // comparing two independent draws (e.g. "did it get smaller?") is
+    // flaky with an unseeded Random, since the draw itself varies even
+    // when the underlying envelope shrinks. Seeding makes every run of
+    // these tests deterministic.
+    test('Camera.shake with impulse decays to (near) zero by duration end', () {
+      final camera = Camera(random: Random(1));
       camera.shake(magnitude: 20, duration: 0.5, impulse: true);
 
       camera.update(0.016);
-      final offset1 = camera.shakeOffset;
-      expect(offset1.distance, greaterThan(0));
+      expect(camera.shakeOffset.distance, greaterThan(0));
 
-      camera.update(0.016);
-      final offset2 = camera.shakeOffset;
-      // Impulse should decay to near zero quickly
-      expect(offset2.distance, lessThan(offset1.distance));
+      // 98% of the way through: falloff is t^2 with t = 0.01, so the
+      // envelope (and therefore the bound on the jitter draw, whatever it
+      // is) is magnitude * 0.0001 — tiny regardless of the random draw.
+      camera.update(0.49);
+      expect(camera.shakeOffset.distance, lessThan(0.1));
+
+      // Past the full duration: no active shake left to jitter at all.
+      camera.update(0.1);
+      expect(camera.shakeOffset, Offset.zero);
     });
 
-    test('Camera.shake with sustained applies continuous shake', () {
-      final camera = Camera();
-      camera.shake(magnitude: 20, duration: 1.0, impulse: false);
+    test('Camera.shake sustained decays slower than impulse over the same span', () {
+      // Same seed and update sequence on both, so they draw identical
+      // underlying jitter fractions — any difference in the resulting
+      // offset is purely down to impulse's quadratic vs. sustained's
+      // linear (decay: 1.0, the default) falloff curve.
+      final impulse = Camera(random: Random(1));
+      impulse.shake(magnitude: 20, duration: 1.0, impulse: true);
 
-      camera.update(0.016);
-      final offset1 = camera.shakeOffset;
-      expect(offset1.distance, greaterThan(0));
+      final sustained = Camera(random: Random(1));
+      sustained.shake(magnitude: 20, duration: 1.0, impulse: false);
 
-      camera.update(0.016);
-      final offset2 = camera.shakeOffset;
-      expect(offset2.distance, greaterThan(0));
-      // Sustained should not decay to zero quickly
-      expect(offset2.distance, closeTo(offset1.distance, offset1.distance * 0.5));
+      for (int i = 0; i < 30; i++) {
+        impulse.update(0.016);
+        sustained.update(0.016);
+      }
+
+      expect(sustained.shakeOffset.distance, greaterThan(impulse.shakeOffset.distance));
     });
 
     test('Camera.shake with per-axis control', () {
-      final camera = Camera();
+      final camera = Camera(random: Random(1));
       camera.shake(magnitude: 20, duration: 0.5, impulse: true, axis: ShakeAxis.x);
 
       camera.update(0.016);
       final offset = camera.shakeOffset;
       expect(offset.dy, 0); // Y should not shake
-      expect(offset.dx, not(0)); // X should shake
+      expect(offset.dx, isNot(0)); // X should shake
     });
 
     test('Camera.shake additive stacking', () {
-      final camera = Camera();
+      final camera = Camera(random: Random(1));
       camera.shake(magnitude: 10, duration: 1.0);
       camera.shake(magnitude: 10, duration: 1.0);
 
@@ -60,7 +74,7 @@ void main() {
     });
 
     test('Camera.shake frequency parameter', () {
-      final camera = Camera();
+      final camera = Camera(random: Random(1));
       camera.shake(magnitude: 20, duration: 0.5, frequency: 10.0);
 
       final offsets = <double>[];
@@ -79,36 +93,38 @@ void main() {
       expect(signChanges, greaterThan(5));
     });
 
-    test('Camera.shake decay parameter', () {
-      final camera = Camera();
-      camera.shake(magnitude: 20, duration: 1.0, decay: 0.5);
+    test('Camera.shake decay > 1 decays faster than linear (decay: 1.0)', () {
+      // Per Camera.shake's own doc comment: "decay curve exponent (1.0 =
+      // linear, >1 = faster decay, <1 = slower)" — falloff is
+      // pow(remaining/duration, decay), and raising a fraction in (0, 1)
+      // to a larger exponent makes it *smaller*, i.e. decays faster.
+      final linear = Camera(random: Random(1));
+      linear.shake(magnitude: 20, duration: 1.0, decay: 1.0);
 
-      camera.update(0.016);
-      final offset1 = camera.shakeOffset.distance;
-
-      for (int i = 0; i < 20; i++) {
-        camera.update(0.016);
-      }
-      final offset2 = camera.shakeOffset.distance;
-
-      // With decay, should decay faster than without
-      expect(offset2, lessThan(offset1 * 0.1));
-    });
-
-    test('Camera.shake decay parameter sustained', () {
-      final camera = Camera();
-      camera.shake(magnitude: 20, duration: 1.0, decay: 0.5, impulse: false);
-
-      camera.update(0.016);
-      final offset1 = camera.shakeOffset.distance;
+      final fast = Camera(random: Random(1));
+      fast.shake(magnitude: 20, duration: 1.0, decay: 3.0);
 
       for (int i = 0; i < 10; i++) {
-        camera.update(0.016);
+        linear.update(0.016);
+        fast.update(0.016);
       }
-      final offset2 = camera.shakeOffset.distance;
 
-      // Even sustained should decay with decay parameter
-      expect(offset2, lessThan(offset1));
+      expect(fast.shakeOffset.distance, lessThan(linear.shakeOffset.distance));
+    });
+
+    test('Camera.shake decay < 1 decays slower than linear (decay: 1.0)', () {
+      final linear = Camera(random: Random(1));
+      linear.shake(magnitude: 20, duration: 1.0, decay: 1.0, impulse: false);
+
+      final slow = Camera(random: Random(1));
+      slow.shake(magnitude: 20, duration: 1.0, decay: 0.3, impulse: false);
+
+      for (int i = 0; i < 10; i++) {
+        linear.update(0.016);
+        slow.update(0.016);
+      }
+
+      expect(slow.shakeOffset.distance, greaterThan(linear.shakeOffset.distance));
     });
   });
 }

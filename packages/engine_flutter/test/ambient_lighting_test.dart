@@ -74,7 +74,7 @@ void main() {
       expect(pixel.r, greaterThan(0.9), reason: 'overlapping lights should fully reveal the area');
     });
 
-    testWidgets('singlePassLighting=true: light with color tint applies additively', (tester) async {
+    testWidgets('singlePassLighting=true: a tinted light falls back to legacy, which applies the tint', (tester) async {
       final world = World(width: 400, height: 300);
       registerCoreComponents(world);
       registerFlutterComponents(world);
@@ -112,7 +112,27 @@ void main() {
       ));
       await tester.pump(const Duration(milliseconds: 16));
 
-      final pixel = (await tester.runAsync(() => _pixelAt(tester, boundaryKey, const Offset(200, 150))))!;
+      // ambient_lighting.frag only ever computes a darkness-reveal mask
+      // (its uLightColors uniform is packed but never read) -- it has
+      // no way to apply a per-light color tint, unlike the legacy
+      // multi-pass path's dedicated additive tint pass. A tinted light
+      // (colorArgb alpha > 0) is therefore treated as an "unsupported"
+      // feature the same way castsShadows/coneAngle are (see the two
+      // "falls back to legacy" tests below), so this still exercises
+      // the real tint math -- just via the legacy path, which is the
+      // one that actually implements it.
+      //
+      // Sampled 85px off the light's center (still within its 100px
+      // radius, but past the falloff curve's full-reveal plateau --
+      // see _falloffStops) rather than dead center: at the center,
+      // intensity 1 fully reveals the sprite back to pure opaque white
+      // before the tint pass's additive BlendMode.plus even runs, and
+      // adding any color to an already-(1,1,1) destination clamps
+      // right back to white -- mathematically unable to show a tint
+      // no matter how correct the tint math is. Off-center, the
+      // darkness overlay is only partially revealed, leaving headroom
+      // for the additive orange to visibly shift red above green.
+      final pixel = (await tester.runAsync(() => _pixelAt(tester, boundaryKey, const Offset(285, 150))))!;
       // Should have orange tint
       expect(pixel.r, greaterThan(pixel.g), reason: 'orange tint should have more red than green');
     });

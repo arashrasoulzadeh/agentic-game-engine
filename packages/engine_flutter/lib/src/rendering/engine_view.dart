@@ -1296,7 +1296,17 @@ class _EnginePainter extends CustomPainter {
     for (var i = 0; i < lights.length; i++) {
       final light = lights.denseAt(i);
       if (lightFilter != null && !lightFilter(light)) continue;
-      if (light.castsShadows || light.coneAngle != null || light.useGpuShadows) {
+      // ambient_lighting.frag only ever computes a darkness-reveal mask
+      // (see its own header comment) — it packs uLightColors but never
+      // reads them, so a tinted light's colorArgb alpha silently did
+      // nothing under the single-pass path. Route it through the
+      // legacy multi-pass path instead, which has a real additive
+      // tint pass, same as the other per-light features the shader
+      // doesn't support.
+      if (light.castsShadows ||
+          light.coneAngle != null ||
+          light.useGpuShadows ||
+          Color(light.colorArgb).a > 0) {
         return true;
       }
     }
@@ -1355,10 +1365,10 @@ class _EnginePainter extends CustomPainter {
       lightData[baseIdx + 3] = light.intensity.clamp(0.0, 1.0);
 
       final color = Color(light.colorArgb);
-      lightColorData[baseIdx] = color.r / 255.0;
-      lightColorData[baseIdx + 1] = color.g / 255.0;
-      lightColorData[baseIdx + 2] = color.b / 255.0;
-      lightColorData[baseIdx + 3] = color.a / 255.0;
+      lightColorData[baseIdx] = color.r;
+      lightColorData[baseIdx + 1] = color.g;
+      lightColorData[baseIdx + 2] = color.b;
+      lightColorData[baseIdx + 3] = color.a;
 
       // Flags: x=castsShadows (unsupported, always 0 here), y=hasCone, z=coneAngle, w=reserved
       // Since we filtered out castsShadows and coneAngle, these are all 0.
@@ -1390,10 +1400,10 @@ class _EnginePainter extends CustomPainter {
     shader
       ..setFloat(u++, size.width)
       ..setFloat(u++, size.height)
-      ..setFloat(u++, ambientColor.r / 255.0)
-      ..setFloat(u++, ambientColor.g / 255.0)
-      ..setFloat(u++, ambientColor.b / 255.0)
-      ..setFloat(u++, ambientColor.a / 255.0)
+      ..setFloat(u++, ambientColor.r)
+      ..setFloat(u++, ambientColor.g)
+      ..setFloat(u++, ambientColor.b)
+      ..setFloat(u++, ambientColor.a)
       ..setFloat(u++, _effectiveAmbientBrightness.clamp(0.0, 1.0))
       ..setFloat(u++, lightCount.toDouble());
 
@@ -2286,10 +2296,10 @@ void _drawColorblind(Canvas canvas, Size size) {
       lightData[baseIdx + 3] = light.light.intensity.clamp(0.0, 1.0);
 
       final color = Color(light.light.colorArgb);
-      lightColorData[baseIdx] = color.r / 255.0;
-      lightColorData[baseIdx + 1] = color.g / 255.0;
-      lightColorData[baseIdx + 2] = color.b / 255.0;
-      lightColorData[baseIdx + 3] = color.a / 255.0;
+      lightColorData[baseIdx] = color.r;
+      lightColorData[baseIdx + 1] = color.g;
+      lightColorData[baseIdx + 2] = color.b;
+      lightColorData[baseIdx + 3] = color.a;
 
       lightFalloffData[i] = 0.0; // Smooth falloff (same as ambient)
     }

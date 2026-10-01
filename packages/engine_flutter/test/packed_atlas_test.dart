@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:engine_core/engine_core.dart';
@@ -110,11 +111,43 @@ void main() {
       "rootBundle.load's failure becomes the loading Future's error and "
       "GameRunner's FutureBuilder just keeps showing the loading screen for an "
       'errored future rather than throwing into the widget tree', (tester) async {
+    // Truly leaving the "flutter/assets" channel with no handler at
+    // all makes `defaultBinaryMessenger.send` return null
+    // *synchronously*, which newer `TestWidgetsFlutterBinding`
+    // versions report straight to the test's own zone as an uncaught
+    // exception (failing the test itself) in addition to rejecting the
+    // loading Future -- a test-harness-level behavior change from
+    // when this test was written, not a GameRunner bug. Installing an
+    // explicit mock handler that returns null asset data exercises the
+    // exact same "asset not found" `FlutterError` from
+    // `PlatformAssetBundle.load` (see its source), but through the
+    // supported mock-messenger path, so the error only ever surfaces
+    // as the loading Future's rejection -- which is what this test is
+    // actually about.
+    tester.binding.defaultBinaryMessenger.setMockMessageHandler(
+      'flutter/assets',
+      (ByteData? message) async => null,
+    );
+    addTearDown(() => tester.binding.defaultBinaryMessenger
+        .setMockMessageHandler('flutter/assets', null));
+
+    // GameRunner deliberately reports a failed load via
+    // FlutterError.reportError (see game_test.dart's own
+    // "would otherwise just hang on the loading screen forever with no
+    // diagnostic at all" test) rather than swallowing it silently --
+    // expected here too, so it needs the same interception or the test
+    // framework flags the reported error as a test failure.
+    final reported = <FlutterErrorDetails>[];
+    final previousOnError = FlutterError.onError;
+    FlutterError.onError = reported.add;
+    addTearDown(() => FlutterError.onError = previousOnError);
+
     final game = _PackedConfigGame(_EmptyScene());
     await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
     await tester.pump();
     await tester.pump();
 
+    expect(reported, hasLength(1));
     expect(find.byType(EngineView), findsNothing);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });

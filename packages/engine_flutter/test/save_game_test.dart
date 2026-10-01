@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart';
-
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -232,7 +230,7 @@ void main() {
       final retrieved = await SaveGame.getThumbnail();
       expect(retrieved, isNotNull);
       expect(retrieved!.length, thumbnail.length);
-      expect(retrieved![0], 0x89);
+      expect(retrieved[0], 0x89);
       expect(retrieved[1], 0x50);
     });
 

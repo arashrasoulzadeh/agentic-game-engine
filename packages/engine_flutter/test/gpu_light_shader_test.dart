@@ -5,7 +5,6 @@ import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import 'package:flutter/material.dart' hide Velocity;
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:engine_flutter/src/rendering/gpu_light_shader.dart';
 
 Future<Color> _pixelAt(WidgetTester tester, Key boundaryKey, Offset point) async {
   final boundary =
