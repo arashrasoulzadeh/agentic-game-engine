@@ -129,15 +129,29 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     await super.populate(world, scenes, state);
   }
 
+  /// Loads each atlas declared by [requiredAtlasIds] from
+  /// `assets/<id>.png` + `assets/<id>_manifest.json`.
+  ///
+  /// A missing atlas is logged and skipped rather than thrown: dialogue
+  /// is content-driven, and a bad/missing portrait or background atlas
+  /// ID (e.g. a typo in a hand-authored dialogue graph) shouldn't crash
+  /// the whole scene — the sprite referencing it just won't render.
   @override
   Future<AtlasRegistry> loadAssets() async {
     _atlasRegistry = AtlasRegistry();
-    // Register any required atlases that this dialogue scene needs.
-    // Subclasses should override [requiredAtlasIds] to declare dependencies.
-    // Note: The base scene's atlases are not automatically available to overlays.
-    // A real implementation would need to load/register the actual SpriteAtlas
-    // instances here (e.g., from assets). For now, we return an empty registry;
-    // the actual atlases must be registered by the concrete subclass if needed.
+
+    for (final atlasId in requiredAtlasIds) {
+      try {
+        final atlas = await SpriteAtlas.loadFromAssets(
+          imageAssetPath: 'assets/$atlasId.png',
+          manifestAssetPath: 'assets/${atlasId}_manifest.json',
+        );
+        _atlasRegistry!.register(atlasId, atlas);
+      } catch (e) {
+        print('Warning: Failed to load dialogue atlas "$atlasId": $e');
+      }
+    }
+
     return _atlasRegistry!;
   }
 

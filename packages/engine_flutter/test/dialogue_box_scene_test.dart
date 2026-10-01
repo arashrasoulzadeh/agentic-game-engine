@@ -7,13 +7,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:engine_flutter/src/rendering/text.dart' as ef_text;
 
 class _TestDialogueBoxScene extends DialogueBoxScene {
-  _TestDialogueBoxScene(this.runner, this.stringTable);
+  _TestDialogueBoxScene(this.runner, this.stringTable, {this.atlasIds = const []});
 
   @override
   late final DialogueRunner runner;
 
   @override
   late final StringTable stringTable;
+
+  final List<String> atlasIds;
+
+  @override
+  List<String> get requiredAtlasIds => atlasIds;
 
   @override
   Future<void> populate(World world, SceneController scenes, GameState state) async {
@@ -219,6 +224,19 @@ void main() {
 
       expect(endScene.runner.currentNode, isNull);
       expect(endScene.runner.currentText, isNull);
+    });
+
+    test('loadAssets skips a missing atlas instead of throwing', () async {
+      final scene = _TestDialogueBoxScene(
+        DialogueRunner(graph, stringTable),
+        stringTable,
+        atlasIds: const ['does_not_exist'],
+      );
+
+      final registry = await scene.loadAssets();
+
+      expect(registry, isNotNull);
+      expect(registry.has('does_not_exist'), isFalse);
     });
   });
 }
