@@ -8,6 +8,61 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Hardening pass (round 3)
+
+- **`HearingSystem` could silently stop working for a new `World`**:
+  its "subscribed already" flag lived in a global
+  `Map<int, bool>` keyed by `identityHashCode(world)`, which is only
+  unique while the original `World` is reachable — once an earlier one
+  was garbage-collected, a later `World` could reuse its hash and
+  inherit a stale "already subscribed" entry, so it never actually
+  subscribed and never heard any `SoundEvent`. Switched to an
+  `Expando<bool>`, which ties the flag's lifetime to the `World`
+  instance itself (`ai/hearing.dart`).
+- **`PatrolBehavior` clobbered vertical velocity every tick**:
+  `_PatrolStepAction.apply` hardcoded `Velocity(vx, 0)` instead of
+  preserving `vy`. Since `AISystem` runs after `GravitySystem`/
+  `MovementSystem`, this silently discarded whatever vertical speed
+  gravity had accumulated that tick — a gravity-affected patroller
+  never actually fell (`ai/patrol_behavior.dart`).
+- **`PatrolBehavior.avoidLedges` flipped direction every tick while
+  airborne**: its ground-ahead probe only checks a short strip directly
+  below the entity's *current* y, so while still falling from well
+  above the floor it read as "no ground ahead" on every tick regardless
+  of real level geometry, oscillating direction with near-zero net
+  movement well before reaching an actual ledge. Gated the probe on
+  `PlatformerController.grounded` when a controller is present
+  (`ai/patrol_behavior.dart`).
+- **`DialogueBoxScene` positioned its background/text against
+  `World.width`/`height`** instead of the viewport — on a level with
+  large world bounds (e.g. `test_game`'s 4000x1440 prison level) this
+  sent the dialogue background and text thousands of pixels
+  off-screen, leaving only the portrait (positioned with its own
+  literal constant) visible. Replaced with a fixed 800x600 screen-space
+  reference matching the portrait's own constants
+  (`ui/dialogue_box_scene.dart`).
+- **The `colorblind.frag` shader failed to compile under Impeller**:
+  `uniform int uColorblindType` hit "Non-floating-type struct member
+  ... is not supported," breaking `flutter test`'s asset bundling for
+  every `engine_flutter`-dependent package. Changed the uniform to
+  `float`, rounded on read (`shaders/colorblind.frag`).
+- Extracted `setVelocityX` (`ai/velocity_helpers.dart`): the "set `vx`,
+  preserve `vy`" pattern was independently duplicated across every AI
+  `Action` in `engine_platformer` (`FollowBehavior`, `PatrolBehavior`,
+  `PathFollowBehavior`, `InvestigateBehavior` — 8 call sites, 5 files),
+  which is exactly how the `PatrolBehavior` vy-clobbering bug above got
+  introduced in the first place.
+- Fixed several stale/broken test fixtures surfaced while getting
+  `engine_platformer`'s suite green: `behaviors_test.dart` and
+  `platformer_edge_cases_test.dart` still constructed the removed core
+  `PathPoint` instead of `PlatformerPathPoint`;
+  `investigate_behavior_test.dart`'s `HearingSystem`-integration tests
+  under-simulated landing time and placed sounds exactly on tile
+  boundaries (occluded by `raycastTileMap`'s line-of-sight check);
+  `patrol_behavior_test.dart` never actually registered an `AISystem`,
+  so every assertion was incidentally checking an inert entity rather
+  than `PatrolBehavior` itself.
+
 ### New engine features (round 5)
 
 - Dialogue / branching-conversation system: `DialogueGraph`/
