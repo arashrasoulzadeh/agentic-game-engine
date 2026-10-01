@@ -10,9 +10,8 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
   /// via `GameState`).
   late final DialogueRunner runner;
 
-  /// The [StringTable] used to resolve text keys. Must be set before
-  /// `populate` is called.
-  late final StringTable stringTable;
+  /// The [StringTable] used to resolve text keys. Delegates to [runner.stringTable].
+  StringTable get stringTable => runner.stringTable;
 
   /// Override to return a custom atlas/region for dialogue box background.
   /// Defaults to the engine's generated rounded-rect atlas.
