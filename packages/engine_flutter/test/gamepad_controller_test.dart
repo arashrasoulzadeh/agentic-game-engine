@@ -52,7 +52,7 @@ void main() {
   });
 
   test('a custom deadzone is respected', () {
-    final controller = GamepadController(input: InputController(), deadzone: 0.5);
+    final controller = GamepadController(input: InputController(), defaultDeadzone: 0.5);
     controller.handleAxis(0, 0.3);
     expect(controller.input.state.isPressed('right'), isFalse,
         reason: '0.3 is inside the wider 0.5 deadzone');

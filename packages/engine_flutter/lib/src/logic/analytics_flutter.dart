@@ -81,7 +81,12 @@ class FirebaseAnalyticsProvider extends PlatformAnalyticsProvider {
 /// Google Play Games / Apple Game Center provider (skeleton).
 /// Implement with Google Play Games Services or GameKit.
 class GameServicesAnalyticsProvider extends PlatformAnalyticsProvider {
-  @override
+  /// Not part of [AnalyticsProvider] -- `AnalyticsManager.logAchievement`
+  /// goes through [logEvent] like every other event. A real
+  /// implementation that wants a native "unlock achievement" call
+  /// (distinct from just logging the event) overrides [logEvent] and
+  /// dispatches on `event.name == 'achievement_unlocked'` instead of
+  /// this, which nothing calls.
   Future<void> logAchievementUnlocked(String achievementId) async {
     // Unlock achievement in Play Games / Game Center
   }
@@ -99,7 +104,11 @@ class AttributionAnalyticsProvider extends PlatformAnalyticsProvider {
     // Send to attribution provider
   }
 
-  @override
+  /// Not part of [AnalyticsProvider] -- `AnalyticsManager.logPurchase`
+  /// goes through [logEvent] like every other event. A real
+  /// implementation that wants a dedicated revenue-tracking call
+  /// overrides [logEvent] and dispatches on `event.name == 'purchase'`
+  /// instead of this, which nothing calls.
   Future<void> logPurchase(String productId, double price, String currency,
       {Map<String, dynamic>? extra}) async {
     // Track revenue for attribution

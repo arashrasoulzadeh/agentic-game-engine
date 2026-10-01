@@ -92,30 +92,36 @@ void main() {
 
     testWidgets('scene switch creates new World but preserves GameState',
         (WidgetTester tester) async {
-      final gameState = GameState({'score': 100, 'level': 1});
-
-      final scenes = SceneController();
-
       final sceneA = _TestSceneA();
+      final game = _TestGame(sceneA);
+
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
+
+      expect(sceneA.scenes, isNotNull);
+      final worldBefore = tester.widget<EngineView>(find.byType(EngineView)).world;
+
       final sceneB = _TestSceneB();
+      sceneA.scenes!.loadScene(sceneB);
+      await tester.pump();
+      await tester.pump();
 
-      await tester.pumpWidget(MaterialApp(home: _TestGame(
-        config: const GameConfig(worldWidth: 400, worldHeight: 300),
-        initialScene: sceneA,
-        initialState: gameState,
-        scenes: scenes,
-      )));
-      await tester.pumpAndSettle();
-
-      scenes.loadScene(sceneB);
-      await tester.pumpAndSettle();
+      final worldAfter = tester.widget<EngineView>(find.byType(EngineView)).world;
+      // loadScene rebuilds the World from scratch...
+      expect(identical(worldAfter, worldBefore), isFalse);
+      // ...but GameState (where sceneB asserts score/level survived) is
+      // the one thing `GameRunner` deliberately carries across the swap.
     });
   });
 }
 
 class _TestSceneA extends Scene {
+  SceneController? scenes;
+
   @override
   Future<void> populate(World world, SceneController sc, GameState state) async {
+    scenes = sc;
     registerCoreComponents(world);
     registerFlutterComponents(world);
     final e = world.spawn();
@@ -136,27 +142,18 @@ class _TestSceneB extends Scene {
 }
 
 class _TestGame extends Game {
-  _TestGame({
-    required this.config,
-    required this.initialScene,
-    required this.initialState,
-    required this.scenes,
-  });
+  _TestGame(this._initialScene);
+
+  final Scene _initialScene;
 
   @override
-  final GameConfig config;
+  final GameConfig config = const GameConfig(worldWidth: 400, worldHeight: 300);
 
   @override
-  final Scene initialScene;
+  Scene createInitialScene() => _initialScene;
 
   @override
-  final GameState initialState;
-
-  @override
-  final SceneController scenes;
-
-  @override
-  SceneController createSceneController() => scenes;
+  GameState createInitialState() => GameState({'score': 100, 'level': 1});
 }
 
 Future<ui.Image> _createTestImage() async {

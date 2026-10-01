@@ -1,7 +1,6 @@
 import 'dart:ui' as ui show TextAlign, TextDirection, TextStyle, Color, FontWeight, FontStyle;
 
 import 'package:engine_core/engine_core.dart';
-import 'package:engine_flutter/engine_flutter.dart';
 
 /// Flutter-specific localization integration.
 /// Handles font loading, RTL layout, and text rendering with localization.
@@ -17,47 +16,44 @@ class LocalizationFlutter {
     for (final code in supportedLocales) {
       final info = LocaleInfo.common[code];
       if (info != null) {
-        LocalizationManager.instance.addLocale(info);
+        _manager.addLocale(info);
       }
     }
 
-    // Load from assets if available
-    // await _loadFromAssets(supportedLocales);
-
     if (initialLocale != null) {
-      LocalizationManager.instance.setLocale(initialLocale);
+      _manager.setLocale(initialLocale);
     }
   }
 
   /// Get the current locale's font family.
-  static String? get fontFamily => LocalizationManager.instance.currentLocaleInfo?.fontFamily;
+  static String? get fontFamily => _manager.currentLocaleInfo?.fontFamily;
 
   /// Whether current locale is RTL.
-  static bool get isRTL => LocalizationManager.instance.isRTL;
+  static bool get isRTL => _manager.isRTL;
 
   /// Get text direction for current locale.
   static ui.TextDirection get textDirection =>
-      LocalizationManager.instance.isRTL ? ui.TextDirection.rtl : ui.TextDirection.ltr;
+      _manager.isRTL ? ui.TextDirection.rtl : ui.TextDirection.ltr;
 
   /// Get current locale code.
-  static String get currentLocale => LocalizationManager.instance.currentLocale;
+  static String get currentLocale => _manager.currentLocale;
 
   /// Get available locale codes.
-  static List<String> get availableLocales => LocalizationManager.instance.availableLocaleCodes;
+  static List<String> get availableLocales => _manager.availableLocaleCodes;
 
   /// Set locale at runtime.
   static void setLocale(String localeCode) {
-    LocalizationManager.instance.setLocale(localeCode);
+    _manager.setLocale(localeCode);
   }
 
   /// Translate a key with optional args.
   static String tr(String key, [Map<String, dynamic>? args]) {
-    return LocalizationManager.instance.tr(key, args: args);
+    return _manager.tr(key, args: args);
   }
 
   /// Translate with pluralization.
   static String trPlural(String key, int count, [Map<String, dynamic>? args]) {
-    return LocalizationManager.instance.trPlural(key, count, args: args);
+    return _manager.trPlural(key, count, args: args);
   }
 
   /// Create a TextStyle with locale-appropriate font.
@@ -67,7 +63,6 @@ class LocalizationFlutter {
     ui.FontWeight? fontWeight,
     ui.FontStyle? fontStyle,
   }) {
-    final localeInfo = LocalizationManager.instance.currentLocaleInfo;
     return ui.TextStyle(
       fontFamily: fontFamily,
       fontSize: fontSize,
@@ -121,15 +116,6 @@ class LocalizationFlutter {
     if (count == 1) return 'one';
     if (count == 2) return 'two';
     return 'other';
-  }
-
-  /// Load locale data from assets.
-  static Future<void> _loadFromAssets(List<String> locales) async {
-    // In a real implementation, load from assets/
-    // For now, we just register the locale info
-    for (final code in LocaleInfo.common.keys) {
-      LocalizationManager.instance.addLocale(LocaleInfo.common[code]!);
-    }
   }
 }
 

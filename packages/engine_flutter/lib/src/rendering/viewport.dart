@@ -110,21 +110,20 @@ class ViewportManager {
   ) {
     final screenWidth = screenSize.width;
     final screenHeight = screenSize.height;
-    final _screenAspectRatio = screenWidth / screenHeight;
 
     // Apply safe area insets if enabled
     double effectiveWidth = screenWidth;
     double effectiveHeight = screenHeight;
     double leftInset = 0;
     double topInset = 0;
-    double _rightInset = 0;
-    double _bottomInset = 0;
 
     if (_config.avoidSystemUi && safeArea != null) {
       leftInset = safeArea.left;
       topInset = safeArea.top;
-      _rightInset = screenWidth - safeArea.right;
-      _bottomInset = screenHeight - safeArea.bottom;
+      // The right/bottom edges don't need their own inset variables --
+      // they're already baked into effectiveWidth/effectiveHeight below
+      // (safeArea.width/height), which the fit-mode switch uses to
+      // compute contentWidth/contentHeight.
       effectiveWidth = safeArea.width;
       effectiveHeight = safeArea.height;
     }
