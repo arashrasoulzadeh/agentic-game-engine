@@ -97,21 +97,29 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
 
     // Add dialogue box background if specified (screen-space, centered)
     if (dialogueBoxAtlasId != null && dialogueBoxRegion != null) {
-      final bg = world.spawn();
-      world.storeOf<Position>().set(bg, Position(0, 0));
-      world.storeOf<Sprite>().set(bg, Sprite(
-        dialogueBoxAtlasId!,
-        dialogueBoxRegion!,
-        zIndex: -5,
-        scaleX: 800 / 200, // scale to cover viewport width
-        scaleY: 600 / 150, // scale to cover viewport height
-        screenSpace: true,
-      ));
+      final atlas = _atlasRegistry?.resolve(dialogueBoxAtlasId!);
+      if (atlas != null) {
+        final region = atlas.regionFor(dialogueBoxRegion!);
+        final bg = world.spawn();
+        // Center the background on screen
+        world.storeOf<Position>().set(bg, Position(world.width / 2, world.height / 2));
+        // Scale to fit the region with some padding
+        final scaleX = world.width / region.width * 0.8;
+        final scaleY = world.height / region.height * 0.5;
+        world.storeOf<Sprite>().set(bg, Sprite(
+          dialogueBoxAtlasId!,
+          dialogueBoxRegion!,
+          zIndex: -5,
+          scaleX: scaleX,
+          scaleY: scaleY,
+          screenSpace: true,
+        ));
+      }
     }
 
     // Add dialogue text as a Text entity (screen-space, centered)
     textEntityId = world.spawn();
-    world.storeOf<Position>().set(textEntityId!, Position(400, 100));
+    world.storeOf<Position>().set(textEntityId!, Position(world.width / 2, world.height / 2 - 100));
     world.storeOf<Text>().set(textEntityId!, Text(
       runner.visibleText(WorldView(world)) ?? '',
       colorArgb: 0xFFFFFFFF,
@@ -259,7 +267,7 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
           scaleY: 0.5,
           screenSpace: true,
         ));
-      }
+}
     }
   }
 }

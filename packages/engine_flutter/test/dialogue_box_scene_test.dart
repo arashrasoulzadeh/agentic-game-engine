@@ -57,7 +57,7 @@ void main() {
         startNodeId: 'start',
       );
 
-      scene = _TestDialogueBoxScene(DialogueRunner(graph, stringTable), stringTable);
+      scene = _TestDialogueBoxScene(DialogueRunner(graph: graph, stringTable: stringTable), stringTable);
     });
 
     testWidgets('renders dialogue text and choice buttons', (tester) async {
@@ -146,7 +146,7 @@ void main() {
         startNodeId: 'start',
       );
 
-      final sceneWithFlag = _TestDialogueBoxScene(DialogueRunner(graphWithFlag, stringTable), stringTable);
+      final sceneWithFlag = _TestDialogueBoxScene(DialogueRunner(graph: graphWithFlag, stringTable: stringTable), stringTable);
       final world = World(width: 800, height: 600);
       registerCoreComponents(world);
       registerFlutterComponents(world);
@@ -205,7 +205,7 @@ void main() {
         startNodeId: 'start',
       );
 
-      final endScene = _TestDialogueBoxScene(DialogueRunner(endGraph, stringTable), stringTable);
+      final endScene = _TestDialogueBoxScene(DialogueRunner(graph: endGraph, stringTable: stringTable), stringTable);
       final world = World(width: 800, height: 600);
       registerCoreComponents(world);
       registerFlutterComponents(world);
@@ -228,7 +228,7 @@ void main() {
 
     test('loadAssets skips a missing atlas instead of throwing', () async {
       final scene = _TestDialogueBoxScene(
-        DialogueRunner(graph, stringTable),
+        DialogueRunner(graph: graph, stringTable: stringTable),
         stringTable,
         atlasIds: const ['does_not_exist'],
       );
