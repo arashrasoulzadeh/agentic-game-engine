@@ -214,28 +214,26 @@ abstract class SettingsMenuScene extends ButtonMenuScene {
 
     if (widget is SettingsToggleSpec) {
       final isOn = currentValue == true;
-      displayLabel = '$widget.label: ${isOn ? widget.onLabel : widget.offLabel}';
+      displayLabel = '${widget.label}: ${isOn ? widget.onLabel : widget.offLabel}';
     } else if (widget is SettingsSliderSpec) {
       final value = (currentValue as num?)?.toDouble() ?? widget.min;
       displayLabel =
-          '$widget.label: ${widget.valueFormat.replaceFirst(RegExp(r'%.[df]'), value.toStringAsFixed(1))}';
+          '${widget.label}: ${widget.valueFormat.replaceFirst(RegExp(r'%.[df]'), value.toStringAsFixed(1))}';
     } else if (widget is SettingsDropdownSpec) {
       final selected = currentValue as String?;
       final label = selected != null && widget.options.containsKey(selected)
           ? widget.options[selected]!
           : widget.placeholder ?? 'Select...';
-      displayLabel = '$widget.label: $label';
+      displayLabel = '${widget.label}: $label';
     } else if (widget is SettingsListSpec) {
-      final selected = currentValue as String?;
-      } else if (widget is SettingsListSpec) {
       final selected = currentValue as String?;
       final label = selected != null && widget.items.containsKey(selected)
           ? widget.items[selected]!
           : 'Select...';
-      displayLabel = '$widget.label: $label';
+      displayLabel = '${widget.label}: $label';
     } else if (widget is SettingsKeyBindingSpec) {
       final label = widget.currentBindingLabel ?? 'Press to bind...';
-      displayLabel = '$widget.label: $label';
+      displayLabel = '${widget.label}: $label';
     }
 
     return MenuButtonSpec(

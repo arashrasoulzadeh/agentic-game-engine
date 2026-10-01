@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:math' as math;
 
-import 'package:engine_core/engine_core.dart';
 import 'package:http/http.dart' as http;
 
 import 'error_reporting.dart';
@@ -100,8 +99,13 @@ class SentryErrorReporter extends ErrorReporter {
           }
         ]
       },
-      'user': error.userId != null ? {'id': error.userId} : null,
-      'tags': error.extra?['tags'] as Map<String, String>? ?? {},
+      // error.userId (per-report) wins over the reporter-wide
+      // setUserContext value -- a caller supplying one explicitly for
+      // this specific error is more specific than the ambient context.
+      'user': error.userId != null
+          ? {'id': error.userId}
+          : (_userId != null ? {'id': _userId} : null),
+      'tags': {...?error.extra?['tags'] as Map<String, String>?, ..._tags},
       'contexts': {
         'app': {
           'app_version': error.appVersion,
@@ -133,7 +137,7 @@ class SentryErrorReporter extends ErrorReporter {
     String? username,
     Map<String, dynamic>? data,
   }) async {
-    // User context will be included in next report
+    _userId = userId;
   }
 
   @override
@@ -142,7 +146,9 @@ class SentryErrorReporter extends ErrorReporter {
   }
 
   @override
-  Future<void> clearUserContext() async {}
+  Future<void> clearUserContext() async {
+    _userId = null;
+  }
 
   @override
   Future<void> flush() async {}
