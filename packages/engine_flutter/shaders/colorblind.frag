@@ -6,7 +6,12 @@
 
 uniform sampler2D uTexture;
 uniform vec2 uSize;
-uniform int uColorblindType; // 0=none, 1=protanopia, 2=deuteranopia, 3=tritanopia
+// Impeller's shader compiler rejects non-float uniform struct members
+// ("Non-floating-type struct member ... is not supported"), so the type
+// selector is a float here (0=none, 1=protanopia, 2=deuteranopia,
+// 3=tritanopia) rather than an int, even though it only ever holds a
+// whole number.
+uniform float uColorblindType;
 uniform float uSeverity; // 0.0 to 1.0
 
 out vec4 fragColor;
@@ -14,10 +19,11 @@ out vec4 fragColor;
 void main() {
   vec2 fragCoord = FlutterFragCoord().xy;
   vec2 uv = fragCoord / uSize;
-  
+
   vec4 color = texture(uTexture, uv);
-  
-  if (uColorblindType == 0 || uSeverity <= 0.0) {
+  int colorblindType = int(uColorblindType + 0.5);
+
+  if (colorblindType == 0 || uSeverity <= 0.0) {
     fragColor = color;
     return;
   }
@@ -43,9 +49,9 @@ void main() {
   );
   
   mat3 matrix;
-  if (uColorblindType == 1) {
+  if (colorblindType == 1) {
     matrix = protanopiaMatrix;
-  } else if (uColorblindType == 2) {
+  } else if (colorblindType == 2) {
     matrix = deuteranopiaMatrix;
   } else {
     matrix = tritanopiaMatrix;
