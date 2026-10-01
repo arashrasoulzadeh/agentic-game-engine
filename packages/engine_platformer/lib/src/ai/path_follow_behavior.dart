@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_platformer/engine_platformer.dart';
+import 'velocity_helpers.dart';
 
 /// Walks [path] (a precomputed route from `findPlatformerPath`) one waypoint at a
 /// time — handles jumps, one-way platforms, ladders, and ledge drops.
@@ -106,9 +107,7 @@ class _SetVelocityXAction implements Action {
 
   @override
   void apply(World world) {
-    final store = world.storeOf<Velocity>();
-    final existing = store.get(entity);
-    store.set(entity, Velocity(vx, existing?.y ?? 0));
+    setVelocityX(world, entity, vx);
   }
 }
 
@@ -134,11 +133,8 @@ class _SetVelocityAndJumpAction implements Action {
 
   @override
   void apply(World world) {
-    final store = world.storeOf<Velocity>();
-    final controllerStore = world.storeOf<PlatformerController>();
-    final existing = store.get(entity);
-    store.set(entity, Velocity(vx, existing?.y ?? 0));
-    final controller = controllerStore.get(entity);
+    setVelocityX(world, entity, vx);
+    final controller = world.storeOf<PlatformerController>().get(entity);
     if (controller != null) {
       controller.jumpRequested = true;
     }
@@ -153,11 +149,8 @@ class _SetVelocityAndDownAction implements Action {
 
   @override
   void apply(World world) {
-    final store = world.storeOf<Velocity>();
-    final controllerStore = world.storeOf<PlatformerController>();
-    final existing = store.get(entity);
-    store.set(entity, Velocity(vx, existing?.y ?? 0));
-    final controller = controllerStore.get(entity);
+    setVelocityX(world, entity, vx);
+    final controller = world.storeOf<PlatformerController>().get(entity);
     if (controller != null) {
       // Request drop through one-way platform
       // This would need a new field on PlatformerController

@@ -2,6 +2,7 @@ import 'package:engine_core/engine_core.dart';
 
 import '../physics/collision_math.dart';
 import '../physics/platformer_controller.dart';
+import 'velocity_helpers.dart';
 
 /// Chases [target] horizontally at [speed] — the "following" behavior
 /// for a ground-based enemy/companion. Only ever touches `Velocity.x`
@@ -98,9 +99,7 @@ class _SetVelocityXAction implements Action {
 
   @override
   void apply(World world) {
-    final store = world.storeOf<Velocity>();
-    final existing = store.get(entity);
-    store.set(entity, Velocity(vx, existing?.y ?? 0));
+    setVelocityX(world, entity, vx);
   }
 }
 
@@ -134,9 +133,7 @@ class _FollowWithJumpAction implements Action {
 
       if (!hasGround) {
         // No ground ahead - stop horizontal movement
-        final store = world.storeOf<Velocity>();
-        final existing = store.get(self);
-        store.set(self, Velocity(0, existing?.y ?? 0));
+        setVelocityX(world, self, 0);
 
         // If jumpAcrossGaps is enabled, request a jump.
         // JumpSystem will only fire it if the entity is actually grounded/
@@ -152,9 +149,7 @@ class _FollowWithJumpAction implements Action {
     }
 
     // Ground ahead or in the air - continue moving horizontally
-    final store = world.storeOf<Velocity>();
-    final existing = store.get(self);
-    store.set(self, Velocity(vx, existing?.y ?? 0));
+    setVelocityX(world, self, vx);
   }
 
   /// Checks if there's ground ahead of the entity in the direction of movement.

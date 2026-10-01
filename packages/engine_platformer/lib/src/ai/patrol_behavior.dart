@@ -1,6 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 
 import '../physics/platformer_controller.dart';
+import 'velocity_helpers.dart';
 
 /// Walks back and forth between [minX] and [maxX] at [speed]. Direction
 /// is persisted in the entity's own `AIState.memory['dir']` (1.0 or
@@ -133,9 +134,7 @@ class _PatrolStepAction implements Action {
     // gravity-affected patroller (caught by a test asserting a
     // patroller actually reaches the floor after being dropped above
     // it, which it never did).
-    final store = world.storeOf<Velocity>();
-    final existing = store.get(entity);
-    store.set(entity, Velocity(vx, existing?.y ?? 0));
+    setVelocityX(world, entity, vx);
     final dir = newDirection;
     if (dir != null) {
       world.storeOf<AIState>().get(entity)?.memory['dir'] = dir;

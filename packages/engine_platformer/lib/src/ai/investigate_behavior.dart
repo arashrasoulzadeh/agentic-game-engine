@@ -1,5 +1,6 @@
 import 'package:engine_core/engine_core.dart';
 import '../physics/platformer_controller.dart';
+import 'velocity_helpers.dart';
 
 /// Moves toward the last-heard sound position stored in `AIState.memory`
 /// by `HearingSystem`. When the entity reaches the position (within
@@ -132,9 +133,7 @@ class _InvestigateAction implements Action {
 
   @override
   void apply(World world) {
-    final store = world.storeOf<Velocity>();
-    final existing = store.get(entity);
-    store.set(entity, Velocity(vx, existing?.y ?? 0));
+    setVelocityX(world, entity, vx);
 
     if (clearMemory) {
       final state = world.storeOf<AIState>().get(entity);
