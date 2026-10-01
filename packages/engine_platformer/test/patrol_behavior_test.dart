@@ -3,7 +3,7 @@ import 'package:engine_flutter/engine_flutter.dart';
 import 'package:engine_platformer/engine_platformer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-World _buildWorld() {
+World _buildWorld({bool avoidLedges = false}) {
   final world = World(width: 2000, height: 2000);
   registerCoreComponents(world);
   registerFlutterComponents(world);
@@ -12,6 +12,14 @@ World _buildWorld() {
   world.addSystem(MovementSystem());
   world.addSystem(PlatformerSystem());
   world.addSystem(TileCollisionSystem());
+  // Every test spawns an AIState('patrol', ...) entity, which only ever
+  // does anything once an AISystem is actually driving a 'patrol'
+  // registration — without this, every spawned patroller just sits with
+  // Velocity(0, 0) forever, which is what every assertion in this file
+  // was actually seeing before this was added.
+  final registry = BehaviorRegistry()
+    ..register('patrol', PatrolBehavior(avoidLedges: avoidLedges));
+  world.addSystem(AISystem(registry));
   return world;
 }
 
@@ -21,7 +29,6 @@ EntityId _spawnPatroller(World world, {
   double minX = 100,
   double maxX = 300,
   double speed = 60,
-  bool avoidLedges = true,
   bool affectedByGravity = true,
   Map<String, dynamic>? memory,
 }) {
@@ -77,8 +84,9 @@ void main() {
           affectedByGravity: true,
         );
 
-        // Let it fall and settle
-        for (int i = 0; i < 30; i++) world.step(0.016);
+        // Let it fall and settle (a ~200px fall takes on the order of
+        // 40 steps to fully settle under this world's gravity scale).
+        for (int i = 0; i < 60; i++) world.step(0.016);
 
         final pos = world.storeOf<Position>().get(patroller)!;
         expect(pos.y, closeTo(1000 - 12, 5)); // on floor (collider radius 12)
@@ -125,7 +133,7 @@ void main() {
       });
 
       test('avoidLedges: flips early when ledge detected ahead', () {
-        final world = _buildWorld();
+        final world = _buildWorld(avoidLedges: true);
         // Floor with a gap at x=240-280
         final mapEntity = world.spawn();
         world.storeOf<Position>().set(mapEntity, Position(0, 0));
@@ -157,8 +165,9 @@ void main() {
           affectedByGravity: true,
         );
 
-        // Let it fall and approach gap
-        for (int i = 0; i < 40; i++) world.step(0.016);
+        // Let it fall and approach gap (land first, then walk into
+        // range of the ledge probe).
+        for (int i = 0; i < 90; i++) world.step(0.016);
 
         // Should have flipped left before falling into gap
         final pos = world.storeOf<Position>().get(patroller)!;
@@ -168,7 +177,7 @@ void main() {
       });
 
       test('avoidLedges: does NOT flip when ground continues', () {
-        final world = _buildWorld();
+        final world = _buildWorld(avoidLedges: true);
         _createFloorMap(world, y: 1000);
 
         final patroller = _spawnPatroller(world,
@@ -189,14 +198,13 @@ void main() {
 
     group('WITHOUT gravity (floating patroller - BUG SCENARIO)', () {
       test('avoidLedges with no gravity causes rapid direction flip (BUG)', () {
-        final world = _buildWorld();
+        final world = _buildWorld(avoidLedges: true);
         // NO floor - empty air
 
         final patroller = _spawnPatroller(world,
           x: 200, y: 500,
           minX: 150, maxX: 350,
           speed: 60,
-          avoidLedges: true,
           affectedByGravity: false, // KEY: no gravity
         );
 
@@ -224,13 +232,15 @@ void main() {
           x: 200, y: 500,
           minX: 150, maxX: 350,
           speed: 60,
-          avoidLedges: false, // NO ledge avoidance
-          affectedByGravity: false,
+          affectedByGravity: false, // avoidLedges: false is _buildWorld's default
         );
 
-        // Should just patrol between bounds
+        // Should just patrol between bounds. At `speed: 60` and dt
+        // 0.016, each step covers under 1px, so visiting both a 200→350
+        // trip and the 350→150 trip back needs on the order of 400
+        // steps, not 50.
         final positions = <double>[];
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 500; i++) {
           world.step(0.016);
           positions.add(world.storeOf<Position>().get(patroller)!.x);
         }
