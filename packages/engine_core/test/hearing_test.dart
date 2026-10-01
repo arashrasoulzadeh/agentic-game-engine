@@ -222,5 +222,39 @@ void main() {
 
       // Should not crash, just nothing happens
     });
+
+    test(
+        'a freshly created World always subscribes, even if an earlier '
+        'World already marked its own flag (regression: the flag used to '
+        'live in a Map<int, bool> keyed by identityHashCode(world), which '
+        'is only unique while the original object is reachable -- once a '
+        'World was garbage-collected, a later World could reuse its hash '
+        'code and inherit a stale "already subscribed" entry, silently '
+        'never subscribing and never hearing any SoundEvent; see '
+        'WorldHearingExtension)', () {
+      // Can't force an actual identityHashCode collision deterministically,
+      // so this instead pins down the contract the fix relies on: each
+      // World's hasHearingSubscription is independent of any other
+      // World's, including one already marked true.
+      world.hasHearingSubscription = true;
+
+      final other = World(width: 500, height: 500);
+      registerCoreComponents(other);
+      expect(other.hasHearingSubscription, isFalse);
+
+      other.addSystem(HearingSystem());
+      final entity = other.spawn();
+      other.storeOf<Position>().set(entity, Position(100, 100));
+      other.storeOf<HearingComponent>().set(entity, HearingComponent(range: 200));
+      other.storeOf<AIState>().set(entity, AIState('idle'));
+
+      other.events.emit(SoundEvent(x: 150, y: 100, loudness: 100, tag: 'footstep'));
+      other.step(0.016);
+
+      final aiState = other.storeOf<AIState>().get(entity)!;
+      expect(aiState.memory['lastHeardSound'], isNotNull,
+          reason: 'a new World must subscribe on its own, independent of '
+              'any other World\'s flag');
+    });
   });
 }

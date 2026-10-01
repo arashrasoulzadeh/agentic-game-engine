@@ -149,16 +149,26 @@ class HearingSystem implements System {
 
 /// Extension to store the hearing subscription flag on World.
 /// This is a workaround since we can't add fields to World directly.
-/// In a real implementation, we'd add a field to World or use a separate
-/// registry. For now, we use a map keyed by World identity.
-final Map<int, bool> _worldHearingSubscriptions = {};
+///
+/// Uses an `Expando` rather than a `Map<int, bool>` keyed by
+/// `identityHashCode`: `identityHashCode` isn't guaranteed unique over an
+/// object's *lifetime*, only while it's reachable, so a long-lived global
+/// map keeps stale entries whose key can collide once the original World
+/// is garbage-collected and a later one reuses the same hash — causing the
+/// new World to appear "already subscribed" and silently never actually
+/// subscribe, so its SoundEvents go unheard. This surfaced as flaky
+/// `HearingSystem`/`InvestigateBehavior` test failures that got worse
+/// later in a test run as more World instances had been created and
+/// collected. `Expando` ties the flag's lifetime to the World object
+/// itself, so there's no key reuse to collide on.
+final Expando<bool> _worldHearingSubscriptions = Expando<bool>();
 
 extension WorldHearingExtension on World {
   bool get hasHearingSubscription {
-    return _worldHearingSubscriptions[identityHashCode(this)] ?? false;
+    return _worldHearingSubscriptions[this] ?? false;
   }
 
   set hasHearingSubscription(bool value) {
-    _worldHearingSubscriptions[identityHashCode(this)] = value;
+    _worldHearingSubscriptions[this] = value;
   }
 }
