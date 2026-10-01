@@ -180,15 +180,14 @@ void main() {
       await scene.populate(world, controller, gameState);
       await tester.pump(const Duration(milliseconds: 16));
 
-      // Simulate selecting first choice (index 0)
-      scene.onChoiceSelected(
-        DialogueChoice(textKey: 'choice_yes', onSelectEvent: 'give_reward', nextNodeId: 'rewarded'),
-        world,
-        controller,
-      );
+      // `_choiceIndex` looks the choice up by identity within the current
+      // node, so it must be the actual instance from the graph, not an
+      // equal-looking copy.
+      final choice = scene.runner.currentNode!.choices.first;
+      scene.onChoiceSelected(choice, world, controller);
 
       expect(scene.runner.currentNode!.id, 'rewarded');
-      expect(scene.runner.currentText, 'Great! Here is your reward.');
+      expect(scene.runner.currentText(WorldView(world)), 'Great! Here is your reward.');
     });
 
     testWidgets('onChoiceSelected ends dialogue when nextNodeId is null', (tester) async {
@@ -212,18 +211,23 @@ void main() {
 
       final gameState = GameState({});
       final controller = SceneController();
+      var popped = false;
+      controller.attach(
+        pushOverlay: (_) {},
+        popOverlay: () => popped = true,
+        loadScene: (_) {},
+      );
 
       await endScene.populate(world, controller, gameState);
       await tester.pump(const Duration(milliseconds: 16));
 
-      endScene.onChoiceSelected(
-        DialogueChoice(textKey: 'choice_yes', onSelectEvent: 'end_dialogue', nextNodeId: null),
-        world,
-        controller,
-      );
+      final choice = endScene.runner.currentNode!.choices.first;
+      endScene.onChoiceSelected(choice, world, controller);
+
+      expect(popped, isTrue);
 
       expect(endScene.runner.currentNode, isNull);
-      expect(endScene.runner.currentText, isNull);
+      expect(endScene.runner.currentText(WorldView(world)), isNull);
     });
 
     test('loadAssets skips a missing atlas instead of throwing', () async {

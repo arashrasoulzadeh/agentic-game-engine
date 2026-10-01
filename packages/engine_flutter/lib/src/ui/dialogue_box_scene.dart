@@ -95,28 +95,27 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
   Future<void> populate(World world, SceneController scenes, GameState state) async {
     _world = world;
 
-    // Add dialogue box background if specified (screen-space, at bottom)
+    // Add dialogue box background if specified (screen-space, at bottom).
+    // `loadAssets` (where the atlas is actually decoded) runs *after*
+    // `populate` — see `GameRunner._load` — so the real pixel size of
+    // [dialogueBoxRegion] isn't known yet here. Sizing against
+    // `world.width`/`world.height` instead of the source region's pixel
+    // dimensions avoids depending on load order; `Sprite` only needs the
+    // atlas/region *id strings*, which `EngineView` resolves at paint
+    // time once loading has finished.
     if (dialogueBoxAtlasId != null && dialogueBoxRegion != null) {
-      final atlas = _atlasRegistry?.resolve(dialogueBoxAtlasId!);
-      if (atlas != null) {
-        final region = atlas.regionFor(dialogueBoxRegion!);
-        final bg = world.spawn();
-        // Position at bottom center of screen
-        final bgHeight = region.height * world.height / region.height * 0.4;
-        final bgY = world.height - bgHeight / 2;
-        world.storeOf<Position>().set(bg, Position(world.width / 2, bgY));
-        // Scale to fit width with padding
-        final scaleX = world.width / region.width * 0.85;
-        final scaleY = bgHeight / region.height;
-        world.storeOf<Sprite>().set(bg, Sprite(
-          dialogueBoxAtlasId!,
-          dialogueBoxRegion!,
-          zIndex: -5,
-          scaleX: scaleX,
-          scaleY: scaleY,
-          screenSpace: true,
-        ));
-      }
+      final bg = world.spawn();
+      final bgHeight = world.height * 0.3;
+      final bgY = world.height - bgHeight / 2;
+      world.storeOf<Position>().set(bg, Position(world.width / 2, bgY));
+      world.storeOf<Sprite>().set(bg, Sprite(
+        dialogueBoxAtlasId!,
+        dialogueBoxRegion!,
+        zIndex: -5,
+        scaleX: world.width / 200, // atlas regions are authored at ~200x92px
+        scaleY: bgHeight / 92,
+        screenSpace: true,
+      ));
     }
 
     // Add dialogue text as a Text entity (screen-space, at bottom)
@@ -175,7 +174,14 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
 
     if (portraitRegion == null) return null;
 
-    final atlasId = portraitAtlasId ?? 'atlas'; // fallback to default atlas
+    // Fall back to the dialogue box's own atlas rather than a hardcoded
+    // id — an id no subclass ever declared in [requiredAtlasIds] would
+    // never be registered, so resolving it in `EngineView` throws and
+    // the whole overlay fails to render (that was the actual cause of
+    // dialogue silently not showing: a node set `portrait` without a
+    // `portraitAtlasId`, and the old 'atlas' fallback id didn't exist).
+    final atlasId = portraitAtlasId ?? dialogueBoxAtlasId;
+    if (atlasId == null) return null;
 
     // Just create the sprite with the atlas ID and region.
     // Resolution happens at render time via EngineView's AtlasRegistry.
@@ -233,7 +239,8 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     final portraitRegion = runner.getCurrentPortraitRegion();
     final portraitAtlasId = runner.getCurrentPortraitAtlasId();
     
-    if (portraitRegion == null) {
+    final atlasId = portraitAtlasId ?? dialogueBoxAtlasId;
+    if (portraitRegion == null || atlasId == null) {
       // No portrait for current node - remove existing
       if (portraitEntityId != null) {
         world.destroy(portraitEntityId!);
@@ -241,9 +248,7 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
       }
       return;
     }
-    
-    final atlasId = portraitAtlasId ?? 'atlas';
-    
+
     if (portraitEntityId == null) {
       // Create new portrait
       final portraitEntity = world.spawn();
