@@ -7,6 +7,25 @@ input into engine-readable state, and provides the platform services
 (storage, audio) a real game needs. Everything else (physics, AI,
 content) lives in `engine_core`, which stays Flutter-free.
 
+## Contents
+
+- [Install](#install)
+- [Quick start: `Game` + `Scene`](#quick-start-game--scene)
+- [`GameConfig`](#gameconfig)
+- [Components/systems this package adds](#componentssystems-this-package-adds)
+- [Sprites and atlases](#sprites-and-atlases)
+- [Input](#input)
+- [Parallax backgrounds](#parallax-backgrounds)
+- [Particle effects](#particle-effects)
+- [Draw order (z-index)](#draw-order-z-index)
+- [Masking/clipping (`ClipShape`)](#maskingclipping-clipshape)
+- [Lighting (`Light2D`)](#lighting-light2d)
+- [Audio](#audio)
+- [Save/load](#saveload)
+- [Camera](#camera)
+- [Fixed timestep](#fixed-timestep)
+- [Testing](#testing)
+
 ## Install
 
 ```yaml

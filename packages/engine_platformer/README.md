@@ -19,6 +19,26 @@ so a non-platformer game shouldn't be forced to depend on this package.
 enough for other genres — only the platformer-specific *collision
 logic* against it lives here.
 
+## Contents
+
+- [Install](#install)
+- [Quick start: `installPlatformerSystems`](#quick-start-installplatformersystems)
+- [System order](#system-order-what-installplatformersystems-does-for-you)
+- [Movement feel (`PlatformerController`)](#movement-feel-platformercontroller)
+- [Behaviors](#behaviors)
+- [Animation](#animation)
+- [Reacting to collisions](#reacting-to-collisions-coins-hitting-an-enemy-)
+- [Damage/health/combat](#damagehealthcombat)
+- [Guard/block, stability (poise), and parry](#guardblock-stability-poise-and-parry)
+- [Weapons: melee and ranged combat](#weapons-melee-sword-and-ranged-gun-combat)
+- [Enemy combat AI with telegraph states](#enemy-combat-ai-with-telegraph-states)
+- [Platformer-aware pathfinding](#platformer-aware-pathfinding)
+- [Collectibles/inventory](#collectiblesinventory)
+- [Tile-based terrain features](#tile-based-terrain-features)
+- [Tilemaps vs. platform entities](#tilemaps-vs-platform-entities)
+- [Testing](#testing)
+- [Benchmarks](#benchmarks)
+
 ## Install
 
 ```yaml
