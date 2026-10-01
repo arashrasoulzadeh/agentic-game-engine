@@ -95,17 +95,19 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
   Future<void> populate(World world, SceneController scenes, GameState state) async {
     _world = world;
 
-    // Add dialogue box background if specified (screen-space, centered)
+    // Add dialogue box background if specified (screen-space, at bottom)
     if (dialogueBoxAtlasId != null && dialogueBoxRegion != null) {
       final atlas = _atlasRegistry?.resolve(dialogueBoxAtlasId!);
       if (atlas != null) {
         final region = atlas.regionFor(dialogueBoxRegion!);
         final bg = world.spawn();
-        // Center the background on screen
-        world.storeOf<Position>().set(bg, Position(world.width / 2, world.height / 2));
-        // Scale to fit the region with some padding
-        final scaleX = world.width / region.width * 0.8;
-        final scaleY = world.height / region.height * 0.5;
+        // Position at bottom center of screen
+        final bgHeight = region.height * world.height / region.height * 0.4;
+        final bgY = world.height - bgHeight / 2;
+        world.storeOf<Position>().set(bg, Position(world.width / 2, bgY));
+        // Scale to fit width with padding
+        final scaleX = world.width / region.width * 0.85;
+        final scaleY = bgHeight / region.height;
         world.storeOf<Sprite>().set(bg, Sprite(
           dialogueBoxAtlasId!,
           dialogueBoxRegion!,
@@ -117,13 +119,14 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
       }
     }
 
-    // Add dialogue text as a Text entity (screen-space, centered)
+    // Add dialogue text as a Text entity (screen-space, at bottom)
     textEntityId = world.spawn();
-    world.storeOf<Position>().set(textEntityId!, Position(world.width / 2, world.height / 2 - 100));
+    final textY = world.height - 120; // Near bottom
+    world.storeOf<Position>().set(textEntityId!, Position(world.width / 2, textY));
     world.storeOf<Text>().set(textEntityId!, Text(
       runner.visibleText(WorldView(world)) ?? '',
       colorArgb: 0xFFFFFFFF,
-      fontSize: 24,
+      fontSize: 22,
       align: TextAlignment.center,
       screenSpace: true,
     ));
