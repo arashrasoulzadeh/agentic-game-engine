@@ -115,27 +115,32 @@ class ConsoleAnalyticsProvider implements AnalyticsProvider {
     String? userId,
     Map<String, dynamic>? userProperties,
   }) async {
+    if (!_verbose) return;
     print('[Analytics] Initialized (userId: $userId, properties: $userProperties)');
   }
 
   @override
   Future<void> logEvent(AnalyticsEvent event) async {
+    if (!_verbose) return;
     final payloadStr = event.payload.isEmpty ? '' : ' ${json.encode(event.payload)}';
     print('[Analytics] ${event.name}$payloadStr');
   }
 
   @override
   Future<void> setUserId(String? userId) async {
+    if (!_verbose) return;
     print('[Analytics] User ID set: $userId');
   }
 
   @override
   Future<void> setUserProperties(Map<String, dynamic> properties) async {
+    if (!_verbose) return;
     print('[Analytics] User properties: $properties');
   }
 
   @override
   Future<void> logScreenView(String screenName, {String? screenClass}) async {
+    if (!_verbose) return;
     print('[Analytics] Screen view: $screenName (class: $screenClass)');
   }
 
@@ -205,8 +210,15 @@ class AnalyticsManager {
     _initialized = true;
   }
 
-  /// Logs an event to all providers.
+  /// Logs an event to all providers. Dropped while [onPause] has been
+  /// called and [onResume] hasn't yet — avoids recording engagement
+  /// events (and growing the offline queue) for a backgrounded session.
+  /// `onPause`/`onResume` log their own session_pause/session_resume
+  /// marker events before/after toggling this, so those two always get
+  /// through regardless of pause state.
   Future<void> logEvent(AnalyticsEvent event) async {
+    if (_isPaused) return;
+
     final enriched = AnalyticsEvent(
       name: event.name,
       payload: event.payload,
@@ -326,12 +338,12 @@ class AnalyticsManager {
 
   /// Called when app goes to background.
   Future<void> onPause() async {
-    _isPaused = true;
     await logEvent(AnalyticsEvent(
       name: 'session_pause',
       sessionId: _sessionId,
       userId: _userId,
     ));
+    _isPaused = true;
     for (final provider in _providers) {
       await provider.onPause();
     }

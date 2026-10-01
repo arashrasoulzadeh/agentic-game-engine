@@ -39,9 +39,6 @@ class ComponentRegistration<T> {
   /// The component store (package-private for archetype access).
   ComponentStore<T> get store => _store;
 
-  /// Package-private raw store access for archetype (bypasses generic erasure).
-  ComponentStore get _archetypeStore => _store;
-
   ComponentRegistration(this.name, this.toJson, this.fromJson);
 
   void _setArchetypeManager(ArchetypeManager manager) {

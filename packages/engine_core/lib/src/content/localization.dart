@@ -6,8 +6,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:engine_core/engine_core.dart';
-
 /// Supported locales with their display names and RTL info.
 class LocaleInfo {
   final String code; // e.g., 'en', 'ar', 'zh_CN'
@@ -136,7 +134,6 @@ class LocalizationManager {
   final List<LocaleInfo> _availableLocales = [];
   String _currentLocale = 'en';
   String _fallbackLocale = 'en';
-  final Map<String, String> _customLocales = {};
 
   /// Called when locale changes.
   void Function(String newLocale)? onLocaleChanged;
@@ -201,9 +198,6 @@ class LocalizationManager {
 
   /// Set current locale.
   void setLocale(String localeCode) {
-    if (!_availableLocales.any((l) => l.code == localeCode)) {
-      // Allow custom locales too
-    }
     if (_currentLocale != localeCode) {
       _currentLocale = localeCode;
       onLocaleChanged?.call(localeCode);
@@ -214,7 +208,9 @@ class LocalizationManager {
   String tr(String key, {Map<String, dynamic>? args}) {
     final resource = _resources[key];
     if (resource == null) return key;
-    String result = resource.translate(_currentLocale);
+    String result = resource.translations[_currentLocale] ??
+        resource.translations[_fallbackLocale] ??
+        resource.translate(_currentLocale);
     if (args != null) {
       for (final entry in args.entries) {
         result = result.replaceAll('{${entry.key}}', entry.value.toString());
@@ -259,10 +255,4 @@ extension Localization on String {
   String trPlural(int count, [Map<String, dynamic>? args]) {
     return LocalizationManager.instance.trPlural(this, count, args: args);
   }
-}
-
-/// Singleton instance.
-class _LocalizationManagerSingleton {
-  static final LocalizationManager _instance = LocalizationManager._();
-  static LocalizationManager get instance => _instance;
 }

@@ -3,8 +3,6 @@ import 'dart:math';
 import 'package:engine_core/engine_core.dart';
 import 'package:test/test.dart';
 
-import 'package:engine_core/src/rendering/particle_forces.dart';
-
 World _buildWorld() {
   final world = World(width: 500, height: 500);
   registerCoreComponents(world);
