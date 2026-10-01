@@ -306,47 +306,6 @@ class SetFlagStep extends CinematicStep {
   bool update(World world, double dt) => true;
 }
 
-/// Triggers a camera shake effect over [duration] seconds with [intensity].
-/// Completes when the shake finishes.
-class CameraShakeStep extends CinematicStep {
-  final double duration;
-  final double intensity;
-  late final Tween _tween;
-
-  CameraShakeStep({
-    required this.duration,
-    this.intensity = 10,
-  });
-
-  @override
-  void start(World world) {
-    _tween = Tween(from: 0, to: 1, duration: duration);
-  }
-
-  @override
-  bool update(World world, double dt) {
-    _tween.elapsed += dt;
-    final t = _tween.value;
-
-    // Emit shake offset event for engine_flutter's camera to consume
-    world.events.emit(_CameraShakeEvent(intensity * (1.0 - t)));
-
-    return _tween.isComplete;
-  }
-
-  @override
-  void skip(World world) {
-    _tween.elapsed = _tween.duration;
-    world.events.emit(_CameraShakeEvent(0));
-  }
-}
-
-/// Emitted by [CameraShakeStep] for engine_flutter's camera to apply shake offset.
-class _CameraShakeEvent {
-  final double offset;
-  _CameraShakeEvent(this.offset);
-}
-
 /// Makes the camera follow [targetEntity] for [duration] seconds.
 /// After [duration], camera returns to normal behavior (or keeps following
 /// if [keepFollowing] is true).
