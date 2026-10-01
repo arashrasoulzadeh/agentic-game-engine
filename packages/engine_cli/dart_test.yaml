@@ -1,0 +1,7 @@
+tags:
+  integration:
+    description: >-
+      End-to-end CLI workflow tests that shell out to `flutter create`/`pub
+      get` and hit the network. Run explicitly with `dart test
+      integration_test`; excluded from the default `dart test` run (over
+      `test/`) because they're slow and require network access.

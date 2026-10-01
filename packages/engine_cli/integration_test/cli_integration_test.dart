@@ -1,12 +1,17 @@
+@Tags(['integration'])
+library;
+
 import 'dart:io';
+import 'package:args/command_runner.dart';
 import 'package:engine_cli/src/create_command.dart';
 import 'package:engine_cli/src/lint_command.dart';
 import 'package:engine_cli/src/pack_assets_command.dart';
+import 'package:engine_cli/src/process_utils.dart';
 import 'package:engine_cli/src/upgrade_command.dart';
 import 'package:engine_cli/src/template.dart';
+import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
 
-@Tags(const ['integration'])
 void main() {
   group('CLI integration', () {
     late Directory tmp;
@@ -24,15 +29,13 @@ void main() {
 
     test('create -> lint -> pack-assets -> upgrade full workflow', () async {
       // 1. Create a game project
-      final projectDir = Directory('${tmp.path}/my_game');
-      
       var calls = <List<Object?>>[];
-      Future<int> mockProcess(String exe, List<String> args, {String? wd}) async {
-        calls.add([exe, args, wd]);
+      Future<void> mockProcess(String exe, List<String> args,
+          {String? workingDirectory}) async {
+        calls.add([exe, args, workingDirectory]);
         if (args.first == 'create') {
-          Directory('${wd}/${args.last}').createSync(recursive: true);
+          Directory('$workingDirectory/${args.last}').createSync(recursive: true);
         }
-        return 0;
       }
 
       final runner = _createRunner(mockProcess);
@@ -170,11 +173,11 @@ void main() {
   });
 }
 
-CommandRunner<int> _createRunner(Future<int> Function(String, List<String>, {String?}) runProcess) {
+CommandRunner<int> _createRunner(CommandProcessRunner runProcess) {
   return CommandRunner<int>('game_agent', 'test')
     ..addCommand(CreateCommand(
       runProcess: runProcess,
-      findTemplate: (name) => Directory('packages/engine_cli/templates/default_game').absolute,
+      findTemplate: (name) => Directory('templates/default_game').absolute,
     ));
 }
 
@@ -188,7 +191,7 @@ CommandRunner<int> _createPackRunner() {
     ..addCommand(PackAssetsCommand());
 }
 
-CommandRunner<int> _createUpgradeRunner(Future<int> Function(String, List<String>, {String?}) runProcess) {
+CommandRunner<int> _createUpgradeRunner(CommandProcessRunner runProcess) {
   return CommandRunner<int>('game_agent', 'test')
     ..addCommand(UpgradeCommand(runProcess: runProcess));
 }
@@ -200,5 +203,3 @@ void _writeTestPng(String path, int width, int height) {
     ..createSync(recursive: true)
     ..writeAsBytesSync(img.encodePng(image));
 }
-
-import 'package:image/image.dart' as img;

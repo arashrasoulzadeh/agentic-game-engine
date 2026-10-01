@@ -224,7 +224,7 @@ class BuildReleaseCommand extends Command<int> {
         keyPassword != null;
 
     if (useSigning) {
-      final keystoreFile = File(keystorePath!);
+      final keystoreFile = File(keystorePath);
       if (!keystoreFile.existsSync()) {
         stderr.writeln('Error: Keystore file not found at $keystorePath');
         return 1;
@@ -281,7 +281,7 @@ class BuildReleaseCommand extends Command<int> {
     } else {
       if (teamId != null) args.add('--team-id=$teamId');
       if (provisioningProfile != null) {
-        final profileFile = File(provisioningProfile!);
+        final profileFile = File(provisioningProfile);
         if (!profileFile.existsSync()) {
           stderr.writeln('Error: Provisioning profile not found at $provisioningProfile');
           return 1;
@@ -290,7 +290,7 @@ class BuildReleaseCommand extends Command<int> {
       }
       if (codesignIdentity != null) args.add('--codesign-identity=$codesignIdentity');
       if (exportOptionsPlist != null) {
-        final plistFile = File(exportOptionsPlist!);
+        final plistFile = File(exportOptionsPlist);
         if (!plistFile.existsSync()) {
           stderr.writeln('Error: ExportOptions.plist not found at $exportOptionsPlist');
           return 1;
@@ -339,6 +339,4 @@ class BuildReleaseCommand extends Command<int> {
     }
     return exitCode;
   }
-
-static int _getExitCode(int? code) => code ?? 1;
 }
