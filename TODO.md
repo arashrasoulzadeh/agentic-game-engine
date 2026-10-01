@@ -132,7 +132,7 @@ team releasing a real 2D game needs that nothing above already covers.
 - [ ] **Save slot thumbnails** — Screenshot capture when saving, display in SaveSlotMenuScene. Uses existing rendering pipeline to capture viewport.
 - [ ] **Input action aliases** — Friendly names for actions (e.g., "Jump" vs "action_0") shown in remap menus and debug overlay.
 - [ ] **Debug overlay improvements** — FPS graph, memory graph, entity inspector with component values.
-- [ ] **Localization system** — Language switching, RTL support, pluralization, date/number formatting. JSON/CSV/ARB resource files.
+- [x] **Localization system** — Language switching, RTL support, pluralization, date/number formatting. JSON/CSV/ARB resource files. Implemented in `engine_core/lib/src/content/localization.dart` + `engine_flutter/lib/src/logic/localization_flutter.dart` with `LocalizationManager`, `LocaleInfo`, `LocalizedString`, `LocalizationFlutter`, `RTLWidget`, and extension methods.
 - [ ] **Asset hot-reload** — Watch assets folder, reload textures/atlases/levels without restart. Invalidate caches on file change.
 - [ ] **Scene transition effects** — Fade, slide, crossfade, iris, pixel-dissolve between scenes. Configurable duration/easing.
 - [ ] **Local split-screen multiplayer** — Viewport splitting, multi-camera/multi-`WorldView` simulation support. Viewport split in `engine_flutter`, multi-context support in `engine_core`.
