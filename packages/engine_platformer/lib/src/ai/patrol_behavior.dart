@@ -1,5 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 
+import '../physics/platformer_controller.dart';
+
 /// Walks back and forth between [minX] and [maxX] at [speed]. Direction
 /// is persisted in the entity's own `AIState.memory['dir']` (1.0 or
 /// -1.0) — a `Behavior` only ever sees a read-only `WorldView`, so
@@ -68,7 +70,21 @@ class PatrolBehavior implements Behavior {
     var shouldFlip =
         (dir > 0 && pos.x >= effectiveMaxX) || (dir < 0 && pos.x <= effectiveMinX);
 
-    if (!shouldFlip && avoidLedges) {
+    // Gated on `grounded` (when a `PlatformerController` is present —
+    // an entity with no controller at all, e.g. a simple non-physics
+    // patroller, has no such notion and keeps the old ungated check):
+    // probing "is there ground below the next step" is only meaningful
+    // for an entity currently resting on a surface. Checked while still
+    // airborne (e.g. mid-fall, well above the real floor), the probe's
+    // short vertical range almost always finds nothing below, which
+    // reads as "ledge ahead" on *every* tick and flips direction every
+    // tick — a rapid, position-independent oscillation with net
+    // horizontal movement near zero, caught by a test that fell an
+    // entity from well above the floor and expected it to walk normally
+    // once landed.
+    final controller = view.component<PlatformerController>(self);
+    final groundedCheckApplies = controller == null || controller.grounded;
+    if (!shouldFlip && avoidLedges && groundedCheckApplies) {
       final aheadX = pos.x + dir * ledgeCheckAheadDistance;
       if (!_hasGroundBelow(view, self, aheadX, pos.y)) {
         shouldFlip = true;
@@ -109,7 +125,17 @@ class _PatrolStepAction implements Action {
 
   @override
   void apply(World world) {
-    world.storeOf<Velocity>().set(entity, Velocity(vx, 0));
+    // Preserves the existing vertical velocity rather than zeroing it:
+    // `AISystem` runs after `GravitySystem`/`MovementSystem` in the
+    // documented system order, so hardcoding `vy: 0` here silently
+    // discarded whatever vertical speed gravity had already accumulated
+    // this tick, every tick — breaking falling entirely for any
+    // gravity-affected patroller (caught by a test asserting a
+    // patroller actually reaches the floor after being dropped above
+    // it, which it never did).
+    final store = world.storeOf<Velocity>();
+    final existing = store.get(entity);
+    store.set(entity, Velocity(vx, existing?.y ?? 0));
     final dir = newDirection;
     if (dir != null) {
       world.storeOf<AIState>().get(entity)?.memory['dir'] = dir;
