@@ -91,6 +91,23 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     }
   }
 
+  /// `screenSpace: true` `Position`s are viewport *pixel* coordinates
+  /// (see `HudBar.screenSpace`'s doc comment) — `EngineView` paints them
+  /// at whatever the real widget size is, which `Scene.populate` has no
+  /// way to query (only `LayoutBuilder` inside `EngineView` itself knows
+  /// it, at paint time). `World.width`/`.height` is *not* a substitute:
+  /// it's the level/simulation's own bounds (e.g. `test_game`'s prison
+  /// level is 4000x1440), completely unrelated to the viewport the
+  /// player actually sees — using it here previously sent the dialogue
+  /// background and text thousands of pixels off-screen while only the
+  /// portrait (positioned with a literal constant) stayed visible,
+  /// which is exactly the "dialogue box empty, only the portrait shows"
+  /// bug this fixes. Lay out against this fixed reference resolution
+  /// instead, matching every other screen-space constant already used
+  /// here (and in `_addPortraitEntity`'s `Position(100, 100)`).
+  static const double _kScreenWidth = 800;
+  static const double _kScreenHeight = 600;
+
   @override
   Future<void> populate(World world, SceneController scenes, GameState state) async {
     _world = world;
@@ -98,21 +115,19 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     // Add dialogue box background if specified (screen-space, at bottom).
     // `loadAssets` (where the atlas is actually decoded) runs *after*
     // `populate` — see `GameRunner._load` — so the real pixel size of
-    // [dialogueBoxRegion] isn't known yet here. Sizing against
-    // `world.width`/`world.height` instead of the source region's pixel
-    // dimensions avoids depending on load order; `Sprite` only needs the
-    // atlas/region *id strings*, which `EngineView` resolves at paint
-    // time once loading has finished.
+    // [dialogueBoxRegion] isn't known yet here. `Sprite` only needs the
+    // atlas/region *id strings*, resolved by `EngineView` at paint time
+    // once loading has finished, so sizing doesn't need to wait for it.
     if (dialogueBoxAtlasId != null && dialogueBoxRegion != null) {
       final bg = world.spawn();
-      final bgHeight = world.height * 0.3;
-      final bgY = world.height - bgHeight / 2;
-      world.storeOf<Position>().set(bg, Position(world.width / 2, bgY));
+      final bgHeight = _kScreenHeight * 0.3;
+      final bgY = _kScreenHeight - bgHeight / 2;
+      world.storeOf<Position>().set(bg, Position(_kScreenWidth / 2, bgY));
       world.storeOf<Sprite>().set(bg, Sprite(
         dialogueBoxAtlasId!,
         dialogueBoxRegion!,
         zIndex: -5,
-        scaleX: world.width / 200, // atlas regions are authored at ~200x92px
+        scaleX: _kScreenWidth / 200, // atlas regions are authored at ~200x92px
         scaleY: bgHeight / 92,
         screenSpace: true,
       ));
@@ -120,8 +135,8 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
 
     // Add dialogue text as a Text entity (screen-space, at bottom)
     textEntityId = world.spawn();
-    final textY = world.height - 120; // Near bottom
-    world.storeOf<Position>().set(textEntityId!, Position(world.width / 2, textY));
+    final textY = _kScreenHeight - 120; // Near bottom
+    world.storeOf<Position>().set(textEntityId!, Position(_kScreenWidth / 2, textY));
     world.storeOf<Text>().set(textEntityId!, Text(
       runner.visibleText(WorldView(world)) ?? '',
       colorArgb: 0xFFFFFFFF,

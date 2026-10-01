@@ -104,6 +104,36 @@ void main() {
       expect(textComponent.text, 'Hello, {name}!');
     });
 
+    testWidgets(
+        'positions dialogue background/text against the fixed screen '
+        'reference, not World.width/height (regression: a large level '
+        'world used to send the dialogue background and text thousands '
+        'of pixels off-screen, leaving only the portrait -- positioned '
+        'with a separate literal constant -- visible)', (tester) async {
+      // Mirrors test_game's prison level, which is much larger than any
+      // real viewport -- this is exactly the shape of world that
+      // triggered the bug.
+      final world = World(width: 4000, height: 1440);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final gameState = GameState({});
+      final controller = SceneController();
+
+      await scene.populate(world, controller, gameState);
+
+      final view = WorldView(world);
+      final textEntities = view.entitiesWith<ef_text.Text>().toList();
+      expect(textEntities, isNotEmpty);
+      final textPos = world.storeOf<Position>().get(textEntities.first)!;
+
+      // Screen-space reference is a fixed 800x600, regardless of the
+      // World's own (much larger) dimensions -- see
+      // DialogueBoxScene._kScreenWidth/_kScreenHeight.
+      expect(textPos.x, 400); // _kScreenWidth / 2
+      expect(textPos.y, 480); // _kScreenHeight - 120
+    });
+
     testWidgets('buttons() returns correct number of choices', (tester) async {
       final world = World(width: 800, height: 600);
       registerCoreComponents(world);
