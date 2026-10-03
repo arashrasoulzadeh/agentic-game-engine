@@ -163,14 +163,13 @@ team releasing a real 2D game needs that nothing above already covers.
 
 ## Engine Polish / Quality of Life
 
-- [ ] **Save slot thumbnails** — Screenshot capture when saving, display in SaveSlotMenuScene. Uses existing rendering pipeline to capture viewport.
+- [x] **Save slot thumbnails** — Screenshot capture when saving, display in SaveSlotMenuScene. `SceneController.captureScreenshot` (`logic/game.dart`/`logic/scene.dart`) snapshots the base scene's `EngineView` via a `RepaintBoundary` as PNG bytes, for `SaveGame.save`'s existing `thumbnail` parameter. `SaveSlotMenuScene` (`ui/save_slot_menu_scene.dart`) decodes each slot's saved thumbnail and shows it next to that slot's button via a new `ButtonMenuScene.onButtonSpawned` hook.
 - [ ] **Input action aliases** — Friendly names for actions (e.g., "Jump" vs "action_0") shown in remap menus and debug overlay.
 - [ ] **Debug overlay improvements** — FPS graph, memory graph, entity inspector with component values.
 - [x] **Localization system** — Language switching, RTL support, pluralization, date/number formatting. JSON/CSV/ARB resource files. Implemented in `engine_core/lib/src/content/localization.dart` + `engine_flutter/lib/src/logic/localization_flutter.dart` with `LocalizationManager`, `LocaleInfo`, `LocalizedString`, `LocalizationFlutter`, `RTLWidget`, and extension methods.
 - [ ] **Asset hot-reload** — Watch assets folder, reload textures/atlases/levels without restart. Invalidate caches on file change.
 - [x] **Scene transition effects (fade/iris)** — see "New engine features" above for the full writeup; duplicated here before, now tracked in one place. Slide/crossfade/pixel-dissolve remain open, see the item directly below.
 - [ ] **Scene transition effects (slide/crossfade/pixel-dissolve)** — needs true multi-scene rendering (both the outgoing and incoming `World`s drawn in the same frame), unlike the fade/iris transitions already shipped — see "New engine features" above.
-- [ ] **Local split-screen multiplayer** — Viewport splitting, multi-camera/multi-`WorldView` simulation support. Viewport split in `engine_flutter`, multi-context support in `engine_core`.
 - [ ] **Network multiplayer foundation** — ECS state serialization, rollback networking, lag compensation, state sync.
 - [ ] **Visual scripting / node editor** — Extend BT/FSM visual editor to general logic (dialogue, cutscenes, AI, quests).
 - [ ] **Level editor integration** — TileMap editor, entity placement, autotile painting, prefab brushes. Export to level JSON.

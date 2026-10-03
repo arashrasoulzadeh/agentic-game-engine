@@ -146,8 +146,25 @@ abstract class ButtonMenuScene extends Scene {
       );
       _spawnedButtonEntities.add(spawned.button);
       if (spawned.label != null) _spawnedButtonEntities.add(spawned.label!);
+      onButtonSpawned(world, spec, i, Offset(world.width / 2, startY + i * buttonSpacing));
     }
   }
+
+  /// Called immediately after spawning button [index] (`buttons()[index]`,
+  /// also handed in as [spec]) at [position] — the hook a subclass that
+  /// needs to attach something extra per button (e.g.
+  /// `SaveSlotMenuScene`'s save-thumbnail sprite, keyed off
+  /// `spec.actionId`) overrides instead of reaching into the private
+  /// [_spawnButtons] loop itself. No-op by default. Any entity created
+  /// here must be registered via [trackExtraEntity], or it leaks past a
+  /// later [refreshButtons] call (which only knows to destroy the
+  /// button/label entities [_spawnButtons] itself tracks).
+  void onButtonSpawned(World world, MenuButtonSpec spec, int index, Offset position) {}
+
+  /// Registers an entity an [onButtonSpawned] override created, so
+  /// [refreshButtons] tears it down along with this menu's own button
+  /// entities instead of leaking it on a respawn.
+  void trackExtraEntity(EntityId id) => _spawnedButtonEntities.add(id);
 
   /// Destroys every entity this menu's own buttons currently occupy,
   /// then re-spawns from a fresh call to [buttons] — for a menu whose

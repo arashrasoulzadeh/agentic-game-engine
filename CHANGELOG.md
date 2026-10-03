@@ -20,6 +20,16 @@ pubspec.yaml.
   incoming one — around the existing `World`-per-scene swap, reusing
   `ScreenTint` (fade) and `ClipShape` (iris) rather than needing true
   multi-scene rendering.
+- Save slot thumbnails: `SceneController.captureScreenshot`
+  (`logic/game.dart`/`logic/scene.dart`) wraps the base scene's
+  `EngineView` in a `RepaintBoundary` and snapshots it as PNG bytes —
+  meant to feed `SaveGame.save`'s existing `thumbnail` parameter right
+  before saving. `SaveSlotMenuScene` (`ui/save_slot_menu_scene.dart`)
+  now decodes each slot's saved thumbnail (if any) during `populate`
+  and shows it beside that slot's button, via a new
+  `ButtonMenuScene.onButtonSpawned`/`trackExtraEntity` extension point
+  (`ui/button_menu_scene.dart`) rather than branching on scene type
+  inside `_spawnButtons` itself.
 
 ### Hardening pass (round 4)
 

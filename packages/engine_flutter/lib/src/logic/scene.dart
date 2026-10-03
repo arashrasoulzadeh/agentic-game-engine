@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui' show Offset;
 
 import 'package:engine_core/engine_core.dart';
@@ -133,6 +134,7 @@ class SceneController {
   void Function(Scene next, SceneTransitionConfig? transition)? _loadSceneWithTransition;
   void Function(Scene overlay)? _pushOverlay;
   void Function()? _popOverlay;
+  Future<Uint8List?> Function({double pixelRatio})? _captureScreenshot;
 
   /// Wired up by `GameRunner`; not for a game to call directly.
   void attach({
@@ -140,11 +142,13 @@ class SceneController {
     required void Function(Scene overlay) pushOverlay,
     required void Function() popOverlay,
     void Function(Scene next, SceneTransitionConfig? transition)? loadSceneWithTransition,
+    Future<Uint8List?> Function({double pixelRatio})? captureScreenshot,
   }) {
     _loadScene = loadScene;
     _pushOverlay = pushOverlay;
     _popOverlay = popOverlay;
     _loadSceneWithTransition = loadSceneWithTransition;
+    _captureScreenshot = captureScreenshot;
   }
 
   /// Tears down the current scene's `World` and loads [next] in its
@@ -213,5 +217,19 @@ class SceneController {
           'SceneController.popOverlay called before it was attached to a running GameRunner');
     }
     popOverlay();
+  }
+
+  /// Captures the base scene's current `EngineView` frame (never an
+  /// active overlay's, or `OnScreenControls`) as PNG bytes — e.g. to
+  /// pass as `SaveGame.save`'s `thumbnail` parameter for a save-slot
+  /// preview. [pixelRatio] scales the capture relative to logical
+  /// pixels; a thumbnail typically wants well under `1.0` to keep the
+  /// saved bytes small. Returns `null` if called before `GameRunner`
+  /// has attached this controller, or before `EngineView` has painted
+  /// a first frame.
+  Future<Uint8List?> captureScreenshot({double pixelRatio = 1.0}) async {
+    final captureScreenshot = _captureScreenshot;
+    if (captureScreenshot == null) return null;
+    return captureScreenshot(pixelRatio: pixelRatio);
   }
 }

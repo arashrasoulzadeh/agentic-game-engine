@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import 'package:flutter/material.dart';
@@ -395,6 +397,36 @@ void main() {
     final afterPop = tester.widgetList<EngineView>(find.byType(EngineView)).single;
     expect(identical(afterPop.world, baseWorld), isTrue);
     expect(afterPop.paused, isFalse);
+  });
+
+  test('SceneController.captureScreenshot returns null before GameRunner attaches it', () async {
+    final scenes = SceneController();
+    expect(await scenes.captureScreenshot(), isNull);
+  });
+
+  testWidgets(
+      'SceneController.captureScreenshot returns the base scene\'s rendered frame as PNG bytes',
+      (tester) async {
+    final scene = _MarkerScene('captured');
+    final game = _SwitchingGame(scene);
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump();
+
+    // RenderRepaintBoundary.toImage's real rasterizer round-trip
+    // deadlocks inside testWidgets' fake-async zone combined with
+    // GameRunner's own continuously-rescheduling Ticker -- the same
+    // class of issue sprite_atlas_test.dart documents for
+    // ui.instantiateImageCodec -- so it needs tester.runAsync here too.
+    Uint8List? bytes;
+    await tester.runAsync(() async {
+      bytes = await scene.scenes!.captureScreenshot();
+    });
+
+    expect(bytes, isNotNull);
+    // PNG magic number -- proves this is real encoded image data, not
+    // just raw pixels or an empty buffer.
+    expect(bytes!.sublist(0, 4), [0x89, 0x50, 0x4E, 0x47]);
   });
 }
 

@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kReleaseMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 
 import '../rendering/camera.dart';
@@ -118,6 +122,13 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   bool _paused = false;
   _LoadedGame? _overlay;
 
+  /// Wraps the base scene's `EngineView` (not an overlay's, and not
+  /// `OnScreenControls`) so [_captureScreenshot] can find its
+  /// `RenderRepaintBoundary` and snapshot exactly the gameplay viewport
+  /// — the same thing a player actually sees, not whatever UI happens
+  /// to be layered on top.
+  final GlobalKey _engineViewRepaintKey = GlobalKey();
+
   /// The `_future` a load error was already reported for -- `build`
   /// re-runs every frame while the loading screen's own spinner
   /// animates, and without this a single load failure would spam
@@ -136,6 +147,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
       pushOverlay: _pushOverlay,
       popOverlay: _popOverlay,
       loadSceneWithTransition: _loadSceneWithTransition,
+      captureScreenshot: _captureScreenshot,
     );
     _gameState = widget.game.createInitialState();
     _future = _load(widget.game.createInitialScene());
@@ -206,6 +218,28 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
 
   void _popOverlay() {
     setState(() => _overlay = null);
+  }
+
+  /// Snapshots the base scene's `EngineView` (see
+  /// [_engineViewRepaintKey]'s own doc comment) as PNG bytes —
+  /// `SceneController.captureScreenshot`'s implementation, typically
+  /// used right before `SaveGame.save(..., thumbnail: bytes)` for a
+  /// save-slot preview. [pixelRatio] scales the capture relative to
+  /// logical pixels; a thumbnail usually wants well under `1.0` to
+  /// keep the saved bytes small. Returns `null` if `EngineView` hasn't
+  /// painted a frame yet (its `RenderRepaintBoundary` isn't attached
+  /// to the render tree until then) rather than throwing — a save
+  /// taken too early just gets no thumbnail instead of crashing.
+  Future<Uint8List?> _captureScreenshot({double pixelRatio = 1.0}) async {
+    final renderObject = _engineViewRepaintKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderRepaintBoundary) return null;
+    final image = await renderObject.toImage(pixelRatio: pixelRatio);
+    try {
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    } finally {
+      image.dispose();
+    }
   }
 
   /// Lazily decoded once and reused for every scene load thereafter —
@@ -382,42 +416,46 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           );
         }
         final overlay = _overlay;
-        final engineView = EngineView(
-          world: loaded.world,
-          atlasRegistry: loaded.atlasRegistry,
-          camera: loaded.camera,
-          inputController: loaded.inputController,
-          cameraFollowEntity: loaded.scene.cameraFollowEntity(loaded.world),
-          backgroundColor: widget.game.config.backgroundColor,
-          paused: _paused || overlay != null,
-          // Forced off in a real release build regardless of what
-          // game_config.json says -- these are debugging aids, not
-          // something a shipped build should ever be able to leak
-          // (a config file left with one of these true by accident,
-          // the common way this actually happens, otherwise ships
-          // fps/tick/entity-count text or collider outlines to real
-          // players). kReleaseMode is a compile-time constant Dart
-          // tree-shakes the disabled branch from entirely in a release
-          // build, not a runtime check with any cost.
-          showFpsOverlay: !kReleaseMode && widget.game.config.showFpsOverlay,
-          showColliderDebug: !kReleaseMode && widget.game.config.showColliderDebug,
-          showPerformanceOverlay: !kReleaseMode && widget.game.config.showPerformanceOverlay,
-          showAutoTileBitmask: !kReleaseMode &&
-              (widget.game.config.showAutoTileBitmask || loaded.scene.showAutoTileBitmask),
-          ambientBrightness: loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness,
-          dayNightCycle: loaded.scene.dayNightCycle,
-          maxFps: widget.game.config.maxFps,
-          frameStats: widget.game.frameStats,
-          singlePassLighting: widget.game.config.singlePassLighting,
-          // No taps while an overlay is up -- it alone should be
-          // interactive, so the paused scene underneath can't be
-          // accidentally poked through it.
-          onWorldTap: overlay == null
-              ? (worldPosition) =>
-                  loaded.scene.handleTap(loaded.world, _sceneController, worldPosition)
-              : null,
-          // Call scene's update method after each world step for per-frame logic
-          onPostTick: (dt, world) => loaded.scene.update(dt, world),
+        final engineView = RepaintBoundary(
+          key: _engineViewRepaintKey,
+          child: EngineView(
+            world: loaded.world,
+            atlasRegistry: loaded.atlasRegistry,
+            camera: loaded.camera,
+            inputController: loaded.inputController,
+            cameraFollowEntity: loaded.scene.cameraFollowEntity(loaded.world),
+            backgroundColor: widget.game.config.backgroundColor,
+            paused: _paused || overlay != null,
+            // Forced off in a real release build regardless of what
+            // game_config.json says -- these are debugging aids, not
+            // something a shipped build should ever be able to leak
+            // (a config file left with one of these true by accident,
+            // the common way this actually happens, otherwise ships
+            // fps/tick/entity-count text or collider outlines to real
+            // players). kReleaseMode is a compile-time constant Dart
+            // tree-shakes the disabled branch from entirely in a release
+            // build, not a runtime check with any cost.
+            showFpsOverlay: !kReleaseMode && widget.game.config.showFpsOverlay,
+            showColliderDebug: !kReleaseMode && widget.game.config.showColliderDebug,
+            showPerformanceOverlay: !kReleaseMode && widget.game.config.showPerformanceOverlay,
+            showAutoTileBitmask: !kReleaseMode &&
+                (widget.game.config.showAutoTileBitmask || loaded.scene.showAutoTileBitmask),
+            ambientBrightness:
+                loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness,
+            dayNightCycle: loaded.scene.dayNightCycle,
+            maxFps: widget.game.config.maxFps,
+            frameStats: widget.game.frameStats,
+            singlePassLighting: widget.game.config.singlePassLighting,
+            // No taps while an overlay is up -- it alone should be
+            // interactive, so the paused scene underneath can't be
+            // accidentally poked through it.
+            onWorldTap: overlay == null
+                ? (worldPosition) =>
+                    loaded.scene.handleTap(loaded.world, _sceneController, worldPosition)
+                : null,
+            // Call scene's update method after each world step for per-frame logic
+            onPostTick: (dt, world) => loaded.scene.update(dt, world),
+          ),
         );
 
         final controller = loaded.inputController;
