@@ -99,6 +99,40 @@ actionable items here.
 
 - [x] **Procedural level generation** — Room/corridor (BSP), cellular automata caves, wave-function collapse for tile patterns. Seeded, deterministic, JSON output. Implemented in `engine_core/lib/src/physics/procedural_generation.dart` with `BSPGenerator`, `CellularAutomataGenerator`, `WFCGenerator`, `ProceduralLevelGenerator`.
 
+- [x] **Dialogue / branching-conversation system** — `DialogueGraph`/`DialogueNode`/`DialogueChoice` (`content/dialogue.dart`, plain-JSON round-trip like `Level`/`Cinematic`) plus a `DialogueRunner` driven on demand (not a `System`) that resolves choices through `StringTable` and emits each choice's event onto `EventBus`. `DialogueBoxScene` (`ui/dialogue_box_scene.dart`) renders it.
+
+- [x] **AI steering primitives** — `seek`/`arrive`/`wander` (`ai/steering.dart`) — plain functions, not `Behavior`s, meant as shared math for `FollowBehavior`/`AvoidanceBehavior` to call into. `arrive` gives a decelerating approach instead of `FollowBehavior`'s hard stop/start at `stopDistance`.
+
+- [x] **FollowBehavior.jumpAcrossGaps** — An NPC blocked by a gap it's physically capable of clearing now requests a real jump (via `PlatformerController.jumpRequested`, the same field player input sets) computed from the same arc math `JumpSystem` uses, instead of just walking up to the edge and stopping.
+
+- [x] **AttackSystem.requireLineOfSight** — Gates melee/ranged attacks on `WorldView.hasLineOfSight`, the same convention `FollowBehavior`/`FleeBehavior` already use — an attacker behind a wall from its target no longer fires through it. Cooldown still ticks down while blocked.
+
+- [x] **Hearing / sound propagation** — `SoundEvent` (`ai/hearing.dart`) is an `EventBus` event any system can emit; `HearingSystem` matches it against every `HearingComponent`-bearing entity's range and tile occlusion (reusing `raycastTileMap`'s traversal) and writes a heard position into that entity's `AIState.memory` blackboard. `InvestigateBehavior` consumes it to walk the NPC toward the last-heard sound.
+
+- [x] **TileMap collision layers/groups** — `Collider.collisionGroup`/`collisionMask` and a matching per-tile-id `TileMap.collisionGroups` bitmask, checked by both `CollisionSystem` and `TileCollisionSystem` — lets a level or spawn helper put player, enemies, and projectiles in different collision groups (e.g. so enemies stop colliding with each other) without affecting who still collides with solid tiles.
+
+- [x] **Camera shake enhancements** — `Camera.shake` grew named params (`frequency`, `decay`, `impulse` for a sharp one-time hit vs. sustained, `axis` for per-axis shake, `stack` for additive multiple shakes) on top of the original `shake(magnitude, duration)`.
+
+- [x] **TileMap auto-tile bitmask debug overlay** — `EngineView.showAutoTileBitmask` draws each auto-tiled cell's computed neighbor bitmask with a hover tooltip, now also wired through `GameConfig.showAutoTileBitmask`/`Scene.showAutoTileBitmask` so a game can actually turn it on.
+
+- [x] **Single-pass ambient-lighting shader** — `ambient_lighting.frag` computes the combined darkness mask for every light in one fragment shader invocation instead of the legacy `saveLayer` + per-light draw path (1 draw instead of 1+N). Opt-in via `EngineView.singlePassLighting`/`GameConfig.singlePassLighting` (default `false`); falls back to the legacy path for any light using `castsShadows`, `coneAngle`, or `useGpuShadows`.
+
+- [x] **Particle rendering batching** — Plain (spriteless) particles now batch through one `Canvas.drawAtlas` call per `zIndex` via a new tiny cached `ParticleDotTexture`, instead of one `drawCircle`/`Paint` pair per particle. Falls back per-particle to the original `drawCircle` path for any frame before the texture's one-time async generation resolves or for a particle that carries its own registered `Sprite`.
+
+- [x] **AnimationClip.sequence memoization** — Memoized by its full argument set — a call site that rebuilds the same sequence repeatedly (e.g. from `Scene.populate`, which reruns on every scene reload/room transition) gets the same cached instance back instead of re-running `List.generate`/reallocating a fresh clip every time.
+
+- [x] **Gravity.fallMultiplier** — An extra gravity multiplier `GravitySystem` applies only while an entity is already falling (`Velocity.y > 0`), independent of `Gravity.scale` (which speeds up rise and fall equally, changing jump height/reach too). The standard "floaty rise, snappy fall" platformer feel — `1` (default) is no asymmetry, identical to every jump before this field existed.
+
+- [x] **ParallaxLayer.fitHeight** — Stretches a background region to exactly the viewport's height instead of native size (optionally tiled).
+
+- [x] **Documentation site** — Added a top-level `docs/` tutorial/concept layer (`docs/README.md`, `docs/getting-started.md`, `docs/concepts/{ecs,content-as-data,agent-api,rendering,platformer}.md`, `docs/tutorials/01-hello-world.md`, `docs/examples/{README,spawn-enemy-with-patrol-ai,health-bar,save-load,custom-behavior}.md`), written for both human developers and AI coding agents, with every code sample checked against current signatures under `packages/*/lib/src/`.
+
+- [x] **Flutter Web CanvasKit text rendering fix** — Bundled Roboto Regular as `EngineDefault` font family (`engine_flutter/assets/fonts/EngineDefault-Regular.ttf`, declared in `engine_flutter/pubspec.yaml`) so `Text` has a default typeface it owns on every platform, fixing the "dialogue box renders, text never appears" bug on web where CanvasKit has no typeface until a custom font is bundled or its default-font fetch succeeds.
+
+- [x] **Colorblind shader Impeller compatibility** — Changed `uniform int uColorblindType` to `float` in `shaders/colorblind.frag` (rounded on read) to fix "Non-floating-type struct member ... is not supported" error under Impeller that broke `flutter test` asset bundling for every `engine_flutter`-dependent package.
+
+- [x] **Scene transition effects** — Fade and iris transitions between scenes. Configurable duration/easing. Implemented in `engine_flutter/lib/src/logic/scene_transition.dart` with `SceneTransitionType`, `SceneTransitionConfig`, `SceneTransition`, `SceneTransitionSystem`, plus `SceneController.loadSceneWithTransition` / `GameRunner._loadSceneWithTransition` driving it as two phases (cover the outgoing scene, swap `World`s, reveal the incoming one) across the existing `World`-per-scene swap. Uses existing `ScreenTint` (fade) and `ClipShape` (iris) components for rendering — no multi-scene rendering needed, since only one `World` is ever live at a time. Slide/crossfade/pixel-dissolve still require true multi-scene rendering (both scenes' `World`s drawn simultaneously) and remain future work.
+
 ## For zahaak
 
 Engine gameplay features the `zahaak` game design (local-only,
@@ -134,7 +168,8 @@ team releasing a real 2D game needs that nothing above already covers.
 - [ ] **Debug overlay improvements** — FPS graph, memory graph, entity inspector with component values.
 - [x] **Localization system** — Language switching, RTL support, pluralization, date/number formatting. JSON/CSV/ARB resource files. Implemented in `engine_core/lib/src/content/localization.dart` + `engine_flutter/lib/src/logic/localization_flutter.dart` with `LocalizationManager`, `LocaleInfo`, `LocalizedString`, `LocalizationFlutter`, `RTLWidget`, and extension methods.
 - [ ] **Asset hot-reload** — Watch assets folder, reload textures/atlases/levels without restart. Invalidate caches on file change.
-- [ ] **Scene transition effects** — Fade, slide, crossfade, iris, pixel-dissolve between scenes. Configurable duration/easing.
+- [x] **Scene transition effects (fade/iris)** — see "New engine features" above for the full writeup; duplicated here before, now tracked in one place. Slide/crossfade/pixel-dissolve remain open, see the item directly below.
+- [ ] **Scene transition effects (slide/crossfade/pixel-dissolve)** — needs true multi-scene rendering (both the outgoing and incoming `World`s drawn in the same frame), unlike the fade/iris transitions already shipped — see "New engine features" above.
 - [ ] **Local split-screen multiplayer** — Viewport splitting, multi-camera/multi-`WorldView` simulation support. Viewport split in `engine_flutter`, multi-context support in `engine_core`.
 - [ ] **Network multiplayer foundation** — ECS state serialization, rollback networking, lag compensation, state sync.
 - [ ] **Visual scripting / node editor** — Extend BT/FSM visual editor to general logic (dialogue, cutscenes, AI, quests).
@@ -142,10 +177,5 @@ team releasing a real 2D game needs that nothing above already covers.
 - [ ] **Documentation site** — Auto-generated from doc comments, versioned, searchable. Host on GitHub Pages.
 - [ ] **Example game** — Complete small game showing all features (platformer, RPG, puzzle). Playable in browser.
 - [ ] **Performance profiling tools** — Frame time breakdown, GPU/CPU timers, allocation tracker, shader compile time.
-- [ ] **Input action aliases** — Friendly names for actions (e.g., "Jump" vs "action_0") shown in remap menus and debug overlay.
-- [ ] **Debug overlay improvements** — FPS graph, memory graph, entity inspector with component values.
-- [ ] **Asset hot-reload** — Watch assets folder, reload textures/atlases/levels without restart. Invalidate caches on file change.
-- [ ] **Scene transition effects** — Fade, slide, crossfade, iris, pixel-dissolve between scenes. Configurable duration/easing.
-- [ ] **Localization system** — Language switching, RTL support, pluralization, date/number formatting. JSON/CSV/ARB resource files.
 
 (End of file)

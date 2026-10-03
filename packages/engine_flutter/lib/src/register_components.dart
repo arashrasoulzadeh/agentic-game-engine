@@ -11,6 +11,7 @@ import 'rendering/screen_tint.dart';
 import 'rendering/sprite.dart';
 import 'rendering/text.dart';
 import 'input/input.dart';
+import 'logic/scene_transition.dart';
 
 /// Registers engine_flutter's components on [world], mirroring
 /// `registerCoreComponents`. `GameRunner` calls both automatically;
@@ -75,5 +76,10 @@ void registerFlutterComponents(World world) {
     'playerOptions',
     (o) => o.toJson(),
     PlayerOptions.fromJson,
+  );
+  world.components.register<SceneTransition>(
+    'sceneTransition',
+    (s) => s.toJson(),
+    SceneTransition.fromJson,
   );
 }

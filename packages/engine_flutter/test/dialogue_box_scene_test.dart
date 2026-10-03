@@ -260,6 +260,67 @@ void main() {
       expect(endScene.runner.currentText(WorldView(world)), isNull);
     });
 
+    testWidgets(
+        'loadAssets registers the generated choice-button atlas '
+        '(regression: overriding loadAssets without calling '
+        "super.loadAssets() left every choice button's Sprite pointing "
+        'at an unregistered kMenuButtonAtlasId -- AtlasRegistry.resolve '
+        'throws for that uncaught mid-paint, which silently killed the '
+        "dialogue text and buttons drawn later in the same frame, i.e. "
+        'the actual "dialogue box renders, no text, cannot pick a '
+        'choice" bug)', (tester) async {
+      final world = World(width: 800, height: 600);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final gameState = GameState({});
+      final controller = SceneController();
+
+      // loadAssets runs after populate in GameRunner._load (see
+      // DialogueBoxScene.loadAssets's own doc comment) -- populate
+      // first so buttons() has real choices to bake labels from.
+      await scene.populate(world, controller, gameState);
+      final registry = await scene.loadAssets();
+
+      expect(registry.has(kMenuButtonAtlasId), isTrue);
+    });
+
+    testWidgets(
+        "update() re-spawns choice buttons once the current node changes "
+        '(regression: ButtonMenuScene.populate only ever spawns buttons '
+        'once, so a tap that correctly advanced the DialogueRunner to a '
+        "new node used to leave the previous node's now-stale buttons "
+        'on screen -- the actual "dialogue advances internally but the '
+        'player can\'t act on it / can\'t skip" bug)', (tester) async {
+      final world = World(width: 800, height: 600);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+
+      final gameState = GameState({});
+      final controller = SceneController();
+
+      await scene.populate(world, controller, gameState);
+      await tester.pump(const Duration(milliseconds: 16));
+
+      final buttonsBefore = world.storeOf<Button>().length;
+      final actionIdsBefore = scene.buttons().map((b) => b.actionId).toSet();
+      expect(actionIdsBefore, {'choice_yes', 'choice_no'});
+
+      // Advance to a node with a different set of choices (none here,
+      // since 'rewarded' is a dead end) by going through the same path
+      // a real tap takes: onButtonPressed -> onChoiceSelected -> advance.
+      scene.onButtonPressed('choice_yes', controller);
+      scene.update(0.016, world);
+
+      expect(scene.runner.currentNode!.id, 'rewarded');
+      expect(buttonsBefore, 2);
+      // 'rewarded' has no choices -- the old node's buttons must be
+      // actually destroyed, not just superseded by new ones left
+      // stacked on top underneath.
+      expect(scene.buttons(), isEmpty);
+      expect(world.storeOf<Button>().length, 0);
+    });
+
     test('loadAssets skips a missing atlas instead of throwing', () async {
       final scene = _TestDialogueBoxScene(
         DialogueRunner(graph: graph, stringTable: stringTable),

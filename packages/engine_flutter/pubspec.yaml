@@ -55,3 +55,20 @@ flutter:
     - shaders/normal_mapping.frag
     - shaders/normal_mapping_combined.frag
     - shaders/colorblind.frag
+  fonts:
+    # Bundled so `Text` has a default typeface it owns outright on every
+    # platform, instead of implicitly depending on whatever "no
+    # fontFamily" resolves to. That dependency is invisible on
+    # mobile/desktop (the OS always has *some* default system font) but
+    # not on web: Flutter Web's CanvasKit renderer has no typeface at
+    # all until either a custom font is bundled (this) or its own
+    # default-font fetch succeeds, and a page where that never resolves
+    # lays out `Text` with correct size/position (so nothing crashes or
+    # looks obviously broken) while painting zero visible glyphs — the
+    # exact "dialogue box renders, text never appears" bug this fixes.
+    # Roboto-Regular from the Flutter SDK's own bundled Material fonts
+    # (`bin/cache/artifacts/material_fonts/`) — Apache-2.0, already the
+    # implicit default for every Flutter app's Material widgets.
+    - family: EngineDefault
+      fonts:
+        - asset: assets/fonts/EngineDefault-Regular.ttf

@@ -2958,6 +2958,19 @@ for (var row = minRow; row <= maxRow; row++) {
             style: TextStyle(
               color: Color(text.colorArgb),
               fontSize: effectiveFontSize,
+              // No fontFamily means "whatever the platform's default
+              // is" — fine on mobile/desktop (the OS always has one)
+              // but on Flutter Web's CanvasKit renderer that can mean
+              // *no usable typeface at all*: layout still succeeds
+              // (painter.width/height are sane) but nothing actually
+              // paints, invisibly. Pin to the font this package bundles
+              // (pubspec.yaml's `fonts:`) so `Text` never depends on
+              // that resolution succeeding.
+              // A font declared in a dependency package's pubspec.yaml
+              // is only resolvable under this prefixed family name —
+              // even from code inside that same package — per Flutter's
+              // asset-bundling convention for package-provided fonts.
+              fontFamily: 'packages/engine_flutter/EngineDefault',
             ),
           ),
           textDirection: TextDirection.ltr,
@@ -2968,7 +2981,8 @@ for (var row = minRow; row <= maxRow; row++) {
           txt.TextAlignment.center => -painter.width / 2,
           txt.TextAlignment.right => -painter.width,
         };
-        painter.paint(canvas, Offset(screenPos.dx + dx, screenPos.dy - painter.height / 2));
+        final paintOffset = Offset(screenPos.dx + dx, screenPos.dy - painter.height / 2);
+        painter.paint(canvas, paintOffset);
       }));
     }
     return order;

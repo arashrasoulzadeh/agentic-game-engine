@@ -100,7 +100,16 @@ Future<SpriteAtlas> buildMenuButtonAtlas(
 ///
 /// [actionId] is what a `Scene.handleTap`/`ButtonMenuScene.onButtonPressed`
 /// reads back via `Button.actionId` — free-form, chosen by the game.
-EntityId spawnMenuButton(
+///
+/// Returns both spawned entity ids (the label is only spawned for
+/// custom-art buttons with a non-empty [label] — see `.label`'s own
+/// doc comment) so a caller that needs to tear a button back down
+/// (`ButtonMenuScene.refreshButtons`, for a menu whose choices change
+/// at runtime, e.g. `DialogueBoxScene`) can destroy exactly what this
+/// call created, nothing more.
+typedef SpawnedMenuButton = ({EntityId button, EntityId? label});
+
+SpawnedMenuButton spawnMenuButton(
   World world, {
   required Offset position,
   required String label,
@@ -118,6 +127,7 @@ EntityId spawnMenuButton(
   world.storeOf<Position>().set(id, Position(position.dx, position.dy));
   world.storeOf<Button>().set(id, Button(actionId));
 
+  EntityId? labelId;
   if (atlasId != null && region != null) {
     world.storeOf<ButtonHitBox>().set(
           id,
@@ -125,7 +135,7 @@ EntityId spawnMenuButton(
         );
     world.storeOf<Sprite>().set(id, Sprite(atlasId, region, scaleX: scaleX, scaleY: scaleY));
     if (label.isNotEmpty) {
-      final labelId = world.spawn();
+      labelId = world.spawn();
       world.storeOf<Position>().set(labelId, Position(position.dx, position.dy));
       world.storeOf<txt.Text>().set(
             labelId,
@@ -140,5 +150,5 @@ EntityId spawnMenuButton(
     world.storeOf<Collider>().set(id, Collider((height ?? kMenuButtonHeight) / 2));
     world.storeOf<Sprite>().set(id, Sprite(kMenuButtonAtlasId, label));
   }
-  return id;
+  return (button: id, label: labelId);
 }

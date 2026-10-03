@@ -112,14 +112,25 @@ abstract class ButtonMenuScene extends Scene {
   @override
   double get ambientBrightness => 1.0;
 
-  @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
-    this.state = state;
+  /// Every entity [_spawnButtons] has created that's still live — both
+  /// halves of each `SpawnedMenuButton` (the button itself, and its
+  /// label `Text` entity for custom-art buttons) — so [refreshButtons]
+  /// knows exactly what to destroy before respawning, without having
+  /// to guess which `Button`-tagged entities in the `World` are this
+  /// menu's own.
+  final List<EntityId> _spawnedButtonEntities = [];
+
+  /// Spawns one entity (two, with a label, for custom-art buttons) per
+  /// [buttons] spec, stacked vertically per [buttonSpacing] and
+  /// centered on `(world.width / 2, world.height / 2)` — shared by
+  /// [populate] (the initial spawn) and [refreshButtons] (a respawn
+  /// after this menu's own choices have changed at runtime).
+  void _spawnButtons(World world) {
     final specs = buttons();
     final startY = world.height / 2 - (specs.length - 1) * buttonSpacing / 2;
     for (var i = 0; i < specs.length; i++) {
       final spec = specs[i];
-      spawnMenuButton(
+      final spawned = spawnMenuButton(
         world,
         position: Offset(world.width / 2, startY + i * buttonSpacing),
         label: spec.label,
@@ -133,7 +144,34 @@ abstract class ButtonMenuScene extends Scene {
         labelColorArgb: spec.labelColorArgb,
         labelFontSize: spec.labelFontSize,
       );
+      _spawnedButtonEntities.add(spawned.button);
+      if (spawned.label != null) _spawnedButtonEntities.add(spawned.label!);
     }
+  }
+
+  /// Destroys every entity this menu's own buttons currently occupy,
+  /// then re-spawns from a fresh call to [buttons] — for a menu whose
+  /// choices can change without reloading the whole scene (e.g.
+  /// `DialogueBoxScene` advancing to a node with different choices).
+  /// [populate] only ever spawns once; nothing previously called this
+  /// for a change mid-scene, which used to leave a dialogue's choice
+  /// buttons frozen on whichever node's choices were current when the
+  /// overlay first loaded — tapping one still correctly advanced the
+  /// `DialogueRunner` (confirmed live: the node *did* change), but the
+  /// screen kept showing the stale choices from the node already left,
+  /// with no way to act on the real ones underneath.
+  void refreshButtons(World world) {
+    for (final entity in _spawnedButtonEntities) {
+      world.destroy(entity);
+    }
+    _spawnedButtonEntities.clear();
+    _spawnButtons(world);
+  }
+
+  @override
+  Future<void> populate(World world, SceneController scenes, GameState state) async {
+    this.state = state;
+    _spawnButtons(world);
   }
 
   @override

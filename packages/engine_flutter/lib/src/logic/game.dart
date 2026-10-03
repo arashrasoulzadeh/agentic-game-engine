@@ -2,6 +2,7 @@ import 'package:engine_core/engine_core.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kReleaseMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show FontLoader, rootBundle;
 
 import '../rendering/camera.dart';
 import '../rendering/engine_view.dart';
@@ -11,6 +12,7 @@ import '../input/input.dart';
 import '../input/on_screen_controls.dart';
 import '../register_components.dart';
 import 'scene.dart';
+import 'scene_transition.dart';
 import '../rendering/sprite_atlas.dart';
 
 /// The top-level entry point a game implements. Extend this instead of
@@ -133,6 +135,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
       loadScene: _loadScene,
       pushOverlay: _pushOverlay,
       popOverlay: _popOverlay,
+      loadSceneWithTransition: _loadSceneWithTransition,
     );
     _gameState = widget.game.createInitialState();
     _future = _load(widget.game.createInitialScene());
@@ -148,6 +151,44 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
       _future = _load(next);
       _overlay = null;
     });
+  }
+
+  /// Loads [next] with an optional [transition] effect, in two phases
+  /// sharing one `World` swap: [transition] plays once covering the
+  /// current scene, [next] loads exactly like [_loadScene], then
+  /// [transition] plays again revealing it. `EngineView` keeps ticking
+  /// whichever `World` is live throughout (its own `Ticker` isn't gated
+  /// by `setState`), which is what actually advances
+  /// `SceneTransitionSystem`/the tween underneath each phase — this
+  /// just awaits each phase's own real-time duration before moving on.
+  Future<void> _loadSceneWithTransition(
+    Scene next,
+    SceneTransitionConfig? transition,
+  ) async {
+    if (transition == null) {
+      _loadScene(next);
+      return;
+    }
+    final outgoingWorld = (await _future).world;
+    await _runTransitionPhase(outgoingWorld, transition, covering: true);
+    _loadScene(next);
+    final incomingWorld = (await _future).world;
+    await _runTransitionPhase(incomingWorld, transition, covering: false);
+  }
+
+  /// Spawns a [SceneTransition] on [world] and waits out its real-time
+  /// duration. [covering]: see [SceneTransition.covering].
+  Future<void> _runTransitionPhase(
+    World world,
+    SceneTransitionConfig transition, {
+    required bool covering,
+  }) async {
+    final entity = world.spawn();
+    final sceneTransition = SceneTransition(config: transition, covering: covering);
+    sceneTransition.start(world, cameraX: world.width / 2, cameraY: world.height / 2);
+    world.storeOf<SceneTransition>().set(entity, sceneTransition);
+    await Future.delayed(Duration(milliseconds: (transition.duration * 1000).round()));
+    if (world.entities.isAlive(entity)) world.destroy(entity);
   }
 
   /// Loads [overlay] into its own small `World` (via the same `_load`
@@ -176,17 +217,77 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   /// null check in [_load].
   Future<SpriteAtlas>? _packedAtlasFuture;
 
+  /// Flutter Web's font loading is asynchronous and the framework
+  /// doesn't block the first frame on it — normally invisible, since a
+  /// typical app's first real text appears after a user interaction,
+  /// well after the font has finished loading in the background. This
+  /// engine doesn't get that grace period: a `Scene.populate` can spawn
+  /// `Text`/push a dialogue overlay on literally the very first frame,
+  /// racing the bundled default font's `rootBundle.load`. Observed live
+  /// on web/CanvasKit: `Text`'s `Position`/size/color were all correct
+  /// and sprites rendered normally, but every glyph silently painted
+  /// nothing — once a font family fails to resolve for a `Paragraph`,
+  /// CanvasKit's `FontCollection` caches that failure for the rest of
+  /// the session, so it doesn't self-correct once the bytes do arrive a
+  /// few frames later. Awaited once, cached *on success only*, in
+  /// [_load] (which already runs before any scene's content can need
+  /// it) rather than per-call — caching a *failed* attempt here too
+  /// used to permanently break every later scene load for the rest of
+  /// the process (this field is `static`, so one transient asset-load
+  /// failure poisoned it forever, with no way to recover): caught live
+  /// via `packed_atlas_test.dart`'s test that deliberately fails an
+  /// unrelated asset load by nulling out the whole `flutter/assets`
+  /// channel, which left [_defaultFontFuture] permanently rejected and
+  /// broke every `testWidgets` after it in the same process.
+  static Future<void>? _defaultFontFuture;
+
+  Future<void> _ensureDefaultFontLoaded() {
+    final future = _defaultFontFuture ??= _loadDefaultFont();
+    // Bounded, and forgets a failed/timed-out attempt instead of
+    // caching the rejection forever (see [_defaultFontFuture]'s own doc
+    // comment) — the next call retries from scratch rather than
+    // replaying the same error. A missing/corrupt/slow-to-resolve
+    // bundled font is also not worth treating as fatal to (or capable
+    // of indefinitely stalling) the whole scene load: the engine
+    // already tolerates a missing sprite atlas the same way (see
+    // `DialogueBoxScene.loadAssets`) -- `Text` just falls back to
+    // whatever typeface the platform resolves for an unset
+    // `fontFamily`, which is exactly this engine's behavior before
+    // this font ever existed. The timeout also matters for
+    // `testWidgets` specifically: a `rootBundle.load` that never
+    // replies (an asset channel mock with no handler for this path, or
+    // one some other test in the same process left in a bad state)
+    // would otherwise hang every later `GameRunner` test for the rest
+    // of that 10-minute-timeout-bounded suite run instead of just this
+    // one scene failing to get its font.
+    return future.timeout(const Duration(seconds: 5), onTimeout: () {}).catchError(
+      (Object error, StackTrace stackTrace) {
+        _defaultFontFuture = null;
+      },
+    );
+  }
+
+  static Future<void> _loadDefaultFont() async {
+    final loader = FontLoader('packages/engine_flutter/EngineDefault')
+      ..addFont(
+        rootBundle.load('packages/engine_flutter/assets/fonts/EngineDefault-Regular.ttf'),
+      );
+    await loader.load();
+  }
+
   /// Builds a brand-new `World` for [scene] rather than clearing the
   /// previous one — the previous scene's systems (added in its own
   /// `populate`) would otherwise keep running against the new scene's
   /// entities, a class of bug a fresh `World` rules out entirely.
   Future<_LoadedGame> _load(Scene scene) async {
+    await _ensureDefaultFontLoaded();
     final world = World(
       width: widget.game.config.worldWidth,
       height: widget.game.config.worldHeight,
     );
     registerCoreComponents(world);
     registerFlutterComponents(world);
+    world.addSystem(SceneTransitionSystem());
     await scene.populate(world, _sceneController, _gameState);
 
     final atlasRegistry = await scene.loadAssets();

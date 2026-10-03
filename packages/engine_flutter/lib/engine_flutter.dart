@@ -31,6 +31,7 @@ export 'src/register_components.dart';
 export 'src/logic/room_exit_trigger.dart';
 export 'src/logic/save_game.dart';
 export 'src/logic/scene.dart';
+export 'src/logic/scene_transition.dart';
 export 'src/logic/error_reporting.dart';
 export 'src/logic/error_reporting_backends.dart';
 export 'src/logic/player_options_flutter.dart';

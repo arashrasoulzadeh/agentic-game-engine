@@ -150,6 +150,11 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
 
     // Initialize typewriter
     runner.reset();
+    // Matches the node `super.populate` (below) spawns buttons for --
+    // see `update`'s own doc comment on why this must be set now, not
+    // left at its `null` default, or the very first `update` tick would
+    // see a "changed" node and immediately respawn the same buttons.
+    _lastNodeId = runner.currentNode?.id;
 
     await super.populate(world, scenes, state);
   }
@@ -161,9 +166,25 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
   /// is content-driven, and a bad/missing portrait or background atlas
   /// ID (e.g. a typo in a hand-authored dialogue graph) shouldn't crash
   /// the whole scene — the sprite referencing it just won't render.
+  ///
+  /// Starts from `super.loadAssets()` (not a fresh `AtlasRegistry`) so
+  /// `ButtonMenuScene`'s generated choice-button atlas — built from
+  /// `buttons()`'s labels, keyed by `kMenuButtonAtlasId` — is registered
+  /// too. Skipping that call used to leave every choice button's
+  /// `Sprite` pointing at an atlas id nothing had registered:
+  /// `AtlasRegistry.resolve` throws `ArgumentError` for an unregistered
+  /// id, uncaught, partway through `EngineView`'s sprite-draw loop — so
+  /// the background/portrait (drawn earlier in z-order) still showed,
+  /// but the dialogue text and every choice button (drawn after, same
+  /// paint call) silently never did, with no visible error. That's the
+  /// actual cause of a live "dialogue box renders, no text, can't pick
+  /// a choice or skip" report; calling `super.loadAssets()` first is
+  /// safe since `buttons()` only needs `_world`/`runner` state, already
+  /// set by `populate` (which always runs before `loadAssets` — see
+  /// `GameRunner._load`).
   @override
   Future<AtlasRegistry> loadAssets() async {
-    _atlasRegistry = AtlasRegistry();
+    _atlasRegistry = await super.loadAssets();
 
     for (final atlasId in requiredAtlasIds) {
       try {
@@ -240,12 +261,31 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
       // Update portrait if node changed
       _updatePortraitIfNeeded(world);
     }
-    
+
+    // Re-spawn the choice buttons whenever the current node changes --
+    // `ButtonMenuScene.populate` (via `super.populate`) only ever
+    // spawns once, so without this a choice tap correctly advanced
+    // `runner` (confirmed live: the node *did* change) but the screen
+    // kept showing the previous node's now-stale buttons, with no way
+    // to act on the real ones underneath -- exactly the "cannot pick a
+    // choice / cannot skip" bug this fixes.
+    final currentNodeId = runner.currentNode?.id;
+    if (currentNodeId != _lastNodeId) {
+      _lastNodeId = currentNodeId;
+      refreshButtons(world);
+    }
+
     // If typewriter just completed, the full text is now shown
     if (wasComplete != runner.isTypewriterComplete && runner.isTypewriterComplete) {
       // Typewriter just finished - full text is visible
     }
   }
+
+  /// The node id [update] last refreshed buttons for -- set in
+  /// [populate] to match the node `super.populate` spawns buttons for,
+  /// so `update`'s very first tick sees no change and doesn't
+  /// immediately respawn the same buttons again.
+  String? _lastNodeId;
 
   void _updatePortraitIfNeeded(World world) {
     final node = runner.currentNode;

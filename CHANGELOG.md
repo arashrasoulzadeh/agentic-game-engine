@@ -8,6 +8,53 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### New engine features (round 6)
+
+- Scene transition effects: fade and iris transitions between scenes,
+  configurable duration/easing. `SceneTransitionType`/
+  `SceneTransitionConfig`/`SceneTransition`/`SceneTransitionSystem`
+  (`logic/scene_transition.dart`) plus
+  `SceneController.loadSceneWithTransition`/
+  `GameRunner._loadSceneWithTransition`, which play the same config
+  twice — once covering the outgoing scene, once revealing the
+  incoming one — around the existing `World`-per-scene swap, reusing
+  `ScreenTint` (fade) and `ClipShape` (iris) rather than needing true
+  multi-scene rendering.
+
+### Hardening pass (round 4)
+
+- **`ButtonMenuScene`/`DialogueBoxScene` never re-spawned choice
+  buttons when the current dialogue node changed**: `populate` only
+  ever spawned buttons once, so a tap that correctly advanced the
+  `DialogueRunner` to a new node left the previous node's now-stale
+  buttons on screen with no way to act on the real ones underneath.
+  Added `ButtonMenuScene.refreshButtons` (destroy-then-respawn, via a
+  new `spawnMenuButton` return type tracking both entities a button
+  spawn creates) and called it from `DialogueBoxScene.update` whenever
+  `runner.currentNode.id` changes (`ui/button_menu_scene.dart`,
+  `ui/dialogue_box_scene.dart`, `ui/menu_button_atlas.dart`).
+- **`DialogueBoxScene.loadAssets` overriding without calling
+  `super.loadAssets()`** left every choice button's `Sprite` pointing
+  at the unregistered `kMenuButtonAtlasId` — `AtlasRegistry.resolve`
+  throws uncaught mid-paint, silently killing the dialogue text and
+  every choice button drawn after it in the same frame. Fixed by
+  starting from `super.loadAssets()` (`ui/dialogue_box_scene.dart`).
+- **Flutter Web's CanvasKit renderer had no default typeface for
+  `Text`** until a custom font is bundled or its own default-font
+  fetch succeeds — `Text` laid out with correct size/position but
+  painted zero visible glyphs on web whenever that race was lost.
+  Bundled Roboto Regular as `EngineDefault`
+  (`assets/fonts/EngineDefault-Regular.ttf`, declared in
+  `pubspec.yaml`), pinned every `Text`'s `fontFamily` to it
+  (`rendering/engine_view.dart`), and awaited loading it once via
+  `FontLoader` before a scene's first frame (`logic/game.dart`).
+  Caching that load in a `static` field meant one transient asset-load
+  failure (or a slow/never-replying mock asset channel under
+  `testWidgets`) permanently broke every later scene load for the rest
+  of the process — bounded the wait with a timeout and only cache a
+  *successful* load, retrying from scratch otherwise
+  (`logic/game.dart`).
+
 ### Hardening pass (round 3)
 
 - **`HearingSystem` could silently stop working for a new `World`**:

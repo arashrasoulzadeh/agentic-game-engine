@@ -4,6 +4,7 @@ import 'package:engine_core/engine_core.dart';
 
 import '../rendering/camera.dart';
 import '../rendering/sprite_atlas.dart';
+import 'scene_transition.dart';
 
 /// One level/room a `Game` can be showing. `GameRunner` builds a fresh
 /// `World` per scene (not a bulk-clear of the previous one, so no
@@ -129,6 +130,7 @@ abstract class Scene {
 /// `GameRunner`.
 class SceneController {
   void Function(Scene next)? _loadScene;
+  void Function(Scene next, SceneTransitionConfig? transition)? _loadSceneWithTransition;
   void Function(Scene overlay)? _pushOverlay;
   void Function()? _popOverlay;
 
@@ -137,10 +139,12 @@ class SceneController {
     required void Function(Scene next) loadScene,
     required void Function(Scene overlay) pushOverlay,
     required void Function() popOverlay,
+    void Function(Scene next, SceneTransitionConfig? transition)? loadSceneWithTransition,
   }) {
     _loadScene = loadScene;
     _pushOverlay = pushOverlay;
     _popOverlay = popOverlay;
+    _loadSceneWithTransition = loadSceneWithTransition;
   }
 
   /// Tears down the current scene's `World` and loads [next] in its
@@ -157,6 +161,25 @@ class SceneController {
           'SceneController.loadScene called before it was attached to a running GameRunner');
     }
     loadScene(next);
+  }
+
+  /// Loads [next] the same way [loadScene] does, but plays [transition]
+  /// (if given) across the swap: the current scene covers (fade to
+  /// [SceneTransitionConfig.fadeColorArgb], or an iris closing — see
+  /// `SceneTransition.covering`), then [next] loads, then the same
+  /// effect plays in reverse to reveal it. Null (default) switches
+  /// immediately like [loadScene] — no transition machinery runs at
+  /// all. See `GameRunner._loadSceneWithTransition` for the actual
+  /// two-phase sequencing; this just forwards to whatever `GameRunner`
+  /// wired up via [attach].
+  void loadSceneWithTransition(Scene next, {SceneTransitionConfig? transition}) {
+    final loadSceneWithTransition = _loadSceneWithTransition;
+    if (loadSceneWithTransition == null) {
+      // Fall back to immediate switch if transition callback isn't wired
+      loadScene(next);
+      return;
+    }
+    loadSceneWithTransition(next, transition);
   }
 
   /// Freezes the current scene in place (its `World` keeps existing,
