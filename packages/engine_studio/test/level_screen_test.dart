@@ -134,4 +134,41 @@ void main() {
     );
     expect(button.onPressed, isNull);
   });
+
+  testWidgets(
+    'the preview scrolls horizontally and vertically when the level is larger than the view',
+    (tester) async {
+      final big = {
+        'entities': [
+          {
+            'name': 'far',
+            'components': {
+              'position': {'x': 900.0, 'y': 700.0},
+            },
+          },
+        ],
+      };
+      final path = write('big.json', jsonEncode(big));
+      await tester.pumpWidget(
+        MaterialApp(home: LevelScreen(levelPath: path, autosaveInterval: null)),
+      );
+
+      final scrollables = find.ancestor(
+        of: find.byKey(const Key('level-canvas')),
+        matching: find.byType(Scrollable),
+      );
+      final states = tester.stateList<ScrollableState>(scrollables).toList();
+      expect(
+        states.map((s) => s.widget.axis),
+        containsAll([Axis.vertical, Axis.horizontal]),
+      );
+      for (final state in states) {
+        expect(
+          state.position.maxScrollExtent,
+          greaterThan(0),
+          reason: 'the ${state.widget.axis} view has somewhere to scroll',
+        );
+      }
+    },
+  );
 }

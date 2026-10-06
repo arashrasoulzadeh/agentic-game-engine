@@ -40,6 +40,8 @@ class _LevelScreenState extends State<LevelScreen> {
   LevelEditor? _editor;
   String? _loadError;
   Timer? _autosave;
+  final _vertical = ScrollController();
+  final _horizontal = ScrollController();
   String? _saveError;
 
   @override
@@ -62,6 +64,8 @@ class _LevelScreenState extends State<LevelScreen> {
   @override
   void dispose() {
     _autosave?.cancel();
+    _vertical.dispose();
+    _horizontal.dispose();
     super.dispose();
   }
 
@@ -184,24 +188,37 @@ class _LevelScreenState extends State<LevelScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: InteractiveViewer(
-                        minScale: 0.25,
-                        maxScale: 8,
-                        constrained: false,
-                        child: GestureDetector(
-                          key: const Key('level-canvas'),
-                          behavior: HitTestBehavior.opaque,
-                          onTapUp: (details) =>
-                              _edit((e) => e.tap(details.localPosition)),
-                          onPanStart: (details) =>
-                              _edit((e) => e.dragStart(details.localPosition)),
-                          onPanUpdate: (details) =>
-                              _edit((e) => e.dragUpdate(details.localPosition)),
-                          onPanEnd: (_) =>
-                              _edit((e) => e.dragEnd(_lastPoint(e))),
-                          child: CustomPaint(
-                            size: _canvasSize(editor),
-                            painter: LevelCanvasPainter(editor: editor),
+                      child: Scrollbar(
+                        controller: _vertical,
+                        thumbVisibility: true,
+                        child: SingleChildScrollView(
+                          controller: _vertical,
+                          child: Scrollbar(
+                            controller: _horizontal,
+                            thumbVisibility: true,
+                            notificationPredicate: (n) => n.depth == 1,
+                            child: SingleChildScrollView(
+                              controller: _horizontal,
+                              scrollDirection: Axis.horizontal,
+                              child: GestureDetector(
+                                key: const Key('level-canvas'),
+                                behavior: HitTestBehavior.opaque,
+                                onTapUp: (details) =>
+                                    _edit((e) => e.tap(details.localPosition)),
+                                onPanStart: (details) => _edit(
+                                  (e) => e.dragStart(details.localPosition),
+                                ),
+                                onPanUpdate: (details) => _edit(
+                                  (e) => e.dragUpdate(details.localPosition),
+                                ),
+                                onPanEnd: (_) =>
+                                    _edit((e) => e.dragEnd(_lastPoint(e))),
+                                child: CustomPaint(
+                                  size: _canvasSize(editor),
+                                  painter: LevelCanvasPainter(editor: editor),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
