@@ -41,6 +41,7 @@ export 'src/ecs/event_bus.dart';
 export 'src/ecs/event_helpers.dart';
 export 'src/content/game_state.dart';
 export 'src/content/level_document.dart';
+export 'src/content/level_format.dart';
 export 'src/content/level.dart';
 export 'src/command/edit_command.dart';
 export 'src/command/entity_commands.dart';

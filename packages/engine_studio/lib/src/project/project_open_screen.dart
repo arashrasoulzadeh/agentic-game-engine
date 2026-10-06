@@ -1,34 +1,24 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
-import '../level/level_screen.dart';
+import 'project_screen.dart';
 import 'studio_project.dart';
 
 /// Asks for a game project folder and opens it. Takes a typed path for now: a
 /// native folder picker needs a plugin, which is added once package access is
 /// available.
 class ProjectOpenScreen extends StatefulWidget {
-  /// Called with the project once it opens. The app passes [openFirstLevel];
+  /// Called with the project once it opens. The app passes [openProject];
   /// tests pass their own.
   final void Function(BuildContext context, StudioProject project) onOpened;
 
   const ProjectOpenScreen({super.key, required this.onOpened});
 
-  /// Opens the project's first level, or shows a message when there are none,
-  /// since an empty level screen would only be confusing.
-  static void openFirstLevel(BuildContext context, StudioProject project) {
-    final levels = project.levelPaths();
-    if (levels.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This project has no levels yet.')),
-      );
-      return;
-    }
+  /// Opens the project's level list. Shared by the app and tests that don't
+  /// need to override it.
+  static void openProject(BuildContext context, StudioProject project) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) =>
-            LevelScreen(levelPath: '${project.root}/${levels.first}'),
-      ),
+      MaterialPageRoute<void>(builder: (_) => ProjectScreen(project: project)),
     );
   }
 

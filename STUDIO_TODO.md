@@ -450,7 +450,7 @@ Goal: a designer builds, saves, and play-tests a level.
   from schemas.
 - [ ] **3.10** Validation panel: live `LevelValidator` results, click to
   focus the offending entity.
-- [ ] **3.11** Save/load level JSON; autosave to a backup file, not the
+- [x] **3.11** (saves atomically to the level file; autosave writes a backup under .studio/autosave and never touches the level; also adds a project level list) Save/load level JSON; autosave to a backup file, not the
   level itself.
 - [ ] **3.12** Play-test button: saves snapshot, launches game runner
   process on that level, returns on exit (D4 default: separate process).

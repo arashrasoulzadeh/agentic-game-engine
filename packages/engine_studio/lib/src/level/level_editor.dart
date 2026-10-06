@@ -39,7 +39,19 @@ class LevelEditor {
   /// one step.
   List<EditCommand>? _stroke;
 
-  LevelEditor(this.document) : history = CommandHistory(document);
+  /// The level as last saved or loaded, encoded, so [isDirty] is a plain
+  /// comparison. Undoing back to this state is therefore clean again.
+  String _savedText;
+
+  LevelEditor(this.document)
+    : history = CommandHistory(document),
+      _savedText = encodeLevelJson(document.toJson());
+
+  /// Whether the level differs from its last saved state.
+  bool get isDirty => encodeLevelJson(document.toJson()) != _savedText;
+
+  /// Records the current state as saved. Call after a successful write.
+  void markSaved() => _savedText = encodeLevelJson(document.toJson());
 
   /// Geometry for the document as it is right now. Recomputed on each read, so a
   /// view never shows positions from before the latest command.
@@ -113,7 +125,7 @@ class LevelEditor {
   void dragEnd(Offset point) {
     final moved = _dragging;
     if (moved != null) {
-      final at = _dragPosition ?? point;
+      final at = point;
       _dragging = null;
       _dragPosition = null;
       history.execute(MoveEntityCommand(entity: moved, x: at.dx, y: at.dy));

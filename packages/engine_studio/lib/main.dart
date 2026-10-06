@@ -16,7 +16,7 @@ class EngineStudioApp extends StatelessWidget {
     return MaterialApp(
       title: 'Engine Studio',
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-      home: ProjectOpenScreen(onOpened: ProjectOpenScreen.openFirstLevel),
+      home: ProjectOpenScreen(onOpened: ProjectOpenScreen.openProject),
     );
   }
 }

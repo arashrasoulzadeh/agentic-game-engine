@@ -2,10 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:engine_core/engine_core.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../inspector/inspector_panel.dart';
 import 'level_canvas.dart';
+import 'level_saver.dart';
 import 'level_editor.dart';
 
 /// Edits one level file in memory. A toolbar picks the tool; gestures on the
@@ -14,7 +18,19 @@ import 'level_editor.dart';
 class LevelScreen extends StatefulWidget {
   final String levelPath;
 
-  const LevelScreen({super.key, required this.levelPath});
+  /// The project this level belongs to. Autosave backups go under it; without it
+  /// there is nowhere to back up to, so autosave is off.
+  final String? projectRoot;
+
+  /// How often a dirty level is backed up. Null turns autosave off.
+  final Duration? autosaveInterval;
+
+  const LevelScreen({
+    super.key,
+    required this.levelPath,
+    this.projectRoot,
+    this.autosaveInterval = const Duration(seconds: 30),
+  });
 
   @override
   State<LevelScreen> createState() => _LevelScreenState();
@@ -23,6 +39,8 @@ class LevelScreen extends StatefulWidget {
 class _LevelScreenState extends State<LevelScreen> {
   LevelEditor? _editor;
   String? _loadError;
+  Timer? _autosave;
+  String? _saveError;
 
   @override
   void initState() {
@@ -34,6 +52,46 @@ class _LevelScreenState extends State<LevelScreen> {
       _editor = LevelEditor(LevelDocument.fromJson(json));
     } on Object catch (e) {
       _loadError = 'Could not open ${widget.levelPath}: $e';
+    }
+    final interval = widget.autosaveInterval;
+    if (interval != null && widget.projectRoot != null) {
+      _autosave = Timer.periodic(interval, (_) => _backUpIfDirty());
+    }
+  }
+
+  @override
+  void dispose() {
+    _autosave?.cancel();
+    super.dispose();
+  }
+
+  /// Writes the level file. A failure stays on screen rather than being lost, and
+  /// the level stays dirty so nothing is marked saved that was not.
+  void _save() {
+    final editor = _editor;
+    if (editor == null) return;
+    try {
+      LevelSaver.save(widget.levelPath, editor.document);
+      editor.markSaved();
+      setState(() => _saveError = null);
+    } on FileSystemException catch (e) {
+      setState(() => _saveError = 'Could not save: ${e.message}');
+    }
+  }
+
+  void _backUpIfDirty() {
+    final editor = _editor;
+    final root = widget.projectRoot;
+    if (editor == null || root == null || !editor.isDirty) return;
+    try {
+      LevelSaver.autosave(
+        projectRoot: root,
+        levelPath: widget.levelPath,
+        document: editor.document,
+      );
+    } on FileSystemException {
+      // A missed backup is not worth interrupting the designer. The next tick
+      // retries, and the explicit save reports its own failures.
     }
   }
 
@@ -53,87 +111,125 @@ class _LevelScreenState extends State<LevelScreen> {
     }
 
     final title = widget.levelPath.split(Platform.pathSeparator).last;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: [
-          IconButton(
-            key: const Key('undo'),
-            tooltip: editor.history.undoLabel == null
-                ? 'Nothing to undo'
-                : 'Undo ${editor.history.undoLabel}',
-            onPressed: editor.history.canUndo
-                ? () => _edit((e) => e.undo())
-                : null,
-            icon: const Icon(Icons.undo),
-          ),
-          IconButton(
-            key: const Key('redo'),
-            tooltip: editor.history.redoLabel == null
-                ? 'Nothing to redo'
-                : 'Redo ${editor.history.redoLabel}',
-            onPressed: editor.history.canRedo
-                ? () => _edit((e) => e.redo())
-                : null,
-            icon: const Icon(Icons.redo),
-          ),
-          IconButton(
-            key: const Key('delete-selected'),
-            tooltip: 'Delete selected entity',
-            onPressed: editor.selected == null
-                ? null
-                : () => _edit((e) => e.deleteSelected()),
-            icon: const Icon(Icons.delete_outline),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          _Toolbar(
-            tool: editor.tool,
-            onChanged: (tool) => _edit((e) => e.tool = tool),
-          ),
-          Expanded(
-            child: Row(
+    final saveShortcut = {
+      const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _save,
+      const SingleActivator(LogicalKeyboardKey.keyS, control: true): _save,
+    };
+    return CallbackShortcuts(
+      bindings: saveShortcut,
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Row(
               children: [
-                Expanded(
-                  child: InteractiveViewer(
-                    minScale: 0.25,
-                    maxScale: 8,
-                    constrained: false,
-                    child: GestureDetector(
-                      key: const Key('level-canvas'),
-                      behavior: HitTestBehavior.opaque,
-                      onTapUp: (details) =>
-                          _edit((e) => e.tap(details.localPosition)),
-                      onPanStart: (details) =>
-                          _edit((e) => e.dragStart(details.localPosition)),
-                      onPanUpdate: (details) =>
-                          _edit((e) => e.dragUpdate(details.localPosition)),
-                      onPanEnd: (_) => _edit((e) => e.dragEnd(_lastPoint(e))),
-                      child: CustomPaint(
-                        size: _canvasSize(editor),
-                        painter: LevelCanvasPainter(editor: editor),
+                Text(title),
+                if (editor.isDirty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Text(
+                      '•',
+                      key: const Key('dirty-marker'),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
-                ),
-                InspectorPanel(
-                  editor: editor,
-                  onChanged: () => setState(() {}),
-                ),
               ],
             ),
+            actions: [
+              IconButton(
+                key: const Key('save'),
+                tooltip: 'Save (Cmd/Ctrl+S)',
+                onPressed: editor.isDirty ? _save : null,
+                icon: const Icon(Icons.save_outlined),
+              ),
+              IconButton(
+                key: const Key('undo'),
+                tooltip: editor.history.undoLabel == null
+                    ? 'Nothing to undo'
+                    : 'Undo ${editor.history.undoLabel}',
+                onPressed: editor.history.canUndo
+                    ? () => _edit((e) => e.undo())
+                    : null,
+                icon: const Icon(Icons.undo),
+              ),
+              IconButton(
+                key: const Key('redo'),
+                tooltip: editor.history.redoLabel == null
+                    ? 'Nothing to redo'
+                    : 'Redo ${editor.history.redoLabel}',
+                onPressed: editor.history.canRedo
+                    ? () => _edit((e) => e.redo())
+                    : null,
+                icon: const Icon(Icons.redo),
+              ),
+              IconButton(
+                key: const Key('delete-selected'),
+                tooltip: 'Delete selected entity',
+                onPressed: editor.selected == null
+                    ? null
+                    : () => _edit((e) => e.deleteSelected()),
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ],
           ),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Text(
-              _statusText(editor),
-              key: const Key('selection-status'),
-            ),
+          body: Column(
+            children: [
+              _Toolbar(
+                tool: editor.tool,
+                onChanged: (tool) => _edit((e) => e.tool = tool),
+              ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: InteractiveViewer(
+                        minScale: 0.25,
+                        maxScale: 8,
+                        constrained: false,
+                        child: GestureDetector(
+                          key: const Key('level-canvas'),
+                          behavior: HitTestBehavior.opaque,
+                          onTapUp: (details) =>
+                              _edit((e) => e.tap(details.localPosition)),
+                          onPanStart: (details) =>
+                              _edit((e) => e.dragStart(details.localPosition)),
+                          onPanUpdate: (details) =>
+                              _edit((e) => e.dragUpdate(details.localPosition)),
+                          onPanEnd: (_) =>
+                              _edit((e) => e.dragEnd(_lastPoint(e))),
+                          child: CustomPaint(
+                            size: _canvasSize(editor),
+                            painter: LevelCanvasPainter(editor: editor),
+                          ),
+                        ),
+                      ),
+                    ),
+                    InspectorPanel(
+                      editor: editor,
+                      onChanged: () => setState(() {}),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                child: Text(
+                  _saveError ?? _statusText(editor),
+                  key: const Key('selection-status'),
+                  style: _saveError == null
+                      ? null
+                      : TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
