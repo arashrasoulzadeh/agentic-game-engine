@@ -2,7 +2,11 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'dart:async';
+
+import 'edits.dart';
 import 'lsp_client.dart';
+import 'sdk_locator.dart';
 
 /// One completion the language server offers: the text to insert, and its kind.
 class ServerCompletion {
@@ -28,11 +32,15 @@ class DartSession {
   DartSession._(this._client, this.projectRoot);
 
   /// Starts the server for [projectRoot] and completes the protocol handshake.
-  static Future<DartSession> open(
-    String projectRoot, {
-    String dart = 'dart',
-  }) async {
-    final client = await LspClient.start(dart: dart, projectRoot: projectRoot);
+  static Future<DartSession> open(String projectRoot, {String? dart}) async {
+    final binary = dart ?? findDartBinary();
+    if (binary == null) {
+      throw StateError('No Dart SDK found. Set DART_SDK or install Flutter.');
+    }
+    final client = await LspClient.start(
+      dart: binary,
+      projectRoot: projectRoot,
+    );
     await client.request('initialize', {
       'processId': pid,
       'rootUri': Uri.directory(projectRoot).toString(),
@@ -100,6 +108,66 @@ class DartSession {
     ];
   }
 
+  /// Problems the server reports for [path] as it analyzes, live. Each event is the
+  /// full current list for the file, so an empty list means the file is clean now.
+  Stream<List<LiveDiagnostic>> diagnosticsFor(String path) {
+    final uri = _uri(path);
+    return _client.notifications
+        .where((m) => m['method'] == 'textDocument/publishDiagnostics')
+        .map((m) => m['params'] as Map<String, dynamic>)
+        .where((params) => params['uri'] == uri)
+        .map(
+          (params) => [
+            for (final d
+                in (params['diagnostics'] as List).cast<Map<String, dynamic>>())
+              LiveDiagnostic.fromJson(d),
+          ],
+        );
+  }
+
+  /// Where the symbol at [line] and [character] in [path] is declared, or null when
+  /// the server does not know.
+  Future<SourceLocation?> definitionAt(
+    String path,
+    int line,
+    int character,
+  ) async {
+    final result = await _client.request('textDocument/definition', {
+      'textDocument': {'uri': _uri(path)},
+      'position': {'line': line, 'character': character},
+    });
+    final first = result is List && result.isNotEmpty ? result.first : result;
+    if (first is! Map<String, dynamic>) return null;
+    final range = (first['range'] as Map).cast<String, dynamic>();
+    final start = (range['start'] as Map).cast<String, dynamic>();
+    return SourceLocation(
+      Uri.parse(first['uri'] as String).toFilePath(),
+      start['line'] as int,
+      start['character'] as int,
+    );
+  }
+
+  /// The formatted text of [path], as the server's formatter would write it, or null
+  /// when there is nothing to change.
+  Future<String?> formatted(String path, String text) async {
+    final result = await _client.request('textDocument/formatting', {
+      'textDocument': {'uri': _uri(path)},
+      'options': {'tabSize': 2, 'insertSpaces': true},
+    });
+    if (result is! List || result.isEmpty) return null;
+    final edits = [
+      for (final e in result.cast<Map<String, dynamic>>())
+        TextEdit(
+          (e['range']['start']['line'] as int),
+          (e['range']['start']['character'] as int),
+          (e['range']['end']['line'] as int),
+          (e['range']['end']['character'] as int),
+          e['newText'] as String,
+        ),
+    ];
+    return applyEdits(text, edits);
+  }
+
   /// Ends the session: asks the server to shut down, then exits it.
   Future<void> close() async {
     await _client.request('shutdown', {});
@@ -131,3 +199,44 @@ String _kindName(int? kind) => switch (kind) {
   21 => 'constant',
   _ => 'symbol',
 };
+
+/// A place in a file: where a definition is.
+class SourceLocation {
+  final String path;
+  final int line;
+  final int character;
+
+  const SourceLocation(this.path, this.line, this.character);
+}
+
+/// One problem the server reports as it analyzes: its severity, place, and message.
+class LiveDiagnostic {
+  final int line;
+  final int character;
+  final int severity;
+  final String message;
+  final String? code;
+
+  const LiveDiagnostic({
+    required this.line,
+    required this.character,
+    required this.severity,
+    required this.message,
+    this.code,
+  });
+
+  /// LSP severities: 1 error, 2 warning, 3 information, 4 hint.
+  bool get isError => severity == 1;
+
+  factory LiveDiagnostic.fromJson(Map<String, dynamic> json) {
+    final start = ((json['range'] as Map)['start'] as Map)
+        .cast<String, dynamic>();
+    return LiveDiagnostic(
+      line: start['line'] as int,
+      character: start['character'] as int,
+      severity: (json['severity'] as int?) ?? 1,
+      message: json['message'] as String,
+      code: json['code']?.toString(),
+    );
+  }
+}

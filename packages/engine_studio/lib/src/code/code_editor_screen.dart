@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
+import 'dart:async';
+
 import '../lsp/dart_session.dart';
 import 'analysis.dart';
 import 'completion.dart';
@@ -52,6 +54,8 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   int _completionIndex = 0;
   bool _completionDismissed = false;
   DartSession? _session;
+  StreamSubscription<List<LiveDiagnostic>>? _liveSub;
+  List<LiveDiagnostic>? _live;
   List<CompletionItem>? _serverItems;
   int _serverRequest = 0;
   bool _analyzing = false;
@@ -90,6 +94,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         return;
       }
       session.openFile(widget.filePath, _text.text);
+      _liveSub = session.diagnosticsFor(widget.filePath).listen((list) {
+        if (mounted) setState(() => _live = list);
+      });
       setState(() => _session = session);
     } on Object {
       // Fall back to the local list; the editor works without the server.
@@ -142,6 +149,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
 
   @override
   void dispose() {
+    _liveSub?.cancel();
     _session?.close();
     _text.removeListener(_onTextChanged);
     _text.dispose();
@@ -163,6 +171,19 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   /// Handles keys while the completion list is open: arrows move the selection, Enter
   /// or Tab accepts it, and Escape closes the list. Other keys type as usual.
   KeyEventResult _onEditorKey(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent) {
+      final keyboard = HardwareKeyboard.instance;
+      if (event.logicalKey == LogicalKeyboardKey.f12) {
+        _goToDefinition();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.keyF &&
+          keyboard.isAltPressed &&
+          keyboard.isShiftPressed) {
+        _format();
+        return KeyEventResult.handled;
+      }
+    }
     final items = _completionItems();
     if (items.isEmpty || event is! KeyDownEvent) {
       return KeyEventResult.ignored;
@@ -205,6 +226,61 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       ];
     }
     return completionsFor(word, _symbols);
+  }
+
+  /// Jumps to where the symbol under the cursor is declared. A declaration in this
+  /// file moves the cursor; one in another file opens that file.
+  Future<void> _goToDefinition() async {
+    final session = _session;
+    if (session == null) return;
+    final offset = _text.selection.baseOffset;
+    if (offset < 0) return;
+    final before = _text.text.substring(0, offset);
+    final line = '\n'.allMatches(before).length;
+    final character = offset - (before.lastIndexOf('\n') + 1);
+    final target = await session.definitionAt(widget.filePath, line, character);
+    if (target == null || !mounted) return;
+    if (p.equals(target.path, widget.filePath)) {
+      _jumpToPosition(target.line, target.character);
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => CodeEditorScreen(
+            filePath: target.path,
+            projectRoot: widget.projectRoot,
+            analyzer: widget.analyzer,
+            useLanguageServer: widget.useLanguageServer,
+          ),
+        ),
+      );
+    }
+  }
+
+  /// Formats the file with the language server, as one undoable edit: the whole
+  /// formatted text replaces the old one, and the file is marked changed until saved.
+  Future<void> _format() async {
+    final session = _session;
+    if (session == null) return;
+    final formatted = await session.formatted(widget.filePath, _text.text);
+    if (formatted == null || !mounted || formatted == _text.text) return;
+    _text.value = TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(
+        offset: _text.selection.baseOffset.clamp(0, formatted.length),
+      ),
+    );
+  }
+
+  void _jumpToPosition(int line, int character) {
+    var offset = 0;
+    var current = 0;
+    final text = _text.text;
+    while (current < line && offset < text.length) {
+      if (text.codeUnitAt(offset) == 10) current++;
+      offset++;
+    }
+    final target = (offset + character).clamp(0, text.length);
+    _text.selection = TextSelection.collapsed(offset: target);
   }
 
   void _complete(String name) {
@@ -311,7 +387,11 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   /// The analyzer's findings for this file, or a clean message. Tapping a finding
   /// moves the cursor to its line.
   Widget _analysisPanel(BuildContext context) {
-    final issues = _issues!;
+    final live = _live ?? const <LiveDiagnostic>[];
+    final issues = _issues ?? const <AnalysisIssue>[];
+    if (issues.isEmpty && live.isNotEmpty) {
+      return _liveList(context, live);
+    }
     final theme = Theme.of(context);
     return Container(
       key: const Key('analysis-panel'),
@@ -347,6 +427,36 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                   ),
               ],
             ),
+    );
+  }
+
+  /// The server's live problems for this file, as the file changes.
+  Widget _liveList(BuildContext context, List<LiveDiagnostic> live) {
+    final theme = Theme.of(context);
+    return Container(
+      key: const Key('live-problems'),
+      constraints: const BoxConstraints(maxHeight: 180),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: theme.dividerColor)),
+      ),
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          for (final d in live)
+            ListTile(
+              dense: true,
+              key: Key('live-${d.line}-${d.character}'),
+              leading: Icon(
+                d.isError ? Icons.error_outline : Icons.warning_amber_outlined,
+                color: d.isError
+                    ? theme.colorScheme.error
+                    : theme.colorScheme.tertiary,
+              ),
+              title: Text('${d.line + 1}:${d.character + 1}  ${d.message}'),
+              onTap: () => _jumpToPosition(d.line, d.character),
+            ),
+        ],
+      ),
     );
   }
 
@@ -423,7 +533,8 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                 ),
               ),
             ),
-            if (_issues != null) _analysisPanel(context),
+            if (_issues != null || (_live?.isNotEmpty ?? false))
+              _analysisPanel(context),
           ],
         ),
       ),

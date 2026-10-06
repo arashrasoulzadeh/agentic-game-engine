@@ -13,6 +13,7 @@ class LspClient {
   final Stream<List<int>> _input;
   final void Function(List<int>) _output;
   final _pending = <int, Completer<Map<String, dynamic>>>{};
+  final _notifications = StreamController<Map<String, dynamic>>.broadcast();
   final _buffer = BytesBuilder(copy: false);
   int _nextId = 1;
 
@@ -51,6 +52,9 @@ class LspClient {
       return message['result'];
     });
   }
+
+  /// Messages the server sends without being asked, such as diagnostics.
+  Stream<Map<String, dynamic>> get notifications => _notifications.stream;
 
   /// Sends a notification, which expects no response.
   void notify(String method, Map<String, dynamic> params) {
@@ -91,6 +95,8 @@ class LspClient {
     final id = message['id'];
     if (id is int && _pending.containsKey(id)) {
       _pending.remove(id)!.complete(message);
+    } else if (message['method'] is String && !_notifications.isClosed) {
+      _notifications.add(message);
     }
   }
 
@@ -109,5 +115,6 @@ class LspClient {
   /// Closes the server's pipes. The server exits when its input ends.
   Future<void> dispose() async {
     _pending.clear();
+    await _notifications.close();
   }
 }
