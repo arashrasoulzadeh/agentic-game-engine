@@ -1,4 +1,5 @@
 import '../content/level_document.dart';
+import 'composite_command.dart';
 import 'edit_command.dart';
 
 /// Undo and redo stacks for a [LevelDocument]. Every edit goes through
@@ -19,6 +20,13 @@ class CommandHistory {
 
   /// Label of the command the next [redo] re-applies, or null.
   String? get redoLabel => _redo.isEmpty ? null : _redo.last.label;
+
+  /// Applies [commands] as one undo step labelled [label], such as a paint
+  /// stroke made of many tile edits. Nothing is recorded when [commands] is empty.
+  void executeGroup(String label, List<EditCommand> commands) {
+    if (commands.isEmpty) return;
+    execute(CompositeCommand(label, commands));
+  }
 
   void execute(EditCommand command) {
     command.apply(document);

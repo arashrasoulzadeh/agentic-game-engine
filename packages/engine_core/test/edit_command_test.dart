@@ -41,6 +41,7 @@ void _expectApplyThenRevertRestores(EditCommand command, LevelDocument doc) {
 }
 
 void main() {
+  _groupTests();
   group('entity commands', () {
     test('AddEntityCommand appends by default and reverts exactly', () {
       final doc = _doc();
@@ -172,6 +173,46 @@ void main() {
       expect(history.undoLabel, 'Add entity coin');
       history.undo();
       expect(history.redoLabel, 'Add entity coin');
+    });
+  });
+}
+
+void _groupTests() {
+  group('CommandHistory.executeGroup', () {
+    test('a group is one undo step, and undo reverts all of it', () {
+      final doc = _doc();
+      final history = CommandHistory(doc);
+      final before = _snapshot(doc);
+      history.executeGroup('Paint stroke', [
+        AddEntityCommand(LevelEntity(name: 'a')),
+        AddEntityCommand(LevelEntity(name: 'b')),
+        AddEntityCommand(LevelEntity(name: 'c')),
+      ]);
+      expect(doc.entities, hasLength(5));
+      expect(history.undoLabel, 'Paint stroke');
+
+      history.undo();
+      expect(_snapshot(doc), before);
+      expect(history.canUndo, isFalse);
+    });
+
+    test('redo re-applies the whole group', () {
+      final doc = _doc();
+      final history = CommandHistory(doc);
+      history.executeGroup('Stroke', [
+        AddEntityCommand(LevelEntity(name: 'a')),
+        AddEntityCommand(LevelEntity(name: 'b')),
+      ]);
+      history.undo();
+      history.redo();
+      expect(doc.entities, hasLength(4));
+    });
+
+    test('an empty group records nothing', () {
+      final doc = _doc();
+      final history = CommandHistory(doc);
+      history.executeGroup('Nothing', []);
+      expect(history.canUndo, isFalse);
     });
   });
 }

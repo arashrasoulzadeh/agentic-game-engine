@@ -396,17 +396,17 @@ game runs.
 - [~] **1.2** Commands: `PlaceTile`, `EraseTile`, `FillRegion`,
   `AddEntity`, `RemoveEntity`, `SetComponentField`, `MoveEntity`,
   `SetLayer`.
-- [~] **1.3** `CommandHistory` with undo/redo stacks and stroke merging.
+- [x] **1.3** `CommandHistory` with undo/redo stacks and stroke merging.
 - [x] **1.4** Test per command: `apply` then `revert` restores the
   document exactly.
-- [~] **1.5** Test: history undo/redo ordering and stroke merge.
-- [ ] **1.6** Decide D2 (commands in `engine_core`) and record it.
+- [x] **1.5** Test: history undo/redo ordering and stroke merge.
+- [x] **1.6** Decide D2 (commands in `engine_core`) and record it.
 - [x] **1.7** `LevelValidator` in `engine_core/lib/src/validation/`:
   unknown component, field out of range, dangling entity refs.
 - [x] **1.8** Reachability check (flood-fill from spawn over the tile
   map) — reuses existing tile traversal.
 - [~] **1.9** Tests for each validator rule, including a passing level.
-- [ ] **1.10** Decide D4 (play-test process model) and record it.
+- [x] **1.10** Decide D4 (play-test process model) and record it.
 
 ### Phase 2 — CLI and headless tooling
 
