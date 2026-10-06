@@ -1,29 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:args/command_runner.dart';
-import 'package:engine_cli/src/studio_command.dart';
 import 'package:test/test.dart';
 
-/// Runs `game_agent studio ...` and returns the exit code. Output is discarded:
-/// these tests check the exit code and the files written, which CI relies on.
-Future<int> _run(List<String> args) async {
-  final runner = CommandRunner<int>('game_agent', 'test')
-    ..addCommand(StudioCommand());
-  return await IOOverrides.runZoned(
-    () async => (await runner.run(['studio', ...args])) ?? 0,
-    stdout: () => _NullStdout(),
-  );
-}
+import 'support/run_studio.dart';
 
-class _NullStdout implements Stdout {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-  @override
-  void writeln([Object? object = '']) {}
-  @override
-  void write(Object? object) {}
-}
+/// Shorthand for the import-tmx command in these tests.
+Future<int> _run(List<String> args) => runStudio(args);
 
 const _tmx = '''
 <map version="1.10" orientation="orthogonal" width="3" height="2" tilewidth="16" tileheight="16">

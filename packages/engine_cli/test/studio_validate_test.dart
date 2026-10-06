@@ -1,30 +1,12 @@
 import 'dart:io';
 
-import 'package:args/command_runner.dart';
-import 'package:engine_cli/src/studio_command.dart';
 import 'package:test/test.dart';
 
-/// Runs `game_agent studio validate` against a throwaway project and returns
-/// its exit code. stdout is discarded here: these tests check the exit code,
-/// which is the contract CI relies on.
-Future<int> _validate(Directory project, {bool strict = false}) async {
-  final runner = CommandRunner<int>('game_agent', 'test')
-    ..addCommand(StudioCommand());
-  final args = ['studio', 'validate', project.path, if (strict) '--strict'];
-  return await IOOverrides.runZoned(
-    () async => (await runner.run(args)) ?? 0,
-    stdout: () => _NullStdout(),
-  );
-}
+import 'support/run_studio.dart';
 
-class _NullStdout implements Stdout {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-  @override
-  void writeln([Object? object = '']) {}
-  @override
-  void write(Object? object) {}
-}
+/// Runs `game_agent studio validate` against a throwaway project.
+Future<int> _validate(Directory project, {bool strict = false}) =>
+    runStudio(['validate', project.path, if (strict) '--strict']);
 
 Directory _project(String levelJson, {String name = 'level.json'}) {
   final dir = Directory.systemTemp.createTempSync('studio_validate');

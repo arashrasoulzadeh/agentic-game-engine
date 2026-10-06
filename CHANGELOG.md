@@ -15,6 +15,11 @@ pubspec.yaml.
   reach).
 - `engine_schema`: a pure-Dart package holding every component's schema, so the
   CLI and the studio validate levels without importing Flutter.
+- `game_agent studio export-levels`: re-writes levels in one canonical format,
+  validating each first (invalid levels are left unchanged).
+- `game_agent studio project-manifest`: writes `project.json` (name, engine ref,
+  levels), keeping keys it does not own.
+- `game_agent studio import-tmx`: converts a Tiled map into a validated level.
 - Studio data model (in `engine_core`): `LevelDocument`, undoable edit commands
   with `CommandHistory`, and `LevelValidator`.
 

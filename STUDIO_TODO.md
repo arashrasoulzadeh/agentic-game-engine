@@ -414,11 +414,11 @@ Goal: an agent or CI can do everything a designer can, without a UI.
 
 - [x] **2.1** `engine_cli` command `studio validate <project>` — runs
   `LevelValidator` over all levels, exits non-zero on errors.
-- [ ] **2.2** `studio export-levels` — writes levels in engine JSON
+- [x] **2.2** `studio export-levels` — writes levels in engine JSON
   (no-op for native files; reserved for Tiled export in phase 5).
 - [x] **2.3** `studio import-tmx <file>` — wraps existing
   `tmx_import.dart`, writes `levels/*.json`, runs validator.
-- [ ] **2.4** `studio project-manifest` — creates/updates `project.json`.
+- [x] **2.4** `studio project-manifest` — creates/updates `project.json`.
 - [ ] **2.5** Test: each CLI command has a golden-output test and an
   exit-code test.
 - [ ] **2.6** End-to-end script: create project → apply commands → save
