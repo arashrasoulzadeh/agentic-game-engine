@@ -10,6 +10,8 @@ import 'package:flutter/services.dart';
 import '../inspector/inspector_panel.dart';
 import '../palette/entity_palette.dart';
 import '../validation/validation_panel.dart';
+import '../playtest/play_test.dart';
+import '../project/studio_project.dart';
 import 'editor_shortcuts.dart';
 import 'level_canvas.dart';
 import 'level_saver.dart';
@@ -28,11 +30,15 @@ class LevelScreen extends StatefulWidget {
   /// How often a dirty level is backed up. Null turns autosave off.
   final Duration? autosaveInterval;
 
+  /// Starts the game on the level. Null uses the real launcher; tests pass a fake.
+  final PlayTest? playTest;
+
   const LevelScreen({
     super.key,
     required this.levelPath,
     this.projectRoot,
     this.autosaveInterval = const Duration(seconds: 30),
+    this.playTest,
   });
 
   @override
@@ -70,6 +76,36 @@ class _LevelScreenState extends State<LevelScreen> {
     _vertical.dispose();
     _horizontal.dispose();
     super.dispose();
+  }
+
+  /// Starts the game on the level as it is now, edits included. Needs the level to
+  /// belong to a project, since the snapshot is written into it.
+  Future<void> _playTest() async {
+    final editor = _editor;
+    final root = widget.projectRoot;
+    if (editor == null) {
+      return;
+    }
+    if (root == null) {
+      _message('Open the level from a project to play-test it.');
+      return;
+    }
+    try {
+      await (widget.playTest ?? PlayTest()).launch(
+        StudioProject.open(root),
+        editor.document,
+      );
+      _message('Play-test started.');
+    } on Object catch (e) {
+      _message('Could not start play-test: $e');
+    }
+  }
+
+  void _message(String text) {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   /// Writes the level file. A failure stays on screen rather than being lost, and
@@ -140,6 +176,12 @@ class _LevelScreenState extends State<LevelScreen> {
             ],
           ),
           actions: [
+            IconButton(
+              key: const Key('playtest'),
+              tooltip: 'Play-test this level',
+              onPressed: _playTest,
+              icon: const Icon(Icons.play_arrow),
+            ),
             IconButton(
               key: const Key('save'),
               tooltip: 'Save (Cmd/Ctrl+S)',

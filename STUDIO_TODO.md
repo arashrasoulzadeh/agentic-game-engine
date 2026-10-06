@@ -452,7 +452,7 @@ Goal: a designer builds, saves, and play-tests a level.
   focus the offending entity.
 - [x] **3.11** (saves atomically to the level file; autosave writes a backup under .studio/autosave and never touches the level; also adds a project level list) Save/load level JSON; autosave to a backup file, not the
   level itself.
-- [ ] **3.12** Play-test button: saves snapshot, launches game runner
+- [~] **3.12** (play-test snapshots the in-memory level, runs the game as a separate process, and the template loads the snapshot via PLAYTEST_LEVEL; end-to-end is blocked: generated games pin engine packages to tag v0.1.0, which the remote does not have) Play-test button: saves snapshot, launches game runner
   process on that level, returns on exit (D4 default: separate process).
 - [ ] **3.13** Widget tests: inspector per field type; tool emits the
   right command.

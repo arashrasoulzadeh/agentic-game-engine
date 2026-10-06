@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../playtest/play_test.dart';
+
 /// Why a folder cannot be opened as a game project. [message] is shown to the
 /// designer as-is, so it says what to fix rather than just that opening failed.
 class ProjectOpenException implements Exception {
@@ -44,7 +46,9 @@ class StudioProject {
     final dir = Directory(p.join(root, 'assets', 'levels'));
     return [
       for (final file in dir.listSync(recursive: true).whereType<File>())
-        if (file.path.endsWith('.json')) p.relative(file.path, from: root),
+        if (file.path.endsWith('.json') &&
+            p.basename(file.path) != playtestLevelFile)
+          p.relative(file.path, from: root),
     ]..sort();
   }
 }
