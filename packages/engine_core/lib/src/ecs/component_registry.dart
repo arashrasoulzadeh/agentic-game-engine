@@ -1,4 +1,4 @@
-import '../schema/component_schema.dart';
+import 'package:engine_schema/engine_schema.dart';
 import 'component_store.dart';
 import 'entity.dart';
 import 'archetype.dart';

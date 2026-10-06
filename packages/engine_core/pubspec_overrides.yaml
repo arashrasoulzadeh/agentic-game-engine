@@ -1,0 +1,5 @@
+# Local monorepo development only: resolve engine_schema from this checkout.
+# Ignored when engine_core is fetched as a git dependency by another project.
+dependency_overrides:
+  engine_schema:
+    path: ../engine_schema

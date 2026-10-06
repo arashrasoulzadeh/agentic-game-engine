@@ -8,6 +8,17 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added
+- `game_agent studio validate [project]`: checks every level under
+  `assets/levels` against the engine's component schemas and exits non-zero on
+  errors (`--strict` also fails on warnings, such as an exit the player cannot
+  reach).
+- `engine_schema`: a pure-Dart package holding every component's schema, so the
+  CLI and the studio validate levels without importing Flutter.
+- Studio data model (in `engine_core`): `LevelDocument`, undoable edit commands
+  with `CommandHistory`, and `LevelValidator`.
+
+
 ### New engine features (round 6)
 
 - Scene transition effects: fade and iris transitions between scenes,

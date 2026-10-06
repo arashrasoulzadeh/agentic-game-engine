@@ -27,6 +27,13 @@ dependencies:
   # pinning to a tag only works if this file is updated to that same tag
   # (and re-tagged) as part of cutting the release. Moving to pub.dev
   # publishing removes this constraint entirely via normal semver.
+  # Self-referencing git dependency for the component schemas (see
+  # engine_core/pubspec.yaml).
+  engine_schema:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_schema
+      ref: main
   engine_core:
     git:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git

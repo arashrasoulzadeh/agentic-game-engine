@@ -19,6 +19,13 @@ dependencies:
   yaml: ^3.1.2
   # Self-referencing git dependency, same pattern as engine_flutter (see
   # its pubspec.yaml comment) — `game_agent lint` needs Level.validate().
+  # Component schemas for `game_agent studio validate`. Pure Dart, so the CLI
+  # validates every engine component without importing Flutter.
+  engine_schema:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_schema
+      ref: main
   engine_core:
     git:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git

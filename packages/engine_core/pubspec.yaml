@@ -1,6 +1,7 @@
 name: engine_core
 description: Pure-Dart 2D game engine core (ECS, scheduler, spatial hash). No Flutter dependency.
 version: 0.1.0
+publish_to: none
 homepage: https://github.com/arashrasoulzadeh/agentic-game-engine
 repository: https://github.com/arashrasoulzadeh/agentic-game-engine
 
@@ -8,6 +9,15 @@ environment:
   sdk: ^3.9.0
 
 dependencies:
+  # Self-referencing git dependency for the component schemas (pure Dart, no
+  # Flutter). Same pattern as engine_flutter's dependency on engine_core: see
+  # that pubspec.yaml's comment. Local monorepo development uses
+  # pubspec_overrides.yaml.
+  engine_schema:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_schema
+      ref: main
   # For TmxImport (Tiled .tmx/.tsx -> TileMap) -- a standard, minimal
   # XML parser rather than hand-rolling one for a real interchange
   # format's actual grammar.

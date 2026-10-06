@@ -412,7 +412,7 @@ game runs.
 
 Goal: an agent or CI can do everything a designer can, without a UI.
 
-- [ ] **2.1** `engine_cli` command `studio validate <project>` — runs
+- [x] **2.1** `engine_cli` command `studio validate <project>` — runs
   `LevelValidator` over all levels, exits non-zero on errors.
 - [ ] **2.2** `studio export-levels` — writes levels in engine JSON
   (no-op for native files; reserved for Tiled export in phase 5).
@@ -423,6 +423,9 @@ Goal: an agent or CI can do everything a designer can, without a UI.
   exit-code test.
 - [ ] **2.6** End-to-end script: create project → apply commands → save
   → validate → load in headless `GameRunner`. Added to CI.
+- [ ] **2.8** `game_agent lint --playable` runs its own flood-fill, separate
+  from `isTileReachable` (engine_core). Make `lint` call `isTileReachable` so the
+  CLI and the validator cannot disagree about reachability.
 - [ ] **2.7** Verify end-to-end against the **pushed** repo (CLAUDE.md
   rule): `game_agent create` a project and run `studio validate` on it.
 

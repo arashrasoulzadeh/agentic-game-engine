@@ -148,7 +148,7 @@ void main() {
       });
     }
 
-    final validator = LevelValidator(() {
+    final validator = LevelValidator.forRegistry(() {
       final world = World(width: 800, height: 480);
       registerCoreComponents(world);
       return world.components;

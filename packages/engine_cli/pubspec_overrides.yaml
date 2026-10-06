@@ -4,3 +4,5 @@
 dependency_overrides:
   engine_core:
     path: ../engine_core
+  engine_schema:
+    path: ../engine_schema

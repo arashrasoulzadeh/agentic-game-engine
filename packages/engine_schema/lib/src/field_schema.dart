@@ -20,10 +20,15 @@ class FieldSchema {
   final List<String> options;
   final Object? defaultValue;
 
+  /// True when the component's `fromJson` cannot load without this key: it
+  /// casts the value with no fallback. A missing required key is an error. A
+  /// field that is not required is allowed to be absent, because `fromJson`
+  /// supplies a default for it.
+  final bool required;
+
   /// True for fields a component only serializes when set (`if (x != null)`
-  /// in its `toJson`), or that serialize as `null` when unset. A missing or
-  /// null optional value is valid; any other value is still checked against
-  /// [type].
+  /// in its `toJson`), or that serialize as `null` when unset. A null optional
+  /// value is valid; any other value is still checked against [type].
   final bool optional;
 
   const FieldSchema(
@@ -33,6 +38,7 @@ class FieldSchema {
     this.max,
     this.options = const [],
     this.defaultValue,
+    this.required = false,
     this.optional = false,
   });
 
@@ -107,7 +113,7 @@ class ComponentSchema {
     final errors = <String>[];
     for (final field in fields) {
       if (!json.containsKey(field.name)) {
-        if (!field.optional) errors.add('${field.name} is missing');
+        if (field.required) errors.add('${field.name} is missing');
         continue;
       }
       final error = field.validate(json[field.name]);

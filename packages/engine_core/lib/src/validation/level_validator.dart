@@ -1,4 +1,6 @@
 import '../content/level_document.dart';
+import 'package:engine_schema/engine_schema.dart';
+
 import '../ecs/component_registry.dart';
 import '../physics/tile_map.dart';
 import 'reachability.dart';
@@ -40,9 +42,29 @@ class LevelIssue {
 /// validate` in CI, so both report the same problems. Checks return every
 /// issue, not only the first, so a designer can fix them in one pass.
 class LevelValidator {
-  final ComponentRegistry components;
+  /// The schema for a component name, or null when it has none.
+  final ComponentSchema? Function(String name) schemaFor;
 
-  const LevelValidator(this.components);
+  /// Whether a component name is known at all. A known component without a
+  /// schema is reported as unchecked; an unknown one as a typo.
+  final bool Function(String name) isKnown;
+
+  const LevelValidator({required this.schemaFor, required this.isKnown});
+
+  /// Validates against a live registry, which knows exactly what a running game
+  /// registers. Use this inside the engine and its tests.
+  factory LevelValidator.forRegistry(ComponentRegistry components) => LevelValidator(
+        schemaFor: components.schemaFor,
+        isKnown: components.isRegistered,
+      );
+
+  /// Validates against a plain schema map, such as `allComponentSchemas`, for
+  /// tools that cannot register components (the CLI, the studio). Every name
+  /// missing from [schemas] is reported as unknown.
+  factory LevelValidator.forSchemas(Map<String, ComponentSchema> schemas) => LevelValidator(
+        schemaFor: (name) => schemas[name],
+        isKnown: schemas.containsKey,
+      );
 
   /// Every issue in [document], in entity order. Empty when the level is valid.
   List<LevelIssue> validate(LevelDocument document) {
@@ -51,14 +73,25 @@ class LevelValidator {
       final entity = document.entities[i];
       for (final entry in entity.components.entries) {
         final name = entry.key;
-        final schema = components.schemaFor(name);
+        if (name == 'tileMap' && entry.value.containsKey('legend')) {
+          for (final message in _legendTileMapProblems(entry.value)) {
+            issues.add(LevelIssue(
+              entityIndex: i,
+              entityName: entity.name,
+              component: name,
+              message: message,
+            ));
+          }
+          continue;
+        }
+        final schema = schemaFor(name);
         if (schema == null) {
           issues.add(
             LevelIssue(
               entityIndex: i,
               entityName: entity.name,
               component: name,
-              message: !components.isRegistered(name)
+              message: !isKnown(name)
                   ? 'unknown component "$name"'
                   : 'component "$name" has no schema, so its fields cannot be checked',
             ),
@@ -79,6 +112,29 @@ class LevelValidator {
     }
     _checkExitReachability(document, issues);
     return issues;
+  }
+
+  /// Checks the legend-authored `tileMap` form: the ASCII `rows` a designer
+  /// writes, and the `legend` that maps each character to a tile id. The flat
+  /// `tiles` form is checked by the schema instead.
+  static List<String> _legendTileMapProblems(Map<String, dynamic> map) {
+    final problems = <String>[];
+    final legend = map['legend'];
+    if (legend is! Map) {
+      return ['legend must be an object mapping characters to tile ids'];
+    }
+    final rows = map['rows'];
+    if (rows is! List || rows.any((row) => row is! String)) {
+      return ['rows must be a list of strings, one per map row'];
+    }
+    for (var r = 0; r < rows.length; r++) {
+      for (final character in (rows[r] as String).split('')) {
+        if (!legend.containsKey(character)) {
+          problems.add('row $r uses "$character", which is not in the legend');
+        }
+      }
+    }
+    return problems;
   }
 
   /// Warns for each exit no walker from the player can reach. Skipped when the

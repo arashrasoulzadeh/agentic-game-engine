@@ -1,4 +1,4 @@
-import 'package:engine_core/engine_core.dart';
+import 'package:engine_schema/engine_schema.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -91,9 +91,9 @@ void main() {
 
   group('ComponentSchema', () {
     const health = ComponentSchema('health', [
-      FieldSchema('current', FieldType.int, min: 0, defaultValue: 100),
+      FieldSchema('current', FieldType.int, min: 0, defaultValue: 100, required: true),
       FieldSchema('max', FieldType.int, min: 1, defaultValue: 100),
-      FieldSchema('label', FieldType.string),
+      FieldSchema('label', FieldType.string, required: true),
     ]);
 
     test('fieldNames preserves declaration order', () {

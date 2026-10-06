@@ -5,5 +5,7 @@
 # git dependency by another project, so it can't cause the ref-mismatch
 # conflict pubspec.yaml's comment describes.
 dependency_overrides:
+  engine_schema:
+    path: ../engine_schema
   engine_core:
     path: ../engine_core

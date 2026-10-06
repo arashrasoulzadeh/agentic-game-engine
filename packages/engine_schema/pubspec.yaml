@@ -1,0 +1,16 @@
+name: engine_schema
+description: >
+  Pure-Dart component schemas for the agentic game engine: the field lists
+  (names, types, ranges, defaults) of every registered component. No Flutter
+  dependency, so the game_agent CLI and the studio can validate levels without
+  importing the rendering packages.
+version: 0.1.0
+homepage: https://github.com/arashrasoulzadeh/agentic-game-engine
+repository: https://github.com/arashrasoulzadeh/agentic-game-engine
+
+environment:
+  sdk: ^3.9.0
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^5.0.0

@@ -2,6 +2,8 @@
 # for why this exists and why it's safe (ignored when engine_platformer
 # is fetched as a git dependency by another project).
 dependency_overrides:
+  engine_schema:
+    path: ../engine_schema
   engine_core:
     path: ../engine_core
   engine_flutter:
