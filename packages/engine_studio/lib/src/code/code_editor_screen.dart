@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
+import 'analysis.dart';
 import 'dart_highlighter.dart';
 import 'project_symbols.dart';
 
@@ -21,7 +22,15 @@ class CodeEditorScreen extends StatefulWidget {
   /// project-specific completions.
   final String? projectRoot;
 
-  const CodeEditorScreen({super.key, required this.filePath, this.projectRoot});
+  /// Runs the analyzer. Tests pass a fake; the app uses the default.
+  final ProjectAnalyzer? analyzer;
+
+  const CodeEditorScreen({
+    super.key,
+    required this.filePath,
+    this.projectRoot,
+    this.analyzer,
+  });
 
   @override
   State<CodeEditorScreen> createState() => _CodeEditorScreenState();
@@ -32,6 +41,8 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   late final ProjectSymbols _symbols;
   late String _saved;
   String? _error;
+  List<AnalysisIssue>? _issues;
+  bool _analyzing = false;
 
   bool get _isDart => widget.filePath.endsWith('.dart');
 
@@ -82,6 +93,44 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     );
   }
 
+  /// Runs the Dart analyzer on the project and keeps the findings for this file. The
+  /// analyzer reads the saved files, so unsaved edits are saved first.
+  Future<void> _analyze() async {
+    final root = widget.projectRoot;
+    if (root == null || _analyzing) {
+      return;
+    }
+    if (_dirty) {
+      _save();
+    }
+    setState(() => _analyzing = true);
+    final all = await (widget.analyzer ?? ProjectAnalyzer()).analyze(root);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _analyzing = false;
+      _issues = [
+        for (final issue in all)
+          if (p.equals(issue.file, widget.filePath)) issue,
+      ];
+    });
+  }
+
+  /// Moves the cursor to the start of [line] (1-based), so tapping a finding shows it.
+  void _jumpTo(int line) {
+    var offset = 0;
+    var current = 1;
+    final text = _text.text;
+    while (current < line && offset < text.length) {
+      if (text.codeUnitAt(offset) == 10) {
+        current++;
+      }
+      offset++;
+    }
+    _text.selection = TextSelection.collapsed(offset: offset);
+  }
+
   void _save() {
     if (!_dirty) {
       return;
@@ -98,6 +147,48 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     } on FileSystemException catch (e) {
       setState(() => _error = 'Could not save: ${e.message}');
     }
+  }
+
+  /// The analyzer's findings for this file, or a clean message. Tapping a finding
+  /// moves the cursor to its line.
+  Widget _analysisPanel(BuildContext context) {
+    final issues = _issues!;
+    final theme = Theme.of(context);
+    return Container(
+      key: const Key('analysis-panel'),
+      constraints: const BoxConstraints(maxHeight: 180),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: theme.dividerColor)),
+      ),
+      child: issues.isEmpty
+          ? const ListTile(
+              dense: true,
+              title: Text('No problems in this file.'),
+            )
+          : ListView(
+              shrinkWrap: true,
+              children: [
+                for (final issue in issues)
+                  ListTile(
+                    dense: true,
+                    key: Key('finding-${issue.line}-${issue.column}'),
+                    leading: Icon(
+                      issue.severity == AnalysisSeverity.error
+                          ? Icons.error_outline
+                          : Icons.warning_amber_outlined,
+                      color: issue.severity == AnalysisSeverity.error
+                          ? theme.colorScheme.error
+                          : theme.colorScheme.tertiary,
+                    ),
+                    title: Text(
+                      '${issue.line}:${issue.column}  ${issue.message}',
+                    ),
+                    subtitle: Text(issue.code),
+                    onTap: () => _jumpTo(issue.line),
+                  ),
+              ],
+            ),
+    );
   }
 
   @override
@@ -122,6 +213,19 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
             ],
           ),
           actions: [
+            if (widget.projectRoot != null)
+              IconButton(
+                key: const Key('code-analyze'),
+                tooltip: 'Analyze project (compile check)',
+                onPressed: _analyzing ? null : _analyze,
+                icon: _analyzing
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.fact_check_outlined),
+              ),
             IconButton(
               key: const Key('code-save'),
               tooltip: 'Save (Cmd/Ctrl+S)',
@@ -182,6 +286,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                 ),
               ),
             ),
+            if (_issues != null) _analysisPanel(context),
           ],
         ),
       ),
