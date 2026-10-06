@@ -19,13 +19,31 @@ class LevelCanvasPainter extends CustomPainter {
   static const _solid = Color(0xFF8A8A94);
   static const _oneWay = Color(0xFF6FA8DC);
   static const _marker = Color(0xFFE0474C);
+  static const _grid = Color(0x22FFFFFF);
   static const _selected = Color(0xFFFFD54F);
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(Offset.zero & size, Paint()..color = _empty);
-    _paintTiles(canvas, editor.geometry);
-    _paintEntities(canvas);
+    if (editor.showTiles) _paintTiles(canvas, editor.geometry);
+    if (editor.gridVisible) _paintGrid(canvas, size);
+    if (editor.showEntities) _paintEntities(canvas);
+  }
+
+  /// Grid lines every [LevelEditor.gridSize] world units, drawn faintly so they
+  /// help placement without competing with tiles and markers.
+  void _paintGrid(Canvas canvas, Size size) {
+    final step = editor.gridSize;
+    if (step <= 0) return;
+    final paint = Paint()
+      ..color = _grid
+      ..strokeWidth = 1;
+    for (var x = 0.0; x <= size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (var y = 0.0; y <= size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
   }
 
   void _paintTiles(Canvas canvas, LevelGeometry geometry) {

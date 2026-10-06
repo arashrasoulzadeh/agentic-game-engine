@@ -24,6 +24,27 @@ class LevelEditor {
   /// The tile id the paint tool writes. Id 0 is empty and is what erase writes.
   int paintTileId = 1;
 
+  /// Whether the canvas draws the grid, and whether tap and drag positions snap
+  /// to it. The grid is in world units; by default one tile.
+  bool gridVisible = true;
+  bool snapToGrid = false;
+  double gridSize = 16;
+
+  /// Layer visibility. Hiding a layer only changes what is drawn; the data stays
+  /// the same and still validates and saves.
+  bool showTiles = true;
+  bool showEntities = true;
+
+  /// [point] moved to the nearest grid intersection when snapping is on, otherwise
+  /// unchanged. Used for placing and for where a move lands.
+  Offset snapped(Offset point) {
+    if (!snapToGrid || gridSize <= 0) return point;
+    return Offset(
+      (point.dx / gridSize).round() * gridSize,
+      (point.dy / gridSize).round() * gridSize,
+    );
+  }
+
   /// The component the palette picked, which the place tool gives each new
   /// entity with its schema's starting values. Null places an empty entity.
   String? pendingComponent;
@@ -130,7 +151,7 @@ class LevelEditor {
   void dragEnd(Offset point) {
     final moved = _dragging;
     if (moved != null) {
-      final at = point;
+      final at = snapped(point);
       _dragging = null;
       _dragPosition = null;
       history.execute(MoveEntityCommand(entity: moved, x: at.dx, y: at.dy));
@@ -151,7 +172,8 @@ class LevelEditor {
     return index == null ? null : document.entities[index];
   }
 
-  void _placeAt(Offset point) {
+  void _placeAt(Offset at) {
+    final point = snapped(at);
     final components = <String, Map<String, dynamic>>{
       'position': {'x': point.dx, 'y': point.dy},
     };

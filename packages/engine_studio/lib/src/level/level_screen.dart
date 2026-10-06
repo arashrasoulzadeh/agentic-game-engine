@@ -170,6 +170,34 @@ class _LevelScreenState extends State<LevelScreen> {
                     : null,
                 icon: const Icon(Icons.redo),
               ),
+              _ToggleIcon(
+                keyName: 'toggle-grid',
+                tooltip: 'Show grid',
+                icon: Icons.grid_on,
+                on: editor.gridVisible,
+                onPressed: () => _edit((e) => e.gridVisible = !e.gridVisible),
+              ),
+              _ToggleIcon(
+                keyName: 'toggle-snap',
+                tooltip: 'Snap to grid',
+                icon: Icons.align_horizontal_left,
+                on: editor.snapToGrid,
+                onPressed: () => _edit((e) => e.snapToGrid = !e.snapToGrid),
+              ),
+              _ToggleIcon(
+                keyName: 'toggle-tiles',
+                tooltip: 'Show tiles',
+                icon: Icons.view_module_outlined,
+                on: editor.showTiles,
+                onPressed: () => _edit((e) => e.showTiles = !e.showTiles),
+              ),
+              _ToggleIcon(
+                keyName: 'toggle-entities',
+                tooltip: 'Show entities',
+                icon: Icons.place_outlined,
+                on: editor.showEntities,
+                onPressed: () => _edit((e) => e.showEntities = !e.showEntities),
+              ),
               IconButton(
                 key: const Key('delete-selected'),
                 tooltip: 'Delete selected entity',
@@ -319,6 +347,35 @@ class _Toolbar extends StatelessWidget {
         selected: {tool},
         onSelectionChanged: (set) => onChanged(set.first),
       ),
+    );
+  }
+}
+
+/// An app-bar button that shows whether a view setting is on.
+class _ToggleIcon extends StatelessWidget {
+  final String keyName;
+  final String tooltip;
+  final IconData icon;
+  final bool on;
+  final VoidCallback onPressed;
+
+  const _ToggleIcon({
+    required this.keyName,
+    required this.tooltip,
+    required this.icon,
+    required this.on,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      key: Key(keyName),
+      tooltip: tooltip,
+      isSelected: on,
+      onPressed: onPressed,
+      icon: Icon(icon),
+      selectedIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
     );
   }
 }
