@@ -15,7 +15,14 @@ import 'studio_project.dart';
 class ProjectScreen extends StatefulWidget {
   final StudioProject project;
 
-  const ProjectScreen({super.key, required this.project});
+  /// Passed to each code editor the window opens. Tests turn it off.
+  final bool useLanguageServer;
+
+  const ProjectScreen({
+    super.key,
+    required this.project,
+    this.useLanguageServer = true,
+  });
 
   @override
   State<ProjectScreen> createState() => _ProjectScreenState();
@@ -123,6 +130,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         key: ValueKey(fullPath),
         filePath: fullPath,
         projectRoot: widget.project.root,
+        useLanguageServer: widget.useLanguageServer,
       );
     }
     return const Center(child: Text('That file no longer exists.'));

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
+import '../lsp/dart_session.dart';
 import 'analysis.dart';
 import 'completion.dart';
 import 'dart_highlighter.dart';
@@ -26,11 +27,15 @@ class CodeEditorScreen extends StatefulWidget {
   /// Runs the analyzer. Tests pass a fake; the app uses the default.
   final ProjectAnalyzer? analyzer;
 
+  /// Whether to start the Dart language server for completions. Tests turn it off.
+  final bool useLanguageServer;
+
   const CodeEditorScreen({
     super.key,
     required this.filePath,
     this.projectRoot,
     this.analyzer,
+    this.useLanguageServer = true,
   });
 
   @override
@@ -46,6 +51,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   final FocusNode _editorFocus = FocusNode();
   int _completionIndex = 0;
   bool _completionDismissed = false;
+  DartSession? _session;
+  List<CompletionItem>? _serverItems;
+  int _serverRequest = 0;
   bool _analyzing = false;
 
   bool get _isDart => widget.filePath.endsWith('.dart');
@@ -57,13 +65,11 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     _text = _isDart
         ? DartHighlightController(text: _saved)
         : TextEditingController(text: _saved);
-    _text.addListener(() {
-      setState(() {
-        _completionIndex = 0;
-        _completionDismissed = false;
-      });
-    });
+    _text.addListener(_onTextChanged);
     final root = widget.projectRoot;
+    if (_isDart && root != null && widget.useLanguageServer) {
+      _startServer(root);
+    }
     _symbols = root == null
         ? const ProjectSymbols(
             classes: {},
@@ -74,8 +80,70 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         : ProjectSymbols.scan(root);
   }
 
+  /// Starts the language server for the project and opens this file in it. If the
+  /// server cannot start, completion falls back to the local list.
+  Future<void> _startServer(String root) async {
+    try {
+      final session = await DartSession.open(root);
+      if (!mounted) {
+        await session.close();
+        return;
+      }
+      session.openFile(widget.filePath, _text.text);
+      setState(() => _session = session);
+    } on Object {
+      // Fall back to the local list; the editor works without the server.
+    }
+  }
+
+  void _onTextChanged() {
+    _session?.change(widget.filePath, _text.text);
+    setState(() {
+      _completionIndex = 0;
+      _completionDismissed = false;
+      _serverItems = null;
+    });
+    _requestServerCompletions();
+  }
+
+  /// Asks the server for completions at the cursor. A reply that arrives after the
+  /// text has moved on is ignored, so an old list never replaces a newer one.
+  Future<void> _requestServerCompletions() async {
+    final session = _session;
+    if (session == null || !_isDart) {
+      return;
+    }
+    final request = ++_serverRequest;
+    final offset = _text.selection.baseOffset;
+    if (offset < 0) {
+      return;
+    }
+    final before = _text.text.substring(0, offset);
+    final line = '\n'.allMatches(before).length;
+    final character = offset - (before.lastIndexOf('\n') + 1);
+    try {
+      final items = await session.completionsAt(
+        widget.filePath,
+        line,
+        character,
+      );
+      if (!mounted || request != _serverRequest) {
+        return;
+      }
+      setState(() {
+        _serverItems = [
+          for (final item in items) CompletionItem(item.insertText, item.kind),
+        ];
+      });
+    } on Object {
+      // A failed request leaves the local list in place.
+    }
+  }
+
   @override
   void dispose() {
+    _session?.close();
+    _text.removeListener(_onTextChanged);
     _text.dispose();
     _editorFocus.dispose();
     super.dispose();
@@ -128,7 +196,15 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     if (!_isDart || _completionDismissed) {
       return const [];
     }
-    return completionsFor(_wordBeforeCursor, _symbols);
+    final word = _wordBeforeCursor;
+    final server = _serverItems;
+    if (server != null && word.isNotEmpty) {
+      return [
+        for (final item in server)
+          if (item.name.startsWith(word)) item,
+      ];
+    }
+    return completionsFor(word, _symbols);
   }
 
   void _complete(String name) {

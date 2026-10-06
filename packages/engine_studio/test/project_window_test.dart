@@ -29,7 +29,10 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: ProjectScreen(project: StudioProject.open(root.path)),
+          home: ProjectScreen(
+            project: StudioProject.open(root.path),
+            useLanguageServer: false,
+          ),
         ),
       );
       expect(find.byKey(const Key('file-tree')), findsOneWidget);
@@ -52,6 +55,7 @@ void main() {
           home: CodeEditorScreen(
             filePath: path,
             projectRoot: root.path,
+            useLanguageServer: false,
             analyzer: _FakeAnalyzer([
               AnalysisIssue(
                 severity: AnalysisSeverity.error,
@@ -101,7 +105,12 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: ProjectScreen(project: StudioProject.open(root.path))),
+      MaterialApp(
+        home: ProjectScreen(
+          project: StudioProject.open(root.path),
+          useLanguageServer: false,
+        ),
+      ),
     );
     expect(find.byKey(const Key('file-lib')), findsOneWidget);
     expect(find.byKey(const Key('file-lib/main.dart')), findsNothing);
@@ -117,7 +126,10 @@ void main() {
       _writeTinyPng('${root.path}/assets/logo.png');
       await tester.pumpWidget(
         MaterialApp(
-          home: ProjectScreen(project: StudioProject.open(root.path)),
+          home: ProjectScreen(
+            project: StudioProject.open(root.path),
+            useLanguageServer: false,
+          ),
         ),
       );
 

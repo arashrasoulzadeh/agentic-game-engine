@@ -67,7 +67,11 @@ void main() {
     final path = '${root.path}/lib/hero.dart';
     await tester.pumpWidget(
       MaterialApp(
-        home: CodeEditorScreen(filePath: path, projectRoot: root.path),
+        home: CodeEditorScreen(
+          filePath: path,
+          projectRoot: root.path,
+          useLanguageServer: false,
+        ),
       ),
     );
     await tester.enterText(
@@ -94,7 +98,11 @@ void main() {
       final path = '${root.path}/lib/hero.dart';
       await tester.pumpWidget(
         MaterialApp(
-          home: CodeEditorScreen(filePath: path, projectRoot: root.path),
+          home: CodeEditorScreen(
+            filePath: path,
+            projectRoot: root.path,
+            useLanguageServer: false,
+          ),
         ),
       );
       await tester.enterText(find.byKey(const Key('code-text')), 'cl');
@@ -121,7 +129,11 @@ void main() {
     final path = '${root.path}/lib/hero.dart';
     await tester.pumpWidget(
       MaterialApp(
-        home: CodeEditorScreen(filePath: path, projectRoot: root.path),
+        home: CodeEditorScreen(
+          filePath: path,
+          projectRoot: root.path,
+          useLanguageServer: false,
+        ),
       ),
     );
     await tester.enterText(find.byKey(const Key('code-text')), 'He');
