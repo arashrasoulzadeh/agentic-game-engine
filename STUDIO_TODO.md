@@ -448,7 +448,7 @@ Goal: a designer builds, saves, and play-tests a level.
   (phase 0.1). Widget per `FieldType`.
 - [ ] **3.9** Entity palette: list of component templates with defaults
   from schemas.
-- [ ] **3.10** Validation panel: live `LevelValidator` results, click to
+- [x] **3.10** Validation panel: live `LevelValidator` results, click to
   focus the offending entity.
 - [x] **3.11** (saves atomically to the level file; autosave writes a backup under .studio/autosave and never touches the level; also adds a project level list) Save/load level JSON; autosave to a backup file, not the
   level itself.

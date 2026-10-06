@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../inspector/inspector_panel.dart';
+import '../validation/validation_panel.dart';
 import 'level_canvas.dart';
 import 'level_saver.dart';
 import 'level_editor.dart';
@@ -230,6 +231,7 @@ class _LevelScreenState extends State<LevelScreen> {
                   ],
                 ),
               ),
+              ValidationPanel(editor: editor, onSelect: () => setState(() {})),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(

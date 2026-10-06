@@ -41,6 +41,7 @@ List<int> _tiles(LevelDocument doc) =>
     ((doc.entities.first.components['tileMap']!['tiles']) as List).cast<int>();
 
 void main() {
+  _validationTests();
   group('select', () {
     test('a tap selects the entity under it', () {
       final editor = LevelEditor(_level());
@@ -244,5 +245,61 @@ void main() {
       editor.undo(); // removes the placed entity, not the player
       expect(editor.selected?.name, 'player');
     });
+  });
+}
+
+void _validationTests() {
+  group('validation', () {
+    test(
+      'issues reports the validator problems for the level as it is now',
+      () {
+        final doc = LevelDocument.fromJson({
+          'entities': [
+            {
+              'components': {'warpDrive': {}},
+            },
+          ],
+        });
+        final editor = LevelEditor(doc);
+        expect(editor.issues.map((i) => i.message), [
+          'unknown component "warpDrive"',
+        ]);
+      },
+    );
+
+    test('issues updates after an edit fixes the problem', () {
+      final doc = LevelDocument.fromJson({
+        'entities': [
+          {
+            'components': {
+              'pushable': {'pushSpeed': -1.0},
+            },
+          },
+        ],
+      });
+      final editor = LevelEditor(doc);
+      expect(editor.issues, isNotEmpty);
+      editor.history.execute(
+        SetComponentFieldCommand(
+          entity: doc.entities.first,
+          component: 'pushable',
+          field: 'pushSpeed',
+          value: 1.0,
+        ),
+      );
+      expect(editor.issues, isEmpty);
+    });
+
+    test(
+      'selectIndex selects that entity, and ignores an index outside the level',
+      () {
+        final doc = _level();
+        final editor = LevelEditor(doc);
+        editor.selectIndex(1);
+        expect(editor.selected, same(doc.entities[1]));
+        editor.selectIndex(9);
+        expect(editor.selected, same(doc.entities[1]));
+      },
+    );
   });
 }

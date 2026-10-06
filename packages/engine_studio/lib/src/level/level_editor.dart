@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:engine_core/engine_core.dart';
+import 'package:engine_schema/engine_schema.dart';
 
 import 'level_geometry.dart';
 
@@ -215,6 +216,19 @@ class LevelEditor {
         tileId: paintTileId,
       ),
     );
+  }
+
+  // --- validation ---------------------------------------------------------
+
+  /// Every problem in the level as it is right now, from the same validator the
+  /// CLI runs, so the panel and `game_agent studio validate` agree.
+  List<LevelIssue> get issues =>
+      LevelValidator.forSchemas(allComponentSchemas).validate(document);
+
+  /// Selects the entity at [index] in the document, for problems that name one.
+  void selectIndex(int index) {
+    if (index < 0 || index >= document.entities.length) return;
+    selected = document.entities[index];
   }
 
   // --- history ------------------------------------------------------------
