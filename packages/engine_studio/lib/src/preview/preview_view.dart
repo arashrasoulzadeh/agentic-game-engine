@@ -1,9 +1,11 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:engine_flutter/engine_flutter.dart' show SpriteAtlas;
 import 'package:flutter/services.dart';
 
 import '../level/level_geometry.dart';
+import '../textures/atlas_catalog.dart';
 import 'preview_world.dart';
 
 /// The game actions the preview's controls send, keyed by the names the platformer
@@ -27,7 +29,15 @@ class PreviewView extends StatefulWidget {
   final LevelDocument document;
   final bool running;
 
-  const PreviewView({super.key, required this.document, required this.running});
+  /// The project whose atlas catalog supplies the art. Null draws plain shapes only.
+  final String? projectRoot;
+
+  const PreviewView({
+    super.key,
+    required this.document,
+    required this.running,
+    this.projectRoot,
+  });
 
   @override
   State<PreviewView> createState() => _PreviewViewState();
@@ -42,6 +52,8 @@ class _PreviewViewState extends State<PreviewView>
   Duration _last = Duration.zero;
   String? _error;
   bool _fitWidth = true;
+  bool _textures = true;
+  Map<String, SpriteAtlas> _atlases = const {};
 
   @override
   void initState() {
@@ -49,6 +61,14 @@ class _PreviewViewState extends State<PreviewView>
     if (widget.running) {
       _start();
     }
+    _loadAtlases();
+  }
+
+  Future<void> _loadAtlases() async {
+    final root = widget.projectRoot;
+    if (root == null) return;
+    final loaded = await AtlasCatalog.read(root).load(root);
+    if (mounted) setState(() => _atlases = loaded);
   }
 
   @override
@@ -145,6 +165,9 @@ class _PreviewViewState extends State<PreviewView>
           _Controls(
             fitWidth: _fitWidth,
             onFitChanged: (value) => setState(() => _fitWidth = value),
+            textures: _textures,
+            hasTextures: _atlases.isNotEmpty,
+            onTexturesChanged: (value) => setState(() => _textures = value),
             onHold: _hold,
           ),
           Expanded(
@@ -162,6 +185,7 @@ class _PreviewViewState extends State<PreviewView>
                       geometry: geometry,
                       positions: positions,
                       scale: scale,
+                      atlases: _textures ? _atlases : const {},
                     ),
                   ),
                 );
@@ -186,11 +210,17 @@ class _PreviewViewState extends State<PreviewView>
 class _Controls extends StatelessWidget {
   final bool fitWidth;
   final ValueChanged<bool> onFitChanged;
+  final bool textures;
+  final bool hasTextures;
+  final ValueChanged<bool> onTexturesChanged;
   final void Function(String action, bool down) onHold;
 
   const _Controls({
     required this.fitWidth,
     required this.onFitChanged,
+    required this.textures,
+    required this.hasTextures,
+    required this.onTexturesChanged,
     required this.onHold,
   });
 
@@ -198,36 +228,46 @@ class _Controls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8),
-      child: Row(
-        children: [
-          _HoldButton(
-            key: const Key('control-left'),
-            label: 'Left',
-            action: 'left',
-            onHold: onHold,
-          ),
-          const SizedBox(width: 8),
-          _HoldButton(
-            key: const Key('control-jump'),
-            label: 'Jump',
-            action: 'jump',
-            onHold: onHold,
-          ),
-          const SizedBox(width: 8),
-          _HoldButton(
-            key: const Key('control-right'),
-            label: 'Right',
-            action: 'right',
-            onHold: onHold,
-          ),
-          const Spacer(),
-          const Text('Fit width'),
-          Switch(
-            key: const Key('fit-width'),
-            value: fitWidth,
-            onChanged: onFitChanged,
-          ),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _HoldButton(
+              key: const Key('control-left'),
+              label: 'Left',
+              action: 'left',
+              onHold: onHold,
+            ),
+            const SizedBox(width: 8),
+            _HoldButton(
+              key: const Key('control-jump'),
+              label: 'Jump',
+              action: 'jump',
+              onHold: onHold,
+            ),
+            const SizedBox(width: 8),
+            _HoldButton(
+              key: const Key('control-right'),
+              label: 'Right',
+              action: 'right',
+              onHold: onHold,
+            ),
+            const SizedBox(width: 16),
+            const Text('Fit width'),
+            Switch(
+              key: const Key('fit-width'),
+              value: fitWidth,
+              onChanged: onFitChanged,
+            ),
+            const SizedBox(width: 8),
+            Text(hasTextures ? 'Textures' : 'Textures (none declared)'),
+            Switch(
+              key: const Key('textures'),
+              value: textures && hasTextures,
+              onChanged: hasTextures ? onTexturesChanged : null,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -261,11 +301,13 @@ class _PreviewPainter extends CustomPainter {
   final LevelGeometry geometry;
   final List<Offset> positions;
   final double scale;
+  final Map<String, SpriteAtlas> atlases;
 
   _PreviewPainter({
     required this.geometry,
     required this.positions,
     required this.scale,
+    required this.atlases,
   });
 
   @override
@@ -282,6 +324,13 @@ class _PreviewPainter extends CustomPainter {
       for (var row = 0; row < map.rows; row++) {
         for (var col = 0; col < map.cols; col++) {
           if (!map.isSolid(col, row)) continue;
+          final dst = Rect.fromLTWH(
+            geometry.tileOrigin.dx + col * map.tileWidth,
+            geometry.tileOrigin.dy + row * map.tileHeight,
+            map.tileWidth,
+            map.tileHeight,
+          );
+          if (_drawTexture(canvas, map, map.tileAt(col, row), dst)) continue;
           canvas.drawRect(
             Rect.fromLTWH(
               geometry.tileOrigin.dx + col * map.tileWidth,
@@ -299,6 +348,23 @@ class _PreviewPainter extends CustomPainter {
       canvas.drawCircle(at, 5, marker);
     }
     canvas.restore();
+  }
+
+  /// Draws the tile's region from its atlas. Returns false when there is no atlas
+  /// or region for it, so the caller falls back to the plain shape.
+  bool _drawTexture(Canvas canvas, TileMap map, int tileId, Rect dst) {
+    final atlasId = map.atlasId;
+    final regionName = map.regionByTileId[tileId];
+    if (atlasId == null || regionName == null) return false;
+    final atlas = atlases[atlasId];
+    if (atlas == null || !atlas.regions.containsKey(regionName)) return false;
+    canvas.drawImageRect(
+      atlas.image,
+      atlas.regionFor(regionName),
+      dst,
+      Paint(),
+    );
+    return true;
   }
 
   @override
