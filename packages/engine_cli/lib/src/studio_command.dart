@@ -16,6 +16,7 @@ class StudioCommand extends Command<int> {
 
   StudioCommand() {
     addSubcommand(StudioValidateCommand());
+    addSubcommand(StudioImportTmxCommand());
   }
 }
 
@@ -101,5 +102,76 @@ class StudioValidateCommand extends Command<int> {
     stdout.writeln('${files.length} level(s): $errors error(s), $warnings warning(s).');
     final strict = argResults!['strict'] as bool;
     return errors > 0 || (strict && warnings > 0) ? 1 : 0;
+  }
+}
+
+/// `game_agent studio import-tmx <map.tmx> [--project dir] [--out file]`:
+/// converts a Tiled map (embedded tileset, CSV layer) into a level file under
+/// the project's `assets/levels`, so a level built in Tiled is editable in the
+/// studio and loadable by the engine. The result is validated before it is
+/// written, so an import that the engine would reject never reaches disk.
+class StudioImportTmxCommand extends Command<int> {
+  @override
+  final name = 'import-tmx';
+  @override
+  final description = 'Convert a Tiled .tmx map into a level file in a game project.';
+
+  StudioImportTmxCommand() {
+    argParser
+      ..addOption('project', defaultsTo: '.', help: 'The game project to write into.')
+      ..addOption(
+        'out',
+        help: 'Level file to write. Defaults to assets/levels/<map name>.level.json.',
+      );
+  }
+
+  @override
+  Future<int> run() async {
+    final rest = argResults!.rest;
+    if (rest.isEmpty) {
+      usageException('Missing the .tmx file, e.g. `game_agent studio import-tmx level1.tmx`');
+    }
+    final source = File(rest.first);
+    if (!source.existsSync()) {
+      stderr.writeln('Error: ${source.path} does not exist.');
+      return 1;
+    }
+
+    final TileMap map;
+    try {
+      map = tileMapFromTmx(source.readAsStringSync());
+    } on UnsupportedError catch (e) {
+      stderr.writeln('${source.path}: ${e.message}');
+      return 1;
+    } on Object catch (e) {
+      stderr.writeln('${source.path}: not a readable Tiled map ($e)');
+      return 1;
+    }
+
+    final document = LevelDocument(entities: [
+      LevelEntity(name: 'map', components: {
+        'position': {'x': 0.0, 'y': 0.0},
+        'tileMap': map.toJson(),
+      }),
+    ]);
+
+    final issues = LevelValidator.forSchemas(allComponentSchemas).validate(document);
+    final errors = issues.where((i) => i.severity == IssueSeverity.error).toList();
+    if (errors.isNotEmpty) {
+      stderr.writeln('${source.path}: the imported map is not a valid level:');
+      for (final issue in errors) {
+        stderr.writeln('  $issue');
+      }
+      return 1;
+    }
+
+    final projectDir = argResults!['project'] as String;
+    final defaultName = p.basenameWithoutExtension(source.path);
+    final outPath = (argResults!['out'] as String?) ??
+        p.join(projectDir, 'assets', 'levels', '$defaultName.level.json');
+    final out = File(outPath)..createSync(recursive: true);
+    out.writeAsStringSync(const JsonEncoder.withIndent('  ').convert(document.toJson()));
+    stdout.writeln('Wrote ${out.path} (${map.cols}x${map.rows} tiles).');
+    return 0;
   }
 }
