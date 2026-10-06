@@ -442,7 +442,7 @@ Goal: a designer builds, saves, and play-tests a level.
 - [x] **3.5** Tools: select, move, tile paint, tile erase, fill, entity
   place. Each tool emits commands only.
 - [x] **3.6** Grid snap and layer visibility toggles.
-- [~] **3.7** (undo/redo buttons done; keyboard shortcuts not yet) Undo/redo keybindings and toolbar buttons bound to
+- [x] **3.7** (undo, redo, save, delete, grid, and tool keys) Undo/redo keybindings and toolbar buttons bound to
   `CommandHistory`.
 - [x] **3.8** (list and object fields are read-only JSON for now; editing them as JSON is deferred) Property inspector generated from component schemas
   (phase 0.1). Widget per `FieldType`.

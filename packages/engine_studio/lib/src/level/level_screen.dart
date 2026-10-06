@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import '../inspector/inspector_panel.dart';
 import '../palette/entity_palette.dart';
 import '../validation/validation_panel.dart';
+import 'editor_shortcuts.dart';
 import 'level_canvas.dart';
 import 'level_saver.dart';
 import 'level_editor.dart';
@@ -117,174 +118,202 @@ class _LevelScreenState extends State<LevelScreen> {
     }
 
     final title = widget.levelPath.split(Platform.pathSeparator).last;
-    final saveShortcut = {
-      const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _save,
-      const SingleActivator(LogicalKeyboardKey.keyS, control: true): _save,
-    };
-    return CallbackShortcuts(
-      bindings: saveShortcut,
-      child: Focus(
-        autofocus: true,
-        child: Scaffold(
-          appBar: AppBar(
-            title: Row(
-              children: [
-                Text(title),
-                if (editor.isDirty)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: Text(
-                      '•',
-                      key: const Key('dirty-marker'),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _onKey,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Row(
+            children: [
+              Text(title),
+              if (editor.isDirty)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text(
+                    '•',
+                    key: const Key('dirty-marker'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
-              ],
-            ),
-            actions: [
-              IconButton(
-                key: const Key('save'),
-                tooltip: 'Save (Cmd/Ctrl+S)',
-                onPressed: editor.isDirty ? _save : null,
-                icon: const Icon(Icons.save_outlined),
-              ),
-              IconButton(
-                key: const Key('undo'),
-                tooltip: editor.history.undoLabel == null
-                    ? 'Nothing to undo'
-                    : 'Undo ${editor.history.undoLabel}',
-                onPressed: editor.history.canUndo
-                    ? () => _edit((e) => e.undo())
-                    : null,
-                icon: const Icon(Icons.undo),
-              ),
-              IconButton(
-                key: const Key('redo'),
-                tooltip: editor.history.redoLabel == null
-                    ? 'Nothing to redo'
-                    : 'Redo ${editor.history.redoLabel}',
-                onPressed: editor.history.canRedo
-                    ? () => _edit((e) => e.redo())
-                    : null,
-                icon: const Icon(Icons.redo),
-              ),
-              _ToggleIcon(
-                keyName: 'toggle-grid',
-                tooltip: 'Show grid',
-                icon: Icons.grid_on,
-                on: editor.gridVisible,
-                onPressed: () => _edit((e) => e.gridVisible = !e.gridVisible),
-              ),
-              _ToggleIcon(
-                keyName: 'toggle-snap',
-                tooltip: 'Snap to grid',
-                icon: Icons.align_horizontal_left,
-                on: editor.snapToGrid,
-                onPressed: () => _edit((e) => e.snapToGrid = !e.snapToGrid),
-              ),
-              _ToggleIcon(
-                keyName: 'toggle-tiles',
-                tooltip: 'Show tiles',
-                icon: Icons.view_module_outlined,
-                on: editor.showTiles,
-                onPressed: () => _edit((e) => e.showTiles = !e.showTiles),
-              ),
-              _ToggleIcon(
-                keyName: 'toggle-entities',
-                tooltip: 'Show entities',
-                icon: Icons.place_outlined,
-                on: editor.showEntities,
-                onPressed: () => _edit((e) => e.showEntities = !e.showEntities),
-              ),
-              IconButton(
-                key: const Key('delete-selected'),
-                tooltip: 'Delete selected entity',
-                onPressed: editor.selected == null
-                    ? null
-                    : () => _edit((e) => e.deleteSelected()),
-                icon: const Icon(Icons.delete_outline),
-              ),
+                ),
             ],
           ),
-          body: Column(
-            children: [
-              _Toolbar(
-                tool: editor.tool,
-                onChanged: (tool) => _edit((e) => e.tool = tool),
-              ),
-              Expanded(
-                child: Row(
-                  children: [
-                    EntityPalette(
-                      editor: editor,
-                      onChanged: () => setState(() {}),
-                    ),
-                    Expanded(
-                      child: Scrollbar(
+          actions: [
+            IconButton(
+              key: const Key('save'),
+              tooltip: 'Save (Cmd/Ctrl+S)',
+              onPressed: editor.isDirty ? _save : null,
+              icon: const Icon(Icons.save_outlined),
+            ),
+            IconButton(
+              key: const Key('undo'),
+              tooltip: editor.history.undoLabel == null
+                  ? 'Nothing to undo'
+                  : 'Undo ${editor.history.undoLabel}',
+              onPressed: editor.history.canUndo
+                  ? () => _edit((e) => e.undo())
+                  : null,
+              icon: const Icon(Icons.undo),
+            ),
+            IconButton(
+              key: const Key('redo'),
+              tooltip: editor.history.redoLabel == null
+                  ? 'Nothing to redo'
+                  : 'Redo ${editor.history.redoLabel}',
+              onPressed: editor.history.canRedo
+                  ? () => _edit((e) => e.redo())
+                  : null,
+              icon: const Icon(Icons.redo),
+            ),
+            _ToggleIcon(
+              keyName: 'toggle-grid',
+              tooltip: 'Show grid',
+              icon: Icons.grid_on,
+              on: editor.gridVisible,
+              onPressed: () => _edit((e) => e.gridVisible = !e.gridVisible),
+            ),
+            _ToggleIcon(
+              keyName: 'toggle-snap',
+              tooltip: 'Snap to grid',
+              icon: Icons.align_horizontal_left,
+              on: editor.snapToGrid,
+              onPressed: () => _edit((e) => e.snapToGrid = !e.snapToGrid),
+            ),
+            _ToggleIcon(
+              keyName: 'toggle-tiles',
+              tooltip: 'Show tiles',
+              icon: Icons.view_module_outlined,
+              on: editor.showTiles,
+              onPressed: () => _edit((e) => e.showTiles = !e.showTiles),
+            ),
+            _ToggleIcon(
+              keyName: 'toggle-entities',
+              tooltip: 'Show entities',
+              icon: Icons.place_outlined,
+              on: editor.showEntities,
+              onPressed: () => _edit((e) => e.showEntities = !e.showEntities),
+            ),
+            IconButton(
+              key: const Key('delete-selected'),
+              tooltip: 'Delete selected entity',
+              onPressed: editor.selected == null
+                  ? null
+                  : () => _edit((e) => e.deleteSelected()),
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            _Toolbar(
+              tool: editor.tool,
+              onChanged: (tool) => _edit((e) => e.tool = tool),
+            ),
+            Expanded(
+              child: Row(
+                children: [
+                  EntityPalette(
+                    editor: editor,
+                    onChanged: () => setState(() {}),
+                  ),
+                  Expanded(
+                    child: Scrollbar(
+                      controller: _vertical,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
                         controller: _vertical,
-                        thumbVisibility: true,
-                        child: SingleChildScrollView(
-                          controller: _vertical,
-                          child: Scrollbar(
+                        child: Scrollbar(
+                          controller: _horizontal,
+                          thumbVisibility: true,
+                          notificationPredicate: (n) => n.depth == 1,
+                          child: SingleChildScrollView(
                             controller: _horizontal,
-                            thumbVisibility: true,
-                            notificationPredicate: (n) => n.depth == 1,
-                            child: SingleChildScrollView(
-                              controller: _horizontal,
-                              scrollDirection: Axis.horizontal,
-                              child: GestureDetector(
-                                key: const Key('level-canvas'),
-                                behavior: HitTestBehavior.opaque,
-                                onTapUp: (details) =>
-                                    _edit((e) => e.tap(details.localPosition)),
-                                onPanStart: (details) => _edit(
-                                  (e) => e.dragStart(details.localPosition),
-                                ),
-                                onPanUpdate: (details) => _edit(
-                                  (e) => e.dragUpdate(details.localPosition),
-                                ),
-                                onPanEnd: (_) =>
-                                    _edit((e) => e.dragEnd(_lastPoint(e))),
-                                child: CustomPaint(
-                                  size: _canvasSize(editor),
-                                  painter: LevelCanvasPainter(editor: editor),
-                                ),
+                            scrollDirection: Axis.horizontal,
+                            child: GestureDetector(
+                              key: const Key('level-canvas'),
+                              behavior: HitTestBehavior.opaque,
+                              onTapUp: (details) =>
+                                  _edit((e) => e.tap(details.localPosition)),
+                              onPanStart: (details) => _edit(
+                                (e) => e.dragStart(details.localPosition),
+                              ),
+                              onPanUpdate: (details) => _edit(
+                                (e) => e.dragUpdate(details.localPosition),
+                              ),
+                              onPanEnd: (_) =>
+                                  _edit((e) => e.dragEnd(_lastPoint(e))),
+                              child: CustomPaint(
+                                size: _canvasSize(editor),
+                                painter: LevelCanvasPainter(editor: editor),
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                    InspectorPanel(
-                      editor: editor,
-                      onChanged: () => setState(() {}),
-                    ),
-                  ],
-                ),
+                  ),
+                  InspectorPanel(
+                    editor: editor,
+                    onChanged: () => setState(() {}),
+                  ),
+                ],
               ),
-              ValidationPanel(editor: editor, onSelect: () => setState(() {})),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                child: Text(
-                  _saveError ?? _statusText(editor),
-                  key: const Key('selection-status'),
-                  style: _saveError == null
-                      ? null
-                      : TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
+            ),
+            ValidationPanel(editor: editor, onSelect: () => setState(() {})),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Text(
+                _saveError ?? _statusText(editor),
+                key: const Key('selection-status'),
+                style: _saveError == null
+                    ? null
+                    : TextStyle(color: Theme.of(context).colorScheme.error),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  /// Runs an editor shortcut. Letter keys are ignored while a text field has
+  /// focus, so typing a value in the inspector never switches tools.
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    final editor = _editor;
+    if (editor == null || event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (_textFieldHasFocus()) return KeyEventResult.ignored;
+
+    final keyboard = HardwareKeyboard.instance;
+    final shortcut = shortcutFor(
+      event.logicalKey,
+      command: keyboard.isMetaPressed || keyboard.isControlPressed,
+      shift: keyboard.isShiftPressed,
+    );
+    if (shortcut == null) return KeyEventResult.ignored;
+
+    switch (shortcut.action) {
+      case EditorAction.undo:
+        _edit((e) => e.undo());
+      case EditorAction.redo:
+        _edit((e) => e.redo());
+      case EditorAction.save:
+        _save();
+      case EditorAction.deleteSelected:
+        _edit((e) => e.deleteSelected());
+      case EditorAction.toggleGrid:
+        _edit((e) => e.gridVisible = !e.gridVisible);
+      case EditorAction.tool:
+        _edit((e) => e.tool = shortcut.tool!);
+    }
+    return KeyEventResult.handled;
+  }
+
+  bool _textFieldHasFocus() =>
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<EditableText>() !=
+      null;
 
   /// The last point the drag reached, for committing a move or stroke on release.
   /// Pan end carries no position, so the editor's own preview point is used.
