@@ -1,0 +1,11 @@
+# Local monorepo development only: resolve the engine packages from this
+# checkout. Ignored when engine_studio is built from a git checkout elsewhere.
+dependency_overrides:
+  engine_core:
+    path: ../engine_core
+  engine_schema:
+    path: ../engine_schema
+  engine_flutter:
+    path: ../engine_flutter
+  engine_platformer:
+    path: ../engine_platformer

@@ -1,0 +1,45 @@
+name: engine_studio
+description: >
+  Desktop level editor for games built on the agentic game engine (macOS,
+  Windows, Linux). Edits level data, validates it against the engine's
+  schemas, and play-tests it.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Self-referencing git dependencies, same pattern as the engine packages (see
+  # engine_core/pubspec.yaml). Local development uses pubspec_overrides.yaml.
+  path: ^1.9.0
+  engine_core:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_core
+      ref: main
+  engine_schema:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_schema
+      ref: main
+  engine_flutter:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_flutter
+      ref: main
+  engine_platformer:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_platformer
+      ref: main
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
