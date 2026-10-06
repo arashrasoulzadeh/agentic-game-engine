@@ -26,8 +26,10 @@ class ProjectScreen extends StatelessWidget {
               subtitle: Text(file),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) =>
-                      CodeEditorScreen(filePath: '${project.root}/$file'),
+                  builder: (_) => CodeEditorScreen(
+                    filePath: '${project.root}/$file',
+                    projectRoot: project.root,
+                  ),
                 ),
               ),
             ),
