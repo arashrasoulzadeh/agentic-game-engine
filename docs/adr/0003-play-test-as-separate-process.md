@@ -1,6 +1,8 @@
 # ADR 0003: Play-test runs as a separate process
 
-Status: accepted (STUDIO_TODO.md decision D4, default recommendation)
+Status: superseded by ADR 0005 (embedded preview). Kept as the fallback launcher.
+
+(Originally accepted as STUDIO_TODO.md decision D4, default recommendation.)
 
 ## Context
 

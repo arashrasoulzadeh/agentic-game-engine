@@ -99,38 +99,10 @@ void main() {
     });
   });
 
-  group('play-test button', () {
-    testWidgets('starts the game on the level from its project', (
-      tester,
-    ) async {
-      final recorder = _Recorder();
-      final path = '${root.path}/assets/levels/level.json';
-      File(path).writeAsStringSync(jsonEncode(_level()));
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: LevelScreen(
-            levelPath: path,
-            projectRoot: root.path,
-            autosaveInterval: null,
-            playTest: PlayTest(start: recorder.start),
-          ),
-        ),
-      );
-      await tester.runAsync(() async {
-        await tester.tap(find.byKey(const Key('playtest')));
-        await Future<void>.delayed(const Duration(milliseconds: 200));
-      });
-      await tester.pump();
-
-      expect(recorder.workingDirectory, root.path);
-      expect(find.text('Play-test started.'), findsOneWidget);
-    });
-
+  group('play button', () {
     testWidgets(
-      'a level outside a project says so instead of starting anything',
+      'switches to the Preview mode and runs the level in the engine',
       (tester) async {
-        final recorder = _Recorder();
         final path = '${root.path}/assets/levels/level.json';
         File(path).writeAsStringSync(jsonEncode(_level()));
 
@@ -138,20 +110,36 @@ void main() {
           MaterialApp(
             home: LevelScreen(
               levelPath: path,
+              projectRoot: root.path,
               autosaveInterval: null,
-              playTest: PlayTest(start: recorder.start),
             ),
           ),
         );
         await tester.tap(find.byKey(const Key('playtest')));
         await tester.pump();
 
-        expect(recorder.executable, isNull);
-        expect(
-          find.text('Open the level from a project to play-test it.'),
-          findsOneWidget,
+        expect(find.byKey(const Key('preview-canvas')), findsOneWidget);
+        final switcher = tester.widget<SegmentedButton<bool>>(
+          find.byKey(const Key('mode-switch')),
         );
+        expect(switcher.selected, {true});
       },
     );
+
+    testWidgets('the Edit mode brings the editing canvas back', (tester) async {
+      final path = '${root.path}/assets/levels/level.json';
+      File(path).writeAsStringSync(jsonEncode(_level()));
+
+      await tester.pumpWidget(
+        MaterialApp(home: LevelScreen(levelPath: path, autosaveInterval: null)),
+      );
+      await tester.tap(find.byKey(const Key('playtest')));
+      await tester.pump();
+      await tester.tap(find.text('Edit'));
+      await tester.pump();
+
+      expect(find.byKey(const Key('level-canvas')), findsOneWidget);
+      expect(find.byKey(const Key('preview-canvas')), findsNothing);
+    });
   });
 }

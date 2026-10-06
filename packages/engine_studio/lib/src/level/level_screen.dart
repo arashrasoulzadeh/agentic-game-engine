@@ -11,7 +11,7 @@ import '../inspector/inspector_panel.dart';
 import '../palette/entity_palette.dart';
 import '../validation/validation_panel.dart';
 import '../playtest/play_test.dart';
-import '../project/studio_project.dart';
+import '../preview/preview_view.dart';
 import 'editor_shortcuts.dart';
 import 'level_canvas.dart';
 import 'level_saver.dart';
@@ -49,6 +49,8 @@ class _LevelScreenState extends State<LevelScreen> {
   LevelEditor? _editor;
   String? _loadError;
   Timer? _autosave;
+  bool _previewing = false;
+  bool _running = false;
   final _vertical = ScrollController();
   final _horizontal = ScrollController();
   String? _saveError;
@@ -80,32 +82,14 @@ class _LevelScreenState extends State<LevelScreen> {
 
   /// Starts the game on the level as it is now, edits included. Needs the level to
   /// belong to a project, since the snapshot is written into it.
-  Future<void> _playTest() async {
-    final editor = _editor;
-    final root = widget.projectRoot;
-    if (editor == null) {
+  void _playTest() {
+    if (_editor == null) {
       return;
     }
-    if (root == null) {
-      _message('Open the level from a project to play-test it.');
-      return;
-    }
-    try {
-      await (widget.playTest ?? PlayTest()).launch(
-        StudioProject.open(root),
-        editor.document,
-      );
-      _message('Play-test started.');
-    } on Object catch (e) {
-      _message('Could not start play-test: $e');
-    }
-  }
-
-  void _message(String text) {
-    if (!mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    setState(() {
+      _previewing = true;
+      _running = true;
+    });
   }
 
   /// Writes the level file. A failure stays on screen rather than being lost, and
@@ -178,7 +162,7 @@ class _LevelScreenState extends State<LevelScreen> {
           actions: [
             IconButton(
               key: const Key('playtest'),
-              tooltip: 'Play-test this level',
+              tooltip: 'Run the level in the preview',
               onPressed: _playTest,
               icon: const Icon(Icons.play_arrow),
             ),
@@ -248,71 +232,107 @@ class _LevelScreenState extends State<LevelScreen> {
         ),
         body: Column(
           children: [
-            _Toolbar(
-              tool: editor.tool,
-              onChanged: (tool) => _edit((e) => e.tool = tool),
+            _ModeSwitch(
+              previewing: _previewing,
+              onChanged: (previewing) => setState(() {
+                _previewing = previewing;
+                _running = previewing;
+              }),
             ),
             Expanded(
-              child: Row(
-                children: [
-                  EntityPalette(
-                    editor: editor,
-                    onChanged: () => setState(() {}),
-                  ),
-                  Expanded(
-                    child: Scrollbar(
-                      controller: _vertical,
-                      thumbVisibility: true,
-                      child: SingleChildScrollView(
-                        controller: _vertical,
-                        child: Scrollbar(
-                          controller: _horizontal,
-                          thumbVisibility: true,
-                          notificationPredicate: (n) => n.depth == 1,
-                          child: SingleChildScrollView(
-                            controller: _horizontal,
-                            scrollDirection: Axis.horizontal,
-                            child: GestureDetector(
-                              key: const Key('level-canvas'),
-                              behavior: HitTestBehavior.opaque,
-                              onTapUp: (details) =>
-                                  _edit((e) => e.tap(details.localPosition)),
-                              onPanStart: (details) => _edit(
-                                (e) => e.dragStart(details.localPosition),
+              child: _previewing
+                  ? PreviewView(
+                      document: editor.document,
+                      running: _running,
+                      onError: (_) {},
+                    )
+                  : Column(
+                      children: [
+                        _Toolbar(
+                          tool: editor.tool,
+                          onChanged: (tool) => _edit((e) => e.tool = tool),
+                        ),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              EntityPalette(
+                                editor: editor,
+                                onChanged: () => setState(() {}),
                               ),
-                              onPanUpdate: (details) => _edit(
-                                (e) => e.dragUpdate(details.localPosition),
+                              Expanded(
+                                child: Scrollbar(
+                                  controller: _vertical,
+                                  thumbVisibility: true,
+                                  child: SingleChildScrollView(
+                                    controller: _vertical,
+                                    child: Scrollbar(
+                                      controller: _horizontal,
+                                      thumbVisibility: true,
+                                      notificationPredicate: (n) =>
+                                          n.depth == 1,
+                                      child: SingleChildScrollView(
+                                        controller: _horizontal,
+                                        scrollDirection: Axis.horizontal,
+                                        child: GestureDetector(
+                                          key: const Key('level-canvas'),
+                                          behavior: HitTestBehavior.opaque,
+                                          onTapUp: (details) => _edit(
+                                            (e) => e.tap(details.localPosition),
+                                          ),
+                                          onPanStart: (details) => _edit(
+                                            (e) => e.dragStart(
+                                              details.localPosition,
+                                            ),
+                                          ),
+                                          onPanUpdate: (details) => _edit(
+                                            (e) => e.dragUpdate(
+                                              details.localPosition,
+                                            ),
+                                          ),
+                                          onPanEnd: (_) => _edit(
+                                            (e) => e.dragEnd(_lastPoint(e)),
+                                          ),
+                                          child: CustomPaint(
+                                            size: _canvasSize(editor),
+                                            painter: LevelCanvasPainter(
+                                              editor: editor,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
-                              onPanEnd: (_) =>
-                                  _edit((e) => e.dragEnd(_lastPoint(e))),
-                              child: CustomPaint(
-                                size: _canvasSize(editor),
-                                painter: LevelCanvasPainter(editor: editor),
+                              InspectorPanel(
+                                editor: editor,
+                                onChanged: () => setState(() {}),
                               ),
-                            ),
+                            ],
                           ),
                         ),
-                      ),
+                        ValidationPanel(
+                          editor: editor,
+                          onSelect: () => setState(() {}),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          child: Text(
+                            _saveError ?? _statusText(editor),
+                            key: const Key('selection-status'),
+                            style: _saveError == null
+                                ? null
+                                : TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  InspectorPanel(
-                    editor: editor,
-                    onChanged: () => setState(() {}),
-                  ),
-                ],
-              ),
-            ),
-            ValidationPanel(editor: editor, onSelect: () => setState(() {})),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Text(
-                _saveError ?? _statusText(editor),
-                key: const Key('selection-status'),
-                style: _saveError == null
-                    ? null
-                    : TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
             ),
           ],
         ),
@@ -447,6 +467,38 @@ class _ToggleIcon extends StatelessWidget {
       onPressed: onPressed,
       icon: Icon(icon),
       selectedIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
+    );
+  }
+}
+
+/// Switches the level screen between editing and the running preview.
+class _ModeSwitch extends StatelessWidget {
+  final bool previewing;
+  final ValueChanged<bool> onChanged;
+
+  const _ModeSwitch({required this.previewing, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: SegmentedButton<bool>(
+        key: const Key('mode-switch'),
+        segments: const [
+          ButtonSegment(
+            value: false,
+            label: Text('Edit'),
+            icon: Icon(Icons.edit_outlined),
+          ),
+          ButtonSegment(
+            value: true,
+            label: Text('Preview'),
+            icon: Icon(Icons.play_circle_outline),
+          ),
+        ],
+        selected: {previewing},
+        onSelectionChanged: (set) => onChanged(set.first),
+      ),
     );
   }
 }
