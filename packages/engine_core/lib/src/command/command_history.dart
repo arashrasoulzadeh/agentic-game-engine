@@ -28,6 +28,14 @@ class CommandHistory {
     execute(CompositeCommand(label, commands));
   }
 
+  /// Records [command] as the latest undo step without applying it, for edits
+  /// that were already applied step by step. A paint stroke is the case: each
+  /// cell must be applied as it is painted, so the next cell sees the last one.
+  void recordApplied(EditCommand command) {
+    _undo.add(command);
+    _redo.clear();
+  }
+
   void execute(EditCommand command) {
     command.apply(document);
     _undo.add(command);

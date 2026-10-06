@@ -439,10 +439,10 @@ Goal: a designer builds, saves, and play-tests a level.
 - [x] **3.3** Static level view: draws `LevelDocument` (tiles by collision kind, entity markers and names) without running systems. Deviation: drawn directly, not through `EngineView`, which needs sprite atlases that arrive with the asset browser (5.1).
   with no systems installed (see 2.5).
 - [x] **3.4** Pure hit-test function for selection, with unit tests.
-- [ ] **3.5** Tools: select, move, tile paint, tile erase, fill, entity
+- [x] **3.5** Tools: select, move, tile paint, tile erase, fill, entity
   place. Each tool emits commands only.
 - [ ] **3.6** Grid snap and layer visibility toggles.
-- [ ] **3.7** Undo/redo keybindings and toolbar buttons bound to
+- [~] **3.7** (undo/redo buttons done; keyboard shortcuts not yet) Undo/redo keybindings and toolbar buttons bound to
   `CommandHistory`.
 - [ ] **3.8** Property inspector generated from component schemas
   (phase 0.1). Widget per `FieldType`.

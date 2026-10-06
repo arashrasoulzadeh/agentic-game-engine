@@ -42,6 +42,7 @@ void _expectApplyThenRevertRestores(EditCommand command, LevelDocument doc) {
 
 void main() {
   _groupTests();
+  _recordTests();
   group('entity commands', () {
     test('AddEntityCommand appends by default and reverts exactly', () {
       final doc = _doc();
@@ -213,6 +214,24 @@ void _groupTests() {
       final history = CommandHistory(doc);
       history.executeGroup('Nothing', []);
       expect(history.canUndo, isFalse);
+    });
+  });
+}
+
+void _recordTests() {
+  group('CommandHistory.recordApplied', () {
+    test('records an already-applied command without applying it again', () {
+      final doc = _doc();
+      final history = CommandHistory(doc);
+      final command = AddEntityCommand(LevelEntity(name: 'coin'));
+      command.apply(doc);
+      history.recordApplied(command);
+
+      expect(doc.entities, hasLength(3), reason: 'not applied a second time');
+      history.undo();
+      expect(doc.entities, hasLength(2));
+      history.redo();
+      expect(doc.entities, hasLength(3));
     });
   });
 }

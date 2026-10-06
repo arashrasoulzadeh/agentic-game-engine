@@ -86,4 +86,52 @@ void main() {
     expect(find.byKey(const Key('level-error')), findsOneWidget);
     expect(find.textContaining('Could not open'), findsOneWidget);
   });
+
+  testWidgets(
+    'the place tool adds an entity where the canvas is tapped, and undo removes it',
+    (tester) async {
+      final path = write('level.json', jsonEncode(_level()));
+      await tester.pumpWidget(MaterialApp(home: LevelScreen(levelPath: path)));
+
+      await tester.tap(find.text('Place'));
+      await tester.pump();
+      final canvas = find.byKey(const Key('level-canvas'));
+      await tester.tapAt(tester.getTopLeft(canvas) + const Offset(100, 60));
+      await tester.pump();
+
+      final status = tester
+          .widget<Text>(find.byKey(const Key('selection-status')))
+          .data;
+      expect(status, 'Selected: entity 3');
+      final undo = tester.widget<IconButton>(find.byKey(const Key('undo')));
+      expect(undo.onPressed, isNotNull);
+
+      await tester.tap(find.byKey(const Key('undo')));
+      await tester.pump();
+      expect(find.text('Tap an entity to select it.'), findsOneWidget);
+    },
+  );
+
+  testWidgets('undo and redo are disabled until there is something to undo', (
+    tester,
+  ) async {
+    final path = write('level.json', jsonEncode(_level()));
+    await tester.pumpWidget(MaterialApp(home: LevelScreen(levelPath: path)));
+
+    final undo = tester.widget<IconButton>(find.byKey(const Key('undo')));
+    final redo = tester.widget<IconButton>(find.byKey(const Key('redo')));
+    expect(undo.onPressed, isNull);
+    expect(redo.onPressed, isNull);
+  });
+
+  testWidgets('the delete button is disabled until an entity is selected', (
+    tester,
+  ) async {
+    final path = write('level.json', jsonEncode(_level()));
+    await tester.pumpWidget(MaterialApp(home: LevelScreen(levelPath: path)));
+    final button = tester.widget<IconButton>(
+      find.byKey(const Key('delete-selected')),
+    );
+    expect(button.onPressed, isNull);
+  });
 }
