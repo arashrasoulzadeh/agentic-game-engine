@@ -1,7 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:engine_flutter/engine_flutter.dart' show SpriteAtlas;
+import 'package:engine_flutter/engine_flutter.dart' show Sprite, SpriteAtlas;
 import 'package:flutter/services.dart';
 
 import '../level/level_geometry.dart';
@@ -153,8 +153,9 @@ class _PreviewViewState extends State<PreviewView>
     }
 
     final geometry = LevelGeometry.of(widget.document);
-    final positions = [
-      for (final (_, pos) in preview.positions) Offset(pos.x, pos.y),
+    final drawables = [
+      for (final (pos, sprite) in preview.drawables)
+        _Drawable(Offset(pos.x, pos.y), sprite),
     ];
     return Focus(
       focusNode: _focus,
@@ -183,7 +184,7 @@ class _PreviewViewState extends State<PreviewView>
                     size: Size.infinite,
                     painter: _PreviewPainter(
                       geometry: geometry,
-                      positions: positions,
+                      drawables: drawables,
                       scale: scale,
                       atlases: _textures ? _atlases : const {},
                     ),
@@ -297,15 +298,23 @@ class _HoldButton extends StatelessWidget {
   }
 }
 
+/// One entity to draw: where it is, and its sprite if it has one.
+class _Drawable {
+  final Offset at;
+  final Sprite? sprite;
+
+  const _Drawable(this.at, this.sprite);
+}
+
 class _PreviewPainter extends CustomPainter {
   final LevelGeometry geometry;
-  final List<Offset> positions;
+  final List<_Drawable> drawables;
   final double scale;
   final Map<String, SpriteAtlas> atlases;
 
   _PreviewPainter({
     required this.geometry,
-    required this.positions,
+    required this.drawables,
     required this.scale,
     required this.atlases,
   });
@@ -344,8 +353,11 @@ class _PreviewPainter extends CustomPainter {
       }
     }
     final marker = Paint()..color = const Color(0xFFE0474C);
-    for (final at in positions) {
-      canvas.drawCircle(at, 5, marker);
+    for (final drawable in drawables) {
+      if (_drawSprite(canvas, drawable)) {
+        continue;
+      }
+      canvas.drawCircle(drawable.at, 5, marker);
     }
     canvas.restore();
   }
@@ -364,6 +376,28 @@ class _PreviewPainter extends CustomPainter {
       dst,
       Paint(),
     );
+    return true;
+  }
+
+  /// Draws an entity's sprite region, centred on its position and scaled as the
+  /// sprite says. Returns false when the entity has no sprite or its atlas is not
+  /// loaded, so the caller draws a marker.
+  bool _drawSprite(Canvas canvas, _Drawable drawable) {
+    final sprite = drawable.sprite;
+    if (sprite == null) return false;
+    final atlas = atlases[sprite.atlasId];
+    if (atlas == null || !atlas.regions.containsKey(sprite.region)) {
+      return false;
+    }
+    final src = atlas.regionFor(sprite.region);
+    final w = src.width * sprite.scaleX;
+    final h = src.height * sprite.scaleY;
+    final dst = Rect.fromCenter(
+      center: drawable.at + Offset(sprite.offsetX, sprite.offsetY),
+      width: w,
+      height: h,
+    );
+    canvas.drawImageRect(atlas.image, src, dst, Paint());
     return true;
   }
 

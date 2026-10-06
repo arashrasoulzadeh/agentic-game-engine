@@ -45,12 +45,14 @@ class PreviewWorld {
   /// Advances the simulation by [dt] seconds.
   void step(double dt) => world.step(dt);
 
-  /// Where each entity with a position is now, for drawing.
-  Iterable<(EntityId, Position)> get positions sync* {
-    final store = world.components.storeOf<Position>();
-    for (var i = 0; i < store.length; i++) {
-      final id = store.entityAt(i);
-      yield (id, store.get(id)!);
+  /// Where each entity with a position is now, with its sprite when it has one, for
+  /// drawing.
+  Iterable<(Position, Sprite?)> get drawables sync* {
+    final positions = world.components.storeOf<Position>();
+    final sprites = world.components.storeOf<Sprite>();
+    for (var i = 0; i < positions.length; i++) {
+      final id = positions.entityAt(i);
+      yield (positions.get(id)!, sprites.get(id));
     }
   }
 

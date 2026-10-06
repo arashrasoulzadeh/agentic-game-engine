@@ -15,7 +15,7 @@ void main() {
     test('loads the level into a live engine world with the named player', () {
       final preview = PreviewWorld.of(_fixture(), width: 4000, height: 4000);
       expect(preview.named.containsKey('player'), isTrue);
-      expect(preview.positions, isNotEmpty);
+      expect(preview.drawables, isNotEmpty);
     });
 
     test(
@@ -88,5 +88,32 @@ void main() {
         reason: 'no held action, no sideways motion',
       );
     });
+  });
+
+  test('an entity with a sprite is handed to the preview with that sprite', () {
+    final doc = LevelDocument.fromJson({
+      'entities': [
+        {
+          'components': {
+            'position': {'x': 5.0, 'y': 6.0},
+            'sprite': {'atlasId': 'kave', 'region': 'idle_0'},
+          },
+        },
+        {
+          'components': {
+            'position': {'x': 9.0, 'y': 9.0},
+          },
+        },
+      ],
+    });
+    final preview = PreviewWorld.of(doc, width: 4000, height: 4000);
+    final drawables = preview.drawables.toList();
+    expect(drawables, hasLength(2));
+    expect(drawables.first.$2?.atlasId, 'kave');
+    expect(
+      drawables.last.$2,
+      isNull,
+      reason: 'no sprite, so the preview draws a marker',
+    );
   });
 }
