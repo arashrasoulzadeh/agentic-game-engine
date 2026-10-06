@@ -401,11 +401,11 @@ game runs.
   document exactly.
 - [~] **1.5** Test: history undo/redo ordering and stroke merge.
 - [ ] **1.6** Decide D2 (commands in `engine_core`) and record it.
-- [ ] **1.7** `LevelValidator` in `engine_core/lib/src/validation/`:
+- [x] **1.7** `LevelValidator` in `engine_core/lib/src/validation/`:
   unknown component, field out of range, dangling entity refs.
 - [ ] **1.8** Reachability check (flood-fill from spawn over the tile
   map) — reuses existing tile traversal.
-- [ ] **1.9** Tests for each validator rule, including a passing level.
+- [~] **1.9** Tests for each validator rule, including a passing level.
 - [ ] **1.10** Decide D4 (play-test process model) and record it.
 
 ### Phase 2 — CLI and headless tooling

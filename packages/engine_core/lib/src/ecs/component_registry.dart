@@ -98,6 +98,9 @@ class ComponentRegistry {
   /// none (or isn't registered at all).
   ComponentSchema? schemaFor(String name) => _byName[name]?.schema;
 
+  /// Whether a component is registered under [name].
+  bool isRegistered(String name) => _byName.containsKey(name);
+
   /// Every registered component name, in registration order. Lets a
   /// coverage test check that each one has a schema, not just the ones a
   /// test happens to name.
