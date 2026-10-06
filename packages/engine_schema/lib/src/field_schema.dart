@@ -94,6 +94,35 @@ class ComponentSchema {
 
   const ComponentSchema(this.name, this.fields);
 
+  /// A JSON object with every field set to a valid starting value, for placing a
+  /// new component in an editor. A declared default wins; otherwise the field's
+  /// zero value, raised to its minimum so it is never out of range.
+  Map<String, Object?> get template => {
+    for (final field in fields) field.name: _templateValue(field),
+  };
+
+  static Object? _templateValue(FieldSchema field) {
+    if (field.defaultValue != null) return field.defaultValue;
+    switch (field.type) {
+      case FieldType.int:
+        return (field.min ?? 0).toInt();
+      case FieldType.double:
+        return (field.min ?? 0).toDouble();
+      case FieldType.bool:
+        return false;
+      case FieldType.string:
+        return '';
+      case FieldType.enumeration:
+        return field.options.isEmpty ? '' : field.options.first;
+      case FieldType.vector2:
+        return [0.0, 0.0];
+      case FieldType.list:
+        return <Object?>[];
+      case FieldType.object:
+        return <String, Object?>{};
+    }
+  }
+
   /// The field called [name], or null when this schema does not declare it.
   FieldSchema? fieldNamed(String name) {
     for (final field in fields) {

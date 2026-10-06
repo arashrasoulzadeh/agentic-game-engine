@@ -24,6 +24,10 @@ class LevelEditor {
   /// The tile id the paint tool writes. Id 0 is empty and is what erase writes.
   int paintTileId = 1;
 
+  /// The component the palette picked, which the place tool gives each new
+  /// entity with its schema's starting values. Null places an empty entity.
+  String? pendingComponent;
+
   /// The entity under the last select, or null.
   LevelEntity? selected;
 
@@ -148,11 +152,15 @@ class LevelEditor {
   }
 
   void _placeAt(Offset point) {
-    final entity = LevelEntity(
-      components: {
-        'position': {'x': point.dx, 'y': point.dy},
-      },
-    );
+    final components = <String, Map<String, dynamic>>{
+      'position': {'x': point.dx, 'y': point.dy},
+    };
+    final pending = pendingComponent;
+    if (pending != null && pending != 'position') {
+      final schema = allComponentSchemas[pending];
+      if (schema != null) components[pending] = Map.of(schema.template);
+    }
+    final entity = LevelEntity(components: components);
     history.execute(AddEntityCommand(entity));
     selected = entity;
   }

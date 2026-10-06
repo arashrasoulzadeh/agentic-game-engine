@@ -2,6 +2,7 @@ import 'package:engine_schema/engine_schema.dart';
 import 'package:test/test.dart';
 
 void main() {
+  _templateTests();
   group('FieldSchema.validate', () {
     test('accepts a value of the declared type', () {
       expect(const FieldSchema('hp', FieldType.int).validate(5), isNull);
@@ -132,6 +133,56 @@ void main() {
       const schema = ComponentSchema('c', [FieldSchema('hp', FieldType.int)]);
       expect(schema.fieldNamed('hp')?.type, FieldType.int);
       expect(schema.fieldNamed('mp'), isNull);
+    });
+  });
+}
+
+void _templateTests() {
+  group('ComponentSchema.template', () {
+    test('gives every field a value that passes its own validation', () {
+      const schema = ComponentSchema('c', [
+        FieldSchema('hp', FieldType.int, min: 1),
+        FieldSchema('speed', FieldType.double, min: 0.5),
+        FieldSchema('on', FieldType.bool),
+        FieldSchema('label', FieldType.string),
+        FieldSchema(
+          'facing',
+          FieldType.enumeration,
+          options: ['left', 'right'],
+        ),
+        FieldSchema('offset', FieldType.vector2),
+        FieldSchema('items', FieldType.list),
+        FieldSchema('data', FieldType.object),
+        FieldSchema('scale', FieldType.double, defaultValue: 2),
+      ]);
+      expect(schema.validate(schema.template), isEmpty);
+    });
+
+    test(
+      'raises a zero value to the minimum rather than going out of range',
+      () {
+        const schema = ComponentSchema('c', [
+          FieldSchema('hp', FieldType.int, min: 1),
+        ]);
+        expect(schema.template['hp'], 1);
+      },
+    );
+
+    test('a declared default is used over the zero value', () {
+      const schema = ComponentSchema('c', [
+        FieldSchema('scale', FieldType.double, defaultValue: 2),
+      ]);
+      expect(schema.template['scale'], 2);
+    });
+
+    test('every engine component schema has a template that validates', () {
+      for (final schema in allComponentSchemas.values) {
+        expect(
+          schema.validate(schema.template),
+          isEmpty,
+          reason: '${schema.name} template is invalid',
+        );
+      }
     });
   });
 }

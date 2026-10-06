@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:engine_core/engine_core.dart';
+import 'package:engine_schema/engine_schema.dart';
 import 'package:engine_studio/src/level/level_editor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -41,6 +42,7 @@ List<int> _tiles(LevelDocument doc) =>
     ((doc.entities.first.components['tileMap']!['tiles']) as List).cast<int>();
 
 void main() {
+  _paletteTests();
   _validationTests();
   group('select', () {
     test('a tap selects the entity under it', () {
@@ -299,6 +301,48 @@ void _validationTests() {
         expect(editor.selected, same(doc.entities[1]));
         editor.selectIndex(9);
         expect(editor.selected, same(doc.entities[1]));
+      },
+    );
+  });
+}
+
+void _paletteTests() {
+  group('palette placement', () {
+    test(
+      'placing with a pending component gives the new entity its schema template',
+      () {
+        final doc = _level();
+        final editor = LevelEditor(doc)
+          ..tool = EditorTool.placeEntity
+          ..pendingComponent = 'pushable';
+        editor.tap(const Offset(100, 60));
+
+        final placed = editor.selected!;
+        expect(
+          placed.components['pushable'],
+          allComponentSchemas['pushable']!.template,
+        );
+        expect(placed.components['position'], {'x': 100.0, 'y': 60.0});
+      },
+    );
+
+    test('placing with no pending component gives only a position', () {
+      final editor = LevelEditor(_level())..tool = EditorTool.placeEntity;
+      editor.tap(const Offset(100, 60));
+      expect(editor.selected!.components.keys, ['position']);
+    });
+
+    test(
+      'the placed entity passes validation, so the palette never adds an error',
+      () {
+        final editor = LevelEditor(_level())
+          ..tool = EditorTool.placeEntity
+          ..pendingComponent = 'platformerController';
+        editor.tap(const Offset(100, 60));
+        expect(
+          editor.issues.where((i) => i.severity == IssueSeverity.error),
+          isEmpty,
+        );
       },
     );
   });

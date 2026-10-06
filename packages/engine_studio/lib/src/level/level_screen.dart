@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../inspector/inspector_panel.dart';
+import '../palette/entity_palette.dart';
 import '../validation/validation_panel.dart';
 import 'level_canvas.dart';
 import 'level_saver.dart';
@@ -188,6 +189,10 @@ class _LevelScreenState extends State<LevelScreen> {
               Expanded(
                 child: Row(
                   children: [
+                    EntityPalette(
+                      editor: editor,
+                      onChanged: () => setState(() {}),
+                    ),
                     Expanded(
                       child: Scrollbar(
                         controller: _vertical,
