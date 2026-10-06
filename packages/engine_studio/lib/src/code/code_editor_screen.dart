@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import 'analysis.dart';
+import 'completion.dart';
 import 'dart_highlighter.dart';
 import 'project_symbols.dart';
 
@@ -42,6 +43,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   late String _saved;
   String? _error;
   List<AnalysisIssue>? _issues;
+  final FocusNode _editorFocus = FocusNode();
+  int _completionIndex = 0;
+  bool _completionDismissed = false;
   bool _analyzing = false;
 
   bool get _isDart => widget.filePath.endsWith('.dart');
@@ -53,7 +57,12 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     _text = _isDart
         ? DartHighlightController(text: _saved)
         : TextEditingController(text: _saved);
-    _text.addListener(() => setState(() {}));
+    _text.addListener(() {
+      setState(() {
+        _completionIndex = 0;
+        _completionDismissed = false;
+      });
+    });
     final root = widget.projectRoot;
     _symbols = root == null
         ? const ProjectSymbols(
@@ -68,6 +77,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   @override
   void dispose() {
     _text.dispose();
+    _editorFocus.dispose();
     super.dispose();
   }
 
@@ -82,6 +92,45 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     return match?.group(0) ?? '';
   }
 
+  /// Handles keys while the completion list is open: arrows move the selection, Enter
+  /// or Tab accepts it, and Escape closes the list. Other keys type as usual.
+  KeyEventResult _onEditorKey(FocusNode node, KeyEvent event) {
+    final items = _completionItems();
+    if (items.isEmpty || event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowDown) {
+      setState(() => _completionIndex = (_completionIndex + 1) % items.length);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
+      setState(
+        () => _completionIndex =
+            (_completionIndex - 1 + items.length) % items.length,
+      );
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.tab) {
+      _complete(items[_completionIndex.clamp(0, items.length - 1)].name);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.escape) {
+      setState(() => _completionDismissed = true);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  /// The suggestions for the word at the cursor, or none in a non-Dart file or
+  /// after Escape closed the list.
+  List<CompletionItem> _completionItems() {
+    if (!_isDart || _completionDismissed) {
+      return const [];
+    }
+    return completionsFor(_wordBeforeCursor, _symbols);
+  }
+
   void _complete(String name) {
     final cursor = _text.selection.baseOffset;
     final word = _wordBeforeCursor;
@@ -91,6 +140,8 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       text: updated,
       selection: TextSelection.collapsed(offset: start + name.length),
     );
+    // The text listener reopens the list on any text change, so this runs after it.
+    setState(() => _completionDismissed = true);
   }
 
   /// Runs the Dart analyzer on the project and keeps the findings for this file. The
@@ -149,6 +200,38 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     }
   }
 
+  /// The live list under the cursor: keywords and project names matching the word
+  /// being typed. The selected row is highlighted; a click accepts a row.
+  Widget _completionList(List<CompletionItem> items) {
+    final theme = Theme.of(context);
+    final index = _completionIndex.clamp(0, items.length - 1);
+    return Container(
+      key: const Key('completion-list'),
+      constraints: const BoxConstraints(maxHeight: 200),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+      ),
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          for (var i = 0; i < items.length && i < 30; i++)
+            ListTile(
+              key: Key('completion-${items[i].name}'),
+              dense: true,
+              selected: i == index,
+              title: Text(
+                items[i].name,
+                style: const TextStyle(fontFamily: 'Menlo'),
+              ),
+              trailing: Text(items[i].kind, style: theme.textTheme.bodySmall),
+              onTap: () => _complete(items[i].name),
+            ),
+        ],
+      ),
+    );
+  }
+
   /// The analyzer's findings for this file, or a clean message. Tapping a finding
   /// moves the cursor to its line.
   Widget _analysisPanel(BuildContext context) {
@@ -194,7 +277,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final name = p.basename(widget.filePath);
-    final suggestions = _symbols.completionsFor(_wordBeforeCursor);
+    final suggestions = _completionItems();
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _save,
@@ -245,44 +328,22 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
-            if (suggestions.isNotEmpty)
-              SizedBox(
-                height: 40,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  children: [
-                    for (final (name, kind) in suggestions.take(12))
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          right: 6,
-                          top: 4,
-                          bottom: 4,
-                        ),
-                        child: ActionChip(
-                          key: Key('suggest-$name'),
-                          avatar: Text(
-                            kind,
-                            style: const TextStyle(fontSize: 10),
-                          ),
-                          label: Text(name),
-                          onPressed: () => _complete(name),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+            if (suggestions.isNotEmpty) _completionList(suggestions),
             Expanded(
-              child: TextField(
-                key: const Key('code-text'),
-                controller: _text,
-                expands: true,
-                maxLines: null,
-                minLines: null,
-                style: const TextStyle(fontFamily: 'Menlo', fontSize: 13),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(12),
+              child: Focus(
+                focusNode: _editorFocus,
+                onKeyEvent: _onEditorKey,
+                child: TextField(
+                  key: const Key('code-text'),
+                  controller: _text,
+                  expands: true,
+                  maxLines: null,
+                  minLines: null,
+                  style: const TextStyle(fontFamily: 'Menlo', fontSize: 13),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(12),
+                  ),
                 ),
               ),
             ),

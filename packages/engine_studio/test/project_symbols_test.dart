@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:engine_studio/src/code/code_editor_screen.dart';
 import 'package:engine_studio/src/code/project_symbols.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -75,7 +76,7 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byKey(const Key('suggest-Hero')));
+    await tester.tap(find.byKey(const Key('completion-Hero')));
     await tester.pump();
 
     expect(
@@ -84,6 +85,56 @@ void main() {
           .controller!
           .text,
       'final class Hero',
+    );
+  });
+
+  testWidgets(
+    'the list appears as you type, arrows move the selection, and Enter accepts it',
+    (tester) async {
+      final path = '${root.path}/lib/hero.dart';
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CodeEditorScreen(filePath: path, projectRoot: root.path),
+        ),
+      );
+      await tester.enterText(find.byKey(const Key('code-text')), 'cl');
+      await tester.pump();
+      expect(find.byKey(const Key('completion-list')), findsOneWidget);
+      expect(find.byKey(const Key('completion-class')), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('code-text')))
+            .controller!
+            .text,
+        'class',
+      );
+      expect(find.byKey(const Key('completion-list')), findsNothing);
+    },
+  );
+
+  testWidgets('Escape closes the list without changing the text', (
+    tester,
+  ) async {
+    final path = '${root.path}/lib/hero.dart';
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CodeEditorScreen(filePath: path, projectRoot: root.path),
+      ),
+    );
+    await tester.enterText(find.byKey(const Key('code-text')), 'He');
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+    expect(find.byKey(const Key('completion-list')), findsNothing);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('code-text')))
+          .controller!
+          .text,
+      'He',
     );
   });
 }

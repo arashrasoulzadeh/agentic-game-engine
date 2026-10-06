@@ -11,7 +11,8 @@ class DartToken {
   const DartToken(this.text, this.kind);
 }
 
-const _keywords = {
+/// Dart's reserved and built-in words. Also offered by completion.
+const dartKeywords = {
   'abstract',
   'as',
   'assert',
@@ -107,7 +108,7 @@ DartTokenKind _kindOf(String text) {
     return DartTokenKind.string;
   }
   if (RegExp(r'^\d').hasMatch(text)) return DartTokenKind.number;
-  if (_keywords.contains(text)) return DartTokenKind.keyword;
+  if (dartKeywords.contains(text)) return DartTokenKind.keyword;
   if (RegExp(r'^[A-Z]').hasMatch(text)) return DartTokenKind.type;
   return DartTokenKind.plain;
 }
