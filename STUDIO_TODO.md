@@ -369,7 +369,7 @@ Goal: the data contracts the studio depends on exist and are tested.
   (`component_schema_coverage_test.dart`). Not "defaults alone pass `fromJson`":
   required fields have no default, so a component cannot be built from defaults
   alone.
-- [ ] **0.5** `LevelDocument` (editable plain-data level) with
+- [x] **0.5** `LevelDocument` (editable plain-data level) with
   `fromJson`/`toJson`.
 - [ ] **0.6** Round-trip test: load → save of existing example levels is
   byte-stable. Fix any existing level JSON that is not.
