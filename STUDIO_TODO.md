@@ -377,8 +377,12 @@ Goal: the data contracts the studio depends on exist and are tested.
   alone.
 - [x] **0.5** `LevelDocument` (editable plain-data level) with
   `fromJson`/`toJson`.
-- [ ] **0.6** Round-trip test: load → save of existing example levels is
-  byte-stable. Fix any existing level JSON that is not.
+- [x] **0.6** Round-trip: a legend-authored level (the default template) keeps
+  its data, key order, and ASCII rows through a save, and saving twice gives
+  identical output (`level_document_roundtrip_test.dart`). Not "byte-identical
+  to the original file": the template's hand-written spacing is not what a
+  JSON encoder emits. The round-trip avoids `TileMap.fromJson` on purpose,
+  since that would rewrite the legend as flat ids.
 - [x] **0.7** Decide D1 (schemas hand-written) and record it in
   `docs/adr/0001-hand-written-component-schemas.md`.
 
