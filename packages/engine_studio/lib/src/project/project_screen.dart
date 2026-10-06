@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../code/code_editor_screen.dart';
 import '../level/level_screen.dart';
 import 'studio_project.dart';
 
@@ -15,30 +16,43 @@ class ProjectScreen extends StatelessWidget {
     final levels = project.levelPaths();
     return Scaffold(
       appBar: AppBar(title: Text(project.root.split('/').last)),
-      body: levels.isEmpty
-          ? const Center(
-              key: Key('no-levels'),
-              child: Text('This project has no levels yet.'),
-            )
-          : ListView(
-              children: [
-                for (final relative in levels)
-                  ListTile(
-                    key: Key('level-$relative'),
-                    leading: const Icon(Icons.map_outlined),
-                    title: Text(relative.split('/').last),
-                    subtitle: Text(relative),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => LevelScreen(
-                          levelPath: '${project.root}/$relative',
-                          projectRoot: project.root,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+      body: ListView(
+        children: [
+          for (final file in project.codeFiles())
+            ListTile(
+              key: Key('code-$file'),
+              leading: const Icon(Icons.code),
+              title: Text(file.split('/').last),
+              subtitle: Text(file),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) =>
+                      CodeEditorScreen(filePath: '${project.root}/$file'),
+                ),
+              ),
             ),
+          if (levels.isEmpty)
+            const ListTile(
+              key: Key('no-levels'),
+              title: Text('This project has no levels yet.'),
+            ),
+          for (final relative in levels)
+            ListTile(
+              key: Key('level-$relative'),
+              leading: const Icon(Icons.map_outlined),
+              title: Text(relative.split('/').last),
+              subtitle: Text(relative),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => LevelScreen(
+                    levelPath: '${project.root}/$relative',
+                    projectRoot: project.root,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -38,7 +38,7 @@ class PreviewWorld {
       input = InputState();
       world.components.storeOf<InputState>().set(player, input);
     }
-    installPlatformerSystems(world, player: player, includeAnimation: false);
+    installPlatformerSystems(world, player: player, includeAnimation: true);
     return PreviewWorld._(world, named, input);
   }
 

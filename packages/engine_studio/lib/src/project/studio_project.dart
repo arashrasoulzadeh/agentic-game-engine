@@ -51,4 +51,15 @@ class StudioProject {
           p.relative(file.path, from: root),
     ]..sort();
   }
+
+  /// The project's source files a designer can edit as text: Dart under `lib/`,
+  /// sorted and relative to [root]. Level JSON is listed separately by [levelPaths].
+  List<String> codeFiles() {
+    final dir = Directory(p.join(root, 'lib'));
+    if (!dir.existsSync()) return [];
+    return [
+      for (final file in dir.listSync(recursive: true).whereType<File>())
+        if (file.path.endsWith('.dart')) p.relative(file.path, from: root),
+    ]..sort();
+  }
 }

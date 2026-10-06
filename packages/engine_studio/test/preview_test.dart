@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:engine_core/engine_core.dart';
+import 'package:engine_flutter/engine_flutter.dart';
 import 'package:engine_studio/src/preview/preview_world.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -114,6 +115,36 @@ void main() {
       drawables.last.$2,
       isNull,
       reason: 'no sprite, so the preview draws a marker',
+    );
+  });
+
+  test('an animated sprite changes its region as its clip plays', () {
+    final doc = LevelDocument.fromJson({
+      'entities': [
+        {
+          'components': {
+            'position': {'x': 5.0, 'y': 6.0},
+            'sprite': {'atlasId': 'kave', 'region': 'idle_0'},
+            'animationState': {
+              'clip': {
+                'name': 'idle',
+                'frameRegions': ['idle_0', 'idle_1'],
+                'frameDurationSeconds': 0.1,
+                'loop': true,
+              },
+            },
+          },
+        },
+      ],
+    });
+    final preview = PreviewWorld.of(doc, width: 4000, height: 4000);
+    final entity = preview.world.components.storeOf<Sprite>().entityAt(0);
+    for (var i = 0; i < 12; i++) {
+      preview.step(1 / 60);
+    }
+    expect(
+      preview.world.components.storeOf<Sprite>().get(entity)!.region,
+      'idle_1',
     );
   });
 }
