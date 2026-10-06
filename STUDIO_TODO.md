@@ -391,15 +391,15 @@ Goal: the data contracts the studio depends on exist and are tested.
 Goal: every change is an undoable command; bad data is caught before the
 game runs.
 
-- [ ] **1.1** `EditCommand` base type with `apply`/`revert` in
+- [x] **1.1** `EditCommand` base type with `apply`/`revert` in
   `engine_core/lib/src/command/`.
 - [ ] **1.2** Commands: `PlaceTile`, `EraseTile`, `FillRegion`,
   `AddEntity`, `RemoveEntity`, `SetComponentField`, `MoveEntity`,
   `SetLayer`.
-- [ ] **1.3** `CommandHistory` with undo/redo stacks and stroke merging.
-- [ ] **1.4** Test per command: `apply` then `revert` restores the
+- [~] **1.3** `CommandHistory` with undo/redo stacks and stroke merging.
+- [x] **1.4** Test per command: `apply` then `revert` restores the
   document exactly.
-- [ ] **1.5** Test: history undo/redo ordering and stroke merge.
+- [~] **1.5** Test: history undo/redo ordering and stroke merge.
 - [ ] **1.6** Decide D2 (commands in `engine_core`) and record it.
 - [ ] **1.7** `LevelValidator` in `engine_core/lib/src/validation/`:
   unknown component, field out of range, dangling entity refs.
