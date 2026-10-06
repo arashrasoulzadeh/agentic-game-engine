@@ -57,6 +57,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   DartSession? _session;
   StreamSubscription<List<LiveDiagnostic>>? _liveSub;
   List<LiveDiagnostic>? _live;
+  String? _hover;
   List<CompletionItem>? _serverItems;
   int _serverRequest = 0;
   bool _analyzing = false;
@@ -180,6 +181,11 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         _goToDefinition();
         return KeyEventResult.handled;
       }
+      final command = keyboard.isControlPressed || keyboard.isMetaPressed;
+      if (command && event.logicalKey == LogicalKeyboardKey.keyK) {
+        _showHover();
+        return KeyEventResult.handled;
+      }
       if (event.logicalKey == LogicalKeyboardKey.keyF &&
           keyboard.isAltPressed &&
           keyboard.isShiftPressed) {
@@ -257,6 +263,26 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         ),
       );
     }
+  }
+
+  /// Shows what the server knows about the symbol at the cursor: its type and its
+  /// documentation. Nothing is shown when the server has nothing for that spot.
+  Future<void> _showHover() async {
+    final session = _session;
+    if (session == null) return;
+    final (line, character) = _cursorPosition();
+    final text = await session.hoverAt(widget.filePath, line, character);
+    if (!mounted) return;
+    setState(() => _hover = text ?? 'Nothing to show here.');
+  }
+
+  /// The cursor as a 0-based line and character, the way the server counts.
+  (int, int) _cursorPosition() {
+    final offset = _text.selection.baseOffset.clamp(0, _text.text.length);
+    final before = _text.text.substring(0, offset);
+    final line = '\n'.allMatches(before).length;
+    final character = offset - (before.lastIndexOf('\n') + 1);
+    return (line, character);
   }
 
   /// Formats the file with the language server, as one undoable edit: the whole
@@ -456,6 +482,41 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     );
   }
 
+  /// The hover card: the symbol's description, with a close button.
+  Widget _hoverCard(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      key: const Key('hover-card'),
+      width: double.infinity,
+      constraints: const BoxConstraints(maxHeight: 160),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: SelectableText(
+                _hover!,
+                style: const TextStyle(fontFamily: 'Menlo', fontSize: 12),
+              ),
+            ),
+          ),
+          IconButton(
+            key: const Key('hover-close'),
+            tooltip: 'Close',
+            iconSize: 16,
+            onPressed: () => setState(() => _hover = null),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// The server's live problems for this file, as the file changes.
   Widget _liveList(BuildContext context, List<LiveDiagnostic> live) {
     final theme = Theme.of(context);
@@ -559,6 +620,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                 ),
               ),
             ),
+            if (_hover != null) _hoverCard(context),
             if (_issues != null || (_live?.isNotEmpty ?? false))
               _analysisPanel(context),
           ],

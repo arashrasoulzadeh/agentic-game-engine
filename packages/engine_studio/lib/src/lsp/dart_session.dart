@@ -108,6 +108,17 @@ class DartSession {
     ];
   }
 
+  /// The documentation and type the server knows for the symbol at [line] and
+  /// [character], as plain text, or null when there is nothing to show.
+  Future<String?> hoverAt(String path, int line, int character) async {
+    final result = await _client.request('textDocument/hover', {
+      'textDocument': {'uri': _uri(path)},
+      'position': {'line': line, 'character': character},
+    });
+    if (result is! Map) return null;
+    return hoverText(result['contents']);
+  }
+
   /// Problems the server reports for [path] as it analyzes, live. Each event is the
   /// full current list for the file, so an empty list means the file is clean now.
   Stream<List<LiveDiagnostic>> diagnosticsFor(String path) {
@@ -248,4 +259,18 @@ class LiveDiagnostic {
       code: json['code']?.toString(),
     );
   }
+}
+
+/// Turns hover contents into plain text. The protocol allows markup, a plain string,
+/// a list of either, or a marked string with a language; all of them reduce to the
+/// text a designer reads. Blank contents give null.
+String? hoverText(Object? contents) {
+  final text = switch (contents) {
+    String value => value,
+    Map value when value['value'] is String => value['value'] as String,
+    List value => value.map(hoverText).whereType<String>().join('\n\n'),
+    _ => null,
+  };
+  final trimmed = text?.trim();
+  return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
 }
