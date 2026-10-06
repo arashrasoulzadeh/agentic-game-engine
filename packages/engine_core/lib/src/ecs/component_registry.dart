@@ -1,3 +1,4 @@
+import '../schema/component_schema.dart';
 import 'component_store.dart';
 import 'entity.dart';
 import 'archetype.dart';
@@ -39,7 +40,11 @@ class ComponentRegistration<T> {
   /// The component store (package-private for archetype access).
   ComponentStore<T> get store => _store;
 
-  ComponentRegistration(this.name, this.toJson, this.fromJson);
+  /// The field list the studio uses to edit this component; null when the
+  /// component has no schema registered (see [ComponentRegistry.register]).
+  final ComponentSchema? schema;
+
+  ComponentRegistration(this.name, this.toJson, this.fromJson, [this.schema]);
 
   void _setArchetypeManager(ArchetypeManager manager) {
     _archetypeManager = manager;
@@ -74,16 +79,33 @@ class ComponentRegistry {
   final Map<String, ComponentRegistration> _byName = {};
   late final ArchetypeManager _archetypeManager = ArchetypeManager(this);
 
+  /// [schema] is optional so existing registrations keep working, but the
+  /// studio's inspector and validator can only see components that declare
+  /// one — register the schema in the same call wherever it exists.
   void register<T>(
     String name,
     Map<String, dynamic> Function(T) toJson,
-    T Function(Map<String, dynamic>) fromJson,
-  ) {
-    final reg = ComponentRegistration<T>(name, toJson, fromJson);
+    T Function(Map<String, dynamic>) fromJson, {
+    ComponentSchema? schema,
+  }) {
+    final reg = ComponentRegistration<T>(name, toJson, fromJson, schema);
     reg._setArchetypeManager(_archetypeManager);
     _byType[T] = reg;
     _byName[name] = reg;
   }
+
+  /// The schema registered under [name], or null if that component has
+  /// none (or isn't registered at all).
+  ComponentSchema? schemaFor(String name) => _byName[name]?.schema;
+
+  /// Every registered component name, in registration order. Lets a
+  /// coverage test check that each one has a schema, not just the ones a
+  /// test happens to name.
+  Iterable<String> get registeredNames => _byName.keys;
+
+  /// Every registered schema, in registration order.
+  Iterable<ComponentSchema> get schemas =>
+      _byName.values.map((reg) => reg.schema).whereType<ComponentSchema>();
 
   ComponentStore<T> storeOf<T>() {
     final reg = _byType[T];

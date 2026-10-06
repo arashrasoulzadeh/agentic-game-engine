@@ -1,4 +1,5 @@
 import 'src/rendering/particle_forces.dart';
+import 'src/schema/component_schema.dart';
 import 'src/content/inventory.dart';
 
 export 'src/ecs/action.dart';
@@ -14,6 +15,7 @@ export 'src/content/cinematic.dart';
 export 'src/content/inventory.dart';
 export 'src/content/dialogue.dart';
 export 'src/ecs/component_registry.dart';
+export 'src/schema/component_schema.dart';
 export 'src/ecs/component_store.dart';
 export 'src/ecs/deterministic_random.dart';
 export 'src/ecs/replay_recorder.dart';
@@ -98,95 +100,258 @@ void registerCoreComponents(World world) {
     'position',
     (p) => p.toJson(),
     Position.fromJson,
+    schema: const ComponentSchema('position', [
+      FieldSchema('x', FieldType.double, defaultValue: 0),
+      FieldSchema('y', FieldType.double, defaultValue: 0),
+    ]),
   );
   world.components.register<Velocity>(
     'velocity',
     (v) => v.toJson(),
     Velocity.fromJson,
+    schema: const ComponentSchema('velocity', [
+      FieldSchema('x', FieldType.double, defaultValue: 0),
+      FieldSchema('y', FieldType.double, defaultValue: 0),
+    ]),
   );
   world.components.register<Collider>(
     'collider',
     (c) => c.toJson(),
     Collider.fromJson,
+
+    schema: const ComponentSchema('collider', [
+      FieldSchema('radius', FieldType.double, min: 0),
+      FieldSchema('blocksLight', FieldType.bool, defaultValue: false),
+      FieldSchema('pushable', FieldType.bool, defaultValue: true),
+      FieldSchema('collisionGroup', FieldType.int, defaultValue: 1),
+      FieldSchema('collisionMask', FieldType.int, defaultValue: -1),
+    ]),
   );
   world.components.register<AIState>(
     'aiState',
     (a) => a.toJson(),
     AIState.fromJson,
+
+    schema: const ComponentSchema('aiState', [
+      FieldSchema('behaviorId', FieldType.string),
+      FieldSchema('memory', FieldType.object, optional: true),
+    ]),
   );
   world.components.register<Button>(
     'button',
     (b) => b.toJson(),
     Button.fromJson,
+    schema: const ComponentSchema('button', [
+      FieldSchema('actionId', FieldType.string),
+    ]),
   );
   world.components.register<ButtonHitBox>(
     'buttonHitBox',
     (b) => b.toJson(),
     ButtonHitBox.fromJson,
+    schema: const ComponentSchema('buttonHitBox', [
+      FieldSchema('width', FieldType.double, min: 0),
+      FieldSchema('height', FieldType.double, min: 0),
+    ]),
   );
   world.components.register<RoomExit>(
     'roomExit',
     (r) => r.toJson(),
     RoomExit.fromJson,
+
+    schema: const ComponentSchema('roomExit', [
+      FieldSchema('targetSceneId', FieldType.string),
+      FieldSchema('spawnPoint', FieldType.string),
+    ]),
   );
   world.components.register<TileMap>(
     'tileMap',
     (t) => t.toJson(),
     TileMap.fromJson,
+
+    schema: const ComponentSchema('tileMap', [
+      FieldSchema('cols', FieldType.int, min: 1),
+      FieldSchema('rows', FieldType.int, min: 1),
+      FieldSchema('tileWidth', FieldType.double, min: 0),
+      FieldSchema('tileHeight', FieldType.double, min: 0),
+      FieldSchema('tiles', FieldType.list),
+      FieldSchema('solidTileIds', FieldType.list),
+      FieldSchema('oneWayTileIds', FieldType.list),
+      FieldSchema('slopeUpRightTileIds', FieldType.list),
+      FieldSchema('slopeUpLeftTileIds', FieldType.list),
+      FieldSchema('ladderTileIds', FieldType.list),
+      FieldSchema('conveyorSpeedByTileId', FieldType.object),
+      FieldSchema('frictionByTileId', FieldType.object),
+      FieldSchema('atlasId', FieldType.string, optional: true),
+      FieldSchema('regionByTileId', FieldType.object),
+      FieldSchema('zIndex', FieldType.int, defaultValue: 0),
+      FieldSchema('backgroundTiles', FieldType.list, optional: true),
+      FieldSchema('foregroundTiles', FieldType.list, optional: true),
+      FieldSchema('tileAnimations', FieldType.object, optional: true),
+      FieldSchema(
+        'tileAnimationFps',
+        FieldType.double,
+        min: 0,
+        defaultValue: 6,
+      ),
+      FieldSchema('collisionGroups', FieldType.object, optional: true),
+    ]),
   );
   world.components.register<Particle>(
     'particle',
     (p) => p.toJson(),
     Particle.fromJson,
+
+    schema: const ComponentSchema('particle', [
+      FieldSchema('age', FieldType.double, min: 0),
+      FieldSchema('lifetime', FieldType.double, min: 0),
+      FieldSchema('startScale', FieldType.double, min: 0),
+      FieldSchema('endScale', FieldType.double, min: 0),
+      FieldSchema('startAlpha', FieldType.double, min: 0, max: 1),
+      FieldSchema('endAlpha', FieldType.double, min: 0, max: 1),
+      FieldSchema('colorArgb', FieldType.int),
+      FieldSchema('zIndex', FieldType.int),
+      FieldSchema('followEmitter', FieldType.bool),
+      FieldSchema('emitterEntityId', FieldType.int, optional: true),
+    ]),
   );
   world.components.register<ParticleEmitter>(
     'particleEmitter',
     (p) => p.toJson(),
     ParticleEmitter.fromJson,
+
+    schema: const ComponentSchema('particleEmitter', [
+      FieldSchema('rate', FieldType.double, min: 0),
+      FieldSchema('burstCount', FieldType.int, min: 0),
+      FieldSchema('speedMin', FieldType.double, min: 0),
+      FieldSchema('speedMax', FieldType.double, min: 0),
+      FieldSchema('angleMin', FieldType.double),
+      FieldSchema('angleMax', FieldType.double),
+      FieldSchema('lifetimeMin', FieldType.double, min: 0),
+      FieldSchema('lifetimeMax', FieldType.double, min: 0),
+      FieldSchema('startScale', FieldType.double, min: 0),
+      FieldSchema('endScale', FieldType.double, min: 0),
+      FieldSchema('startAlpha', FieldType.double, min: 0, max: 1),
+      FieldSchema('endAlpha', FieldType.double, min: 0, max: 1),
+      FieldSchema('colorArgb', FieldType.int),
+      FieldSchema('zIndex', FieldType.int),
+      FieldSchema(
+        'emissionShape',
+        FieldType.enumeration,
+        options: ['point', 'circle', 'rect', 'edge'],
+        defaultValue: 'point',
+      ),
+      FieldSchema('emissionRadius', FieldType.double, min: 0),
+      FieldSchema('emissionHalfWidth', FieldType.double, min: 0),
+      FieldSchema('emissionHalfHeight', FieldType.double, min: 0),
+      FieldSchema('edgeStartX', FieldType.double),
+      FieldSchema('edgeStartY', FieldType.double),
+      FieldSchema('edgeEndX', FieldType.double),
+      FieldSchema('edgeEndY', FieldType.double),
+      FieldSchema('followEmitter', FieldType.bool),
+      FieldSchema('accumulator', FieldType.double, min: 0),
+    ]),
   );
   world.components.register<Tween>(
     'tween',
     (t) => t.toJson(),
     Tween.fromJson,
+    schema: const ComponentSchema('tween', [
+      FieldSchema('from', FieldType.double),
+      FieldSchema('to', FieldType.double),
+      FieldSchema('duration', FieldType.double, min: 0),
+      FieldSchema('elapsed', FieldType.double, min: 0),
+      FieldSchema('loop', FieldType.bool),
+      FieldSchema('pingPong', FieldType.bool),
+      FieldSchema(
+        'easing',
+        FieldType.enumeration,
+        options: ['linear', 'easeInQuad', 'easeOutQuad', 'easeInOutQuad'],
+        defaultValue: 'linear',
+      ),
+      FieldSchema('reversed', FieldType.bool),
+    ]),
   );
   world.components.register<TriggerZone>(
     'triggerZone',
     (t) => t.toJson(),
     TriggerZone.fromJson,
+
+    schema: const ComponentSchema('triggerZone', [
+      FieldSchema('triggerId', FieldType.string),
+      FieldSchema('data', FieldType.object, optional: true),
+    ]),
   );
   world.components.register<Pushable>(
     'pushable',
     (p) => p.toJson(),
     Pushable.fromJson,
+    schema: const ComponentSchema('pushable', [
+      FieldSchema('pushSpeed', FieldType.double, min: 0),
+    ]),
   );
   world.components.register<DialogueGraph>(
     'dialogueGraph',
     (d) => d.toJson(),
     DialogueGraph.fromJson,
+
+    schema: const ComponentSchema('dialogueGraph', [
+      FieldSchema('nodes', FieldType.object),
+      FieldSchema('startNodeId', FieldType.string),
+      FieldSchema('metadata', FieldType.object, optional: true),
+    ]),
   );
   world.components.register<GameState>(
     'gameState',
     (g) => g.toJson(),
     GameState.fromJson,
+
+    schema: const ComponentSchema('gameState', [
+      FieldSchema('data', FieldType.object),
+      FieldSchema('migrationVersion', FieldType.int, min: 1, defaultValue: 1),
+    ]),
   );
   world.components.register<Inventory>(
     'inventory',
     (i) => i.toJson(),
     Inventory.fromJson,
+
+    schema: const ComponentSchema('inventory', [
+      FieldSchema('items', FieldType.object),
+    ]),
   );
   world.components.register<ParticleForces>(
     'particleForces',
     (p) => p.toJson(),
     ParticleForces.fromJson,
+
+    schema: const ComponentSchema('particleForces', [
+      FieldSchema('radius', FieldType.double, min: 0, defaultValue: 100),
+      FieldSchema('strength', FieldType.double, defaultValue: 500),
+      FieldSchema('isWind', FieldType.bool, defaultValue: false),
+      FieldSchema('windDirection', FieldType.double, defaultValue: 0),
+      FieldSchema('falloffExponent', FieldType.double, min: 0, defaultValue: 2),
+    ]),
   );
   world.components.register<HearingComponent>(
     'hearing',
     (h) => h.toJson(),
     HearingComponent.fromJson,
+    schema: const ComponentSchema('hearing', [
+      FieldSchema('range', FieldType.double, min: 0),
+    ]),
   );
   world.components.register<SoundEvent>(
     'soundEvent',
     (s) => s.toJson(),
     SoundEvent.fromJson,
+
+    schema: const ComponentSchema('soundEvent', [
+      FieldSchema('x', FieldType.double),
+      FieldSchema('y', FieldType.double),
+      FieldSchema('loudness', FieldType.double, min: 0),
+      FieldSchema('tag', FieldType.string, optional: true),
+      FieldSchema('data', FieldType.object, optional: true),
+    ]),
   );
 }
