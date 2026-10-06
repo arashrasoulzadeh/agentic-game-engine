@@ -91,3 +91,35 @@ class SetComponentFieldCommand implements EditCommand {
     if (!_componentExisted) entity.components.remove(component);
   }
 }
+
+/// Moves [entity] to ([x], [y]) by setting its `position` component. Revert
+/// restores the previous `position` exactly, or removes it if there was none.
+class MoveEntityCommand implements EditCommand {
+  final LevelEntity entity;
+  final double x;
+  final double y;
+
+  Map<String, dynamic>? _previous;
+  bool _existed = false;
+
+  MoveEntityCommand({required this.entity, required this.x, required this.y});
+
+  @override
+  String get label => 'Move ${entity.name ?? 'entity'}';
+
+  @override
+  void apply(LevelDocument document) {
+    _existed = entity.components.containsKey('position');
+    _previous = entity.components['position'];
+    entity.components['position'] = {'x': x, 'y': y};
+  }
+
+  @override
+  void revert(LevelDocument document) {
+    if (_existed) {
+      entity.components['position'] = _previous!;
+    } else {
+      entity.components.remove('position');
+    }
+  }
+}

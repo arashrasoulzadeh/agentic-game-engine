@@ -393,7 +393,7 @@ game runs.
 
 - [x] **1.1** `EditCommand` base type with `apply`/`revert` in
   `engine_core/lib/src/command/`.
-- [ ] **1.2** Commands: `PlaceTile`, `EraseTile`, `FillRegion`,
+- [~] **1.2** Commands: `PlaceTile`, `EraseTile`, `FillRegion`,
   `AddEntity`, `RemoveEntity`, `SetComponentField`, `MoveEntity`,
   `SetLayer`.
 - [~] **1.3** `CommandHistory` with undo/redo stacks and stroke merging.
