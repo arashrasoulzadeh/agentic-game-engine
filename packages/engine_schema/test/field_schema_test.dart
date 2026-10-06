@@ -91,7 +91,13 @@ void main() {
 
   group('ComponentSchema', () {
     const health = ComponentSchema('health', [
-      FieldSchema('current', FieldType.int, min: 0, defaultValue: 100, required: true),
+      FieldSchema(
+        'current',
+        FieldType.int,
+        min: 0,
+        defaultValue: 100,
+        required: true,
+      ),
       FieldSchema('max', FieldType.int, min: 1, defaultValue: 100),
       FieldSchema('label', FieldType.string, required: true),
     ]);
@@ -118,6 +124,14 @@ void main() {
         health.validate({'current': 3, 'max': 10, 'label': 'hero'}),
         isEmpty,
       );
+    });
+  });
+
+  group('ComponentSchema.fieldNamed', () {
+    test('finds a declared field, and returns null for an undeclared one', () {
+      const schema = ComponentSchema('c', [FieldSchema('hp', FieldType.int)]);
+      expect(schema.fieldNamed('hp')?.type, FieldType.int);
+      expect(schema.fieldNamed('mp'), isNull);
     });
   });
 }

@@ -94,6 +94,14 @@ class ComponentSchema {
 
   const ComponentSchema(this.name, this.fields);
 
+  /// The field called [name], or null when this schema does not declare it.
+  FieldSchema? fieldNamed(String name) {
+    for (final field in fields) {
+      if (field.name == name) return field;
+    }
+    return null;
+  }
+
   /// The JSON keys this schema declares, in declaration order. Used to
   /// check the schema against a component's real `toJson` output.
   List<String> get fieldNames => [for (final field in fields) field.name];

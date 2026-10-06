@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 
+import '../inspector/inspector_panel.dart';
 import 'level_canvas.dart';
 import 'level_editor.dart';
 
@@ -93,25 +94,35 @@ class _LevelScreenState extends State<LevelScreen> {
             onChanged: (tool) => _edit((e) => e.tool = tool),
           ),
           Expanded(
-            child: InteractiveViewer(
-              minScale: 0.25,
-              maxScale: 8,
-              constrained: false,
-              child: GestureDetector(
-                key: const Key('level-canvas'),
-                behavior: HitTestBehavior.opaque,
-                onTapUp: (details) =>
-                    _edit((e) => e.tap(details.localPosition)),
-                onPanStart: (details) =>
-                    _edit((e) => e.dragStart(details.localPosition)),
-                onPanUpdate: (details) =>
-                    _edit((e) => e.dragUpdate(details.localPosition)),
-                onPanEnd: (_) => _edit((e) => e.dragEnd(_lastPoint(e))),
-                child: CustomPaint(
-                  size: _canvasSize(editor),
-                  painter: LevelCanvasPainter(editor: editor),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InteractiveViewer(
+                    minScale: 0.25,
+                    maxScale: 8,
+                    constrained: false,
+                    child: GestureDetector(
+                      key: const Key('level-canvas'),
+                      behavior: HitTestBehavior.opaque,
+                      onTapUp: (details) =>
+                          _edit((e) => e.tap(details.localPosition)),
+                      onPanStart: (details) =>
+                          _edit((e) => e.dragStart(details.localPosition)),
+                      onPanUpdate: (details) =>
+                          _edit((e) => e.dragUpdate(details.localPosition)),
+                      onPanEnd: (_) => _edit((e) => e.dragEnd(_lastPoint(e))),
+                      child: CustomPaint(
+                        size: _canvasSize(editor),
+                        painter: LevelCanvasPainter(editor: editor),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                InspectorPanel(
+                  editor: editor,
+                  onChanged: () => setState(() {}),
+                ),
+              ],
             ),
           ),
           Container(

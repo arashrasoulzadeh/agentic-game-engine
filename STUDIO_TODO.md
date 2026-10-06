@@ -444,7 +444,7 @@ Goal: a designer builds, saves, and play-tests a level.
 - [ ] **3.6** Grid snap and layer visibility toggles.
 - [~] **3.7** (undo/redo buttons done; keyboard shortcuts not yet) Undo/redo keybindings and toolbar buttons bound to
   `CommandHistory`.
-- [ ] **3.8** Property inspector generated from component schemas
+- [x] **3.8** (list and object fields are read-only JSON for now; editing them as JSON is deferred) Property inspector generated from component schemas
   (phase 0.1). Widget per `FieldType`.
 - [ ] **3.9** Entity palette: list of component templates with defaults
   from schemas.
