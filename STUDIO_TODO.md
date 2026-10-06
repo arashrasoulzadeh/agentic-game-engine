@@ -481,6 +481,38 @@ Goal: a designer builds, saves, and play-tests a level.
 **Phase 3 exit criteria:** PRD metrics 1.6 (10-minute build + play-test)
 and the undo coverage test are both green.
 
+### Phase 3B — Professional code editor (IDE)
+
+Goal: the studio's code editor works like a professional Dart IDE for a game
+project. Built on the Dart language server (`dart language-server`), the same
+server other editors use, so type information comes from the analyzer.
+
+Done before this section: highlighting, live completions from the analyzer,
+live diagnostics, inline squiggles, go to definition (F12), format (Shift+Alt+F),
+Analyze, SDK discovery, project file manager.
+
+- [x] **IDE.1** Inline squiggles for live errors and warnings.
+- [x] **IDE.2** Hover: pointing at a symbol (or pressing Ctrl/Cmd+K) shows its type and
+  documentation from the analyzer (`textDocument/hover`).
+- [ ] **IDE.3** Find all references (Shift+F12): a panel listing every use of the symbol
+  across the project, tap to open it.
+- [ ] **IDE.4** Rename symbol (F2): renames the symbol in every file that uses it, applied
+  as edits (`textDocument/rename`), undoable per file.
+- [ ] **IDE.5** Quick fixes: the lightbulb (Ctrl/Cmd+. ) lists the analyzer's fixes for the
+  line and applies the one chosen (`textDocument/codeAction`).
+- [ ] **IDE.6** Find and replace in the file (Cmd/Ctrl+F, Cmd/Ctrl+H), with match count.
+- [ ] **IDE.7** Find in project: search every Dart and JSON file, list matches, open one.
+- [ ] **IDE.8** Line numbers in the gutter, and the current line highlighted.
+- [ ] **IDE.9** Bracket matching: the bracket paired with the one at the cursor is highlighted.
+- [ ] **IDE.10** Auto-indent on Enter and auto-close of brackets and quotes.
+- [ ] **IDE.11** Code folding of blocks (the server's folding ranges).
+- [ ] **IDE.12** Document outline: the classes and members of the file, tap to jump.
+- [ ] **IDE.13** Editor settings: font size, tab width, and formatting on save.
+- [ ] **IDE.14** Unsaved-work safety: closing a dirty file asks before discarding it.
+
+Not in this phase (own phases): a debugger, a terminal, git integration, and
+running `pub get` from the studio.
+
 ### Phase 4 — Visual scripting and dialogue/cutscene graphs
 
 Goal: narrative and cutscene logic authored as graphs, running on
