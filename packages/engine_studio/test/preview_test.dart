@@ -59,4 +59,34 @@ void main() {
       expect(preview.named, isEmpty);
     });
   });
+
+  group('controls', () {
+    test('holding right moves the player right; holding nothing does not', () {
+      final preview = PreviewWorld.of(_fixture(), width: 4000, height: 4000);
+      final player = preview.named['player']!;
+      Position at() =>
+          preview.world.components.storeOf<Position>().get(player)!;
+
+      for (var i = 0; i < 30; i++) {
+        preview.step(1 / 60);
+      }
+      final before = at().x;
+      preview.pressActions({'right'});
+      for (var i = 0; i < 30; i++) {
+        preview.step(1 / 60);
+      }
+      expect(at().x, greaterThan(before));
+
+      preview.pressActions({});
+      final stopped = at().x;
+      for (var i = 0; i < 30; i++) {
+        preview.step(1 / 60);
+      }
+      expect(
+        at().x,
+        closeTo(stopped, 1),
+        reason: 'no held action, no sideways motion',
+      );
+    });
+  });
 }

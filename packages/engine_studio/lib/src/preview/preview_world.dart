@@ -13,7 +13,11 @@ class PreviewWorld {
   /// Entities by the names the level gave them, as [Level.loadInto] returns them.
   final Map<String, EntityId> named;
 
-  PreviewWorld._(this.world, this.named);
+  /// The player's input, which the keyboard and the on-screen buttons drive. Null
+  /// when the level has no player.
+  final InputState? input;
+
+  PreviewWorld._(this.world, this.named, this.input);
 
   /// Loads [document]. Throws [LevelLoadException] when the level is structurally
   /// invalid; component-level problems are the validator's job, and the engine
@@ -28,12 +32,14 @@ class PreviewWorld {
     registerFlutterComponents(world);
     registerPlatformerComponents(world);
     final named = Level.loadInto(world, document.toJson());
-    installPlatformerSystems(
-      world,
-      player: named['player'],
-      includeAnimation: false,
-    );
-    return PreviewWorld._(world, named);
+    final player = named['player'];
+    InputState? input;
+    if (player != null) {
+      input = InputState();
+      world.components.storeOf<InputState>().set(player, input);
+    }
+    installPlatformerSystems(world, player: player, includeAnimation: false);
+    return PreviewWorld._(world, named, input);
   }
 
   /// Advances the simulation by [dt] seconds.
@@ -46,5 +52,15 @@ class PreviewWorld {
       final id = store.entityAt(i);
       yield (id, store.get(id)!);
     }
+  }
+
+  /// Sets which actions the player is holding: `left`, `right`, `jump`, or `dash`.
+  /// The platformer input system reads these each step.
+  void pressActions(Set<String> actions) {
+    final input = this.input;
+    if (input == null) return;
+    input.pressedActions
+      ..clear()
+      ..addAll(actions);
   }
 }

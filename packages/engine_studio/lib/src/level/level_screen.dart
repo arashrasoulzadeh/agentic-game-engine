@@ -241,11 +241,7 @@ class _LevelScreenState extends State<LevelScreen> {
             ),
             Expanded(
               child: _previewing
-                  ? PreviewView(
-                      document: editor.document,
-                      running: _running,
-                      onError: (_) {},
-                    )
+                  ? PreviewView(document: editor.document, running: _running)
                   : Column(
                       children: [
                         _Toolbar(
