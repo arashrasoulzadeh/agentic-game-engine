@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:engine_studio/src/code/analysis.dart';
@@ -34,6 +35,8 @@ void main() {
       expect(find.byKey(const Key('file-tree')), findsOneWidget);
       expect(find.byKey(const Key('no-file-open')), findsOneWidget);
 
+      await tester.tap(find.byKey(const Key('file-lib')));
+      await tester.pump();
       await tester.tap(find.byKey(const Key('file-lib/main.dart')));
       await tester.pump();
       expect(find.byKey(const Key('code-text')), findsOneWidget);
@@ -92,6 +95,55 @@ void main() {
         reason: 'the cursor is at the start of line 2',
       );
     },
+  );
+
+  testWidgets('the tree opens closed; tapping a folder expands it', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(home: ProjectScreen(project: StudioProject.open(root.path))),
+    );
+    expect(find.byKey(const Key('file-lib')), findsOneWidget);
+    expect(find.byKey(const Key('file-lib/main.dart')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('file-lib')));
+    await tester.pump();
+    expect(find.byKey(const Key('file-lib/main.dart')), findsOneWidget);
+  });
+
+  testWidgets(
+    'the Images filter lists only images, and an image opens in the viewer',
+    (tester) async {
+      _writeTinyPng('${root.path}/assets/logo.png');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ProjectScreen(project: StudioProject.open(root.path)),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('filter-image')));
+      await tester.pump();
+      expect(find.byKey(const Key('file-assets/logo.png')), findsOneWidget);
+      expect(
+        find.byKey(const Key('file-lib')),
+        findsNothing,
+        reason: 'the filter shows files only, not the tree',
+      );
+
+      await tester.tap(find.byKey(const Key('file-assets/logo.png')));
+      await tester.pump();
+      expect(find.byKey(const Key('image-view')), findsOneWidget);
+      expect(find.text('logo.png'), findsOneWidget);
+    },
+  );
+}
+
+void _writeTinyPng(String path) {
+  // A real 1x1 PNG, so the viewer has a valid image to decode.
+  File(path).writeAsBytesSync(
+    base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+    ),
   );
 }
 
