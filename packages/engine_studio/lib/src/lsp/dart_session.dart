@@ -108,6 +108,29 @@ class DartSession {
     ];
   }
 
+  /// Every place the symbol at [line] and [character] is used, including its
+  /// declaration. Each result is a file and the position in it.
+  Future<List<SourceLocation>> referencesAt(
+    String path,
+    int line,
+    int character,
+  ) async {
+    final result = await _client.request('textDocument/references', {
+      'textDocument': {'uri': _uri(path)},
+      'position': {'line': line, 'character': character},
+      'context': {'includeDeclaration': true},
+    });
+    if (result is! List) return const [];
+    return [
+      for (final item in result.cast<Map<String, dynamic>>())
+        SourceLocation(
+          Uri.parse(item['uri'] as String).toFilePath(),
+          (item['range']['start']['line'] as int),
+          (item['range']['start']['character'] as int),
+        ),
+    ];
+  }
+
   /// The documentation and type the server knows for the symbol at [line] and
   /// [character], as plain text, or null when there is nothing to show.
   Future<String?> hoverAt(String path, int line, int character) async {

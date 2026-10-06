@@ -494,7 +494,7 @@ Analyze, SDK discovery, project file manager.
 - [x] **IDE.1** Inline squiggles for live errors and warnings.
 - [x] **IDE.2** Hover: pointing at a symbol (or pressing Ctrl/Cmd+K) shows its type and
   documentation from the analyzer (`textDocument/hover`).
-- [ ] **IDE.3** Find all references (Shift+F12): a panel listing every use of the symbol
+- [x] **IDE.3** Find all references (Shift+F12): a panel listing every use of the symbol
   across the project, tap to open it.
 - [ ] **IDE.4** Rename symbol (F2): renames the symbol in every file that uses it, applied
   as edits (`textDocument/rename`), undoable per file.

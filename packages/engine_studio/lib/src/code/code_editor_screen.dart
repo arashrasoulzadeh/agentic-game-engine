@@ -33,12 +33,18 @@ class CodeEditorScreen extends StatefulWidget {
   /// Whether to start the Dart language server for completions. Tests turn it off.
   final bool useLanguageServer;
 
+  /// Where the cursor starts, for opening a file at a result such as a reference.
+  final int initialLine;
+  final int initialCharacter;
+
   const CodeEditorScreen({
     super.key,
     required this.filePath,
     this.projectRoot,
     this.analyzer,
     this.useLanguageServer = true,
+    this.initialLine = 0,
+    this.initialCharacter = 0,
   });
 
   @override
@@ -58,6 +64,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   StreamSubscription<List<LiveDiagnostic>>? _liveSub;
   List<LiveDiagnostic>? _live;
   String? _hover;
+  List<SourceLocation>? _references;
   List<CompletionItem>? _serverItems;
   int _serverRequest = 0;
   bool _analyzing = false;
@@ -72,6 +79,10 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         ? DartHighlightController(text: _saved)
         : TextEditingController(text: _saved);
     _text.addListener(_onTextChanged);
+    if (widget.initialLine > 0 || widget.initialCharacter > 0) {
+      final start = _offsetOf(widget.initialLine, widget.initialCharacter);
+      _text.selection = TextSelection.collapsed(offset: start);
+    }
     final root = widget.projectRoot;
     if (_isDart && root != null && widget.useLanguageServer) {
       _startServer(root);
@@ -182,6 +193,11 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         return KeyEventResult.handled;
       }
       final command = keyboard.isControlPressed || keyboard.isMetaPressed;
+      if (keyboard.isShiftPressed &&
+          event.logicalKey == LogicalKeyboardKey.f12) {
+        _showReferences();
+        return KeyEventResult.handled;
+      }
       if (command && event.logicalKey == LogicalKeyboardKey.keyK) {
         _showHover();
         return KeyEventResult.handled;
@@ -265,6 +281,32 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     }
   }
 
+  /// Lists every use of the symbol at the cursor, across the project. Tapping one
+  /// opens its file at that line.
+  Future<void> _showReferences() async {
+    final session = _session;
+    if (session == null) return;
+    final (line, character) = _cursorPosition();
+    final found = await session.referencesAt(widget.filePath, line, character);
+    if (!mounted) return;
+    setState(() => _references = found);
+  }
+
+  void _openReference(SourceLocation at) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CodeEditorScreen(
+          filePath: at.path,
+          projectRoot: widget.projectRoot,
+          analyzer: widget.analyzer,
+          useLanguageServer: widget.useLanguageServer,
+          initialLine: at.line,
+          initialCharacter: at.character,
+        ),
+      ),
+    );
+  }
+
   /// Shows what the server knows about the symbol at the cursor: its type and its
   /// documentation. Nothing is shown when the server has nothing for that spot.
   Future<void> _showHover() async {
@@ -298,6 +340,17 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         offset: _text.selection.baseOffset.clamp(0, formatted.length),
       ),
     );
+  }
+
+  int _offsetOf(int line, int character) {
+    var offset = 0;
+    var current = 0;
+    final text = _text.text;
+    while (current < line && offset < text.length) {
+      if (text.codeUnitAt(offset) == 10) current++;
+      offset++;
+    }
+    return (offset + character).clamp(0, text.length);
   }
 
   void _jumpToPosition(int line, int character) {
@@ -482,6 +535,59 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     );
   }
 
+  /// The references list: each use of the symbol, with its file and line.
+  Widget _referencesPanel(BuildContext context) {
+    final theme = Theme.of(context);
+    final found = _references!;
+    return Container(
+      key: const Key('references-panel'),
+      constraints: const BoxConstraints(maxHeight: 180),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Text('${found.length} reference(s)'),
+                ),
+              ),
+              IconButton(
+                key: const Key('references-close'),
+                tooltip: 'Close',
+                iconSize: 16,
+                onPressed: () => setState(() => _references = null),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                for (final at in found)
+                  ListTile(
+                    dense: true,
+                    key: Key('reference-${at.path}-${at.line}-${at.character}'),
+                    title: Text(
+                      '${p.basename(at.path)}:${at.line + 1}:${at.character + 1}',
+                    ),
+                    subtitle: Text(at.path, overflow: TextOverflow.ellipsis),
+                    onTap: () => _openReference(at),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// The hover card: the symbol's description, with a close button.
   Widget _hoverCard(BuildContext context) {
     final theme = Theme.of(context);
@@ -621,6 +727,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               ),
             ),
             if (_hover != null) _hoverCard(context),
+            if (_references != null) _referencesPanel(context),
             if (_issues != null || (_live?.isNotEmpty ?? false))
               _analysisPanel(context),
           ],
