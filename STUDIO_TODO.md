@@ -1,6 +1,6 @@
 # Studio — PRD, Technical Design, and Phased TODO
 
-Scope: a desktop/web authoring studio for games built on this engine. It
+Scope: a cross-platform **desktop** authoring studio for games built on this engine. It
 covers the level editor, property inspector, visual scripting, asset
 pipeline, play-test, and project management. It sits **on top of** the
 engine; the engine remains the runtime and stays usable without the
@@ -53,6 +53,11 @@ hard to review visually, and gives no feedback until the game is run.
 | AI agent (Claude, etc.) | Read/write the same JSON through CLI and the agent API |
 
 ### 1.5 Core requirements
+
+**Platform requirement (decided by the project owner):** the studio is a
+desktop application, cross-platform across **macOS, Windows, and Linux**.
+All three are required targets from phase 3 onward, each built and tested in
+CI. Web is optional and view-only; it is not a substitute for a desktop build.
 
 **Must have (v1):**
 - Open/create a project folder created by `game_agent create`.
@@ -315,7 +320,8 @@ installs the studio once and uses it to create and open game projects. It
 does not need the engine repo checked out.
 
 **Packaging per platform:** macOS `.dmg`, Windows `.msi`, Linux
-`.AppImage`, and a web build served for view-only and light editing.
+`.AppImage`. A web build is optional and view-only, and is never the
+primary editing surface.
 
 **What "auto download required packages" means.** A compiled Flutter app
 cannot run `pub get` for code it doesn't already contain, so the studio
@@ -445,7 +451,7 @@ Goal: a designer builds, saves, and play-tests a level.
   right command.
 - [ ] **3.14** Golden test for the level view on a fixed sample level.
 - [ ] **3.15** Manual verification checklist recorded in
-  `docs/studio/qa-level-editor.md`, run on macOS and Flutter web.
+  `docs/studio/qa-level-editor.md`, run on macOS, Windows, and Linux.
 - [ ] **3.16** Performance check: 500×500 tile level pans and paints at
   60 fps on the reference machine; numbers recorded.
 
