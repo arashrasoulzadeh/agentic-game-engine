@@ -46,6 +46,7 @@ export 'src/command/edit_command.dart';
 export 'src/command/entity_commands.dart';
 export 'src/command/command_history.dart';
 export 'src/validation/level_validator.dart';
+export 'src/validation/reachability.dart';
 export 'src/content/string_table.dart';
 export 'src/physics/pathfinding.dart';
 export 'src/physics/raycast.dart';

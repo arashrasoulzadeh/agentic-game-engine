@@ -403,7 +403,7 @@ game runs.
 - [ ] **1.6** Decide D2 (commands in `engine_core`) and record it.
 - [x] **1.7** `LevelValidator` in `engine_core/lib/src/validation/`:
   unknown component, field out of range, dangling entity refs.
-- [ ] **1.8** Reachability check (flood-fill from spawn over the tile
+- [x] **1.8** Reachability check (flood-fill from spawn over the tile
   map) — reuses existing tile traversal.
 - [~] **1.9** Tests for each validator rule, including a passing level.
 - [ ] **1.10** Decide D4 (play-test process model) and record it.
