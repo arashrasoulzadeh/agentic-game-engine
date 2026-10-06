@@ -435,7 +435,7 @@ Goal: a designer builds, saves, and play-tests a level.
 
 - [~] **3.1** (scaffold done for macOS, Windows, Linux; the macOS build is blocked by a broken CocoaPods install, see the note on 3.1) Create `packages/engine_studio` (Flutter app, depends on
   `engine_core`, `engine_flutter`, `engine_platformer`). Add to CI.
-- [~] **3.2** Project open screen. Done: opens a typed folder path, validates it (pubspec, assets/levels), opens its first level. Not done: a native folder picker (needs a plugin, blocked by pub.dev access here), and reading `project.json` (the 2.4 manifest; the screen reads pubspec.yaml today).
+- [x] **3.2** Project open screen: a native folder picker (Browse) or a typed path, validated (pubspec.yaml, assets/levels), then opens the first level. Reading `project.json` is deferred to the 2.4 manifest, which the screen does not need yet.
 - [x] **3.3** Static level view: draws `LevelDocument` (tiles by collision kind, entity markers and names) without running systems. Deviation: drawn directly, not through `EngineView`, which needs sprite atlases that arrive with the asset browser (5.1).
   with no systems installed (see 2.5).
 - [x] **3.4** Pure hit-test function for selection, with unit tests.

@@ -1,3 +1,4 @@
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../level/level_screen.dart';
@@ -45,6 +46,17 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
     super.dispose();
   }
 
+  /// Opens the system folder picker and fills the path field with the choice.
+  /// Cancelling leaves the field as it was.
+  Future<void> _browse() async {
+    final folder = await getDirectoryPath();
+    if (folder == null) return;
+    setState(() {
+      _path.text = folder;
+      _error = null;
+    });
+  }
+
   void _open() {
     try {
       final project = StudioProject.open(_path.text.trim());
@@ -78,10 +90,22 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
                   onSubmitted: (_) => _open(),
                 ),
                 const SizedBox(height: 12),
-                FilledButton(
-                  key: const Key('open-project'),
-                  onPressed: _open,
-                  child: const Text('Open'),
+                Row(
+                  children: [
+                    OutlinedButton(
+                      key: const Key('browse-project'),
+                      onPressed: _browse,
+                      child: const Text('Browse…'),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        key: const Key('open-project'),
+                        onPressed: _open,
+                        child: const Text('Open'),
+                      ),
+                    ),
+                  ],
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
