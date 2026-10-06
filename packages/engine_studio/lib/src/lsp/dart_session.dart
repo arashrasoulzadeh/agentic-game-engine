@@ -213,6 +213,10 @@ class SourceLocation {
 class LiveDiagnostic {
   final int line;
   final int character;
+
+  /// Where the problem ends, so the editor can underline exactly the bad text.
+  final int endLine;
+  final int endCharacter;
   final int severity;
   final String message;
   final String? code;
@@ -220,6 +224,8 @@ class LiveDiagnostic {
   const LiveDiagnostic({
     required this.line,
     required this.character,
+    required this.endLine,
+    required this.endCharacter,
     required this.severity,
     required this.message,
     this.code,
@@ -229,11 +235,14 @@ class LiveDiagnostic {
   bool get isError => severity == 1;
 
   factory LiveDiagnostic.fromJson(Map<String, dynamic> json) {
-    final start = ((json['range'] as Map)['start'] as Map)
-        .cast<String, dynamic>();
+    final range = (json['range'] as Map).cast<String, dynamic>();
+    final start = (range['start'] as Map).cast<String, dynamic>();
+    final end = (range['end'] as Map).cast<String, dynamic>();
     return LiveDiagnostic(
       line: start['line'] as int,
       character: start['character'] as int,
+      endLine: end['line'] as int,
+      endCharacter: end['character'] as int,
       severity: (json['severity'] as int?) ?? 1,
       message: json['message'] as String,
       code: json['code']?.toString(),

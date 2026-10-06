@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'marks.dart';
+
 /// What a run of Dart source is, for colouring.
 enum DartTokenKind { comment, string, number, keyword, type, plain }
 
@@ -128,6 +130,14 @@ const dartPalette = <DartTokenKind, Color?>{
 class DartHighlightController extends TextEditingController {
   DartHighlightController({super.text});
 
+  List<TextMark> _marks = const [];
+
+  /// The stretches to underline as errors or warnings. Setting them redraws the text.
+  set marks(List<TextMark> value) {
+    _marks = value;
+    notifyListeners();
+  }
+
   @override
   TextSpan buildTextSpan({
     required BuildContext context,
@@ -137,14 +147,25 @@ class DartHighlightController extends TextEditingController {
     return TextSpan(
       style: style,
       children: [
-        for (final token in tokenizeDart(text))
-          TextSpan(
-            text: token.text,
-            style: dartPalette[token.kind] == null
-                ? null
-                : TextStyle(color: dartPalette[token.kind]),
-          ),
+        for (final run in applyMarks(tokenizeDart(text), _marks))
+          TextSpan(text: run.text, style: _styleFor(run)),
       ],
+    );
+  }
+
+  /// The colour of a run, plus a wavy underline when it is marked: red for an
+  /// error, amber for a warning.
+  TextStyle? _styleFor(StyledRun run) {
+    final colour = dartPalette[run.kind];
+    final mark = run.mark;
+    if (colour == null && mark == null) return null;
+    return TextStyle(
+      color: colour,
+      decoration: mark == null ? null : TextDecoration.underline,
+      decorationStyle: mark == null ? null : TextDecorationStyle.wavy,
+      decorationColor: mark == null
+          ? null
+          : (mark.isError ? const Color(0xFFF14C4C) : const Color(0xFFCCA700)),
     );
   }
 }

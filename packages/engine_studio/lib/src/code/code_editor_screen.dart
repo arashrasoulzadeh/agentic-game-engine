@@ -10,6 +10,7 @@ import '../lsp/dart_session.dart';
 import 'analysis.dart';
 import 'completion.dart';
 import 'dart_highlighter.dart';
+import 'marks.dart';
 import 'project_symbols.dart';
 
 /// A text editor for one project file. Dart files are coloured as they are typed
@@ -95,7 +96,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       }
       session.openFile(widget.filePath, _text.text);
       _liveSub = session.diagnosticsFor(widget.filePath).listen((list) {
-        if (mounted) setState(() => _live = list);
+        if (!mounted) return;
+        setState(() => _live = list);
+        _underline(list);
       });
       setState(() => _session = session);
     } on Object {
@@ -318,6 +321,29 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
           if (p.equals(issue.file, widget.filePath)) issue,
       ];
     });
+  }
+
+  /// Underlines each live problem in the text, from where it starts to where it ends.
+  void _underline(List<LiveDiagnostic> diagnostics) {
+    final highlighter = _text;
+    if (highlighter is! DartHighlightController) return;
+    final lineStarts = <int>[0];
+    for (var i = 0; i < _text.text.length; i++) {
+      if (_text.text.codeUnitAt(i) == 10) lineStarts.add(i + 1);
+    }
+    int offsetOf(int line, int character) {
+      if (line >= lineStarts.length) return _text.text.length;
+      return (lineStarts[line] + character).clamp(0, _text.text.length);
+    }
+
+    highlighter.marks = [
+      for (final d in diagnostics)
+        TextMark(
+          offsetOf(d.line, d.character),
+          offsetOf(d.endLine, d.endCharacter),
+          isError: d.isError,
+        ),
+    ];
   }
 
   /// Moves the cursor to the start of [line] (1-based), so tapping a finding shows it.
