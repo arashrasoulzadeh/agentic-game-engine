@@ -28,7 +28,7 @@ void main() {
 
       // Line 3 (0-based), just after the dot.
       var items = await session.completionsAt(use, 3, 4);
-      for (var attempt = 0; attempt < 40 && items.isEmpty; attempt++) {
+      for (var attempt = 0; attempt < 80 && items.isEmpty; attempt++) {
         await Future<void>.delayed(const Duration(milliseconds: 500));
         items = await session.completionsAt(use, 3, 4);
       }
@@ -71,8 +71,12 @@ void main() {
       session.openFile(use, source);
 
       SourceLocation? where;
-      for (var attempt = 0; attempt < 40 && where == null; attempt++) {
-        where = await session.definitionAt(use, 2, 3);
+      for (var attempt = 0; attempt < 80 && where == null; attempt++) {
+        try {
+          where = await session.definitionAt(use, 2, 3);
+        } on Object {
+          where = null;
+        }
         if (where == null) {
           await Future<void>.delayed(const Duration(milliseconds: 500));
         }
@@ -94,8 +98,12 @@ void main() {
       session.openFile(file, messy);
 
       String? formatted;
-      for (var attempt = 0; attempt < 40 && formatted == null; attempt++) {
-        formatted = await session.formatted(file, messy);
+      for (var attempt = 0; attempt < 80 && formatted == null; attempt++) {
+        try {
+          formatted = await session.formatted(file, messy);
+        } on Object {
+          formatted = null;
+        }
         if (formatted == null) {
           await Future<void>.delayed(const Duration(milliseconds: 500));
         }

@@ -55,3 +55,31 @@ int _offsetOf(List<int> starts, int line, int character, int length) {
   final offset = starts[line] + character;
   return offset > length ? length : offset;
 }
+
+/// Splits a rename's grouped edits into the current file's new text (ready to put
+/// in the open buffer) and the other files' edits (to write to disk after review).
+/// [currentPath] not being in [grouped] is fine: the symbol may not appear there.
+class RenamePlan {
+  final String? currentFileText;
+  final Map<String, List<TextEdit>> otherFiles;
+
+  const RenamePlan({required this.currentFileText, required this.otherFiles});
+}
+
+RenamePlan planRename(
+  Map<String, List<TextEdit>> grouped,
+  String currentPath,
+  String currentText,
+) {
+  final currentEdits = grouped[currentPath];
+  final others = {
+    for (final e in grouped.entries)
+      if (e.key != currentPath) e.key: e.value,
+  };
+  return RenamePlan(
+    currentFileText: currentEdits == null
+        ? null
+        : applyEdits(currentText, currentEdits),
+    otherFiles: others,
+  );
+}

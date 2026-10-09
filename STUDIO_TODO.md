@@ -496,7 +496,7 @@ Analyze, SDK discovery, project file manager.
   documentation from the analyzer (`textDocument/hover`).
 - [x] **IDE.3** Find all references (Shift+F12): a panel listing every use of the symbol
   across the project, tap to open it.
-- [ ] **IDE.4** Rename symbol (F2): renames the symbol in every file that uses it, applied
+- [x] **IDE.4** Rename symbol (F2): renames the symbol in every file that uses it, applied
   as edits (`textDocument/rename`), undoable per file.
 - [ ] **IDE.5** Quick fixes: the lightbulb (Ctrl/Cmd+. ) lists the analyzer's fixes for the
   line and applies the one chosen (`textDocument/codeAction`).

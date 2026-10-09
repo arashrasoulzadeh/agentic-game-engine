@@ -2,6 +2,7 @@ import 'package:engine_studio/src/lsp/edits.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  _planTests();
   test('a single edit replaces the text between two positions', () {
     expect(
       applyEdits('void main(){}\n', [const TextEdit(0, 12, 0, 12, '\n  ')]),
@@ -27,5 +28,31 @@ void main() {
 
   test('no edits leaves the text alone', () {
     expect(applyEdits('same', []), 'same');
+  });
+}
+
+void _planTests() {
+  group('planRename', () {
+    test('splits the current file\'s edits from the others', () {
+      final plan = planRename(
+        {
+          '/a.dart': [const TextEdit(0, 0, 0, 4, 'Champ')],
+          '/b.dart': [const TextEdit(1, 0, 1, 4, 'Champ')],
+        },
+        '/a.dart',
+        'Hero stays here\n',
+      );
+      expect(plan.currentFileText, 'Champ stays here\n');
+      expect(plan.otherFiles.keys, ['/b.dart']);
+    });
+
+    test(
+      'the current file not being in the edits gives a null text, not a crash',
+      () {
+        final plan = planRename({'/b.dart': []}, '/a.dart', 'unchanged');
+        expect(plan.currentFileText, isNull);
+        expect(plan.otherFiles.keys, ['/b.dart']);
+      },
+    );
   });
 }

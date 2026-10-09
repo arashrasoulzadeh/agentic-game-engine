@@ -108,6 +108,22 @@ class DartSession {
     ];
   }
 
+  /// The edits needed to rename the symbol at [line] and [character] to [newName],
+  /// grouped by file path. Empty when the server has nothing to rename there.
+  Future<Map<String, List<TextEdit>>> renameAt(
+    String path,
+    int line,
+    int character,
+    String newName,
+  ) async {
+    final result = await _client.request('textDocument/rename', {
+      'textDocument': {'uri': _uri(path)},
+      'position': {'line': line, 'character': character},
+      'newName': newName,
+    });
+    return parseWorkspaceEdit(result);
+  }
+
   /// Every place the symbol at [line] and [character] is used, including its
   /// declaration. Each result is a file and the position in it.
   Future<List<SourceLocation>> referencesAt(
@@ -296,4 +312,41 @@ String? hoverText(Object? contents) {
   };
   final trimmed = text?.trim();
   return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+}
+
+/// Reads a `WorkspaceEdit` into edits grouped by file path. The protocol allows
+/// either a `changes` map (uri to edits) or a `documentChanges` list of per-document
+/// edits; both are read the same way here.
+Map<String, List<TextEdit>> parseWorkspaceEdit(Object? result) {
+  if (result is! Map) return const {};
+  final grouped = <String, List<TextEdit>>{};
+
+  void addEdits(String uri, List edits) {
+    final path = Uri.parse(uri).toFilePath();
+    grouped.putIfAbsent(path, () => []).addAll([
+      for (final e in edits.cast<Map<String, dynamic>>())
+        TextEdit(
+          e['range']['start']['line'] as int,
+          e['range']['start']['character'] as int,
+          e['range']['end']['line'] as int,
+          e['range']['end']['character'] as int,
+          e['newText'] as String,
+        ),
+    ]);
+  }
+
+  final changes = result['changes'];
+  if (changes is Map) {
+    changes.forEach((uri, edits) => addEdits(uri as String, edits as List));
+  }
+  final documentChanges = result['documentChanges'];
+  if (documentChanges is List) {
+    for (final change in documentChanges.cast<Map<String, dynamic>>()) {
+      final doc = change['textDocument'];
+      if (doc is Map && doc['uri'] is String && change['edits'] is List) {
+        addEdits(doc['uri'] as String, change['edits'] as List);
+      }
+    }
+  }
+  return grouped;
 }

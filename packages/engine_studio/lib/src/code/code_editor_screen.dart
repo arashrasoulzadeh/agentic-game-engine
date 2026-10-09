@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'dart:async';
 
 import '../lsp/dart_session.dart';
+import '../lsp/edits.dart' show RenamePlan, TextEdit, applyEdits, planRename;
 import 'analysis.dart';
 import 'completion.dart';
 import 'dart_highlighter.dart';
@@ -198,6 +199,11 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         _showReferences();
         return KeyEventResult.handled;
       }
+      if (!keyboard.isShiftPressed &&
+          event.logicalKey == LogicalKeyboardKey.f2) {
+        _renameSymbol();
+        return KeyEventResult.handled;
+      }
       if (command && event.logicalKey == LogicalKeyboardKey.keyK) {
         _showHover();
         return KeyEventResult.handled;
@@ -278,6 +284,106 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
           ),
         ),
       );
+    }
+  }
+
+  /// The identifier touching the cursor: the letters/digits/underscore run the
+  /// cursor is inside or right after. Used to prefill the rename dialog.
+  String _identifierAtCursor() {
+    final offset = _text.selection.baseOffset.clamp(0, _text.text.length);
+    final text = _text.text;
+    var start = offset;
+    while (start > 0 && RegExp(r'\w').hasMatch(text[start - 1])) {
+      start--;
+    }
+    var end = offset;
+    while (end < text.length && RegExp(r'\w').hasMatch(text[end])) {
+      end++;
+    }
+    return text.substring(start, end);
+  }
+
+  /// Renames the symbol at the cursor: asks for the new name, applies the server's
+  /// edits to this buffer (undoable, unsaved until the file is saved), and asks
+  /// before writing the edits in other files to disk.
+  Future<void> _renameSymbol() async {
+    final session = _session;
+    if (session == null) return;
+    final current = _identifierAtCursor();
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => _RenameDialog(initialName: current),
+    );
+    if (newName == null || newName.isEmpty || newName == current || !mounted) {
+      return;
+    }
+
+    final (line, character) = _cursorPosition();
+    Map<String, List<TextEdit>> grouped;
+    try {
+      grouped = await session.renameAt(
+        widget.filePath,
+        line,
+        character,
+        newName,
+      );
+    } on Object {
+      return;
+    }
+    if (!mounted || grouped.isEmpty) return;
+    final plan = planRename(grouped, widget.filePath, _text.text);
+
+    if (plan.currentFileText != null) {
+      _text.value = TextEditingValue(text: plan.currentFileText!);
+    }
+    if (plan.otherFiles.isNotEmpty) {
+      await _confirmAndWriteOthers(plan);
+    }
+  }
+
+  /// Shows the files a rename would also change and writes them on confirmation.
+  Future<void> _confirmAndWriteOthers(RenamePlan plan) async {
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Rename in other files?'),
+            content: SizedBox(
+              width: 360,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final path in plan.otherFiles.keys)
+                    Text(
+                      p.basename(path),
+                      key: Key('rename-file-${p.basename(path)}'),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                key: const Key('rename-apply'),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Apply'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed) return;
+    for (final entry in plan.otherFiles.entries) {
+      final file = File(entry.key);
+      if (!file.existsSync()) continue;
+      final updated = applyEdits(file.readAsStringSync(), entry.value);
+      final temp = File('${entry.key}.tmp')
+        ..writeAsStringSync(updated, flush: true);
+      temp.renameSync(entry.key);
     }
   }
 
@@ -733,6 +839,52 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Asks for the new name when renaming a symbol, prefilled with the current one.
+class _RenameDialog extends StatefulWidget {
+  final String initialName;
+
+  const _RenameDialog({required this.initialName});
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialName,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Rename symbol'),
+      content: TextField(
+        key: const Key('rename-input'),
+        controller: _controller,
+        autofocus: true,
+        onSubmitted: (value) => Navigator.of(context).pop(value),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          key: const Key('rename-confirm'),
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: const Text('Rename'),
+        ),
+      ],
     );
   }
 }

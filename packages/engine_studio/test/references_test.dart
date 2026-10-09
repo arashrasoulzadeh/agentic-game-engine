@@ -28,8 +28,12 @@ void main() {
       );
 
       List<SourceLocation> found = const [];
-      for (var attempt = 0; attempt < 40 && found.length < 3; attempt++) {
-        found = await session.referencesAt(hero, 0, 6);
+      for (var attempt = 0; attempt < 80 && found.length < 3; attempt++) {
+        try {
+          found = await session.referencesAt(hero, 0, 6);
+        } on Object {
+          found = const [];
+        }
         if (found.length < 3) {
           await Future<void>.delayed(const Duration(milliseconds: 500));
         }

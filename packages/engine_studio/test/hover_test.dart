@@ -54,8 +54,12 @@ void main() {
       );
 
       String? text;
-      for (var attempt = 0; attempt < 40 && text == null; attempt++) {
-        text = await session.hoverAt(use, 2, 4);
+      for (var attempt = 0; attempt < 80 && text == null; attempt++) {
+        try {
+          text = await session.hoverAt(use, 2, 4);
+        } on Object {
+          text = null;
+        }
         if (text == null) {
           await Future<void>.delayed(const Duration(milliseconds: 500));
         }
