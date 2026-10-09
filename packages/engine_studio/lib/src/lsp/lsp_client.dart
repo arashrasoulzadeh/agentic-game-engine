@@ -13,6 +13,8 @@ class LspClient {
   final Stream<List<int>> _input;
   final void Function(List<int>) _output;
   final _pending = <int, Completer<Map<String, dynamic>>>{};
+  final _requestHandlers =
+      <String, Future<Map<String, dynamic>> Function(Map<String, dynamic>)>{};
   final _notifications = StreamController<Map<String, dynamic>>.broadcast();
   final _buffer = BytesBuilder(copy: false);
   int _nextId = 1;
@@ -61,6 +63,16 @@ class LspClient {
     _send({'jsonrpc': '2.0', 'method': method, 'params': params});
   }
 
+  /// Handles a request the server sends to the client, such as
+  /// `workspace/applyEdit` (the server asking the client to write an edit). The
+  /// handler's return value is sent back as the response's `result`.
+  void onRequest(
+    String method,
+    Future<Map<String, dynamic>> Function(Map<String, dynamic> params) handler,
+  ) {
+    _requestHandlers[method] = handler;
+  }
+
   void _send(Map<String, dynamic> message) {
     final body = utf8.encode(jsonEncode(message));
     _output([
@@ -93,10 +105,44 @@ class LspClient {
 
   void _dispatch(Map<String, dynamic> message) {
     final id = message['id'];
+    final method = message['method'];
     if (id is int && _pending.containsKey(id)) {
       _pending.remove(id)!.complete(message);
-    } else if (message['method'] is String && !_notifications.isClosed) {
+    } else if (id != null && method is String) {
+      // A request from the server to the client, not a response to one of ours.
+      _handleServerRequest(
+        id,
+        method,
+        (message['params'] as Map?)?.cast<String, dynamic>() ?? const {},
+      );
+    } else if (method is String && !_notifications.isClosed) {
       _notifications.add(message);
+    }
+  }
+
+  Future<void> _handleServerRequest(
+    Object id,
+    String method,
+    Map<String, dynamic> params,
+  ) async {
+    final handler = _requestHandlers[method];
+    if (handler == null) {
+      _send({
+        'jsonrpc': '2.0',
+        'id': id,
+        'error': {'code': -32601, 'message': 'Method not found: $method'},
+      });
+      return;
+    }
+    try {
+      final result = await handler(params);
+      _send({'jsonrpc': '2.0', 'id': id, 'result': result});
+    } on Object catch (e) {
+      _send({
+        'jsonrpc': '2.0',
+        'id': id,
+        'error': {'code': -32603, 'message': '$e'},
+      });
     }
   }
 

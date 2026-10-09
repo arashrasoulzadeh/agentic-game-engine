@@ -66,6 +66,8 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   List<LiveDiagnostic>? _live;
   String? _hover;
   List<SourceLocation>? _references;
+  List<CodeActionItem>? _quickFixes;
+  int _quickFixRequest = 0;
   List<CompletionItem>? _serverItems;
   int _serverRequest = 0;
   bool _analyzing = false;
@@ -206,6 +208,10 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       }
       if (command && event.logicalKey == LogicalKeyboardKey.keyK) {
         _showHover();
+        return KeyEventResult.handled;
+      }
+      if (command && event.logicalKey == LogicalKeyboardKey.period) {
+        _showQuickFixes();
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.keyF &&
@@ -411,6 +417,45 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         ),
       ),
     );
+  }
+
+  /// Lists the analyzer's fixes for the cursor's line: both quick fixes for a
+  /// problem there and refactoring assists. The nearby diagnostics are sent as
+  /// context, which is how the server matches a fix to the right problem.
+  Future<void> _showQuickFixes() async {
+    final session = _session;
+    if (session == null) return;
+    final request = ++_quickFixRequest;
+    final (line, character) = _cursorPosition();
+    final diagnostics = session
+        .rawDiagnosticsFor(widget.filePath)
+        .where((d) => (d['range']['start']['line'] as int) == line)
+        .toList();
+    final found = await session.codeActionsAt(
+      widget.filePath,
+      line,
+      character,
+      diagnosticsJson: diagnostics,
+    );
+    if (!mounted || request != _quickFixRequest) return;
+    setState(() => _quickFixes = found.isEmpty ? null : found);
+  }
+
+  /// Runs a quick fix: applies it to this buffer if it touches this file, and asks
+  /// before writing any edits it makes in other files.
+  Future<void> _applyQuickFix(CodeActionItem item) async {
+    final session = _session;
+    if (session == null) return;
+    setState(() => _quickFixes = null);
+    final grouped = await session.applyCodeAction(item);
+    if (!mounted || grouped.isEmpty) return;
+    final plan = planRename(grouped, widget.filePath, _text.text);
+    if (plan.currentFileText != null) {
+      _text.value = TextEditingValue(text: plan.currentFileText!);
+    }
+    if (plan.otherFiles.isNotEmpty) {
+      await _confirmAndWriteOthers(plan);
+    }
   }
 
   /// Shows what the server knows about the symbol at the cursor: its type and its
@@ -694,6 +739,57 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     );
   }
 
+  /// The quick-fix list for the cursor's line. Tapping one applies it.
+  Widget _quickFixesPanel(BuildContext context) {
+    final theme = Theme.of(context);
+    final found = _quickFixes!;
+    return Container(
+      key: const Key('quick-fixes-panel'),
+      constraints: const BoxConstraints(maxHeight: 180),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Text('${found.length} fix(es)'),
+                ),
+              ),
+              IconButton(
+                key: const Key('quick-fixes-close'),
+                tooltip: 'Close',
+                iconSize: 16,
+                onPressed: () => setState(() => _quickFixes = null),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                for (final item in found)
+                  ListTile(
+                    dense: true,
+                    key: Key('quick-fix-${item.title}'),
+                    leading: const Icon(Icons.lightbulb_outline),
+                    title: Text(item.title),
+                    onTap: () => _applyQuickFix(item),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// The hover card: the symbol's description, with a close button.
   Widget _hoverCard(BuildContext context) {
     final theme = Theme.of(context);
@@ -834,6 +930,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
             ),
             if (_hover != null) _hoverCard(context),
             if (_references != null) _referencesPanel(context),
+            if (_quickFixes != null) _quickFixesPanel(context),
             if (_issues != null || (_live?.isNotEmpty ?? false))
               _analysisPanel(context),
           ],

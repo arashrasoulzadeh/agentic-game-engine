@@ -498,8 +498,8 @@ Analyze, SDK discovery, project file manager.
   across the project, tap to open it.
 - [x] **IDE.4** Rename symbol (F2): renames the symbol in every file that uses it, applied
   as edits (`textDocument/rename`), undoable per file.
-- [ ] **IDE.5** Quick fixes: the lightbulb (Ctrl/Cmd+. ) lists the analyzer's fixes for the
-  line and applies the one chosen (`textDocument/codeAction`).
+- [x] **IDE.5** Quick fixes: Ctrl/Cmd+. lists the analyzer's fixes and refactor
+  assists for the cursor's line and applies the one chosen.
 - [ ] **IDE.6** Find and replace in the file (Cmd/Ctrl+F, Cmd/Ctrl+H), with match count.
 - [ ] **IDE.7** Find in project: search every Dart and JSON file, list matches, open one.
 - [ ] **IDE.8** Line numbers in the gutter, and the current line highlighted.

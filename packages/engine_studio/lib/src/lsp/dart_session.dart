@@ -29,7 +29,33 @@ class DartSession {
   final String projectRoot;
   final Map<String, int> _versions = {};
 
-  DartSession._(this._client, this.projectRoot);
+  final Map<String, List<Map<String, dynamic>>> _rawDiagnostics = {};
+  final StreamController<Map<String, dynamic>> _appliedEdits =
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  DartSession._(this._client, this.projectRoot) {
+    _client.notifications
+        .where((m) => m['method'] == 'textDocument/publishDiagnostics')
+        .listen((m) {
+          final params = m['params'] as Map<String, dynamic>;
+          _rawDiagnostics[params['uri'] as String] =
+              (params['diagnostics'] as List).cast<Map<String, dynamic>>();
+        });
+    // The server asks the client to apply a quick fix's edit via a request, not
+    // through the command's own response. Acknowledging it is how a fix a
+    // designer picks (applyCodeAction) actually takes effect on the server's side.
+    _client.onRequest('workspace/applyEdit', (params) async {
+      _appliedEdits.add(
+        (params['edit'] as Map?)?.cast<String, dynamic>() ?? const {},
+      );
+      return {'applied': true};
+    });
+  }
+
+  /// The raw diagnostics last published for [path], for passing as code-action
+  /// context. Empty before any diagnostics have arrived for it.
+  List<Map<String, dynamic>> rawDiagnosticsFor(String path) =>
+      _rawDiagnostics[_uri(path)] ?? const [];
 
   /// Starts the server for [projectRoot] and completes the protocol handshake.
   static Future<DartSession> open(String projectRoot, {String? dart}) async {
@@ -44,7 +70,16 @@ class DartSession {
     await client.request('initialize', {
       'processId': pid,
       'rootUri': Uri.directory(projectRoot).toString(),
-      'capabilities': <String, dynamic>{},
+      // workspace.applyEdit tells the server it may send us a workspace/applyEdit
+      // request, which is how a quick fix's edit actually arrives (see
+      // applyCodeAction). Without declaring it, the server refuses to run the
+      // fix's command at all.
+      'capabilities': <String, dynamic>{
+        'workspace': {
+          'applyEdit': true,
+          'workspaceEdit': {'documentChanges': true},
+        },
+      },
       'workspaceFolders': [
         {
           'uri': Uri.directory(projectRoot).toString(),
@@ -106,6 +141,83 @@ class DartSession {
           detail: item['detail'] as String?,
         ),
     ];
+  }
+
+  /// The analyzer's quick fixes at [line] and [character]. [diagnosticsJson] are the
+  /// raw diagnostics covering that spot (from the last publishDiagnostics), which
+  /// the server uses to match fixes to the right problem. Each item still needs
+  /// [applyCodeAction] to get its edit: Dart's server returns a command to run, not
+  /// the edit itself.
+  Future<List<CodeActionItem>> codeActionsAt(
+    String path,
+    int line,
+    int character, {
+    List<Map<String, dynamic>> diagnosticsJson = const [],
+  }) async {
+    final result = await _client.request('textDocument/codeAction', {
+      'textDocument': {'uri': _uri(path)},
+      'range': {
+        'start': {'line': line, 'character': character},
+        'end': {'line': line, 'character': character},
+      },
+      'context': {'diagnostics': diagnosticsJson},
+    });
+    if (result is! List) return const [];
+    return [
+      for (final json in result.cast<Map<String, dynamic>>())
+        ?_parseCodeAction(json),
+    ];
+  }
+
+  /// Reads one entry of a code-action list. Dart's server returns a plain
+  /// `Command` (title, command, arguments) rather than an edit directly; running
+  /// it is [applyCodeAction]'s job. A `null` result means this entry had neither
+  /// an edit nor a command, so there is nothing to offer for it.
+  CodeActionItem? _parseCodeAction(Map<String, dynamic> json) {
+    final title = json['title'] as String?;
+    if (title == null) return null;
+    if (json['edit'] != null) {
+      return CodeActionItem(title, edit: parseWorkspaceEdit(json['edit']));
+    }
+    if (json['command'] is String) {
+      return CodeActionItem(
+        title,
+        command: json['command'] as String,
+        arguments: (json['arguments'] as List?)?.cast<Object?>(),
+      );
+    }
+    final command = json['command'];
+    if (command is Map && command['command'] is String) {
+      return CodeActionItem(
+        title,
+        command: command['command'] as String,
+        arguments: (command['arguments'] as List?)?.cast<Object?>(),
+      );
+    }
+    return null;
+  }
+
+  /// Runs a quick fix and returns the edits it makes, grouped by file. A fix that
+  /// already carried its edit returns it directly; one that only names a server
+  /// command is executed, and the edit arrives back as a request from the server,
+  /// which this acknowledges on the designer's behalf.
+  Future<Map<String, List<TextEdit>>> applyCodeAction(
+    CodeActionItem item,
+  ) async {
+    final direct = item.edit;
+    if (direct != null) return direct;
+    final command = item.command;
+    if (command == null) return const {};
+    final editFuture = _appliedEdits.stream.first.timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => const {},
+    );
+    await _client.request('workspace/executeCommand', {
+      'command': command,
+      'arguments': item.arguments ?? const [],
+    });
+    final edit = await editFuture;
+    return parseWorkspaceEdit(edit);
   }
 
   /// The edits needed to rename the symbol at [line] and [character] to [newName],
@@ -222,6 +334,7 @@ class DartSession {
   Future<void> close() async {
     await _client.request('shutdown', {});
     _client.notify('exit', {});
+    await _appliedEdits.close();
     await _client.dispose();
   }
 }
@@ -349,4 +462,20 @@ Map<String, List<TextEdit>> parseWorkspaceEdit(Object? result) {
     }
   }
   return grouped;
+}
+
+/// One quick fix the analyzer offers: its label, and the edits it would make,
+/// grouped by file.
+class CodeActionItem {
+  final String title;
+
+  /// Set when the server gave the edit directly.
+  final Map<String, List<TextEdit>>? edit;
+
+  /// Set when applying this fix means running a server command first
+  /// ([DartSession.applyCodeAction] does that and returns the resulting edit).
+  final String? command;
+  final List<Object?>? arguments;
+
+  const CodeActionItem(this.title, {this.edit, this.command, this.arguments});
 }
