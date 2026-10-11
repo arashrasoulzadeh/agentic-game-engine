@@ -53,8 +53,19 @@ class CodeEditorScreen extends StatefulWidget {
   State<CodeEditorScreen> createState() => _CodeEditorScreenState();
 }
 
+/// The editor's font size and line height, shared by the text field and the
+/// line-number gutter so a line in one lines up with the same line in the other.
+const _editorFontSize = 13.0;
+const _editorLineHeightMultiplier = 1.4;
+const _editorLineHeight = _editorFontSize * _editorLineHeightMultiplier;
+
 class _CodeEditorScreenState extends State<CodeEditorScreen> {
   late final TextEditingController _text;
+  // Two separate controllers, not one shared: a ScrollController can only ever
+  // attach to a single scroll view, so the text field's own scrolling is
+  // mirrored onto the gutter's by hand instead (see _syncGutterScroll).
+  final ScrollController _editorScroll = ScrollController();
+  final ScrollController _gutterScroll = ScrollController();
   late final ProjectSymbols _symbols;
   late String _saved;
   String? _error;
@@ -89,6 +100,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         ? DartHighlightController(text: _saved)
         : TextEditingController(text: _saved);
     _text.addListener(_onTextChanged);
+    _editorScroll.addListener(_syncGutterScroll);
     if (widget.initialLine > 0 || widget.initialCharacter > 0) {
       final start = _offsetOf(widget.initialLine, widget.initialCharacter);
       _text.selection = TextSelection.collapsed(offset: start);
@@ -183,7 +195,19 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     _findController.dispose();
     _replaceController.dispose();
     _findFocus.dispose();
+    _editorScroll.removeListener(_syncGutterScroll);
+    _editorScroll.dispose();
+    _gutterScroll.dispose();
     super.dispose();
+  }
+
+  /// Mirrors the text field's scroll offset onto the gutter's own controller,
+  /// clamped to what the gutter can actually scroll (it may be shorter or
+  /// taller than the text field by a line or two).
+  void _syncGutterScroll() {
+    if (!_editorScroll.hasClients || !_gutterScroll.hasClients) return;
+    final max = _gutterScroll.position.maxScrollExtent;
+    _gutterScroll.jumpTo(_editorScroll.offset.clamp(0, max));
   }
 
   bool get _dirty => _text.text != _saved;
@@ -930,6 +954,54 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     );
   }
 
+  /// The line-number gutter: one number per line, the current line highlighted.
+  /// It scrolls with the text field via the shared [_editorScroll] controller,
+  /// and each number sits in a fixed-height box matching the text field's own
+  /// line height, so the two stay lined up.
+  Widget _gutter(BuildContext context) {
+    final theme = Theme.of(context);
+    final lineCount = '\n'.allMatches(_text.text).length + 1;
+    final currentLine = _cursorPosition().$1;
+    final digits = '$lineCount'.length;
+    return Container(
+      key: const Key('editor-gutter'),
+      width: 24.0 + digits * 8.0,
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: SingleChildScrollView(
+        controller: _gutterScroll,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            for (var line = 0; line < lineCount; line++)
+              Container(
+                key: Key('gutter-line-${line + 1}'),
+                height: _editorLineHeight,
+                width: double.infinity,
+                padding: const EdgeInsets.only(right: 8),
+                color: line == currentLine
+                    ? theme.colorScheme.surfaceContainerHigh
+                    : null,
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '${line + 1}',
+                  style: TextStyle(
+                    fontFamily: 'Menlo',
+                    fontSize: _editorFontSize,
+                    height: _editorLineHeightMultiplier,
+                    color: line == currentLine
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// The find bar: a query field with a match count and next/previous, plus a
   /// replace row when opened with Cmd/Ctrl+H.
   Widget _findBar(BuildContext context) {
@@ -1156,21 +1228,34 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
             if (suggestions.isNotEmpty) _completionList(suggestions),
             if (_findOpen) _findBar(context),
             Expanded(
-              child: Focus(
-                focusNode: _editorFocus,
-                onKeyEvent: _onEditorKey,
-                child: TextField(
-                  key: const Key('code-text'),
-                  controller: _text,
-                  expands: true,
-                  maxLines: null,
-                  minLines: null,
-                  style: const TextStyle(fontFamily: 'Menlo', fontSize: 13),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _gutter(context),
+                  Expanded(
+                    child: Focus(
+                      focusNode: _editorFocus,
+                      onKeyEvent: _onEditorKey,
+                      child: TextField(
+                        key: const Key('code-text'),
+                        controller: _text,
+                        scrollController: _editorScroll,
+                        expands: true,
+                        maxLines: null,
+                        minLines: null,
+                        style: const TextStyle(
+                          fontFamily: 'Menlo',
+                          fontSize: _editorFontSize,
+                          height: _editorLineHeightMultiplier,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.all(12),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
             if (_hover != null) _hoverCard(context),
