@@ -503,7 +503,7 @@ Analyze, SDK discovery, project file manager.
 - [x] **IDE.6** Find and replace in the file (Cmd/Ctrl+F, Cmd/Ctrl+H), with match count.
 - [x] **IDE.7** Find in project: search every Dart and JSON file, list matches, open one.
 - [x] **IDE.8** Line numbers in the gutter, and the current line highlighted.
-- [ ] **IDE.9** Bracket matching: the bracket paired with the one at the cursor is highlighted.
+- [x] **IDE.9** Bracket matching: the bracket paired with the one at the cursor is highlighted.
 - [ ] **IDE.10** Auto-indent on Enter and auto-close of brackets and quotes.
 - [ ] **IDE.11** Code folding of blocks (the server's folding ranges).
 - [ ] **IDE.12** Document outline: the classes and members of the file, tap to jump.

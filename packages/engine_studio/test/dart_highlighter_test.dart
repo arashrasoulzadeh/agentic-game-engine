@@ -70,6 +70,11 @@ void main() {
         const TextMark(4, 5, kind: MarkKind.searchMatch),
       ];
       expect(notifications, 2, reason: 'an equal value is a no-op');
+
+      controller.bracketMarks = [const TextMark(0, 1, kind: MarkKind.bracket)];
+      expect(notifications, 3);
+      controller.bracketMarks = [const TextMark(0, 1, kind: MarkKind.bracket)];
+      expect(notifications, 3, reason: 'an equal value is a no-op');
     },
   );
 

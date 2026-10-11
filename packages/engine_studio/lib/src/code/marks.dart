@@ -2,7 +2,7 @@ import 'dart_highlighter.dart';
 
 /// What a marked stretch of text means, for how it is drawn: an error or warning
 /// gets a wavy underline, a search match gets a background highlight.
-enum MarkKind { error, warning, searchMatch, currentMatch }
+enum MarkKind { error, warning, searchMatch, currentMatch, bracket }
 
 /// A stretch of text to mark: from [start] up to [end] (offsets into the text).
 class TextMark {

@@ -9,6 +9,7 @@ import 'dart:async';
 import '../lsp/dart_session.dart';
 import '../lsp/edits.dart' show RenamePlan, TextEdit, applyEdits, planRename;
 import 'analysis.dart';
+import 'bracket_match.dart';
 import 'completion.dart';
 import 'dart_highlighter.dart';
 import 'find_replace.dart';
@@ -149,6 +150,29 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     });
     _requestServerCompletions();
     _updateSearchHighlights();
+    _updateBracketHighlight();
+  }
+
+  /// Highlights the bracket at the cursor and the one it pairs with. Does
+  /// nothing for a non-Dart file, which has no highlighter to mark.
+  void _updateBracketHighlight() {
+    final highlighter = _text;
+    if (highlighter is! DartHighlightController) return;
+    final cursor = _text.selection.baseOffset;
+    if (cursor < 0) {
+      highlighter.bracketMarks = const [];
+      return;
+    }
+    final found = matchingBracket(_text.text, cursor);
+    if (found == null) {
+      highlighter.bracketMarks = const [];
+      return;
+    }
+    final (at, pair) = found;
+    highlighter.bracketMarks = [
+      TextMark(at, at + 1, kind: MarkKind.bracket),
+      TextMark(pair, pair + 1, kind: MarkKind.bracket),
+    ];
   }
 
   /// Asks the server for completions at the cursor. A reply that arrives after the

@@ -133,6 +133,7 @@ class DartHighlightController extends TextEditingController {
 
   List<TextMark> _marks = const [];
   List<TextMark> _searchMarks = const [];
+  List<TextMark> _bracketMarks = const [];
 
   /// The stretches to underline as errors or warnings. Setting them redraws the
   /// text. A value equal to the current one is ignored: both this and
@@ -153,6 +154,14 @@ class DartHighlightController extends TextEditingController {
     notifyListeners();
   }
 
+  /// The bracket at the cursor and the one it pairs with, if any. See [marks]
+  /// for why an unchanged value is ignored rather than always notifying.
+  set bracketMarks(List<TextMark> value) {
+    if (listEquals(_bracketMarks, value)) return;
+    _bracketMarks = value;
+    notifyListeners();
+  }
+
   @override
   TextSpan buildTextSpan({
     required BuildContext context,
@@ -165,6 +174,7 @@ class DartHighlightController extends TextEditingController {
         for (final run in applyMarks(tokenizeDart(text), [
           ..._marks,
           ..._searchMarks,
+          ..._bracketMarks,
         ]))
           TextSpan(text: run.text, style: _styleFor(run)),
       ],
@@ -196,6 +206,12 @@ class DartHighlightController extends TextEditingController {
         return TextStyle(color: colour, backgroundColor: const Color(0x66FFA500));
       case MarkKind.currentMatch:
         return TextStyle(color: colour, backgroundColor: const Color(0xAAFFA500));
+      case MarkKind.bracket:
+        return TextStyle(
+          color: colour,
+          fontWeight: FontWeight.bold,
+          backgroundColor: const Color(0x5542A5F5),
+        );
       case null:
         return TextStyle(color: colour);
     }
