@@ -1,4 +1,5 @@
 import 'package:engine_studio/src/code/dart_highlighter.dart';
+import 'package:engine_studio/src/code/marks.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 DartTokenKind? _kindOf(List<DartToken> tokens, String text) =>
@@ -48,4 +49,46 @@ void main() {
   test('empty source gives no tokens', () {
     expect(tokenizeDart(''), isEmpty);
   });
+
+  test(
+    'setting marks or searchMarks to an equal value does not notify listeners',
+    () {
+      final controller = DartHighlightController(text: 'var x = 1;');
+      var notifications = 0;
+      controller.addListener(() => notifications++);
+
+      controller.marks = [const TextMark(0, 3, kind: MarkKind.error)];
+      expect(notifications, 1);
+      controller.marks = [const TextMark(0, 3, kind: MarkKind.error)];
+      expect(notifications, 1, reason: 'an equal value is a no-op');
+
+      controller.searchMarks = [
+        const TextMark(4, 5, kind: MarkKind.searchMatch),
+      ];
+      expect(notifications, 2);
+      controller.searchMarks = [
+        const TextMark(4, 5, kind: MarkKind.searchMatch),
+      ];
+      expect(notifications, 2, reason: 'an equal value is a no-op');
+    },
+  );
+
+  test(
+    'a listener that resets searchMarks to the same value does not recurse '
+    '(regression: this froze the editor with a StackOverflowError)',
+    () {
+      final controller = DartHighlightController(text: 'var x = 1;');
+      controller.addListener(() {
+        controller.searchMarks = [
+          const TextMark(0, 3, kind: MarkKind.searchMatch),
+        ];
+      });
+      expect(
+        () => controller.searchMarks = [
+          const TextMark(0, 3, kind: MarkKind.searchMatch),
+        ],
+        returnsNormally,
+      );
+    },
+  );
 }

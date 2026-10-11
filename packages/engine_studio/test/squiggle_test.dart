@@ -8,7 +8,7 @@ void main() {
     'a marked error is drawn with a wavy underline and the rest is not',
     (tester) async {
       final controller = DartHighlightController(text: 'var x = bad;')
-        ..marks = const [TextMark(8, 11, isError: true)];
+        ..marks = const [TextMark(8, 11, kind: MarkKind.error)];
       late TextSpan span;
       await tester.pumpWidget(
         MaterialApp(

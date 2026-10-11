@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'marks.dart';
@@ -131,10 +132,24 @@ class DartHighlightController extends TextEditingController {
   DartHighlightController({super.text});
 
   List<TextMark> _marks = const [];
+  List<TextMark> _searchMarks = const [];
 
-  /// The stretches to underline as errors or warnings. Setting them redraws the text.
+  /// The stretches to underline as errors or warnings. Setting them redraws the
+  /// text. A value equal to the current one is ignored: both this and
+  /// [searchMarks] are set from this controller's own text-changed listener, and
+  /// notifying on every call (even a no-op one) would re-trigger that listener
+  /// and recurse forever — caught as a `StackOverflowError` that froze the editor.
   set marks(List<TextMark> value) {
+    if (listEquals(_marks, value)) return;
     _marks = value;
+    notifyListeners();
+  }
+
+  /// The find/replace matches to highlight. Setting them redraws the text. See
+  /// [marks] for why an unchanged value is ignored rather than always notifying.
+  set searchMarks(List<TextMark> value) {
+    if (listEquals(_searchMarks, value)) return;
+    _searchMarks = value;
     notifyListeners();
   }
 
@@ -147,25 +162,42 @@ class DartHighlightController extends TextEditingController {
     return TextSpan(
       style: style,
       children: [
-        for (final run in applyMarks(tokenizeDart(text), _marks))
+        for (final run in applyMarks(tokenizeDart(text), [
+          ..._marks,
+          ..._searchMarks,
+        ]))
           TextSpan(text: run.text, style: _styleFor(run)),
       ],
     );
   }
 
-  /// The colour of a run, plus a wavy underline when it is marked: red for an
-  /// error, amber for a warning.
+  /// The colour of a run, plus a wavy underline for an error/warning or a
+  /// background highlight for a search match.
   TextStyle? _styleFor(StyledRun run) {
     final colour = dartPalette[run.kind];
     final mark = run.mark;
     if (colour == null && mark == null) return null;
-    return TextStyle(
-      color: colour,
-      decoration: mark == null ? null : TextDecoration.underline,
-      decorationStyle: mark == null ? null : TextDecorationStyle.wavy,
-      decorationColor: mark == null
-          ? null
-          : (mark.isError ? const Color(0xFFF14C4C) : const Color(0xFFCCA700)),
-    );
+    switch (mark?.kind) {
+      case MarkKind.error:
+        return TextStyle(
+          color: colour,
+          decoration: TextDecoration.underline,
+          decorationStyle: TextDecorationStyle.wavy,
+          decorationColor: const Color(0xFFF14C4C),
+        );
+      case MarkKind.warning:
+        return TextStyle(
+          color: colour,
+          decoration: TextDecoration.underline,
+          decorationStyle: TextDecorationStyle.wavy,
+          decorationColor: const Color(0xFFCCA700),
+        );
+      case MarkKind.searchMatch:
+        return TextStyle(color: colour, backgroundColor: const Color(0x66FFA500));
+      case MarkKind.currentMatch:
+        return TextStyle(color: colour, backgroundColor: const Color(0xAAFFA500));
+      case null:
+        return TextStyle(color: colour);
+    }
   }
 }

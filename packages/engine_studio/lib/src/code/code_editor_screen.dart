@@ -11,6 +11,7 @@ import '../lsp/edits.dart' show RenamePlan, TextEdit, applyEdits, planRename;
 import 'analysis.dart';
 import 'completion.dart';
 import 'dart_highlighter.dart';
+import 'find_replace.dart';
 import 'marks.dart';
 import 'project_symbols.dart';
 
@@ -71,6 +72,12 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   List<CompletionItem>? _serverItems;
   int _serverRequest = 0;
   bool _analyzing = false;
+  bool _findOpen = false;
+  bool _replaceOpen = false;
+  int _matchIndex = 0;
+  final TextEditingController _findController = TextEditingController();
+  final TextEditingController _replaceController = TextEditingController();
+  final FocusNode _findFocus = FocusNode();
 
   bool get _isDart => widget.filePath.endsWith('.dart');
 
@@ -129,6 +136,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       _serverItems = null;
     });
     _requestServerCompletions();
+    _updateSearchHighlights();
   }
 
   /// Asks the server for completions at the cursor. A reply that arrives after the
@@ -172,6 +180,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     _text.removeListener(_onTextChanged);
     _text.dispose();
     _editorFocus.dispose();
+    _findController.dispose();
+    _replaceController.dispose();
+    _findFocus.dispose();
     super.dispose();
   }
 
@@ -571,9 +582,138 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         TextMark(
           offsetOf(d.line, d.character),
           offsetOf(d.endLine, d.endCharacter),
-          isError: d.isError,
+          kind: d.isError ? MarkKind.error : MarkKind.warning,
         ),
     ];
+  }
+
+  /// The find bar's matches in the current text, recomputed from the query.
+  List<TextMatch> get _matches =>
+      findMatches(_text.text, _findController.text);
+
+  /// Opens the find bar (Cmd/Ctrl+F), or just focuses it if already open.
+  void _openFind() {
+    setState(() {
+      _findOpen = true;
+      _matchIndex = 0;
+    });
+    _findFocus.requestFocus();
+    _updateSearchHighlights();
+  }
+
+  /// Opens the find bar with its replace row (Cmd/Ctrl+H).
+  void _openReplace() {
+    setState(() {
+      _findOpen = true;
+      _replaceOpen = true;
+      _matchIndex = 0;
+    });
+    _findFocus.requestFocus();
+    _updateSearchHighlights();
+  }
+
+  /// Closes the find bar and clears its highlights.
+  void _closeFind() {
+    setState(() {
+      _findOpen = false;
+      _replaceOpen = false;
+    });
+    _updateSearchHighlights();
+    _editorFocus.requestFocus();
+  }
+
+  /// Selects the next match, wrapping to the first after the last.
+  void _nextMatch() {
+    final matches = _matches;
+    if (matches.isEmpty) return;
+    setState(() => _matchIndex = (_matchIndex + 1) % matches.length);
+    _selectCurrentMatch();
+  }
+
+  /// Selects the previous match, wrapping to the last before the first.
+  void _previousMatch() {
+    final matches = _matches;
+    if (matches.isEmpty) return;
+    setState(
+      () => _matchIndex = (_matchIndex - 1 + matches.length) % matches.length,
+    );
+    _selectCurrentMatch();
+  }
+
+  void _selectCurrentMatch() {
+    final matches = _matches;
+    if (matches.isEmpty) return;
+    final match = matches[_matchIndex.clamp(0, matches.length - 1)];
+    _text.selection = TextSelection(
+      baseOffset: match.start,
+      extentOffset: match.end,
+    );
+    _updateSearchHighlights();
+  }
+
+  /// Replaces the current match and moves on to the next one.
+  void _replaceCurrent() {
+    final matches = _matches;
+    if (matches.isEmpty) return;
+    final match = matches[_matchIndex.clamp(0, matches.length - 1)];
+    final replacement = _replaceController.text;
+    final updated = _text.text.replaceRange(match.start, match.end, replacement);
+    _text.value = TextEditingValue(
+      text: updated,
+      selection: TextSelection.collapsed(offset: match.start + replacement.length),
+    );
+  }
+
+  /// Replaces every match in the file in one edit.
+  void _replaceAll() {
+    final updated = replaceAllMatches(
+      _text.text,
+      _findController.text,
+      _replaceController.text,
+    );
+    _text.value = TextEditingValue(
+      text: updated,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+    setState(() => _matchIndex = 0);
+  }
+
+  /// Marks every match in the Dart highlighter, with the current one brighter.
+  /// Does nothing for a non-Dart file, which has no highlighter to mark.
+  void _updateSearchHighlights() {
+    final highlighter = _text;
+    if (highlighter is! DartHighlightController) return;
+    if (!_findOpen || _findController.text.isEmpty) {
+      highlighter.searchMarks = const [];
+      return;
+    }
+    final matches = _matches;
+    final current = _matchIndex.clamp(0, matches.isEmpty ? 0 : matches.length - 1);
+    highlighter.searchMarks = [
+      for (var i = 0; i < matches.length; i++)
+        TextMark(
+          matches[i].start,
+          matches[i].end,
+          kind: i == current ? MarkKind.currentMatch : MarkKind.searchMatch,
+        ),
+    ];
+  }
+
+  /// Handles keys inside the find field: Escape closes the bar, Shift+Enter
+  /// goes to the previous match (plain Enter goes to the next, via onSubmitted).
+  KeyEventResult _onFindKey(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.escape) {
+        _closeFind();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.enter &&
+          HardwareKeyboard.instance.isShiftPressed) {
+        _previousMatch();
+        return KeyEventResult.handled;
+      }
+    }
+    return KeyEventResult.ignored;
   }
 
   /// Moves the cursor to the start of [line] (1-based), so tapping a finding shows it.
@@ -790,6 +930,103 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     );
   }
 
+  /// The find bar: a query field with a match count and next/previous, plus a
+  /// replace row when opened with Cmd/Ctrl+H.
+  Widget _findBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final matches = _matches;
+    final count = matches.isEmpty
+        ? '0/0'
+        : '${_matchIndex.clamp(0, matches.length - 1) + 1}/${matches.length}';
+    return Container(
+      key: const Key('find-bar'),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Focus(
+                  onKeyEvent: _onFindKey,
+                  child: TextField(
+                    key: const Key('find-input'),
+                    controller: _findController,
+                    focusNode: _findFocus,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      hintText: 'Find',
+                    ),
+                    onSubmitted: (_) => _nextMatch(),
+                    onChanged: (_) {
+                      setState(() => _matchIndex = 0);
+                      _updateSearchHighlights();
+                    },
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(count, key: const Key('find-count')),
+              ),
+              IconButton(
+                key: const Key('find-prev'),
+                tooltip: 'Previous match (Shift+Enter)',
+                iconSize: 16,
+                onPressed: _previousMatch,
+                icon: const Icon(Icons.keyboard_arrow_up),
+              ),
+              IconButton(
+                key: const Key('find-next'),
+                tooltip: 'Next match (Enter)',
+                iconSize: 16,
+                onPressed: _nextMatch,
+                icon: const Icon(Icons.keyboard_arrow_down),
+              ),
+              IconButton(
+                key: const Key('find-close'),
+                tooltip: 'Close (Esc)',
+                iconSize: 16,
+                onPressed: _closeFind,
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          if (_replaceOpen)
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: const Key('replace-input'),
+                    controller: _replaceController,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      hintText: 'Replace',
+                    ),
+                  ),
+                ),
+                TextButton(
+                  key: const Key('replace-one'),
+                  onPressed: _replaceCurrent,
+                  child: const Text('Replace'),
+                ),
+                TextButton(
+                  key: const Key('replace-all'),
+                  onPressed: _replaceAll,
+                  child: const Text('Replace All'),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
   /// The hover card: the symbol's description, with a close button.
   Widget _hoverCard(BuildContext context) {
     final theme = Theme.of(context);
@@ -863,6 +1100,13 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _save,
         const SingleActivator(LogicalKeyboardKey.keyS, control: true): _save,
+        const SingleActivator(LogicalKeyboardKey.keyF, meta: true): _openFind,
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true):
+            _openFind,
+        const SingleActivator(LogicalKeyboardKey.keyH, meta: true):
+            _openReplace,
+        const SingleActivator(LogicalKeyboardKey.keyH, control: true):
+            _openReplace,
       },
       child: Scaffold(
         appBar: AppBar(
@@ -910,6 +1154,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                 ),
               ),
             if (suggestions.isNotEmpty) _completionList(suggestions),
+            if (_findOpen) _findBar(context),
             Expanded(
               child: Focus(
                 focusNode: _editorFocus,

@@ -1,13 +1,26 @@
 import 'dart_highlighter.dart';
 
-/// A stretch of text to underline: from [start] up to [end] (offsets into the text),
-/// as an error or a warning.
+/// What a marked stretch of text means, for how it is drawn: an error or warning
+/// gets a wavy underline, a search match gets a background highlight.
+enum MarkKind { error, warning, searchMatch, currentMatch }
+
+/// A stretch of text to mark: from [start] up to [end] (offsets into the text).
 class TextMark {
   final int start;
   final int end;
-  final bool isError;
+  final MarkKind kind;
 
-  const TextMark(this.start, this.end, {required this.isError});
+  const TextMark(this.start, this.end, {required this.kind});
+
+  @override
+  bool operator ==(Object other) =>
+      other is TextMark &&
+      other.start == start &&
+      other.end == end &&
+      other.kind == kind;
+
+  @override
+  int get hashCode => Object.hash(start, end, kind);
 }
 
 /// One run of text with its colour kind and whether it is underlined.

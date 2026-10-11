@@ -6,14 +6,14 @@ void main() {
   test('runs rebuild the source exactly, with marks applied', () {
     const source = 'var x = nothere;';
     final runs = applyMarks(tokenizeDart(source), [
-      const TextMark(8, 15, isError: true),
+      const TextMark(8, 15, kind: MarkKind.error),
     ]);
     expect(runs.map((r) => r.text).join(), source);
   });
 
   test('the marked stretch is exactly the marked characters', () {
     final runs = applyMarks(tokenizeDart('var x = nothere;'), [
-      const TextMark(8, 15, isError: true),
+      const TextMark(8, 15, kind: MarkKind.error),
     ]);
     final marked = runs.where((r) => r.mark != null).map((r) => r.text).join();
     expect(marked, 'nothere');
@@ -21,7 +21,7 @@ void main() {
 
   test('a mark can cross a token boundary and keeps each token\'s colour', () {
     final runs = applyMarks(tokenizeDart("String a = 'hi';"), [
-      const TextMark(7, 10, isError: false),
+      const TextMark(7, 10, kind: MarkKind.warning),
     ]);
     final marked = runs.where((r) => r.mark != null).toList();
     expect(marked.map((r) => r.text).join(), 'a =');
