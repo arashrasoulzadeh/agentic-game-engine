@@ -199,5 +199,32 @@ void _legendTests() {
         'rows must be a list of strings, one per map row',
       );
     });
+
+    test('reports rows missing entirely, not just malformed', () {
+      final validator = LevelValidator.forSchemas(allComponentSchemas);
+      final doc = withLegend({
+        'tileWidth': 16.0,
+        'tileHeight': 16.0,
+        'legend': {'.': 0},
+      });
+      expect(
+        validator.validate(doc).single.message,
+        'rows must be a list of strings, one per map row',
+      );
+    });
+
+    test('reports a legend that is not an object', () {
+      final validator = LevelValidator.forSchemas(allComponentSchemas);
+      final doc = withLegend({
+        'tileWidth': 16.0,
+        'tileHeight': 16.0,
+        'legend': 'not a map',
+        'rows': ['..'],
+      });
+      expect(
+        validator.validate(doc).single.message,
+        'legend must be an object mapping characters to tile ids',
+      );
+    });
   });
 }

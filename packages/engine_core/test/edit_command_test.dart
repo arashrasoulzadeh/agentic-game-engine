@@ -119,6 +119,55 @@ void main() {
     });
   });
 
+  group('SetLayerCommand', () {
+    test('changes an existing zIndex and reverts it', () {
+      final doc = LevelDocument.fromJson({
+        'entities': [
+          {
+            'components': {
+              'sprite': {'atlasId': 'a', 'region': 'r', 'zIndex': 1},
+            },
+          },
+        ],
+      });
+      _expectApplyThenRevertRestores(
+        SetLayerCommand(
+          entity: doc.entities.single,
+          component: 'sprite',
+          zIndex: 5,
+        ),
+        doc,
+      );
+    });
+
+    test('adds a zIndex that was absent and removes it again on revert', () {
+      final doc = LevelDocument.fromJson({
+        'entities': [
+          {
+            'components': {
+              // Explicitly typed <String, dynamic>: an all-String literal
+              // like {'atlasId': 'a', 'region': 'r'} would infer
+              // Map<String, String>, and LevelEntity.fromJson's .cast<String,
+              // dynamic>() is a view over that same map — writing an int
+              // through it still throws at the underlying map's real type.
+              'sprite': <String, dynamic>{'atlasId': 'a', 'region': 'r'},
+            },
+          },
+        ],
+      });
+      final sprite = doc.entities.single;
+      _expectApplyThenRevertRestores(
+        SetLayerCommand(entity: sprite, component: 'sprite', zIndex: 3),
+        doc,
+      );
+      expect(
+        sprite.components['sprite']!.containsKey('zIndex'),
+        isFalse,
+        reason: 'reverting removes a zIndex this command added',
+      );
+    });
+  });
+
   group('CommandHistory', () {
     test('undo reverts the latest command, redo re-applies it', () {
       final doc = _doc();

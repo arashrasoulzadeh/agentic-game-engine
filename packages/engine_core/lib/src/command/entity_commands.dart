@@ -92,6 +92,49 @@ class SetComponentFieldCommand implements EditCommand {
   }
 }
 
+/// Sets the draw-order `zIndex` field of [entity]'s [component] (e.g. a
+/// `sprite`, `tileMap`, `particle`, or `parallaxLayer` — any component the
+/// engine draws respects `zIndex`, per `engine_flutter`'s `z_index_test.dart`).
+/// The component must already exist: a bare `zIndex` with nothing else isn't
+/// a meaningful component on its own, unlike [MoveEntityCommand]'s
+/// `position`, so there is nothing sensible to create here. Revert restores
+/// the previous `zIndex`, or removes it if this command added it.
+class SetLayerCommand implements EditCommand {
+  final LevelEntity entity;
+  final String component;
+  final int zIndex;
+
+  bool _fieldExisted = false;
+  Object? _previous;
+
+  SetLayerCommand({
+    required this.entity,
+    required this.component,
+    required this.zIndex,
+  });
+
+  @override
+  String get label => 'Set layer';
+
+  @override
+  void apply(LevelDocument document) {
+    final fields = entity.components[component]!;
+    _fieldExisted = fields.containsKey('zIndex');
+    _previous = fields['zIndex'];
+    fields['zIndex'] = zIndex;
+  }
+
+  @override
+  void revert(LevelDocument document) {
+    final fields = entity.components[component]!;
+    if (_fieldExisted) {
+      fields['zIndex'] = _previous;
+    } else {
+      fields.remove('zIndex');
+    }
+  }
+}
+
 /// Moves [entity] to ([x], [y]) by setting its `position` component. Revert
 /// restores the previous `position` exactly, or removes it if there was none.
 class MoveEntityCommand implements EditCommand {

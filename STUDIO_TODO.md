@@ -393,7 +393,7 @@ game runs.
 
 - [x] **1.1** `EditCommand` base type with `apply`/`revert` in
   `engine_core/lib/src/command/`.
-- [~] **1.2** Commands: `PlaceTile`, `EraseTile`, `FillRegion`,
+- [x] **1.2** Commands: `PlaceTile`, `EraseTile`, `FillRegion`,
   `AddEntity`, `RemoveEntity`, `SetComponentField`, `MoveEntity`,
   `SetLayer`.
 - [x] **1.3** `CommandHistory` with undo/redo stacks and stroke merging.
@@ -405,7 +405,7 @@ game runs.
   unknown component, field out of range, dangling entity refs.
 - [x] **1.8** Reachability check (flood-fill from spawn over the tile
   map) — reuses existing tile traversal.
-- [~] **1.9** Tests for each validator rule, including a passing level.
+- [x] **1.9** Tests for each validator rule, including a passing level.
 - [x] **1.10** Decide D4 (play-test process model) and record it.
 
 ### Phase 2 — CLI and headless tooling
