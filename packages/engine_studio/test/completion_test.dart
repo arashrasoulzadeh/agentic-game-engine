@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:engine_studio/src/code/completion.dart';
 import 'package:engine_studio/src/code/project_symbols.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -34,5 +35,42 @@ void main() {
     expect(completionsFor('', symbols), isEmpty);
     final names = completionsFor('c', symbols).map((i) => i.name).toList();
     expect(names.toSet().length, names.length);
+  });
+
+  test('an item with no explicit label displays its insert text', () {
+    final item = CompletionItem('jump', 'method');
+    expect(item.label, 'jump');
+  });
+
+  test('an explicit label (e.g. with parameters) is kept as given', () {
+    final item = CompletionItem('jump', 'method', label: 'jump(double dy)');
+    expect(item.label, 'jump(double dy)');
+    expect(item.name, 'jump', reason: 'insert text stays just the name');
+  });
+
+  test('every completion kind has its own icon, not a shared fallback', () {
+    const kinds = [
+      'keyword',
+      'method',
+      'function',
+      'constructor',
+      'field',
+      'property',
+      'variable',
+      'class',
+      'interface',
+      'module',
+      'enum',
+      'constant',
+      'atlas',
+      'entity',
+      'component',
+    ];
+    final icons = kinds.map(iconForCompletionKind).toSet();
+    expect(icons.length, kinds.length);
+  });
+
+  test('an unrecognised kind falls back to a plain icon', () {
+    expect(iconForCompletionKind('something-new'), Icons.circle_outlined);
   });
 }

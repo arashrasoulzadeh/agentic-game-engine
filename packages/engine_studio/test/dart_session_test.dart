@@ -38,6 +38,14 @@ void main() {
         containsAll(['jump', 'health']),
         reason: 'the analyzer knows Hero, so its members are offered',
       );
+      final jump = items.firstWhere((i) => i.insertText == 'jump');
+      expect(
+        jump.label,
+        isNot('jump'),
+        reason:
+            'a method\'s label shows its signature (e.g. jump()), not just '
+            'its bare name, the way an IDE completion list does',
+      );
       await session.close();
     },
     timeout: const Timeout(Duration(minutes: 2)),

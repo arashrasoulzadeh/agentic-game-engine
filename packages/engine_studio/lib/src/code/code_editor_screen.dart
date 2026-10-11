@@ -177,7 +177,13 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       }
       setState(() {
         _serverItems = [
-          for (final item in items) CompletionItem(item.insertText, item.kind),
+          for (final item in items)
+            CompletionItem(
+              item.insertText,
+              item.kind,
+              label: item.label,
+              detail: item.detail,
+            ),
         ];
       });
     } on Object {
@@ -292,12 +298,30 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     final word = _wordBeforeCursor;
     final server = _serverItems;
     if (server != null && word.isNotEmpty) {
-      return [
-        for (final item in server)
-          if (item.name.startsWith(word)) item,
-      ];
+      return _rankedByMatch(server, word);
     }
     return completionsFor(word, _symbols);
+  }
+
+  /// The items matching [word], case-insensitively, ranked the way an IDE's list
+  /// is: a name that starts with what was typed comes before one that merely
+  /// contains it, and among ties the shorter (closer) name comes first.
+  List<CompletionItem> _rankedByMatch(
+    List<CompletionItem> items,
+    String word,
+  ) {
+    final needle = word.toLowerCase();
+    final matches = [
+      for (final item in items)
+        if (item.name.toLowerCase().contains(needle)) item,
+    ];
+    matches.sort((a, b) {
+      final aStarts = a.name.toLowerCase().startsWith(needle);
+      final bStarts = b.name.toLowerCase().startsWith(needle);
+      if (aStarts != bStarts) return aStarts ? -1 : 1;
+      return a.name.length.compareTo(b.name.length);
+    });
+    return matches;
   }
 
   /// Jumps to where the symbol under the cursor is declared. A declaration in this
@@ -792,11 +816,21 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               key: Key('completion-${items[i].name}'),
               dense: true,
               selected: i == index,
+              leading: Icon(iconForCompletionKind(items[i].kind), size: 16),
               title: Text(
-                items[i].name,
+                items[i].label,
                 style: const TextStyle(fontFamily: 'Menlo'),
+                overflow: TextOverflow.ellipsis,
               ),
-              trailing: Text(items[i].kind, style: theme.textTheme.bodySmall),
+              trailing: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 160),
+                child: Text(
+                  items[i].detail ?? items[i].kind,
+                  style: theme.textTheme.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                ),
+              ),
               onTap: () => _complete(items[i].name),
             ),
         ],
