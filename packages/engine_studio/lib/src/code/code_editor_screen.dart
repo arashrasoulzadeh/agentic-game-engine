@@ -9,6 +9,8 @@ import 'dart:async';
 import '../lsp/dart_session.dart';
 import '../lsp/edits.dart' show RenamePlan, TextEdit, applyEdits, planRename;
 import 'analysis.dart';
+import 'auto_close.dart';
+import 'auto_indent.dart';
 import 'bracket_match.dart';
 import 'completion.dart';
 import 'dart_highlighter.dart';
@@ -91,12 +93,18 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   final TextEditingController _replaceController = TextEditingController();
   final FocusNode _findFocus = FocusNode();
 
+  /// The buffer's text right before the latest keystroke, so [_maybeAutoClose]
+  /// can tell a single typed character apart from a paste or a programmatic
+  /// edit (format, rename, completion), which must never be auto-closed.
+  late String _previousText;
+
   bool get _isDart => widget.filePath.endsWith('.dart');
 
   @override
   void initState() {
     super.initState();
     _saved = File(widget.filePath).readAsStringSync();
+    _previousText = _saved;
     _text = _isDart
         ? DartHighlightController(text: _saved)
         : TextEditingController(text: _saved);
@@ -151,6 +159,38 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     _requestServerCompletions();
     _updateSearchHighlights();
     _updateBracketHighlight();
+    _maybeAutoClose();
+  }
+
+  /// Auto-closes a bracket or quote just typed, or types through one already
+  /// auto-closed, by diffing against [_previousText] (see [autoCloseResult]).
+  /// Mutating `_text.value` here re-enters this listener once more, but with
+  /// [_previousText] already updated to match, so that nested call's own diff
+  /// finds nothing to do and the recursion stops there.
+  void _maybeAutoClose() {
+    final previous = _previousText;
+    final cursor = _text.selection.baseOffset;
+    _previousText = _text.text;
+    if (cursor < 0) return;
+    final result = autoCloseResult(previous, _text.text, cursor);
+    if (result == null) return;
+    final (newText, newCursor) = result;
+    _previousText = newText;
+    _text.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newCursor),
+    );
+  }
+
+  /// Replaces a default Enter with one that matches the current line's
+  /// indentation (see [indentedNewline]).
+  void _insertIndentedNewline() {
+    final cursor = _text.selection.baseOffset.clamp(0, _text.text.length);
+    final (newText, newCursor) = indentedNewline(_text.text, cursor);
+    _text.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newCursor),
+    );
   }
 
   /// Highlights the bracket at the cursor and the one it pairs with. Does
@@ -283,6 +323,13 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
           keyboard.isAltPressed &&
           keyboard.isShiftPressed) {
         _format();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.enter &&
+          !command &&
+          !keyboard.isShiftPressed &&
+          _completionItems().isEmpty) {
+        _insertIndentedNewline();
         return KeyEventResult.handled;
       }
     }
