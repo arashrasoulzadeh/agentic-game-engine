@@ -7,6 +7,8 @@ import 'package:engine_schema/engine_schema.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import 'studio_edit_commands.dart';
+
 /// `game_agent studio ...`: headless tools for the level editor's data, so CI
 /// and agents can check the same levels a designer edits in the studio.
 class StudioCommand extends Command<int> {
@@ -21,6 +23,7 @@ class StudioCommand extends Command<int> {
     addSubcommand(StudioImportTmxCommand());
     addSubcommand(StudioExportLevelsCommand());
     addSubcommand(StudioProjectManifestCommand());
+    addStudioEditCommands(this);
   }
 }
 

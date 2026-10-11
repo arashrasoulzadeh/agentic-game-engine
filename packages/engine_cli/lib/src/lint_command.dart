@@ -39,10 +39,13 @@ class LintCommand extends Command<int> {
       'playable',
       help: 'Also check that every positioned entity is reachable from the '
           'spawn point (an entity whose name contains "player" or "spawn", '
-          'case-insensitive) by flood-filling the TileMap\'s non-solid '
-          'tiles. Catches an entity sealed off by solid tiles, but not a '
-          'gap too wide to jump -- this is tile-connectivity, not physics. '
-          'Errors if the level has no tileMap component or no spawn entity.',
+          'case-insensitive) by walking, falling, and jumping over the '
+          'TileMap -- the same heuristic the studio\'s own validator uses, '
+          'so this and the validator never disagree. A conservative model, '
+          'not a physics simulation: it can pass a level that needs a '
+          'mechanic it does not know about (wall jumps, ladders, double '
+          'jumps). Errors if the level has no tileMap component or no '
+          'spawn entity.',
     );
   }
 
@@ -92,16 +95,15 @@ class LintCommand extends Command<int> {
     return exitCode;
   }
 
-  /// Flood-fills the level's non-solid tiles starting from the spawn
-  /// entity (name contains "player" or "spawn", case-insensitive) and
-  /// reports any other positioned entity whose tile isn't reached --
-  /// e.g. an item or exit accidentally sealed behind solid tiles.
-  ///
-  /// This is tile connectivity, not physics: it doesn't know a
-  /// platformer's jump height/gap width, so it can pass a level with a
-  /// gap too wide to actually jump across. It exists to catch the more
-  /// common authoring mistake (a wall or missing doorway that seals a
-  /// region off entirely), not to replace playtesting.
+  /// Checks that every positioned entity is reachable from the spawn entity
+  /// (name contains "player" or "spawn", case-insensitive) via
+  /// [isTileReachable] — the same walk/fall/jump heuristic
+  /// `LevelValidator`'s own exit-reachability check uses, so `lint
+  /// --playable` and the studio's validation panel can never disagree about
+  /// what counts as reachable (STUDIO_TODO.md 2.8). This used to run its own,
+  /// simpler four-connected flood-fill that didn't know about jumping, so it
+  /// could flag a gap a platformer jump clears as unreachable when the
+  /// validator would not.
   int _checkPlayable(List<Map<String, dynamic>> entities) {
     Map<String, dynamic>? tileMapJson;
     final positioned = <(String name, double x, double y)>[];
@@ -137,45 +139,32 @@ class LintCommand extends Command<int> {
     }
     final spawn = positioned[spawnIndex];
 
-    int colOf(double x) => (x / map.tileWidth).floor();
-    int rowOf(double y) => (y / map.tileHeight).floor();
-    bool solid(int col, int row) {
-      if (col < 0 || col >= map.cols || row < 0 || row >= map.rows) return true;
-      return map.solidTileIds.contains(map.tileAt(col, row));
-    }
-
-    final startCol = colOf(spawn.$2);
-    final startRow = rowOf(spawn.$3);
-    final reachable = <int>{};
-    if (!solid(startCol, startRow)) {
-      final queue = [(startCol, startRow)];
-      reachable.add(startRow * map.cols + startCol);
-      const dirs = [(-1, 0), (1, 0), (0, -1), (0, 1)];
-      while (queue.isNotEmpty) {
-        final (col, row) = queue.removeLast();
-        for (final (dc, dr) in dirs) {
-          final nCol = col + dc;
-          final nRow = row + dr;
-          if (solid(nCol, nRow)) continue;
-          final key = nRow * map.cols + nCol;
-          if (!reachable.add(key)) continue;
-          queue.add((nCol, nRow));
-        }
-      }
+    final spawnOnSolidTile = !isTileReachable(
+      map,
+      startX: spawn.$2,
+      startY: spawn.$3,
+      targetX: spawn.$2,
+      targetY: spawn.$3,
+    );
+    if (spawnOnSolidTile) {
+      stderr.writeln('Error: --playable spawn entity "${spawn.$1}" sits on a solid tile.');
+      return 1;
     }
 
     final unreachable = <String>[];
     for (var i = 0; i < positioned.length; i++) {
       if (i == spawnIndex) continue;
       final (name, x, y) = positioned[i];
-      final key = rowOf(y) * map.cols + colOf(x);
-      if (!reachable.contains(key)) unreachable.add(name);
+      final reachable = isTileReachable(
+        map,
+        startX: spawn.$2,
+        startY: spawn.$3,
+        targetX: x,
+        targetY: y,
+      );
+      if (!reachable) unreachable.add(name);
     }
 
-    if (solid(startCol, startRow)) {
-      stderr.writeln('Error: --playable spawn entity "${spawn.$1}" sits on a solid tile.');
-      return 1;
-    }
     if (unreachable.isNotEmpty) {
       stderr.writeln(
         '--playable: ${unreachable.length} entity(ies) unreachable from spawn '

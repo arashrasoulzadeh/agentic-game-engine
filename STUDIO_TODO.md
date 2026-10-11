@@ -419,11 +419,19 @@ Goal: an agent or CI can do everything a designer can, without a UI.
 - [x] **2.3** `studio import-tmx <file>` — wraps existing
   `tmx_import.dart`, writes `levels/*.json`, runs validator.
 - [x] **2.4** `studio project-manifest` — creates/updates `project.json`.
+- [x] **2.9** `studio add-entity`/`remove-entity`/`set-field`/`move-entity`/
+  `set-layer`/`paint-tile`/`fill-region` — the mutating half of the command
+  model (`entity_commands.dart`/`tile_commands.dart`), headless, so an agent
+  or script can edit a level exactly as the studio GUI would: every edit is
+  validated before it is written, and a bad edit leaves the file untouched
+  and exits non-zero rather than writing invalid data. This is what actually
+  satisfies this phase's goal statement above — 2.1-2.4 covered read/import/
+  export, but nothing could *change* a level without the GUI until this.
 - [ ] **2.5** Test: each CLI command has a golden-output test and an
   exit-code test.
 - [ ] **2.6** End-to-end script: create project → apply commands → save
   → validate → load in headless `GameRunner`. Added to CI.
-- [ ] **2.8** `game_agent lint --playable` runs its own flood-fill, separate
+- [x] **2.8** `game_agent lint --playable` runs its own flood-fill, separate
   from `isTileReachable` (engine_core). Make `lint` call `isTileReachable` so the
   CLI and the validator cannot disagree about reachability.
 - [ ] **2.7** Verify end-to-end against the **pushed** repo (CLAUDE.md

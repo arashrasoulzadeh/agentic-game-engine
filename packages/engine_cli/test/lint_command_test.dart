@@ -129,24 +129,51 @@ void main() {
     });
 
     test('returns 0 when every entity is reachable from spawn', () async {
+      // isTileReachable models gravity: an entity needs an actual floor to
+      // stand on (a solid tile below it), not just "any non-solid tile" --
+      // row 2 is that floor, and both entities sit in row 1, right above it.
       final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
-        rows: ['....', '....'],
-        entities: '{"name": "player", "components": {"position": {"x": 20, "y": 20}}},'
-            '{"name": "coin", "components": {"position": {"x": 140, "y": 20}}}',
+        rows: ['....', '....', '####'],
+        entities: '{"name": "player", "components": {"position": {"x": 20, "y": 60}}},'
+            '{"name": "coin", "components": {"position": {"x": 140, "y": 60}}}',
       ));
 
       expect(await _runLint([file.path, '--playable']), 0);
     });
 
     test('returns 1 when an entity is sealed off from spawn by solid tiles', () async {
+      // The wall at column 4 spans both the ceiling (row 0) and the standing
+      // row (row 1), on top of a continuous floor (row 2) -- there is no row
+      // above it to jump through, so it still seals the two sides apart even
+      // with isTileReachable's jump model.
       final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
-        rows: ['....#....', '....#....'],
-        entities: '{"name": "player", "components": {"position": {"x": 20, "y": 20}}},'
-            '{"name": "coin", "components": {"position": {"x": 260, "y": 20}}}',
+        rows: ['....#....', '....#....', '#########'],
+        entities: '{"name": "player", "components": {"position": {"x": 20, "y": 60}}},'
+            '{"name": "coin", "components": {"position": {"x": 260, "y": 60}}}',
       ));
 
       expect(await _runLint([file.path, '--playable']), 1);
     });
+
+    test(
+      'returns 1 for an entity floating with no floor beneath it, even '
+      'though its tile connects to spawn through open air',
+      () async {
+        // A fully open, floorless room: every tile is non-solid, so a plain
+        // non-solid-tile flood-fill (what this check used before 2.8) would
+        // call the coin reachable. isTileReachable models gravity -- a
+        // walker here never lands, so it correctly disagrees. This is the
+        // actual behavior this migration changes: the old check could pass
+        // a level nothing could ever stand in.
+        final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
+          rows: ['....', '....'],
+          entities: '{"name": "player", "components": {"position": {"x": 20, "y": 20}}},'
+              '{"name": "coin", "components": {"position": {"x": 140, "y": 20}}}',
+        ));
+
+        expect(await _runLint([file.path, '--playable']), 1);
+      },
+    );
   });
 }
 
