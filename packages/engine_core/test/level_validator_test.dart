@@ -11,6 +11,7 @@ ComponentRegistry _registry() {
 void main() {
   _schemaMapTests();
   _legendTests();
+  _danglingEntityRefTests();
   final validator = LevelValidator.forRegistry(_registry());
 
   test('a valid level has no issues', () {
@@ -224,6 +225,69 @@ void _legendTests() {
       expect(
         validator.validate(doc).single.message,
         'legend must be an object mapping characters to tile ids',
+      );
+    });
+  });
+}
+
+void _danglingEntityRefTests() {
+  group('LevelValidator dangling entity refs', () {
+    final validator = LevelValidator.forSchemas(allComponentSchemas);
+
+    LevelDocument levelWithEntities(List<Map<String, dynamic>> entities) =>
+        LevelDocument.fromJson({'entities': entities});
+
+    test('reports particle.emitterEntityId referencing missing entity', () {
+      final doc = levelWithEntities([
+        {
+          'components': {
+            'particle': {'lifetime': 1.0, 'emitterEntityId': 5},
+          },
+        },
+      ]);
+      final issues = validator.validate(doc);
+      expect(issues, hasLength(1));
+      expect(issues.single.component, 'particle');
+      expect(issues.single.message, contains('references entity 5'));
+    });
+
+    test('accepts a valid entity reference within range', () {
+      final doc = levelWithEntities([
+        {'components': {'position': {'x': 0, 'y': 0}}},
+        {
+          'components': {
+            'particle': {'lifetime': 1.0, 'emitterEntityId': 0},
+          },
+        },
+      ]);
+      expect(validator.validate(doc), isEmpty);
+    });
+
+    test('reports a non-integer entity reference', () {
+      final doc = levelWithEntities([
+        {
+          'components': {
+            'particle': {'lifetime': 1.0, 'emitterEntityId': 'not-an-int'},
+          },
+        },
+      ]);
+      final issues = validator.validate(doc);
+      final messages = issues.map((i) => i.message).toList();
+      expect(messages, contains('emitterEntityId must be an integer entity ID'));
+    });
+
+    test('reports a negative entity reference', () {
+      final doc = levelWithEntities([
+        {
+          'components': {
+            'particle': {'lifetime': 1.0, 'emitterEntityId': -1},
+          },
+        },
+      ]);
+      final issues = validator.validate(doc);
+      expect(
+        issues.map((i) => i.message),
+        contains(contains('references entity -1')),
       );
     });
   });

@@ -32,7 +32,7 @@ class CreateCommand extends Command<int> {
           defaultsTo: defaultEngineRepoUrl,
           help: 'Git URL of the engine repo to depend on.')
       ..addOption('ref',
-          defaultsTo: 'v0.1.0',
+          defaultsTo: 'main',
           help: 'Git ref (branch or tag) of engine_core to pin to.');
   }
 

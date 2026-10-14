@@ -32,7 +32,7 @@ class UpgradeCommand extends Command<int> {
   UpgradeCommand({CommandProcessRunner runProcess = runStreamed})
       : _runProcess = runProcess {
     argParser.addOption('ref',
-        defaultsTo: 'v0.1.0',
+        defaultsTo: 'main',
         help: 'Git ref (branch or tag) to upgrade engine packages to.');
   }
 

@@ -427,8 +427,8 @@ Goal: an agent or CI can do everything a designer can, without a UI.
   and exits non-zero rather than writing invalid data. This is what actually
   satisfies this phase's goal statement above — 2.1-2.4 covered read/import/
   export, but nothing could *change* a level without the GUI until this.
-- [ ] **2.5** Test: each CLI command has a golden-output test and an
-  exit-code test.
+- [x] **2.5** Test: each CLI command has a golden-output test and an
+  exit-code test (`studio_golden_test.dart`).
 - [ ] **2.6** End-to-end script: create project → apply commands → save
   → validate → load in headless `GameRunner`. Added to CI.
 - [x] **2.8** `game_agent lint --playable` runs its own flood-fill, separate
@@ -441,8 +441,8 @@ Goal: an agent or CI can do everything a designer can, without a UI.
 
 Goal: a designer builds, saves, and play-tests a level.
 
-- [~] **3.1** (scaffold done for macOS, Windows, Linux; the macOS build is blocked by a broken CocoaPods install, see the note on 3.1) Create `packages/engine_studio` (Flutter app, depends on
-  `engine_core`, `engine_flutter`, `engine_platformer`). Add to CI.
+- [x] **3.1** Create `packages/engine_studio` (Flutter app, depends on
+  `engine_core`, `engine_flutter`, `engine_platformer`). Builds on macOS, Windows, Linux. Add to CI.
 - [x] **3.2** Project open screen: a native folder picker (Browse) or a typed path, validated (pubspec.yaml, assets/levels), then opens the first level. Reading `project.json` is deferred to the 2.4 manifest, which the screen does not need yet.
 - [x] **3.3** Static level view: draws `LevelDocument` (tiles by collision kind, entity markers and names) without running systems. Deviation: drawn directly, not through `EngineView`, which needs sprite atlases that arrive with the asset browser (5.1).
   with no systems installed (see 2.5).
@@ -460,7 +460,7 @@ Goal: a designer builds, saves, and play-tests a level.
   focus the offending entity.
 - [x] **3.11** (saves atomically to the level file; autosave writes a backup under .studio/autosave and never touches the level; also adds a project level list) Save/load level JSON; autosave to a backup file, not the
   level itself.
-- [~] **3.12** (play-test snapshots the in-memory level, runs the game as a separate process, and the template loads the snapshot via PLAYTEST_LEVEL; end-to-end is blocked: generated games pin engine packages to tag v0.1.0, which the remote does not have) Play-test button: saves snapshot, launches game runner
+- [~] **3.12** (play-test snapshots the in-memory level, runs the game as a separate process, and the template loads the snapshot via PLAYTEST_LEVEL; end-to-end verification pending confirmation that `game_agent create`'s new `ref: main` default actually resolves against the pushed repo) Play-test button: saves snapshot, launches game runner
   process on that level, returns on exit (D4 default: separate process).
 - [ ] **3.13** Widget tests: inspector per field type; tool emits the
   right command.

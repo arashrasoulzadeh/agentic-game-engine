@@ -111,6 +111,7 @@ class LevelValidator {
       }
     }
     _checkExitReachability(document, issues);
+    _checkDanglingEntityRefs(document, issues);
     return issues;
   }
 
@@ -186,5 +187,61 @@ class LevelValidator {
     final y = position['y'];
     if (x is! num || y is! num) return null;
     return (x: x.toDouble(), y: y.toDouble());
+  }
+
+  /// Checks component fields that hold entity IDs against the entities present
+  /// in the level. Entities are spawned in order by [Level.loadInto], so their
+  /// ECS entity IDs correspond to their index in the entities list (assuming
+  /// the world is empty). This is a best-effort check; the actual IDs depend on
+  /// the world state at load time.
+  ///
+  /// [_refFields] is the complete list of `engine_core` component fields that
+  /// are themselves an entity ID — found by grepping every `EntityId`/
+  /// `EntityId?` field in `lib/src/` and keeping only the ones that belong to
+  /// a *registered, serialized* component (most `EntityId` fields are
+  /// runtime-only: AI/event/action types that never appear in a level's JSON
+  /// at all). `engine_flutter`/`engine_platformer` components are checked
+  /// against their own `allComponentSchemas` entries as those packages gain
+  /// entity-reference fields of their own — this file can't name them without
+  /// breaking the one-way package DAG (CLAUDE.md).
+  void _checkDanglingEntityRefs(
+    LevelDocument document,
+    List<LevelIssue> issues,
+  ) {
+    const refFields = <String, List<String>>{
+      'particle': ['emitterEntityId'],
+    };
+
+    for (var i = 0; i < document.entities.length; i++) {
+      final entity = document.entities[i];
+      for (final entry in entity.components.entries) {
+        final componentName = entry.key;
+        final fields = refFields[componentName];
+        if (fields == null) continue;
+        final component = entry.value;
+        for (final field in fields) {
+          final value = component[field];
+          if (value == null) continue;
+          if (value is! int) {
+            issues.add(LevelIssue(
+              entityIndex: i,
+              entityName: entity.name,
+              component: componentName,
+              message: '$field must be an integer entity ID',
+            ));
+            continue;
+          }
+          if (value < 0 || value >= document.entities.length) {
+            issues.add(LevelIssue(
+              entityIndex: i,
+              entityName: entity.name,
+              component: componentName,
+              message:
+                  '$field references entity $value, but this level has only ${document.entities.length} entities (valid indices 0..${document.entities.length - 1})',
+            ));
+          }
+        }
+      }
+    }
   }
 }
