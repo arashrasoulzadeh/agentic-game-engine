@@ -429,7 +429,12 @@ Goal: an agent or CI can do everything a designer can, without a UI.
   export, but nothing could *change* a level without the GUI until this.
 - [x] **2.5** Test: each CLI command has a golden-output test and an
   exit-code test (`studio_golden_test.dart`).
-- [ ] **2.6** End-to-end script: create project → apply commands → save
+- [x] **2.6** (`tool/e2e_check.dart`: create → add/move/set-field via the
+  real `studio` subcommands → validate → `World`/`Level.loadInto`/60
+  ticks, no Flutter involved — "headless" here means no `GameRunner`/
+  rendering at all, not a specific headless mode of it. Wired into a new
+  `e2e` job in `engine_cli.yml`, separate from `test` since it needs
+  Flutter, not just Dart) End-to-end script: create project → apply commands → save
   → validate → load in headless `GameRunner`. Added to CI.
 - [x] **2.8** `game_agent lint --playable` runs its own flood-fill, separate
   from `isTileReachable` (engine_core). Make `lint` call `isTileReachable` so the

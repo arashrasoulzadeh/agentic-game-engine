@@ -23,3 +23,21 @@ jobs:
       - run: dart pub get
       - run: dart analyze --fatal-infos
       - run: dart test
+
+  # STUDIO_TODO.md 2.6: create a project -> edit it with the real `studio`
+  # subcommands -> validate -> load headlessly, end to end, against the
+  # pushed repo (game_agent create resolves engine_core/engine_flutter/
+  # engine_platformer from the git remote, which is why this needs Flutter,
+  # not just Dart, unlike the `test` job above).
+  e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/engine_cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: dart pub get
+      - run: dart run tool/e2e_check.dart
