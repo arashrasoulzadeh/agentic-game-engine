@@ -393,10 +393,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   /// The items matching [word], case-insensitively, ranked the way an IDE's list
   /// is: a name that starts with what was typed comes before one that merely
   /// contains it, and among ties the shorter (closer) name comes first.
-  List<CompletionItem> _rankedByMatch(
-    List<CompletionItem> items,
-    String word,
-  ) {
+  List<CompletionItem> _rankedByMatch(List<CompletionItem> items, String word) {
     final needle = word.toLowerCase();
     final matches = [
       for (final item in items)
@@ -723,8 +720,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   }
 
   /// The find bar's matches in the current text, recomputed from the query.
-  List<TextMatch> get _matches =>
-      findMatches(_text.text, _findController.text);
+  List<TextMatch> get _matches => findMatches(_text.text, _findController.text);
 
   /// Opens the find bar (Cmd/Ctrl+F), or just focuses it if already open.
   void _openFind() {
@@ -792,10 +788,16 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     if (matches.isEmpty) return;
     final match = matches[_matchIndex.clamp(0, matches.length - 1)];
     final replacement = _replaceController.text;
-    final updated = _text.text.replaceRange(match.start, match.end, replacement);
+    final updated = _text.text.replaceRange(
+      match.start,
+      match.end,
+      replacement,
+    );
     _text.value = TextEditingValue(
       text: updated,
-      selection: TextSelection.collapsed(offset: match.start + replacement.length),
+      selection: TextSelection.collapsed(
+        offset: match.start + replacement.length,
+      ),
     );
   }
 
@@ -823,7 +825,10 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       return;
     }
     final matches = _matches;
-    final current = _matchIndex.clamp(0, matches.isEmpty ? 0 : matches.length - 1);
+    final current = _matchIndex.clamp(
+      0,
+      matches.isEmpty ? 0 : matches.length - 1,
+    );
     highlighter.searchMarks = [
       for (var i = 0; i < matches.length; i++)
         TextMark(
@@ -1301,113 +1306,150 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     );
   }
 
+  /// Asks before discarding unsaved changes, so closing a dirty file
+  /// (popping this screen off the navigation stack — opened via go-to-
+  /// definition or a project-search result) never silently loses an edit.
+  /// A clean file pops immediately, with no dialog.
+  Future<void> _onPopInvoked(bool didPop, Object? result) async {
+    if (didPop) return;
+    final discard =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Discard unsaved changes?'),
+            content: Text(
+              '${p.basename(widget.filePath)} has unsaved changes.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                key: const Key('discard-changes'),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Discard'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (discard && mounted) Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = p.basename(widget.filePath);
     final suggestions = _completionItems();
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _save,
-        const SingleActivator(LogicalKeyboardKey.keyS, control: true): _save,
-        const SingleActivator(LogicalKeyboardKey.keyF, meta: true): _openFind,
-        const SingleActivator(LogicalKeyboardKey.keyF, control: true):
-            _openFind,
-        const SingleActivator(LogicalKeyboardKey.keyH, meta: true):
-            _openReplace,
-        const SingleActivator(LogicalKeyboardKey.keyH, control: true):
-            _openReplace,
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Row(
-            children: [
-              Text(name),
-              if (_dirty)
-                const Padding(
-                  padding: EdgeInsets.only(left: 8),
-                  child: Text('•', key: Key('code-dirty')),
+    return PopScope(
+      canPop: !_dirty,
+      onPopInvokedWithResult: _onPopInvoked,
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _save,
+          const SingleActivator(LogicalKeyboardKey.keyS, control: true): _save,
+          const SingleActivator(LogicalKeyboardKey.keyF, meta: true): _openFind,
+          const SingleActivator(LogicalKeyboardKey.keyF, control: true):
+              _openFind,
+          const SingleActivator(LogicalKeyboardKey.keyH, meta: true):
+              _openReplace,
+          const SingleActivator(LogicalKeyboardKey.keyH, control: true):
+              _openReplace,
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Row(
+              children: [
+                Text(name),
+                if (_dirty)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8),
+                    child: Text('•', key: Key('code-dirty')),
+                  ),
+              ],
+            ),
+            actions: [
+              if (widget.projectRoot != null)
+                IconButton(
+                  key: const Key('code-analyze'),
+                  tooltip: 'Analyze project (compile check)',
+                  onPressed: _analyzing ? null : _analyze,
+                  icon: _analyzing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.fact_check_outlined),
+                ),
+              IconButton(
+                key: const Key('code-save'),
+                tooltip: 'Save (Cmd/Ctrl+S)',
+                onPressed: _dirty ? _save : null,
+                icon: const Icon(Icons.save_outlined),
+              ),
+              if (widget.projectRoot != null)
+                IconButton(
+                  key: const Key('code-settings'),
+                  tooltip: 'Editor settings',
+                  onPressed: _showSettings,
+                  icon: const Icon(Icons.settings_outlined),
                 ),
             ],
           ),
-          actions: [
-            if (widget.projectRoot != null)
-              IconButton(
-                key: const Key('code-analyze'),
-                tooltip: 'Analyze project (compile check)',
-                onPressed: _analyzing ? null : _analyze,
-                icon: _analyzing
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.fact_check_outlined),
-              ),
-            IconButton(
-              key: const Key('code-save'),
-              tooltip: 'Save (Cmd/Ctrl+S)',
-              onPressed: _dirty ? _save : null,
-              icon: const Icon(Icons.save_outlined),
-            ),
-            if (widget.projectRoot != null)
-              IconButton(
-                key: const Key('code-settings'),
-                tooltip: 'Editor settings',
-                onPressed: _showSettings,
-                icon: const Icon(Icons.settings_outlined),
-              ),
-          ],
-        ),
-        body: Column(
-          children: [
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  _error!,
-                  key: const Key('code-error'),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+          body: Column(
+            children: [
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    _error!,
+                    key: const Key('code-error'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ),
-              ),
-            if (suggestions.isNotEmpty) _completionList(suggestions),
-            if (_findOpen) _findBar(context),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _gutter(context),
-                  Expanded(
-                    child: Focus(
-                      focusNode: _editorFocus,
-                      onKeyEvent: _onEditorKey,
-                      child: TextField(
-                        key: const Key('code-text'),
-                        controller: _text,
-                        scrollController: _editorScroll,
-                        expands: true,
-                        maxLines: null,
-                        minLines: null,
-                        style: TextStyle(
-                          fontFamily: 'Menlo',
-                          fontSize: _fontSize,
-                          height: _editorLineHeightMultiplier,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.all(12),
+              if (suggestions.isNotEmpty) _completionList(suggestions),
+              if (_findOpen) _findBar(context),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _gutter(context),
+                    Expanded(
+                      child: Focus(
+                        focusNode: _editorFocus,
+                        onKeyEvent: _onEditorKey,
+                        child: TextField(
+                          key: const Key('code-text'),
+                          controller: _text,
+                          scrollController: _editorScroll,
+                          expands: true,
+                          maxLines: null,
+                          minLines: null,
+                          style: TextStyle(
+                            fontFamily: 'Menlo',
+                            fontSize: _fontSize,
+                            height: _editorLineHeightMultiplier,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.all(12),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (_hover != null) _hoverCard(context),
-            if (_references != null) _referencesPanel(context),
-            if (_quickFixes != null) _quickFixesPanel(context),
-            if (_issues != null || (_live?.isNotEmpty ?? false))
-              _analysisPanel(context),
-          ],
+              if (_hover != null) _hoverCard(context),
+              if (_references != null) _referencesPanel(context),
+              if (_quickFixes != null) _quickFixesPanel(context),
+              if (_issues != null || (_live?.isNotEmpty ?? false))
+                _analysisPanel(context),
+            ],
+          ),
         ),
       ),
     );

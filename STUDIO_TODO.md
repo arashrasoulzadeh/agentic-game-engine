@@ -543,7 +543,11 @@ Analyze, SDK discovery, project file manager.
 - [ ] **IDE.11** Code folding of blocks (the server's folding ranges).
 - [ ] **IDE.12** Document outline: the classes and members of the file, tap to jump.
 - [x] **IDE.13** Editor settings: font size, tab width, and formatting on save.
-- [ ] **IDE.14** Unsaved-work safety: closing a dirty file asks before discarding it.
+- [x] **IDE.14** (scoped to closing the editor's own route — go-to-
+  definition/references open a new CodeEditorScreen pushed onto the nav
+  stack, and popping it is "closing" that file; swapping which file is
+  shown in ProjectScreen's own content pane is a different, in-place
+  content-swap and was not in scope here) Unsaved-work safety: closing a dirty file asks before discarding it.
 
 Not in this phase (own phases): a debugger, a terminal, git integration, and
 running `pub get` from the studio.
