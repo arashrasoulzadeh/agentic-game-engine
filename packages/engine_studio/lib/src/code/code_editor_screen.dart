@@ -82,6 +82,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   List<LiveDiagnostic>? _live;
   String? _hover;
   List<SourceLocation>? _references;
+  List<DocumentSymbolEntry>? _outline;
   List<CodeActionItem>? _quickFixes;
   int _quickFixRequest = 0;
   List<CompletionItem>? _serverItems;
@@ -545,6 +546,22 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     final found = await session.referencesAt(widget.filePath, line, character);
     if (!mounted) return;
     setState(() => _references = found);
+  }
+
+  /// Lists the file's classes/methods/fields. Tapping one moves the cursor
+  /// there. Toggling it closed again when it's already open, rather than
+  /// re-requesting it, matches how the hover/references/quick-fix panels
+  /// each already behave.
+  Future<void> _toggleOutline() async {
+    if (_outline != null) {
+      setState(() => _outline = null);
+      return;
+    }
+    final session = _session;
+    if (session == null) return;
+    final found = await session.documentSymbols(widget.filePath);
+    if (!mounted) return;
+    setState(() => _outline = found);
   }
 
   void _openReference(SourceLocation at) {
@@ -1045,6 +1062,71 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     );
   }
 
+  /// The file's outline: one row per class/method/field, indented by
+  /// nesting depth. Tapping a row moves the cursor there.
+  Widget _outlinePanel(BuildContext context) {
+    final theme = Theme.of(context);
+    final found = _outline!;
+    return Container(
+      key: const Key('outline-panel'),
+      constraints: const BoxConstraints(maxHeight: 220),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Text(
+                    found.isEmpty ? 'No symbols found' : '${found.length} symbol(s)',
+                  ),
+                ),
+              ),
+              IconButton(
+                key: const Key('outline-close'),
+                tooltip: 'Close',
+                iconSize: 16,
+                onPressed: () => setState(() => _outline = null),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                for (final symbol in found)
+                  ListTile(
+                    dense: true,
+                    key: Key(
+                      'outline-${symbol.name}-${symbol.line}-${symbol.character}',
+                    ),
+                    contentPadding: EdgeInsets.only(
+                      left: 16.0 + symbol.depth * 16,
+                      right: 16,
+                    ),
+                    leading: Icon(iconForCompletionKind(symbol.kind), size: 16),
+                    title: Text(symbol.name, style: const TextStyle(fontFamily: 'Menlo')),
+                    trailing: Text(symbol.kind, style: theme.textTheme.bodySmall),
+                    onTap: () {
+                      setState(() => _outline = null);
+                      _jumpToPosition(symbol.line, symbol.character);
+                      _editorFocus.requestFocus();
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// The quick-fix list for the cursor's line. Tapping one applies it.
   Widget _quickFixesPanel(BuildContext context) {
     final theme = Theme.of(context);
@@ -1369,6 +1451,13 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               ],
             ),
             actions: [
+              if (_session != null)
+                IconButton(
+                  key: const Key('code-outline'),
+                  tooltip: 'Document outline',
+                  onPressed: _toggleOutline,
+                  icon: const Icon(Icons.list_alt_outlined),
+                ),
               if (widget.projectRoot != null)
                 IconButton(
                   key: const Key('code-analyze'),
@@ -1445,6 +1534,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               ),
               if (_hover != null) _hoverCard(context),
               if (_references != null) _referencesPanel(context),
+              if (_outline != null) _outlinePanel(context),
               if (_quickFixes != null) _quickFixesPanel(context),
               if (_issues != null || (_live?.isNotEmpty ?? false))
                 _analysisPanel(context),

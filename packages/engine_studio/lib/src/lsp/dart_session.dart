@@ -259,6 +259,71 @@ class DartSession {
     ];
   }
 
+  /// The file's outline: every class, method, field, and similar the server
+  /// finds. The Dart analysis server replies with the flat `SymbolInformation[]`
+  /// form (each with a `location.range` and a `containerName` naming its
+  /// enclosing symbol, if any) rather than LSP's newer nested
+  /// `DocumentSymbol[]` tree — this handles the nested form too, in case a
+  /// future server version switches, but depth for the flat form is derived
+  /// from matching `containerName` back to an already-seen symbol's name,
+  /// since there's no explicit nesting to walk.
+  Future<List<DocumentSymbolEntry>> documentSymbols(String path) async {
+    final result = await _client.request('textDocument/documentSymbol', {
+      'textDocument': {'uri': _uri(path)},
+    });
+    if (result is! List) return const [];
+    final entries = <DocumentSymbolEntry>[];
+
+    void walkNested(List<dynamic> items, int depth) {
+      for (final raw in items.cast<Map<String, dynamic>>()) {
+        final range =
+            (raw['selectionRange'] ?? raw['range']) as Map<String, dynamic>;
+        final start = range['start'] as Map<String, dynamic>;
+        entries.add(
+          DocumentSymbolEntry(
+            raw['name'] as String,
+            _symbolKindName(raw['kind'] as int?),
+            start['line'] as int,
+            start['character'] as int,
+            depth,
+          ),
+        );
+        final children = raw['children'];
+        if (children is List) walkNested(children, depth + 1);
+      }
+    }
+
+    final items = result.cast<Map<String, dynamic>>();
+    final isNested = items.isNotEmpty &&
+        (items.first.containsKey('range') ||
+            items.first.containsKey('selectionRange'));
+    if (isNested) {
+      walkNested(items, 0);
+      return entries;
+    }
+
+    final depthByName = <String, int>{};
+    for (final raw in items) {
+      final location = raw['location'] as Map<String, dynamic>;
+      final start = (location['range'] as Map<String, dynamic>)['start']
+          as Map<String, dynamic>;
+      final name = raw['name'] as String;
+      final container = raw['containerName'] as String?;
+      final depth = container == null ? 0 : (depthByName[container] ?? 0) + 1;
+      depthByName[name] = depth;
+      entries.add(
+        DocumentSymbolEntry(
+          name,
+          _symbolKindName(raw['kind'] as int?),
+          start['line'] as int,
+          start['character'] as int,
+          depth,
+        ),
+      );
+    }
+    return entries;
+  }
+
   /// The documentation and type the server knows for the symbol at [line] and
   /// [character], as plain text, or null when there is nothing to show.
   Future<String?> hoverAt(String path, int line, int character) async {
@@ -371,6 +436,41 @@ class SourceLocation {
 
   const SourceLocation(this.path, this.line, this.character);
 }
+
+/// One entry in a file's outline: a class, method, field, or similar, with
+/// where to jump to it and how deeply nested it is (a method inside a class
+/// is depth 1, the class itself depth 0), so the outline panel can indent it.
+class DocumentSymbolEntry {
+  final String name;
+  final String kind;
+  final int line;
+  final int character;
+  final int depth;
+
+  const DocumentSymbolEntry(
+    this.name,
+    this.kind,
+    this.line,
+    this.character,
+    this.depth,
+  );
+}
+
+/// The name for an LSP `SymbolKind` number — a different numbering from
+/// completion's `CompletionItemKind`, so not shared with [_kindName].
+String _symbolKindName(int? kind) => switch (kind) {
+  5 => 'class',
+  6 => 'method',
+  7 => 'property',
+  8 => 'field',
+  9 => 'constructor',
+  10 => 'enum',
+  11 => 'interface',
+  12 => 'function',
+  13 => 'variable',
+  14 => 'constant',
+  _ => 'symbol',
+};
 
 /// One problem the server reports as it analyzes: its severity, place, and message.
 class LiveDiagnostic {

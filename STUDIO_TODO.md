@@ -541,7 +541,7 @@ Analyze, SDK discovery, project file manager.
 - [x] **IDE.9** Bracket matching: the bracket paired with the one at the cursor is highlighted.
 - [x] **IDE.10** Auto-indent on Enter and auto-close of brackets and quotes.
 - [ ] **IDE.11** Code folding of blocks (the server's folding ranges).
-- [ ] **IDE.12** Document outline: the classes and members of the file, tap to jump.
+- [x] **IDE.12** Document outline: the classes and members of the file, tap to jump.
 - [x] **IDE.13** Editor settings: font size, tab width, and formatting on save.
 - [x] **IDE.14** (scoped to closing the editor's own route — go-to-
   definition/references open a new CodeEditorScreen pushed onto the nav
