@@ -22,6 +22,13 @@ dependencies:
   # XML parser rather than hand-rolling one for a real interchange
   # format's actual grammar.
   xml: ^6.5.0
+  # For the studio's signed release manifest (STUDIO_TODO.md 3.19):
+  # Ed25519 signature verification. Never hand-roll signature
+  # verification -- this is a well-maintained, pure-Dart implementation,
+  # not a cryptography primitive written for this engine.
+  cryptography: ^2.7.0
+  # For the manifest's per-item checksums (SHA-256).
+  crypto: ^3.0.3
 
 dev_dependencies:
   test: ^1.25.0

@@ -70,6 +70,7 @@ export 'src/physics/tmx_import.dart';
 export 'src/ui/trigger_helpers.dart';
 export 'src/ecs/world.dart';
 export 'src/ecs/world_view.dart';
+export 'src/distribution/release_manifest.dart';
 
 import 'src/ai/ai_state.dart';
 import 'src/ui/button.dart';

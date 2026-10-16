@@ -494,7 +494,15 @@ Goal: a designer builds, saves, and play-tests a level.
   packages). Builds on macOS first.
 - [ ] **3.18** Bootstrap window: lists required downloads, shows progress,
   size, and checksum result per item; retry on failure (section 2.13).
-- [ ] **3.19** Signed release manifest format (`manifest.json` + signature)
+- [x] **3.19** (`release_manifest.dart`: `ReleaseManifest`/`ManifestItem`
+  plain data, Ed25519 signing/verification via `package:cryptography` —
+  never hand-roll signature verification — and SHA-256 checksum
+  verification via `package:crypto`. Tests cover valid, unsigned (null
+  and empty), tampered-after-signing, wrong-keypair, and
+  checksum-mismatch cases; a wrong-length/garbage signature was found to
+  throw a bare `StateError` instead of failing verification — a crash
+  bug a hostile CDN could trigger — fixed to report `invalidSignature`
+  like any other forged signature instead) Signed release manifest format (`manifest.json` + signature)
   and a verifier in `engine_core`, with tests for valid, unsigned,
   tampered, and checksum-mismatch manifests.
 - [ ] **3.20** Update notices: the bootstrap window lists version changes
