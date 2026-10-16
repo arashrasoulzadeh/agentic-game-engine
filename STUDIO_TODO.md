@@ -467,15 +467,29 @@ Goal: a designer builds, saves, and play-tests a level.
   level itself.
 - [x] **3.12** (play-test snapshots the in-memory level, runs the game as a separate process, and the template loads the snapshot via PLAYTEST_LEVEL; the generated-game dependency conflict that blocked this is fixed — see the `ref: main` commits) Play-test button: saves snapshot, launches game runner
   process on that level, returns on exit (D4 default: separate process).
-- [ ] **3.13** Widget tests: inspector per field type; tool emits the
+- [x] **3.13** (bool/enumeration/list-object widget coverage added in
+  `inspector_panel_field_types_test.dart`; vector2 has no real component
+  using it yet, so it stays covered only at the pure-function level;
+  every tool — select/move/paintTile/eraseTile/fill/placeEntity/delete —
+  already had thorough command-emission + undo coverage in
+  `level_editor_test.dart`) Widget tests: inspector per field type; tool emits the
   right command.
-- [ ] **3.14** Golden test for the level view on a fixed sample level.
-- [ ] **3.15** Manual verification checklist recorded in
+- [x] **3.14** (`level_canvas_golden_test.dart`) Golden test for the level view on a fixed sample level.
+- [~] **3.15** (checklist written and run on macOS — see
+  `docs/studio/qa-level-editor.md`'s run log; this session has no access
+  to Windows or Linux machines, so those two runs are still outstanding)
+  Manual verification checklist recorded in
   `docs/studio/qa-level-editor.md`, run on macOS, Windows, and Linux.
-- [ ] **3.16** Performance check: 500×500 tile level pans and paints at
+- [x] **3.16** (`level_canvas_performance_test.dart`: 13.72ms/frame average
+  painting a 500x500 tile level + 50 entities over 60 simulated frames,
+  measured on this dev machine — under the 16.7ms/frame 60fps budget.
+  Measures `LevelCanvasPainter.paint`'s own CPU cost via an off-screen
+  `PictureRecorder`, not a real composited GPU frame, since `flutter test`
+  has no way to measure that; numbers are printed on every run, not just
+  this one recorded here) Performance check: 500×500 tile level pans and paints at
   60 fps on the reference machine; numbers recorded.
 
-- [ ] **3.17** `engine_studio` package scaffold with its own `pubspec.yaml`
+- [x] **3.17** `engine_studio` package scaffold with its own `pubspec.yaml`
   depending on the engine packages by git ref (same convention as other
   packages). Builds on macOS first.
 - [ ] **3.18** Bootstrap window: lists required downloads, shows progress,

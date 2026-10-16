@@ -1,0 +1,52 @@
+name: engine_studio
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/engine_studio/**'
+      - 'packages/engine_core/**'
+      - 'packages/engine_flutter/**'
+      - 'packages/engine_platformer/**'
+      - 'packages/engine_schema/**'
+      - '.github/workflows/engine_studio.yml'
+  pull_request:
+    paths:
+      - 'packages/engine_studio/**'
+      - 'packages/engine_core/**'
+      - 'packages/engine_flutter/**'
+      - 'packages/engine_platformer/**'
+      - 'packages/engine_schema/**'
+      - '.github/workflows/engine_studio.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/engine_studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
+
+  # The desktop target; the LSP-backed IDE (Phase 3B) and play-test both
+  # launch real subprocesses (the Dart language server, `flutter run`), so
+  # this also catches build regressions `flutter test` alone would not.
+  build-macos:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: packages/engine_studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter config --enable-macos-desktop
+      - run: flutter pub get
+      - run: flutter build macos --debug
