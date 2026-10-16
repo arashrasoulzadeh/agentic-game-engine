@@ -83,6 +83,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   String? _hover;
   List<SourceLocation>? _references;
   List<DocumentSymbolEntry>? _outline;
+  List<FoldingRange> _foldingRanges = const [];
   List<CodeActionItem>? _quickFixes;
   int _quickFixRequest = 0;
   List<CompletionItem>? _serverItems;
@@ -157,6 +158,8 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         _underline(list);
       });
       setState(() => _session = session);
+      final ranges = await session.foldingRanges(widget.filePath);
+      if (mounted) setState(() => _foldingRanges = ranges);
     } on Object {
       // Fall back to the local list; the editor works without the server.
     }
@@ -1187,9 +1190,11 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     final lineCount = '\n'.allMatches(_text.text).length + 1;
     final currentLine = _cursorPosition().$1;
     final digits = '$lineCount'.length;
+    final foldStarts = {for (final r in _foldingRanges) r.startLine: r};
+    final hasFolds = foldStarts.isNotEmpty;
     return Container(
       key: const Key('editor-gutter'),
-      width: 24.0 + digits * 8.0,
+      width: 24.0 + digits * 8.0 + (hasFolds ? 16 : 0),
       color: theme.colorScheme.surfaceContainerHighest,
       child: SingleChildScrollView(
         controller: _gutterScroll,
@@ -1207,23 +1212,62 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                 color: line == currentLine
                     ? theme.colorScheme.surfaceContainerHigh
                     : null,
-                alignment: Alignment.centerRight,
-                child: Text(
-                  '${line + 1}',
-                  style: TextStyle(
-                    fontFamily: 'Menlo',
-                    fontSize: _fontSize,
-                    height: _editorLineHeightMultiplier,
-                    color: line == currentLine
-                        ? theme.colorScheme.onSurface
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (hasFolds)
+                      SizedBox(
+                        width: 16,
+                        height: _lineHeight,
+                        child: foldStarts.containsKey(line)
+                            ? InkWell(
+                                key: Key('fold-$line'),
+                                onTap: () => _revealFold(foldStarts[line]!),
+                                child: const Icon(
+                                  Icons.unfold_more,
+                                  size: 12,
+                                ),
+                              )
+                            : null,
+                      ),
+                    Text(
+                      '${line + 1}',
+                      style: TextStyle(
+                        fontFamily: 'Menlo',
+                        fontSize: _fontSize,
+                        height: _editorLineHeightMultiplier,
+                        color: line == currentLine
+                            ? theme.colorScheme.onSurface
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],
         ),
       ),
     );
+  }
+
+  /// Selects a foldable region's full extent and scrolls it into view.
+  /// There is no way to actually hide a region's lines on top of a plain
+  /// `TextField` (it always renders exactly its controller's full text, and
+  /// the controller's text is the file — hiding lines there would mean
+  /// silently deleting them on save) without replacing the editor's
+  /// rendering with a custom widget, which is its own, much larger piece of
+  /// work. This is the fold affordance a `TextField`-based editor can
+  /// actually offer: select-and-reveal the block a fold indicator marks,
+  /// not collapse/expand.
+  void _revealFold(FoldingRange range) {
+    final start = _offsetOf(range.startLine, 0);
+    final text = _text.text;
+    var end = _offsetOf(range.endLine, 0);
+    while (end < text.length && text.codeUnitAt(end) != 10) {
+      end++;
+    }
+    _text.selection = TextSelection(baseOffset: start, extentOffset: end);
+    _editorFocus.requestFocus();
   }
 
   /// The find bar: a query field with a match count and next/previous, plus a

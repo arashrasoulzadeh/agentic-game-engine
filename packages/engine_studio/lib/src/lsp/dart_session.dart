@@ -324,6 +324,22 @@ class DartSession {
     return entries;
   }
 
+  /// The file's foldable regions (blocks, comments, import groups), from the
+  /// server's `textDocument/foldingRange`. Each entry covers a start and end
+  /// line; nested folds (a method inside a class) aren't related to each
+  /// other here — a UI toggling one has to work out nesting from the line
+  /// ranges themselves, the same as it would from any other folding-range API.
+  Future<List<FoldingRange>> foldingRanges(String path) async {
+    final result = await _client.request('textDocument/foldingRange', {
+      'textDocument': {'uri': _uri(path)},
+    });
+    if (result is! List) return const [];
+    return [
+      for (final raw in result.cast<Map<String, dynamic>>())
+        FoldingRange(raw['startLine'] as int, raw['endLine'] as int),
+    ];
+  }
+
   /// The documentation and type the server knows for the symbol at [line] and
   /// [character], as plain text, or null when there is nothing to show.
   Future<String?> hoverAt(String path, int line, int character) async {
@@ -427,6 +443,17 @@ String _kindName(int? kind) => switch (kind) {
   21 => 'constant',
   _ => 'symbol',
 };
+
+/// A place in a file: where a definition is.
+/// A foldable region of a file (STUDIO_TODO.md IDE.11): the lines from
+/// [startLine] to [endLine] (both 0-based, inclusive) that a block fold
+/// (`{...}`), comment, or import-block fold would collapse.
+class FoldingRange {
+  final int startLine;
+  final int endLine;
+
+  const FoldingRange(this.startLine, this.endLine);
+}
 
 /// A place in a file: where a definition is.
 class SourceLocation {

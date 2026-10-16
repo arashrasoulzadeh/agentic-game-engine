@@ -540,7 +540,16 @@ Analyze, SDK discovery, project file manager.
 - [x] **IDE.8** Line numbers in the gutter, and the current line highlighted.
 - [x] **IDE.9** Bracket matching: the bracket paired with the one at the cursor is highlighted.
 - [x] **IDE.10** Auto-indent on Enter and auto-close of brackets and quotes.
-- [ ] **IDE.11** Code folding of blocks (the server's folding ranges).
+- [~] **IDE.11** (data layer is real: `DartSession.foldingRanges` via
+  `textDocument/foldingRange`, tested against the real server. The UI is
+  deliberately scoped down from true fold/collapse: a `TextField` always
+  renders exactly its controller's full text, and that text *is* the
+  saved file, so actually hiding a folded region's lines would mean
+  silently deleting them on save without a custom rendering widget
+  replacing `TextField` entirely — a much larger, separate piece of work.
+  What's here instead: a fold indicator in the gutter at each foldable
+  line, which selects-and-reveals that block's extent rather than
+  collapsing it) Code folding of blocks (the server's folding ranges).
 - [x] **IDE.12** Document outline: the classes and members of the file, tap to jump.
 - [x] **IDE.13** Editor settings: font size, tab width, and formatting on save.
 - [x] **IDE.14** (scoped to closing the editor's own route — go-to-
