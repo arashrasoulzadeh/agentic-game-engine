@@ -11,6 +11,7 @@ import '../lsp/edits.dart' show RenamePlan, TextEdit, applyEdits, planRename;
 import 'analysis.dart';
 import 'auto_close.dart';
 import 'auto_indent.dart';
+import 'editor_settings.dart';
 import 'bracket_match.dart';
 import 'completion.dart';
 import 'dart_highlighter.dart';
@@ -56,11 +57,11 @@ class CodeEditorScreen extends StatefulWidget {
   State<CodeEditorScreen> createState() => _CodeEditorScreenState();
 }
 
-/// The editor's font size and line height, shared by the text field and the
-/// line-number gutter so a line in one lines up with the same line in the other.
-const _editorFontSize = 13.0;
+/// The line height multiplier shared by the text field and the line-number
+/// gutter so a line in one lines up with the same line in the other. Font
+/// size itself is a per-project setting (see [EditorSettings]), not a
+/// constant, so the gutter's line height is computed from it per instance.
 const _editorLineHeightMultiplier = 1.4;
-const _editorLineHeight = _editorFontSize * _editorLineHeightMultiplier;
 
 class _CodeEditorScreenState extends State<CodeEditorScreen> {
   late final TextEditingController _text;
@@ -98,6 +99,13 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   /// edit (format, rename, completion), which must never be auto-closed.
   late String _previousText;
 
+  EditorSettings _settings = const EditorSettings();
+  EditorSettingsStore? _settingsStore;
+
+  double get _fontSize => _settings.fontSize;
+  double get _lineHeight => _fontSize * _editorLineHeightMultiplier;
+  String get _indentUnit => ' ' * _settings.tabWidth;
+
   bool get _isDart => widget.filePath.endsWith('.dart');
 
   @override
@@ -115,6 +123,10 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       _text.selection = TextSelection.collapsed(offset: start);
     }
     final root = widget.projectRoot;
+    if (root != null) {
+      _settingsStore = EditorSettingsStore(root);
+      _settings = _settingsStore!.read();
+    }
     if (_isDart && root != null && widget.useLanguageServer) {
       _startServer(root);
     }
@@ -186,7 +198,11 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   /// indentation (see [indentedNewline]).
   void _insertIndentedNewline() {
     final cursor = _text.selection.baseOffset.clamp(0, _text.text.length);
-    final (newText, newCursor) = indentedNewline(_text.text, cursor);
+    final (newText, newCursor) = indentedNewline(
+      _text.text,
+      cursor,
+      indentUnit: _indentUnit,
+    );
     _text.value = TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(offset: newCursor),
@@ -667,7 +683,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       return;
     }
     if (_dirty) {
-      _save();
+      await _save();
     }
     setState(() => _analyzing = true);
     final all = await (widget.analyzer ?? ProjectAnalyzer()).analyze(root);
@@ -849,9 +865,12 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     _text.selection = TextSelection.collapsed(offset: offset);
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_dirty) {
       return;
+    }
+    if (_settings.formatOnSave) {
+      await _format();
     }
     try {
       final target = File(widget.filePath);
@@ -865,6 +884,19 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     } on FileSystemException catch (e) {
       setState(() => _error = 'Could not save: ${e.message}');
     }
+  }
+
+  /// Opens the editor settings dialog and saves whatever comes back.
+  Future<void> _showSettings() async {
+    final store = _settingsStore;
+    if (store == null) return;
+    final updated = await showDialog<EditorSettings>(
+      context: context,
+      builder: (context) => _EditorSettingsDialog(initial: _settings),
+    );
+    if (updated == null || !mounted) return;
+    store.write(updated);
+    setState(() => _settings = updated);
   }
 
   /// The live list under the cursor: keywords and project names matching the word
@@ -1082,7 +1114,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
             for (var line = 0; line < lineCount; line++)
               Container(
                 key: Key('gutter-line-${line + 1}'),
-                height: _editorLineHeight,
+                height: _lineHeight,
                 width: double.infinity,
                 padding: const EdgeInsets.only(right: 8),
                 color: line == currentLine
@@ -1093,7 +1125,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                   '${line + 1}',
                   style: TextStyle(
                     fontFamily: 'Menlo',
-                    fontSize: _editorFontSize,
+                    fontSize: _fontSize,
                     height: _editorLineHeightMultiplier,
                     color: line == currentLine
                         ? theme.colorScheme.onSurface
@@ -1317,6 +1349,13 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               onPressed: _dirty ? _save : null,
               icon: const Icon(Icons.save_outlined),
             ),
+            if (widget.projectRoot != null)
+              IconButton(
+                key: const Key('code-settings'),
+                tooltip: 'Editor settings',
+                onPressed: _showSettings,
+                icon: const Icon(Icons.settings_outlined),
+              ),
           ],
         ),
         body: Column(
@@ -1348,9 +1387,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                         expands: true,
                         maxLines: null,
                         minLines: null,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Menlo',
-                          fontSize: _editorFontSize,
+                          fontSize: _fontSize,
                           height: _editorLineHeightMultiplier,
                         ),
                         decoration: const InputDecoration(
@@ -1415,6 +1454,92 @@ class _RenameDialogState extends State<_RenameDialog> {
           key: const Key('rename-confirm'),
           onPressed: () => Navigator.of(context).pop(_controller.text),
           child: const Text('Rename'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Lets the designer change font size, tab width, and format-on-save
+/// (STUDIO_TODO.md IDE.13). Returns the new settings on Save, or null if
+/// cancelled.
+class _EditorSettingsDialog extends StatefulWidget {
+  final EditorSettings initial;
+
+  const _EditorSettingsDialog({required this.initial});
+
+  @override
+  State<_EditorSettingsDialog> createState() => _EditorSettingsDialogState();
+}
+
+class _EditorSettingsDialogState extends State<_EditorSettingsDialog> {
+  late double _fontSize;
+  late int _tabWidth;
+  late bool _formatOnSave;
+
+  @override
+  void initState() {
+    super.initState();
+    _fontSize = widget.initial.fontSize;
+    _tabWidth = widget.initial.tabWidth;
+    _formatOnSave = widget.initial.formatOnSave;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Editor settings'),
+      content: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Font size: ${_fontSize.round()}'),
+            Slider(
+              key: const Key('settings-font-size'),
+              value: _fontSize,
+              min: 8,
+              max: 32,
+              divisions: 24,
+              label: _fontSize.round().toString(),
+              onChanged: (v) => setState(() => _fontSize = v),
+            ),
+            Text('Tab width: $_tabWidth'),
+            Slider(
+              key: const Key('settings-tab-width'),
+              value: _tabWidth.toDouble(),
+              min: 1,
+              max: 8,
+              divisions: 7,
+              label: '$_tabWidth',
+              onChanged: (v) => setState(() => _tabWidth = v.round()),
+            ),
+            SwitchListTile(
+              key: const Key('settings-format-on-save'),
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Format on save'),
+              value: _formatOnSave,
+              onChanged: (v) => setState(() => _formatOnSave = v),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          key: const Key('settings-save'),
+          onPressed: () => Navigator.of(context).pop(
+            EditorSettings(
+              fontSize: _fontSize,
+              tabWidth: _tabWidth,
+              formatOnSave: _formatOnSave,
+            ),
+          ),
+          child: const Text('Save'),
         ),
       ],
     );

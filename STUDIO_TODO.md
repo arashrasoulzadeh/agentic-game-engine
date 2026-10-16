@@ -542,7 +542,7 @@ Analyze, SDK discovery, project file manager.
 - [x] **IDE.10** Auto-indent on Enter and auto-close of brackets and quotes.
 - [ ] **IDE.11** Code folding of blocks (the server's folding ranges).
 - [ ] **IDE.12** Document outline: the classes and members of the file, tap to jump.
-- [ ] **IDE.13** Editor settings: font size, tab width, and formatting on save.
+- [x] **IDE.13** Editor settings: font size, tab width, and formatting on save.
 - [ ] **IDE.14** Unsaved-work safety: closing a dirty file asks before discarding it.
 
 Not in this phase (own phases): a debugger, a terminal, git integration, and
