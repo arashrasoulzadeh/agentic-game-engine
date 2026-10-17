@@ -54,8 +54,17 @@ The package DAG is unchanged.
   project analyzes clean and boots), `upgrade` repins `engine_strategy`.
   `OrderSystem.approachTargets` added when the end-to-end test showed a
   tap on a distant enemy failed `outOfRange` instead of walking over.
-- [ ] **8. AI turn driver** — a `Behavior` running a whole team's turn
+- [x] **8. AI turn driver** — a `Behavior` running a whole team's turn
   through the same order API a human uses.
+  `TurnAI`, `AggressiveAI` (attacks the nearest enemy its team can
+  *see*, so fog binds the AI too), `AITurnSystem` (plans once per
+  round, ends the turn when no queued order can still progress; must
+  register after `OrderSystem`), `installStrategySystems(aiTeams:)`;
+  the template's blue team is now an AI. Tests: `ai_turn_test.dart`.
+
+All eight phases are complete. Remaining ideas (not scheduled):
+stronger AI (move-toward when nothing is visible, focus fire), terrain
+rendering for tile maps in the template, and the realtime follow-up below.
 
 ## Realtime follow-up
 

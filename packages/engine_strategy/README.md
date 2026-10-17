@@ -33,11 +33,13 @@ GridTapController(48).handleTap(world, worldPosition);
 `installStrategySystems` options: `fog: true` (adds `VisionSystem` and a
 `FogOfWar` entity), `blocksSight` (walls for line of sight),
 `autoEndTeams` (teams whose turn ends when out of action points),
+`aiTeams` (`{'blue': AggressiveAI()}` -- any `TurnAI` that calls
+`submitOrder`),
 `attackRange`/`attackCost`, `selectionMarkers`.
 
 ## System order
 
-`vision` (if fog) -> `orders` -> `turn` -> `winCondition` ->
+`vision` (if fog) -> `orders` -> `aiTurn` (if AI) -> `turn` -> `winCondition` ->
 `gridToWorld` -> `selectionMarkers`. Orders run after vision so attack
 visibility checks are current; `gridToWorld` runs after orders so
 rendering never lags a tick behind the grid.

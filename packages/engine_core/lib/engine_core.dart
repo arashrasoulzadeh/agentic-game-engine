@@ -83,6 +83,7 @@ export 'src/turn/grid_navigation.dart';
 export 'src/turn/selection.dart';
 export 'src/turn/combat.dart';
 export 'src/turn/fog_of_war.dart';
+export 'src/turn/ai_turn.dart';
 
 import 'src/ai/ai_state.dart';
 import 'src/ui/button.dart';

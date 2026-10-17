@@ -48,6 +48,22 @@ void main() {
     expect(w.systemOrder, ['orders', 'turn', 'winCondition', 'gridToWorld']);
   });
 
+  test('aiTeams adds AITurnSystem after orders; a human-vs-AI round plays out', () {
+    final w = _world();
+    installStrategySystems(w,
+        navigator: _nav(), cellSize: 32, aiTeams: {'blue': AggressiveAI()});
+    expect(w.systemOrder, containsAllInOrder(['orders', 'aiTurn', 'turn']));
+    final red = spawnStrategyUnit(w, team: 'red', col: 0, row: 0, cellSize: 32, maxHp: 20);
+    spawnStrategyUnit(w, team: 'blue', col: 3, row: 0, cellSize: 32, attack: 4);
+    startTurnBasedGame(w, ['red', 'blue']);
+    endTurn(w);
+    for (var i = 0; i < 4; i++) {
+      w.step(0.1);
+    }
+    expect(turnStateOf(w)!.activeTeam, 'red');
+    expect(w.storeOf<UnitStats>().get(red)!.hp, 16);
+  });
+
   test('a full game: select, move, attack, win, through the installed systems', () {
     final w = _world();
     installStrategySystems(w, navigator: _nav(), cellSize: 32);

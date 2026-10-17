@@ -10,13 +10,15 @@ import 'package:engine_flutter/engine_flutter.dart';
 ///    tick are checked against up-to-date visibility.
 /// 2. `OrderSystem.withNavigator` -- executes queued orders, spending
 ///    action points and routing around terrain/units.
-/// 3. `TurnSystem` -- auto-ends [autoEndTeams] once they're out of
+/// 3. `AITurnSystem` (only with [aiTeams]) -- after orders, so the
+///    "nothing left affordable" check sees this tick's results.
+/// 4. `TurnSystem` -- auto-ends [autoEndTeams] once they're out of
 ///    points, *after* orders have had their chance to spend them.
-/// 4. `WinConditionSystem` -- judges eliminations after this tick's
+/// 5. `WinConditionSystem` -- judges eliminations after this tick's
 ///    kills.
-/// 5. `GridToWorldSystem` -- syncs `Position` from the final cells so
+/// 6. `GridToWorldSystem` -- syncs `Position` from the final cells so
 ///    rendering never lags a tick behind.
-/// 6. `SelectionMarkerSystem` last, so markers follow the synced
+/// 7. `SelectionMarkerSystem` last, so markers follow the synced
 ///    `Position`.
 ///
 /// Also calls `installCombat` (attack orders -> damage). Add your own
@@ -33,6 +35,7 @@ EntityId? installStrategySystems(
   required GridNavigator navigator,
   required double cellSize,
   Set<String> autoEndTeams = const {},
+  Map<String, TurnAI> aiTeams = const {},
   int attackRange = 1,
   int attackCost = 1,
   bool Function(int col, int row)? blocksSight,
@@ -50,6 +53,7 @@ EntityId? installStrategySystems(
     attackCost: attackCost,
     attackRange: attackRange,
   ));
+  if (aiTeams.isNotEmpty) world.addSystem(AITurnSystem(aiTeams));
   world.addSystem(TurnSystem(autoEndTeams: autoEndTeams));
   world.addSystem(WinConditionSystem());
   world.addSystem(GridToWorldSystem(cellSize));
