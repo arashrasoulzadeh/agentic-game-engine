@@ -85,6 +85,7 @@ export 'src/graph/graph.dart';
 export 'src/graph/node_kind.dart';
 export 'src/graph/graph_validator.dart';
 export 'src/graph/dialogue_compiler.dart';
+export 'src/graph/behavior_tree_graph.dart';
 export 'src/turn/turn_components.dart';
 export 'src/turn/turn_system.dart';
 export 'src/turn/order.dart';
