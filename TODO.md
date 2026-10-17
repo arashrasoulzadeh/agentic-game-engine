@@ -108,9 +108,6 @@ Sections: [Performance](#performance) ·
 - [ ] **Scene transitions: slide / crossfade / pixel-dissolve** — needs true
       multi-scene rendering (outgoing and incoming `World`s drawn in the same
       frame). Fade and iris already shipped.
-- [ ] **Asset hot-reload** — watch `assets/`, invalidate `AtlasRegistry`
-      entries and caches, reload textures, atlases and open levels without a
-      restart. (Studio item 5.7 is the same work.)
 - [ ] **Network multiplayer foundation** — ECS state serialization (partly
       there via `World.toJson`), rollback networking, lag compensation, state
       sync.
@@ -210,7 +207,10 @@ done (4.1–4.7). Left:
 - [ ] **5.5** Brush library: tile and prefab brushes, reusable across levels.
 - [ ] **5.6** Tiled export (`studio export-tmx`) with a round-trip test
       against `tmx_import.dart`.
-- [ ] **5.7** Asset hot-reload in the studio (see Engine features).
+- [ ] **5.7** Use `AssetHotReloader` (engine side done) in the studio's
+      play-test: start it against the project's `assets/` with a
+      `LevelAssetHandler` and `AtlasAssetHandler` per atlas, and surface its
+      errors in the studio.
 - [ ] **5.8** Tests for prefab undo as a single step.
 
 ### Behaviors, profiling, polish (phase 6)

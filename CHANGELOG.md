@@ -9,6 +9,11 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Asset hot-reload: `AssetHotReloader` polls an `AssetSource` (a directory via
+  `directoryAssetSource`) and reloads changed levels (`LevelAssetHandler`, via
+  `LevelHandle`, so a broken edit leaves the running level untouched) and
+  sprite atlases (`AtlasAssetHandler`). `AtlasRegistry.tryResolve`; the
+  normal-mapping texture cache no longer goes stale when an atlas is replaced.
 - Profiling and debug tools: `WorldProfiler` (`world.profiler = WorldProfiler()`)
   times every system and the event flush; `World.componentCounts()`;
   `FrameTimingMonitor` (Flutter build/raster/GPU times, jank counting);

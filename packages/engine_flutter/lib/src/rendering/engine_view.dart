@@ -2408,9 +2408,16 @@ void _drawColorblind(Canvas canvas, Size size) {
     ui.Image diffuseImage,
     ui.Image normalImage,
   ) {
-    final key = '$diffuseAtlasId:$normalAtlasId';
+    // The key includes the source images' identity so a hot-reloaded atlas
+    // (same id, new image) misses the cache instead of drawing the stale
+    // combined texture; the superseded entry for this id pair is evicted.
+    final prefix = '$diffuseAtlasId:$normalAtlasId:';
+    final key = '$prefix${identityHashCode(diffuseImage)}:${identityHashCode(normalImage)}';
     final cached = combinedTextureCache[key];
     if (cached != null) return cached;
+    for (final stale in combinedTextureCache.keys.where((k) => k.startsWith(prefix)).toList()) {
+      combinedTextureCache.remove(stale)?.dispose();
+    }
 
     // Create combined image: diffuse on left, normal on right
     final width = max(diffuseImage.width, normalImage.width) * 2;

@@ -69,6 +69,10 @@ class AtlasRegistry {
 
   void register(String id, SpriteAtlas atlas) => _atlases[id] = atlas;
 
+  /// The atlas under [id], or null if none -- for callers (hot reload) that need
+  /// to know whether there is something to replace without a try/catch.
+  SpriteAtlas? tryResolve(String id) => _atlases[id];
+
   SpriteAtlas resolve(String id) {
     final atlas = _atlases[id];
     if (atlas == null) {
