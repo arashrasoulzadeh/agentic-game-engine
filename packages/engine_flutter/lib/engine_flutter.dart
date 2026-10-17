@@ -8,6 +8,8 @@ export 'src/rendering/animation.dart';
 export 'src/rendering/animation_transition.dart';
 export 'src/rendering/hud_bar.dart';
 export 'src/rendering/frame_stats.dart';
+export 'src/rendering/frame_timing_monitor.dart';
+export 'src/rendering/debug_overlay.dart';
 export 'src/rendering/gpu_light_shader.dart';
 export 'src/rendering/ambient_lighting_shader.dart';
 export 'src/rendering/particle_dot_texture.dart';

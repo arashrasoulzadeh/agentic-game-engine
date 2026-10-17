@@ -9,6 +9,12 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Profiling and debug tools: `WorldProfiler` (`world.profiler = WorldProfiler()`)
+  times every system and the event flush; `World.componentCounts()`;
+  `FrameTimingMonitor` (Flutter build/raster/GPU times, jank counting);
+  `FrameStats` history; and a `DebugOverlay` with frame/step/raster/memory
+  graphs, a profiler table, a component census, aliased input display and an
+  entity inspector.
 - `ActionAliases` (`engine_core`) and `InputController.aliases`: friendly names for
   input actions, shown by the keyboard and gamepad remap menus.
 - Turn-based strategy support (see the [turn-based guide](docs/concepts/turn-based-strategy.md)): turn clock, JSON orders,

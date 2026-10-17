@@ -111,13 +111,6 @@ Sections: [Performance](#performance) ·
 - [ ] **Asset hot-reload** — watch `assets/`, invalidate `AtlasRegistry`
       entries and caches, reload textures, atlases and open levels without a
       restart. (Studio item 5.7 is the same work.)
-- [ ] **Performance profiling tools** — frame-time breakdown, per-system
-      timings, entity counts, GPU/CPU timers, allocation tracker, shader
-      compile time, fed from an engine-side metrics hook. (Studio item 6.2
-      consumes it.)
-- [ ] **Debug overlay improvements** — FPS graph, memory graph, entity
-      inspector with component values, on the same metrics feed. (Studio
-      item 6.3.)
 - [ ] **Network multiplayer foundation** — ECS state serialization (partly
       there via `World.toJson`), rollback networking, lag compensation, state
       sync.
@@ -224,8 +217,10 @@ done (4.1–4.7). Left:
 
 - [ ] **6.1** Behavior-tree and FSM editing in the studio, reusing the phase 4
       graph canvas.
-- [ ] **6.2 / 6.3** Profiler panel and debug-overlay improvements (see Engine
-      features: profiling tools, debug overlay).
+- [ ] **6.2 / 6.3** Studio profiler panel: show `WorldProfiler.report()`,
+      `FrameStats` history and `FrameTimingMonitor` data from a running
+      play-test (the engine side is done: `world.profiler`, `DebugOverlay`).
+      Needs a channel from the play-test process to the studio.
 - [ ] **6.4** Keyboard shortcut map, customizable, stored as
       `studio_prefs.json` (not in the project).
 - [ ] **6.5** Accessibility pass on the studio UI: keyboard navigation,

@@ -1,3 +1,5 @@
+import 'package:engine_core/engine_core.dart' show RingBuffer;
+
 /// Real, on-device wall-clock timing for the most recently rendered
 /// `EngineView` frame — how many milliseconds `world.step()`, the full
 /// paint pass, and the lighting pass alone each actually took. Exists
@@ -58,6 +60,19 @@ class FrameStats {
   /// fps-while-moving report where confirming genuine movement
   /// happened at all was itself a real obstacle.
   double? followedSpeed;
+
+  /// The last [historyLength] frames' [frameMs] and [stepMs], oldest first, for
+  /// the `DebugOverlay` graphs. Filled by `EngineView` once per tick via
+  /// [recordHistory]; nothing reads them unless something draws a graph.
+  static const int historyLength = 120;
+  final RingBuffer<double> frameHistory = RingBuffer<double>(historyLength);
+  final RingBuffer<double> stepHistory = RingBuffer<double>(historyLength);
+
+  /// Pushes the current [frameMs]/[stepMs] onto the histories.
+  void recordHistory() {
+    frameHistory.add(frameMs);
+    stepHistory.add(stepMs);
+  }
 
   /// Called synchronously, once per tick, the instant [frameMs] exceeds
   /// [spikeThresholdMs] — `this` is passed so the callback can read

@@ -376,6 +376,7 @@ class _EngineViewState extends State<EngineView>
     stepStopwatch.stop();
     _frameStats.stepMs = stepStopwatch.elapsedMicroseconds / 1000;
     _frameStats.frameMs = dt * 1000;
+    _frameStats.recordHistory();
     _frameStats.entities = widget.world.entities.count;
     _frameStats.sprites = widget.world.storeOf<Sprite>().length;
     _frameStats.particles = widget.world.storeOf<Particle>().length;
