@@ -6,7 +6,7 @@ import 'package:cryptography/cryptography.dart';
 
 /// One downloadable item in a [ReleaseManifest]: a project template, sample
 /// level, node/brush pack, or engine version the bootstrap window can fetch
-/// (STUDIO_TODO.md 2.13/3.19).
+/// (docs/studio/design.md 2.13/3.19).
 class ManifestItem {
   final String name;
   final String url;

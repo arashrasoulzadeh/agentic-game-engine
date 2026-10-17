@@ -445,7 +445,7 @@ String _kindName(int? kind) => switch (kind) {
 };
 
 /// A place in a file: where a definition is.
-/// A foldable region of a file (STUDIO_TODO.md IDE.11): the lines from
+/// A foldable region of a file (docs/studio/design.md IDE.11): the lines from
 /// [startLine] to [endLine] (both 0-based, inclusive) that a block fold
 /// (`{...}`), comment, or import-block fold would collapse.
 class FoldingRange {

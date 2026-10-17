@@ -7,7 +7,7 @@ Turn-based strategy assembly on top of
 live in `engine_core/lib/src/turn/` because they are genre-general;
 this package wires them together in the correct order, the way
 `engine_platformer` does for platformers. Plan and status:
-[TURNBASE.md](../../TURNBASE.md).
+[TODO.md](../../TODO.md#turn-based-strategy).
 
 ## Quick start
 

@@ -91,7 +91,7 @@ class GraphVariable {
   );
 }
 
-/// A visual-scripting graph (STUDIO_TODO.md Phase 4): nodes, the edges
+/// A visual-scripting graph (docs/studio/design.md Phase 4): nodes, the edges
 /// between their ports, the variables it declares, and which node execution
 /// starts at. Graphs don't run themselves — a compiler
 /// (`dialogue_compiler.dart` for now) turns one into the runtime primitives

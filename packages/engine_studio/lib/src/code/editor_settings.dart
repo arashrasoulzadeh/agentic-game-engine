@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Per-project code editor preferences (STUDIO_TODO.md IDE.13): font size,
+/// Per-project code editor preferences (docs/studio/design.md IDE.13): font size,
 /// indent width, and whether saving runs the formatter first. Stored under
 /// `.studio/`, the same place autosave backups live — never the project's
 /// own files.

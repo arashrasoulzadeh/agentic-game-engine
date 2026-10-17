@@ -6,7 +6,7 @@ import 'level.dart';
 ///
 /// Components stay as JSON rather than typed objects. The studio edits the
 /// same data the runtime loads, and keeping the JSON as written is what lets
-/// a load-then-save cycle leave unchanged data byte-identical (STUDIO_TODO.md
+/// a load-then-save cycle leave unchanged data byte-identical (docs/studio/design.md
 /// 0.6).
 class LevelEntity {
   String? name;

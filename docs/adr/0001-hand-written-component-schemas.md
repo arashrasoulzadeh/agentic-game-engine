@@ -1,6 +1,6 @@
 # ADR 0001: Hand-written component schemas (not generated or reflected)
 
-Status: accepted (STUDIO_TODO.md decision D1)
+Status: accepted (docs/studio/design.md decision D1)
 
 ## Context
 

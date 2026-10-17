@@ -67,7 +67,7 @@ void main() {
   });
 
   group('builtinNodeKinds', () {
-    test('has exactly the kinds STUDIO_TODO.md 4.4 lists', () {
+    test('has exactly the kinds docs/studio/design.md 4.4 lists', () {
       expect(
         builtinNodeKinds.keys,
         containsAll([

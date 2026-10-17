@@ -3,7 +3,7 @@ import 'package:engine_flutter/engine_flutter.dart';
 import 'package:engine_platformer/engine_platformer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// The umbrella check for STUDIO_TODO.md phase 0.3: every component the three
+/// The umbrella check for docs/studio/design.md phase 0.3: every component the three
 /// engine packages register must declare a schema. Adding a component without
 /// one fails here, so the studio's inspector never silently lacks a field list.
 void main() {

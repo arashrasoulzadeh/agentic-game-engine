@@ -233,4 +233,4 @@ than between.
 
 Real-time strategy (needs a fixed-step accumulator for lockstep, flow-field
 pathfinding for large groups) and smarter AI (flanking, objectives).
-See [TURNBASE.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TURNBASE.md).
+See [the roadmap](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md#turn-based-strategy).

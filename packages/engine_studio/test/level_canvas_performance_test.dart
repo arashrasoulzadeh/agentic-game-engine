@@ -6,7 +6,7 @@ import 'package:engine_studio/src/level/level_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// STUDIO_TODO.md 3.16: a 500x500 tile level should pan and paint at 60fps
+/// docs/studio/design.md 3.16: a 500x500 tile level should pan and paint at 60fps
 /// (under ~16.6ms/frame) on the reference machine. `flutter test` can't
 /// measure a real GPU frame, so this measures what the studio actually
 /// controls -- `LevelCanvasPainter.paint`'s own CPU cost -- by recording it

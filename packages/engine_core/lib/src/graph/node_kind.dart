@@ -53,7 +53,7 @@ class NodeKind {
   }
 }
 
-/// The node kinds every studio project gets for free (STUDIO_TODO.md 4.4).
+/// The node kinds every studio project gets for free (docs/studio/design.md 4.4).
 /// A project-specific kind would extend this map, not replace it.
 const builtinNodeKinds = <String, NodeKind>{
   'say': NodeKind(

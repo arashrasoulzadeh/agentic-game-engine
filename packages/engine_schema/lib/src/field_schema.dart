@@ -9,7 +9,7 @@ enum FieldType { int, double, bool, string, enumeration, vector2, list, object }
 /// numeric range, and the default a new entity starts with.
 ///
 /// Schemas are explicit lists written next to each component, not
-/// reflection over its fields — see STUDIO_TODO.md decision D1. That
+/// reflection over its fields — see docs/studio/design.md decision D1. That
 /// keeps the field list reviewable and lets a test assert it matches the
 /// component's `toJson` keys.
 class FieldSchema {

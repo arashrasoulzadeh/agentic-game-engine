@@ -224,7 +224,7 @@ slots + schema versioning + migration.
 **Turn-based strategy** — turn clock + action points, JSON orders, weighted
 8-way grid navigation, combat/elimination/victory, per-team fog of war,
 selection + tap input, AI turn driver (`TurnAI`), `engine_strategy`, and a
-`strategy_game` starter (plan: [TURNBASE.md](TURNBASE.md)).
+`strategy_game` starter (guide: [docs/concepts/turn-based-strategy.md](docs/concepts/turn-based-strategy.md)).
 
 **Tooling** — `game_agent` CLI (`create`/`upgrade`/`lint --render`/
 `lint --playable`/`pack-assets` with MaxRects bin-packing + multi-

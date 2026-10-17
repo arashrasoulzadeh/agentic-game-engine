@@ -1,4 +1,4 @@
-# Manual QA checklist — level editor (STUDIO_TODO.md 3.15)
+# Manual QA checklist — level editor (docs/studio/design.md 3.15)
 
 Run through this by hand on each target OS before a release. `flutter
 test` already covers the logic; this catches what only a real window,

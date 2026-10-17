@@ -96,5 +96,4 @@ flowchart LR
 [Source on GitHub](https://github.com/arashrasoulzadeh/agentic-game-engine) ·
 [Changelog](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CHANGELOG.md) ·
 [Roadmap (TODO.md)](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md) ·
-[Turn-based plan](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TURNBASE.md) ·
 [Contributing](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CONTRIBUTING.md)

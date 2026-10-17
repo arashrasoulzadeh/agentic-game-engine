@@ -1,4 +1,4 @@
-// End-to-end smoke test (STUDIO_TODO.md 2.6): create a project with the real
+// End-to-end smoke test (docs/studio/design.md 2.6): create a project with the real
 // `game_agent` binary, edit it with the real `studio` subcommands (not an
 // in-process CommandRunner — a genuine subprocess, the same way a user or CI
 // would run it), validate it, then load the result into a plain `World` and

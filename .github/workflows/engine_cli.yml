@@ -24,7 +24,7 @@ jobs:
       - run: dart analyze --fatal-infos
       - run: dart test
 
-  # STUDIO_TODO.md 2.6: create a project -> edit it with the real `studio`
+  # docs/studio/design.md 2.6: create a project -> edit it with the real `studio`
   # subcommands -> validate -> load headlessly, end to end, against the
   # pushed repo (game_agent create resolves engine_core/engine_flutter/
   # engine_platformer from the git remote, which is why this needs Flutter,

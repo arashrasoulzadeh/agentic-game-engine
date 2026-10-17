@@ -71,7 +71,7 @@ The full site is published at <https://meetarash.ir/agentic-game-engine/> (sourc
 All package manifests currently declare version `0.1.0`. Follow
 [TODO.md](TODO.md) for remaining work, especially rendering performance
 and device validation of optional GPU shadows. See
-[TODO_RENDER.md](TODO_RENDER.md) for rendering design discussions and
+[TODO.md](TODO.md) ("Parked decisions") for rendering design discussions and
 [CHANGELOG.md](CHANGELOG.md) for completed changes.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) covers setup and verification.

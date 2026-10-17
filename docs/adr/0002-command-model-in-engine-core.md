@@ -1,6 +1,6 @@
 # ADR 0002: The command model lives in engine_core
 
-Status: accepted (STUDIO_TODO.md decision D2, default recommendation)
+Status: accepted (docs/studio/design.md decision D2, default recommendation)
 
 ## Context
 

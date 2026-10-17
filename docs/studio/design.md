@@ -1,4 +1,4 @@
-# Studio — PRD, Technical Design, and Phased TODO
+# Studio — PRD and technical design
 
 Scope: a cross-platform **desktop** authoring studio for games built on this engine. It
 covers the level editor, property inspector, visual scripting, asset
@@ -6,7 +6,9 @@ pipeline, play-test, and project management. It sits **on top of** the
 engine; the engine remains the runtime and stays usable without the
 studio.
 
-Status legend: `[ ]` not started · `[~]` in progress · `[x]` done.
+Remaining work is tracked in [TODO.md](../../TODO.md#studio). This document keeps
+the requirements, the design, the decisions, and the record of delivered phases
+(source comments cite items such as "3.14" or "IDE.13" from Part 3).
 
 ---
 
@@ -357,7 +359,7 @@ never has to replace a project's dependencies behind the user's back.
 shows the error in the window, and offers retry. The studio must open
 existing projects even if the manifest server is unreachable.
 
-## Part 3 — Phased Implementation
+## Part 3 — Delivered phases
 
 Each phase ends with a shippable state and a green test suite.
 
@@ -475,11 +477,6 @@ Goal: a designer builds, saves, and play-tests a level.
   `level_editor_test.dart`) Widget tests: inspector per field type; tool emits the
   right command.
 - [x] **3.14** (`level_canvas_golden_test.dart`) Golden test for the level view on a fixed sample level.
-- [~] **3.15** (checklist written and run on macOS — see
-  `docs/studio/qa-level-editor.md`'s run log; this session has no access
-  to Windows or Linux machines, so those two runs are still outstanding)
-  Manual verification checklist recorded in
-  `docs/studio/qa-level-editor.md`, run on macOS, Windows, and Linux.
 - [x] **3.16** (`level_canvas_performance_test.dart`: 13.72ms/frame average
   painting a 500x500 tile level + 50 entities over 60 simulated frames,
   measured on this dev machine — under the 16.7ms/frame 60fps budget.
@@ -492,8 +489,6 @@ Goal: a designer builds, saves, and play-tests a level.
 - [x] **3.17** `engine_studio` package scaffold with its own `pubspec.yaml`
   depending on the engine packages by git ref (same convention as other
   packages). Builds on macOS first.
-- [ ] **3.18** Bootstrap window: lists required downloads, shows progress,
-  size, and checksum result per item; retry on failure (section 2.13).
 - [x] **3.19** (`release_manifest.dart`: `ReleaseManifest`/`ManifestItem`
   plain data, Ed25519 signing/verification via `package:cryptography` —
   never hand-roll signature verification — and SHA-256 checksum
@@ -505,13 +500,6 @@ Goal: a designer builds, saves, and play-tests a level.
   like any other forged signature instead) Signed release manifest format (`manifest.json` + signature)
   and a verifier in `engine_core`, with tests for valid, unsigned,
   tampered, and checksum-mismatch manifests.
-- [ ] **3.20** Update notices: the bootstrap window lists version changes
-  with per-item accept/defer/skip; nothing installs without confirmation.
-- [ ] **3.21** Offline mode: previously cached versions open existing
-  projects when the manifest server is unreachable; test with a fake
-  unreachable server.
-- [ ] **3.22** Packaging scripts for `.dmg` first; `.msi` and `.AppImage`
-  added in phase 6 once the macOS flow is verified end to end.
 
 **Phase 3 exit criteria:** PRD metrics 1.6 (10-minute build + play-test)
 and the undo coverage test are both green.
@@ -540,16 +528,6 @@ Analyze, SDK discovery, project file manager.
 - [x] **IDE.8** Line numbers in the gutter, and the current line highlighted.
 - [x] **IDE.9** Bracket matching: the bracket paired with the one at the cursor is highlighted.
 - [x] **IDE.10** Auto-indent on Enter and auto-close of brackets and quotes.
-- [~] **IDE.11** (data layer is real: `DartSession.foldingRanges` via
-  `textDocument/foldingRange`, tested against the real server. The UI is
-  deliberately scoped down from true fold/collapse: a `TextField` always
-  renders exactly its controller's full text, and that text *is* the
-  saved file, so actually hiding a folded region's lines would mean
-  silently deleting them on save without a custom rendering widget
-  replacing `TextField` entirely — a much larger, separate piece of work.
-  What's here instead: a fold indicator in the gutter at each foldable
-  line, which selects-and-reveals that block's extent rather than
-  collapsing it) Code folding of blocks (the server's folding ranges).
 - [x] **IDE.12** Document outline: the classes and members of the file, tap to jump.
 - [x] **IDE.13** Editor settings: font size, tab width, and formatting on save.
 - [x] **IDE.14** (scoped to closing the editor's own route — go-to-
@@ -576,83 +554,12 @@ existing runtime primitives.
   `Branch`, `Wait`, `PlayCinematic`, `EmitEvent`, `SpawnEntity`.
 - [x] **4.5** `Graph.validate`: port type mismatch, unreachable nodes,
   missing entry, cycles without `Wait`.
-- [~] **4.6** (dialogue subgraph → `DialogueGraph` is done and tested,
-  with its own round-trip test (4.7). Cutscene subgraph → `Cinematic`
-  steps is **not** done: `CinematicStep` is a runtime behavior class
-  with `start`/`update`/`skip`, not a plain-JSON primitive the other
-  node kinds (`wait`/`playCinematic`/`spawnEntity`/`emitEvent`) can be
-  mechanically compiled to the way `say`/`choice` map onto `DialogueNode`
-  — doing this right needs a real design pass on what each of those
-  node kinds means as a cinematic step, not a rushed mapping) Compiler: dialogue subgraph → `DialogueGraph`; cutscene
-  subgraph → `Cinematic` steps. Round-trip tests against the existing
-  runners.
 - [x] **4.7** Test: a compiled dialogue graph produces the same runner
   events as a hand-written `DialogueGraph`.
-- [ ] **4.8** Migrate `bt_editor_web` node-canvas code into
-  `engine_studio/lib/graph/` as the shared canvas widget.
-- [ ] **4.9** Graph canvas widget: pan, zoom, connect ports, select.
-- [ ] **4.10** Node inspector (params generated from node kind schema).
-- [ ] **4.11** Save/load `graphs/*.json`; validation panel shows graph
-  errors alongside level errors.
-- [ ] **4.12** Widget tests for connect/disconnect and invalid-connection
-  rejection.
-- [ ] **4.13** Retire `packages/bt_editor_web` once the studio canvas
-  covers its features; update docs and TODO.md.
-
-### Phase 5 — Assets, prefabs, interchange
-
-Goal: content pipeline is complete for real projects.
-
-- [ ] **5.1** Asset browser: lists `assets/`, previews atlases, shows
-  sprite names from `pack_assets` output.
-- [ ] **5.2** Sprite picker used by `Sprite` field in the inspector.
-- [ ] **5.3** Validator: referenced sprite/atlas missing → error with
-  jump-to-reference.
-- [ ] **5.4** Prefabs: save an entity group as `prefabs/*.json`; place as
-  one command (`InstantiatePrefab`), undoable as one step.
-- [ ] **5.5** Brush library: tile and prefab brushes, reusable across
-  levels.
-- [ ] **5.6** Tiled export (`studio export-tmx`) and round-trip test
-  against `tmx_import.dart`.
-- [ ] **5.7** Asset hot-reload: watch `assets/`, invalidate
-  `AtlasRegistry` entries, reload open levels (this also closes the
-  TODO.md "Asset hot-reload" item).
-- [ ] **5.8** Tests for prefab undo as a single step.
-
-### Phase 6 — Behaviors, profiling, polish
-
-Goal: the studio covers AI authoring and gives performance feedback.
-
-- [ ] **6.1** Behavior-tree and FSM editing in the studio, reusing the
-  graph canvas from phase 4.
-- [ ] **6.2** Profiler panel: frame time, system timings, entity counts,
-  fed from an engine-side metrics hook (also closes the TODO.md
-  "Performance profiling tools" item in part).
-- [ ] **6.3** Debug overlay improvements hooked into the same metrics
-  feed (closes "Debug overlay improvements").
-- [ ] **6.4** Keyboard shortcut map, customizable, stored as
-  `studio_prefs.json` (not in the project).
-- [ ] **6.5** Accessibility pass on studio UI: keyboard navigation,
-  contrast, screen-reader labels.
-- [ ] **6.6** Localization of studio strings via the existing
-  `LocalizationManager`.
-- [ ] **6.7** Documentation: `docs/studio/` user guide, screenshots,
-  and a "build your first level" tutorial, following the examples
-  checked against current signatures.
-
-### Phase 7 — Stretch (not scheduled)
-
-- [ ] **7.1** Live reload of levels into a running game over a local
-  socket.
-- [ ] **7.2** Git-aware diff/merge view for level JSON.
-- [ ] **7.3** Collaborative editing via shared project folder with
-  lock files.
-- [ ] **7.4** Embedded play-test in a studio panel (D4 alternative).
-- [ ] **7.5** Plugin API for third-party node kinds and inspector widgets.
 
 ---
 
-## Part 4 — Open Decisions
+## Part 4 — Decisions
 
 | ID | Question | Default | Decide by |
 |---|---|---|---|
@@ -661,26 +568,3 @@ Goal: the studio covers AI authoring and gives performance feedback.
 | D3 | Graphs compile to existing primitives only, or own interpreter? | Compile only | Phase 4 |
 | D4 | Play-test as separate process or embedded? | Separate process | Phase 1 |
 | D5 | Studio self-update: platform updater (Sparkle/WinSparkle) or notify-and-link to installer? | Notify-and-link in v1 | Phase 3 |
-
-## Part 5 — Milestones
-
-| Milestone | Phases | Outcome |
-|---|---|---|
-| M0 Foundations | 0–1 | Data contracts, undo, validation — no UI |
-| M1 Headless | 2 | CLI/CI can validate and import/export levels |
-| M2 Level editor MVP | 3 | Build and play-test a level in the studio |
-| M3 Narrative graphs | 4 | Dialogue/cutscenes authored visually |
-| M4 Content complete | 5 | Assets, prefabs, Tiled interchange, hot-reload |
-| M5 Full studio | 6 | Behaviors, profiler, docs, polish |
-
-## Part 6 — Relationship to TODO.md
-
-Items in `TODO.md` that this document absorbs:
-- "Level editor integration" → phases 0–3, 5.4–5.5
-- "Visual scripting / node editor" → phase 4
-- "Asset hot-reload" → phase 5.7
-- "Performance profiling tools" → phase 6.2
-- "Debug overlay improvements" → phase 6.3
-
-When a phase item lands, check it here and update the matching `TODO.md`
-entry in the same commit.

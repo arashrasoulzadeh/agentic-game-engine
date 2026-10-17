@@ -100,7 +100,7 @@ class LintCommand extends Command<int> {
   /// [isTileReachable] — the same walk/fall/jump heuristic
   /// `LevelValidator`'s own exit-reachability check uses, so `lint
   /// --playable` and the studio's validation panel can never disagree about
-  /// what counts as reachable (STUDIO_TODO.md 2.8). This used to run its own,
+  /// what counts as reachable (docs/studio/design.md 2.8). This used to run its own,
   /// simpler four-connected flood-fill that didn't know about jumping, so it
   /// could flag a gap a platformer jump clears as unreachable when the
   /// validator would not.

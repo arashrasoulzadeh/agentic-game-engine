@@ -1637,7 +1637,7 @@ class _RenameDialogState extends State<_RenameDialog> {
 }
 
 /// Lets the designer change font size, tab width, and format-on-save
-/// (STUDIO_TODO.md IDE.13). Returns the new settings on Save, or null if
+/// (docs/studio/design.md IDE.13). Returns the new settings on Save, or null if
 /// cancelled.
 class _EditorSettingsDialog extends StatefulWidget {
   final EditorSettings initial;

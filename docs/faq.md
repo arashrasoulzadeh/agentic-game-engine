@@ -119,4 +119,4 @@ Not yet (pre-1.0). Generated projects depend on the git repo; see
 3D: no, by decision. RTS: the building blocks (orders, selection, navigation,
 fog) are in place; the missing pieces are a lockstep fixed-step driver and
 flow-field pathfinding — tracked in
-[TURNBASE.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TURNBASE.md).
+[the roadmap](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md#turn-based-strategy).

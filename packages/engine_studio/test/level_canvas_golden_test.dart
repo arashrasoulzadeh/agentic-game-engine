@@ -4,7 +4,7 @@ import 'package:engine_studio/src/level/level_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// A fixed sample level (STUDIO_TODO.md 3.14): a small tile map mixing solid
+/// A fixed sample level (docs/studio/design.md 3.14): a small tile map mixing solid
 /// and one-way tiles, plus a named entity, so the golden image exercises
 /// every tile-color branch LevelCanvasPainter has, not just solid-vs-empty.
 LevelDocument _sampleLevel() => LevelDocument.fromJson({

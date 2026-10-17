@@ -27,7 +27,7 @@ _Trace _runScript(DialogueGraph graph, List<int> choiceIndices) {
 }
 
 void main() {
-  test('STUDIO_TODO.md 4.7: a compiled dialogue graph behaves the same as '
+  test('docs/studio/design.md 4.7: a compiled dialogue graph behaves the same as '
       'a hand-written one for a linear say -> say script', () {
     const graph = Graph(
       nodes: [

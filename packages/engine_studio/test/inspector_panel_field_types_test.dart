@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Widget coverage for each `FieldType` the inspector renders a different
-/// control for (STUDIO_TODO.md 3.13). `vector2` has no real component using
+/// control for (docs/studio/design.md 3.13). `vector2` has no real component using
 /// it yet (grep confirms), so it's covered only at the pure-function level in
 /// entity_inspector_test.dart's parseFieldText tests; everything here goes
 /// through the real widget with a real schema and a real EditCommand.

@@ -2,7 +2,7 @@
 
 Status: superseded by ADR 0005 (embedded preview). Kept as the fallback launcher.
 
-(Originally accepted as STUDIO_TODO.md decision D4, default recommendation.)
+(Originally accepted as docs/studio/design.md decision D4, default recommendation.)
 
 ## Context
 

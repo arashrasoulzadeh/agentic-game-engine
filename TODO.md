@@ -1,13 +1,42 @@
 # Remaining work
 
-Tracked here so progress survives across sessions. Check items off as
-they land; add new ones as they're discovered.
+The single source of truth for what is left. Check items off as they land
+and delete them once shipped — what shipped is recorded in
+[CHANGELOG.md](CHANGELOG.md), and the full reasoning is in git history.
+Add new work here the moment you discover it rather than leaving it in a
+comment or a side file.
 
-Everything completed has been cleared from this file — see
-[CHANGELOG.md](CHANGELOG.md) for what shipped and git history for the
-full why behind each change. [TODO_RENDER.md](TODO_RENDER.md) tracks
-parked rendering-architecture discussion points not yet scoped into
-actionable items here.
+Related, but not task lists:
+- [docs/studio/design.md](docs/studio/design.md) — the studio's PRD,
+  technical design, decisions, and the record of delivered phases (source
+  comments cite its item numbers, e.g. "3.14", "IDE.13").
+- [docs/concepts/turn-based-strategy.md](docs/concepts/turn-based-strategy.md)
+  — how the finished turn-based layer works and why.
+
+Sections: [Housekeeping](#housekeeping) · [Performance](#performance) ·
+[Engine features](#engine-features) · [Turn-based strategy](#turn-based-strategy) ·
+[Studio](#studio) · [Documentation](#documentation) · [Release](#release) ·
+[Parked decisions](#parked-decisions)
+
+## Housekeeping
+
+- [ ] **`engine_studio` CI fails** — `impellerc failure: Compilation failed
+      for target: SkSL` while bundling shaders in the GitHub Actions run (seen
+      on 2026-10-17, on a push that touched no studio code). Reproduce with
+      the same Flutter channel, then pin the version or fix the shader.
+- [ ] **Commit or discard the untracked studio graph work** —
+      `packages/engine_studio/lib/src/graph/`,
+      `test/graph_canvas_screen_test.dart`, `test/graph_editor_test.dart`
+      (the start of studio items 4.8–4.12 below).
+- [ ] **Verify `game_agent create` against the pushed repo** for both
+      templates (`default_game`, `strategy_game`), as CLAUDE.md requires for
+      CLI changes. So far the strategy template was only checked by
+      generating it with local path overrides. Add the strategy template to
+      `packages/engine_cli/tool/e2e_check.dart` and the CLI workflow.
+- [ ] **GitHub Actions upkeep** — workflows warn that Node 20 actions are
+      deprecated (bump `checkout`, `setup-python`, `upload-pages-artifact`,
+      `deploy-pages`), and `ubuntu-latest` moves to Ubuntu 26 on
+      2026-10-19; check each workflow still passes after the move.
 
 ## Performance
 
@@ -90,94 +119,227 @@ actionable items here.
       fixing this by construction, but shouldn't be started until this
       is actually confirmed either way.
 
+## Engine features
 
-## New engine features
+- [ ] **Local split-screen multiplayer** — gamepad bindings exist per player,
+      but there is no viewport splitting or multi-camera / multi-`WorldView`
+      simulation to render and drive split-screen play. Viewport split in
+      `engine_flutter`, multi-context support in `engine_core`.
+- [ ] **Input action aliases** — friendly names for actions ("Jump" vs
+      "action_0") shown in remap menus and the debug overlay.
+- [ ] **Scene transitions: slide / crossfade / pixel-dissolve** — needs true
+      multi-scene rendering (outgoing and incoming `World`s drawn in the same
+      frame). Fade and iris already shipped.
+- [ ] **Asset hot-reload** — watch `assets/`, invalidate `AtlasRegistry`
+      entries and caches, reload textures, atlases and open levels without a
+      restart. (Studio item 5.7 is the same work.)
+- [ ] **Performance profiling tools** — frame-time breakdown, per-system
+      timings, entity counts, GPU/CPU timers, allocation tracker, shader
+      compile time, fed from an engine-side metrics hook. (Studio item 6.2
+      consumes it.)
+- [ ] **Debug overlay improvements** — FPS graph, memory graph, entity
+      inspector with component values, on the same metrics feed. (Studio
+      item 6.3.)
+- [ ] **Network multiplayer foundation** — ECS state serialization (partly
+      there via `World.toJson`), rollback networking, lag compensation, state
+      sync.
+- [ ] **Example game** — one complete small game showing the major features,
+      playable in the browser. (`test_game/` stays local and gitignored; this
+      would be a separate, deliberately published sample — decide where it
+      lives before starting, since CLAUDE.md forbids committing a sample app
+      to this repo.)
+- [ ] **For zahaak** — gameplay features the local-only `zahaak` game design
+      needs but the engine lacks (see `zahaak/docs/engine-gap-analysis.md`).
+      Not scoped; revisit once its combat/dialogue scope is locked.
 
-- [x] **ECS query caching / Archetypes** — Hot loops (`MovementSystem`, `CollisionSystem`) iterate archetype tables instead of sparse sets. Cache invalidation on component add/remove. Implemented in `engine_core/lib/src/ecs/archetype.dart` with `Archetype`, `ArchetypeManager`, `ArchetypeEntity`.
-
-- [x] **Job system / Multithreaded systems** — Offload `TileCollisionSystem` broadphase, `Pathfinding`, `ParticleSystem` to background isolates. Main thread only commits results. Implemented in `engine_core/lib/src/ecs/job_system.dart` with `JobSystem`, `Job`, `CollisionBroadphaseJob`, `PathfindingJob`.
-
-- [x] **Procedural level generation** — Room/corridor (BSP), cellular automata caves, wave-function collapse for tile patterns. Seeded, deterministic, JSON output. Implemented in `engine_core/lib/src/physics/procedural_generation.dart` with `BSPGenerator`, `CellularAutomataGenerator`, `WFCGenerator`, `ProceduralLevelGenerator`.
-
-- [x] **Dialogue / branching-conversation system** — `DialogueGraph`/`DialogueNode`/`DialogueChoice` (`content/dialogue.dart`, plain-JSON round-trip like `Level`/`Cinematic`) plus a `DialogueRunner` driven on demand (not a `System`) that resolves choices through `StringTable` and emits each choice's event onto `EventBus`. `DialogueBoxScene` (`ui/dialogue_box_scene.dart`) renders it.
-
-- [x] **AI steering primitives** — `seek`/`arrive`/`wander` (`ai/steering.dart`) — plain functions, not `Behavior`s, meant as shared math for `FollowBehavior`/`AvoidanceBehavior` to call into. `arrive` gives a decelerating approach instead of `FollowBehavior`'s hard stop/start at `stopDistance`.
-
-- [x] **FollowBehavior.jumpAcrossGaps** — An NPC blocked by a gap it's physically capable of clearing now requests a real jump (via `PlatformerController.jumpRequested`, the same field player input sets) computed from the same arc math `JumpSystem` uses, instead of just walking up to the edge and stopping.
-
-- [x] **AttackSystem.requireLineOfSight** — Gates melee/ranged attacks on `WorldView.hasLineOfSight`, the same convention `FollowBehavior`/`FleeBehavior` already use — an attacker behind a wall from its target no longer fires through it. Cooldown still ticks down while blocked.
-
-- [x] **Hearing / sound propagation** — `SoundEvent` (`ai/hearing.dart`) is an `EventBus` event any system can emit; `HearingSystem` matches it against every `HearingComponent`-bearing entity's range and tile occlusion (reusing `raycastTileMap`'s traversal) and writes a heard position into that entity's `AIState.memory` blackboard. `InvestigateBehavior` consumes it to walk the NPC toward the last-heard sound.
-
-- [x] **TileMap collision layers/groups** — `Collider.collisionGroup`/`collisionMask` and a matching per-tile-id `TileMap.collisionGroups` bitmask, checked by both `CollisionSystem` and `TileCollisionSystem` — lets a level or spawn helper put player, enemies, and projectiles in different collision groups (e.g. so enemies stop colliding with each other) without affecting who still collides with solid tiles.
-
-- [x] **Camera shake enhancements** — `Camera.shake` grew named params (`frequency`, `decay`, `impulse` for a sharp one-time hit vs. sustained, `axis` for per-axis shake, `stack` for additive multiple shakes) on top of the original `shake(magnitude, duration)`.
-
-- [x] **TileMap auto-tile bitmask debug overlay** — `EngineView.showAutoTileBitmask` draws each auto-tiled cell's computed neighbor bitmask with a hover tooltip, now also wired through `GameConfig.showAutoTileBitmask`/`Scene.showAutoTileBitmask` so a game can actually turn it on.
-
-- [x] **Single-pass ambient-lighting shader** — `ambient_lighting.frag` computes the combined darkness mask for every light in one fragment shader invocation instead of the legacy `saveLayer` + per-light draw path (1 draw instead of 1+N). Opt-in via `EngineView.singlePassLighting`/`GameConfig.singlePassLighting` (default `false`); falls back to the legacy path for any light using `castsShadows`, `coneAngle`, or `useGpuShadows`.
-
-- [x] **Particle rendering batching** — Plain (spriteless) particles now batch through one `Canvas.drawAtlas` call per `zIndex` via a new tiny cached `ParticleDotTexture`, instead of one `drawCircle`/`Paint` pair per particle. Falls back per-particle to the original `drawCircle` path for any frame before the texture's one-time async generation resolves or for a particle that carries its own registered `Sprite`.
-
-- [x] **AnimationClip.sequence memoization** — Memoized by its full argument set — a call site that rebuilds the same sequence repeatedly (e.g. from `Scene.populate`, which reruns on every scene reload/room transition) gets the same cached instance back instead of re-running `List.generate`/reallocating a fresh clip every time.
-
-- [x] **Gravity.fallMultiplier** — An extra gravity multiplier `GravitySystem` applies only while an entity is already falling (`Velocity.y > 0`), independent of `Gravity.scale` (which speeds up rise and fall equally, changing jump height/reach too). The standard "floaty rise, snappy fall" platformer feel — `1` (default) is no asymmetry, identical to every jump before this field existed.
-
-- [x] **ParallaxLayer.fitHeight** — Stretches a background region to exactly the viewport's height instead of native size (optionally tiled).
-
-- [x] **Documentation site** — Added a top-level `docs/` tutorial/concept layer (`docs/README.md`, `docs/getting-started.md`, `docs/concepts/{ecs,content-as-data,agent-api,rendering,platformer}.md`, `docs/tutorials/01-hello-world.md`, `docs/examples/{README,spawn-enemy-with-patrol-ai,health-bar,save-load,custom-behavior}.md`), written for both human developers and AI coding agents, with every code sample checked against current signatures under `packages/*/lib/src/`.
-
-- [x] **Flutter Web CanvasKit text rendering fix** — Bundled Roboto Regular as `EngineDefault` font family (`engine_flutter/assets/fonts/EngineDefault-Regular.ttf`, declared in `engine_flutter/pubspec.yaml`) so `Text` has a default typeface it owns on every platform, fixing the "dialogue box renders, text never appears" bug on web where CanvasKit has no typeface until a custom font is bundled or its default-font fetch succeeds.
-
-- [x] **Colorblind shader Impeller compatibility** — Changed `uniform int uColorblindType` to `float` in `shaders/colorblind.frag` (rounded on read) to fix "Non-floating-type struct member ... is not supported" error under Impeller that broke `flutter test` asset bundling for every `engine_flutter`-dependent package.
-
-- [x] **Scene transition effects** — Fade and iris transitions between scenes. Configurable duration/easing. Implemented in `engine_flutter/lib/src/logic/scene_transition.dart` with `SceneTransitionType`, `SceneTransitionConfig`, `SceneTransition`, `SceneTransitionSystem`, plus `SceneController.loadSceneWithTransition` / `GameRunner._loadSceneWithTransition` driving it as two phases (cover the outgoing scene, swap `World`s, reveal the incoming one) across the existing `World`-per-scene swap. Uses existing `ScreenTint` (fade) and `ClipShape` (iris) components for rendering — no multi-scene rendering needed, since only one `World` is ever live at a time. Slide/crossfade/pixel-dissolve still require true multi-scene rendering (both scenes' `World`s drawn simultaneously) and remain future work.
-
-## For zahaak
-
-Engine gameplay features the `zahaak` game design (local-only,
-gitignored `/zahaak/`, GDD at `zahaak/docs/GDD.md`) needs but the
-engine doesn't have yet — surfaced by
-`zahaak/docs/engine-gap-analysis.md` while writing the GDD, before any
-implementation started. Not scoped/sequenced yet; revisit once the
-GDD's combat/dialogue scope is locked down.
-
-## Shipping a full game
-
-Gaps that don't block a tech demo/sample (`test_game` already exercises
-most engine features) but would block actually shipping a complete,
-real game with this engine as-is — surfaced by auditing what a small
-team releasing a real 2D game needs that nothing above already covers.
-
-- [x] **Settings-menu widgets (checkbox, slider, dropdown, scrollable list)** — Implemented in `engine_flutter/lib/src/ui/settings_menu.dart` with `SettingsToggleSpec`, `SettingsSliderSpec`, `SettingsDropdownSpec`, `SettingsListSpec`, `SettingsSectionSpec`, and `SettingsMenuScene` base class extending `ButtonMenuScene`. Binds to `PlayerOptionsManager` for persistence.
-- [x] **Aspect-ratio / safe-area handling for rendering and UI** — `EngineView`/`Camera` have no letterbox/pillarbox logic, and safe-area insets are only handled inside `on_screen_controls.dart` for touch buttons, not general HUD/menu layout — a notched or unusual-aspect device will clip or misplace UI. Implemented in `engine_flutter/lib/src/rendering/viewport.dart` with `ViewportConfig`, `ViewportManager`, `ViewportLayout`. Integrated with `Camera` and `EngineView`.
-- [x] **Player options persistence (separate from save-game slots)** — `GameConfig` is a static file-loaded config, and `SaveGame`/`SaveSlotMenuScene` are gameplay saves; there's no dedicated "player options" store (volume, control scheme, accessibility flags) a settings menu reads/writes independent of a save slot. Implemented in `engine_core/lib/src/content/player_options.dart` + `engine_flutter/lib/src/logic/player_options_flutter.dart` with `PlayerOptions`, `PlayerOptionsManager`, `shared_preferences` storage.
-- [x] **Accessibility (colorblind-safe palettes, text scaling, full input remapping)** — Implemented in `engine_core/lib/src/content/player_options.dart` + `engine_flutter/lib/src/rendering/text.dart` + `engine_flutter/lib/src/ui/settings_menu.dart` + `engine_flutter/shaders/colorblind.frag`. Supports colorblind modes (protanopia/deuteranopia/tritanopia), high contrast, reduce motion, text scaling, full keyboard/touch remapping via SettingsKeyBindingSpec and AccessibilitySettingsMenu.
-- [x] **Crash/error reporting hook** — Pluggable error-reporting sink exists (e.g. wiring `FlutterError.onError`/a zone guard to Sentry/Crashlytics) to diagnose field crashes post-launch. Implemented in `engine_flutter/lib/src/logic/error_reporting.dart` with `ErrorReporter`, `ConsoleErrorReporter`, `NoOpErrorReporter`, `ErrorReportingManager`, and `runWithErrorReporting` helpers. Backends in `engine_flutter/lib/src/logic/error_reporting_backends.dart`: `SentryErrorReporter`, `FirebaseCrashlyticsReporter`, `GooglePlayReporter`, `CustomHttpReporter`, `MultiErrorReporter`.
-- [x] **Achievements / analytics event hooks** — Generic "fire named event with payload" abstraction implemented in `engine_core/lib/src/content/analytics.dart` + `engine_flutter/lib/src/logic/analytics_flutter.dart`. Supports multiple providers (Firebase, Game Center, custom), batching, offline queue, with convenience methods for achievements, purchases, level events, screen views.
-- [x] **Release build/packaging pipeline** — Implemented `engine_cli` command `build-release` for signed Android AAB (with keystore, split-per-abi) and iOS IPA (team ID, provisioning profile, codesign identity). Reads version from pubspec.yaml, supports dry-run and verbose modes.
-- [x] **Cutscene video playback** — `CinematicSystem` only sequences steps over engine primitives (camera/tween/etc.), not playback of a pre-rendered video file, which many shipped games use for opening logos or non-interactive intro cutscenes. Implemented in `engine_flutter/lib/src/rendering/video_player.dart` with `VideoPlayer`, `PlayVideoStep`, `VideoScene`, and `VideoCinematicExtension`.
-- [ ] **Local split-screen multiplayer** — gamepad TODO above only covers per-player input bindings; there's no viewport-splitting or multi-camera/multi-`WorldView` simulation support to actually render and drive split-screen play. Viewport split in `engine_flutter`, multi-context support in `engine_core`.
-
-- [x] **Credits/attribution scene** — Scrolling credits/attribution scene implemented in `engine_flutter/lib/src/ui/credits_scene.dart`. Supports styled entries, auto-scroll, tap-to-skip, and optional skip hint.
-
-## Engine Polish / Quality of Life
-
-- [x] **Save slot thumbnails** — Screenshot capture when saving, display in SaveSlotMenuScene. `SceneController.captureScreenshot` (`logic/game.dart`/`logic/scene.dart`) snapshots the base scene's `EngineView` via a `RepaintBoundary` as PNG bytes, for `SaveGame.save`'s existing `thumbnail` parameter. `SaveSlotMenuScene` (`ui/save_slot_menu_scene.dart`) decodes each slot's saved thumbnail and shows it next to that slot's button via a new `ButtonMenuScene.onButtonSpawned` hook.
-- [ ] **Input action aliases** — Friendly names for actions (e.g., "Jump" vs "action_0") shown in remap menus and debug overlay.
-- [ ] **Debug overlay improvements** — FPS graph, memory graph, entity inspector with component values.
-- [x] **Localization system** — Language switching, RTL support, pluralization, date/number formatting. JSON/CSV/ARB resource files. Implemented in `engine_core/lib/src/content/localization.dart` + `engine_flutter/lib/src/logic/localization_flutter.dart` with `LocalizationManager`, `LocaleInfo`, `LocalizedString`, `LocalizationFlutter`, `RTLWidget`, and extension methods.
-- [ ] **Asset hot-reload** — Watch assets folder, reload textures/atlases/levels without restart. Invalidate caches on file change.
-- [x] **Scene transition effects (fade/iris)** — see "New engine features" above for the full writeup; duplicated here before, now tracked in one place. Slide/crossfade/pixel-dissolve remain open, see the item directly below.
-- [ ] **Scene transition effects (slide/crossfade/pixel-dissolve)** — needs true multi-scene rendering (both the outgoing and incoming `World`s drawn in the same frame), unlike the fade/iris transitions already shipped — see "New engine features" above.
-- [ ] **Network multiplayer foundation** — ECS state serialization, rollback networking, lag compensation, state sync.
-- [ ] **Visual scripting / node editor** — Extend BT/FSM visual editor to general logic (dialogue, cutscenes, AI, quests).
-- [ ] **Level editor integration** — TileMap editor, entity placement, autotile painting, prefab brushes. Export to level JSON.
-- [ ] **Documentation site** — Auto-generated from doc comments, versioned, searchable. Host on GitHub Pages.
-- [ ] **Example game** — Complete small game showing all features (platformer, RPG, puzzle). Playable in browser.
-- [ ] **Performance profiling tools** — Frame time breakdown, GPU/CPU timers, allocation tracker, shader compile time.
-
-(End of file)
 ## Turn-based strategy
 
-See [TURNBASE.md](TURNBASE.md) for the phased plan; phase 1 (turn clock) is done.
+The turn-based layer is feature-complete for a first release (turn clock,
+orders, grid navigation, combat, fog of war, selection, AI turns,
+`engine_strategy`, `strategy_game` template). Left:
+
+- [ ] **Smarter `AggressiveAI`** — it holds position when nothing is
+      visible. Add exploring toward unexplored fog cells, retreating when
+      hurt, focus fire, holding choke points.
+- [ ] **Terrain rendering in the `strategy_game` template** — it draws units
+      on a black background; add a `TileMap` with forest/mountain tiles using
+      `GridNavigator.fromTileMap`, a move-range overlay, and fog shading.
+- [ ] **More unit behaviours** — ranged attacks (range > 1 without walking),
+      per-unit move/attack costs, defend/overwatch, status effects. Today
+      `attackRange` and the costs are global to `OrderSystem`; they should move
+      onto a per-unit component (e.g. `UnitStats`).
+- [ ] **Real-time strategy** — the order, selection, navigation and fog layers
+      carry over. Missing: wire `EngineView.fixedTimestepSeconds` (opt-in
+      today, default off) through `Game`/`GameConfig` for lockstep
+      determinism, and flow-field pathfinding for large groups.
+- [ ] **Strategy template test in CI** — generate `strategy_game` and run its
+      widget test in the `engine_cli` workflow.
+
+## Studio
+
+Design, decisions and delivered phases: [docs/studio/design.md](docs/studio/design.md).
+Milestones M0–M2 (foundations, headless CLI, level-editor MVP) are done; the
+code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
+
+### Distribution (phase 3)
+
+- [ ] **3.18** Bootstrap window: lists required downloads, shows progress,
+      size and checksum result per item; retry on failure (design §2.13).
+- [ ] **3.20** Update notices: the bootstrap window lists version changes with
+      per-item accept/defer/skip; nothing installs without confirmation.
+- [ ] **3.21** Offline mode: previously cached versions open existing projects
+      when the manifest server is unreachable; test with a fake unreachable
+      server.
+- [ ] **3.22** Packaging scripts for `.dmg` first; `.msi` and `.AppImage`
+      added once the macOS flow is verified end to end.
+
+### Code editor (phase 3B)
+
+- [ ] **IDE.11 (true folding)** — the data layer (`DartSession.foldingRanges`)
+      and a gutter fold indicator exist, but the indicator selects-and-reveals
+      a block instead of collapsing it: a `TextField` always renders its
+      controller's full text, and that text is the saved file, so hiding
+      lines would silently delete them on save. Real folding needs a custom
+      rendering widget replacing `TextField` — a separate, larger piece of
+      work.
+- [ ] Not in the IDE scope yet (each its own phase): a debugger, a terminal,
+      git integration, running `pub get` from the studio.
+
+### Visual scripting (phase 4; replaces the old "Visual scripting / node editor")
+
+Graph data model, node registry, validator and the dialogue compiler are
+done (4.1–4.7). Left:
+
+- [ ] **4.8** Migrate `bt_editor_web` node-canvas code into
+      `engine_studio/lib/graph/` as the shared canvas widget.
+- [ ] **4.9** Graph canvas widget: pan, zoom, connect ports, select.
+- [ ] **4.10** Node inspector (params generated from the node kind schema).
+- [ ] **4.11** Save/load `graphs/*.json`; the validation panel shows graph
+      errors alongside level errors.
+- [ ] **4.12** Widget tests for connect/disconnect and invalid-connection
+      rejection.
+- [ ] **4.13** Retire `packages/bt_editor_web` once the studio canvas covers
+      its features; update docs.
+
+### Assets, prefabs, interchange (phase 5)
+
+- [ ] **5.1** Asset browser: lists `assets/`, previews atlases, shows sprite
+      names from `pack-assets` output.
+- [ ] **5.2** Sprite picker used by the `Sprite` field in the inspector.
+- [ ] **5.3** Validator: referenced sprite/atlas missing → error with
+      jump-to-reference.
+- [ ] **5.4** Prefabs: save an entity group as `prefabs/*.json`; place as one
+      command (`InstantiatePrefab`), undoable as one step.
+- [ ] **5.5** Brush library: tile and prefab brushes, reusable across levels.
+- [ ] **5.6** Tiled export (`studio export-tmx`) with a round-trip test
+      against `tmx_import.dart`.
+- [ ] **5.7** Asset hot-reload in the studio (see Engine features).
+- [ ] **5.8** Tests for prefab undo as a single step.
+
+### Behaviors, profiling, polish (phase 6)
+
+- [ ] **6.1** Behavior-tree and FSM editing in the studio, reusing the phase 4
+      graph canvas.
+- [ ] **6.2 / 6.3** Profiler panel and debug-overlay improvements (see Engine
+      features: profiling tools, debug overlay).
+- [ ] **6.4** Keyboard shortcut map, customizable, stored as
+      `studio_prefs.json` (not in the project).
+- [ ] **6.5** Accessibility pass on the studio UI: keyboard navigation,
+      contrast, screen-reader labels.
+- [ ] **6.6** Localization of studio strings via the existing
+      `LocalizationManager`.
+- [ ] **6.7** Studio user guide — see Documentation.
+
+### Stretch (not scheduled)
+
+- [ ] **7.1** Live reload of levels into a running game over a local socket.
+- [ ] **7.2** Git-aware diff/merge view for level JSON.
+- [ ] **7.3** Collaborative editing via a shared project folder with lock
+      files.
+- [ ] **7.4** Embedded play-test in a studio panel (decision D4 alternative).
+- [ ] **7.5** Plugin API for third-party node kinds and inspector widgets.
+
+## Documentation
+
+Site: <https://meetarash.ir/agentic-game-engine/> (MkDocs Material, built from
+`docs/` by `.github/workflows/docs.yml`). Conventions:
+[docs/contributing-docs.md](docs/contributing-docs.md).
+
+### Coverage gaps — shipped features with no guide yet
+
+None of these appear anywhere under `docs/` today. Each needs a concept page
+(or a section) and, where it has runtime behaviour, a tested recipe:
+
+- [ ] Localization (`LocalizationManager`, RTL, plurals, ARB/CSV/JSON).
+- [ ] Dialogue (`DialogueGraph`, `DialogueRunner`, `DialogueBoxScene`) and the
+      visual-scripting graph compiler.
+- [ ] Procedural level generation (BSP, cellular automata, WFC).
+- [ ] AI building blocks: behavior trees, state machines, steering, hearing /
+      sound propagation, `InvestigateBehavior`, pathfinding.
+- [ ] Particles, tweening, cinematics, scene transitions, video playback.
+- [ ] Settings menus, `PlayerOptions` persistence and accessibility options
+      (colorblind modes, text scaling, remapping).
+- [ ] Viewport / aspect-ratio / safe-area handling.
+- [ ] Error reporting and analytics hooks.
+- [ ] Performance: archetypes, the job system, the benchmark suite.
+- [ ] Lighting deep-dive (`Light2D`, shadows, single-pass shader, day/night)
+      beyond the overview in `concepts/rendering.md`.
+- [ ] Release pipeline (`build-release`) walkthrough: signing for Android and
+      iOS.
+- [ ] Studio user guide and a "build your first level" tutorial (`docs/studio/`
+      only holds the design doc and a QA checklist today; both are excluded
+      from the site).
+
+### Quality of the docs themselves
+
+- [ ] **Execute the platformer samples** — tutorial 1 and the older recipes
+      are checked by hand; give them the same test treatment as the
+      turn-based ones (`doc_examples_test.dart`), and fix any drift found.
+- [ ] **Generate the events reference** — `docs/reference/events.md` is
+      hand-written and can drift; generate it from source (like the component
+      reference) or add a test that every `*Event` class is listed.
+- [ ] **Doc-comment audit** — several `dart doc` warnings remain in
+      `engine_core` (unresolved references); `dart doc` should be clean in CI.
+- [ ] **API docs for the Flutter packages** — only `engine_core` and
+      `engine_schema` are generated on the site. Add `engine_flutter`,
+      `engine_platformer`, `engine_strategy` via the Flutter SDK in the docs
+      workflow.
+- [ ] **Versioned docs** — publish per-release versions (e.g. with `mike`)
+      once tags exist; the site is single-version today.
+- [ ] **Publish or retire the unpublished pages** — `docs/proposals/` and
+      `docs/studio/` are excluded from the site; decide which are public.
+- [ ] **Diagrams and screenshots** — add real screenshots (strategy template,
+      studio) to the tutorials and getting-started.
+- [ ] **Keep the docs claims honest** — the landing page says the turn-based
+      samples are test-executed; extend that guarantee (and the sentence) as
+      other samples gain tests.
+- [ ] **README badges** — still static placeholders; point at real pub.dev
+      badges once packages are published (see Release).
+
+## Release
+
+- [ ] Push the locally tagged `v0.1.0` (CHANGELOG says it exists only
+      locally), and decide the tag / `ref` policy for generated projects.
+- [ ] Publish the packages to pub.dev. That removes the self-referencing git
+      dependency constraint documented in CLAUDE.md and `game_agent upgrade`'s
+      `ref` matching limitation.
+- [ ] Replace placeholder README badges with real ones after publishing.
+- [ ] Add `engine_strategy` to any release/versioning checklist alongside the
+      other packages (it is `0.1.0`, `publish_to: none`).
+
+## Parked decisions
+
+Not tasks — conclusions reached after analysis, kept so they aren't
+re-litigated. Re-open only on the stated trigger.
+
+- **No dirty-rect / partial redraw in `EngineView`.** `shouldRepaint` always
+  returns `true`, so every tick re-runs the whole draw pipeline. Deliberate:
+  a 2D game with a moving camera invalidates most of the screen every frame
+  anyway, GPUs are fast at full-canvas redraws, and viewport culling already
+  covers "don't do wasted work". Measured on a release APK on a real Android
+  device (`SM S731B`, ~25 s of gameplay, ~24 sprites, ~45–50 particles, full
+  lighting): `paint` costs 0.85–1.3 ms of an ~8.3 ms frame (~10–16%), with
+  the lighting pass a further 0.1–0.3 ms. Not a bottleneck. **Re-open only**
+  if a future scene profile shows `paint` itself becoming a real fraction of
+  a frame that is actually over budget.
+- **No 3D, ever** and **no other game engines** — see CLAUDE.md.

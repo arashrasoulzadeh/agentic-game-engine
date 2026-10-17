@@ -72,6 +72,6 @@ is not supplied by a fresh clone. Keep local sample games out of commits.
 Keep changes focused, document public API changes in the relevant package
 README, and update [CHANGELOG.md](CHANGELOG.md) for completed work.
 Use [TODO.md](TODO.md) for remaining tasks and
-[TODO_RENDER.md](TODO_RENDER.md) for parked rendering discussions.
+[TODO.md](TODO.md)'s "Parked decisions" for parked rendering discussions.
 Describe the problem, resulting behavior, and checks performed in a pull
 request. Explain why a fix works and identify any unverified device behavior.
