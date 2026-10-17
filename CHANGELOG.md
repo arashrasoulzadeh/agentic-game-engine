@@ -9,6 +9,14 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Studio: graphs are typed. Behavior trees and state machines are edited on the same
+  pan/zoom canvas as dialogue graphs, validated for their own rules, exported to
+  engine JSON in `assets/ai/` and (trees) imported from existing JSON. The project
+  window lists graphs, creates new ones from a menu, and shows level and graph
+  problems together. The standalone `bt_editor_web` package was removed.
+- `behaviorTreeNodeKinds`, `stateMachineNodeKinds`, `GraphType`, `compileBehaviorTree`,
+  `graphFromBehaviorTree`, `compileStateMachine`, `validateBehaviorTree`,
+  `validateStateMachine` (`engine_core`).
 - Real-time strategy, next layer: formations (`formationCells`, `commandSelected(formation:)`,
   `GridTapController(formation:)`), `SmoothGridToWorldSystem`, `RealtimeAISystem`
   (the turn-based AIs now drive real-time units too), and an economy: `Treasury`

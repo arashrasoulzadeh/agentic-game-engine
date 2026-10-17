@@ -1,4 +1,0 @@
-# Local monorepo development only
-dependency_overrides:
-  engine_core:
-    path: ../engine_core

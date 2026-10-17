@@ -17,16 +17,20 @@ const _portDotSize = 14.0;
 /// selected node, and a validation panel. Opens and saves
 /// `GraphDocument.toJson()` at [graphPath].
 ///
-/// Deliberately not pan/zoom: an `InteractiveViewer` (or a hand-rolled
-/// transform, as `bt_editor_web`'s canvas used) adds real complexity to
-/// every hit-test and drag coordinate in this screen, and a visual-scripting
-/// graph here is dialogue/cutscene-sized (tens of nodes), not a sprawling
-/// behavior tree — a plain scrollable canvas is enough to see and reach
-/// every node without that cost. Revisit if a real graph outgrows it.
+/// The canvas pans (drag the background) and zooms (pinch, scroll wheel, or the
+/// +/-/fit buttons). A node follows the pointer at any zoom.
 class GraphCanvasScreen extends StatefulWidget {
   final String graphPath;
 
-  const GraphCanvasScreen({super.key, required this.graphPath});
+  /// The kind of graph to start when [graphPath] doesn't exist yet. An existing
+  /// file keeps the type it was saved with.
+  final GraphType newType;
+
+  const GraphCanvasScreen({
+    super.key,
+    required this.graphPath,
+    this.newType = GraphType.dialogue,
+  });
 
   @override
   State<GraphCanvasScreen> createState() => _GraphCanvasScreenState();
@@ -35,7 +39,22 @@ class GraphCanvasScreen extends StatefulWidget {
 class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
   late GraphEditor _editor;
   late String _savedJson;
-  String _addKind = builtinNodeKinds.keys.first;
+  final TransformationController _view = TransformationController();
+
+  /// True while a pointer is down on a node. The viewer's own pan/scale
+  /// recognizer would otherwise claim the drag before the node's pan recognizer
+  /// does (its slop is smaller), so the viewer is switched off for the duration
+  /// and the node gets the gesture.
+  bool _draggingNode = false;
+  static const double _minZoom = 0.25;
+  static const double _maxZoom = 2.5;
+  late String _addKind;
+
+  /// Why the last export or import failed, shown in a banner; null when fine.
+  String? _toolError;
+
+  /// The file the last successful export wrote, relative to the project.
+  String? _exportedTo;
 
   @override
   void initState() {
@@ -45,9 +64,55 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
       final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
       _editor = GraphEditor.fromDocument(GraphDocument.fromJson(json));
     } else {
-      _editor = GraphEditor();
+      _editor = GraphEditor(type: widget.newType);
     }
+    _addKind = _editor.registry.keys.first;
     _savedJson = _encode();
+  }
+
+  @override
+  void dispose() {
+    _view.dispose();
+    super.dispose();
+  }
+
+  /// Current zoom factor (1 = actual size).
+  double get zoom => _view.value.getMaxScaleOnAxis();
+
+  /// Zooms by [factor] about the canvas origin's current screen position, clamped to
+  /// the allowed range.
+  void zoomBy(double factor) {
+    final target = (zoom * factor).clamp(_minZoom, _maxZoom);
+    final applied = target / zoom;
+    setState(
+      () =>
+          _view.value = _view.value.clone()
+            ..scaleByDouble(applied, applied, applied, 1),
+    );
+  }
+
+  /// Resets to actual size with the canvas origin at the top-left.
+  void resetView() => setState(() => _view.value = Matrix4.identity());
+
+  /// Scales and positions the view so every node is visible.
+  void fitToContent(Size viewport) {
+    if (_editor.nodes.isEmpty) return resetView();
+    var maxX = 0.0, maxY = 0.0;
+    for (final o in _editor.layout.values) {
+      if (o.dx > maxX) maxX = o.dx;
+      if (o.dy > maxY) maxY = o.dy;
+    }
+    final contentW = maxX + _nodeWidth + 40, contentH = maxY + 160;
+    final scale =
+        (viewport.width / contentW < viewport.height / contentH
+                ? viewport.width / contentW
+                : viewport.height / contentH)
+            .clamp(_minZoom, 1.0);
+    setState(
+      () =>
+          _view.value = Matrix4.identity()
+            ..scaleByDouble(scale, scale, scale, 1),
+    );
   }
 
   String _encode() =>
@@ -57,10 +122,85 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
 
   void _save() {
     final target = File(widget.graphPath);
+    // A new graph lives in a graphs/ folder that may not exist yet.
+    target.parent.createSync(recursive: true);
     final temp = File('${widget.graphPath}.tmp')
       ..writeAsStringSync(_encode(), flush: true);
     temp.renameSync(target.path);
     setState(() => _savedJson = _encode());
+  }
+
+  /// The project folder this graph belongs to: the parent of its `graphs/` folder,
+  /// or its own folder if it lives elsewhere.
+  Directory get _projectRoot {
+    final parent = File(widget.graphPath).parent;
+    return parent.path.split(Platform.pathSeparator).last == 'graphs'
+        ? parent.parent
+        : parent;
+  }
+
+  /// Compiles the graph to engine JSON and writes it to `assets/ai/<name>.json`,
+  /// which a game loads with `BTNode.fromJson` / `StateMachine.fromJson`. A compile
+  /// error is shown instead of writing anything.
+  void _export() {
+    try {
+      final name = File(
+        widget.graphPath,
+      ).uri.pathSegments.last.replaceAll(RegExp(r'\.json$'), '');
+      final json = _editor.compile(id: name, resolveTree: _resolveTree);
+      if (json == null) return;
+      final target = File('${_projectRoot.path}/assets/ai/$name.json')
+        ..parent.createSync(recursive: true)
+        ..writeAsStringSync(
+          '${const JsonEncoder.withIndent('  ').convert(json)}\n',
+        );
+      setState(() {
+        _toolError = null;
+        _exportedTo = 'assets/ai/${target.uri.pathSegments.last}';
+      });
+    } on GraphCompileException catch (e) {
+      setState(() {
+        _toolError = e.message;
+        _exportedTo = null;
+      });
+    }
+  }
+
+  /// A state's `behaviorTreeGraph`, compiled: the referenced behavior-tree graph file
+  /// loaded and compiled, or null if it is missing or doesn't compile (the state is
+  /// then exported without a tree).
+  Map<String, dynamic>? _resolveTree(String relativePath) {
+    try {
+      final file = File('${_projectRoot.path}/$relativePath');
+      final doc = GraphDocument.fromJson(
+        jsonDecode(file.readAsStringSync()) as Map<String, dynamic>,
+      );
+      return GraphEditor.fromDocument(doc).compile();
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<void> _import() async {
+    final path = await showDialog<String>(
+      context: context,
+      builder: (context) => const _ImportPathDialog(),
+    );
+    if (path == null || path.trim().isEmpty) return;
+    final file = File('${_projectRoot.path}/${path.trim()}');
+    String? error;
+    try {
+      error = _editor.importBehaviorTree(
+        jsonDecode(file.readAsStringSync()) as Map<String, dynamic>,
+      );
+    } on FileSystemException {
+      error = '${path.trim()} could not be read';
+    } on FormatException {
+      error = '${path.trim()} is not valid JSON';
+    } on TypeError {
+      error = '${path.trim()} is not a behavior tree';
+    }
+    setState(() => _toolError = error);
   }
 
   void _addNode() {
@@ -100,24 +240,6 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
           ],
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: DropdownButton<String>(
-              key: const Key('graph-add-kind'),
-              value: _addKind,
-              items: [
-                for (final kind in builtinNodeKinds.keys)
-                  DropdownMenuItem(value: kind, child: Text(kind)),
-              ],
-              onChanged: (v) => setState(() => _addKind = v!),
-            ),
-          ),
-          IconButton(
-            key: const Key('graph-add-node'),
-            tooltip: 'Add node',
-            onPressed: _addNode,
-            icon: const Icon(Icons.add_box_outlined),
-          ),
           IconButton(
             key: const Key('graph-save'),
             tooltip: 'Save',
@@ -128,6 +250,86 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
       ),
       body: Column(
         children: [
+          // The tools live in a scrollable row of their own, not in the AppBar:
+          // inside the project window this screen gets a narrow pane, and a dozen
+          // AppBar actions overflowed it.
+          SingleChildScrollView(
+            key: const Key('graph-toolbar'),
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: DropdownButton<String>(
+                    key: const Key('graph-add-kind'),
+                    value: _addKind,
+                    items: [
+                      for (final kind in _editor.registry.keys)
+                        DropdownMenuItem(value: kind, child: Text(kind)),
+                    ],
+                    onChanged: (v) => setState(() => _addKind = v!),
+                  ),
+                ),
+                IconButton(
+                  key: const Key('graph-add-node'),
+                  tooltip: 'Add node',
+                  onPressed: _addNode,
+                  icon: const Icon(Icons.add_box_outlined),
+                ),
+                if (_editor.type != GraphType.dialogue)
+                  IconButton(
+                    key: const Key('graph-export'),
+                    tooltip: 'Export engine JSON to assets/ai/',
+                    onPressed: _export,
+                    icon: const Icon(Icons.output),
+                  ),
+                if (_editor.type == GraphType.behaviorTree)
+                  IconButton(
+                    key: const Key('graph-import'),
+                    tooltip: 'Import a behavior tree JSON',
+                    onPressed: _import,
+                    icon: const Icon(Icons.input),
+                  ),
+                IconButton(
+                  key: const Key('graph-zoom-out'),
+                  tooltip: 'Zoom out',
+                  onPressed: () => zoomBy(1 / 1.25),
+                  icon: const Icon(Icons.zoom_out),
+                ),
+                IconButton(
+                  key: const Key('graph-zoom-in'),
+                  tooltip: 'Zoom in',
+                  onPressed: () => zoomBy(1.25),
+                  icon: const Icon(Icons.zoom_in),
+                ),
+                IconButton(
+                  key: const Key('graph-zoom-fit'),
+                  tooltip: 'Fit all nodes',
+                  onPressed: () => fitToContent(MediaQuery.sizeOf(context)),
+                  icon: const Icon(Icons.fit_screen_outlined),
+                ),
+              ],
+            ),
+          ),
+          if (_toolError != null)
+            Container(
+              key: const Key('graph-tool-error'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              color: theme.colorScheme.errorContainer,
+              child: Text(
+                _toolError!,
+                style: TextStyle(color: theme.colorScheme.onErrorContainer),
+              ),
+            ),
+          if (_exportedTo != null)
+            Container(
+              key: const Key('graph-exported'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              color: theme.colorScheme.secondaryContainer,
+              child: Text('Exported to $_exportedTo'),
+            ),
           if (_editor.lastError != null)
             Container(
               key: const Key('graph-port-error'),
@@ -155,13 +357,24 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
   }
 
   Widget _canvas(BuildContext context) {
-    final maxX = _editor.layout.values.fold(600.0, (m, o) => o.dx > m ? o.dx : m);
-    final maxY = _editor.layout.values.fold(600.0, (m, o) => o.dy > m ? o.dy : m);
-    return SingleChildScrollView(
-      key: const Key('graph-canvas-scroll'),
-      scrollDirection: Axis.vertical,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+    final maxX = _editor.layout.values.fold(
+      600.0,
+      (m, o) => o.dx > m ? o.dx : m,
+    );
+    final maxY = _editor.layout.values.fold(
+      600.0,
+      (m, o) => o.dy > m ? o.dy : m,
+    );
+    return ClipRect(
+      child: InteractiveViewer(
+        key: const Key('graph-canvas-viewer'),
+        transformationController: _view,
+        panEnabled: !_draggingNode,
+        scaleEnabled: !_draggingNode,
+        constrained: false,
+        boundaryMargin: const EdgeInsets.all(2000),
+        minScale: _minZoom,
+        maxScale: _maxZoom,
         child: SizedBox(
           key: const Key('graph-canvas'),
           width: maxX + 240,
@@ -189,37 +402,47 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
     return Positioned(
       left: position.dx,
       top: position.dy,
-      child: GestureDetector(
-        key: Key('graph-node-${node.id}'),
-        onTap: () => setState(() => _editor.select(node.id)),
-        onPanUpdate: (details) => setState(
-          () => _editor.moveNode(node.id, position + details.delta),
-        ),
-        child: Container(
-          width: _nodeWidth,
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            border: Border.all(
-              color: selected ? theme.colorScheme.primary : theme.dividerColor,
-              width: selected ? 2 : 1,
-            ),
-            borderRadius: BorderRadius.circular(6),
+      child: Listener(
+        onPointerDown: (_) => setState(() => _draggingNode = true),
+        onPointerUp: (_) => setState(() => _draggingNode = false),
+        onPointerCancel: (_) => setState(() => _draggingNode = false),
+        child: GestureDetector(
+          key: Key('graph-node-${node.id}'),
+          onTap: () => setState(() => _editor.select(node.id)),
+          // The pointer delta is in screen pixels; the node lives in canvas units.
+          onPanUpdate: (details) => setState(
+            () => _editor.moveNode(node.id, position + details.delta / zoom),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                node.kind == node.id ? node.kind : '${node.kind} (${node.id})',
-                style: theme.textTheme.labelMedium,
-                overflow: TextOverflow.ellipsis,
+          child: Container(
+            width: _nodeWidth,
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              border: Border.all(
+                color: selected
+                    ? theme.colorScheme.primary
+                    : theme.dividerColor,
+                width: selected ? 2 : 1,
               ),
-              const SizedBox(height: 4),
-              for (final input in kind?.inputs ?? const [])
-                _portRow(node.id, input.name, isOutput: false),
-              for (final output in outputs)
-                _portRow(node.id, output, isOutput: true),
-            ],
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  node.kind == node.id
+                      ? node.kind
+                      : '${node.kind} (${node.id})',
+                  style: theme.textTheme.labelMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                for (final input in kind?.inputs ?? const [])
+                  _portRow(node.id, input.name, isOutput: false),
+                for (final output in outputs)
+                  _portRow(node.id, output, isOutput: true),
+              ],
+            ),
           ),
         ),
       ),
@@ -239,14 +462,17 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
-        mainAxisAlignment:
-            isOutput ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isOutput
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
-          if (!isOutput) _portDot(nodeId, portName, isOutput: false, armed: armed),
+          if (!isOutput)
+            _portDot(nodeId, portName, isOutput: false, armed: armed),
           if (!isOutput) const SizedBox(width: 4),
           Text(portName, style: const TextStyle(fontSize: 11)),
           if (isOutput) const SizedBox(width: 4),
-          if (isOutput) _portDot(nodeId, portName, isOutput: true, armed: armed),
+          if (isOutput)
+            _portDot(nodeId, portName, isOutput: true, armed: armed),
         ],
       ),
     );
@@ -266,7 +492,9 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
         height: _portDotSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: armed ? Colors.amber : (isOutput ? Colors.lightBlue : Colors.green),
+          color: armed
+              ? Colors.amber
+              : (isOutput ? Colors.lightBlue : Colors.green),
         ),
       ),
     );
@@ -318,7 +546,10 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
         );
       case FieldType.list:
       case FieldType.object:
-        control = SelectableText(jsonEncode(current), key: Key('graph-field-${field.name}'));
+        control = SelectableText(
+          jsonEncode(current),
+          key: Key('graph-field-${field.name}'),
+        );
       default:
         control = TextFormField(
           key: Key('graph-field-${field.name}'),
@@ -355,7 +586,10 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
             ListTile(
               dense: true,
               key: Key('graph-issue-${issue.nodeId}-${issue.kind}'),
-              leading: Icon(Icons.error_outline, color: theme.colorScheme.error),
+              leading: Icon(
+                Icons.error_outline,
+                color: theme.colorScheme.error,
+              ),
               title: Text(issue.message),
               onTap: issue.nodeId == null
                   ? null
@@ -390,7 +624,11 @@ class _EdgesPainter extends CustomPainter {
     }
   }
 
-  Offset? _portPosition(String nodeId, String portName, {required bool isOutput}) {
+  Offset? _portPosition(
+    String nodeId,
+    String portName, {
+    required bool isOutput,
+  }) {
     final base = editor.layout[nodeId];
     if (base == null) return null;
     final node = editor.nodeById(nodeId);
@@ -398,8 +636,11 @@ class _EdgesPainter extends CustomPainter {
     final kind = editor.registry[node.kind];
     final ports = isOutput
         ? (node.kind == 'choice'
-            ? [for (final c in (node.params['choices'] as List? ?? const [])) (c as Map)['id'] as String]
-            : [for (final p in kind?.outputs ?? const []) p.name])
+              ? [
+                  for (final c in (node.params['choices'] as List? ?? const []))
+                    (c as Map)['id'] as String,
+                ]
+              : [for (final p in kind?.outputs ?? const []) p.name])
         : [for (final p in kind?.inputs ?? const []) p.name];
     final index = ports.indexOf(portName);
     if (index < 0) return null;
@@ -412,4 +653,52 @@ class _EdgesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _EdgesPainter oldDelegate) => true;
+}
+
+/// Asks for a project-relative path. Owns its text controller so it is disposed
+/// with the dialog's own element, after the closing animation - disposing it from
+/// the caller as soon as `showDialog` returned left the still-animating field
+/// using a dead controller.
+class _ImportPathDialog extends StatefulWidget {
+  const _ImportPathDialog();
+
+  @override
+  State<_ImportPathDialog> createState() => _ImportPathDialogState();
+}
+
+class _ImportPathDialogState extends State<_ImportPathDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Import a behavior tree'),
+      content: TextField(
+        key: const Key('graph-import-path'),
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          hintText: 'path relative to the project, e.g. assets/ai/guard.json',
+        ),
+        onSubmitted: (v) => Navigator.pop(context, v),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          key: const Key('graph-import-confirm'),
+          onPressed: () => Navigator.pop(context, _controller.text),
+          child: const Text('Import'),
+        ),
+      ],
+    );
+  }
 }

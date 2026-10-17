@@ -203,9 +203,15 @@ class DartHighlightController extends TextEditingController {
           decorationColor: const Color(0xFFCCA700),
         );
       case MarkKind.searchMatch:
-        return TextStyle(color: colour, backgroundColor: const Color(0x66FFA500));
+        return TextStyle(
+          color: colour,
+          backgroundColor: const Color(0x66FFA500),
+        );
       case MarkKind.currentMatch:
-        return TextStyle(color: colour, backgroundColor: const Color(0xAAFFA500));
+        return TextStyle(
+          color: colour,
+          backgroundColor: const Color(0xAAFFA500),
+        );
       case MarkKind.bracket:
         return TextStyle(
           color: colour,

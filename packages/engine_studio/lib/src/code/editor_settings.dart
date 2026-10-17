@@ -45,9 +45,7 @@ class EditorSettings {
     return EditorSettings(
       fontSize: fontSize is num ? fontSize.toDouble() : fallback.fontSize,
       tabWidth: tabWidth is int ? tabWidth : fallback.tabWidth,
-      formatOnSave: formatOnSave is bool
-          ? formatOnSave
-          : fallback.formatOnSave,
+      formatOnSave: formatOnSave is bool ? formatOnSave : fallback.formatOnSave,
     );
   }
 }

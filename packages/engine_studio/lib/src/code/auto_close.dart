@@ -26,7 +26,9 @@ const _closers = {')', ']', '}', '"', "'"};
   final withoutTyped = text.substring(0, cursor - 1) + text.substring(cursor);
   if (withoutTyped != previous) return null;
 
-  if (_closers.contains(typed) && cursor < text.length && text[cursor] == typed) {
+  if (_closers.contains(typed) &&
+      cursor < text.length &&
+      text[cursor] == typed) {
     return (withoutTyped, cursor);
   }
   final closer = _pairFor[typed];

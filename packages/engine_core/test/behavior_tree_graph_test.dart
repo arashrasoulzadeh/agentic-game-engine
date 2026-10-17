@@ -10,6 +10,7 @@ GraphEdge _e(String from, String port, String to) =>
     GraphEdge(fromNode: from, fromPort: port, toNode: to, toPort: 'in');
 
 void main() {
+  stateMachineValidationTests();
   group('kinds', () {
     test('every node type the engine can load has a kind, and nothing else', () {
       // The engine's BTNode.fromJson switch, by round-tripping one of each.
@@ -368,6 +369,45 @@ void main() {
         ],
       );
       expect(fail(twice).message, contains('two transitions to "b"'));
+    });
+  });
+}
+
+void stateMachineValidationTests() {
+  group('validateStateMachine', () {
+    test('a looping machine is fine (states are supposed to cycle)', () {
+      final g = Graph(
+        entryNodeId: 'a',
+        nodes: [
+          _n('a', 'state', {'name': 'a'}),
+          _n('b', 'state', {'name': 'b'}),
+          _n('t1', 'transition', {'condition': 'go'}),
+          _n('t2', 'transition', {'condition': 'back'}),
+        ],
+        edges: [
+          GraphEdge(fromNode: 'a', fromPort: 'out', toNode: 't1', toPort: 'in'),
+          GraphEdge(fromNode: 't1', fromPort: 'out', toNode: 'b', toPort: 'in'),
+          GraphEdge(fromNode: 'b', fromPort: 'out', toNode: 't2', toPort: 'in'),
+          GraphEdge(fromNode: 't2', fromPort: 'out', toNode: 'a', toPort: 'in'),
+        ],
+      );
+      expect(validateStateMachine(g), isEmpty);
+    });
+
+    test('compile-blocking mistakes show up as issues on the node at fault', () {
+      final g = Graph(
+        entryNodeId: 'a',
+        nodes: [_n('a', 'state', {'name': 'a'}), _n('t', 'transition', {'condition': 'c'})],
+        edges: [GraphEdge(fromNode: 'a', fromPort: 'out', toNode: 't', toPort: 'in')],
+      );
+      final issues = validateStateMachine(g);
+      expect(issues.any((i) => i.nodeId == 't' && i.message.contains('exactly one state')), isTrue);
+    });
+
+    test('an empty graph reports no entry and no states', () {
+      final messages = [for (final i in validateStateMachine(const Graph())) i.message];
+      expect(messages.any((m) => m.contains('no entry node')), isTrue);
+      expect(messages.any((m) => m.contains('at least one state')), isTrue);
     });
   });
 }

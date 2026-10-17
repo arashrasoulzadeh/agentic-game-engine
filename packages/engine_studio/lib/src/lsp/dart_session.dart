@@ -294,7 +294,8 @@ class DartSession {
     }
 
     final items = result.cast<Map<String, dynamic>>();
-    final isNested = items.isNotEmpty &&
+    final isNested =
+        items.isNotEmpty &&
         (items.first.containsKey('range') ||
             items.first.containsKey('selectionRange'));
     if (isNested) {
@@ -305,8 +306,9 @@ class DartSession {
     final depthByName = <String, int>{};
     for (final raw in items) {
       final location = raw['location'] as Map<String, dynamic>;
-      final start = (location['range'] as Map<String, dynamic>)['start']
-          as Map<String, dynamic>;
+      final start =
+          (location['range'] as Map<String, dynamic>)['start']
+              as Map<String, dynamic>;
       final name = raw['name'] as String;
       final container = raw['containerName'] as String?;
       final depth = container == null ? 0 : (depthByName[container] ?? 0) + 1;

@@ -61,10 +61,11 @@ List<ProjectEntry> listProjectTree(String root) {
 
 /// The types the file manager can filter by. [all] shows the tree; the others show
 /// matching files as a flat list.
-enum FileKind { all, code, level, image, data, other }
+enum FileKind { all, code, level, graph, image, data, other }
 
-/// Which filter a file belongs to. Levels are JSON under `assets/levels`, so they are
-/// told apart from other JSON; images are the formats the viewer can show.
+/// Which filter a file belongs to. Levels are JSON under `assets/levels` and
+/// visual-scripting graphs are JSON under `graphs/`, so both are told apart from
+/// other JSON; images are the formats the viewer can show.
 FileKind kindOf(ProjectEntry entry) {
   if (entry.isDirectory) return FileKind.other;
   final name = entry.name.toLowerCase();
@@ -72,6 +73,9 @@ FileKind kindOf(ProjectEntry entry) {
   if (name.endsWith('.json') &&
       entry.relativePath.startsWith('assets/levels/')) {
     return FileKind.level;
+  }
+  if (name.endsWith('.json') && entry.relativePath.startsWith('graphs/')) {
+    return FileKind.graph;
   }
   if (_imageExtensions.any(name.endsWith)) return FileKind.image;
   if (name.endsWith('.json') ||

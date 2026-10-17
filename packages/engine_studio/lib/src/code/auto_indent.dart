@@ -33,5 +33,8 @@ const _closerFor = {'{': '}', '[': ']', '(': ')'};
     );
   }
   final inserted = '\n$indent';
-  return (text.replaceRange(cursor, cursor, inserted), cursor + inserted.length);
+  return (
+    text.replaceRange(cursor, cursor, inserted),
+    cursor + inserted.length,
+  );
 }

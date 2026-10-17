@@ -11,9 +11,19 @@ class GraphDocument {
   final Graph graph;
   final Map<String, Offset> layout;
 
-  const GraphDocument({required this.graph, this.layout = const {}});
+  /// Which family of graph this is - it decides the node kinds on offer and how the
+  /// graph validates and compiles. Omitted from the file for the default
+  /// ([GraphType.dialogue]) so existing graph files are unchanged.
+  final GraphType type;
+
+  const GraphDocument({
+    required this.graph,
+    this.layout = const {},
+    this.type = GraphType.dialogue,
+  });
 
   Map<String, dynamic> toJson() => {
+    if (type != GraphType.dialogue) 'type': type.name,
     'graph': graph.toJson(),
     if (layout.isNotEmpty)
       'layout': {
@@ -23,6 +33,7 @@ class GraphDocument {
   };
 
   factory GraphDocument.fromJson(Map<String, dynamic> json) => GraphDocument(
+    type: GraphType.parse(json['type']),
     graph: Graph.fromJson((json['graph'] as Map).cast<String, dynamic>()),
     layout: {
       for (final entry in (json['layout'] as Map? ?? const {}).entries)
@@ -50,6 +61,10 @@ class GraphEditor {
   final Map<String, Offset> layout = {};
   final Map<String, NodeKind> registry;
 
+  /// Dialogue, behavior tree or state machine. Chooses the validator and what
+  /// [compile] does; [registry] defaults to this type's node kinds.
+  final GraphType type;
+
   String? selectedNodeId;
 
   /// An output port the designer has clicked, waiting for a matching input
@@ -59,13 +74,14 @@ class GraphEditor {
 
   String? lastError;
 
-  GraphEditor({this.registry = builtinNodeKinds});
+  GraphEditor({this.type = GraphType.dialogue, Map<String, NodeKind>? registry})
+    : registry = registry ?? type.registry;
 
   factory GraphEditor.fromDocument(
     GraphDocument document, {
-    Map<String, NodeKind> registry = builtinNodeKinds,
+    Map<String, NodeKind>? registry,
   }) {
-    final editor = GraphEditor(registry: registry);
+    final editor = GraphEditor(type: document.type, registry: registry);
     editor._nodes.addAll(document.graph.nodes);
     editor._edges.addAll(document.graph.edges);
     editor._variables.addAll(document.graph.variables);
@@ -85,11 +101,65 @@ class GraphEditor {
     entryNodeId: entryNodeId,
   );
 
-  GraphDocument get document => GraphDocument(graph: graph, layout: Map.of(layout));
+  GraphDocument get document =>
+      GraphDocument(graph: graph, layout: Map.of(layout), type: type);
 
-  List<GraphIssue> validate() => validateGraph(graph, registry: registry);
+  /// Problems with the graph, by type: behavior trees check tree shape, state
+  /// machines allow (and expect) loops, everything else uses the generic graph checks.
+  List<GraphIssue> validate() => switch (type) {
+    GraphType.behaviorTree => validateBehaviorTree(graph),
+    GraphType.stateMachine => validateStateMachine(graph),
+    GraphType.dialogue => validateGraph(graph, registry: registry),
+  };
+
+  /// The engine JSON for this graph (`BTNode` / `StateMachine` format), or null for a
+  /// dialogue graph, which has no single compiled form here. Behavior-tree children
+  /// follow the canvas left-to-right. Throws [GraphCompileException] if the graph
+  /// can't be compiled; [resolveTree] is passed to state machines (see
+  /// [compileStateMachine]).
+  Map<String, dynamic>? compile({
+    String id = 'fsm',
+    Map<String, dynamic>? Function(String graphPath)? resolveTree,
+  }) => switch (type) {
+    GraphType.behaviorTree => compileBehaviorTree(
+      graph,
+      order: {for (final e in layout.entries) e.key: e.value.dx},
+    ),
+    GraphType.stateMachine => compileStateMachine(
+      graph,
+      id: id,
+      resolveTree: resolveTree,
+    ),
+    GraphType.dialogue => null,
+  };
 
   GraphNode? nodeById(String id) => graph.nodeById(id);
+
+  /// Fills this (empty, behavior-tree) editor from engine behavior-tree JSON, laid
+  /// out as a tree. Refuses - returning an explanation instead of throwing - when
+  /// the editor already has nodes (an import must never silently destroy work) or
+  /// isn't a behavior tree, or the JSON isn't a valid tree.
+  String? importBehaviorTree(Map<String, dynamic> json) {
+    if (type != GraphType.behaviorTree) {
+      return 'only a behavior-tree graph can import a tree';
+    }
+    if (_nodes.isNotEmpty) {
+      return 'import into an empty graph; this one already has nodes';
+    }
+    final ImportedGraph imported;
+    try {
+      imported = graphFromBehaviorTree(json);
+    } on FormatException catch (e) {
+      return 'that is not a behavior tree: ${e.message}';
+    }
+    _nodes.addAll(imported.graph.nodes);
+    _edges.addAll(imported.graph.edges);
+    entryNodeId = imported.graph.entryNodeId;
+    for (final e in imported.layout.entries) {
+      layout[e.key] = Offset(40 + e.value.$1, 40 + e.value.$2);
+    }
+    return null;
+  }
 
   /// Adds a node of [kind] at [position], with an auto-generated id unique
   /// in this graph. The first node added becomes the entry automatically,
@@ -102,7 +172,16 @@ class GraphEditor {
       index++;
       id = '$kind$index';
     }
-    final node = GraphNode(id: id, kind: kind);
+    // AI nodes start with their schema defaults (a `wait` needs a duration to mean
+    // anything); dialogue nodes start empty, as they always have.
+    final defaults = type == GraphType.dialogue
+        ? const <String, dynamic>{}
+        : {
+            for (final f
+                in registry[kind]?.paramsSchema ?? const <FieldSchema>[])
+              if (f.defaultValue != null) f.name: f.defaultValue,
+          };
+    final node = GraphNode(id: id, kind: kind, params: defaults);
     _nodes.add(node);
     layout[id] = position;
     entryNodeId ??= id;
@@ -132,7 +211,11 @@ class GraphEditor {
   void setParams(String nodeId, Map<String, dynamic> params) {
     final index = _nodes.indexWhere((n) => n.id == nodeId);
     if (index < 0) return;
-    _nodes[index] = GraphNode(id: nodeId, kind: _nodes[index].kind, params: params);
+    _nodes[index] = GraphNode(
+      id: nodeId,
+      kind: _nodes[index].kind,
+      params: params,
+    );
   }
 
   /// Click-to-connect: call once with an output port to arm it, then again
@@ -145,7 +228,8 @@ class GraphEditor {
     final armed = armedOutput;
     if (armed == null) {
       if (!isOutput) {
-        lastError = 'click an output port first, then the input to connect it to';
+        lastError =
+            'click an output port first, then the input to connect it to';
         return;
       }
       armedOutput = (nodeId, portName);
@@ -153,7 +237,8 @@ class GraphEditor {
     }
     armedOutput = null;
     if (isOutput) {
-      lastError = 'that is another output port — click an input port to finish the connection';
+      lastError =
+          'that is another output port — click an input port to finish the connection';
       return;
     }
     final fromType = _outputPortType(armed.$1, armed.$2);
@@ -169,7 +254,12 @@ class GraphEditor {
     }
     _edges.removeWhere((e) => e.toNode == nodeId && e.toPort == portName);
     _edges.add(
-      GraphEdge(fromNode: armed.$1, fromPort: armed.$2, toNode: nodeId, toPort: portName),
+      GraphEdge(
+        fromNode: armed.$1,
+        fromPort: armed.$2,
+        toNode: nodeId,
+        toPort: portName,
+      ),
     );
   }
 

@@ -298,6 +298,22 @@ ImportedGraph graphFromBehaviorTree(
   return ImportedGraph(Graph(nodes: nodes, edges: edges, entryNodeId: rootId), layout);
 }
 
+/// Problems with a state-machine [graph], for the editor. The generic graph checks
+/// minus the cycle rule (a state machine is *supposed* to loop), plus anything that
+/// would stop [compileStateMachine] - reported against the node at fault.
+List<GraphIssue> validateStateMachine(Graph graph) {
+  final issues = [
+    for (final i in validateGraph(graph, registry: stateMachineNodeKinds))
+      if (i.kind != GraphIssueKind.cycleWithoutWait) i,
+  ];
+  try {
+    compileStateMachine(graph);
+  } on GraphCompileException catch (e) {
+    issues.add(GraphIssue(GraphIssueKind.unknownPort, e.message, nodeId: e.nodeId));
+  }
+  return issues;
+}
+
 /// Compiles a state-machine [graph] to the JSON `StateMachine.fromJson` loads.
 ///
 /// The first `state` node (or [Graph.entryNodeId] if set) is the initial state.

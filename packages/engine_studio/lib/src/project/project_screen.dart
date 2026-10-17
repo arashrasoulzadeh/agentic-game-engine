@@ -1,12 +1,15 @@
 import 'dart:io';
 
+import 'package:engine_core/engine_core.dart' show GraphType;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import '../code/code_editor_screen.dart';
+import '../graph/graph_canvas_screen.dart';
 import '../level/level_screen.dart';
 import 'image_view.dart';
+import 'project_problems.dart';
 import 'project_search.dart';
 import 'project_tree.dart';
 import 'studio_project.dart';
@@ -32,6 +35,9 @@ class ProjectScreen extends StatefulWidget {
 
 class _ProjectScreenState extends State<ProjectScreen> {
   String? _open;
+
+  /// The kind of graph to create when the file just opened doesn't exist yet.
+  GraphType _newGraphType = GraphType.dialogue;
   int _jumpLine = 0;
   int _jumpCharacter = 0;
 
@@ -39,6 +45,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
   final Set<String> _expanded = {};
   FileKind _filter = FileKind.all;
 
+  bool _problemsOpen = false;
   bool _searchOpen = false;
   final TextEditingController _searchController = TextEditingController();
   List<ProjectMatch> _searchResults = const [];
@@ -49,7 +56,36 @@ class _ProjectScreenState extends State<ProjectScreen> {
     super.dispose();
   }
 
-  void _openSearch() => setState(() => _searchOpen = true);
+  void _openSearch() => setState(() {
+    _searchOpen = true;
+    _problemsOpen = false;
+  });
+
+  void _toggleProblems() => setState(() {
+    _problemsOpen = !_problemsOpen;
+    if (_problemsOpen) _searchOpen = false;
+  });
+
+  /// Opens the file a problem came from, then dismisses the problems panel.
+  void _openProblem(ProjectProblem problem) {
+    setState(() {
+      _open = problem.file;
+      _jumpLine = 0;
+      _jumpCharacter = 0;
+      _problemsOpen = false;
+    });
+  }
+
+  /// Starts a new graph: opens the next free `graphs/graphN.json`. The file is
+  /// created on the graph editor's first save, so abandoning it leaves nothing behind.
+  void _newGraph(GraphType type) {
+    setState(() {
+      _newGraphType = type;
+      _open = widget.project.nextGraphPath();
+      _problemsOpen = false;
+      _filter = FileKind.all;
+    });
+  }
 
   void _closeSearch() => setState(() {
     _searchOpen = false;
@@ -96,6 +132,35 @@ class _ProjectScreenState extends State<ProjectScreen> {
         appBar: AppBar(
           title: Text(p.basename(widget.project.root)),
           actions: [
+            PopupMenuButton<GraphType>(
+              key: const Key('project-new-graph'),
+              tooltip: 'New graph',
+              icon: const Icon(Icons.account_tree_outlined),
+              onSelected: _newGraph,
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  key: Key('new-graph-dialogue'),
+                  value: GraphType.dialogue,
+                  child: Text('Dialogue / cutscene graph'),
+                ),
+                PopupMenuItem(
+                  key: Key('new-graph-behaviorTree'),
+                  value: GraphType.behaviorTree,
+                  child: Text('Behavior tree'),
+                ),
+                PopupMenuItem(
+                  key: Key('new-graph-stateMachine'),
+                  value: GraphType.stateMachine,
+                  child: Text('State machine'),
+                ),
+              ],
+            ),
+            IconButton(
+              key: const Key('project-problems'),
+              tooltip: 'Problems in levels and graphs',
+              onPressed: _toggleProblems,
+              icon: const Icon(Icons.rule),
+            ),
             IconButton(
               key: const Key('project-search'),
               tooltip: 'Find in project (Cmd/Ctrl+Shift+F)',
@@ -112,7 +177,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
             children: [
               SizedBox(
                 width: 260,
-                child: _searchOpen ? _searchPanel() : _treePanel(shown),
+                child: _problemsOpen
+                    ? _problemsPanel()
+                    : (_searchOpen ? _searchPanel() : _treePanel(shown)),
               ),
               VerticalDivider(width: 1, color: Theme.of(context).dividerColor),
               Expanded(child: _content()),
@@ -134,6 +201,67 @@ class _ProjectScreenState extends State<ProjectScreen> {
           child: ListView(
             key: const Key('file-tree'),
             children: [for (final entry in shown) _row(entry)],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Every level and graph problem in the project, errors first, in one list. Tapping
+  /// one opens its file. Recomputed each time the panel is opened (and on rebuild
+  /// while open), so it reflects what is on disk.
+  Widget _problemsPanel() {
+    final problems = collectProjectProblems(widget.project)
+      ..sort((a, b) => a.isError == b.isError ? 0 : (a.isError ? -1 : 1));
+    final errors = problems.where((x) => x.isError).length;
+    return Column(
+      key: const Key('project-problems-panel'),
+      children: [
+        ListTile(
+          dense: true,
+          title: Text(
+            problems.isEmpty
+                ? 'No problems in any level or graph'
+                : '$errors error(s), ${problems.length - errors} warning(s)',
+            key: const Key('project-problems-summary'),
+          ),
+          trailing: IconButton(
+            key: const Key('project-problems-close'),
+            tooltip: 'Close',
+            iconSize: 16,
+            onPressed: _toggleProblems,
+            icon: const Icon(Icons.close),
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            key: const Key('project-problems-list'),
+            children: [
+              for (var i = 0; i < problems.length; i++)
+                ListTile(
+                  key: Key('project-problem-$i'),
+                  dense: true,
+                  leading: Icon(
+                    problems[i].isError
+                        ? Icons.error_outline
+                        : Icons.warning_amber_outlined,
+                    size: 18,
+                    color: problems[i].isError
+                        ? Theme.of(context).colorScheme.error
+                        : null,
+                  ),
+                  title: Text(
+                    problems[i].message,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                  subtitle: Text(
+                    '${problems[i].source == ProblemSource.level ? 'level' : 'graph'} · ${problems[i].file}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () => _openProblem(problems[i]),
+                ),
+            ],
           ),
         ),
       ],
@@ -266,6 +394,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
         projectRoot: widget.project.root,
       );
     }
+    if (kindOf(ProjectEntry(open, isDirectory: false)) == FileKind.graph) {
+      return GraphCanvasScreen(
+        key: ValueKey(fullPath),
+        graphPath: fullPath,
+        newType: _newGraphType,
+      );
+    }
     if (kindOf(ProjectEntry(open, isDirectory: false)) == FileKind.image) {
       return ImageView(key: ValueKey(fullPath), filePath: fullPath);
     }
@@ -305,6 +440,7 @@ class _FilterBar extends StatelessWidget {
     FileKind.all: 'All',
     FileKind.code: 'Code',
     FileKind.level: 'Levels',
+    FileKind.graph: 'Graphs',
     FileKind.image: 'Images',
     FileKind.data: 'Data',
     FileKind.other: 'Other',

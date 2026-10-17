@@ -159,30 +159,6 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 - [ ] Not in the IDE scope yet (each its own phase): a debugger, a terminal,
       git integration, running `pub get` from the studio.
 
-### Visual scripting (phase 4; replaces the old "Visual scripting / node editor")
-
-Graph data model, node registry, validator and the dialogue compiler are
-done (4.1–4.7). Left:
-
-- [ ] **Wire the graph editor into the studio** — `GraphCanvasScreen` /
-      `GraphEditor` (`engine_studio/lib/src/graph/`, committed, tested) is not
-      reachable from the project screen yet: add an entry point that lists
-      `graphs/*.json`, opens one, and shows graph errors in the shared
-      validation panel (4.11).
-- [ ] **4.9 follow-up** — the canvas is a plain scrollable surface, with no
-      pan/zoom; add them if real graphs outgrow it (see the screen's doc
-      comment).
-- [ ] **4.8** Migrate `bt_editor_web` node-canvas code into
-      `engine_studio/lib/graph/` as the shared canvas widget.
-- [ ] **4.9** Graph canvas widget: pan, zoom, connect ports, select.
-- [ ] **4.10** Node inspector (params generated from the node kind schema).
-- [ ] **4.11** Save/load `graphs/*.json`; the validation panel shows graph
-      errors alongside level errors.
-- [ ] **4.12** Widget tests for connect/disconnect and invalid-connection
-      rejection.
-- [ ] **4.13** Retire `packages/bt_editor_web` once the studio canvas covers
-      its features; update docs.
-
 ### Assets, prefabs, interchange (phase 5)
 
 - [ ] **5.1** Asset browser: lists `assets/`, previews atlases, shows sprite
@@ -203,8 +179,6 @@ done (4.1–4.7). Left:
 
 ### Behaviors, profiling, polish (phase 6)
 
-- [ ] **6.1** Behavior-tree and FSM editing in the studio, reusing the phase 4
-      graph canvas.
 - [ ] **6.2 / 6.3** Studio profiler panel: show `WorldProfiler.report()`,
       `FrameStats` history and `FrameTimingMonitor` data from a running
       play-test (the engine side is done: `world.profiler`, `DebugOverlay`).
