@@ -51,6 +51,17 @@ class GridNavigator {
     return terrainCost(c, r);
   }
 
+  /// The cells a unit standing on ([c], [r]) can step into, as `(col, row, cost)`:
+  /// in bounds, passable, not [blocked], diagonals only where the corner rule allows.
+  /// The same adjacency `findPath` and `reachable` use, public so other planners
+  /// (see `FlowField`) agree with them about what a legal step is.
+  Iterable<(int, int, int)> neighbours(
+    int c,
+    int r, {
+    bool Function(int col, int row)? blocked,
+  }) =>
+      _neighbours(c, r, blocked ?? (_, _) => false);
+
   Iterable<(int, int, int)> _neighbours(
     int c,
     int r,

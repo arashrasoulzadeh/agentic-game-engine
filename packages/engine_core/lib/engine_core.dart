@@ -88,6 +88,7 @@ export 'src/turn/turn_system.dart';
 export 'src/turn/order.dart';
 export 'src/turn/order_system.dart';
 export 'src/turn/grid_navigation.dart';
+export 'src/turn/flow_field.dart';
 export 'src/turn/selection.dart';
 export 'src/turn/combat.dart';
 export 'src/turn/status.dart';
