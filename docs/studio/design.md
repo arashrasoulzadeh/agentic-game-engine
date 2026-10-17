@@ -120,8 +120,9 @@ CI. Web is optional and view-only; it is not a substitute for a desktop build.
 | `engine_cli` | `studio validate`, `studio export`, `studio import-tmx` | `engine_core` |
 | `engine_studio` (new, Flutter app, separately installable) | Editor UI, inspector, graph canvas, asset browser | all of the above |
 
-`bt_editor_web` was a standalone app; its features moved into `engine_studio` (and the package was removed) in
-phase 4 and is then deleted.
+`bt_editor_web` was a standalone app. Its node-canvas features now live in
+`engine_studio` (typed graphs: dialogue, behavior tree, state machine) and the
+package has been deleted.
 
 ### 2.2 Data model (what the studio reads and writes)
 
