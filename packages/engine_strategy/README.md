@@ -37,7 +37,10 @@ GridTapController(48).handleTap(world, worldPosition);
 `submitOrder`),
 `attackRange`/`attackCost`, `defendBonus`, `selectionMarkers`, and
 `moveHighlight: (atlasId: 'terrain', region: 'highlight')` to light up the
-selected unit's reachable cells (`MoveRangeHighlightSystem`).
+selected unit's reachable cells (`MoveRangeHighlightSystem`), and
+`fogShade: (team:, atlasId:, unknownRegion:, exploredRegion:, clearRegion:)` (needs
+`fog: true`) to draw the fog and hide enemies the team can't see
+(`FogShadeSystem`).
 
 ## System order
 

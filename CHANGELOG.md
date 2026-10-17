@@ -9,6 +9,10 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `FogShadeSystem` (`installStrategySystems(fogShade:)`): draws fog of war for
+  the local team and hides enemy sprites in unseen cells (`FogHidden`). The
+  `strategy_game` starter now has fog, a `TacticalAI` opponent that explores,
+  terrain and a move-range highlight.
 - `OverwatchOrder` / `OverwatchTriggeredEvent`: a unit holds its points and
   shoots the first enemy to move into its range, stopping that enemy mid-path.
   `resolveAttack` applies a hit immediately (what `installCombat` uses per event).

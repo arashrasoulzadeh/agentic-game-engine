@@ -123,9 +123,6 @@ The turn-based layer is feature-complete for a first release (turn clock,
 orders, grid navigation, combat, fog of war, selection, AI turns,
 `engine_strategy`, `strategy_game` template). Left:
 
-- [ ] **Fog shading in the `strategy_game` template** — the starter has terrain
-      and a move-range highlight but no fog; show `FogOfWar` (visible / explored /
-      unknown) as an overlay and hide unseen enemies (`canSee`).
 - [ ] **Objective-driven AI** — capture points, escort and defend-the-flag
       behaviours for `TurnAI`, beyond `TacticalAI`'s kill-or-explore logic.
 - [ ] **Real-time strategy** — the order, selection, navigation and fog layers

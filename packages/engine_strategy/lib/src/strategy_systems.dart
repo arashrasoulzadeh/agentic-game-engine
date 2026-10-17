@@ -1,6 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 
+import 'fog_shade.dart';
 import 'move_range_highlight.dart';
 
 /// Registers everything a turn-based strategy game needs, in the one
@@ -21,7 +22,9 @@ import 'move_range_highlight.dart';
 /// 6. `GridToWorldSystem` -- syncs `Position` from the final cells so
 ///    rendering never lags a tick behind.
 /// 7. `SelectionMarkerSystem`, so markers follow the synced `Position`.
-/// 8. `MoveRangeHighlightSystem` (only with [moveHighlight]) last: it reads the
+/// 8. `FogShadeSystem` (only with [fogShade], which needs `fog: true`), after
+///    `VisionSystem` has updated what the team sees.
+/// 9. `MoveRangeHighlightSystem` (only with [moveHighlight]) last: it reads the
 ///    final selection, cells and points.
 ///
 /// Also calls `installCombat` (attack orders -> damage). Add your own
@@ -49,6 +52,13 @@ EntityId? installStrategySystems(
   bool fog = false,
   bool selectionMarkers = true,
   ({String atlasId, String region})? moveHighlight,
+  ({
+    String team,
+    String atlasId,
+    String unknownRegion,
+    String exploredRegion,
+    String clearRegion,
+  })? fogShade,
 }) {
   EntityId? fogEntity;
   if (fog) {
@@ -67,16 +77,21 @@ EntityId? installStrategySystems(
   world.addSystem(WinConditionSystem());
   world.addSystem(GridToWorldSystem(cellSize));
   if (selectionMarkers) world.addSystem(SelectionMarkerSystem(cellSize));
+  if (fogShade != null) {
+    if (!fog) throw ArgumentError('fogShade needs fog: true');
+    _registerOnce<FogShadeCell>(world, 'fogShadeCell', (c) => c.toJson(), FogShadeCell.fromJson);
+    _registerOnce<FogHidden>(world, 'fogHidden', (h) => h.toJson(), FogHidden.fromJson);
+    world.addSystem(FogShadeSystem(
+      team: fogShade.team,
+      cellSize: cellSize,
+      atlasId: fogShade.atlasId,
+      unknownRegion: fogShade.unknownRegion,
+      exploredRegion: fogShade.exploredRegion,
+      clearRegion: fogShade.clearRegion,
+    ));
+  }
   if (moveHighlight != null) {
-    // Registered here (not in registerFlutterComponents) because the marker is
-    // this package's own type; a no-op if the game already registered it.
-    if (!world.components.all.any((r) => r.name == 'moveRangeMarker')) {
-      world.components.register<MoveRangeMarker>(
-        'moveRangeMarker',
-        (m) => m.toJson(),
-        MoveRangeMarker.fromJson,
-      );
-    }
+    _registerOnce<MoveRangeMarker>(world, 'moveRangeMarker', (m) => m.toJson(), MoveRangeMarker.fromJson);
     world.addSystem(MoveRangeHighlightSystem(
       navigator: navigator,
       cellSize: cellSize,
@@ -86,4 +101,17 @@ EntityId? installStrategySystems(
   }
   installCombat(world);
   return fogEntity;
+}
+
+/// Registers one of this package's own component types, unless it already is. These
+/// are not in `registerFlutterComponents` (they belong to this package), so the
+/// install call that needs them registers them; calling it twice is harmless.
+void _registerOnce<T>(
+  World world,
+  String name,
+  Map<String, dynamic> Function(T) toJson,
+  T Function(Map<String, dynamic>) fromJson,
+) {
+  if (world.components.all.any((r) => r.name == name)) return;
+  world.components.register<T>(name, toJson, fromJson);
 }

@@ -35,6 +35,25 @@ canSee(world, 'red', scout);       // true  — you always know your own units
 
 ## Drawing the fog
 
+The quickest way is built in: pass `fogShade` to `installStrategySystems`.
+
+```dart
+installStrategySystems(world,
+    navigator: nav, cellSize: 48, fog: true,
+    fogShade: (
+      team: 'red',                       // whose view to show
+      atlasId: 'terrain',
+      unknownRegion: 'fog_unknown',      // opaque, never seen
+      exploredRegion: 'fog_explored',    // translucent, seen before
+      clearRegion: 'fog_clear',          // fully transparent, in sight
+    ));
+```
+
+`FogShadeSystem` keeps one shade tile per cell (touching a tile only when its
+state changes) and parks the `Sprite` of any enemy standing where `red` can't see
+in a `FogHidden` component, restoring it when seen. To draw it yourself instead,
+loop the grid and shade by state:
+
 Loop the grid and shade by state:
 
 | State | Test | Draw |

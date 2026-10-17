@@ -15,6 +15,9 @@ import 'package:flutter/material.dart' hide Velocity, Action, Text;
 // - Terrain: forest (dark green) costs 3 points to enter, mountains are
 //   impassable. The map is a TileMap; GridNavigator.fromTileMap reads the costs
 //   from it, so the picture and the rules can't disagree.
+// - Fog of war: you only see within 4 cells (mountains block sight). Cells you
+//   have seen stay dimmed; enemies out of sight are hidden, and so are your
+//   attacks on them. Blue is a TacticalAI that explores to find you.
 // - Tap the strip below the grid to end your turn; blue then plays
 //   its turn automatically.
 // - assets/game_config.json sets the world size (grid + one button row).
@@ -78,25 +81,36 @@ class SkirmishScene extends Scene {
     world.storeOf<Position>().set(mapEntity, Position(0, 0));
     world.storeOf<TileMap>().set(mapEntity, map);
 
+    final nav = GridNavigator.fromTileMap(map, terrainCosts: {_forest: 3});
     installStrategySystems(
       world,
-      navigator: GridNavigator.fromTileMap(map, terrainCosts: {_forest: 3}),
+      navigator: nav,
+      cellSize: _cell,
+      // Blue is the computer: TacticalAI focuses fire, retreats when hurt and
+      // explores the fog to find you. Remove the line for hot-seat play, or pass
+      // your own TurnAI (anything that calls submitOrder).
+      aiTeams: {'blue': TacticalAI(navigator: nav)},
+      fog: true,
+      blocksSight: (col, row) => _terrain[row * _grid + col] == _mountain,
+      fogShade: (
+        team: 'red',
+        atlasId: 'terrain',
+        unknownRegion: 'fog_unknown',
+        exploredRegion: 'fog_explored',
+        clearRegion: 'fog_clear',
+      ),
       // Lights up the cells the selected unit can reach (MoveRangeHighlightSystem).
       moveHighlight: (atlasId: 'terrain', region: 'highlight'),
-      cellSize: _cell,
-      // Blue is the computer. Remove this line for hot-seat play, or
-      // pass your own TurnAI (anything that calls submitOrder).
-      aiTeams: {'blue': AggressiveAI()},
     );
 
     spawnStrategyUnit(world,
-        team: 'red', col: 1, row: 6, cellSize: _cell, atlasId: 'units', spriteRegion: 'red');
+        team: 'red', col: 1, row: 6, cellSize: _cell, visionRange: 4, atlasId: 'units', spriteRegion: 'red');
     spawnStrategyUnit(world,
-        team: 'red', col: 2, row: 6, cellSize: _cell, atlasId: 'units', spriteRegion: 'red');
+        team: 'red', col: 2, row: 6, cellSize: _cell, visionRange: 4, atlasId: 'units', spriteRegion: 'red');
     spawnStrategyUnit(world,
-        team: 'blue', col: 5, row: 1, cellSize: _cell, atlasId: 'units', spriteRegion: 'blue');
+        team: 'blue', col: 5, row: 1, cellSize: _cell, visionRange: 4, atlasId: 'units', spriteRegion: 'blue');
     spawnStrategyUnit(world,
-        team: 'blue', col: 6, row: 1, cellSize: _cell, atlasId: 'units', spriteRegion: 'blue');
+        team: 'blue', col: 6, row: 1, cellSize: _cell, visionRange: 4, atlasId: 'units', spriteRegion: 'blue');
 
     _label = world.spawn();
     world.storeOf<Position>().set(_label, Position(_grid * _cell / 2, _grid * _cell + _cell / 2));
@@ -162,12 +176,18 @@ class SkirmishScene extends Scene {
     tile(1, const Color(0xFF1F4A2A)); // forest
     tile(2, const Color(0xFF6E6E78)); // mountain
     tile(3, const Color(0x6640E0D0)); // highlight
-    final image = await recorder.endRecording().toImage(size.toInt() * 4, size.toInt());
+    tile(4, const Color(0xFF000000)); // fog_unknown: never seen
+    tile(5, const Color(0x99000000)); // fog_explored: seen before, not now
+    // tile 6 stays empty: fog_clear, fully transparent over visible cells
+    final image = await recorder.endRecording().toImage(size.toInt() * 7, size.toInt());
     return SpriteAtlas(image, {
       'grass': const Rect.fromLTWH(0, 0, size, size),
       'forest': const Rect.fromLTWH(size, 0, size, size),
       'mountain': const Rect.fromLTWH(size * 2, 0, size, size),
       'highlight': const Rect.fromLTWH(size * 3, 0, size, size),
+      'fog_unknown': const Rect.fromLTWH(size * 4, 0, size, size),
+      'fog_explored': const Rect.fromLTWH(size * 5, 0, size, size),
+      'fog_clear': const Rect.fromLTWH(size * 6, 0, size, size),
     });
   }
 }
