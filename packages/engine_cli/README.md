@@ -74,4 +74,4 @@ Run this before `flutter run`/`flutter build` whenever your source
 sprite images change — it isn't run automatically by any build hook.
 
 
-Full command reference (including `build-release` and `studio`): <https://arashrasoulzadeh.github.io/agentic-game-engine/reference/cli/>.
+Full command reference (including `build-release` and `studio`): <https://meetarash.ir/agentic-game-engine/reference/cli/>.

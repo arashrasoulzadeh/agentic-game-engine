@@ -63,7 +63,7 @@ files under `lib/src/` contain implementation details.
 
 ## Documentation
 
-The full site is published at <https://arashrasoulzadeh.github.io/agentic-game-engine/> (source in `docs/`; diagrams in
+The full site is published at <https://meetarash.ir/agentic-game-engine/> (source in `docs/`; diagrams in
 [docs/concepts/architecture.md](docs/concepts/architecture.md)).
 
 ## Status and further reading

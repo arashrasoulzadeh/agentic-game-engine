@@ -1,6 +1,6 @@
 site_name: Agentic Game Engine
 site_description: A pure-Dart 2D game engine built for AI agents and humans — ECS, platformer and turn-based strategy, content as data.
-site_url: https://arashrasoulzadeh.github.io/agentic-game-engine/
+site_url: https://meetarash.ir/agentic-game-engine/
 repo_url: https://github.com/arashrasoulzadeh/agentic-game-engine
 repo_name: arashrasoulzadeh/agentic-game-engine
 edit_uri: edit/main/docs/

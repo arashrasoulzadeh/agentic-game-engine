@@ -164,8 +164,8 @@ Genre-general turn data and rules, usable headless (no Flutter): `TurnState`
 `AggressiveAI` / `AITurnSystem`. `engine_strategy` wires these together in the
 correct order.
 
-Guide: <https://arashrasoulzadeh.github.io/agentic-game-engine/concepts/turn-based-strategy/> · Tutorial:
-<https://arashrasoulzadeh.github.io/agentic-game-engine/tutorials/02-turn-based-strategy/>
+Guide: <https://meetarash.ir/agentic-game-engine/concepts/turn-based-strategy/> · Tutorial:
+<https://meetarash.ir/agentic-game-engine/tutorials/02-turn-based-strategy/>
 
 ## The agent-facing API
 

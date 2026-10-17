@@ -8,8 +8,8 @@ Browse them three ways.
 
 | Package | Docs |
 |---|---|
-| `engine_core` | [engine_core API](https://arashrasoulzadeh.github.io/agentic-game-engine/api/engine_core/) |
-| `engine_schema` | [engine_schema API](https://arashrasoulzadeh.github.io/agentic-game-engine/api/engine_schema/) |
+| `engine_core` | [engine_core API](https://meetarash.ir/agentic-game-engine/api/engine_core/) |
+| `engine_schema` | [engine_schema API](https://meetarash.ir/agentic-game-engine/api/engine_schema/) |
 
 These are rebuilt from `main` by the docs workflow. The Flutter-dependent
 packages (`engine_flutter`, `engine_platformer`, `engine_strategy`) need the

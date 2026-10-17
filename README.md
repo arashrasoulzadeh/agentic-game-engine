@@ -9,7 +9,7 @@
 > pub.dev — see [API stability](#api-stability)). Once published, these
 > should point at real pub.dev version badges instead of static text.
 
-> **📖 Documentation: <https://arashrasoulzadeh.github.io/agentic-game-engine/>** — tutorials, concepts, recipes and reference.
+> **📖 Documentation: <https://meetarash.ir/agentic-game-engine/>** — tutorials, concepts, recipes and reference.
 
 A pure-Dart 2D game engine for building platformers and turn-based strategy games (ECS, fixed-timestep
 simulation, spatial-hash collision, tile-based and entity-based
