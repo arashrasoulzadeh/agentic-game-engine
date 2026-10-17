@@ -1,3 +1,4 @@
+import 'package:engine_core/engine_core.dart' show ActionAliases;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' show KeyEventResult;
 
@@ -42,9 +43,18 @@ class InputController {
   final InputState state;
   final Map<LogicalKeyboardKey, String> bindings;
 
-  InputController({InputState? state, Map<LogicalKeyboardKey, String>? bindings})
-      : state = state ?? InputState(),
-        bindings = bindings ?? defaultBindings();
+  /// Friendly names the remap menus and debug overlay show instead of raw
+  /// action ids. Display only: the id in [bindings] is still what systems
+  /// read, so changing a label never affects gameplay or saved bindings.
+  final ActionAliases aliases;
+
+  InputController({
+    InputState? state,
+    Map<LogicalKeyboardKey, String>? bindings,
+    ActionAliases? aliases,
+  })  : state = state ?? InputState(),
+        bindings = bindings ?? defaultBindings(),
+        aliases = aliases ?? ActionAliases();
 
   static Map<LogicalKeyboardKey, String> defaultBindings() => {
         LogicalKeyboardKey.arrowLeft: 'left',

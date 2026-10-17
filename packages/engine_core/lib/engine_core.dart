@@ -56,6 +56,7 @@ export 'src/physics/raycast.dart';
 export 'src/physics/spatial_hash.dart';
 export 'src/physics/procedural_generation.dart';
 export 'src/content/player_options.dart';
+export 'src/content/action_aliases.dart';
 export 'src/content/analytics.dart';
 export 'src/content/localization.dart';
 export 'src/ecs/system.dart';

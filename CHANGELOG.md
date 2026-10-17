@@ -9,6 +9,8 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `ActionAliases` (`engine_core`) and `InputController.aliases`: friendly names for
+  input actions, shown by the keyboard and gamepad remap menus.
 - Turn-based strategy support (see the [turn-based guide](docs/concepts/turn-based-strategy.md)): turn clock, JSON orders,
   weighted 8-way grid navigation, combat and victory, per-team fog of war,
   selection and tap input, an AI turn driver, the `engine_strategy` package and

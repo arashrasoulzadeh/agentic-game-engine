@@ -13,12 +13,10 @@ Related, but not task lists:
 - [docs/concepts/turn-based-strategy.md](docs/concepts/turn-based-strategy.md)
   — how the finished turn-based layer works and why.
 
-Sections: [Housekeeping](#housekeeping) · [Performance](#performance) ·
+Sections: [Performance](#performance) ·
 [Engine features](#engine-features) · [Turn-based strategy](#turn-based-strategy) ·
 [Studio](#studio) · [Documentation](#documentation) · [Release](#release) ·
 [Parked decisions](#parked-decisions)
-
-## Housekeeping
 
 ## Performance
 
@@ -107,8 +105,6 @@ Sections: [Housekeeping](#housekeeping) · [Performance](#performance) ·
       but there is no viewport splitting or multi-camera / multi-`WorldView`
       simulation to render and drive split-screen play. Viewport split in
       `engine_flutter`, multi-context support in `engine_core`.
-- [ ] **Input action aliases** — friendly names for actions ("Jump" vs
-      "action_0") shown in remap menus and the debug overlay.
 - [ ] **Scene transitions: slide / crossfade / pixel-dissolve** — needs true
       multi-scene rendering (outgoing and incoming `World`s drawn in the same
       frame). Fade and iris already shipped.

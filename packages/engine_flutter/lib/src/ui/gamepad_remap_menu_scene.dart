@@ -29,7 +29,7 @@ class GamepadRemapMenuScene extends ButtonMenuScene {
   @override
   List<MenuButtonSpec> buttons() => [
         for (final action in actions)
-          MenuButtonSpec(label: '${action.toUpperCase()}: ${_buttonLabelFor(action)}', actionId: action),
+          MenuButtonSpec(label: '${controller.input.aliases.labelFor(action).toUpperCase()}: ${_buttonLabelFor(action)}', actionId: action),
         const MenuButtonSpec(label: 'DONE', actionId: '_gamepadRemapDone'),
       ];
 

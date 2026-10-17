@@ -43,7 +43,7 @@ class RemapMenuScene extends ButtonMenuScene {
   @override
   List<MenuButtonSpec> buttons() => [
         for (final action in actions)
-          MenuButtonSpec(label: '${action.toUpperCase()}: ${_keyLabelFor(action)}', actionId: action),
+          MenuButtonSpec(label: '${inputController.aliases.labelFor(action).toUpperCase()}: ${_keyLabelFor(action)}', actionId: action),
         const MenuButtonSpec(label: 'DONE', actionId: '_remapDone'),
       ];
 
