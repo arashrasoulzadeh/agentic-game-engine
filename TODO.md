@@ -20,11 +20,6 @@ Sections: [Housekeeping](#housekeeping) · [Performance](#performance) ·
 
 ## Housekeeping
 
-- [ ] **GitHub Actions upkeep** — workflows warn that Node 20 actions are
-      deprecated (bump `checkout`, `setup-python`, `upload-pages-artifact`,
-      `deploy-pages`), and `ubuntu-latest` moves to Ubuntu 26 on
-      2026-10-19; check each workflow still passes after the move.
-
 ## Performance
 
 - [ ] GPU-shader shadow casting — **landed as opt-in engine

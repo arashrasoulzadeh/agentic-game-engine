@@ -20,7 +20,7 @@ jobs:
       run:
         working-directory: packages/engine_cli
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dart-lang/setup-dart@v1
       - run: dart pub get
       - run: dart analyze --fatal-infos
@@ -37,7 +37,7 @@ jobs:
       run:
         working-directory: packages/engine_cli
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -55,7 +55,7 @@ jobs:
       matrix:
         template: [default_game, strategy_game]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
