@@ -11,6 +11,7 @@ import 'rendering/screen_tint.dart';
 import 'rendering/sprite.dart';
 import 'rendering/text.dart';
 import 'input/input.dart';
+import 'ui/grid_selection.dart';
 import 'logic/scene_transition.dart';
 import 'package:engine_schema/engine_schema.dart';
 
@@ -47,6 +48,12 @@ void registerFlutterComponents(World world) {
     (t) => t.toJson(),
     Text.fromJson,
     schema: textSchema,
+  );
+  world.components.register<SelectionMarker>(
+    'selectionMarker',
+    (m) => m.toJson(),
+    SelectionMarker.fromJson,
+    schema: selectionMarkerSchema,
   );
   world.components.register<HudBar>(
     'hudBar',

@@ -164,3 +164,7 @@ const sceneTransitionSchema = ComponentSchema('sceneTransition', [
   FieldSchema('isRunning', FieldType.bool),
   FieldSchema('isComplete', FieldType.bool),
 ]);
+
+const selectionMarkerSchema = ComponentSchema('selectionMarker', [
+  FieldSchema('owner', FieldType.int, required: true, min: 0),
+]);

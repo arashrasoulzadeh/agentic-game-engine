@@ -80,6 +80,7 @@ export 'src/turn/turn_system.dart';
 export 'src/turn/order.dart';
 export 'src/turn/order_system.dart';
 export 'src/turn/grid_navigation.dart';
+export 'src/turn/selection.dart';
 
 import 'src/ai/ai_state.dart';
 import 'src/ui/button.dart';
@@ -100,6 +101,7 @@ import 'src/ecs/world.dart';
 import 'src/content/game_state.dart';
 import 'src/turn/turn_components.dart';
 import 'src/turn/order.dart';
+import 'src/turn/selection.dart';
 
 /// Registers the engine's built-in components on [world]. Games/agents
 /// register their own additional component types the same way via
@@ -272,5 +274,11 @@ void registerCoreComponents(World world) {
     (q) => q.toJson(),
     OrderQueue.fromJson,
     schema: orderQueueSchema,
+  );
+  world.components.register<Selected>(
+    'selected',
+    (s) => s.toJson(),
+    Selected.fromJson,
+    schema: selectedSchema,
   );
 }

@@ -28,8 +28,13 @@ The package DAG is unchanged.
   `GridNavigator` (`findPath`, `reachable`, `fromTileMap`) +
   `OrderSystem.withNavigator`; no diagonal corner-cutting past walls.
   Tests: `grid_navigation_test.dart`.
-- [ ] **4. Selection and input** — single/multi select component,
+- [x] **4. Selection and input** — single/multi select component,
   tap-to-select/tap-to-order in `engine_flutter`, selection rings.
+  Core: `Selected`, `selectAtCell`, `selectInBox`, `commandSelected`,
+  `GridToWorldSystem`. Flutter: `GridTapController` (one-line
+  `Scene.handleTap`), `SelectionMarkerSystem` (a world-space `HudBar`
+  under each selected unit, reusing the existing renderer). Tests:
+  `selection_test.dart`, `grid_selection_test.dart`.
 - [ ] **5. Combat and win conditions** — damage reuse (`damageEntity`),
   team elimination skipping in turn order, victory event.
 - [ ] **6. Fog of war** — per-team visibility built on the existing

@@ -192,3 +192,5 @@ const gridPositionSchema = ComponentSchema('gridPosition', [
 const orderQueueSchema = ComponentSchema('orderQueue', [
   FieldSchema('orders', FieldType.list),
 ]);
+
+const selectedSchema = ComponentSchema('selected', []);

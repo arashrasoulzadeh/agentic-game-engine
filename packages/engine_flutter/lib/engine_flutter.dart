@@ -27,6 +27,7 @@ export 'src/ui/gamepad_remap_menu_scene.dart';
 export 'src/input/input.dart';
 export 'src/input/input_bindings_storage.dart';
 export 'src/input/on_screen_controls.dart';
+export 'src/ui/grid_selection.dart';
 export 'src/register_components.dart';
 export 'src/logic/room_exit_trigger.dart';
 export 'src/logic/save_game.dart';
