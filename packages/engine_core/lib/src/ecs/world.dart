@@ -5,6 +5,7 @@ import 'event_bus.dart';
 import 'system.dart';
 import 'archetype.dart';
 import 'job_system.dart';
+import 'world_profiler.dart';
 
 /// Thrown by [World.applyPatch] when the patch's own shape is wrong —
 /// `entities` not a list, an entry not an object, a missing/malformed
@@ -41,6 +42,10 @@ class World {
     return _jobSystem!;
   }
 
+  /// When set, `step` times every system (see [WorldProfiler]). Null by
+  /// default, in which case `step` runs the untimed loop.
+  WorldProfiler? profiler;
+
   int _tick = 0;
   int get tick => _tick;
 
@@ -69,12 +74,48 @@ class World {
   /// flushes events emitted during this tick. Fixed timestep is enforced
   /// by the caller (engine_flutter's ticker) — World just executes dt.
   void step(double dt) {
-    for (final system in _systems) {
-      system.update(this, dt);
+    final profiler = this.profiler;
+    if (profiler == null) {
+      for (final system in _systems) {
+        system.update(this, dt);
+      }
+      events.flush();
+    } else {
+      _profiledStep(profiler, dt);
     }
-    events.flush();
     _tick++;
   }
+
+  void _profiledStep(WorldProfiler profiler, double dt) {
+    final whole = Stopwatch()..start();
+    final timer = Stopwatch();
+    for (final system in _systems) {
+      timer
+        ..reset()
+        ..start();
+      system.update(this, dt);
+      profiler.recordSystem(system.name, timer.elapsedMicroseconds / 1000);
+    }
+    timer
+      ..reset()
+      ..start();
+    events.flush();
+    profiler.recordStep(
+      stepMs: whole.elapsedMicroseconds / 1000,
+      eventsMs: timer.elapsedMicroseconds / 1000,
+      entities: entities.count,
+    );
+  }
+
+  /// How many entities carry each registered component, by name -- a
+  /// census of what the world is made of. Dart has no per-type allocation
+  /// counter, so this is the practical stand-in for "where is my memory
+  /// going": a runaway `particle` or `soundEvent` count shows up here long
+  /// before it shows up as a frame spike. Zero-count components are omitted.
+  Map<String, int> componentCounts() => {
+        for (final r in components.all)
+          if (r.store.length > 0) r.name: r.store.length,
+      };
 
   /// Full world snapshot as plain JSON — the agent-facing read path.
   Map<String, dynamic> toJson() => {

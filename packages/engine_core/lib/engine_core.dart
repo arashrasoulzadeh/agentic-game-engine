@@ -70,6 +70,8 @@ export 'src/rendering/tween_system.dart';
 export 'src/physics/tmx_import.dart';
 export 'src/ui/trigger_helpers.dart';
 export 'src/ecs/world.dart';
+export 'src/ecs/world_profiler.dart';
+export 'src/ecs/ring_buffer.dart';
 export 'src/ecs/world_view.dart';
 export 'src/distribution/release_manifest.dart';
 export 'src/graph/graph.dart';
