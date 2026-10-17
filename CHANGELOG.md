@@ -9,6 +9,9 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Escort and capture-the-flag rules: `Vip` (its death loses the game), `Flag`
+  (picked up by enemies, carried, dropped on carrier death), `DeliveryZone`,
+  `FlagRules`, and the pickup/drop/capture events; works turn-based and real-time.
 - Real-time strategy: `RealtimeOrderSystem` (continuous movement and cooldown
   combat, auto-engage), `RealtimeStats`, `LastTeamStandingSystem`, `FlowField` /
   `FlowFieldCache` (one search shared by a group), `installRealtimeStrategySystems`,

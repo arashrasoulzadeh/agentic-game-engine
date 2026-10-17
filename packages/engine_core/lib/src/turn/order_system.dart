@@ -1,6 +1,7 @@
 import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
+import 'carry.dart';
 import 'combat.dart';
 import 'grid_navigation.dart';
 import 'status.dart';
@@ -147,6 +148,7 @@ class OrderSystem extends System {
       pos.col = step.col;
       pos.row = step.row;
       world.events.emit(MovedEvent(entity, pos.col, pos.row));
+      onUnitMoved(world, entity);
       if (_triggerOverwatch(world, entity)) return _Result.done;
     }
     return _Result.done;
@@ -183,6 +185,7 @@ class OrderSystem extends System {
         me.col = step.col;
         me.row = step.row;
         world.events.emit(MovedEvent(entity, me.col, me.row));
+        onUnitMoved(world, entity);
         if (_triggerOverwatch(world, entity)) return _Result.done;
       }
     }

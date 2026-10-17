@@ -95,6 +95,7 @@ export 'src/turn/selection.dart';
 export 'src/turn/combat.dart';
 export 'src/turn/status.dart';
 export 'src/turn/objectives.dart';
+export 'src/turn/carry.dart';
 export 'src/turn/fog_of_war.dart';
 export 'src/turn/ai_turn.dart';
 
@@ -121,6 +122,7 @@ import 'src/turn/selection.dart';
 import 'src/turn/combat.dart';
 import 'src/turn/status.dart';
 import 'src/turn/objectives.dart';
+import 'src/turn/carry.dart';
 import 'src/turn/realtime.dart';
 import 'src/turn/fog_of_war.dart';
 
@@ -349,5 +351,19 @@ void registerCoreComponents(World world) {
     (r) => r.toJson(),
     RealtimeStats.fromJson,
     schema: realtimeStatsSchema,
+  );
+  world.components.register<Vip>('vip', (v) => v.toJson(), Vip.fromJson, schema: vipSchema);
+  world.components.register<Flag>('flag', (f) => f.toJson(), Flag.fromJson, schema: flagSchema);
+  world.components.register<DeliveryZone>(
+    'deliveryZone',
+    (z) => z.toJson(),
+    DeliveryZone.fromJson,
+    schema: deliveryZoneSchema,
+  );
+  world.components.register<FlagRules>(
+    'flagRules',
+    (r) => r.toJson(),
+    FlagRules.fromJson,
+    schema: flagRulesSchema,
   );
 }

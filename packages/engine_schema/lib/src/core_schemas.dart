@@ -242,3 +242,26 @@ const realtimeStatsSchema = ComponentSchema('realtimeStats', [
   FieldSchema('moveProgress', FieldType.double, min: 0),
   FieldSchema('cooldown', FieldType.double, min: 0),
 ]);
+
+const vipSchema = ComponentSchema('vip', []);
+
+const flagSchema = ComponentSchema('flag', [
+  FieldSchema('id', FieldType.string, required: true),
+  FieldSchema('homeTeam', FieldType.string, required: true),
+  FieldSchema('homeCol', FieldType.int, required: true),
+  FieldSchema('homeRow', FieldType.int, required: true),
+  FieldSchema('col', FieldType.int),
+  FieldSchema('row', FieldType.int),
+  FieldSchema('carrier', FieldType.int, optional: true),
+]);
+
+const deliveryZoneSchema = ComponentSchema('deliveryZone', [
+  FieldSchema('team', FieldType.string, required: true),
+  FieldSchema('col', FieldType.int, required: true),
+  FieldSchema('row', FieldType.int, required: true),
+]);
+
+const flagRulesSchema = ComponentSchema('flagRules', [
+  FieldSchema('capturesToWin', FieldType.int, min: 1, required: true),
+  FieldSchema('captures', FieldType.object),
+]);

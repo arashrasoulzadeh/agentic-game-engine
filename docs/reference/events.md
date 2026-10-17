@@ -35,6 +35,9 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | `VictoryEvent` | `team` | `WinConditionSystem` |
 | `OverwatchTriggeredEvent` | `watcher`, `target` | `OrderSystem` (on a watcher's shot) |
 | `ObjectiveCapturedEvent` | `objective`, `team`, `previousOwner` | the turn clock (`resolveObjectives`) |
+| `FlagPickedUpEvent` | `flag`, `carrier` | `onUnitMoved` |
+| `FlagDroppedEvent` | `flag`, `formerCarrier` | `resolveAttack` (carrier killed) |
+| `FlagCapturedEvent` | `flag`, `team`, `total` | `onUnitMoved` (on delivery) |
 | `StatusAppliedEvent` | `entity`, `id` | `applyStatus` |
 | `StatusExpiredEvent` | `entity`, `id` | turn clock (`tickStatusEffects`) |
 

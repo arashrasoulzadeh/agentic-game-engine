@@ -1,6 +1,7 @@
 import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
+import 'carry.dart';
 import 'combat.dart';
 import 'flow_field.dart';
 import 'fog_of_war.dart';
@@ -206,6 +207,7 @@ class RealtimeOrderSystem extends System {
       pos.row = step.row;
       s.moveProgress = s.moveProgress - 1 < 0 ? 0 : s.moveProgress - 1;
       world.events.emit(MovedEvent(entity, pos.col, pos.row));
+      onUnitMoved(world, entity);
       if (stopWhen(pos)) {
         s.moveProgress = 0;
         return false;
@@ -233,6 +235,7 @@ class LastTeamStandingSystem extends System {
   String? winner;
 
   final Set<String> _seen = {};
+  final Set<String> _vipTeams = {};
 
   @override
   String get name => 'lastTeamStanding';
@@ -240,12 +243,7 @@ class LastTeamStandingSystem extends System {
   @override
   void update(World world, double dt) {
     if (winner != null) return;
-    final teams = world.storeOf<Team>();
-    final stats = world.storeOf<UnitStats>();
-    final alive = <String>{};
-    for (var i = 0; i < teams.length; i++) {
-      if (stats.has(teams.entityAt(i))) alive.add(teams.denseAt(i).id);
-    }
+    final alive = teamsStillInPlay(world, _vipTeams);
     _seen.addAll(alive);
     if (_seen.length > 1 && alive.length == 1) {
       winner = alive.single;

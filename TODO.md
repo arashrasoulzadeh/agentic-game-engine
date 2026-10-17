@@ -123,9 +123,10 @@ The turn-based layer is feature-complete for a first release (turn clock,
 orders, grid navigation, combat, fog of war, selection, AI turns,
 `engine_strategy`, `strategy_game` template). Left:
 
-- [ ] **Escort and flag-carrying objectives** — capture-and-hold is done
-      (`Objective`, `ObjectiveAI`, hold-to-win). Still missing: units that carry
-      an item to a goal, escort/VIP rules, and AI for them.
+- [ ] **AI for carriers and escorts** — `Vip`, `Flag`, `DeliveryZone` and
+      `FlagRules` work in both modes, but `ObjectiveAI` / `TacticalAI` don't play
+      them: send a carrier for the enemy flag, bring it home, guard your own, keep
+      the Vip out of reach.
 - [ ] **Real-time strategy, next layer** — movement, combat, selection, fog and
       flow fields work (see the concept guide). Missing: formations, production
       and a resource economy, a skirmish `TurnAI`-equivalent for real time,

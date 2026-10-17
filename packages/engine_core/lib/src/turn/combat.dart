@@ -2,6 +2,7 @@ import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
 import 'order.dart';
+import 'carry.dart';
 import 'status.dart';
 import 'turn_components.dart';
 
@@ -109,6 +110,7 @@ void resolveAttack(World world, EntityId attackerId, EntityId targetId) {
   world.events.emit(UnitDamagedEvent(attackerId, targetId, amount));
   if (target.hp == 0) {
     world.events.emit(UnitDefeatedEvent(targetId, world.storeOf<Team>().get(targetId)?.id));
+    dropCarried(world, targetId);
     world.destroy(targetId);
   }
 }
@@ -121,6 +123,7 @@ void resolveAttack(World world, EntityId attackerId, EntityId targetId) {
 /// one, which would otherwise end the game immediately.
 class WinConditionSystem extends System {
   final Set<String> _seen = {};
+  final Set<String> _vipTeams = {};
 
   @override
   String get name => 'winCondition';
@@ -132,12 +135,7 @@ class WinConditionSystem extends System {
     final turn = state.denseAt(0);
     if (turn.winner != null) return;
 
-    final alive = <String>{};
-    final teams = world.storeOf<Team>();
-    final stats = world.storeOf<UnitStats>();
-    for (var i = 0; i < teams.length; i++) {
-      if (stats.has(teams.entityAt(i))) alive.add(teams.denseAt(i).id);
-    }
+    final alive = teamsStillInPlay(world, _vipTeams);
     _seen.addAll(alive);
     for (final t in turn.order) {
       if (_seen.contains(t) && !alive.contains(t) && !turn.eliminated.contains(t)) {
@@ -150,4 +148,25 @@ class WinConditionSystem extends System {
       world.events.emit(VictoryEvent(turn.winner!));
     }
   }
+}
+
+
+/// The teams that have not lost: they still have a unit, and - for a team that has
+/// ever fielded a [Vip] - that Vip is still alive. [vipTeams] is the caller's
+/// memory of which teams had one (a dead Vip is no longer in the world to find),
+/// updated here.
+Set<String> teamsStillInPlay(World world, Set<String> vipTeams) {
+  final teams = world.storeOf<Team>();
+  final stats = world.storeOf<UnitStats>();
+  final vips = world.storeOf<Vip>();
+  final withUnits = <String>{};
+  final withVip = <String>{};
+  for (var i = 0; i < teams.length; i++) {
+    final e = teams.entityAt(i);
+    final id = teams.denseAt(i).id;
+    if (stats.has(e)) withUnits.add(id);
+    if (vips.has(e)) withVip.add(id);
+  }
+  vipTeams.addAll(withVip);
+  return {for (final t in withUnits) if (!vipTeams.contains(t) || withVip.contains(t)) t};
 }

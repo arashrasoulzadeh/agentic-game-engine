@@ -209,6 +209,29 @@ losing one resets the count.
 everyone else marches to the nearest objective the team doesn't own, spreading
 out. With nothing left to take it hunts visible enemies.
 
+### Escort and capture-the-flag
+
+* **`Vip`** marks a unit whose death loses the game for its team no matter how many
+  others are alive (`WinConditionSystem`, and `LastTeamStandingSystem` in real time).
+* **`Flag`** is a carryable item. A unit of a *different* team that walks onto it
+  picks it up (one per unit); it rides along; if the carrier dies it is **dropped
+  where it fell** (`FlagDroppedEvent`) for anyone to take.
+* **`DeliveryZone(team, col, row)`**: a carrier standing on its own team's zone
+  scores a capture (`FlagCapturedEvent`) and the flag returns home. With
+  `FlagRules(capturesToWin: 3)` the first team to that many wins.
+
+```dart
+world.storeOf<Vip>().set(king, const Vip());
+world.storeOf<Flag>().set(world.spawn(), Flag('red flag', 'red', 10, 0));
+world.storeOf<DeliveryZone>().set(world.spawn(), const DeliveryZone('blue', 0, 10));
+world.storeOf<FlagRules>().set(world.spawn(), FlagRules(capturesToWin: 3));
+```
+
+Flags and zones carry their own `col`/`row` instead of a `GridPosition`, so they are
+never mistaken for units: they don't block movement or appear in selection.
+Pickup, carrying and delivery are resolved after every step either order system
+takes, so it all works in real time too.
+
 ## Selection and input
 
 Pure functions in the core:
@@ -278,6 +301,8 @@ than between.
 | `OrderFailedEvent(entity, order, reason)` | An order was dropped. |
 | `OverwatchTriggeredEvent(watcher, target)` | An overwatching unit fired. |
 | `ObjectiveCapturedEvent(objective, team, previousOwner)` | A capture point changed hands. |
+| `FlagPickedUpEvent(flag, carrier)` / `FlagDroppedEvent(flag, formerCarrier)` | A flag was taken / its carrier died. |
+| `FlagCapturedEvent(flag, team, total)` | A flag was delivered; `total` is the team's captures. |
 | `StatusAppliedEvent(entity, id)` | A status was applied or refreshed. |
 | `StatusExpiredEvent(entity, id)` | A status ran out at its owner's turn start. |
 | `VictoryEvent(team)` | One team remains. |
@@ -297,6 +322,6 @@ than between.
 
 ## Not built yet
 
-Escort and flag-carrying objectives. Looking for real time? See
-[Real-time strategy](realtime-strategy.md).
+AI that carries and escorts (the rules exist; `ObjectiveAI` doesn't play
+them yet). Looking for real time? See [Real-time strategy](realtime-strategy.md).
 See [the roadmap](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md#turn-based-strategy).

@@ -4,7 +4,7 @@
 
 Every built-in component and the exact JSON shape it serializes to — what you see in `World.toJson()` and what `applyPatch` / `Level.loadInto` accept. This page is generated from `engine_schema`, the same schemas the studio and `game_agent lint` validate against, so it is always current.
 
-**62 components** across 3 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer)
+**66 components** across 3 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer)
 
 ## engine_core
 
@@ -304,6 +304,37 @@ A marker: present or absent, no fields.
 | `attackInterval` | `double` | 0 to ∞; default `1` |
 | `moveProgress` | `double` | 0 to ∞ |
 | `cooldown` | `double` | 0 to ∞ |
+
+### `vip`
+
+A marker: present or absent, no fields.
+
+### `flag`
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | `string` | required |
+| `homeTeam` | `string` | required |
+| `homeCol` | `int` | required |
+| `homeRow` | `int` | required |
+| `col` | `int` |  |
+| `row` | `int` |  |
+| `carrier` | `int` | may be null |
+
+### `deliveryZone`
+
+| Field | Type | Notes |
+|---|---|---|
+| `team` | `string` | required |
+| `col` | `int` | required |
+| `row` | `int` | required |
+
+### `flagRules`
+
+| Field | Type | Notes |
+|---|---|---|
+| `capturesToWin` | `int` | required; 1 to ∞ |
+| `captures` | `object` |  |
 
 ## engine_flutter
 
