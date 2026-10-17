@@ -20,11 +20,6 @@ Sections: [Housekeeping](#housekeeping) · [Performance](#performance) ·
 
 ## Housekeeping
 
-- [ ] **Verify `game_agent create` against the pushed repo** for both
-      templates (`default_game`, `strategy_game`), as CLAUDE.md requires for
-      CLI changes. So far the strategy template was only checked by
-      generating it with local path overrides. Add the strategy template to
-      `packages/engine_cli/tool/e2e_check.dart` and the CLI workflow.
 - [ ] **GitHub Actions upkeep** — workflows warn that Node 20 actions are
       deprecated (bump `checkout`, `setup-python`, `upload-pages-artifact`,
       `deploy-pages`), and `ubuntu-latest` moves to Ubuntu 26 on
@@ -164,8 +159,6 @@ orders, grid navigation, combat, fog of war, selection, AI turns,
       carry over. Missing: wire `EngineView.fixedTimestepSeconds` (opt-in
       today, default off) through `Game`/`GameConfig` for lockstep
       determinism, and flow-field pathfinding for large groups.
-- [ ] **Strategy template test in CI** — generate `strategy_game` and run its
-      widget test in the `engine_cli` workflow.
 
 ## Studio
 

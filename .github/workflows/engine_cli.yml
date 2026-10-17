@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - 'packages/engine_cli/**'
+      - 'packages/engine_strategy/**'
       - '.github/workflows/engine_cli.yml'
   pull_request:
     paths:
       - 'packages/engine_cli/**'
+      - 'packages/engine_strategy/**'
       - '.github/workflows/engine_cli.yml'
 
 jobs:
@@ -41,3 +43,30 @@ jobs:
           channel: stable
       - run: dart pub get
       - run: dart run tool/e2e_check.dart
+
+  # CLAUDE.md: verify `game_agent create` end to end against the *pushed* repo.
+  # Unit tests with a fake process runner can't catch dependency-resolution or
+  # template compile errors; this generates each starter for real (a git
+  # dependency on this repo's `main`), then analyzes and tests it.
+  templates:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [default_game, strategy_game]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: dart pub get
+        working-directory: packages/engine_cli
+      - name: Generate ${{ matrix.template }}
+        working-directory: packages/engine_cli
+        run: dart run bin/game_agent.dart create template_check --template ${{ matrix.template }} --output-dir ${{ runner.temp }}
+      - name: Analyze the generated project
+        working-directory: ${{ runner.temp }}/template_check
+        run: flutter analyze
+      - name: Test the generated project
+        working-directory: ${{ runner.temp }}/template_check
+        run: flutter test
