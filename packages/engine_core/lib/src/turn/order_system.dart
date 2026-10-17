@@ -13,7 +13,9 @@ import 'turn_system.dart';
 bool submitOrder(World world, EntityId entity, Order order) {
   final state = turnStateOf(world);
   final team = world.storeOf<Team>().get(entity);
-  if (state == null || team == null || team.id != state.activeTeam) return false;
+  if (state == null || state.winner != null || team == null || team.id != state.activeTeam) {
+    return false;
+  }
   final store = world.storeOf<OrderQueue>();
   var queue = store.get(entity);
   if (queue == null) {
@@ -133,7 +135,9 @@ class OrderSystem extends System {
     final grid = world.storeOf<GridPosition>();
     final me = grid.get(entity);
     final target = grid.get(order.target);
-    if (me == null || target == null || !world.entities.isAlive(order.target)) {
+    final friendly = world.storeOf<Team>().get(order.target)?.id ==
+        world.storeOf<Team>().get(entity)?.id;
+    if (me == null || target == null || friendly || !world.entities.isAlive(order.target)) {
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     }
     if (me.chebyshev(target) > attackRange) {

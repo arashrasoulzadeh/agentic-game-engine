@@ -182,6 +182,8 @@ const turnStateSchema = ComponentSchema('turnState', [
   FieldSchema('order', FieldType.list, required: true),
   FieldSchema('activeIndex', FieldType.int, min: 0),
   FieldSchema('round', FieldType.int, min: 1),
+  FieldSchema('eliminated', FieldType.list),
+  FieldSchema('winner', FieldType.string, optional: true),
 ]);
 
 const gridPositionSchema = ComponentSchema('gridPosition', [
@@ -194,3 +196,10 @@ const orderQueueSchema = ComponentSchema('orderQueue', [
 ]);
 
 const selectedSchema = ComponentSchema('selected', []);
+
+const unitStatsSchema = ComponentSchema('unitStats', [
+  FieldSchema('maxHp', FieldType.int, min: 1, required: true),
+  FieldSchema('hp', FieldType.int, min: 0),
+  FieldSchema('attack', FieldType.int, min: 0, defaultValue: 1),
+  FieldSchema('defense', FieldType.int, min: 0, defaultValue: 0),
+]);

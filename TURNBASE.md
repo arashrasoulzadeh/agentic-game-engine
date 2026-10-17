@@ -35,8 +35,12 @@ The package DAG is unchanged.
   `Scene.handleTap`), `SelectionMarkerSystem` (a world-space `HudBar`
   under each selected unit, reusing the existing renderer). Tests:
   `selection_test.dart`, `grid_selection_test.dart`.
-- [ ] **5. Combat and win conditions** — damage reuse (`damageEntity`),
+- [x] **5. Combat and win conditions** — damage reuse (`damageEntity`),
   team elimination skipping in turn order, victory event.
+  `UnitStats` (own component: the platformer `Health` is later in the
+  DAG), `installCombat`, `WinConditionSystem`, `TurnState.eliminated`/
+  `winner`; no friendly fire; turns/orders freeze after victory.
+  Tests: `combat_test.dart`.
 - [ ] **6. Fog of war** — per-team visibility built on the existing
   line-of-sight/raycast code.
 - [ ] **7. `engine_strategy` package + `game_agent create` template.**

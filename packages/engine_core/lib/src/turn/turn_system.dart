@@ -28,13 +28,16 @@ TurnState? turnStateOf(World world) {
 /// there is no turn clock.
 bool endTurn(World world) {
   final state = turnStateOf(world);
-  if (state == null) return false;
+  if (state == null || state.winner != null) return false;
+  if (state.eliminated.length >= state.order.length) return false;
   world.events.emit(TurnEndedEvent(state.activeTeam, state.round));
-  state.activeIndex++;
-  if (state.activeIndex >= state.order.length) {
-    state.activeIndex = 0;
-    state.round++;
-  }
+  do {
+    state.activeIndex++;
+    if (state.activeIndex >= state.order.length) {
+      state.activeIndex = 0;
+      state.round++;
+    }
+  } while (state.eliminated.contains(state.activeTeam));
   _beginTurn(world, state);
   return true;
 }
@@ -48,7 +51,7 @@ bool trySpendActionPoints(World world, EntityId entity, int cost) {
   final state = turnStateOf(world);
   final team = world.storeOf<Team>().get(entity);
   final ap = world.storeOf<ActionPoints>().get(entity);
-  if (state == null || team == null || ap == null) return false;
+  if (state == null || state.winner != null || team == null || ap == null) return false;
   if (team.id != state.activeTeam || cost < 0 || ap.current < cost) return false;
   ap.current -= cost;
   return true;

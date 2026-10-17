@@ -43,7 +43,23 @@ class TurnState {
   /// 1-based; increments each time play wraps back to the first team.
   int round;
 
-  TurnState(this.order, {this.activeIndex = 0, this.round = 1});
+  /// Teams knocked out of the game. `endTurn` skips them; kept here
+  /// (not derived from the world each time) so a team that is later
+  /// "resurrected" by a scripted event is a deliberate edit, and saves
+  /// remember it.
+  List<String> eliminated;
+
+  /// Set by `WinConditionSystem` when one team is left. Once set, turns
+  /// no longer advance and orders/spending are refused.
+  String? winner;
+
+  TurnState(
+    this.order, {
+    this.activeIndex = 0,
+    this.round = 1,
+    List<String>? eliminated,
+    this.winner,
+  }) : eliminated = eliminated ?? [];
 
   String get activeTeam => order[activeIndex];
 
@@ -51,11 +67,15 @@ class TurnState {
         'order': order,
         'activeIndex': activeIndex,
         'round': round,
+        'eliminated': eliminated,
+        'winner': winner,
       };
   factory TurnState.fromJson(Map<String, dynamic> json) => TurnState(
         List<String>.from(json['order'] as List),
         activeIndex: (json['activeIndex'] as num?)?.toInt() ?? 0,
         round: (json['round'] as num?)?.toInt() ?? 1,
+        eliminated: List<String>.from(json['eliminated'] as List? ?? const []),
+        winner: json['winner'] as String?,
       );
 }
 
