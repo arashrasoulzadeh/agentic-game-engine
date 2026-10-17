@@ -12,6 +12,7 @@ World _buildWorld() {
 }
 
 void main() {
+  multiplayerTests();
   test('installPlatformerSystems registers systems in the documented order', () {
     final world = _buildWorld();
     installPlatformerSystems(world, player: 0, behaviors: BehaviorRegistry());
@@ -125,5 +126,40 @@ void main() {
     world.step(0.016);
 
     expect(world.storeOf<Velocity>().get(player)!.y, -300);
+  });
+}
+
+void multiplayerTests() {
+  test('additionalPlayers gets its own input, ladder and ledge-grab systems', () {
+    final world = _buildWorld();
+    installPlatformerSystems(world, player: 0, additionalPlayers: [1, 2]);
+    final order = world.systemOrder;
+    expect(order.where((n) => n == 'platformerInput'), hasLength(3));
+    expect(order.where((n) => n == 'ladder'), hasLength(3));
+    expect(order.where((n) => n == 'ledgeGrab'), hasLength(3));
+    expect(order.indexOf('gravity'), greaterThan(order.lastIndexOf('platformerInput')));
+  });
+
+  test('two players move independently from their own InputState', () {
+    final world = _buildWorld();
+    final left = InputState();
+    final right = InputState();
+    final p1 = spawnPlayer(world, x: 100, y: 100, input: left);
+    final p2 = spawnPlayer(world, x: 300, y: 100, input: right);
+    installPlatformerSystems(world, player: p1, additionalPlayers: [p2], includeAnimation: false);
+
+    left.pressedActions.add('left');
+    right.pressedActions.add('right');
+    for (var i = 0; i < 10; i++) {
+      world.step(1 / 60);
+    }
+    expect(world.storeOf<Position>().get(p1)!.x, lessThan(100));
+    expect(world.storeOf<Position>().get(p2)!.x, greaterThan(300));
+  });
+
+  test('a single player still gets exactly one of each system', () {
+    final world = _buildWorld();
+    installPlatformerSystems(world, player: 0);
+    expect(world.systemOrder.where((n) => n == 'platformerInput'), hasLength(1));
   });
 }

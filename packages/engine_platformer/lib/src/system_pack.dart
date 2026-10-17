@@ -28,6 +28,9 @@ import 'physics/water_physics_system.dart';
 /// game got it wrong.
 ///
 /// Pass [player] to wire up `PlatformerInputSystem` for that entity,
+/// [additionalPlayers] for local multiplayer (each gets its own input, ladder and
+/// ledge-grab system, reading that entity's own `InputState` -- pair with
+/// `SplitScreenView` in `engine_flutter`),
 /// and/or [behaviors] to run `AISystem` for AI-controlled entities
 /// (patrol/follow enemies, etc.) — both optional, since not every game
 /// screen has both a controllable player and AI enemies. Set
@@ -62,11 +65,13 @@ import 'physics/water_physics_system.dart';
 void installPlatformerSystems(
   World world, {
   EntityId? player,
+  List<EntityId> additionalPlayers = const [],
   BehaviorRegistry? behaviors,
   bool includeAnimation = true,
 }) {
-  if (player != null) {
-    world.addSystem(PlatformerInputSystem(player));
+  final players = [if (player != null) player, ...additionalPlayers];
+  for (final p in players) {
+    world.addSystem(PlatformerInputSystem(p));
   }
   if (behaviors != null) {
     world.addSystem(AISystem(behaviors));
@@ -77,9 +82,9 @@ void installPlatformerSystems(
   world.addSystem(TileCollisionSystem());
   world.addSystem(WaterPhysicsSystem());
   world.addSystem(JumpSystem());
-  if (player != null) {
-    world.addSystem(LadderSystem(player));
-    world.addSystem(LedgeGrabSystem(player));
+  for (final p in players) {
+    world.addSystem(LadderSystem(p));
+    world.addSystem(LedgeGrabSystem(p));
   }
   world.addSystem(DashSystem());
   world.addSystem(CollisionSystem());

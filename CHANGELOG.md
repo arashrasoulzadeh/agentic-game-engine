@@ -9,6 +9,10 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Local split-screen: `SplitScreenView` draws one shared `World` through up to
+  four cameras (`SplitScreenLayout.rects`), stepping it exactly once
+  (`EngineView.stepsWorld`); `installPlatformerSystems(additionalPlayers:)`
+  gives each extra player their own input, ladder and ledge-grab systems.
 - Networking foundation in `engine_core` (`lib/src/net/`): `WorldSnapshot` /
   `WorldDelta` (capture, restore with original entity ids, entity-level diffs),
   `StateSyncServer`/`StateSyncClient` (deltas against the client's last

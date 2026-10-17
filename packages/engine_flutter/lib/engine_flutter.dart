@@ -21,6 +21,7 @@ export 'src/rendering/clip_shape.dart';
 export 'src/rendering/sprite.dart';
 export 'src/rendering/text.dart';
 export 'src/rendering/engine_view.dart';
+export 'src/rendering/split_screen.dart';
 export 'src/logic/cinematic_camera_steps.dart';
 export 'src/logic/game.dart';
 export 'src/logic/game_config.dart';

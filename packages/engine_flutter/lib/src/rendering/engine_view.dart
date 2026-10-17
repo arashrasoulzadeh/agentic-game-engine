@@ -45,6 +45,13 @@ class EngineView extends StatefulWidget {
   final Color backgroundColor;
   final bool paused;
 
+  /// Whether this view advances the `World` (`true`, the default). Set `false` on
+  /// every extra view of a world that one other view already steps -- split-screen
+  /// draws one world through several cameras, and stepping it once per view would
+  /// run the game at N times speed. A non-stepping view still follows its
+  /// [cameraFollowEntity] and repaints.
+  final bool stepsWorld;
+
   /// Shows a top-left debug panel: fps, tick count, live entity/sprite/
   /// particle counts, and resident memory (where available — not on
   /// web, `dart:io` has no memory API there, so that line is omitted).
@@ -217,6 +224,7 @@ class EngineView extends StatefulWidget {
     this.cameraFollowEntity,
     this.backgroundColor = const Color(0xFF000000),
     this.paused = false,
+    this.stepsWorld = true,
     this.showFpsOverlay = false,
     this.showColliderDebug = false,
     this.showPerformanceOverlay = false,
@@ -353,7 +361,11 @@ class _EngineViewState extends State<EngineView>
 
     final stepStopwatch = Stopwatch()..start();
     final fixedDt = widget.fixedTimestepSeconds;
-    if (fixedDt == null || fixedDt <= 0) {
+    if (!widget.stepsWorld) {
+      // A secondary view of a world another view already steps (split-screen):
+      // draw it and move its own camera, but never advance the simulation.
+      _interpolationAlpha = 1;
+    } else if (fixedDt == null || fixedDt <= 0) {
       widget.world.step(dt);
       _interpolationAlpha = 1;
     } else {
@@ -382,7 +394,7 @@ class _EngineViewState extends State<EngineView>
     _frameStats.particles = widget.world.storeOf<Particle>().length;
 
     // Call optional post-tick callback for scene-specific logic
-    widget.onPostTick?.call(dt, widget.world);
+    if (widget.stepsWorld) widget.onPostTick?.call(dt, widget.world);
 
     // Decays/recomputes any active Camera.shake() offset -- called
     // unconditionally (not just when cameraFollowEntity is set), since

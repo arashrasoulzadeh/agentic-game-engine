@@ -101,10 +101,6 @@ Sections: [Performance](#performance) ·
 
 ## Engine features
 
-- [ ] **Local split-screen multiplayer** — gamepad bindings exist per player,
-      but there is no viewport splitting or multi-camera / multi-`WorldView`
-      simulation to render and drive split-screen play. Viewport split in
-      `engine_flutter`, multi-context support in `engine_core`.
 - [ ] **Networking: a real transport and a session layer** — the in-memory
       foundation is done (`WorldSnapshot`/`WorldDelta`, `StateSyncServer`/
       `Client`, `RollbackSession`, `PositionHistory`, `LoopbackLink`), but
