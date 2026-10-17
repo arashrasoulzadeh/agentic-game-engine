@@ -34,6 +34,7 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | `OrderFailedEvent` | `entity`, `order`, `reason` | `OrderSystem` |
 | `VictoryEvent` | `team` | `WinConditionSystem` |
 | `OverwatchTriggeredEvent` | `watcher`, `target` | `OrderSystem` (on a watcher's shot) |
+| `ObjectiveCapturedEvent` | `objective`, `team`, `previousOwner` | the turn clock (`resolveObjectives`) |
 | `StatusAppliedEvent` | `entity`, `id` | `applyStatus` |
 | `StatusExpiredEvent` | `entity`, `id` | turn clock (`tickStatusEffects`) |
 

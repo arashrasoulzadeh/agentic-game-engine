@@ -1,9 +1,11 @@
+import '../ecs/component_store.dart';
 import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
 import 'combat.dart';
 import 'fog_of_war.dart';
 import 'grid_navigation.dart';
+import 'objectives.dart';
 import 'order.dart';
 import 'order_system.dart';
 import 'turn_components.dart';
@@ -232,6 +234,128 @@ class TacticalAI implements TurnAI {
       }
     }
     if (best != null) claimed.add(fog.key(best.$1, best.$2));
+    return best;
+  }
+}
+
+/// An AI that plays for the map's [Objective]s rather than just for kills:
+///
+/// * A unit standing on an objective its team owns **holds it** when an enemy is
+///   close enough to take it ([holdRadius]); otherwise it is free to move.
+/// * Units with an enemy in [engageRange] fight it (nearest enemy; units already
+///   engaged don't wander off).
+/// * Everyone else walks toward the nearest objective the team doesn't own,
+///   spreading out so they don't all pick the same one while others remain.
+///
+/// Combat is delegated to a [TacticalAI]-style attack, so it still only targets
+/// what the team can see. Needs a [navigator] to pick reachable destinations.
+class ObjectiveAI implements TurnAI {
+  ObjectiveAI({
+    required this.navigator,
+    this.engageRange = 4,
+    this.holdRadius = 5,
+  });
+
+  final GridNavigator navigator;
+
+  /// Chebyshev distance within which a unit prefers fighting to marching.
+  final int engageRange;
+
+  /// How near an enemy must be before a garrison refuses to leave its objective.
+  final int holdRadius;
+
+  @override
+  void playTurn(World world, String team) {
+    final teams = world.storeOf<Team>();
+    final grid = world.storeOf<GridPosition>();
+    final points = world.storeOf<ActionPoints>();
+    final mine = <EntityId>[];
+    final enemies = <EntityId>[];
+    for (var i = 0; i < teams.length; i++) {
+      final e = teams.entityAt(i);
+      if (!grid.has(e)) continue;
+      if (teams.denseAt(i).id == team) {
+        if ((points.get(e)?.current ?? 0) > 0) mine.add(e);
+      } else if (canSee(world, team, e)) {
+        enemies.add(e);
+      }
+    }
+    for (final unit in mine) {
+      world.storeOf<OrderQueue>().get(unit)?.orders.clear();
+    }
+
+    final objectives = world.storeOf<Objective>();
+    final targets = objectivesToTake(world, team);
+    final claimed = <EntityId>{};
+    for (final unit in mine) {
+      final at = grid.get(unit)!;
+      final nearEnemy = _nearest(grid, at, enemies);
+      final nearDist = nearEnemy == null ? 1 << 30 : at.chebyshev(grid.get(nearEnemy)!);
+
+      final onOwned = _objectiveAt(objectives, at, team);
+      if (onOwned && nearDist <= holdRadius) {
+        if (nearDist <= engageRange) {
+          submitOrder(world, unit, AttackOrder(nearEnemy!));
+        } else {
+          submitOrder(world, unit, const DefendOrder());
+        }
+        continue;
+      }
+      if (nearEnemy != null && nearDist <= engageRange) {
+        submitOrder(world, unit, AttackOrder(nearEnemy));
+        continue;
+      }
+      final goal = _pickObjective(at, targets, claimed);
+      if (goal != null) {
+        claimed.add(goal.$1);
+        submitOrder(world, unit, MoveOrder(goal.$2.col, goal.$2.row));
+      } else if (nearEnemy != null) {
+        submitOrder(world, unit, AttackOrder(nearEnemy));
+      }
+    }
+  }
+
+  bool _objectiveAt(ComponentStore<Objective> objectives, GridPosition at, String team) {
+    for (var i = 0; i < objectives.length; i++) {
+      final o = objectives.denseAt(i);
+      if (o.col == at.col && o.row == at.row && o.owner == team) return true;
+    }
+    return false;
+  }
+
+  EntityId? _nearest(ComponentStore<GridPosition> grid, GridPosition from, List<EntityId> enemies) {
+    EntityId? best;
+    var bestD = 1 << 30;
+    for (final e in enemies) {
+      final d = from.chebyshev(grid.get(e)!);
+      if (d < bestD) {
+        bestD = d;
+        best = e;
+      }
+    }
+    return best;
+  }
+
+  /// The nearest objective to take, preferring ones no teammate has been sent to;
+  /// when all are claimed, the nearest anyway (several units may converge).
+  (EntityId, Objective)? _pickObjective(
+    GridPosition from,
+    List<(EntityId, Objective)> targets,
+    Set<EntityId> claimed,
+  ) {
+    (EntityId, Objective)? best;
+    var bestD = 1 << 30;
+    for (final pass in [true, false]) {
+      for (final t in targets) {
+        if (pass && claimed.contains(t.$1)) continue;
+        final d = from.chebyshev(GridPosition(t.$2.col, t.$2.row));
+        if (d < bestD && navigator.findPath(from, GridPosition(t.$2.col, t.$2.row)) != null) {
+          bestD = d;
+          best = t;
+        }
+      }
+      if (best != null) break;
+    }
     return best;
   }
 }

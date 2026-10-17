@@ -46,6 +46,8 @@ none of them can do anything a player couldn't.
 | `StatusEffects` | `{"effects":[{"id":"defending","turns":1,"attack":0,"defense":2}]}` | Temporary modifiers. |
 | `Vision` | `{"range": 4}` | Sight radius in cells. |
 | `OrderQueue` | `{"orders": [{"type":"move","col":3,"row":5}]}` | Pending orders. |
+| `Objective` | `{"id":"hill","col":6,"row":6,"owner":null}` | A capture point. |
+| `ObjectiveRules` | `{"holdTurnsToWin":3,"holds":{}}` | Optional hold-to-win rule. |
 | `Selected` | `{}` | Marker: the local player has this unit selected. |
 | `TurnState` | `{"order":["red","blue"],"activeIndex":0,"round":1,"eliminated":[],"winner":null}` | The turn clock. One per world. |
 | `FogOfWar` | `{"cols":8,"rows":8,"visible":{…},"explored":{…}}` | Per-team visibility. One per world, optional. |
@@ -184,6 +186,29 @@ Optional. `installStrategySystems(fog: true, blocksSight: …)` adds a
   visible cells. **Attack orders on unseen enemies fail, and
   `AggressiveAI` obeys the same rule.**
 
+## Objectives
+
+Capture points turn "kill everything" into "hold the map".
+
+```dart
+final flag = world.spawn();
+world.storeOf<Objective>().set(flag, Objective('hill', 6, 6));
+// optional: win by holding every objective for 3 of your consecutive turns
+world.storeOf<ObjectiveRules>().set(world.spawn(), ObjectiveRules(holdTurnsToWin: 3));
+```
+
+A team captures an objective by **standing on it when its turn begins** (resolved
+synchronously by the turn clock, before any queued order can walk the unit away);
+it stays theirs until someone else does the same. `ObjectiveCapturedEvent` fires
+on every change of hands. With `ObjectiveRules`, owning *all* objectives at the
+start of `holdTurnsToWin` consecutive own turns ends the game (`VictoryEvent`);
+losing one resets the count.
+
+`ObjectiveAI(navigator: nav)` plays for the map: garrisons hold owned points
+(bracing, or fighting when an enemy gets close), nearby enemies are engaged, and
+everyone else marches to the nearest objective the team doesn't own, spreading
+out. With nothing left to take it hunts visible enemies.
+
 ## Selection and input
 
 Pure functions in the core:
@@ -252,6 +277,7 @@ than between.
 | `UnitDefeatedEvent(unit, team)` | A unit reaches 0 hp, just before destruction. |
 | `OrderFailedEvent(entity, order, reason)` | An order was dropped. |
 | `OverwatchTriggeredEvent(watcher, target)` | An overwatching unit fired. |
+| `ObjectiveCapturedEvent(objective, team, previousOwner)` | A capture point changed hands. |
 | `StatusAppliedEvent(entity, id)` | A status was applied or refreshed. |
 | `StatusExpiredEvent(entity, id)` | A status ran out at its owner's turn start. |
 | `VictoryEvent(team)` | One team remains. |
@@ -272,5 +298,5 @@ than between.
 ## Not built yet
 
 Real-time strategy (needs the fixed-step accumulator wired into `Game`, and
-flow-field pathfinding for large groups) and objective-driven AI.
+flow-field pathfinding for large groups), escort and flag-carrying objectives.
 See [the roadmap](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md#turn-based-strategy).

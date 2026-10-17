@@ -9,6 +9,9 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Objectives: `Objective` capture points (taken by standing on one as your turn
+  begins), optional `ObjectiveRules` hold-to-win, `ObjectiveCapturedEvent`, and
+  `ObjectiveAI` (garrison, engage, march, spread).
 - `FogShadeSystem` (`installStrategySystems(fogShade:)`): draws fog of war for
   the local team and hides enemy sprites in unseen cells (`FogHidden`). The
   `strategy_game` starter now has fog, a `TacticalAI` opponent that explores,

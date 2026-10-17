@@ -123,8 +123,9 @@ The turn-based layer is feature-complete for a first release (turn clock,
 orders, grid navigation, combat, fog of war, selection, AI turns,
 `engine_strategy`, `strategy_game` template). Left:
 
-- [ ] **Objective-driven AI** — capture points, escort and defend-the-flag
-      behaviours for `TurnAI`, beyond `TacticalAI`'s kill-or-explore logic.
+- [ ] **Escort and flag-carrying objectives** — capture-and-hold is done
+      (`Objective`, `ObjectiveAI`, hold-to-win). Still missing: units that carry
+      an item to a goal, escort/VIP rules, and AI for them.
 - [ ] **Real-time strategy** — the order, selection, navigation and fog layers
       carry over. Missing: wire `EngineView.fixedTimestepSeconds` (opt-in
       today, default off) through `Game`/`GameConfig` for lockstep

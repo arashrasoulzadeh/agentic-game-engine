@@ -1,6 +1,7 @@
 import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
+import 'objectives.dart';
 import 'status.dart';
 import 'turn_components.dart';
 
@@ -66,6 +67,7 @@ void _beginTurn(World world, TurnState state) {
     points.get(teams.entityAt(i))?.refill();
   }
   tickStatusEffects(world, state.activeTeam);
+  resolveObjectives(world, state.activeTeam);
   world.events.emit(TurnStartedEvent(state.activeTeam, state.round));
 }
 

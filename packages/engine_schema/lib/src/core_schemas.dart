@@ -223,3 +223,15 @@ const attackProfileSchema = ComponentSchema('attackProfile', [
 const statusEffectsSchema = ComponentSchema('statusEffects', [
   FieldSchema('effects', FieldType.list),
 ]);
+
+const objectiveSchema = ComponentSchema('objective', [
+  FieldSchema('id', FieldType.string, required: true),
+  FieldSchema('col', FieldType.int, required: true),
+  FieldSchema('row', FieldType.int, required: true),
+  FieldSchema('owner', FieldType.string, optional: true),
+]);
+
+const objectiveRulesSchema = ComponentSchema('objectiveRules', [
+  FieldSchema('holdTurnsToWin', FieldType.int, min: 1, required: true),
+  FieldSchema('holds', FieldType.object),
+]);
