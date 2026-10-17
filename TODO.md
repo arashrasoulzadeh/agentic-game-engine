@@ -20,10 +20,6 @@ Sections: [Housekeeping](#housekeeping) · [Performance](#performance) ·
 
 ## Housekeeping
 
-- [ ] **Commit or discard the untracked studio graph work** —
-      `packages/engine_studio/lib/src/graph/`,
-      `test/graph_canvas_screen_test.dart`, `test/graph_editor_test.dart`
-      (the start of studio items 4.8–4.12 below).
 - [ ] **Verify `game_agent create` against the pushed repo** for both
       templates (`default_game`, `strategy_game`), as CLAUDE.md requires for
       CLI changes. So far the strategy template was only checked by
@@ -206,6 +202,14 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 Graph data model, node registry, validator and the dialogue compiler are
 done (4.1–4.7). Left:
 
+- [ ] **Wire the graph editor into the studio** — `GraphCanvasScreen` /
+      `GraphEditor` (`engine_studio/lib/src/graph/`, committed, tested) is not
+      reachable from the project screen yet: add an entry point that lists
+      `graphs/*.json`, opens one, and shows graph errors in the shared
+      validation panel (4.11).
+- [ ] **4.9 follow-up** — the canvas is a plain scrollable surface, with no
+      pan/zoom; add them if real graphs outgrow it (see the screen's doc
+      comment).
 - [ ] **4.8** Migrate `bt_editor_web` node-canvas code into
       `engine_studio/lib/graph/` as the shared canvas widget.
 - [ ] **4.9** Graph canvas widget: pan, zoom, connect ports, select.
