@@ -183,3 +183,12 @@ const turnStateSchema = ComponentSchema('turnState', [
   FieldSchema('activeIndex', FieldType.int, min: 0),
   FieldSchema('round', FieldType.int, min: 1),
 ]);
+
+const gridPositionSchema = ComponentSchema('gridPosition', [
+  FieldSchema('col', FieldType.int, required: true),
+  FieldSchema('row', FieldType.int, required: true),
+]);
+
+const orderQueueSchema = ComponentSchema('orderQueue', [
+  FieldSchema('orders', FieldType.list),
+]);

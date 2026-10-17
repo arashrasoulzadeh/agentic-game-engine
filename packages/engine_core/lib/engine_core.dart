@@ -77,6 +77,8 @@ export 'src/graph/graph_validator.dart';
 export 'src/graph/dialogue_compiler.dart';
 export 'src/turn/turn_components.dart';
 export 'src/turn/turn_system.dart';
+export 'src/turn/order.dart';
+export 'src/turn/order_system.dart';
 
 import 'src/ai/ai_state.dart';
 import 'src/ui/button.dart';
@@ -96,6 +98,7 @@ import 'src/physics/velocity.dart';
 import 'src/ecs/world.dart';
 import 'src/content/game_state.dart';
 import 'src/turn/turn_components.dart';
+import 'src/turn/order.dart';
 
 /// Registers the engine's built-in components on [world]. Games/agents
 /// register their own additional component types the same way via
@@ -256,5 +259,17 @@ void registerCoreComponents(World world) {
     (t) => t.toJson(),
     TurnState.fromJson,
     schema: turnStateSchema,
+  );
+  world.components.register<GridPosition>(
+    'gridPosition',
+    (g) => g.toJson(),
+    GridPosition.fromJson,
+    schema: gridPositionSchema,
+  );
+  world.components.register<OrderQueue>(
+    'orderQueue',
+    (q) => q.toJson(),
+    OrderQueue.fromJson,
+    schema: orderQueueSchema,
   );
 }

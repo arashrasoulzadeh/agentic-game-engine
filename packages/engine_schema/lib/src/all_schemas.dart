@@ -30,6 +30,8 @@ const allComponentSchemas = <String, ComponentSchema>{
   'team': teamSchema,
   'actionPoints': actionPointsSchema,
   'turnState': turnStateSchema,
+  'gridPosition': gridPositionSchema,
+  'orderQueue': orderQueueSchema,
   'sprite': spriteSchema,
   'animationState': animationStateSchema,
   'inputState': inputStateSchema,
