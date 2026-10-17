@@ -122,6 +122,7 @@ class OrderSystem extends System {
     if (order is MoveOrder) return _move(world, entity, order);
     if (order is AttackOrder) return _attack(world, entity, order);
     if (order is DefendOrder) return _defend(world, entity, order);
+    if (order is OverwatchOrder) return _overwatch(world, entity, order);
     return _fail(world, entity, order, OrderFailure.invalidTarget);
   }
 
@@ -141,6 +142,7 @@ class OrderSystem extends System {
       pos.col = step.col;
       pos.row = step.row;
       world.events.emit(MovedEvent(entity, pos.col, pos.row));
+      if (_triggerOverwatch(world, entity)) return _Result.done;
     }
     return _Result.done;
   }
@@ -176,6 +178,7 @@ class OrderSystem extends System {
         me.col = step.col;
         me.row = step.row;
         world.events.emit(MovedEvent(entity, me.col, me.row));
+        if (_triggerOverwatch(world, entity)) return _Result.done;
       }
     }
     if (!trySpendActionPoints(world, entity, price)) return _Result.waiting;
@@ -190,6 +193,45 @@ class OrderSystem extends System {
     if (!trySpendActionPoints(world, entity, ap.current)) return _Result.waiting;
     applyStatus(world, entity, StatusEffect('defending', turns: 1, defense: defendBonus));
     return _Result.done;
+  }
+
+  _Result _overwatch(World world, EntityId entity, OverwatchOrder order) {
+    final ap = world.storeOf<ActionPoints>().get(entity);
+    if (ap == null) return _fail(world, entity, order, OrderFailure.invalidTarget);
+    if (ap.current <= 0) return _Result.waiting;
+    if (!trySpendActionPoints(world, entity, ap.current)) return _Result.waiting;
+    applyStatus(world, entity, StatusEffect(overwatchStatus, turns: 1));
+    return _Result.done;
+  }
+
+  /// After [mover] enters a cell: the first enemy on overwatch that can see it
+  /// and reaches it fires, and its stance ends. Returns true if [mover] died, so
+  /// the caller abandons the rest of its path.
+  bool _triggerOverwatch(World world, EntityId mover) {
+    final teams = world.storeOf<Team>();
+    final moverTeam = teams.get(mover)?.id;
+    final statuses = world.storeOf<StatusEffects>();
+    final grid = world.storeOf<GridPosition>();
+    final at = grid.get(mover);
+    if (moverTeam == null || at == null) return false;
+    for (var i = 0; i < statuses.length; i++) {
+      final watcher = statuses.entityAt(i);
+      final stance = statuses.denseAt(i);
+      if (!stance.has(overwatchStatus) || teams.get(watcher)?.id == moverTeam) continue;
+      final from = grid.get(watcher);
+      if (from == null) continue;
+      final reach = world.storeOf<AttackProfile>().get(watcher)?.range ?? attackRange;
+      if (from.chebyshev(at) > reach) continue;
+      final watcherTeam = teams.get(watcher)?.id;
+      if (watcherTeam != null && !canSee(world, watcherTeam, mover)) continue;
+      stance.effects.removeWhere((e) => e.id == overwatchStatus);
+      world.events.emit(OverwatchTriggeredEvent(watcher, mover));
+      // Resolved directly, not via AttackResolvedEvent: that event is applied at
+      // the next flush, after the mover has already finished its whole path.
+      resolveAttack(world, watcher, mover);
+      return !world.entities.isAlive(mover);
+    }
+    return false;
   }
 
   _Result _fail(World world, EntityId entity, Order order, OrderFailure why) {

@@ -126,10 +126,6 @@ orders, grid navigation, combat, fog of war, selection, AI turns,
 - [ ] **Fog shading in the `strategy_game` template** — the starter has terrain
       and a move-range highlight but no fog; show `FogOfWar` (visible / explored /
       unknown) as an overlay and hide unseen enemies (`canSee`).
-- [ ] **Overwatch** — a stance where a unit holds its points and attacks the
-      first enemy that moves into its range during the enemy's turn (needs a
-      reaction hook in `OrderSystem`'s move step, after the existing
-      `defend`/status machinery).
 - [ ] **Objective-driven AI** — capture points, escort and defend-the-flag
       behaviours for `TurnAI`, beyond `TacticalAI`'s kill-or-explore logic.
 - [ ] **Real-time strategy** — the order, selection, navigation and fog layers

@@ -43,6 +43,9 @@ class StatusEffects {
       ]);
 }
 
+/// The status id of a unit holding an overwatch stance (see `OverwatchOrder`).
+const overwatchStatus = 'overwatch';
+
 class StatusAppliedEvent {
   final EntityId entity;
   final String id;

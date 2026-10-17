@@ -35,6 +35,8 @@ abstract class Order {
         return AttackOrder((json['target'] as num).toInt());
       case 'defend':
         return const DefendOrder();
+      case 'overwatch':
+        return const OverwatchOrder();
       default:
         throw FormatException('Unknown order type: ${json['type']}');
     }
@@ -77,6 +79,27 @@ class DefendOrder extends Order {
 
   @override
   Map<String, dynamic> toJson() => {'type': type};
+}
+
+/// Hold fire and watch: spends all remaining action points (needs at least one)
+/// and, until this unit's team's next turn starts, shoots the first enemy that
+/// moves into its attack range - interrupting that enemy's move where it stands.
+/// The stance ends when it fires. With no points left it waits for next turn.
+class OverwatchOrder extends Order {
+  const OverwatchOrder();
+
+  @override
+  String get type => 'overwatch';
+
+  @override
+  Map<String, dynamic> toJson() => {'type': type};
+}
+
+/// Emitted when an overwatching unit fires at an enemy that entered its range.
+class OverwatchTriggeredEvent {
+  final int watcher;
+  final int target;
+  OverwatchTriggeredEvent(this.watcher, this.target);
 }
 
 /// Pending orders for one entity, executed front to back. An order that

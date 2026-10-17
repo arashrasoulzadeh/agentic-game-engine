@@ -85,24 +85,32 @@ int damageFor(UnitStats attacker, UnitStats target, {int attackBonus = 0, int de
 /// per world; kept as an install function like the engine's other event
 /// wiring so order execution stays ignorant of any health model.
 void installCombat(World world) {
-  world.events.on<AttackResolvedEvent>((e) {
-    final stats = world.storeOf<UnitStats>();
-    final attacker = stats.get(e.attacker);
-    final target = stats.get(e.target);
-    if (attacker == null || target == null || !world.entities.isAlive(e.target)) return;
-    final amount = damageFor(
-      attacker,
-      target,
-      attackBonus: world.storeOf<StatusEffects>().get(e.attacker)?.attackBonus ?? 0,
-      defenseBonus: world.storeOf<StatusEffects>().get(e.target)?.defenseBonus ?? 0,
-    );
-    target.hp = target.hp - amount < 0 ? 0 : target.hp - amount;
-    world.events.emit(UnitDamagedEvent(e.attacker, e.target, amount));
-    if (target.hp == 0) {
-      world.events.emit(UnitDefeatedEvent(e.target, world.storeOf<Team>().get(e.target)?.id));
-      world.destroy(e.target);
-    }
-  });
+  world.events.on<AttackResolvedEvent>((e) => resolveAttack(world, e.attacker, e.target));
+}
+
+/// Applies one attack's damage: bonuses from `StatusEffects`, then
+/// `UnitDamagedEvent`, and on 0 hp `UnitDefeatedEvent` and destruction. What
+/// `installCombat` runs for every `AttackResolvedEvent`; call it directly when a
+/// hit must land *immediately* rather than at the next event flush -- overwatch
+/// uses this so a shot can stop the mover mid-path.
+void resolveAttack(World world, EntityId attackerId, EntityId targetId) {
+  final stats = world.storeOf<UnitStats>();
+  final attacker = stats.get(attackerId);
+  final target = stats.get(targetId);
+  if (attacker == null || target == null || !world.entities.isAlive(targetId)) return;
+  final statuses = world.storeOf<StatusEffects>();
+  final amount = damageFor(
+    attacker,
+    target,
+    attackBonus: statuses.get(attackerId)?.attackBonus ?? 0,
+    defenseBonus: statuses.get(targetId)?.defenseBonus ?? 0,
+  );
+  target.hp = target.hp - amount < 0 ? 0 : target.hp - amount;
+  world.events.emit(UnitDamagedEvent(attackerId, targetId, amount));
+  if (target.hp == 0) {
+    world.events.emit(UnitDefeatedEvent(targetId, world.storeOf<Team>().get(targetId)?.id));
+    world.destroy(targetId);
+  }
 }
 
 /// Eliminates teams with no surviving `UnitStats` unit and declares the

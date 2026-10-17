@@ -91,6 +91,7 @@ spends this way, "can't act out of turn" is enforced in exactly one place.
 |---|---|---|
 | `MoveOrder(col, row)` | `{"type":"move","col":3,"row":5}` | Walks step by step, paying each cell's terrain cost. |
 | `AttackOrder(target)` | `{"type":"attack","target":17}` | Walks into range if needed (with the navigator), then attacks. |
+| `OverwatchOrder()` | `{"type":"overwatch"}` | Spends all remaining points and holds fire; shoots the first enemy that moves into the unit's attack range before its next turn, **interrupting that enemy's move where it stands**. Ends when it fires. |
 | `DefendOrder()` | `{"type":"defend"}` | Spends all remaining points and applies `defending` (+2 defense by default) until the unit's next turn starts. With no points left it waits for the next turn. |
 
 An order the unit **can't afford yet stays queued** and resumes next turn.
@@ -250,6 +251,7 @@ than between.
 | `UnitDamagedEvent(attacker, target, amount)` | Damage applied. |
 | `UnitDefeatedEvent(unit, team)` | A unit reaches 0 hp, just before destruction. |
 | `OrderFailedEvent(entity, order, reason)` | An order was dropped. |
+| `OverwatchTriggeredEvent(watcher, target)` | An overwatching unit fired. |
 | `StatusAppliedEvent(entity, id)` | A status was applied or refreshed. |
 | `StatusExpiredEvent(entity, id)` | A status ran out at its owner's turn start. |
 | `VictoryEvent(team)` | One team remains. |
@@ -270,5 +272,5 @@ than between.
 ## Not built yet
 
 Real-time strategy (needs the fixed-step accumulator wired into `Game`, and
-flow-field pathfinding for large groups), overwatch, and objective-driven AI.
+flow-field pathfinding for large groups) and objective-driven AI.
 See [the roadmap](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md#turn-based-strategy).

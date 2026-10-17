@@ -33,6 +33,7 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | `UnitDefeatedEvent` | `unit`, `team` | `installCombat` (just before destroy) |
 | `OrderFailedEvent` | `entity`, `order`, `reason` | `OrderSystem` |
 | `VictoryEvent` | `team` | `WinConditionSystem` |
+| `OverwatchTriggeredEvent` | `watcher`, `target` | `OrderSystem` (on a watcher's shot) |
 | `StatusAppliedEvent` | `entity`, `id` | `applyStatus` |
 | `StatusExpiredEvent` | `entity`, `id` | turn clock (`tickStatusEffects`) |
 

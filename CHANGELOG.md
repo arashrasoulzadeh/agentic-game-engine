@@ -9,6 +9,9 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `OverwatchOrder` / `OverwatchTriggeredEvent`: a unit holds its points and
+  shoots the first enemy to move into its range, stopping that enemy mid-path.
+  `resolveAttack` applies a hit immediately (what `installCombat` uses per event).
 - `MoveRangeHighlightSystem` (`installStrategySystems(moveHighlight:)`), and a
   `strategy_game` starter with a real terrain `TileMap` (forest costs 3,
   mountains block) read by `GridNavigator.fromTileMap`.
