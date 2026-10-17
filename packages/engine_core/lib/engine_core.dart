@@ -79,6 +79,7 @@ export 'src/turn/turn_components.dart';
 export 'src/turn/turn_system.dart';
 export 'src/turn/order.dart';
 export 'src/turn/order_system.dart';
+export 'src/turn/grid_navigation.dart';
 
 import 'src/ai/ai_state.dart';
 import 'src/ui/button.dart';

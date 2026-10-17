@@ -1,6 +1,7 @@
 import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
+import 'grid_navigation.dart';
 import 'order.dart';
 import 'turn_components.dart';
 import 'turn_system.dart';
@@ -43,12 +44,37 @@ class OrderSystem extends System {
     bool Function(int col, int row) occupied,
   ) nextStep;
 
+  /// Action points to enter [to]. Defaults to the flat [moveCost]; a
+  /// navigator-backed system charges the cell's terrain cost instead.
+  final int Function(World world, GridPosition to) stepCost;
+
   OrderSystem({
     this.moveCost = 1,
+    int Function(World, GridPosition)? stepCost,
     this.attackCost = 1,
     this.attackRange = 1,
     GridPosition? Function(World, GridPosition, GridPosition, bool Function(int, int))? nextStep,
-  }) : nextStep = nextStep ?? _greedyStep;
+  })  : nextStep = nextStep ?? _greedyStep,
+        stepCost = stepCost ?? ((_, __) => moveCost);
+
+  /// An [OrderSystem] that routes with [nav] (weighted, 8-way, around
+  /// other units) and charges each step the terrain cost of the cell
+  /// entered, so a 3-cost forest tile really costs 3 action points.
+  factory OrderSystem.withNavigator(
+    GridNavigator nav, {
+    int attackCost = 1,
+    int attackRange = 1,
+  }) {
+    return OrderSystem(
+      attackCost: attackCost,
+      attackRange: attackRange,
+      stepCost: (_, to) => nav.terrainCost(to.col, to.row) ?? 1,
+      nextStep: (world, from, to, occupied) {
+        final path = nav.findPath(from, to, blocked: occupied);
+        return path == null || path.isEmpty ? null : path.first;
+      },
+    );
+  }
 
   @override
   String get name => 'orders';
@@ -93,7 +119,9 @@ class OrderSystem extends System {
     while (pos.col != goal.col || pos.row != goal.row) {
       final step = nextStep(world, pos, goal, occupied);
       if (step == null) return _fail(world, entity, order, OrderFailure.blocked);
-      if (!trySpendActionPoints(world, entity, moveCost)) return _Result.waiting;
+      if (!trySpendActionPoints(world, entity, stepCost(world, step))) {
+        return _Result.waiting;
+      }
       pos.col = step.col;
       pos.row = step.row;
       world.events.emit(MovedEvent(entity, pos.col, pos.row));

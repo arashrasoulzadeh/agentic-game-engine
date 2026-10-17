@@ -19,12 +19,15 @@ The package DAG is unchanged.
   `trySpendActionPoints` (single out-of-turn gate), and `TurnSystem`
   (optional auto-end per team). Registered in `registerCoreComponents`,
   schemas in `engine_schema`. Tests: `engine_core/test/turn_system_test.dart`.
-- [ ] **2. Orders** — `OrderQueue` component + `MoveOrder`/`AttackOrder`
+- [x] **2. Orders** — `OrderQueue` component + `MoveOrder`/`AttackOrder`
   data, an executor system that spends AP through
   `trySpendActionPoints`. Orders are JSON so an agent can submit them.
-- [ ] **3. Grid movement** — 8-directional A* with terrain costs and
+- [x] **3. Grid movement** — 8-directional A* with terrain costs and
   unit blocking (the current `findPath` is 4-directional and
   platformer-flavored); reachable-tiles query for move-range overlays.
+  `GridNavigator` (`findPath`, `reachable`, `fromTileMap`) +
+  `OrderSystem.withNavigator`; no diagonal corner-cutting past walls.
+  Tests: `grid_navigation_test.dart`.
 - [ ] **4. Selection and input** — single/multi select component,
   tap-to-select/tap-to-order in `engine_flutter`, selection rings.
 - [ ] **5. Combat and win conditions** — damage reuse (`damageEntity`),
