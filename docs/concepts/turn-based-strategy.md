@@ -297,6 +297,6 @@ than between.
 
 ## Not built yet
 
-Real-time strategy (needs the fixed-step accumulator wired into `Game`, and
-flow-field pathfinding for large groups), escort and flag-carrying objectives.
+Escort and flag-carrying objectives. Looking for real time? See
+[Real-time strategy](realtime-strategy.md).
 See [the roadmap](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md#turn-based-strategy).

@@ -126,10 +126,11 @@ orders, grid navigation, combat, fog of war, selection, AI turns,
 - [ ] **Escort and flag-carrying objectives** — capture-and-hold is done
       (`Objective`, `ObjectiveAI`, hold-to-win). Still missing: units that carry
       an item to a goal, escort/VIP rules, and AI for them.
-- [ ] **Real-time strategy** — the order, selection, navigation and fog layers
-      carry over. Missing: wire `EngineView.fixedTimestepSeconds` (opt-in
-      today, default off) through `Game`/`GameConfig` for lockstep
-      determinism, and flow-field pathfinding for large groups.
+- [ ] **Real-time strategy, next layer** — movement, combat, selection, fog and
+      flow fields work (see the concept guide). Missing: formations, production
+      and a resource economy, a skirmish `TurnAI`-equivalent for real time,
+      smooth (interpolated) unit rendering between cells, and a lockstep
+      session that sends only orders over a real transport (see Networking).
 
 ## Studio
 
@@ -250,6 +251,9 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       (colorblind modes, text scaling, remapping).
 - [ ] Viewport / aspect-ratio / safe-area handling.
 - [ ] Error reporting and analytics hooks.
+- [ ] Networking guide: snapshots and deltas, state sync, rollback and its
+      determinism requirements, lag compensation (code is in
+      `engine_core/lib/src/net/`; only mentioned in passing today).
 - [ ] Performance: archetypes, the job system, the benchmark suite.
 - [ ] Lighting deep-dive (`Light2D`, shadows, single-pass shader, day/night)
       beyond the overview in `concepts/rendering.md`.

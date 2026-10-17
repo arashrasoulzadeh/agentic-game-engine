@@ -29,24 +29,32 @@ void clearSelection(World world) {
   }
 }
 
-bool _selectable(World world, EntityId e, TurnState state) =>
-    world.storeOf<Team>().get(e)?.id == state.activeTeam &&
-    world.storeOf<GridPosition>().has(e);
-
-/// Selects the active team's unit standing on ([col], [row]). Only the
-/// side whose turn it is can be selected, so the UI can't hand the
-/// player an opponent's unit. With no unit there, the selection is
-/// left untouched and null returned (so a stray tap on empty ground can
-/// be interpreted as a move command by the caller). [additive] keeps
-/// the existing selection (shift/ctrl-click).
-EntityId? selectAtCell(World world, int col, int row, {bool additive = false}) {
+/// Which team the local player is commanding: [team] when given (real-time, or a
+/// hot-seat game with a fixed viewpoint), otherwise whoever's turn it is. Null
+/// when neither exists, in which case nothing is selectable.
+String? _controlling(World world, String? team) {
+  if (team != null) return team;
   final state = turnStateOf(world);
-  if (state == null) return null;
+  return state == null ? null : state.activeTeam;
+}
+
+bool _selectable(World world, EntityId e, String team) =>
+    world.storeOf<Team>().get(e)?.id == team && world.storeOf<GridPosition>().has(e);
+
+/// Selects the controlled team's unit standing on ([col], [row]). The controlled
+/// team is [team] if given -- required in a real-time game, which has no turns --
+/// otherwise the side whose turn it is, so the UI can't hand the player an
+/// opponent's unit. With no unit there, the selection is left untouched and null
+/// returned (so a stray tap on empty ground can be interpreted as a move command
+/// by the caller). [additive] keeps the existing selection (shift/ctrl-click).
+EntityId? selectAtCell(World world, int col, int row, {bool additive = false, String? team}) {
+  final controlled = _controlling(world, team);
+  if (controlled == null) return null;
   final grid = world.storeOf<GridPosition>();
   for (var i = 0; i < grid.length; i++) {
     final e = grid.entityAt(i);
     final p = grid.denseAt(i);
-    if (p.col == col && p.row == row && _selectable(world, e, state)) {
+    if (p.col == col && p.row == row && _selectable(world, e, controlled)) {
       if (!additive) clearSelection(world);
       world.storeOf<Selected>().set(e, const Selected());
       return e;
@@ -55,12 +63,14 @@ EntityId? selectAtCell(World world, int col, int row, {bool additive = false}) {
   return null;
 }
 
-/// Box-selects every active-team unit with a cell in the inclusive
-/// rectangle spanned by the two corners (given in any order). Returns
-/// how many were selected; an empty box leaves the selection alone.
-int selectInBox(World world, int col0, int row0, int col1, int row1, {bool additive = false}) {
-  final state = turnStateOf(world);
-  if (state == null) return 0;
+/// Box-selects every controlled-team unit (see [selectAtCell] for who that is)
+/// with a cell in the inclusive rectangle spanned by the two corners (given in
+/// any order). Returns how many were selected; an empty box leaves the selection
+/// alone.
+int selectInBox(World world, int col0, int row0, int col1, int row1,
+    {bool additive = false, String? team}) {
+  final controlled = _controlling(world, team);
+  if (controlled == null) return 0;
   final c0 = col0 < col1 ? col0 : col1, c1 = col0 < col1 ? col1 : col0;
   final r0 = row0 < row1 ? row0 : row1, r1 = row0 < row1 ? row1 : row0;
   final grid = world.storeOf<GridPosition>();
@@ -70,7 +80,7 @@ int selectInBox(World world, int col0, int row0, int col1, int row1, {bool addit
           grid.denseAt(i).col <= c1 &&
           grid.denseAt(i).row >= r0 &&
           grid.denseAt(i).row <= r1 &&
-          _selectable(world, grid.entityAt(i), state))
+          _selectable(world, grid.entityAt(i), controlled))
         grid.entityAt(i),
   ];
   if (hits.isEmpty) return 0;
@@ -84,10 +94,11 @@ int selectInBox(World world, int col0, int row0, int col1, int row1, {bool addit
 /// Orders every selected unit toward ([col], [row]): an attack if an
 /// enemy stands there, otherwise a move. Returns how many orders were
 /// accepted. [replace] drops each unit's queued orders first, matching
-/// the usual "new click overrides" feel; false appends (shift-queue).
-int commandSelected(World world, int col, int row, {bool replace = true}) {
-  final state = turnStateOf(world);
-  if (state == null) return 0;
+/// the usual "new click overrides" feel; false appends (shift-queue). [team] is
+/// the commanding side, as in [selectAtCell].
+int commandSelected(World world, int col, int row, {bool replace = true, String? team}) {
+  final controlled = _controlling(world, team);
+  if (controlled == null) return 0;
   final grid = world.storeOf<GridPosition>();
   final teams = world.storeOf<Team>();
   EntityId? enemy;
@@ -97,14 +108,14 @@ int commandSelected(World world, int col, int row, {bool replace = true}) {
     if (grid.denseAt(i).col == col &&
         grid.denseAt(i).row == row &&
         t != null &&
-        t.id != state.activeTeam) {
+        t.id != controlled) {
       enemy = e;
       break;
     }
   }
   var accepted = 0;
   for (final e in selectedEntities(world)) {
-    if (!_selectable(world, e, state)) continue;
+    if (!_selectable(world, e, controlled)) continue;
     if (replace) world.storeOf<OrderQueue>().get(e)?.orders.clear();
     final order = enemy != null ? AttackOrder(enemy) : MoveOrder(col, row);
     if (submitOrder(world, e, order)) accepted++;

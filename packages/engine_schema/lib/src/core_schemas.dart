@@ -235,3 +235,10 @@ const objectiveRulesSchema = ComponentSchema('objectiveRules', [
   FieldSchema('holdTurnsToWin', FieldType.int, min: 1, required: true),
   FieldSchema('holds', FieldType.object),
 ]);
+
+const realtimeStatsSchema = ComponentSchema('realtimeStats', [
+  FieldSchema('speed', FieldType.double, min: 0, defaultValue: 2),
+  FieldSchema('attackInterval', FieldType.double, min: 0, defaultValue: 1),
+  FieldSchema('moveProgress', FieldType.double, min: 0),
+  FieldSchema('cooldown', FieldType.double, min: 0),
+]);

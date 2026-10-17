@@ -492,6 +492,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
                 loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness,
             dayNightCycle: loaded.scene.dayNightCycle,
             maxFps: widget.game.config.maxFps,
+            fixedTimestepSeconds: widget.game.config.fixedTimestepSeconds,
             frameStats: widget.game.frameStats,
             singlePassLighting: widget.game.config.singlePassLighting,
             // No taps while an overlay is up -- it alone should be
@@ -535,6 +536,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
               // otherwise want back once resumed.
               backgroundColor: const Color(0x99101018),
               maxFps: widget.game.config.maxFps,
+              fixedTimestepSeconds: widget.game.config.fixedTimestepSeconds,
               singlePassLighting: widget.game.config.singlePassLighting,
               onWorldTap: (worldPosition) =>
                   overlay.scene.handleTap(overlay.world, _sceneController, worldPosition),

@@ -7,6 +7,9 @@ import 'package:engine_flutter/engine_flutter.dart';
 /// and optionally `Vision`, an `AttackProfile` (pass [attackRange] and/or
 /// [attackCost] for ranged or expensive attacks) and a `Sprite`.
 ///
+/// Pass [realtime] (`RealtimeStats(speed: 3, attackInterval: 0.8)`) for a
+/// real-time game: the unit gets those instead of `ActionPoints`.
+///
 /// Action points start at 0 -- `startTurnBasedGame`/`endTurn` refill
 /// them when the unit's team's turn begins -- so a unit spawned
 /// mid-game can't act on the turn it appears.
@@ -23,6 +26,7 @@ EntityId spawnStrategyUnit(
   int? visionRange,
   int? attackRange,
   int? attackCost,
+  RealtimeStats? realtime,
   String? atlasId,
   String? spriteRegion,
 }) {
@@ -30,7 +34,12 @@ EntityId spawnStrategyUnit(
   world.storeOf<Team>().set(id, Team(team));
   world.storeOf<GridPosition>().set(id, GridPosition(col, row));
   world.storeOf<Position>().set(id, Position((col + 0.5) * cellSize, (row + 0.5) * cellSize));
-  world.storeOf<ActionPoints>().set(id, ActionPoints(actionPoints, current: 0));
+  if (realtime != null) {
+    // Real-time units act on speed and cooldowns, not action points.
+    world.storeOf<RealtimeStats>().set(id, realtime);
+  } else {
+    world.storeOf<ActionPoints>().set(id, ActionPoints(actionPoints, current: 0));
+  }
   world.storeOf<UnitStats>().set(id, UnitStats(maxHp: maxHp, attack: attack, defense: defense));
   if (attackRange != null || attackCost != null) {
     world.storeOf<AttackProfile>().set(id, AttackProfile(range: attackRange ?? 1, cost: attackCost ?? 1));

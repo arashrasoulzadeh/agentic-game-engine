@@ -1,4 +1,3 @@
-import '../ecs/component_store.dart';
 import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
@@ -6,20 +5,23 @@ import 'combat.dart';
 import 'grid_navigation.dart';
 import 'status.dart';
 import 'fog_of_war.dart';
+import 'occupancy.dart';
 import 'order.dart';
 import 'turn_components.dart';
 import 'turn_system.dart';
 
-/// Queues [order] for [entity]. Rejected (false) when it isn't the
-/// entity's team's turn or the entity has no team -- orders are only
-/// accepted from the side that can act, so a client or agent can't
-/// pre-plan the opponent's units.
+/// Queues [order] for [entity]. Rejected (false) when the entity has no team, or
+/// when a turn clock exists and it isn't that team's turn (or the game is over) --
+/// orders are only accepted from the side that can act, so a client or agent
+/// can't pre-plan the opponent's units.
+///
+/// A world with **no** turn clock is real-time: any unit with a team may be
+/// ordered at any time (who may command which unit is then the caller's rule).
 bool submitOrder(World world, EntityId entity, Order order) {
   final state = turnStateOf(world);
   final team = world.storeOf<Team>().get(entity);
-  if (state == null || state.winner != null || team == null || team.id != state.activeTeam) {
-    return false;
-  }
+  if (team == null) return false;
+  if (state != null && (state.winner != null || team.id != state.activeTeam)) return false;
   final store = world.storeOf<OrderQueue>();
   var queue = store.get(entity);
   if (queue == null) {
@@ -106,10 +108,13 @@ class OrderSystem extends System {
     if (state == null) return;
     final queues = world.storeOf<OrderQueue>();
     final teams = world.storeOf<Team>();
-    for (var i = 0; i < queues.length; i++) {
-      final entity = queues.entityAt(i);
-      if (teams.get(entity)?.id != state.activeTeam) continue;
-      final queue = queues.denseAt(i);
+    // In id order, not store order: the store's order depends on add/remove
+    // history, so a world restored from a snapshot would resolve contested cells
+    // differently from the original (see RealtimeOrderSystem.update).
+    final ids = [for (var i = 0; i < queues.length; i++) queues.entityAt(i)]..sort();
+    for (final entity in ids) {
+      final queue = queues.get(entity);
+      if (queue == null || teams.get(entity)?.id != state.activeTeam) continue;
       while (queue.orders.isNotEmpty) {
         final result = _run(world, entity, queue.orders.first);
         if (result == _Result.waiting) break;
@@ -131,7 +136,7 @@ class OrderSystem extends System {
     final pos = grid.get(entity);
     if (pos == null) return _fail(world, entity, order, OrderFailure.invalidTarget);
     final goal = GridPosition(order.col, order.row);
-    final occupied = _occupiedBy(grid, entity);
+    final occupied = occupiedBy(grid, entity);
 
     while (pos.col != goal.col || pos.row != goal.row) {
       final step = nextStep(world, pos, goal, occupied);
@@ -168,7 +173,7 @@ class OrderSystem extends System {
       // The target's own cell must be walkable for the router, so it is
       // excluded from the occupied set; we stop once in range, before
       // ever entering it.
-      final occupied = _occupiedBy(grid, entity, ignore: order.target);
+      final occupied = occupiedBy(grid, entity, ignore: order.target);
       while (me.chebyshev(target) > reach) {
         final step = nextStep(world, me, target, occupied);
         if (step == null) return _fail(world, entity, order, OrderFailure.blocked);
@@ -241,21 +246,6 @@ class OrderSystem extends System {
 }
 
 enum _Result { done, waiting, failed }
-
-bool Function(int, int) _occupiedBy(
-  ComponentStore<GridPosition> grid,
-  EntityId self, {
-  EntityId? ignore,
-}) {
-  return (c, r) {
-    for (var i = 0; i < grid.length; i++) {
-      final o = grid.denseAt(i);
-      final e = grid.entityAt(i);
-      if (e != self && e != ignore && o.col == c && o.row == r) return true;
-    }
-    return false;
-  };
-}
 
 GridPosition? _greedyStep(
   World world,

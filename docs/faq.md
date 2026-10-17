@@ -116,7 +116,7 @@ Not yet (pre-1.0). Generated projects depend on the git repo; see
 [Getting started](getting-started.md#why-a-git-dependency).
 
 ### Can it do 3D / real-time strategy?
-3D: no, by decision. RTS: the building blocks (orders, selection, navigation,
-fog) are in place; the missing pieces are a lockstep fixed-step driver and
-flow-field pathfinding — tracked in
+3D: no, by decision. RTS: yes at a basic level — see
+[Real-time strategy](concepts/realtime-strategy.md). Still missing: formations,
+a resource economy and a real-time AI — tracked in
 [the roadmap](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md#turn-based-strategy).

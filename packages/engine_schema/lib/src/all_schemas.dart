@@ -35,6 +35,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'selected': selectedSchema,
   'unitStats': unitStatsSchema,
   'attackProfile': attackProfileSchema,
+  'realtimeStats': realtimeStatsSchema,
   'objective': objectiveSchema,
   'objectiveRules': objectiveRulesSchema,
   'statusEffects': statusEffectsSchema,

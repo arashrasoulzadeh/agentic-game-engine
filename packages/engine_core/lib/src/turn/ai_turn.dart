@@ -40,6 +40,8 @@ class AggressiveAI implements TurnAI {
         enemies.add(e);
       }
     }
+    mine.sort();
+    enemies.sort();
     for (final unit in mine) {
       final from = grid.get(unit)!;
       EntityId? best;
@@ -108,6 +110,10 @@ class TacticalAI implements TurnAI {
         enemies.add(e);
       }
     }
+    // Id order, not store order, so the same position always yields the same
+    // orders (store order depends on add/remove history; see RealtimeOrderSystem).
+    mine.sort();
+    enemies.sort();
     if (mine.isEmpty) return;
     for (final unit in mine) {
       world.storeOf<OrderQueue>().get(unit)?.orders.clear();
@@ -280,6 +286,8 @@ class ObjectiveAI implements TurnAI {
         enemies.add(e);
       }
     }
+    mine.sort();
+    enemies.sort();
     for (final unit in mine) {
       world.storeOf<OrderQueue>().get(unit)?.orders.clear();
     }

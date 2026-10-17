@@ -86,6 +86,7 @@ nav:
       - Rendering: concepts/rendering.md
       - Platformer gameplay: concepts/platformer.md
       - Turn-based strategy: concepts/turn-based-strategy.md
+      - Real-time strategy: concepts/realtime-strategy.md
   - Examples:
       - Overview: examples/README.md
       - Custom turn-based AI: examples/custom-turn-ai.md

@@ -115,3 +115,76 @@ void _registerOnce<T>(
   if (world.components.all.any((r) => r.name == name)) return;
   world.components.register<T>(name, toJson, fromJson);
 }
+
+/// What [installRealtimeStrategySystems] created, for the game to hold on to.
+class RealtimeInstall {
+  RealtimeInstall({required this.fields, required this.matchRule, this.fog});
+
+  /// Shared flow fields. Call `fields.invalidate()` when terrain changes.
+  final FlowFieldCache fields;
+
+  /// Decides the winner; read `matchRule.winner`.
+  final LastTeamStandingSystem matchRule;
+
+  /// The `FogOfWar` entity, when fog was enabled.
+  final EntityId? fog;
+}
+
+/// The real-time counterpart of [installStrategySystems]: no turn clock or action
+/// points - units act continuously on their `RealtimeStats` speed and cooldowns.
+///
+/// Order, and why: `VisionSystem` (with fog) first so visibility is current;
+/// `RealtimeOrderSystem` (movement and combat, sharing one `FlowField` per
+/// destination); `LastTeamStandingSystem` after this tick's kills;
+/// `GridToWorldSystem`; then the optional selection markers and fog shade. Combat
+/// is applied directly by the order system, so there is no `installCombat` here.
+///
+/// **Run it on a fixed timestep** (`GameConfig.fixedTimestepSeconds`, e.g.
+/// `1 / 20`): the systems are deterministic for identical `dt`, which is what
+/// replays, rollback and lockstep multiplayer depend on, and frame-time `dt`
+/// would break that. Spawn units with `spawnStrategyUnit(realtime: ...)`, issue
+/// orders with `GridTapController(cell, localTeam: ...)` or `submitOrder`.
+RealtimeInstall installRealtimeStrategySystems(
+  World world, {
+  required GridNavigator navigator,
+  required double cellSize,
+  int attackRange = 1,
+  bool autoEngage = true,
+  bool fog = false,
+  bool Function(int col, int row)? blocksSight,
+  bool selectionMarkers = true,
+  ({
+    String team,
+    String atlasId,
+    String unknownRegion,
+    String exploredRegion,
+    String clearRegion,
+  })? fogShade,
+}) {
+  EntityId? fogEntity;
+  if (fog) {
+    fogEntity = world.spawn();
+    world.storeOf<FogOfWar>().set(fogEntity, FogOfWar(navigator.cols, navigator.rows));
+    world.addSystem(VisionSystem(blocksSight: blocksSight ?? (_, _) => false));
+  }
+  final fields = FlowFieldCache(navigator);
+  world.addSystem(RealtimeOrderSystem(fields: fields, attackRange: attackRange, autoEngage: autoEngage));
+  final matchRule = LastTeamStandingSystem();
+  world.addSystem(matchRule);
+  world.addSystem(GridToWorldSystem(cellSize));
+  if (selectionMarkers) world.addSystem(SelectionMarkerSystem(cellSize));
+  if (fogShade != null) {
+    if (!fog) throw ArgumentError('fogShade needs fog: true');
+    _registerOnce<FogShadeCell>(world, 'fogShadeCell', (c) => c.toJson(), FogShadeCell.fromJson);
+    _registerOnce<FogHidden>(world, 'fogHidden', (h) => h.toJson(), FogHidden.fromJson);
+    world.addSystem(FogShadeSystem(
+      team: fogShade.team,
+      cellSize: cellSize,
+      atlasId: fogShade.atlasId,
+      unknownRegion: fogShade.unknownRegion,
+      exploredRegion: fogShade.exploredRegion,
+      clearRegion: fogShade.clearRegion,
+    ));
+  }
+  return RealtimeInstall(fields: fields, matchRule: matchRule, fog: fogEntity);
+}

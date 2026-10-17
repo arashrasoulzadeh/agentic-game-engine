@@ -89,6 +89,8 @@ export 'src/turn/order.dart';
 export 'src/turn/order_system.dart';
 export 'src/turn/grid_navigation.dart';
 export 'src/turn/flow_field.dart';
+export 'src/turn/realtime.dart';
+export 'src/turn/occupancy.dart';
 export 'src/turn/selection.dart';
 export 'src/turn/combat.dart';
 export 'src/turn/status.dart';
@@ -119,6 +121,7 @@ import 'src/turn/selection.dart';
 import 'src/turn/combat.dart';
 import 'src/turn/status.dart';
 import 'src/turn/objectives.dart';
+import 'src/turn/realtime.dart';
 import 'src/turn/fog_of_war.dart';
 
 /// Registers the engine's built-in components on [world]. Games/agents
@@ -340,5 +343,11 @@ void registerCoreComponents(World world) {
     (r) => r.toJson(),
     ObjectiveRules.fromJson,
     schema: objectiveRulesSchema,
+  );
+  world.components.register<RealtimeStats>(
+    'realtimeStats',
+    (r) => r.toJson(),
+    RealtimeStats.fromJson,
+    schema: realtimeStatsSchema,
   );
 }

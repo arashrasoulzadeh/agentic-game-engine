@@ -74,6 +74,14 @@ class GameConfig {
   /// given device's actual refresh rate happens to be.
   final int? maxFps;
 
+  /// Simulation step in seconds (typically `1 / 60`); see
+  /// `EngineView.fixedTimestepSeconds`. `null` (default) steps once per rendered
+  /// frame with that frame's duration. Set it for anything that must behave
+  /// identically on every device - platform physics, and above all lockstep
+  /// multiplayer, rollback and replays, which are only reproducible when every
+  /// step has exactly the same `dt`.
+  final double? fixedTimestepSeconds;
+
   /// See `EngineView.singlePassLighting`'s doc comment — `false` (default)
   /// uses the legacy multi-pass lighting (saveLayer + dark rect + N light
   /// holes). `true` enables the single-pass shader approach
@@ -130,6 +138,7 @@ class GameConfig {
     this.onScreenControls = OnScreenControlsMode.auto,
     this.ambientBrightness = 1.0,
     this.maxFps,
+    this.fixedTimestepSeconds,
     this.singlePassLighting = false,
     this.packedAtlasId,
     this.packedAtlasImage,
@@ -152,6 +161,7 @@ class GameConfig {
         'ambientBrightness': ambientBrightness,
         'singlePassLighting': singlePassLighting,
         if (maxFps != null) 'maxFps': maxFps,
+        if (fixedTimestepSeconds != null) 'fixedTimestepSeconds': fixedTimestepSeconds,
         if (packedAtlasId != null) 'packedAtlasId': packedAtlasId,
         if (packedAtlasImage != null) 'packedAtlasImage': packedAtlasImage,
         if (packedAtlasManifest != null) 'packedAtlasManifest': packedAtlasManifest,
@@ -180,6 +190,7 @@ class GameConfig {
         ),
         ambientBrightness: (json['ambientBrightness'] as num?)?.toDouble() ?? 1.0,
         maxFps: (json['maxFps'] as num?)?.toInt(),
+        fixedTimestepSeconds: (json['fixedTimestepSeconds'] as num?)?.toDouble(),
         singlePassLighting: json['singlePassLighting'] as bool? ?? false,
         packedAtlasId: json['packedAtlasId'] as String?,
         packedAtlasImage: json['packedAtlasImage'] as String?,

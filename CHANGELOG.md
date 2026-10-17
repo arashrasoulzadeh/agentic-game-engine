@@ -9,6 +9,14 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Real-time strategy: `RealtimeOrderSystem` (continuous movement and cooldown
+  combat, auto-engage), `RealtimeStats`, `LastTeamStandingSystem`, `FlowField` /
+  `FlowFieldCache` (one search shared by a group), `installRealtimeStrategySystems`,
+  `GameConfig.fixedTimestepSeconds`, and `localTeam` for taps/selection. A world
+  with no turn clock is real-time.
+- Determinism fix: `OrderSystem`, `RealtimeOrderSystem` and the AIs now process
+  units in entity-id order. Store order depends on history, so a world restored
+  from a snapshot used to resolve contested cells differently from the original.
 - Objectives: `Objective` capture points (taken by standing on one as your turn
   begins), optional `ObjectiveRules` hold-to-win, `ObjectiveCapturedEvent`, and
   `ObjectiveAI` (garrison, engage, march, spread).

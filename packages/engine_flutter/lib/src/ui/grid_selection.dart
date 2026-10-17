@@ -91,7 +91,12 @@ class GridTapController {
   final double originX;
   final double originY;
 
-  GridTapController(this.cellSize, {this.originX = 0, this.originY = 0});
+  GridTapController(this.cellSize, {this.originX = 0, this.originY = 0, this.localTeam});
+
+  /// The team the local player commands. Required for real-time games (no turn
+  /// clock to say whose side it is); in turn-based games leave it null and the
+  /// active team is used.
+  final String? localTeam;
 
   int colOf(double worldX) => ((worldX - originX) / cellSize).floor();
   int rowOf(double worldY) => ((worldY - originY) / cellSize).floor();
@@ -101,10 +106,10 @@ class GridTapController {
   GridTapResult handleTap(World world, Offset worldPosition, {bool additive = false}) {
     final col = colOf(worldPosition.dx);
     final row = rowOf(worldPosition.dy);
-    if (selectAtCell(world, col, row, additive: additive) != null) {
+    if (selectAtCell(world, col, row, additive: additive, team: localTeam) != null) {
       return GridTapResult.selected;
     }
-    if (selectedEntities(world).isNotEmpty && commandSelected(world, col, row, replace: !additive) > 0) {
+    if (selectedEntities(world).isNotEmpty && commandSelected(world, col, row, replace: !additive, team: localTeam) > 0) {
       return GridTapResult.commanded;
     }
     return GridTapResult.ignored;
@@ -113,5 +118,5 @@ class GridTapController {
   /// Box-selects between two world points (a drag rectangle).
   int handleDrag(World world, Offset start, Offset end, {bool additive = false}) =>
       selectInBox(world, colOf(start.dx), rowOf(start.dy), colOf(end.dx), rowOf(end.dy),
-          additive: additive);
+          additive: additive, team: localTeam);
 }
