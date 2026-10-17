@@ -1,0 +1,113 @@
+site_name: Agentic Game Engine
+site_description: A pure-Dart 2D game engine built for AI agents and humans — ECS, platformer and turn-based strategy, content as data.
+site_url: https://arashrasoulzadeh.github.io/agentic-game-engine/
+repo_url: https://github.com/arashrasoulzadeh/agentic-game-engine
+repo_name: arashrasoulzadeh/agentic-game-engine
+edit_uri: edit/main/docs/
+docs_dir: docs
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+hooks:
+  - hooks/repo_links.py
+
+exclude_docs: |
+  proposals/
+  studio/
+
+validation:
+  omitted_files: info
+  absolute_links: warn
+  unrecognized_links: warn
+
+nav:
+  - Home: README.md
+  - Start:
+      - Getting started: getting-started.md
+      - FAQ & troubleshooting: faq.md
+  - Tutorials:
+      - Overview: tutorials/README.md
+      - "1 · A tiny platformer": tutorials/01-hello-world.md
+      - "2 · Turn-based strategy": tutorials/02-turn-based-strategy.md
+      - "3 · An agent-driven game": tutorials/03-agent-driven-game.md
+  - Concepts:
+      - Architecture: concepts/architecture.md
+      - The ECS: concepts/ecs.md
+      - Content as data: concepts/content-as-data.md
+      - The agent API: concepts/agent-api.md
+      - Rendering: concepts/rendering.md
+      - Platformer gameplay: concepts/platformer.md
+      - Turn-based strategy: concepts/turn-based-strategy.md
+  - Examples:
+      - Overview: examples/README.md
+      - Custom turn-based AI: examples/custom-turn-ai.md
+      - Fog of war: examples/fog-of-war.md
+      - Move-range overlay: examples/move-range-overlay.md
+      - Save & restore a turn-based game: examples/save-restore-turn-game.md
+      - Enemy with patrol AI: examples/spawn-enemy-with-patrol-ai.md
+      - Health bar: examples/health-bar.md
+      - Custom Behavior: examples/custom-behavior.md
+      - Save / load: examples/save-load.md
+  - Reference:
+      - Cheat sheet: reference/cheatsheet.md
+      - Components: reference/components.md
+      - Events: reference/events.md
+      - CLI: reference/cli.md
+      - Glossary: reference/glossary.md
+      - API reference: api-reference.md
+  - Project:
+      - Decisions (ADRs):
+          - adr/0001-hand-written-component-schemas.md
+          - adr/0002-command-model-in-engine-core.md
+          - adr/0003-play-test-as-separate-process.md
+          - adr/0004-schemas-in-engine-schema.md
+          - adr/0005-embedded-preview.md
+      - Working on the docs: contributing-docs.md

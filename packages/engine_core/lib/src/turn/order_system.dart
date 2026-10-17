@@ -46,8 +46,8 @@ class OrderSystem extends System {
   /// on a distant enemy should mean "go get it".
   final bool approachTargets;
 
-  /// Returns the next cell from [from] toward [to], or null if there is
-  /// none. [occupied] tells whether a cell holds another entity.
+  /// Returns the next cell from `from` toward `to`, or null if there is
+  /// none. `occupied` tells whether a cell holds another entity.
   final GridPosition? Function(
     World world,
     GridPosition from,
@@ -55,7 +55,7 @@ class OrderSystem extends System {
     bool Function(int col, int row) occupied,
   ) nextStep;
 
-  /// Action points to enter [to]. Defaults to the flat [moveCost]; a
+  /// Action points to enter `to`. Defaults to the flat `moveCost`; a
   /// navigator-backed system charges the cell's terrain cost instead.
   final int Function(World world, GridPosition to) stepCost;
 

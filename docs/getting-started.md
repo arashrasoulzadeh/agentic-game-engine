@@ -1,13 +1,23 @@
 # Getting started
 
+From nothing to a running game in about five minutes.
+
+```mermaid
+flowchart LR
+    A[Install CLI] --> B[game_agent create] --> C[flutter run] --> D[Edit lib/main.dart]
+```
+
 ## Prerequisites
 
-- Flutter SDK with a Dart version satisfying `^3.9.0` (all four
-  packages require this — check `flutter --version`).
-- Git (the CLI pins generated projects to this repo via a git
-  dependency, not a pub.dev version — see [Why a git dependency?](#why-a-git-dependency) below).
+| Need | Version | Check |
+|---|---|---|
+| Flutter SDK (includes Dart) | Dart `^3.9.0` | `flutter --version` |
+| Git | any recent | `git --version` |
 
-## 1. Install the `game_agent` CLI
+Git matters because projects depend on the engine through a git dependency,
+not pub.dev ([why](#why-a-git-dependency)).
+
+## 1. Install the CLI
 
 ```bash
 dart pub global activate --source git \
@@ -15,53 +25,55 @@ dart pub global activate --source git \
   --git-path packages/engine_cli
 ```
 
-This makes the `game_agent` command available on your `PATH` (Dart's
-global pub cache `bin/` directory must be on it — `dart pub global
-activate` prints a warning with instructions if it isn't).
+`game_agent` is now on your `PATH` (add `~/.pub-cache/bin` if the command
+prints a warning).
 
-## 2. Scaffold a project
+## 2. Pick a starter and create it
+
+=== "Platformer"
+
+    ```bash
+    game_agent create my_game
+    ```
+
+    A player, solid ground, keyboard and on-screen controls. Continue with
+    [Tutorial 1](tutorials/01-hello-world.md).
+
+=== "Turn-based strategy"
+
+    ```bash
+    game_agent create my_war --template strategy_game
+    ```
+
+    An 8×8 skirmish against an AI with tap-to-select, tap-to-move/attack and
+    an end-turn strip. Continue with
+    [Tutorial 2](tutorials/02-turn-based-strategy.md).
+
+Then:
 
 ```bash
-game_agent create my_game
-cd my_game
+cd my_game          # or my_war
+flutter run         # pick a device, or: flutter run -d chrome
 ```
 
-This produces a normal Flutter project pre-wired to the engine: a
-`main.dart` with a `Game` subclass and an initial `Scene`, a
-`pubspec.yaml` with the three engine packages as self-referencing git
-dependencies (see below), and a starter `assets/` folder.
+## 3. What you got
 
-## 3. Run it
-
-```bash
-flutter run
-```
-
-Standard Flutter run — pick a connected device/emulator or a browser
-target (`flutter run -d chrome`) the same way you would for any
-Flutter app.
-
-## 4. Folder layout
-
-```
+```text
 my_game/
-  lib/
-    main.dart        # Game subclass, createInitialScene(), runGame()
-  assets/
-    ...               # level JSON, sprite atlases, audio — content as data
-  pubspec.yaml        # engine_core/engine_flutter/engine_platformer as git deps
+├── lib/main.dart            Game subclass, first Scene, runGame()
+├── assets/
+│   ├── game_config.json     world size, orientation, background colour
+│   └── levels/main.level.json   (platformer) the starting level, as data
+├── test/widget_test.dart    boots the game and finds the EngineView
+└── pubspec.yaml             engine packages as git dependencies
 ```
 
-`main.dart`'s shape, sketched:
+### The shape of `main.dart`
 
 ```dart
-import 'package:engine_core/engine_core.dart';
-import 'package:engine_flutter/engine_flutter.dart' hide Text; // Flutter's Text collides
-import 'package:flutter/material.dart';
-
 class MyGame extends Game {
   @override
-  GameConfig get config => const GameConfig(worldWidth: 800, worldHeight: 600);
+  GameConfig get config => _config;            // loaded from game_config.json
 
   @override
   Scene createInitialScene() => MainScene();
@@ -72,57 +84,63 @@ class MainScene extends Scene {
   Future<void> populate(
     World world, SceneController scenes, GameState state,
   ) async {
-    // registerCoreComponents/registerFlutterComponents are already
-    // called for you by GameRunner before populate runs.
+    // Core + Flutter components are already registered by GameRunner.
     world.addSystem(MovementSystem());
     final player = world.spawn();
-    world.storeOf<Position>().set(player, const Position(100, 100));
-    world.storeOf<Velocity>().set(player, const Velocity(0, 0));
+    world.storeOf<Position>().set(player, Position(100, 100));
+    world.storeOf<Velocity>().set(player, Velocity(0, 0));
   }
 }
 
 void main() => runGame(MyGame());
 ```
 
-See [`packages/engine_flutter/README.md`](../packages/engine_flutter/README.md)
-for the full `Game`/`Scene`/`GameRunner` API, and
-[concepts/ecs.md](concepts/ecs.md) for what `World`/`spawn`/`storeOf`
-actually do.
+| Piece | Role |
+|---|---|
+| `Game` | App-level config, input controller, first scene. |
+| `Scene` | One screen. Owns a fresh `World`; `populate` fills it, `loadAssets` loads sprites, `handleTap` receives taps. |
+| `GameState` | Survives scene switches (score, unlocks). |
+| `runGame` | Starts the Flutter shell. |
 
-## 5. Update the engine version later
+New to `World`, `spawn` and `storeOf`? Read the [ECS guide](concepts/ecs.md).
+
+## 4. Keep going
+
+| Next | Why |
+|---|---|
+| [Tutorials](tutorials/README.md) | Build a platformer, a strategy game, or an agent-driven game. |
+| [Cheat sheet](reference/cheatsheet.md) | The calls you'll use most, on one page. |
+| [FAQ](faq.md) | If something doesn't work. |
+
+## Everyday commands
 
 ```bash
-game_agent upgrade --ref main
+game_agent upgrade --ref main                # move the engine pin forward
+game_agent lint assets/levels/main.level.json   # validate a level (add --playable)
+game_agent pack-assets --input art --output-image assets/packed/atlas.png
 ```
 
-Rewrites the pinned git `ref` in your project's `pubspec.yaml` for all
-three engine dependencies, then you run `flutter pub get` yourself.
-
-## 6. Validate content without running the game
-
-```bash
-game_agent lint assets/level1.json
-```
-
-Checks a level/content JSON file against the `Level` DSL's validation
-rules (see [concepts/content-as-data.md](concepts/content-as-data.md))
-without booting a `Game`. See
-[`packages/engine_cli/README.md`](../packages/engine_cli/README.md) for
-`--render`/`--playable` flags.
+See the [CLI reference](reference/cli.md) for every option.
 
 ## Why a git dependency?
 
-None of these packages are published to pub.dev yet (pre-1.0, see the
-root README's "API stability" section), so `game_agent create` wires
-your project to `engine_core`/`engine_flutter`/`engine_platformer` via
-a **self-referencing git dependency** (same repo URL, pinned `ref`) —
-not a local `path:` dependency. Don't hand-edit those entries to
-`path:` deps; see [CLAUDE.md](../CLAUDE.md)'s "Non-obvious constraints"
-section for exactly why that breaks pub's dependency resolution across
-a multi-package monorepo. Use `game_agent upgrade` to move the pin
-forward instead of editing it by hand.
+The packages aren't on pub.dev yet (pre-1.0). A generated project depends on
+`engine_core`, `engine_flutter` and the genre package (`engine_platformer` or
+`engine_strategy`) through a **self-referencing git dependency** — same repo
+URL and `ref` for each — rather than local `path:` entries. Pub treats a
+resolved commit and a consumer's `ref: main` as different descriptions of the
+same package and refuses to solve if they're mixed; the self-referencing form
+avoids that. Don't hand-edit these to `path:`; use `game_agent upgrade`.
+Details: the "Non-obvious constraints" section of
+[CLAUDE.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CLAUDE.md).
 
-## Next
+## Working on the engine itself
 
-- [concepts/ecs.md](concepts/ecs.md) — the World/Entity/Component/System model.
-- [tutorials/01-hello-world.md](tutorials/01-hello-world.md) — build something real, step by step.
+```bash
+git clone https://github.com/arashrasoulzadeh/agentic-game-engine.git
+cd agentic-game-engine
+(cd packages/engine_core && dart test)
+(cd packages/engine_flutter && flutter test)
+```
+
+See [CONTRIBUTING](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CONTRIBUTING.md).

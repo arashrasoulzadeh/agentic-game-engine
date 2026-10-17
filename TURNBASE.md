@@ -1,5 +1,7 @@
 # TURNBASE.md
 
+User-facing docs: [concept guide](docs/concepts/turn-based-strategy.md), [tutorial](docs/tutorials/02-turn-based-strategy.md), [agent tutorial](docs/tutorials/03-agent-driven-game.md).
+
 Plan and progress for turn-based strategy support. Realtime (RTS) is a
 later phase that reuses most of this; see the end.
 

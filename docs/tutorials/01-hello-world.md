@@ -129,8 +129,8 @@ keeps this bar's `HudBar.value`/`maxValue` synced from the player's
 
 ```dart
 final coinId = world.spawn();
-world.storeOf<Position>().set(coinId, const Position(450, 380));
-world.storeOf<Collider>().set(coinId, const Collider(8));
+world.storeOf<Position>().set(coinId, Position(450, 380));
+world.storeOf<Collider>().set(coinId, Collider(8));
 world.storeOf<Sprite>().set(coinId, Sprite('items', 'coin')); // if you have an atlas loaded
 
 world.storeOf<Inventory>().set(player, Inventory({'coin': 0}));
@@ -163,5 +163,5 @@ bar in the top-left, and a coin that disappears (and increments
 
 ## Next
 
-- [examples/](../examples/) — smaller focused recipes (save/load, custom Behavior, more).
-- [concepts/](../concepts/) — the underlying model for everything used above.
+- [examples/](../examples/README.md) — smaller focused recipes (save/load, custom Behavior, more).
+- [concepts/](../concepts/architecture.md) — the underlying model for everything used above.

@@ -16,7 +16,9 @@ cd my_game
 flutter run
 ```
 
-Options: `--org com.yourcompany`, `--output-dir path/to/parent`, `--ref <branch-or-tag>` to pin `engine_core` to something other than `main`.
+Choose a starter with `--template default_game` (platformer, the default) or `--template strategy_game` (turn-based skirmish against an AI, using `engine_strategy`).
+
+Options: `--template`, `--org com.yourcompany`, `--output-dir path/to/parent`, `--ref <branch-or-tag>` to pin `engine_core` to something other than `main`.
 
 ## Update an existing game's engine version
 
@@ -70,3 +72,6 @@ game_agent pack-assets --input art/sprites --output-image assets/packed/atlas.pn
 
 Run this before `flutter run`/`flutter build` whenever your source
 sprite images change — it isn't run automatically by any build hook.
+
+
+Full command reference (including `build-release` and `studio`): <https://arashrasoulzadeh.github.io/agentic-game-engine/reference/cli/>.

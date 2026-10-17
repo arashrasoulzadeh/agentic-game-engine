@@ -20,7 +20,7 @@ component type lives in its own `ComponentStore<T>`, reachable via
 `world.storeOf<T>()`:
 
 ```dart
-world.storeOf<Position>().set(id, const Position(100, 100));
+world.storeOf<Position>().set(id, Position(100, 100));
 final pos = world.storeOf<Position>().get(id); // Position?
 final has = world.storeOf<Position>().has(id); // bool
 ```
@@ -63,8 +63,8 @@ timestep tick counter:
 final world = World(width: 800, height: 600);
 world.addSystem(MovementSystem());
 final id = world.spawn();
-world.storeOf<Position>().set(id, const Position(0, 0));
-world.storeOf<Velocity>().set(id, const Velocity(50, 0));
+world.storeOf<Position>().set(id, Position(0, 0));
+world.storeOf<Velocity>().set(id, Velocity(50, 0));
 ```
 
 `GameRunner` (in `engine_flutter`) creates one `World` per `Scene` and

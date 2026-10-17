@@ -1,80 +1,100 @@
-# Documentation
+# Agentic Game Engine
 
-This folder is the tutorial/concept layer on top of each package's
-API-reference README. It's written for two readers at once: a human
-skimming to learn the engine, and an AI coding agent that needs
-concrete, copy-pasteable, unambiguous examples to work from. Every
-code sample here is checked against the current source under
-`packages/*/lib/src/` — if you find one that's drifted, that's a bug,
-please fix it alongside whatever API change caused it.
+A pure-Dart **2D game engine built for AI agents and humans to work on
+together**. The world is plain JSON an agent can read and patch, content is
+authored as data, and gameplay logic an agent writes runs behind a sandbox
+that can't corrupt the simulation. Flutter is only the shell (rendering,
+input, audio) for Android, iOS and the web.
 
-This is markdown-in-repo today; it's written so it can become a static
-docs site later without restructuring (see the "Overview → Getting
-started → Concepts → Tutorials → Examples → API reference" hierarchy
-below).
-
-## Start here
-
-| If you want to... | Read |
-|---|---|
-| Understand what this engine is and why | [root README](../README.md) |
-| Install the CLI and get a project running | [getting-started.md](getting-started.md) |
-| Understand the ECS (World/Entity/Component/System) | [concepts/ecs.md](concepts/ecs.md) |
-| Understand the JSON level/content format | [concepts/content-as-data.md](concepts/content-as-data.md) |
-| Understand how an AI agent drives an entity safely | [concepts/agent-api.md](concepts/agent-api.md) |
-| Understand rendering (sprites, camera, lighting, HUD) | [concepts/rendering.md](concepts/rendering.md) |
-| Understand platformer gameplay (gravity, jump, combat, AI) | [concepts/platformer.md](concepts/platformer.md) |
-| Build something step by step | [tutorials/](tutorials/) |
-| Copy a small focused snippet | [examples/](examples/) |
-| Generate/browse the full API reference | [api-reference.md](api-reference.md) |
-
-## Package API references
-
-The full public API of each package is documented in that package's
-own README, not duplicated here:
-
-- [`packages/engine_core/README.md`](../packages/engine_core/README.md)
-- [`packages/engine_flutter/README.md`](../packages/engine_flutter/README.md)
-- [`packages/engine_platformer/README.md`](../packages/engine_platformer/README.md)
-- [`packages/engine_cli/README.md`](../packages/engine_cli/README.md)
-
-## For AI agents
-
-If you're an agent (not a human) reading this to write code against
-this engine:
-
-- Every public class/method referenced in this `docs/` folder and in
-  the package READMEs has a doc comment in the actual source — when in
-  doubt, `grep` the class name under `packages/*/lib/src/` and read its
-  doc comment directly; it explains *why*, which the method signature
-  alone won't tell you.
-- [concepts/agent-api.md](concepts/agent-api.md) is specifically about
-  *you*: the `Behavior`/`WorldView` sandbox is the API this engine
-  expects an agent to drive gameplay through at runtime, and
-  [concepts/content-as-data.md](concepts/content-as-data.md) is the API
-  for authoring/patching world state as JSON rather than Dart code.
-- Component registration is not automatic: a component type only
-  participates in `World.toJson()`/`applyPatch()`/`Level.loadInto()`
-  after it's registered — see `registerCoreComponents`,
-  `registerFlutterComponents` (called for you by `Scene`/`GameRunner`),
-  and `registerPlatformerComponents`.
-
-## API reference (dartdoc)
-
-This repo does not check in generated API docs or run `dartdoc` in CI
-yet. To generate the full API reference locally for any package:
-
-```bash
-cd packages/engine_core   # or engine_flutter / engine_platformer / engine_cli
-dart pub get              # flutter pub get for the Flutter-dependent packages
-dart doc .                # writes HTML to doc/api/
+```mermaid
+flowchart LR
+    subgraph Your game
+      G[Game + Scenes]
+    end
+    G --> S[engine_strategy<br/>turn-based strategy]
+    G --> P[engine_platformer<br/>platformer gameplay]
+    S --> F[engine_flutter<br/>render · input · audio]
+    P --> F
+    F --> C[engine_core<br/>ECS · physics · content · agent API]
+    S --> C
+    P --> C
+    C --> X[engine_schema<br/>component schemas]
 ```
 
-Then open `doc/api/index.html`. Public API doc-comment coverage (every
-exported class/field/function in each package's top-level
-`engine_core.dart`/`engine_flutter.dart`/`engine_platformer.dart`, per
-[CLAUDE.md](../CLAUDE.md)) is treated as a hard requirement in this
-repo, not best-effort — so `dart doc`'s output should already be
-readable without further cleanup. If you find a public symbol with a
-missing or low-quality doc comment, that's worth filing/fixing on its
-own, same as any other doc-comment gap.
+## Pick your path
+
+| I want to… | Start here |
+|---|---|
+| **Get a game running in 5 minutes** | [Getting started](getting-started.md) |
+| **Build a platformer** | [Tutorial 1 — a tiny platformer](tutorials/01-hello-world.md) |
+| **Build a turn-based strategy game** | [Tutorial 2 — turn-based strategy](tutorials/02-turn-based-strategy.md) |
+| **Let an AI agent play or build the game** | [Tutorial 3 — an agent-driven game](tutorials/03-agent-driven-game.md) |
+| Understand how the engine is put together | [Architecture](concepts/architecture.md) · [ECS](concepts/ecs.md) |
+| Copy a focused snippet | [Examples](examples/README.md) |
+| Look up a component's JSON shape | [Component reference](reference/components.md) |
+| Look up an event, system order or command | [Cheat sheet](reference/cheatsheet.md) · [Events](reference/events.md) · [CLI](reference/cli.md) |
+| Fix something that isn't working | [FAQ & troubleshooting](faq.md) |
+
+## The four ideas that shape everything
+
+1. **World state is data.** Every entity is a bag of registered components
+   that serialize to JSON. `World.toJson()` is the read path and
+   `World.applyPatch()` is the write path — see
+   [content as data](concepts/content-as-data.md).
+2. **Systems are small and ordered.** One system, one job, run in a
+   registration order you can inspect (`world.systemOrder`) —
+   see [the ECS](concepts/ecs.md).
+3. **Agents propose, the engine disposes.** A `Behavior` reads a read-only
+   `WorldView` and returns an `Action`; the engine applies it. In turn-based
+   games, humans and AI alike go through `submitOrder` —
+   see [the agent API](concepts/agent-api.md).
+4. **Genre logic is separate from the core.** Platformer physics and
+   strategy rules sit in their own packages on a one-way dependency chain, so
+   a puzzle game never pays for gravity.
+
+## Packages
+
+| Package | What it gives you | Depends on |
+|---|---|---|
+| [`engine_core`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_core) | ECS, physics primitives, `TileMap`, content DSL, `WorldView`/`Behavior`, **turn clock, orders, grid navigation, combat, fog of war, selection** | `engine_schema` |
+| [`engine_flutter`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_flutter) | `Game`/`Scene`, sprites, camera, lighting, input, audio, save/load, grid tap input | `engine_core` |
+| [`engine_platformer`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_platformer) | Gravity, jump, tile collision, combat, patrol/follow AI, animation | core, flutter |
+| [`engine_strategy`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_strategy) | One-call wiring for turn-based strategy, unit spawning | core, flutter |
+| [`engine_cli`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_cli) | `game_agent create / upgrade / lint / pack-assets` | `engine_core` |
+| [`engine_schema`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_schema) | Hand-written component schemas used by the CLI and studio | — |
+
+## Reading this documentation
+
+- **Concepts** explain *why* and *how it fits together*.
+- **Tutorials** are linear: follow them in order and you end with a working game.
+- **Examples** are standalone recipes, each verified by a test.
+- **Reference** pages are lookup tables; the component page is generated from
+  the source schemas.
+
+!!! note "Code samples are tested"
+    The platformer tutorial is checked against current signatures by hand;
+    the turn-based tutorial, the agent tutorial and the turn-based recipes
+    are executed by tests in CI
+    (`packages/engine_strategy/test/doc_examples_test.dart`,
+    `packages/engine_core/test/agent_turn_based_test.dart`). If a sample here
+    drifts from the code, that is a bug — please open an issue or fix both.
+
+## For AI agents reading this
+
+- Every public symbol has a doc comment that explains *why*; `grep` the class
+  under `packages/*/lib/src/` for the authoritative version.
+- A component only participates in `toJson` / `applyPatch` / `Level.loadInto`
+  once registered — see
+  [FAQ: "my component isn't saved"](faq.md#my-component-isnt-saved-or-loaded).
+- Drive gameplay through `Behavior` (real-time) or `submitOrder`
+  (turn-based). Don't mutate stores from outside the system that owns the data.
+- Start with [concepts/agent-api.md](concepts/agent-api.md) and
+  [tutorial 3](tutorials/03-agent-driven-game.md).
+
+## Project links
+
+[Source on GitHub](https://github.com/arashrasoulzadeh/agentic-game-engine) ·
+[Changelog](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CHANGELOG.md) ·
+[Roadmap (TODO.md)](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md) ·
+[Turn-based plan](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TURNBASE.md) ·
+[Contributing](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CONTRIBUTING.md)

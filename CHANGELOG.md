@@ -9,6 +9,13 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Turn-based strategy support (see `TURNBASE.md`): turn clock, JSON orders,
+  weighted 8-way grid navigation, combat and victory, per-team fog of war,
+  selection and tap input, an AI turn driver, the `engine_strategy` package and
+  `game_agent create --template strategy_game`.
+- Documentation site (MkDocs Material) published to GitHub Pages: new
+  architecture and turn-based concept guides, tutorials 2 and 3, tested recipes,
+  and generated component/events/CLI reference pages.
 - `game_agent studio validate [project]`: checks every level under
   `assets/levels` against the engine's component schemas and exits non-zero on
   errors (`--strict` also fails on warnings, such as an exit the player cannot

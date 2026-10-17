@@ -128,3 +128,24 @@ these as a worked example of writing your own.
 - [content-as-data.md](content-as-data.md) — the other read/write path (patching from outside simulation, vs. deciding during it).
 - [examples/custom-behavior.md](../examples/custom-behavior.md) — a focused, minimal worked example.
 - [`packages/engine_core/README.md`](../../packages/engine_core/README.md)'s "The agent-facing API" section.
+
+## Two doors, one idea: real-time and turn-based
+
+The sandbox principle — *an agent proposes, the engine applies* — has two
+shapes in this engine:
+
+| | Real-time (platformer) | Turn-based (strategy) |
+|---|---|---|
+| Agent type | `Behavior` | `TurnAI` (or any external program) |
+| Reads | read-only `WorldView` | `World.toJson()` snapshot, or the typed stores |
+| Proposes | an `Action` returned from `decide` | `Order`s passed to `submitOrder` |
+| Applied by | `AISystem` | `OrderSystem` |
+| Refused when | the action is invalid | not that team's turn, game over, or the order is illegal |
+| Cadence | every tick | once per team turn |
+
+In both cases an agent that is wrong, confused or hostile can at worst waste
+its own turn: it has no direct path to a unit's hit points or position.
+
+For a complete turn-based agent that sees only JSON, see
+[Tutorial 3](../tutorials/03-agent-driven-game.md); for a hand-written
+opponent, the [custom TurnAI recipe](../examples/custom-turn-ai.md).

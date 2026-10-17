@@ -15,6 +15,7 @@ It does not by itself imply an integrated hosted AI model or service.
 | [engine_core](packages/engine_core/README.md) | Entities, components, systems, world serialization, collision primitives, tile data, content loading, behavior API | None |
 | [engine_flutter](packages/engine_flutter/README.md) | Game/scene lifecycle, rendering, camera, input, audio, save/load integration | `engine_core` |
 | [engine_platformer](packages/engine_platformer/README.md) | Gravity, jumping, platform/tile resolution, combat, character helpers and animation | `engine_core`, `engine_flutter` |
+| [engine_strategy](packages/engine_strategy/README.md) | One-call wiring and unit spawning for turn-based strategy (rules live in `engine_core/lib/src/turn/`) | `engine_core`, `engine_flutter` |
 | [engine_cli](packages/engine_cli/README.md) | Game scaffolding, dependency upgrades, content validation and asset packing | `engine_core` |
 
 Core has no Flutter dependency. The shell must not depend on platformer
@@ -42,6 +43,9 @@ it, while platformer tile collision logic lives in `engine_platformer`.
 6. Scene switches create another world. `GameState` persists across scene
    changes; scene-local entities and systems belong to their own world.
 
+Turn-based games advance by orders and `endTurn` rather than by `dt`; see
+[the turn-based concept guide](docs/concepts/turn-based-strategy.md).
+
 For platformers, `installPlatformerSystems` provides the standard system
 order. Grounding and collision must be resolved in the appropriate order
 relative to jumping; manual reordering can change gameplay behavior.
@@ -56,6 +60,11 @@ registration and `toJson`/`fromJson` support in their owning package.
 Extend gameplay with components, systems, helpers, and behaviors. Public
 library exports and package READMEs describe the supported entry points;
 files under `lib/src/` contain implementation details.
+
+## Documentation
+
+The full site is published at <https://arashrasoulzadeh.github.io/agentic-game-engine/> (source in `docs/`; diagrams in
+[docs/concepts/architecture.md](docs/concepts/architecture.md)).
 
 ## Status and further reading
 

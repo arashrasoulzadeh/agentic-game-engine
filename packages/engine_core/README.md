@@ -152,6 +152,21 @@ world.onCollisionInvolving(player, (other) { ... });        // player + anything
 world.onCollisionWithAny(coinIds, (coin, other) { ... });   // any coin + anything
 ```
 
+## Turn-based strategy (`lib/src/turn/`)
+
+Genre-general turn data and rules, usable headless (no Flutter): `TurnState`
+/ `Team` / `ActionPoints` and `startTurnBasedGame` / `endTurn` /
+`trySpendActionPoints`; JSON `Order`s (`MoveOrder`, `AttackOrder`),
+`OrderQueue`, `submitOrder` and `OrderSystem`; `GridNavigator` (weighted
+8-way A*, `reachable`); `UnitStats`, `installCombat`, `WinConditionSystem`;
+`Vision`, `FogOfWar`, `VisionSystem`, `canSee`; selection helpers
+(`selectAtCell`, `selectInBox`, `commandSelected`); and `TurnAI` /
+`AggressiveAI` / `AITurnSystem`. `engine_strategy` wires these together in the
+correct order.
+
+Guide: <https://arashrasoulzadeh.github.io/agentic-game-engine/concepts/turn-based-strategy/> · Tutorial:
+<https://arashrasoulzadeh.github.io/agentic-game-engine/tutorials/02-turn-based-strategy/>
+
 ## The agent-facing API
 
 This is the part that makes the engine "AI-agent-friendly," not just a
