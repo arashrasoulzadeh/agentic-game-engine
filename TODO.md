@@ -20,10 +20,6 @@ Sections: [Housekeeping](#housekeeping) · [Performance](#performance) ·
 
 ## Housekeeping
 
-- [ ] **`engine_studio` CI fails** — `impellerc failure: Compilation failed
-      for target: SkSL` while bundling shaders in the GitHub Actions run (seen
-      on 2026-10-17, on a push that touched no studio code). Reproduce with
-      the same Flutter channel, then pin the version or fix the shader.
 - [ ] **Commit or discard the untracked studio graph work** —
       `packages/engine_studio/lib/src/graph/`,
       `test/graph_canvas_screen_test.dart`, `test/graph_editor_test.dart`

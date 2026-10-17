@@ -933,35 +933,39 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       key: const Key('completion-list'),
       constraints: const BoxConstraints(maxHeight: 200),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
         border: Border(bottom: BorderSide(color: theme.dividerColor)),
       ),
-      child: ListView(
-        shrinkWrap: true,
-        children: [
-          for (var i = 0; i < items.length && i < 30; i++)
-            ListTile(
-              key: Key('completion-${items[i].name}'),
-              dense: true,
-              selected: i == index,
-              leading: Icon(iconForCompletionKind(items[i].kind), size: 16),
-              title: Text(
-                items[i].label,
-                style: const TextStyle(fontFamily: 'Menlo'),
-                overflow: TextOverflow.ellipsis,
-              ),
-              trailing: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 160),
-                child: Text(
-                  items[i].detail ?? items[i].kind,
-                  style: theme.textTheme.bodySmall,
+      // A Material (not a decorated Container) paints the background so the
+      // ListTiles' selection and ink effects are visible on top of it.
+      child: Material(
+        color: theme.colorScheme.surfaceContainerHighest,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (var i = 0; i < items.length && i < 30; i++)
+              ListTile(
+                key: Key('completion-${items[i].name}'),
+                dense: true,
+                selected: i == index,
+                leading: Icon(iconForCompletionKind(items[i].kind), size: 16),
+                title: Text(
+                  items[i].label,
+                  style: const TextStyle(fontFamily: 'Menlo'),
                   overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.right,
                 ),
+                trailing: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 160),
+                  child: Text(
+                    items[i].detail ?? items[i].kind,
+                    style: theme.textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+                onTap: () => _complete(items[i].name),
               ),
-              onTap: () => _complete(items[i].name),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1086,7 +1090,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12),
                   child: Text(
-                    found.isEmpty ? 'No symbols found' : '${found.length} symbol(s)',
+                    found.isEmpty
+                        ? 'No symbols found'
+                        : '${found.length} symbol(s)',
                   ),
                 ),
               ),
@@ -1114,8 +1120,14 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                       right: 16,
                     ),
                     leading: Icon(iconForCompletionKind(symbol.kind), size: 16),
-                    title: Text(symbol.name, style: const TextStyle(fontFamily: 'Menlo')),
-                    trailing: Text(symbol.kind, style: theme.textTheme.bodySmall),
+                    title: Text(
+                      symbol.name,
+                      style: const TextStyle(fontFamily: 'Menlo'),
+                    ),
+                    trailing: Text(
+                      symbol.kind,
+                      style: theme.textTheme.bodySmall,
+                    ),
                     onTap: () {
                       setState(() => _outline = null);
                       _jumpToPosition(symbol.line, symbol.character);
@@ -1223,10 +1235,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                             ? InkWell(
                                 key: Key('fold-$line'),
                                 onTap: () => _revealFold(foldStarts[line]!),
-                                child: const Icon(
-                                  Icons.unfold_more,
-                                  size: 12,
-                                ),
+                                child: const Icon(Icons.unfold_more, size: 12),
                               )
                             : null,
                       ),

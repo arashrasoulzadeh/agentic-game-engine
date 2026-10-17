@@ -51,10 +51,10 @@ uniform vec4 uSpriteScreenRect; // left, top, right, bottom in screen pixels
 
 out vec4 fragColor;
 
-vec3 unpackNormal(vec3 packed) {
+vec3 unpackNormal(vec3 encoded) {
   // Packed normal: R=X(-1..1), G=Y(-1..1), B=Z(0..1 mapped from -1..1)
   // Standard encoding maps -1..1 to 0..1, so unpack: val * 2.0 - 1.0
-  return vec3(packed.xy * 2.0 - 1.0, packed.z * 2.0 - 1.0);
+  return vec3(encoded.xy * 2.0 - 1.0, encoded.z * 2.0 - 1.0);
 }
 
 float falloff(float t, float falloffType) {
