@@ -2,11 +2,13 @@ import '../ecs/component_store.dart';
 import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
+import 'carry.dart';
 import 'combat.dart';
 import 'fog_of_war.dart';
 import 'grid_navigation.dart';
 import 'objectives.dart';
 import 'order.dart';
+import 'occupancy.dart';
 import 'order_system.dart';
 import 'turn_components.dart';
 import 'turn_system.dart';
@@ -170,42 +172,8 @@ class TacticalAI implements TurnAI {
     return stats != null && stats.hp / stats.maxHp < retreatBelow;
   }
 
-  bool _occupied(World world, EntityId self, int col, int row) {
-    final grid = world.storeOf<GridPosition>();
-    for (var i = 0; i < grid.length; i++) {
-      final g = grid.denseAt(i);
-      if (grid.entityAt(i) != self && g.col == col && g.row == row) return true;
-    }
-    return false;
-  }
-
-  bool _retreat(World world, EntityId unit, List<EntityId> enemies) {
-    final grid = world.storeOf<GridPosition>();
-    final from = grid.get(unit)!;
-    int threat(int col, int row) {
-      var nearest = 1 << 30;
-      for (final e in enemies) {
-        final p = grid.get(e)!;
-        final d = (col - p.col).abs() > (row - p.row).abs() ? (col - p.col).abs() : (row - p.row).abs();
-        if (d < nearest) nearest = d;
-      }
-      return nearest;
-    }
-
-    final budget = world.storeOf<ActionPoints>().get(unit)!.current;
-    final options = navigator!.reachable(from, budget, blocked: (c, r) => _occupied(world, unit, c, r));
-    var bestScore = threat(from.col, from.row);
-    (int, int)? best;
-    for (final cell in options.keys) {
-      final score = threat(cell.$1, cell.$2);
-      if (score > bestScore) {
-        bestScore = score;
-        best = cell;
-      }
-    }
-    if (best == null) return false;
-    return submitOrder(world, unit, MoveOrder(best.$1, best.$2));
-  }
+  bool _retreat(World world, EntityId unit, List<EntityId> enemies) =>
+      _retreatFrom(world, unit, world.storeOf<GridPosition>().get(unit)!, enemies, navigator!);
 
   void _idle(World world, String team, List<EntityId> mine) {
     final fog = fogOf(world);
@@ -231,7 +199,7 @@ class TacticalAI implements TurnAI {
         final d = (c - from.col).abs() > (r - from.row).abs() ? (c - from.col).abs() : (r - from.row).abs();
         if (d >= bestDist) continue;
         if (navigator!.findPath(from, GridPosition(c, r),
-                blocked: (cc, rr) => _occupied(world, unit, cc, rr)) ==
+                blocked: occupiedBy(world.storeOf<GridPosition>(), unit)) ==
             null) {
           continue;
         }
@@ -252,6 +220,16 @@ class TacticalAI implements TurnAI {
 ///   engaged don't wander off).
 /// * Everyone else walks toward the nearest objective the team doesn't own,
 ///   spreading out so they don't all pick the same one while others remain.
+///
+/// It also plays the carry-and-escort rules when the map has them:
+///
+/// * A unit **carrying a flag** heads for its team's `DeliveryZone`.
+/// * The nearest free unit goes to pick up each enemy flag lying on the ground, one
+///   unit per flag.
+/// * When an enemy is **carrying your flag**, units nearby chase and attack the
+///   carrier (killing it drops the flag).
+/// * Your **`Vip`** stays out of reach: it retreats to the reachable cell farthest
+///   from the enemy when one is within [engageRange] + 1, instead of fighting.
 ///
 /// Combat is delegated to a [TacticalAI]-style attack, so it still only targets
 /// what the team can see. Needs a [navigator] to pick reachable destinations.
@@ -295,10 +273,13 @@ class ObjectiveAI implements TurnAI {
     final objectives = world.storeOf<Objective>();
     final targets = objectivesToTake(world, team);
     final claimed = <EntityId>{};
+    final claimedFlags = <EntityId>{};
     for (final unit in mine) {
       final at = grid.get(unit)!;
       final nearEnemy = _nearest(grid, at, enemies);
       final nearDist = nearEnemy == null ? 1 << 30 : at.chebyshev(grid.get(nearEnemy)!);
+
+      if (_playCarryAndEscort(world, team, unit, at, enemies, claimedFlags)) continue;
 
       final onOwned = _objectiveAt(objectives, at, team);
       if (onOwned && nearDist <= holdRadius) {
@@ -321,6 +302,87 @@ class ObjectiveAI implements TurnAI {
         submitOrder(world, unit, AttackOrder(nearEnemy));
       }
     }
+  }
+
+  /// Handles flags, zones and the Vip for [unit]; true if it issued an order (so
+  /// the ordinary objective logic is skipped for this unit).
+  bool _playCarryAndEscort(
+    World world,
+    String team,
+    EntityId unit,
+    GridPosition at,
+    List<EntityId> enemies,
+    Set<EntityId> claimedFlags,
+  ) {
+    final flags = world.storeOf<Flag>();
+    final grid = world.storeOf<GridPosition>();
+
+    // 1. The Vip keeps away from danger.
+    if (world.storeOf<Vip>().has(unit) && enemies.isNotEmpty) {
+      final near = _nearest(grid, at, enemies)!;
+      if (at.chebyshev(grid.get(near)!) <= engageRange + 1 && _retreatFrom(world, unit, at, enemies, navigator)) {
+        return true;
+      }
+    }
+
+    // 2. A carrier runs for home.
+    for (var i = 0; i < flags.length; i++) {
+      if (flags.denseAt(i).carrier != unit) continue;
+      final zones = world.storeOf<DeliveryZone>();
+      for (var z = 0; z < zones.length; z++) {
+        final zone = zones.denseAt(z);
+        if (zone.team != team) continue;
+        return submitOrder(world, unit, MoveOrder(zone.col, zone.row));
+      }
+    }
+
+    // 3. Chase whoever is carrying our flag.
+    for (var i = 0; i < flags.length; i++) {
+      final f = flags.denseAt(i);
+      final holder = f.carrier;
+      if (f.homeTeam != team || holder == null || !world.entities.isAlive(holder)) continue;
+      if (world.storeOf<Team>().get(holder)?.id == team || !canSee(world, team, holder)) continue;
+      final hp = grid.get(holder);
+      if (hp != null && at.chebyshev(hp) <= holdRadius + engageRange) {
+        return submitOrder(world, unit, AttackOrder(holder));
+      }
+    }
+
+    // 4. Fetch enemy flags lying on the ground, one unit each (the nearest free one).
+    for (var i = 0; i < flags.length; i++) {
+      final f = flags.denseAt(i);
+      final id = flags.entityAt(i);
+      if (f.homeTeam == team || f.carrier != null || claimedFlags.contains(id)) continue;
+      if (world.storeOf<Vip>().has(unit)) continue;
+      if (_isNearestTo(world, team, unit, f.col, f.row)) {
+        claimedFlags.add(id);
+        return submitOrder(world, unit, MoveOrder(f.col, f.row));
+      }
+    }
+    return false;
+  }
+
+  /// True if [unit] is the closest of this team's units with action points to
+  /// ([col], [row]) (ties go to the lowest id, so the answer is deterministic).
+  bool _isNearestTo(World world, String team, EntityId unit, int col, int row) {
+    final teams = world.storeOf<Team>();
+    final grid = world.storeOf<GridPosition>();
+    final points = world.storeOf<ActionPoints>();
+    final cell = GridPosition(col, row);
+    EntityId? best;
+    var bestD = 1 << 30;
+    for (var i = 0; i < teams.length; i++) {
+      final e = teams.entityAt(i);
+      if (teams.denseAt(i).id != team || (points.get(e)?.current ?? 0) <= 0 || world.storeOf<Vip>().has(e)) continue;
+      final p = grid.get(e);
+      if (p == null) continue;
+      final d = p.chebyshev(cell);
+      if (d < bestD || (d == bestD && e < best!)) {
+        bestD = d;
+        best = e;
+      }
+    }
+    return best == unit;
   }
 
   bool _objectiveAt(ComponentStore<Objective> objectives, GridPosition at, String team) {
@@ -366,6 +428,41 @@ class ObjectiveAI implements TurnAI {
     }
     return best;
   }
+}
+
+/// Moves [unit] to the cell it can reach with its action points that is farthest
+/// from the nearest of [enemies], if that is an improvement on staying put.
+/// Returns whether a move order was issued. Shared by the AIs' retreat behaviours.
+bool _retreatFrom(
+  World world,
+  EntityId unit,
+  GridPosition from,
+  List<EntityId> enemies,
+  GridNavigator navigator,
+) {
+  final grid = world.storeOf<GridPosition>();
+  int threat(int col, int row) {
+    var nearest = 1 << 30;
+    for (final e in enemies) {
+      final p = grid.get(e)!;
+      final d = (col - p.col).abs() > (row - p.row).abs() ? (col - p.col).abs() : (row - p.row).abs();
+      if (d < nearest) nearest = d;
+    }
+    return nearest;
+  }
+
+  final budget = world.storeOf<ActionPoints>().get(unit)?.current ?? 0;
+  final options = navigator.reachable(from, budget, blocked: occupiedBy(grid, unit));
+  var bestScore = threat(from.col, from.row);
+  (int, int)? best;
+  for (final cell in options.keys) {
+    final score = threat(cell.$1, cell.$2);
+    if (score > bestScore) {
+      bestScore = score;
+      best = cell;
+    }
+  }
+  return best != null && submitOrder(world, unit, MoveOrder(best.$1, best.$2));
 }
 
 /// Runs a [TurnAI] for each team in [controllers] when it is that

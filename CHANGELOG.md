@@ -9,6 +9,8 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `ObjectiveAI` plays the carry rules: carriers deliver, the nearest unit fetches loose
+  flags, guards chase an enemy carrier, a `Vip` keeps out of reach.
 - Escort and capture-the-flag rules: `Vip` (its death loses the game), `Flag`
   (picked up by enemies, carried, dropped on carrier death), `DeliveryZone`,
   `FlagRules`, and the pickup/drop/capture events; works turn-based and real-time.

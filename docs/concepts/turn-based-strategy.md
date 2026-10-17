@@ -207,7 +207,10 @@ losing one resets the count.
 `ObjectiveAI(navigator: nav)` plays for the map: garrisons hold owned points
 (bracing, or fighting when an enemy gets close), nearby enemies are engaged, and
 everyone else marches to the nearest objective the team doesn't own, spreading
-out. With nothing left to take it hunts visible enemies.
+out. With nothing left to take it hunts visible enemies. It also plays the
+carry rules: a carrier runs for its `DeliveryZone`, the nearest free unit fetches
+each loose enemy flag, units near an enemy carrying *your* flag attack the
+carrier, and a `Vip` retreats from nearby enemies instead of fighting.
 
 ### Escort and capture-the-flag
 
@@ -322,6 +325,5 @@ than between.
 
 ## Not built yet
 
-AI that carries and escorts (the rules exist; `ObjectiveAI` doesn't play
-them yet). Looking for real time? See [Real-time strategy](realtime-strategy.md).
+Looking for real time? See [Real-time strategy](realtime-strategy.md).
 See [the roadmap](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md#turn-based-strategy).
