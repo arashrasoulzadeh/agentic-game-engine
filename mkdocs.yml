@@ -78,6 +78,7 @@ nav:
       - "1 · A tiny platformer": tutorials/01-hello-world.md
       - "2 · Turn-based strategy": tutorials/02-turn-based-strategy.md
       - "3 · An agent-driven game": tutorials/03-agent-driven-game.md
+      - "4 · Multiplayer": tutorials/04-multiplayer.md
   - Concepts:
       - Architecture: concepts/architecture.md
       - The ECS: concepts/ecs.md
@@ -87,6 +88,7 @@ nav:
       - Platformer gameplay: concepts/platformer.md
       - Turn-based strategy: concepts/turn-based-strategy.md
       - Real-time strategy: concepts/realtime-strategy.md
+      - Networking: concepts/networking.md
   - Examples:
       - Overview: examples/README.md
       - Custom turn-based AI: examples/custom-turn-ai.md

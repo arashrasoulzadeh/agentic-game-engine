@@ -101,13 +101,13 @@ Sections: [Performance](#performance) ·
 
 ## Engine features
 
-- [ ] **Networking: a real transport and a session layer** — the in-memory
-      foundation is done (`WorldSnapshot`/`WorldDelta`, `StateSyncServer`/
-      `Client`, `RollbackSession`, `PositionHistory`, `LoopbackLink`), but
-      nothing carries it over a socket yet. Needed: a WebSocket (and optionally
-      UDP/WebRTC) implementation of the send/receive pair `LoopbackLink`
-      stands in for, lobby/matchmaking and player-id assignment, clock sync
-      between peers, and a tutorial that wires a two-player game end to end.
+- [ ] **Networking: beyond the WebSocket basics** — host/client sessions, order
+      validation, clock sync and a `dart:io` WebSocket transport exist (see the
+      networking guide). Still missing: a browser transport (`NetEndpoint` over
+      `web_socket_channel`), UDP/WebRTC for lower latency, a matchmaking/lobby
+      service with NAT traversal, authentication and `wss://` guidance, interest
+      management (send each player only what they can see), and a Flutter widget
+      that connects, shows the mirror in `EngineView` and sends tap orders.
 - [ ] **Example game** — one complete small game showing the major features,
       playable in the browser. (`test_game/` stays local and gitignored; this
       would be a separate, deliberately published sample — decide where it
@@ -248,9 +248,6 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       (colorblind modes, text scaling, remapping).
 - [ ] Viewport / aspect-ratio / safe-area handling.
 - [ ] Error reporting and analytics hooks.
-- [ ] Networking guide: snapshots and deltas, state sync, rollback and its
-      determinism requirements, lag compensation (code is in
-      `engine_core/lib/src/net/`; only mentioned in passing today).
 - [ ] Performance: archetypes, the job system, the benchmark suite.
 - [ ] Lighting deep-dive (`Light2D`, shadows, single-pass shader, day/night)
       beyond the overview in `concepts/rendering.md`.

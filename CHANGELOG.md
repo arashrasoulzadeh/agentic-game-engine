@@ -9,6 +9,10 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Multiplayer sessions: `NetEndpoint`, `HostSession` / `ClientSession` (team
+  assignment, server-side order validation, ping/pong clock sync) and, in
+  `package:engine_core/engine_core_io.dart`, a real `WebSocketEndpoint` /
+  `WebSocketListener` / `connectWebSocket`. Docs: networking guide and tutorial 4.
 - `ObjectiveAI` plays the carry rules: carriers deliver, the nearest unit fetches loose
   flags, guards chase an enemy carrier, a `Vip` keeps out of reach.
 - Escort and capture-the-flag rules: `Vip` (its death loses the game), `Flag`

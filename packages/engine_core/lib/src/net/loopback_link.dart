@@ -1,19 +1,43 @@
 import 'dart:convert';
 
 import '../ecs/deterministic_random.dart';
+import 'net_endpoint.dart';
 
 /// One end of a [LoopbackLink]: send JSON messages, receive them via [onMessage].
-class LinkEndpoint {
+class LinkEndpoint implements NetEndpoint {
   LinkEndpoint._(this._link, this._index);
 
   final LoopbackLink _link;
   final int _index;
 
-  /// Called for each delivered message.
+  @override
   void Function(Map<String, dynamic> message)? onMessage;
 
+  @override
+  void Function()? onClose;
+
+  bool _closed = false;
+
   /// Queues [message] for the other end (subject to the link's latency and loss).
-  void send(Map<String, dynamic> message) => _link._send(_index, message);
+  /// Ignored once either end has closed.
+  @override
+  void send(Map<String, dynamic> message) {
+    if (_closed || _link._endpointAt(1 - _index)._closed) return;
+    _link._send(_index, message);
+  }
+
+  /// Ends the connection for both sides and notifies each via [onClose].
+  @override
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    onClose?.call();
+    final peer = _link._endpointAt(1 - _index);
+    if (!peer._closed) {
+      peer._closed = true;
+      peer.onClose?.call();
+    }
+  }
 }
 
 /// An in-memory, tick-driven link between two endpoints with fixed latency,
@@ -49,6 +73,8 @@ class LoopbackLink {
   final List<_InFlight> _queue = [];
   int sent = 0;
   int dropped = 0;
+
+  LinkEndpoint _endpointAt(int index) => index == 0 ? a : b;
 
   void _send(int from, Map<String, dynamic> message) {
     sent++;
