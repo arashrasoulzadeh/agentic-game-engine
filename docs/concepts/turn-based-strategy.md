@@ -42,6 +42,8 @@ none of them can do anything a player couldn't.
 | `Position` | `{"x": 168, "y": 264}` | World pixels, **derived** from the grid by `GridToWorldSystem` for rendering. |
 | `ActionPoints` | `{"current": 2, "max": 4}` | Budget for the active turn. |
 | `UnitStats` | `{"hp": 8, "maxHp": 10, "attack": 3, "defense": 1}` | Combat numbers. |
+| `AttackProfile` | `{"range": 3, "cost": 1}` | Per-unit attack reach and cost; absent = the global values. |
+| `StatusEffects` | `{"effects":[{"id":"defending","turns":1,"attack":0,"defense":2}]}` | Temporary modifiers. |
 | `Vision` | `{"range": 4}` | Sight radius in cells. |
 | `OrderQueue` | `{"orders": [{"type":"move","col":3,"row":5}]}` | Pending orders. |
 | `Selected` | `{}` | Marker: the local player has this unit selected. |
@@ -89,6 +91,7 @@ spends this way, "can't act out of turn" is enforced in exactly one place.
 |---|---|---|
 | `MoveOrder(col, row)` | `{"type":"move","col":3,"row":5}` | Walks step by step, paying each cell's terrain cost. |
 | `AttackOrder(target)` | `{"type":"attack","target":17}` | Walks into range if needed (with the navigator), then attacks. |
+| `DefendOrder()` | `{"type":"defend"}` | Spends all remaining points and applies `defending` (+2 defense by default) until the unit's next turn starts. With no points left it waits for the next turn. |
 
 An order the unit **can't afford yet stays queued** and resumes next turn.
 An order that **can never succeed** is dropped and an `OrderFailedEvent`
@@ -139,6 +142,32 @@ There is **no friendly fire**: attack orders against your own team fail with
 A team is only judged after it has been seen with units, so a unit-less
 neutral side doesn't end the game on tick one.
 
+### Ranged attacks and costs
+
+Give a unit an `AttackProfile` to override the global range/cost:
+
+```dart
+spawnStrategyUnit(world, team: 'red', col: 0, row: 0, cellSize: 48,
+    attackRange: 3);          // an archer: hits from 3 cells (Chebyshev)
+spawnStrategyUnit(world, team: 'red', col: 1, row: 0, cellSize: 48,
+    attackCost: 2);           // a mage: each spell costs 2 points
+```
+
+A unit that must approach stops as soon as it is within *its own* range.
+
+### Status effects
+
+`StatusEffects` hold temporary modifiers. Damage uses
+`max(1, attack + Σ attack bonuses − (defense + Σ defense bonuses))`.
+
+```dart
+applyStatus(world, unit, StatusEffect('rally', turns: 2, attack: 3));
+```
+
+`turns` counts the **owner's** turn starts the effect survives: it is
+decremented, and removed with a `StatusExpiredEvent`, at the start of the
+owning team's turn. Re-applying an id refreshes it instead of stacking.
+
 ## Fog of war
 
 Optional. `installStrategySystems(fog: true, blocksSight: …)` adds a
@@ -183,8 +212,15 @@ abstract class TurnAI { void playTurn(World world, String team); }
 lets `OrderSystem` execute what it queued, and ends the turn when no queued
 order can still progress (the rest are waiting on points that arrive next
 turn). `AggressiveAI` sends every idle unit after the nearest enemy its team
-can see. Writing your own is a ten-line class —
-[recipe](../examples/custom-turn-ai.md).
+can see. `TacticalAI` adds four switchable behaviours — focus fire on the
+weakest visible enemy, retreat when hurt, explore unexplored fog, and brace
+when idle:
+
+```dart
+aiTeams: {'blue': TacticalAI(navigator: nav, retreatBelow: 0.3, defendWhenIdle: true)}
+```
+
+Writing your own is a ten-line class — [recipe](../examples/custom-turn-ai.md).
 
 ## System order
 
@@ -214,6 +250,8 @@ than between.
 | `UnitDamagedEvent(attacker, target, amount)` | Damage applied. |
 | `UnitDefeatedEvent(unit, team)` | A unit reaches 0 hp, just before destruction. |
 | `OrderFailedEvent(entity, order, reason)` | An order was dropped. |
+| `StatusAppliedEvent(entity, id)` | A status was applied or refreshed. |
+| `StatusExpiredEvent(entity, id)` | A status ran out at its owner's turn start. |
 | `VictoryEvent(team)` | One team remains. |
 
 ## Design decisions
@@ -231,6 +269,6 @@ than between.
 
 ## Not built yet
 
-Real-time strategy (needs a fixed-step accumulator for lockstep, flow-field
-pathfinding for large groups) and smarter AI (flanking, objectives).
+Real-time strategy (needs the fixed-step accumulator wired into `Game`, and
+flow-field pathfinding for large groups), overwatch, and objective-driven AI.
 See [the roadmap](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md#turn-based-strategy).

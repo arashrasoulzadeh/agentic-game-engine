@@ -214,3 +214,12 @@ const fogOfWarSchema = ComponentSchema('fogOfWar', [
   FieldSchema('visible', FieldType.object),
   FieldSchema('explored', FieldType.object),
 ]);
+
+const attackProfileSchema = ComponentSchema('attackProfile', [
+  FieldSchema('range', FieldType.int, min: 1, defaultValue: 1),
+  FieldSchema('cost', FieldType.int, min: 0, defaultValue: 1),
+]);
+
+const statusEffectsSchema = ComponentSchema('statusEffects', [
+  FieldSchema('effects', FieldType.list),
+]);

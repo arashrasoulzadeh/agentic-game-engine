@@ -90,6 +90,7 @@ export 'src/turn/order_system.dart';
 export 'src/turn/grid_navigation.dart';
 export 'src/turn/selection.dart';
 export 'src/turn/combat.dart';
+export 'src/turn/status.dart';
 export 'src/turn/fog_of_war.dart';
 export 'src/turn/ai_turn.dart';
 
@@ -114,6 +115,7 @@ import 'src/turn/turn_components.dart';
 import 'src/turn/order.dart';
 import 'src/turn/selection.dart';
 import 'src/turn/combat.dart';
+import 'src/turn/status.dart';
 import 'src/turn/fog_of_war.dart';
 
 /// Registers the engine's built-in components on [world]. Games/agents
@@ -311,5 +313,17 @@ void registerCoreComponents(World world) {
     (f) => f.toJson(),
     FogOfWar.fromJson,
     schema: fogOfWarSchema,
+  );
+  world.components.register<AttackProfile>(
+    'attackProfile',
+    (a) => a.toJson(),
+    AttackProfile.fromJson,
+    schema: attackProfileSchema,
+  );
+  world.components.register<StatusEffects>(
+    'statusEffects',
+    (s) => s.toJson(),
+    StatusEffects.fromJson,
+    schema: statusEffectsSchema,
   );
 }

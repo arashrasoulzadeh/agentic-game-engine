@@ -1,6 +1,7 @@
 import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
+import 'status.dart';
 import 'turn_components.dart';
 
 /// Creates the turn-manager entity and starts the first team's turn
@@ -64,6 +65,7 @@ void _beginTurn(World world, TurnState state) {
     if (teams.denseAt(i).id != state.activeTeam) continue;
     points.get(teams.entityAt(i))?.refill();
   }
+  tickStatusEffects(world, state.activeTeam);
   world.events.emit(TurnStartedEvent(state.activeTeam, state.round));
 }
 

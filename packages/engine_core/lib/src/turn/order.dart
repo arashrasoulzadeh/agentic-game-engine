@@ -33,6 +33,8 @@ abstract class Order {
         return MoveOrder((json['col'] as num).toInt(), (json['row'] as num).toInt());
       case 'attack':
         return AttackOrder((json['target'] as num).toInt());
+      case 'defend':
+        return const DefendOrder();
       default:
         throw FormatException('Unknown order type: ${json['type']}');
     }
@@ -62,6 +64,19 @@ class AttackOrder extends Order {
 
   @override
   Map<String, dynamic> toJson() => {'type': type, 'target': target};
+}
+
+/// Brace for the enemy's turn: spends all remaining action points (needs at
+/// least one) and applies a `defending` status that raises defense until this
+/// unit's team's next turn begins.
+class DefendOrder extends Order {
+  const DefendOrder();
+
+  @override
+  String get type => 'defend';
+
+  @override
+  Map<String, dynamic> toJson() => {'type': type};
 }
 
 /// Pending orders for one entity, executed front to back. An order that

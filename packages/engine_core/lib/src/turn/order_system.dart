@@ -2,7 +2,9 @@ import '../ecs/component_store.dart';
 import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
+import 'combat.dart';
 import 'grid_navigation.dart';
+import 'status.dart';
 import 'fog_of_war.dart';
 import 'order.dart';
 import 'turn_components.dart';
@@ -46,6 +48,9 @@ class OrderSystem extends System {
   /// on a distant enemy should mean "go get it".
   final bool approachTargets;
 
+  /// Defense a `DefendOrder` grants until the unit's next turn starts.
+  final int defendBonus;
+
   /// Returns the next cell from `from` toward `to`, or null if there is
   /// none. `occupied` tells whether a cell holds another entity.
   final GridPosition? Function(
@@ -65,6 +70,7 @@ class OrderSystem extends System {
     this.attackCost = 1,
     this.attackRange = 1,
     this.approachTargets = false,
+    this.defendBonus = 2,
     GridPosition? Function(World, GridPosition, GridPosition, bool Function(int, int))? nextStep,
   })  : nextStep = nextStep ?? _greedyStep,
         stepCost = stepCost ?? ((_, __) => moveCost);
@@ -76,11 +82,13 @@ class OrderSystem extends System {
     GridNavigator nav, {
     int attackCost = 1,
     int attackRange = 1,
+    int defendBonus = 2,
   }) {
     return OrderSystem(
       attackCost: attackCost,
       attackRange: attackRange,
       approachTargets: true,
+      defendBonus: defendBonus,
       stepCost: (_, to) => nav.terrainCost(to.col, to.row) ?? 1,
       nextStep: (world, from, to, occupied) {
         final path = nav.findPath(from, to, blocked: occupied);
@@ -113,6 +121,7 @@ class OrderSystem extends System {
   _Result _run(World world, EntityId entity, Order order) {
     if (order is MoveOrder) return _move(world, entity, order);
     if (order is AttackOrder) return _attack(world, entity, order);
+    if (order is DefendOrder) return _defend(world, entity, order);
     return _fail(world, entity, order, OrderFailure.invalidTarget);
   }
 
@@ -149,13 +158,16 @@ class OrderSystem extends System {
     if (myTeam != null && !canSee(world, myTeam, order.target)) {
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     }
-    if (me.chebyshev(target) > attackRange) {
+    final profile = world.storeOf<AttackProfile>().get(entity);
+    final reach = profile?.range ?? attackRange;
+    final price = profile?.cost ?? attackCost;
+    if (me.chebyshev(target) > reach) {
       if (!approachTargets) return _fail(world, entity, order, OrderFailure.outOfRange);
       // The target's own cell must be walkable for the router, so it is
       // excluded from the occupied set; we stop once in range, before
       // ever entering it.
       final occupied = _occupiedBy(grid, entity, ignore: order.target);
-      while (me.chebyshev(target) > attackRange) {
+      while (me.chebyshev(target) > reach) {
         final step = nextStep(world, me, target, occupied);
         if (step == null) return _fail(world, entity, order, OrderFailure.blocked);
         if (!trySpendActionPoints(world, entity, stepCost(world, step))) {
@@ -166,8 +178,17 @@ class OrderSystem extends System {
         world.events.emit(MovedEvent(entity, me.col, me.row));
       }
     }
-    if (!trySpendActionPoints(world, entity, attackCost)) return _Result.waiting;
+    if (!trySpendActionPoints(world, entity, price)) return _Result.waiting;
     world.events.emit(AttackResolvedEvent(entity, order.target));
+    return _Result.done;
+  }
+
+  _Result _defend(World world, EntityId entity, DefendOrder order) {
+    final ap = world.storeOf<ActionPoints>().get(entity);
+    if (ap == null) return _fail(world, entity, order, OrderFailure.invalidTarget);
+    if (ap.current <= 0) return _Result.waiting;
+    if (!trySpendActionPoints(world, entity, ap.current)) return _Result.waiting;
+    applyStatus(world, entity, StatusEffect('defending', turns: 1, defense: defendBonus));
     return _Result.done;
   }
 

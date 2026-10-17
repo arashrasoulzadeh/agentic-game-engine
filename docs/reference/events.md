@@ -33,6 +33,8 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | `UnitDefeatedEvent` | `unit`, `team` | `installCombat` (just before destroy) |
 | `OrderFailedEvent` | `entity`, `order`, `reason` | `OrderSystem` |
 | `VictoryEvent` | `team` | `WinConditionSystem` |
+| `StatusAppliedEvent` | `entity`, `id` | `applyStatus` |
+| `StatusExpiredEvent` | `entity`, `id` | turn clock (`tickStatusEffects`) |
 
 `OrderFailure` is one of `blocked`, `outOfRange`, `invalidTarget`.
 

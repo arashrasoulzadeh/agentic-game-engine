@@ -9,6 +9,10 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Turn-based: per-unit `AttackProfile` (ranged attacks, per-unit cost),
+  `StatusEffects` (+ `applyStatus`, `StatusAppliedEvent`/`StatusExpiredEvent`,
+  ticked at the owner's turn start), `DefendOrder`, `TacticalAI` (focus fire,
+  retreat, exploration, hold), and `spawnStrategyUnit(attackRange:, attackCost:)`.
 - Local split-screen: `SplitScreenView` draws one shared `World` through up to
   four cameras (`SplitScreenLayout.rects`), stepping it exactly once
   (`EngineView.stepsWorld`); `installPlatformerSystems(additionalPlayers:)`

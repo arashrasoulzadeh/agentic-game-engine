@@ -123,16 +123,15 @@ The turn-based layer is feature-complete for a first release (turn clock,
 orders, grid navigation, combat, fog of war, selection, AI turns,
 `engine_strategy`, `strategy_game` template). Left:
 
-- [ ] **Smarter `AggressiveAI`** — it holds position when nothing is
-      visible. Add exploring toward unexplored fog cells, retreating when
-      hurt, focus fire, holding choke points.
 - [ ] **Terrain rendering in the `strategy_game` template** — it draws units
       on a black background; add a `TileMap` with forest/mountain tiles using
       `GridNavigator.fromTileMap`, a move-range overlay, and fog shading.
-- [ ] **More unit behaviours** — ranged attacks (range > 1 without walking),
-      per-unit move/attack costs, defend/overwatch, status effects. Today
-      `attackRange` and the costs are global to `OrderSystem`; they should move
-      onto a per-unit component (e.g. `UnitStats`).
+- [ ] **Overwatch** — a stance where a unit holds its points and attacks the
+      first enemy that moves into its range during the enemy's turn (needs a
+      reaction hook in `OrderSystem`'s move step, after the existing
+      `defend`/status machinery).
+- [ ] **Objective-driven AI** — capture points, escort and defend-the-flag
+      behaviours for `TurnAI`, beyond `TacticalAI`'s kill-or-explore logic.
 - [ ] **Real-time strategy** — the order, selection, navigation and fog layers
       carry over. Missing: wire `EngineView.fixedTimestepSeconds` (opt-in
       today, default off) through `Game`/`GameConfig` for lockstep

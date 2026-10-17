@@ -25,6 +25,30 @@ void main() {
     expect((p.x, p.y), (80.0, 112.0));
   });
 
+  test('attackRange / attackCost attach an AttackProfile; omitted they do not', () {
+    final w = _world();
+    final archer = spawnStrategyUnit(w, team: 'red', col: 0, row: 0, cellSize: 32, attackRange: 3);
+    final mage = spawnStrategyUnit(w, team: 'red', col: 1, row: 0, cellSize: 32, attackCost: 2);
+    final knight = spawnStrategyUnit(w, team: 'red', col: 2, row: 0, cellSize: 32);
+    expect(w.storeOf<AttackProfile>().get(archer)!.range, 3);
+    expect(w.storeOf<AttackProfile>().get(archer)!.cost, 1);
+    expect(w.storeOf<AttackProfile>().get(mage)!.cost, 2);
+    expect(w.storeOf<AttackProfile>().get(mage)!.range, 1);
+    expect(w.storeOf<AttackProfile>().has(knight), isFalse);
+  });
+
+  test('an archer shoots over a gap a knight cannot, through the installed systems', () {
+    final w = _world();
+    installStrategySystems(w, navigator: _nav(), cellSize: 32);
+    final archer = spawnStrategyUnit(w, team: 'red', col: 0, row: 0, cellSize: 32, attackRange: 4);
+    final foe = spawnStrategyUnit(w, team: 'blue', col: 4, row: 0, cellSize: 32, maxHp: 10);
+    startTurnBasedGame(w, ['red', 'blue']);
+    submitOrder(w, archer, AttackOrder(foe));
+    w.step(0.1);
+    expect(w.storeOf<UnitStats>().get(foe)!.hp, 7);
+    expect(w.storeOf<GridPosition>().get(archer)!.col, 0);
+  });
+
   test('sprite and vision are optional', () {
     final w = _world();
     final u = spawnStrategyUnit(w, team: 'red', col: 0, row: 0, cellSize: 32);

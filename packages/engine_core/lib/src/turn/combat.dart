@@ -2,6 +2,7 @@ import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
 import 'order.dart';
+import 'status.dart';
 import 'turn_components.dart';
 
 /// Hit points and combat numbers for a turn-based unit. Lives in
@@ -30,6 +31,26 @@ class UnitStats {
   }
 }
 
+/// Per-unit reach and cost of an attack, overriding `OrderSystem`'s global
+/// `attackRange`/`attackCost`: an archer with `range: 3`, a mage whose spell
+/// costs 2 points. Absent, the unit uses the global values, so melee-only games
+/// never need it.
+class AttackProfile {
+  /// Chebyshev distance (cells, diagonals count as one) the unit can attack from.
+  int range;
+
+  /// Action points one attack costs.
+  int cost;
+
+  AttackProfile({this.range = 1, this.cost = 1});
+
+  Map<String, dynamic> toJson() => {'range': range, 'cost': cost};
+  factory AttackProfile.fromJson(Map<String, dynamic> json) => AttackProfile(
+        range: (json['range'] as num?)?.toInt() ?? 1,
+        cost: (json['cost'] as num?)?.toInt() ?? 1,
+      );
+}
+
 /// Emitted for each hit that lands.
 class UnitDamagedEvent {
   final EntityId attacker;
@@ -53,8 +74,10 @@ class VictoryEvent {
 
 /// Damage a hit does: attack minus defense, never below 1 so a chip
 /// attack always makes progress and fights can't deadlock on stats.
-int damageFor(UnitStats attacker, UnitStats target) {
-  final raw = attacker.attack - target.defense;
+///
+/// [attackBonus]/[defenseBonus] are the summed `StatusEffects` modifiers.
+int damageFor(UnitStats attacker, UnitStats target, {int attackBonus = 0, int defenseBonus = 0}) {
+  final raw = attacker.attack + attackBonus - (target.defense + defenseBonus);
   return raw < 1 ? 1 : raw;
 }
 
@@ -67,7 +90,12 @@ void installCombat(World world) {
     final attacker = stats.get(e.attacker);
     final target = stats.get(e.target);
     if (attacker == null || target == null || !world.entities.isAlive(e.target)) return;
-    final amount = damageFor(attacker, target);
+    final amount = damageFor(
+      attacker,
+      target,
+      attackBonus: world.storeOf<StatusEffects>().get(e.attacker)?.attackBonus ?? 0,
+      defenseBonus: world.storeOf<StatusEffects>().get(e.target)?.defenseBonus ?? 0,
+    );
     target.hp = target.hp - amount < 0 ? 0 : target.hp - amount;
     world.events.emit(UnitDamagedEvent(e.attacker, e.target, amount));
     if (target.hp == 0) {

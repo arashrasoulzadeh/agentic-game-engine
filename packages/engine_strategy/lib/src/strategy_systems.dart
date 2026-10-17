@@ -38,6 +38,7 @@ EntityId? installStrategySystems(
   Map<String, TurnAI> aiTeams = const {},
   int attackRange = 1,
   int attackCost = 1,
+  int defendBonus = 2,
   bool Function(int col, int row)? blocksSight,
   bool fog = false,
   bool selectionMarkers = true,
@@ -52,6 +53,7 @@ EntityId? installStrategySystems(
     navigator,
     attackCost: attackCost,
     attackRange: attackRange,
+    defendBonus: defendBonus,
   ));
   if (aiTeams.isNotEmpty) world.addSystem(AITurnSystem(aiTeams));
   world.addSystem(TurnSystem(autoEndTeams: autoEndTeams));
