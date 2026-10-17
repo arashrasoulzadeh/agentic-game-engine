@@ -9,8 +9,12 @@ import 'package:flutter/material.dart' hide Velocity, Action, Text;
 // this with your own game.
 //
 // A turn-based skirmish against a simple AI (blue) on an 8x8 grid:
-// - Tap one of your units to select it (a bar appears under it), then tap
-//   a cell to move there, or an enemy to attack it (it walks into range).
+// - Tap one of your units to select it (a bar appears under it and the cells it
+//   can reach this turn light up), then tap a cell to move there, or an enemy
+//   to attack it (it walks into range).
+// - Terrain: forest (dark green) costs 3 points to enter, mountains are
+//   impassable. The map is a TileMap; GridNavigator.fromTileMap reads the costs
+//   from it, so the picture and the rules can't disagree.
 // - Tap the strip below the grid to end your turn; blue then plays
 //   its turn automatically.
 // - assets/game_config.json sets the world size (grid + one button row).
@@ -19,6 +23,21 @@ import 'package:flutter/material.dart' hide Velocity, Action, Text;
 
 const _cell = 48.0;
 const _grid = 8;
+
+// Tile ids, shared by the map below, the atlas regions and the movement costs.
+const _grass = 1, _forest = 2, _mountain = 3;
+
+// 8x8, row-major. Edit freely; every row needs exactly _grid entries.
+const _terrain = <int>[
+  1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 2, 2, 1, 1, 1, 1,
+  1, 1, 2, 3, 1, 1, 2, 1,
+  1, 1, 1, 3, 1, 2, 2, 1,
+  1, 2, 1, 1, 1, 1, 1, 1,
+  1, 2, 2, 1, 1, 3, 1, 1,
+  1, 1, 1, 1, 1, 3, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1,
+];
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,9 +63,26 @@ class SkirmishScene extends Scene {
 
   @override
   Future<void> populate(World world, SceneController scenes, GameState state) async {
+    final map = TileMap(
+      cols: _grid,
+      rows: _grid,
+      tileWidth: _cell,
+      tileHeight: _cell,
+      tiles: _terrain,
+      solidTileIds: {_mountain},
+      atlasId: 'terrain',
+      regionByTileId: {_grass: 'grass', _forest: 'forest', _mountain: 'mountain'},
+      zIndex: -10,
+    );
+    final mapEntity = world.spawn();
+    world.storeOf<Position>().set(mapEntity, Position(0, 0));
+    world.storeOf<TileMap>().set(mapEntity, map);
+
     installStrategySystems(
       world,
-      navigator: GridNavigator(cols: _grid, rows: _grid, terrainCost: (_, _) => 1),
+      navigator: GridNavigator.fromTileMap(map, terrainCosts: {_forest: 3}),
+      // Lights up the cells the selected unit can reach (MoveRangeHighlightSystem).
+      moveHighlight: (atlasId: 'terrain', region: 'highlight'),
       cellSize: _cell,
       // Blue is the computer. Remove this line for hot-seat play, or
       // pass your own TurnAI (anything that calls submitOrder).
@@ -93,6 +129,7 @@ class SkirmishScene extends Scene {
   Future<AtlasRegistry> loadAssets() async {
     final registry = AtlasRegistry();
     registry.register('units', await _placeholderAtlas());
+    registry.register('terrain', await _terrainAtlas());
     return registry;
   }
 
@@ -108,6 +145,29 @@ class SkirmishScene extends Scene {
     return SpriteAtlas(image, {
       'red': const Rect.fromLTWH(0, 0, size, size),
       'blue': const Rect.fromLTWH(size, 0, size, size),
+    });
+  }
+
+  /// Flat-colour terrain tiles plus a translucent highlight, so the template
+  /// has a readable map with no image files. Replace with a real tile sheet.
+  Future<SpriteAtlas> _terrainAtlas() async {
+    const size = 32.0;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    void tile(int index, Color color) => canvas.drawRect(
+          Rect.fromLTWH(index * size, 0, size, size),
+          Paint()..color = color,
+        );
+    tile(0, const Color(0xFF3B6B3A)); // grass
+    tile(1, const Color(0xFF1F4A2A)); // forest
+    tile(2, const Color(0xFF6E6E78)); // mountain
+    tile(3, const Color(0x6640E0D0)); // highlight
+    final image = await recorder.endRecording().toImage(size.toInt() * 4, size.toInt());
+    return SpriteAtlas(image, {
+      'grass': const Rect.fromLTWH(0, 0, size, size),
+      'forest': const Rect.fromLTWH(size, 0, size, size),
+      'mountain': const Rect.fromLTWH(size * 2, 0, size, size),
+      'highlight': const Rect.fromLTWH(size * 3, 0, size, size),
     });
   }
 }

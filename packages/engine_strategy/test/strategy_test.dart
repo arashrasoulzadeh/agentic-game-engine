@@ -13,6 +13,7 @@ World _world() {
 GridNavigator _nav() => GridNavigator(cols: 8, rows: 8, terrainCost: (_, _) => 1);
 
 void main() {
+  moveRangeTests();
   test('spawnStrategyUnit attaches the expected components', () {
     final w = _world();
     final u = spawnStrategyUnit(w,
@@ -107,5 +108,95 @@ void main() {
     expect(g.col, 2);
     expect(w.storeOf<Position>().get(red)!.x, 2.5 * 32);
     expect(w.storeOf<SelectionMarker>().length, 1);
+  });
+}
+
+void moveRangeTests() {
+  Set<(int, int)> lit(World w) {
+    final markers = w.storeOf<MoveRangeMarker>();
+    return {
+      for (var i = 0; i < markers.length; i++)
+        (
+          (w.storeOf<Position>().get(markers.entityAt(i))!.x / 32 - 0.5).round(),
+          (w.storeOf<Position>().get(markers.entityAt(i))!.y / 32 - 0.5).round(),
+        ),
+    };
+  }
+
+  World setup(void Function(World w) extra) {
+    final w = _world();
+    installStrategySystems(
+      w,
+      navigator: _nav(),
+      cellSize: 32,
+      moveHighlight: (atlasId: 'terrain', region: 'highlight'),
+    );
+    extra(w);
+    return w;
+  }
+
+  test('selecting a unit lights up exactly the cells it can reach; deselecting clears them', () {
+    final w = setup((_) {});
+    final u = spawnStrategyUnit(w, team: 'red', col: 3, row: 3, cellSize: 32, actionPoints: 1);
+    spawnStrategyUnit(w, team: 'blue', col: 7, row: 7, cellSize: 32);
+    startTurnBasedGame(w, ['red', 'blue']);
+    w.step(0.1);
+    expect(lit(w), isEmpty);
+
+    selectAtCell(w, 3, 3);
+    w.step(0.1);
+    final expected = _nav().reachable(GridPosition(3, 3), 1).keys.toSet();
+    expect(lit(w), expected);
+    expect(lit(w).length, 8);
+    expect(w.storeOf<Sprite>().get(w.storeOf<MoveRangeMarker>().entityAt(0))!.region, 'highlight');
+
+    clearSelection(w);
+    w.step(0.1);
+    expect(lit(w), isEmpty);
+    expect(w.storeOf<Team>().has(u), isTrue);
+  });
+
+  test('occupied cells are not lit, and the highlight shrinks as points are spent', () {
+    final w = setup((_) {});
+    final u = spawnStrategyUnit(w, team: 'red', col: 3, row: 3, cellSize: 32, actionPoints: 2);
+    spawnStrategyUnit(w, team: 'red', col: 4, row: 3, cellSize: 32);
+    spawnStrategyUnit(w, team: 'blue', col: 7, row: 7, cellSize: 32);
+    startTurnBasedGame(w, ['red', 'blue']);
+    selectAtCell(w, 3, 3);
+    w.step(0.1);
+    final full = lit(w);
+    expect(full.contains((4, 3)), isFalse);
+
+    trySpendActionPoints(w, u, 1);
+    w.step(0.1);
+    expect(lit(w).length, lessThan(full.length));
+  });
+
+  test('a multi-selection or a unit with no points shows nothing', () {
+    final w = setup((_) {});
+    spawnStrategyUnit(w, team: 'red', col: 0, row: 0, cellSize: 32);
+    spawnStrategyUnit(w, team: 'red', col: 1, row: 0, cellSize: 32);
+    spawnStrategyUnit(w, team: 'blue', col: 7, row: 7, cellSize: 32);
+    startTurnBasedGame(w, ['red', 'blue']);
+    selectInBox(w, 0, 0, 1, 0);
+    w.step(0.1);
+    expect(lit(w), isEmpty);
+    selectAtCell(w, 0, 0);
+    trySpendActionPoints(w, selectedEntities(w).single, 3);
+    w.step(0.1);
+    expect(lit(w), isEmpty);
+  });
+
+  test('without moveHighlight the system and component are absent', () {
+    final w = _world();
+    installStrategySystems(w, navigator: _nav(), cellSize: 32);
+    expect(w.systemOrder.contains('moveRangeHighlight'), isFalse);
+  });
+
+  test('installing twice does not double-register the marker component', () {
+    final w = _world();
+    installStrategySystems(w, navigator: _nav(), cellSize: 32, moveHighlight: (atlasId: 'a', region: 'b'));
+    installStrategySystems(w, navigator: _nav(), cellSize: 32, moveHighlight: (atlasId: 'a', region: 'b'));
+    expect(w.components.all.where((r) => r.name == 'moveRangeMarker'), hasLength(1));
   });
 }

@@ -1,6 +1,8 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 
+import 'move_range_highlight.dart';
+
 /// Registers everything a turn-based strategy game needs, in the one
 /// order that's actually correct -- the call this package exists for,
 /// mirroring `installPlatformerSystems`.
@@ -18,11 +20,15 @@ import 'package:engine_flutter/engine_flutter.dart';
 ///    kills.
 /// 6. `GridToWorldSystem` -- syncs `Position` from the final cells so
 ///    rendering never lags a tick behind.
-/// 7. `SelectionMarkerSystem` last, so markers follow the synced
-///    `Position`.
+/// 7. `SelectionMarkerSystem`, so markers follow the synced `Position`.
+/// 8. `MoveRangeHighlightSystem` (only with [moveHighlight]) last: it reads the
+///    final selection, cells and points.
 ///
 /// Also calls `installCombat` (attack orders -> damage). Add your own
 /// systems before or after; this doesn't own the whole list.
+///
+/// Pass `moveHighlight: (atlasId: 'terrain', region: 'highlight')` to light up
+/// the selected unit's reachable cells with that sprite.
 ///
 /// Pass `fog: true` to enable fog of war; it spawns a `FogOfWar` sized
 /// to [navigator] and adds `VisionSystem`. Spawn your units, *then* call
@@ -42,6 +48,7 @@ EntityId? installStrategySystems(
   bool Function(int col, int row)? blocksSight,
   bool fog = false,
   bool selectionMarkers = true,
+  ({String atlasId, String region})? moveHighlight,
 }) {
   EntityId? fogEntity;
   if (fog) {
@@ -60,6 +67,23 @@ EntityId? installStrategySystems(
   world.addSystem(WinConditionSystem());
   world.addSystem(GridToWorldSystem(cellSize));
   if (selectionMarkers) world.addSystem(SelectionMarkerSystem(cellSize));
+  if (moveHighlight != null) {
+    // Registered here (not in registerFlutterComponents) because the marker is
+    // this package's own type; a no-op if the game already registered it.
+    if (!world.components.all.any((r) => r.name == 'moveRangeMarker')) {
+      world.components.register<MoveRangeMarker>(
+        'moveRangeMarker',
+        (m) => m.toJson(),
+        MoveRangeMarker.fromJson,
+      );
+    }
+    world.addSystem(MoveRangeHighlightSystem(
+      navigator: navigator,
+      cellSize: cellSize,
+      atlasId: moveHighlight.atlasId,
+      region: moveHighlight.region,
+    ));
+  }
   installCombat(world);
   return fogEntity;
 }

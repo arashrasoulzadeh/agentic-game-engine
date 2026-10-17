@@ -9,6 +9,9 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `MoveRangeHighlightSystem` (`installStrategySystems(moveHighlight:)`), and a
+  `strategy_game` starter with a real terrain `TileMap` (forest costs 3,
+  mountains block) read by `GridNavigator.fromTileMap`.
 - Turn-based: per-unit `AttackProfile` (ranged attacks, per-unit cost),
   `StatusEffects` (+ `applyStatus`, `StatusAppliedEvent`/`StatusExpiredEvent`,
   ticked at the owner's turn start), `DefendOrder`, `TacticalAI` (focus fire,

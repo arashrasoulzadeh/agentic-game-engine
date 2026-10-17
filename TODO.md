@@ -123,9 +123,9 @@ The turn-based layer is feature-complete for a first release (turn clock,
 orders, grid navigation, combat, fog of war, selection, AI turns,
 `engine_strategy`, `strategy_game` template). Left:
 
-- [ ] **Terrain rendering in the `strategy_game` template** — it draws units
-      on a black background; add a `TileMap` with forest/mountain tiles using
-      `GridNavigator.fromTileMap`, a move-range overlay, and fog shading.
+- [ ] **Fog shading in the `strategy_game` template** — the starter has terrain
+      and a move-range highlight but no fog; show `FogOfWar` (visible / explored /
+      unknown) as an overlay and hide unseen enemies (`canSee`).
 - [ ] **Overwatch** — a stance where a unit holds its points and attacks the
       first enemy that moves into its range during the enemy's turn (needs a
       reaction hook in `OrderSystem`'s move step, after the existing
