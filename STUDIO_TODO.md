@@ -566,18 +566,27 @@ running `pub get` from the studio.
 Goal: narrative and cutscene logic authored as graphs, running on
 existing runtime primitives.
 
-- [ ] **4.1** Decide D3 (compile-only) and record it.
-- [ ] **4.2** Graph data model in `engine_core/lib/src/graph/`: `Graph`,
+- [x] **4.1** (already recorded in the Part 4 decisions table: compile-
+  only, no parallel interpreter — graphs compile to `DialogueGraph`/
+  `Cinematic` steps the runtime already executes) Decide D3 (compile-only) and record it.
+- [x] **4.2** Graph data model in `engine_core/lib/src/graph/`: `Graph`,
   `GraphNode`, `GraphEdge`, `PortType`, variables.
-- [ ] **4.3** `NodeKind` registry with port schemas.
-- [ ] **4.4** Built-in node kinds: `Say`, `Choice`, `SetVar`, `GetVar`,
+- [x] **4.3** `NodeKind` registry with port schemas.
+- [x] **4.4** Built-in node kinds: `Say`, `Choice`, `SetVar`, `GetVar`,
   `Branch`, `Wait`, `PlayCinematic`, `EmitEvent`, `SpawnEntity`.
-- [ ] **4.5** `Graph.validate`: port type mismatch, unreachable nodes,
+- [x] **4.5** `Graph.validate`: port type mismatch, unreachable nodes,
   missing entry, cycles without `Wait`.
-- [ ] **4.6** Compiler: dialogue subgraph → `DialogueGraph`; cutscene
+- [~] **4.6** (dialogue subgraph → `DialogueGraph` is done and tested,
+  with its own round-trip test (4.7). Cutscene subgraph → `Cinematic`
+  steps is **not** done: `CinematicStep` is a runtime behavior class
+  with `start`/`update`/`skip`, not a plain-JSON primitive the other
+  node kinds (`wait`/`playCinematic`/`spawnEntity`/`emitEvent`) can be
+  mechanically compiled to the way `say`/`choice` map onto `DialogueNode`
+  — doing this right needs a real design pass on what each of those
+  node kinds means as a cinematic step, not a rushed mapping) Compiler: dialogue subgraph → `DialogueGraph`; cutscene
   subgraph → `Cinematic` steps. Round-trip tests against the existing
   runners.
-- [ ] **4.7** Test: a compiled dialogue graph produces the same runner
+- [x] **4.7** Test: a compiled dialogue graph produces the same runner
   events as a hand-written `DialogueGraph`.
 - [ ] **4.8** Migrate `bt_editor_web` node-canvas code into
   `engine_studio/lib/graph/` as the shared canvas widget.

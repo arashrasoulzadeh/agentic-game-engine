@@ -71,6 +71,10 @@ export 'src/ui/trigger_helpers.dart';
 export 'src/ecs/world.dart';
 export 'src/ecs/world_view.dart';
 export 'src/distribution/release_manifest.dart';
+export 'src/graph/graph.dart';
+export 'src/graph/node_kind.dart';
+export 'src/graph/graph_validator.dart';
+export 'src/graph/dialogue_compiler.dart';
 
 import 'src/ai/ai_state.dart';
 import 'src/ui/button.dart';
