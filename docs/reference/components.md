@@ -4,7 +4,7 @@
 
 Every built-in component and the exact JSON shape it serializes to — what you see in `World.toJson()` and what `applyPatch` / `Level.loadInto` accept. This page is generated from `engine_schema`, the same schemas the studio and `game_agent lint` validate against, so it is always current.
 
-**66 components** across 3 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer)
+**68 components** across 3 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer)
 
 ## engine_core
 
@@ -335,6 +335,26 @@ A marker: present or absent, no fields.
 |---|---|---|
 | `capturesToWin` | `int` | required; 1 to ∞ |
 | `captures` | `object` |  |
+
+### `treasury`
+
+| Field | Type | Notes |
+|---|---|---|
+| `team` | `string` | required |
+| `amounts` | `object` |  |
+| `incomePerSecond` | `object` |  |
+| `carry` | `object` |  |
+
+### `producer`
+
+| Field | Type | Notes |
+|---|---|---|
+| `cost` | `object` |  |
+| `seconds` | `double` | required; 0 to ∞ |
+| `template` | `object` |  |
+| `queued` | `int` | 0 to ∞ |
+| `progress` | `double` | 0 to ∞ |
+| `paid` | `bool` |  |
 
 ## engine_flutter
 

@@ -265,3 +265,19 @@ const flagRulesSchema = ComponentSchema('flagRules', [
   FieldSchema('capturesToWin', FieldType.int, min: 1, required: true),
   FieldSchema('captures', FieldType.object),
 ]);
+
+const treasurySchema = ComponentSchema('treasury', [
+  FieldSchema('team', FieldType.string, required: true),
+  FieldSchema('amounts', FieldType.object),
+  FieldSchema('incomePerSecond', FieldType.object),
+  FieldSchema('carry', FieldType.object),
+]);
+
+const producerSchema = ComponentSchema('producer', [
+  FieldSchema('cost', FieldType.object),
+  FieldSchema('seconds', FieldType.double, min: 0, required: true),
+  FieldSchema('template', FieldType.object),
+  FieldSchema('queued', FieldType.int, min: 0),
+  FieldSchema('progress', FieldType.double, min: 0),
+  FieldSchema('paid', FieldType.bool),
+]);

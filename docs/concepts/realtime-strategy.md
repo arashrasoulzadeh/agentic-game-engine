@@ -102,7 +102,73 @@ send only *orders* (tiny JSON) with the tick they apply on, run every client at 
 same fixed `dt`, and use `WorldSnapshot` for late joiners and desync recovery.
 A real socket transport is still to be written (see the roadmap).
 
+## Formations
+
+Ten units sent to one cell would all path to it and jam. Give the tap controller a
+navigator and a group order spreads the units over distinct cells around the target,
+nearest first:
+
+```dart
+GridTapController(32, localTeam: 'red', formation: navigator);
+// or directly:
+commandSelected(world, col, row, team: 'red', formation: navigator);
+final cells = formationCells(navigator, GridPosition(10, 10), 7);   // 7 distinct free cells
+```
+
+Cells that are walls, off the map, held by idle units, or cut off from the target are
+skipped; each cell goes to the nearest unassigned unit so paths don't cross.
+
+## Smooth movement
+
+Units advance one *cell* per step, which looks like hopping. `SmoothGridToWorldSystem`
+(on by default in `installRealtimeStrategySystems`; `smoothMotion: false` for the
+snapping version) glides each `Position` toward its cell center. It is purely visual:
+`GridPosition` stays the truth for rules, fog and networking, and a unit that jumps
+far (a respawn or a restored snapshot) snaps instead of sliding across the map.
+
+## AI opponents
+
+The same `TurnAI`s that play turn-based games drive real-time ones — units with no
+`ActionPoints` simply always count as able to act:
+
+```dart
+installRealtimeStrategySystems(world, navigator: nav, cellSize: 32,
+    aiTeams: {'blue': TacticalAI(navigator: nav)}, aiInterval: 1.0);
+```
+
+`RealtimeAISystem` calls each team's `playTurn` every `aiInterval` seconds (0.5–2 s feels
+human; lower is harder). It counts `dt` and visits teams in name order, so AI decisions
+are identical on every machine in a lockstep game.
+
+## Economy and production
+
+```dart
+installRealtimeStrategySystems(world, navigator: nav, cellSize: 32, production: true);
+
+world.storeOf<Treasury>().set(world.spawn(),
+    Treasury('red', amounts: {'gold': 100}, incomePerSecond: {'gold': 1.5}));
+
+world.storeOf<Producer>().set(barracks, Producer(
+  cost: {'gold': 30},
+  seconds: 8,
+  template: {                                   // what it makes: plain component JSON
+    'unitStats': {'maxHp': 12, 'hp': 12, 'attack': 4, 'defense': 1},
+    'realtimeStats': {'speed': 3.0, 'attackInterval': 1.0},
+  },
+));
+queueProduction(world, barracks, 3);
+```
+
+- Cost is paid when a unit's production **starts**; if the team can't afford it the
+  producer waits and fires one `ProductionStalledEvent` (naming what is missing).
+- The finished unit appears on the nearest free cell with the producer's team
+  (`UnitProducedEvent`). If every nearby cell is taken it waits instead of overlapping.
+- Fractional income is carried between ticks (0.5/s really yields one every two seconds)
+  and is part of the saved state, so a restored world pays out on the same tick.
+- Producers run in entity-id order, so two barracks competing for the last 30 gold
+  resolve the same way everywhere.
+
 ## Not built yet
 
-Formations, unit collision radii beyond one-unit-per-cell, production and
-resource economy, and a skirmish AI for real time.
+Gathering units that walk resources home, building placement, unit collision radii
+beyond one unit per cell, and tech trees.

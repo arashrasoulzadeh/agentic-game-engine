@@ -40,6 +40,8 @@ const allComponentSchemas = <String, ComponentSchema>{
   'flag': flagSchema,
   'deliveryZone': deliveryZoneSchema,
   'flagRules': flagRulesSchema,
+  'treasury': treasurySchema,
+  'producer': producerSchema,
   'objective': objectiveSchema,
   'objectiveRules': objectiveRulesSchema,
   'statusEffects': statusEffectsSchema,

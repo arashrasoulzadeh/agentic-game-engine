@@ -91,6 +91,8 @@ export 'src/turn/order.dart';
 export 'src/turn/order_system.dart';
 export 'src/turn/grid_navigation.dart';
 export 'src/turn/flow_field.dart';
+export 'src/turn/formation.dart';
+export 'src/turn/economy.dart';
 export 'src/turn/realtime.dart';
 export 'src/turn/occupancy.dart';
 export 'src/turn/selection.dart';
@@ -125,6 +127,7 @@ import 'src/turn/combat.dart';
 import 'src/turn/status.dart';
 import 'src/turn/objectives.dart';
 import 'src/turn/carry.dart';
+import 'src/turn/economy.dart';
 import 'src/turn/realtime.dart';
 import 'src/turn/fog_of_war.dart';
 
@@ -367,5 +370,17 @@ void registerCoreComponents(World world) {
     (r) => r.toJson(),
     FlagRules.fromJson,
     schema: flagRulesSchema,
+  );
+  world.components.register<Treasury>(
+    'treasury',
+    (t) => t.toJson(),
+    Treasury.fromJson,
+    schema: treasurySchema,
+  );
+  world.components.register<Producer>(
+    'producer',
+    (p) => p.toJson(),
+    Producer.fromJson,
+    schema: producerSchema,
   );
 }

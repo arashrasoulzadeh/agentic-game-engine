@@ -13,6 +13,15 @@ import 'order_system.dart';
 import 'turn_components.dart';
 import 'turn_system.dart';
 
+/// Whether a unit can be given orders now. A turn-based unit needs action points
+/// left; a unit with no `ActionPoints` at all is a real-time unit and always can -
+/// which is what lets the same AIs drive both modes.
+bool _canAct(ActionPoints? points) => points == null || points.current > 0;
+
+/// How far a real-time unit (which has no action-point budget) will run when it
+/// retreats, in cells.
+const int _realtimeRetreatCells = 4;
+
 /// Plays one team's whole turn by submitting orders -- the exact path a
 /// human tap or an external agent uses (`submitOrder`), so an AI can't
 /// do anything a player couldn't, and its decisions are plain JSON
@@ -37,7 +46,7 @@ class AggressiveAI implements TurnAI {
       final e = teams.entityAt(i);
       if (!grid.has(e)) continue;
       if (teams.denseAt(i).id == team) {
-        if ((points.get(e)?.current ?? 0) > 0) mine.add(e);
+        if (_canAct(points.get(e))) mine.add(e);
       } else if (canSee(world, team, e)) {
         enemies.add(e);
       }
@@ -107,7 +116,7 @@ class TacticalAI implements TurnAI {
       final e = teams.entityAt(i);
       if (!grid.has(e)) continue;
       if (teams.denseAt(i).id == team) {
-        if ((points.get(e)?.current ?? 0) > 0) mine.add(e);
+        if (_canAct(points.get(e))) mine.add(e);
       } else if (canSee(world, team, e)) {
         enemies.add(e);
       }
@@ -259,7 +268,7 @@ class ObjectiveAI implements TurnAI {
       final e = teams.entityAt(i);
       if (!grid.has(e)) continue;
       if (teams.denseAt(i).id == team) {
-        if ((points.get(e)?.current ?? 0) > 0) mine.add(e);
+        if (_canAct(points.get(e))) mine.add(e);
       } else if (canSee(world, team, e)) {
         enemies.add(e);
       }
@@ -373,7 +382,7 @@ class ObjectiveAI implements TurnAI {
     var bestD = 1 << 30;
     for (var i = 0; i < teams.length; i++) {
       final e = teams.entityAt(i);
-      if (teams.denseAt(i).id != team || (points.get(e)?.current ?? 0) <= 0 || world.storeOf<Vip>().has(e)) continue;
+      if (teams.denseAt(i).id != team || !_canAct(points.get(e)) || world.storeOf<Vip>().has(e)) continue;
       final p = grid.get(e);
       if (p == null) continue;
       final d = p.chebyshev(cell);
@@ -451,7 +460,7 @@ bool _retreatFrom(
     return nearest;
   }
 
-  final budget = world.storeOf<ActionPoints>().get(unit)?.current ?? 0;
+  final budget = world.storeOf<ActionPoints>().get(unit)?.current ?? _realtimeRetreatCells;
   final options = navigator.reachable(from, budget, blocked: occupiedBy(grid, unit));
   var bestScore = threat(from.col, from.row);
   (int, int)? best;
@@ -509,5 +518,36 @@ class AITurnSystem extends System {
       if ((points.get(e)?.current ?? 0) > 0) return true;
     }
     return false;
+  }
+}
+
+/// Drives [TurnAI]s in **real time**: every [interval] seconds each controlled team
+/// gets a `playTurn`, which re-issues orders to its units (clearing the old ones).
+/// The same AIs that play turn-based games work unchanged, because their units are
+/// simply never short of "action points".
+///
+/// Deterministic: it counts `dt` (never the wall clock) and visits teams in name
+/// order, so a lockstep or replayed game gets identical AI decisions. Pick
+/// [interval] for reaction time - 0.5-2 s feels like a human; lower is harder and
+/// costs more.
+class RealtimeAISystem extends System {
+  RealtimeAISystem(this.controllers, {this.interval = 1.0}) : assert(interval > 0);
+
+  final Map<String, TurnAI> controllers;
+  final double interval;
+  double _elapsed = 0;
+
+  @override
+  String get name => 'realtimeAi';
+
+  @override
+  void update(World world, double dt) {
+    _elapsed += dt;
+    // The epsilon matches the order system's: ten 0.1 s steps must reach 1.0 s.
+    if (_elapsed < interval - 1e-9) return;
+    _elapsed -= interval;
+    for (final team in controllers.keys.toList()..sort()) {
+      controllers[team]!.playTurn(world, team);
+    }
   }
 }

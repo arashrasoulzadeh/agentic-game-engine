@@ -38,6 +38,8 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | `FlagPickedUpEvent` | `flag`, `carrier` | `onUnitMoved` |
 | `FlagDroppedEvent` | `flag`, `formerCarrier` | `resolveAttack` (carrier killed) |
 | `FlagCapturedEvent` | `flag`, `team`, `total` | `onUnitMoved` (on delivery) |
+| `UnitProducedEvent` | `producer`, `unit` | `ProductionSystem` |
+| `ProductionStalledEvent` | `producer`, `missing` | `ProductionSystem` (once per stall) |
 | `StatusAppliedEvent` | `entity`, `id` | `applyStatus` |
 | `StatusExpiredEvent` | `entity`, `id` | turn clock (`tickStatusEffects`) |
 

@@ -3,6 +3,7 @@ import 'package:engine_flutter/engine_flutter.dart';
 
 import 'fog_shade.dart';
 import 'move_range_highlight.dart';
+import 'smooth_motion.dart';
 
 /// Registers everything a turn-based strategy game needs, in the one
 /// order that's actually correct -- the call this package exists for,
@@ -134,9 +135,14 @@ class RealtimeInstall {
 /// points - units act continuously on their `RealtimeStats` speed and cooldowns.
 ///
 /// Order, and why: `VisionSystem` (with fog) first so visibility is current;
+/// `ProductionSystem` (with `production: true`: team `Treasury` income and
+/// `Producer` buildings) so a finished unit exists before the AI looks;
+/// `RealtimeAISystem` (with `aiTeams`) so its orders start this tick;
 /// `RealtimeOrderSystem` (movement and combat, sharing one `FlowField` per
 /// destination); `LastTeamStandingSystem` after this tick's kills;
-/// `GridToWorldSystem`; then the optional selection markers and fog shade. Combat
+/// `SmoothGridToWorldSystem` (or the snapping `GridToWorldSystem` with
+/// `smoothMotion: false`) so units glide between cells; then the optional selection
+/// markers and fog shade. Combat
 /// is applied directly by the order system, so there is no `installCombat` here.
 ///
 /// **Run it on a fixed timestep** (`GameConfig.fixedTimestepSeconds`, e.g.
@@ -150,6 +156,10 @@ RealtimeInstall installRealtimeStrategySystems(
   required double cellSize,
   int attackRange = 1,
   bool autoEngage = true,
+  Map<String, TurnAI> aiTeams = const {},
+  double aiInterval = 1.0,
+  bool production = false,
+  bool smoothMotion = true,
   bool fog = false,
   bool Function(int col, int row)? blocksSight,
   bool selectionMarkers = true,
@@ -168,10 +178,15 @@ RealtimeInstall installRealtimeStrategySystems(
     world.addSystem(VisionSystem(blocksSight: blocksSight ?? (_, _) => false));
   }
   final fields = FlowFieldCache(navigator);
+  // Income and production first: a unit finished this tick can be ordered by the AI
+  // (below) in the same tick.
+  if (production) world.addSystem(ProductionSystem(navigator));
+  // The AI decides first, so its new orders start executing this very tick.
+  if (aiTeams.isNotEmpty) world.addSystem(RealtimeAISystem(aiTeams, interval: aiInterval));
   world.addSystem(RealtimeOrderSystem(fields: fields, attackRange: attackRange, autoEngage: autoEngage));
   final matchRule = LastTeamStandingSystem();
   world.addSystem(matchRule);
-  world.addSystem(GridToWorldSystem(cellSize));
+  world.addSystem(smoothMotion ? SmoothGridToWorldSystem(cellSize) : GridToWorldSystem(cellSize));
   if (selectionMarkers) world.addSystem(SelectionMarkerSystem(cellSize));
   if (fogShade != null) {
     if (!fog) throw ArgumentError('fogShade needs fog: true');

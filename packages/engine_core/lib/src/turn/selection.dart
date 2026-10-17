@@ -2,6 +2,8 @@ import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
 import '../physics/position.dart';
+import 'formation.dart';
+import 'grid_navigation.dart';
 import 'order.dart';
 import 'order_system.dart';
 import 'turn_components.dart';
@@ -96,7 +98,19 @@ int selectInBox(World world, int col0, int row0, int col1, int row1,
 /// accepted. [replace] drops each unit's queued orders first, matching
 /// the usual "new click overrides" feel; false appends (shift-queue). [team] is
 /// the commanding side, as in [selectAtCell].
-int commandSelected(World world, int col, int row, {bool replace = true, String? team}) {
+///
+/// Pass a [formation] navigator and a move order for two or more units spreads
+/// them over distinct cells around the target (`formationCells`) instead of
+/// sending every unit to the same one, where they would jam. Attack orders are
+/// unaffected.
+int commandSelected(
+  World world,
+  int col,
+  int row, {
+  bool replace = true,
+  String? team,
+  GridNavigator? formation,
+}) {
   final controlled = _controlling(world, team);
   if (controlled == null) return 0;
   final grid = world.storeOf<GridPosition>();
@@ -113,11 +127,24 @@ int commandSelected(World world, int col, int row, {bool replace = true, String?
       break;
     }
   }
+  final commanded = [for (final e in selectedEntities(world)) if (_selectable(world, e, controlled)) e];
+  final spread = enemy == null && formation != null && commanded.length >= 2
+      ? assignFormation(
+          world,
+          commanded,
+          formationCells(formation, GridPosition(col, row), commanded.length,
+              taken: cellsHeldExcept(world, commanded)),
+        )
+      : const <EntityId, GridPosition>{};
   var accepted = 0;
-  for (final e in selectedEntities(world)) {
-    if (!_selectable(world, e, controlled)) continue;
+  for (final e in commanded) {
     if (replace) world.storeOf<OrderQueue>().get(e)?.orders.clear();
-    final order = enemy != null ? AttackOrder(enemy) : MoveOrder(col, row);
+    final slot = spread[e];
+    final order = enemy != null
+        ? AttackOrder(enemy)
+        : slot != null
+            ? MoveOrder(slot.col, slot.row)
+            : MoveOrder(col, row);
     if (submitOrder(world, e, order)) accepted++;
   }
   return accepted;

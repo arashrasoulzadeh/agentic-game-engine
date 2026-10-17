@@ -9,6 +9,11 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Real-time strategy, next layer: formations (`formationCells`, `commandSelected(formation:)`,
+  `GridTapController(formation:)`), `SmoothGridToWorldSystem`, `RealtimeAISystem`
+  (the turn-based AIs now drive real-time units too), and an economy: `Treasury`
+  (fractional income, serialized carry), `Producer` / `ProductionSystem` / `queueProduction`,
+  `UnitProducedEvent`, `ProductionStalledEvent`.
 - Multiplayer sessions: `NetEndpoint`, `HostSession` / `ClientSession` (team
   assignment, server-side order validation, ping/pong clock sync) and, in
   `package:engine_core/engine_core_io.dart`, a real `WebSocketEndpoint` /
