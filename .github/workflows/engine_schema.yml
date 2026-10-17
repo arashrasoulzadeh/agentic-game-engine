@@ -1,0 +1,27 @@
+name: engine_schema
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/engine_schema/**'
+      - 'docs/reference/components.md'
+      - '.github/workflows/engine_schema.yml'
+  pull_request:
+    paths:
+      - 'packages/engine_schema/**'
+      - 'docs/reference/components.md'
+      - '.github/workflows/engine_schema.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/engine_schema
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test

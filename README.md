@@ -172,7 +172,7 @@ Each package is tested independently:
 mkdocs build --strict
 ```
 
-CI defines per-package suites with path-based triggers — see
+CI defines per-package suites (including engine_strategy and engine_schema) with path-based triggers — see
 [.github/workflows](.github/workflows).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and validation and
