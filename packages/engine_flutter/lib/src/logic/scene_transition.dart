@@ -10,6 +10,35 @@ enum SceneTransitionType {
 
   /// Iris/wipe effect — a growing/shrinking circle reveals the new scene.
   iris,
+
+  /// The outgoing scene slides off to the left, revealing the new one.
+  slideLeft,
+
+  /// The outgoing scene slides off to the right.
+  slideRight,
+
+  /// The outgoing scene slides off upward.
+  slideUp,
+
+  /// The outgoing scene slides off downward.
+  slideDown,
+
+  /// The outgoing scene fades out over the new one.
+  crossfade,
+
+  /// The outgoing scene breaks into blocks that vanish in a scattered order.
+  pixelDissolve,
+}
+
+extension SceneTransitionTypeX on SceneTransitionType {
+  /// True for the effects drawn from a snapshot of the outgoing scene
+  /// (`SnapshotTransition`) rather than by spawning components into the world
+  /// (`fade`, `iris`). Snapshot effects play once, *after* the new scene loads,
+  /// instead of in a cover phase and a reveal phase.
+  bool get usesSnapshot => switch (this) {
+        SceneTransitionType.fade || SceneTransitionType.iris => false,
+        _ => true,
+      };
 }
 
 /// Configuration for a scene transition's look — not its direction.
@@ -137,6 +166,9 @@ class SceneTransition {
           softness: 0,
         ));
         break;
+      default:
+        // Snapshot transitions draw no world components (see usesSnapshot).
+        break;
     }
   }
 
@@ -171,6 +203,8 @@ class SceneTransition {
           final radius = _maxRadius(world) * (1 - coverAmount);
           world.storeOf<ClipShape>().get(_clipShapeEntity!)?.radius = radius;
         }
+        break;
+      default:
         break;
     }
 

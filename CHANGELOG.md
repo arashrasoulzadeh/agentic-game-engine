@@ -9,6 +9,9 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Scene transitions `slideLeft/Right/Up/Down`, `crossfade` and `pixelDissolve`.
+  They draw a snapshot of the outgoing scene over the incoming one
+  (`SnapshotTransition`), so they need no second `World`.
 - Asset hot-reload: `AssetHotReloader` polls an `AssetSource` (a directory via
   `directoryAssetSource`) and reloads changed levels (`LevelAssetHandler`, via
   `LevelHandle`, so a broken edit leaves the running level untouched) and

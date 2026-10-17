@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -17,6 +18,7 @@ import '../input/on_screen_controls.dart';
 import '../register_components.dart';
 import 'scene.dart';
 import 'scene_transition.dart';
+import 'snapshot_transition.dart';
 import '../rendering/sprite_atlas.dart';
 
 /// The top-level entry point a game implements. Extend this instead of
@@ -122,6 +124,10 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   bool _paused = false;
   _LoadedGame? _overlay;
 
+  /// The in-flight snapshot transition: the outgoing scene's frame, its config,
+  /// and a completer `_loadSceneWithTransition` awaits. Null when none.
+  (ui.Image, SceneTransitionConfig, Completer<void>)? _snapshotTransition;
+
   /// Wraps the base scene's `EngineView` (not an overlay's, and not
   /// `OnScreenControls`) so [_captureScreenshot] can find its
   /// `RenderRepaintBoundary` and snapshot exactly the gameplay viewport
@@ -181,11 +187,41 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
       _loadScene(next);
       return;
     }
+    if (transition.type.usesSnapshot) {
+      await _loadSceneWithSnapshot(next, transition);
+      return;
+    }
     final outgoingWorld = (await _future).world;
     await _runTransitionPhase(outgoingWorld, transition, covering: true);
     _loadScene(next);
     final incomingWorld = (await _future).world;
     await _runTransitionPhase(incomingWorld, transition, covering: false);
+  }
+
+  /// Slide / crossfade / pixel-dissolve: snapshot the outgoing scene, load
+  /// [next] underneath, then play the effect over it (see
+  /// `SnapshotTransitionPainter`). If no frame has painted yet there is nothing to
+  /// snapshot, so it degrades to a plain scene load.
+  Future<void> _loadSceneWithSnapshot(Scene next, SceneTransitionConfig transition) async {
+    final snapshot = await _captureImage();
+    _loadScene(next);
+    if (snapshot == null) return;
+    await _future;
+    if (!mounted) {
+      snapshot.dispose();
+      return;
+    }
+    final done = Completer<void>();
+    setState(() => _snapshotTransition = (snapshot, transition, done));
+    await done.future;
+  }
+
+  void _finishSnapshotTransition() {
+    final active = _snapshotTransition;
+    if (active == null) return;
+    setState(() => _snapshotTransition = null);
+    active.$1.dispose();
+    if (!active.$3.isCompleted) active.$3.complete();
   }
 
   /// Spawns a [SceneTransition] on [world] and waits out its real-time
@@ -231,15 +267,22 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   /// to the render tree until then) rather than throwing — a save
   /// taken too early just gets no thumbnail instead of crashing.
   Future<Uint8List?> _captureScreenshot({double pixelRatio = 1.0}) async {
-    final renderObject = _engineViewRepaintKey.currentContext?.findRenderObject();
-    if (renderObject is! RenderRepaintBoundary) return null;
-    final image = await renderObject.toImage(pixelRatio: pixelRatio);
+    final image = await _captureImage(pixelRatio: pixelRatio);
+    if (image == null) return null;
     try {
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       return byteData?.buffer.asUint8List();
     } finally {
       image.dispose();
     }
+  }
+
+  /// The base scene's current frame as a `ui.Image` (caller disposes), or null
+  /// before the first paint. Shared by screenshots and snapshot transitions.
+  Future<ui.Image?> _captureImage({double pixelRatio = 1.0}) async {
+    final renderObject = _engineViewRepaintKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderRepaintBoundary) return null;
+    return renderObject.toImage(pixelRatio: pixelRatio);
   }
 
   /// Lazily decoded once and reused for every scene load thereafter —
@@ -379,6 +422,11 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    final active = _snapshotTransition;
+    if (active != null) {
+      active.$1.dispose();
+      if (!active.$3.isCompleted) active.$3.complete();
+    }
     super.dispose();
   }
 
@@ -493,6 +541,16 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
               onPostTick: (dt, world) => overlay.scene.update(dt, world),
             ),
         ];
+        final transition = _snapshotTransition;
+        if (transition != null) {
+          children.add(Positioned.fill(
+            child: SnapshotTransition(
+              snapshot: transition.$1,
+              config: transition.$2,
+              onDone: _finishSnapshotTransition,
+            ),
+          ));
+        }
         return children.length == 1 ? engineView : Stack(children: children);
       },
     );

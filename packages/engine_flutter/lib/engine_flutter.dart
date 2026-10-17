@@ -31,6 +31,7 @@ export 'src/input/input_bindings_storage.dart';
 export 'src/input/on_screen_controls.dart';
 export 'src/ui/grid_selection.dart';
 export 'src/logic/asset_hot_reload.dart';
+export 'src/logic/snapshot_transition.dart';
 export 'src/logic/directory_asset_source.dart';
 export 'src/register_components.dart';
 export 'src/logic/room_exit_trigger.dart';

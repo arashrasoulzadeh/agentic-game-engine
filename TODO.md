@@ -105,9 +105,6 @@ Sections: [Performance](#performance) ·
       but there is no viewport splitting or multi-camera / multi-`WorldView`
       simulation to render and drive split-screen play. Viewport split in
       `engine_flutter`, multi-context support in `engine_core`.
-- [ ] **Scene transitions: slide / crossfade / pixel-dissolve** — needs true
-      multi-scene rendering (outgoing and incoming `World`s drawn in the same
-      frame). Fade and iris already shipped.
 - [ ] **Network multiplayer foundation** — ECS state serialization (partly
       there via `World.toJson`), rollback networking, lag compensation, state
       sync.
