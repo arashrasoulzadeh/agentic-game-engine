@@ -41,8 +41,13 @@ The package DAG is unchanged.
   DAG), `installCombat`, `WinConditionSystem`, `TurnState.eliminated`/
   `winner`; no friendly fire; turns/orders freeze after victory.
   Tests: `combat_test.dart`.
-- [ ] **6. Fog of war** — per-team visibility built on the existing
+- [x] **6. Fog of war** — per-team visibility built on the existing
   line-of-sight/raycast code.
+  `Vision`, `FogOfWar` (visible + explored per team, as world state so
+  agents see exactly what a team sees), `VisionSystem` with a
+  `blocksSight` predicate (separate from movement: you see across a
+  lake), `canSee`; attacking an unseen enemy fails. Tests:
+  `fog_of_war_test.dart`.
 - [ ] **7. `engine_strategy` package + `game_agent create` template.**
 - [ ] **8. AI turn driver** — a `Behavior` running a whole team's turn
   through the same order API a human uses.

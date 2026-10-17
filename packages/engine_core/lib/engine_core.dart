@@ -82,6 +82,7 @@ export 'src/turn/order_system.dart';
 export 'src/turn/grid_navigation.dart';
 export 'src/turn/selection.dart';
 export 'src/turn/combat.dart';
+export 'src/turn/fog_of_war.dart';
 
 import 'src/ai/ai_state.dart';
 import 'src/ui/button.dart';
@@ -104,6 +105,7 @@ import 'src/turn/turn_components.dart';
 import 'src/turn/order.dart';
 import 'src/turn/selection.dart';
 import 'src/turn/combat.dart';
+import 'src/turn/fog_of_war.dart';
 
 /// Registers the engine's built-in components on [world]. Games/agents
 /// register their own additional component types the same way via
@@ -288,5 +290,17 @@ void registerCoreComponents(World world) {
     (u) => u.toJson(),
     UnitStats.fromJson,
     schema: unitStatsSchema,
+  );
+  world.components.register<Vision>(
+    'vision',
+    (v) => v.toJson(),
+    Vision.fromJson,
+    schema: visionSchema,
+  );
+  world.components.register<FogOfWar>(
+    'fogOfWar',
+    (f) => f.toJson(),
+    FogOfWar.fromJson,
+    schema: fogOfWarSchema,
   );
 }

@@ -34,6 +34,8 @@ const allComponentSchemas = <String, ComponentSchema>{
   'orderQueue': orderQueueSchema,
   'selected': selectedSchema,
   'unitStats': unitStatsSchema,
+  'vision': visionSchema,
+  'fogOfWar': fogOfWarSchema,
   'sprite': spriteSchema,
   'animationState': animationStateSchema,
   'inputState': inputStateSchema,

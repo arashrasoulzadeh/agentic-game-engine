@@ -2,6 +2,7 @@ import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
 import 'grid_navigation.dart';
+import 'fog_of_war.dart';
 import 'order.dart';
 import 'turn_components.dart';
 import 'turn_system.dart';
@@ -138,6 +139,10 @@ class OrderSystem extends System {
     final friendly = world.storeOf<Team>().get(order.target)?.id ==
         world.storeOf<Team>().get(entity)?.id;
     if (me == null || target == null || friendly || !world.entities.isAlive(order.target)) {
+      return _fail(world, entity, order, OrderFailure.invalidTarget);
+    }
+    final myTeam = world.storeOf<Team>().get(entity)?.id;
+    if (myTeam != null && !canSee(world, myTeam, order.target)) {
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     }
     if (me.chebyshev(target) > attackRange) {

@@ -203,3 +203,14 @@ const unitStatsSchema = ComponentSchema('unitStats', [
   FieldSchema('attack', FieldType.int, min: 0, defaultValue: 1),
   FieldSchema('defense', FieldType.int, min: 0, defaultValue: 0),
 ]);
+
+const visionSchema = ComponentSchema('vision', [
+  FieldSchema('range', FieldType.int, min: 0, required: true),
+]);
+
+const fogOfWarSchema = ComponentSchema('fogOfWar', [
+  FieldSchema('cols', FieldType.int, min: 1, required: true),
+  FieldSchema('rows', FieldType.int, min: 1, required: true),
+  FieldSchema('visible', FieldType.object),
+  FieldSchema('explored', FieldType.object),
+]);
