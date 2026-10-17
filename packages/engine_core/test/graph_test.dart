@@ -94,5 +94,16 @@ void main() {
     test('a port not on the kind is not found', () {
       expect(builtinNodeKinds['say']!.outputNamed('nope'), isNull);
     });
+
+    test('say requires a textKey param', () {
+      final textKey = builtinNodeKinds['say']!.paramsSchema
+          .firstWhere((f) => f.name == 'textKey');
+      expect(textKey.type, FieldType.string);
+      expect(textKey.required, isTrue);
+    });
+
+    test('branch has no params of its own, only ports', () {
+      expect(builtinNodeKinds['branch']!.paramsSchema, isEmpty);
+    });
   });
 }
