@@ -178,3 +178,6 @@ team releasing a real 2D game needs that nothing above already covers.
 - [ ] **Performance profiling tools** — Frame time breakdown, GPU/CPU timers, allocation tracker, shader compile time.
 
 (End of file)
+## Turn-based strategy
+
+See [TURNBASE.md](TURNBASE.md) for the phased plan; phase 1 (turn clock) is done.

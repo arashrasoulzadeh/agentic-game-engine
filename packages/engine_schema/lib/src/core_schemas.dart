@@ -168,3 +168,18 @@ const soundEventSchema = ComponentSchema('soundEvent', [
   FieldSchema('tag', FieldType.string, optional: true),
   FieldSchema('data', FieldType.object, optional: true),
 ]);
+
+const teamSchema = ComponentSchema('team', [
+  FieldSchema('id', FieldType.string, required: true),
+]);
+
+const actionPointsSchema = ComponentSchema('actionPoints', [
+  FieldSchema('max', FieldType.int, min: 0, required: true),
+  FieldSchema('current', FieldType.int, min: 0),
+]);
+
+const turnStateSchema = ComponentSchema('turnState', [
+  FieldSchema('order', FieldType.list, required: true),
+  FieldSchema('activeIndex', FieldType.int, min: 0),
+  FieldSchema('round', FieldType.int, min: 1),
+]);

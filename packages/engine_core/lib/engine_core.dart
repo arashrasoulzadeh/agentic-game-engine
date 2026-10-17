@@ -75,6 +75,8 @@ export 'src/graph/graph.dart';
 export 'src/graph/node_kind.dart';
 export 'src/graph/graph_validator.dart';
 export 'src/graph/dialogue_compiler.dart';
+export 'src/turn/turn_components.dart';
+export 'src/turn/turn_system.dart';
 
 import 'src/ai/ai_state.dart';
 import 'src/ui/button.dart';
@@ -93,6 +95,7 @@ import 'src/rendering/tween.dart';
 import 'src/physics/velocity.dart';
 import 'src/ecs/world.dart';
 import 'src/content/game_state.dart';
+import 'src/turn/turn_components.dart';
 
 /// Registers the engine's built-in components on [world]. Games/agents
 /// register their own additional component types the same way via
@@ -235,5 +238,23 @@ void registerCoreComponents(World world) {
     SoundEvent.fromJson,
 
     schema: soundEventSchema,
+  );
+  world.components.register<Team>(
+    'team',
+    (t) => t.toJson(),
+    Team.fromJson,
+    schema: teamSchema,
+  );
+  world.components.register<ActionPoints>(
+    'actionPoints',
+    (a) => a.toJson(),
+    ActionPoints.fromJson,
+    schema: actionPointsSchema,
+  );
+  world.components.register<TurnState>(
+    'turnState',
+    (t) => t.toJson(),
+    TurnState.fromJson,
+    schema: turnStateSchema,
   );
 }
