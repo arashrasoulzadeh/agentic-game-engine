@@ -1,0 +1,17 @@
+import 'package:engine_flutter/engine_flutter.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:{{PROJECT_NAME}}/main.dart';
+
+void main() {
+  testWidgets('game boots and renders', (tester) async {
+    final game = MyGame(const GameConfig(worldWidth: 384, worldHeight: 432));
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(EngineView), findsOneWidget);
+  });
+}

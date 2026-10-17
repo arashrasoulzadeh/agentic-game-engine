@@ -26,6 +26,7 @@ made explicitly (see the "Remove root sample app" commit).
 | `packages/engine_core` | Genre-general ECS, `TileMap` data, content DSL, agent API. Pure Dart, no Flutter. | nothing engine-internal |
 | `packages/engine_flutter` | Rendering, input, camera, audio, save/load. | `engine_core` |
 | `packages/engine_platformer` | Platformer-genre gameplay: gravity, jump, tile/platform collision, spawn helpers, patrol/follow behaviors, movement animation. | `engine_core`, `engine_flutter` |
+| `packages/engine_strategy` | Turn-based strategy assembly: `installStrategySystems`, `spawnStrategyUnit`. Rules/data live in `engine_core/lib/src/turn/`. | `engine_core`, `engine_flutter` |
 | `packages/engine_cli` | `game_agent` CLI: `create`/`upgrade`/`lint`. | `engine_core` (for `lint`) |
 
 **Dependency direction is a one-way DAG: `engine_core` → `engine_flutter`

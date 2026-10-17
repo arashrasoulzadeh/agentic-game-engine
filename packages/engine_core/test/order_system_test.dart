@@ -118,4 +118,35 @@ void main() {
     w.step(0.1);
     expect(w.storeOf<GridPosition>().get(b)!.row, 5);
   });
+
+  test('approachTargets walks into range then attacks; resumes next turn if short', () {
+    final w = World(width: 10, height: 10);
+    registerCoreComponents(w);
+    w.addSystem(OrderSystem(approachTargets: true));
+    EntityId unit(String t, int c, int r, int ap) {
+      final e = w.spawn();
+      w.storeOf<Team>().set(e, Team(t));
+      w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+      w.storeOf<GridPosition>().set(e, GridPosition(c, r));
+      return e;
+    }
+
+    final a = unit('red', 0, 0, 2);
+    final x = unit('blue', 4, 0, 2);
+    startTurnBasedGame(w, ['red', 'blue']);
+    final hits = <AttackResolvedEvent>[];
+    w.events.on<AttackResolvedEvent>(hits.add);
+    submitOrder(w, a, AttackOrder(x));
+    w.step(0.1);
+    expect(w.storeOf<GridPosition>().get(a)!.col, 2);
+    expect(hits, isEmpty);
+    expect(w.storeOf<OrderQueue>().get(a)!.orders, hasLength(1));
+
+    endTurn(w);
+    endTurn(w);
+    w.step(0.1);
+    expect(w.storeOf<GridPosition>().get(a)!.col, 3);
+    expect(hits.single.target, x);
+    expect(w.storeOf<OrderQueue>().get(a)!.orders, isEmpty);
+  });
 }

@@ -48,7 +48,12 @@ The package DAG is unchanged.
   `blocksSight` predicate (separate from movement: you see across a
   lake), `canSee`; attacking an unseen enemy fails. Tests:
   `fog_of_war_test.dart`.
-- [ ] **7. `engine_strategy` package + `game_agent create` template.**
+- [x] **7. `engine_strategy` package + `game_agent create` template.**
+  `installStrategySystems` (documented order), `spawnStrategyUnit`,
+  `game_agent create --template strategy_game` (verified: generated
+  project analyzes clean and boots), `upgrade` repins `engine_strategy`.
+  `OrderSystem.approachTargets` added when the end-to-end test showed a
+  tap on a distant enemy failed `outOfRange` instead of walking over.
 - [ ] **8. AI turn driver** — a `Behavior` running a whole team's turn
   through the same order API a human uses.
 

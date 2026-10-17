@@ -6,10 +6,15 @@ import 'process_utils.dart';
 
 /// Every self-referencing engine package `CreateCommand`'s template can
 /// write into a generated project's pubspec.yaml — currently
-/// `engine_core` and `engine_flutter` always, `engine_platformer` too
-/// now that the template depends on it. Keep in sync with
+/// `engine_core` and `engine_flutter` always, `engine_platformer` or
+/// `engine_strategy` depending on the chosen template. Keep in sync with
 /// `templates/default_game/pubspec.yaml.tmpl`'s dependency block.
-const _enginePackageNames = ['engine_core', 'engine_flutter', 'engine_platformer'];
+const _enginePackageNames = [
+  'engine_core',
+  'engine_flutter',
+  'engine_platformer',
+  'engine_strategy',
+];
 
 /// Matches one engine package's git-dependency block (name from
 /// [_enginePackageNames]) as written by `CreateCommand`'s template,

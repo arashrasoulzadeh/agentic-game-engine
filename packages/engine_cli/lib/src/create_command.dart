@@ -23,6 +23,14 @@ class CreateCommand extends Command<int> {
     Directory Function(String) findTemplate = templateRoot,
   }) : _runProcess = runProcess, _findTemplate = findTemplate {
     argParser
+      ..addOption('template',
+          defaultsTo: 'default_game',
+          allowed: ['default_game', 'strategy_game'],
+          allowedHelp: {
+            'default_game': 'A 2D platformer starter.',
+            'strategy_game': 'A turn-based strategy skirmish (engine_strategy).',
+          },
+          help: 'Which starter project to generate.')
       ..addOption('org',
           defaultsTo: 'com.example',
           help: 'Reverse-domain org for Android/iOS bundle ids.')
@@ -72,7 +80,7 @@ class CreateCommand extends Command<int> {
 
     stdout.writeln('Wiring up engine_core...');
     copyTemplate(
-      _findTemplate('default_game'),
+      _findTemplate(args['template'] as String),
       projectDir,
       {
         'PROJECT_NAME': projectName,

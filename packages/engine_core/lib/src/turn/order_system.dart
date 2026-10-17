@@ -1,3 +1,4 @@
+import '../ecs/component_store.dart';
 import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
@@ -38,6 +39,13 @@ class OrderSystem extends System {
   final int attackCost;
   final int attackRange;
 
+  /// When true, an attack on a target beyond [attackRange] first walks
+  /// toward it (spending move cost per step) instead of failing with
+  /// `outOfRange`. Off for the plain constructor so existing callers
+  /// keep strict range semantics; on for `withNavigator`, where a tap
+  /// on a distant enemy should mean "go get it".
+  final bool approachTargets;
+
   /// Returns the next cell from [from] toward [to], or null if there is
   /// none. [occupied] tells whether a cell holds another entity.
   final GridPosition? Function(
@@ -56,6 +64,7 @@ class OrderSystem extends System {
     int Function(World, GridPosition)? stepCost,
     this.attackCost = 1,
     this.attackRange = 1,
+    this.approachTargets = false,
     GridPosition? Function(World, GridPosition, GridPosition, bool Function(int, int))? nextStep,
   })  : nextStep = nextStep ?? _greedyStep,
         stepCost = stepCost ?? ((_, __) => moveCost);
@@ -71,6 +80,7 @@ class OrderSystem extends System {
     return OrderSystem(
       attackCost: attackCost,
       attackRange: attackRange,
+      approachTargets: true,
       stepCost: (_, to) => nav.terrainCost(to.col, to.row) ?? 1,
       nextStep: (world, from, to, occupied) {
         final path = nav.findPath(from, to, blocked: occupied);
@@ -111,13 +121,7 @@ class OrderSystem extends System {
     final pos = grid.get(entity);
     if (pos == null) return _fail(world, entity, order, OrderFailure.invalidTarget);
     final goal = GridPosition(order.col, order.row);
-    bool occupied(int c, int r) {
-      for (var i = 0; i < grid.length; i++) {
-        final o = grid.denseAt(i);
-        if (grid.entityAt(i) != entity && o.col == c && o.row == r) return true;
-      }
-      return false;
-    }
+    final occupied = _occupiedBy(grid, entity);
 
     while (pos.col != goal.col || pos.row != goal.row) {
       final step = nextStep(world, pos, goal, occupied);
@@ -146,7 +150,21 @@ class OrderSystem extends System {
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     }
     if (me.chebyshev(target) > attackRange) {
-      return _fail(world, entity, order, OrderFailure.outOfRange);
+      if (!approachTargets) return _fail(world, entity, order, OrderFailure.outOfRange);
+      // The target's own cell must be walkable for the router, so it is
+      // excluded from the occupied set; we stop once in range, before
+      // ever entering it.
+      final occupied = _occupiedBy(grid, entity, ignore: order.target);
+      while (me.chebyshev(target) > attackRange) {
+        final step = nextStep(world, me, target, occupied);
+        if (step == null) return _fail(world, entity, order, OrderFailure.blocked);
+        if (!trySpendActionPoints(world, entity, stepCost(world, step))) {
+          return _Result.waiting;
+        }
+        me.col = step.col;
+        me.row = step.row;
+        world.events.emit(MovedEvent(entity, me.col, me.row));
+      }
     }
     if (!trySpendActionPoints(world, entity, attackCost)) return _Result.waiting;
     world.events.emit(AttackResolvedEvent(entity, order.target));
@@ -160,6 +178,21 @@ class OrderSystem extends System {
 }
 
 enum _Result { done, waiting, failed }
+
+bool Function(int, int) _occupiedBy(
+  ComponentStore<GridPosition> grid,
+  EntityId self, {
+  EntityId? ignore,
+}) {
+  return (c, r) {
+    for (var i = 0; i < grid.length; i++) {
+      final o = grid.denseAt(i);
+      final e = grid.entityAt(i);
+      if (e != self && e != ignore && o.col == c && o.row == r) return true;
+    }
+    return false;
+  };
+}
 
 GridPosition? _greedyStep(
   World world,

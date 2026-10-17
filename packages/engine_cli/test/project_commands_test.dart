@@ -111,4 +111,46 @@ void main() {
       throwsA(isA<ProcessException>().having((e) => e.errorCode, 'exit code', 7)),
     );
   });
+
+  test('create --template strategy_game writes the strategy template and rejects unknown ones', () async {
+    final asked = <String>[];
+    final strategyRunner = CommandRunner<int>('game_agent', 'test')
+      ..addCommand(CreateCommand(
+        runProcess: runProcess,
+        findTemplate: (name) {
+          asked.add(name);
+          return Directory('templates/$name').absolute;
+        },
+      ));
+    expect(
+      await strategyRunner.run(
+          ['create', 'war_game', '--output-dir', tmp.path, '--template', 'strategy_game']),
+      0,
+    );
+    expect(asked, ['strategy_game']);
+    final pubspec = File('${tmp.path}/war_game/pubspec.yaml').readAsStringSync();
+    expect(pubspec, contains('packages/engine_strategy'));
+    expect(pubspec, isNot(contains('engine_platformer')));
+    expect(File('${tmp.path}/war_game/lib/main.dart').readAsStringSync(),
+        contains('installStrategySystems'));
+
+    await expectLater(
+      strategyRunner.run(['create', 'x_game', '--output-dir', tmp.path, '--template', 'nope']),
+      throwsA(isA<UsageException>()),
+    );
+  });
+
+  test('upgrade also repins engine_strategy', () async {
+    Directory.current = tmp;
+    File('pubspec.yaml').writeAsStringSync('''
+dependencies:
+  engine_strategy:
+    git:
+      url: https://example.com/e.git
+      path: packages/engine_strategy
+      ref: main
+''');
+    expect(await runner().run(['upgrade', '--ref', 'v2']), 0);
+    expect(File('pubspec.yaml').readAsStringSync(), contains('ref: v2'));
+  });
 }
