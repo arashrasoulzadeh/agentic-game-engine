@@ -105,9 +105,13 @@ Sections: [Performance](#performance) ·
       but there is no viewport splitting or multi-camera / multi-`WorldView`
       simulation to render and drive split-screen play. Viewport split in
       `engine_flutter`, multi-context support in `engine_core`.
-- [ ] **Network multiplayer foundation** — ECS state serialization (partly
-      there via `World.toJson`), rollback networking, lag compensation, state
-      sync.
+- [ ] **Networking: a real transport and a session layer** — the in-memory
+      foundation is done (`WorldSnapshot`/`WorldDelta`, `StateSyncServer`/
+      `Client`, `RollbackSession`, `PositionHistory`, `LoopbackLink`), but
+      nothing carries it over a socket yet. Needed: a WebSocket (and optionally
+      UDP/WebRTC) implementation of the send/receive pair `LoopbackLink`
+      stands in for, lobby/matchmaking and player-id assignment, clock sync
+      between peers, and a tutorial that wires a two-player game end to end.
 - [ ] **Example game** — one complete small game showing the major features,
       playable in the browser. (`test_game/` stays local and gitignored; this
       would be a separate, deliberately published sample — decide where it

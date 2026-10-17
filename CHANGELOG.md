@@ -9,6 +9,14 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Networking foundation in `engine_core` (`lib/src/net/`): `WorldSnapshot` /
+  `WorldDelta` (capture, restore with original entity ids, entity-level diffs),
+  `StateSyncServer`/`StateSyncClient` (deltas against the client's last
+  *acknowledged* tick, so loss never breaks them), `RollbackSession`
+  (prediction, rollback and replay, authoritative correction),
+  `PositionHistory` (lag compensation), and a seeded `LoopbackLink` with
+  latency/jitter/loss for deterministic tests. `EntityManager.ensureAlive` and
+  `World.setTick` support restoring state.
 - Scene transitions `slideLeft/Right/Up/Down`, `crossfade` and `pixelDissolve`.
   They draw a snapshot of the outgoing scene over the incoming one
   (`SnapshotTransition`), so they need no second `World`.

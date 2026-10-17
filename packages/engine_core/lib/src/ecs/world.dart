@@ -49,6 +49,10 @@ class World {
   int _tick = 0;
   int get tick => _tick;
 
+  /// Sets the tick counter -- for restoring a snapshot (rollback, network
+  /// sync), where the world must resume at the tick it was captured at.
+  void setTick(int tick) => _tick = tick;
+
   World({required this.width, required this.height});
 
   /// Returns the archetype manager for optimized queries.

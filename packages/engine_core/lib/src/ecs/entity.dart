@@ -14,6 +14,19 @@ class EntityManager {
     return id;
   }
 
+  /// Makes [id] alive, whatever it was: used to rebuild a world from a network
+  /// snapshot, where ids are dictated by the sender rather than handed out.
+  /// Ids skipped over to reach [id] stay available to `create()`.
+  void ensureAlive(EntityId id) {
+    if (_alive.contains(id)) return;
+    _free.remove(id);
+    while (_next < id) {
+      _free.add(_next++);
+    }
+    if (id >= _next) _next = id + 1;
+    _alive.add(id);
+  }
+
   void destroy(EntityId id) {
     if (_alive.remove(id)) {
       _free.add(id);
