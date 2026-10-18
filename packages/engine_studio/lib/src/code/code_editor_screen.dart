@@ -1,3 +1,4 @@
+import '../prefs/shortcuts.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -1480,17 +1481,11 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
       canPop: !_dirty,
       onPopInvokedWithResult: _onPopInvoked,
       child: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _save,
-          const SingleActivator(LogicalKeyboardKey.keyS, control: true): _save,
-          const SingleActivator(LogicalKeyboardKey.keyF, meta: true): _openFind,
-          const SingleActivator(LogicalKeyboardKey.keyF, control: true):
-              _openFind,
-          const SingleActivator(LogicalKeyboardKey.keyH, meta: true):
-              _openReplace,
-          const SingleActivator(LogicalKeyboardKey.keyH, control: true):
-              _openReplace,
-        },
+        bindings: ShortcutMap.current.bindings({
+          StudioAction.save: _save,
+          StudioAction.find: _openFind,
+          StudioAction.replace: _openReplace,
+        }),
         child: Scaffold(
           appBar: AppBar(
             title: Row(

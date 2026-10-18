@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'src/prefs/shortcuts.dart';
 import 'src/project/project_open_screen.dart';
 
 void main() {
+  ShortcutMap.current = loadShortcuts(studioPrefsFile());
   runApp(const EngineStudioApp());
 }
 

@@ -1,8 +1,8 @@
+import '../prefs/shortcuts.dart';
 import 'dart:io';
 
 import 'package:engine_core/engine_core.dart' show GraphType;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import '../assets/asset_browser.dart';
@@ -136,15 +136,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
         ? visibleTree(all, _expanded)
         : filterFiles(all, _filter);
     return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyF, meta: true, shift: true):
-            _openSearch,
-        const SingleActivator(
-          LogicalKeyboardKey.keyF,
-          control: true,
-          shift: true,
-        ): _openSearch,
-      },
+      bindings: ShortcutMap.current.bindings({
+        StudioAction.searchProject: _openSearch,
+      }),
       child: Scaffold(
         appBar: AppBar(
           title: Text(p.basename(widget.project.root)),
