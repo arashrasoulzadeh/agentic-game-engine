@@ -306,29 +306,34 @@ class _LevelScreenState extends State<LevelScreen> {
                                       child: SingleChildScrollView(
                                         controller: _horizontal,
                                         scrollDirection: Axis.horizontal,
-                                        child: GestureDetector(
-                                          key: const Key('level-canvas'),
-                                          behavior: HitTestBehavior.opaque,
-                                          onTapUp: (details) => _edit(
-                                            (e) => e.tap(details.localPosition),
-                                          ),
-                                          onPanStart: (details) => _edit(
-                                            (e) => e.dragStart(
-                                              details.localPosition,
+                                        child: Semantics(
+                                          label:
+                                              'Level canvas: tap or drag to use the selected tool',
+                                          child: GestureDetector(
+                                            key: const Key('level-canvas'),
+                                            behavior: HitTestBehavior.opaque,
+                                            onTapUp: (details) => _edit(
+                                              (e) =>
+                                                  e.tap(details.localPosition),
                                             ),
-                                          ),
-                                          onPanUpdate: (details) => _edit(
-                                            (e) => e.dragUpdate(
-                                              details.localPosition,
+                                            onPanStart: (details) => _edit(
+                                              (e) => e.dragStart(
+                                                details.localPosition,
+                                              ),
                                             ),
-                                          ),
-                                          onPanEnd: (_) => _edit(
-                                            (e) => e.dragEnd(_lastPoint(e)),
-                                          ),
-                                          child: CustomPaint(
-                                            size: _canvasSize(editor),
-                                            painter: LevelCanvasPainter(
-                                              editor: editor,
+                                            onPanUpdate: (details) => _edit(
+                                              (e) => e.dragUpdate(
+                                                details.localPosition,
+                                              ),
+                                            ),
+                                            onPanEnd: (_) => _edit(
+                                              (e) => e.dragEnd(_lastPoint(e)),
+                                            ),
+                                            child: CustomPaint(
+                                              size: _canvasSize(editor),
+                                              painter: LevelCanvasPainter(
+                                                editor: editor,
+                                              ),
                                             ),
                                           ),
                                         ),
