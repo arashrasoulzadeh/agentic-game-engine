@@ -170,7 +170,6 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
       (the mechanism and the project window are done; level, graph, code and
       inspector screens still hold English literals) and ship a first non-English
       catalog.
-- [ ] **6.7** Studio user guide — see Documentation.
 
 ### Stretch (not scheduled)
 
@@ -208,9 +207,8 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       beyond the overview in `concepts/rendering.md`.
 - [ ] Release pipeline (`build-release`) walkthrough: signing for Android and
       iOS.
-- [ ] Studio user guide and a "build your first level" tutorial (`docs/studio/`
-      only holds the design doc and a QA checklist today; both are excluded
-      from the site).
+- [ ] A "build your first level" studio tutorial (the user guide, `docs/studio/user-guide.md`,
+      is done).
 
 ### Quality of the docs themselves
 

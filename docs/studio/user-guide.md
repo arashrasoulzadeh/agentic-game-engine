@@ -1,0 +1,143 @@
+# Studio user guide
+
+Engine Studio is the desktop editor for projects made with `game_agent create`. It
+edits the same JSON files the engine loads and the CLI and agents edit, so anything you
+do here can also be done (and checked) from the command line.
+
+!!! note "Running it"
+    The studio is a Flutter app in `packages/engine_studio`. From a checkout of this
+    repository, run `flutter run -d macos` there. It is not distributed as an installer
+    yet.
+
+## Open a project
+
+Start the studio and choose a project folder. A project is a folder with a
+`pubspec.yaml` and an `assets/levels` folder, which `game_agent create` makes. The
+project window then shows:
+
+- a **file tree** on the left (generated and hidden folders are left out), with a filter
+  for levels, graphs, code, images and so on;
+- the **open file** on the right: a level opens in the level editor, a graph in the graph
+  editor, Dart and JSON in the code editor, images in an image view.
+
+The icons in the top bar open, in order: the **asset browser**, a menu for **new graphs**,
+the **problems** list (every level and graph problem in the project) and **project
+search** (`Cmd/Ctrl+Shift+F`).
+
+## Edit a level
+
+Open a `*.level.json` file. The canvas shows the tile map and the entities; the toolbar
+above it picks what a click or drag does:
+
+| Tool | What it does |
+|---|---|
+| Select | Click an entity to select it and see its components in the inspector. |
+| Move | Drag the selected entity. With **Snap to grid** on, it lands on grid points. |
+| Paint | Click or drag over tiles to write the current tile id. One drag is one undo step. |
+| Erase | Same, writing the empty tile. |
+| Fill | Fill the connected region under the click with the current tile id. |
+| Place | Add a new entity at the click, with the component chosen in the palette. |
+
+The top bar has **Save** (`Cmd/Ctrl+S`), **Undo** and **Redo** (every edit is undoable,
+and the tooltip names what will be undone), grid and snap toggles, **Show tiles** and
+**Show entities** toggles (hiding only changes the drawing, not the data) and
+**Delete selected**. The title shows when the level has unsaved changes; going back to the
+saved state clears it.
+
+### The inspector
+
+Select an entity and the right-hand panel lists its components. Each field is edited with
+a control that matches its type (switch, dropdown, number, text), and a bad value is
+refused with a message instead of being written. The fields come from the same schemas the
+validator and `docs/reference/components.md` use, so they cannot drift.
+
+On a `sprite` component, **Pick sprite** opens a grid of the project's sprite sheets;
+clicking a sprite sets `atlasId` and `region` together.
+
+### Problems
+
+The validation list shows every problem in the level as you edit, using the same checks
+as `game_agent studio validate`: unknown components, wrong field types, and — when the
+project declares its sprite sheets — sprites and atlases that do not exist. Clicking a
+problem selects the entity it is about.
+
+## Assets, prefabs and brushes
+
+The **asset browser** lists the project's sprite sheets (with how many sprites each has),
+and its images, audio, data files and prefabs. Opening a sheet shows every sprite with
+the name a level refers to it by.
+
+Sprite sheets are *declared* in `assets/studio_atlases.json`:
+
+```json
+{ "atlases": { "hero": { "image": "assets/hero.png", "manifest": "assets/hero.json" } } }
+```
+
+Undeclared sheets are still listed, but they are not offered in the sprite picker and
+levels are not checked against them.
+
+**Brushes** (the panel under the entity palette) are reusable across levels and are saved in
+`assets/studio_brushes.json`:
+
+- **New tile brush** asks for a name and a pattern: one row per line, ids separated by spaces
+  or commas, `_` to leave a cell alone, `0` to erase. Clicking a brush switches to the stamp
+  tool; a click on the canvas stamps the pattern with its top-left on the clicked tile, as a
+  single undo step.
+- **Save as prefab** turns the selected entity into `prefabs/<name>.json` and adds a prefab
+  brush for it. Stamping a prefab brush places the entity (or group) at the click.
+
+The command line has the same operations: `game_agent studio save-prefab`,
+`place-prefab`, `export-tmx` and `import-tmx`.
+
+## Graphs
+
+Dialogue/cutscene graphs, behavior trees and state machines are edited on one canvas:
+drag to pan, scroll or use the zoom buttons to zoom. Each type has its own node kinds and
+its own validation, and behavior trees and state machines export to the engine's JSON in
+`assets/ai/`. Problems in graphs appear in the same project-wide problems list as level
+problems.
+
+## Play-test
+
+The play button in the level editor switches to a **Preview** that runs the level in the
+engine, and the project can launch the real game on the level you are editing — including
+unsaved edits, because it runs a snapshot of the editor's current state
+(`assets/levels/playtest.level.json`, which is never listed as one of your levels). The game
+runs as its own process, so a crash in the game cannot take the studio down; its output is
+kept in `.studio/playtest.log`.
+
+The play-test passes `ASSET_DIR` to the game. The generated game template then reads its
+level from disk and **restarts the scene when the level file is saved**, so you can keep the
+game open while editing. A game that is not built from the template needs to do the same
+(see `AssetHotReloader` and `CallbackAssetHandler` in `engine_flutter`).
+
+## Code editor
+
+Dart and JSON files open in a built-in editor with syntax colouring, find and replace, and
+Dart language-server features (completion, diagnostics, go to definition, rename with `F2`)
+when a Dart SDK is found.
+
+## Settings
+
+Per-user settings live outside any project, in `~/.game_agent/`:
+
+- **Keyboard shortcuts** — `studio_prefs.json`:
+
+    ```json
+    { "shortcuts": { "save": "mod+k", "searchProject": "mod+shift+p" }, "locale": "fr" }
+    ```
+
+    Actions are `save`, `find`, `replace` and `searchProject`. `mod` means Command on macOS
+    and Control elsewhere; `cmd`, `ctrl`, `alt` and `shift` can be combined with a letter or
+    digit. A binding that cannot be read just turns that shortcut off.
+- **Language** — `locale` above, plus `locales/<code>.json` containing `{"key": "text"}`.
+  Keys are the ones in `StudioStrings` (`packages/engine_studio/lib/src/prefs/strings.dart`);
+  anything not translated stays English. Only the project window is translatable so far.
+
+## Doing the same from the command line
+
+Every studio action has a CLI equivalent, which is what makes the editor agent-friendly:
+`game_agent studio validate`, `add-entity`, `remove-entity`, `set-field`, `move-entity`,
+`set-layer`, `paint-tile`, `fill-region`, `import-tmx`, `export-tmx`, `export-levels`,
+`save-prefab`, `place-prefab` and `project-manifest`. Run `game_agent studio --help` for
+the arguments.
