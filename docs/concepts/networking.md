@@ -101,14 +101,41 @@ ago. Checking the shot against the host's current positions makes players miss
 targets that were under the crosshair. `PositionHistory` records positions per tick;
 `rewind(PositionHistory.rewindTick(...))` gives the shooter's view for the hit test.
 
+## Interest management
+
+By default every client gets the whole world. Give `addClient` an `interest` rule to send a
+client only what it should see — less bandwidth, and a client cannot read what it never
+receives (units in fog, the far side of a big map):
+
+```dart
+sync.addClient(
+  playerId,
+  send,
+  interest: nearbyInterest(
+    center: () => cameraOf(playerId),     // (x: .., y: ..) or null to see everything
+    radius: 800,
+    always: () => ownUnitIds(playerId),   // never hide a player's own things
+  ),
+);
+```
+
+The rule is a factory, re-evaluated every broadcast, so the view follows the camera. Entities
+with no `position` (a treasury, match state) are always sent. Write your own
+`InterestFilter` — `(id, components) => bool` — for other rules, e.g. "units my team can see".
+
+A delta for such a client is taken against **what that client was actually sent**, not the
+whole world, so an entity that leaves its view is removed on its side instead of freezing there
+as a ghost. The server keeps one such record per filtered client; unfiltered clients are
+unchanged and share one.
+
 ## Limits (be honest with yourself)
 
 - **No NAT traversal or matchmaking.** A host must be reachable (LAN, port-forward,
   or a server).
 - **No encryption or authentication.** Use `wss://` behind a reverse proxy; the host
   trusts a connection to be one player.
-- **Full-world snapshots.** Fine for hundreds of entities; very large worlds want
-  interest management (only send what each player can see).
+- **Full-world snapshots by default.** Fine for hundreds of entities; use the interest rules
+  above for larger worlds.
 - **Reliable ordering** is assumed from WebSockets (TCP). Over UDP-like transports
   the sync layer tolerates loss and reordering, but orders need their own
   acknowledgement.

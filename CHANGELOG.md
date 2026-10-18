@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Networking: interest management. `StateSyncServer.addClient(interest: ...)` sends a client only the entities a rule admits (`nearbyInterest` for radius-based views); deltas are taken against what that client was sent, so departures are removed cleanly.
 - Real-time strategy: gathering and building. `ResourceNode`, `Depot`, `Gatherer` with `assignGather` and `GatherSystem` (walk, harvest, haul to the nearest depot, deliver to the team `Treasury`); `placeBuilding` with `BuildFailure` reasons and `Construction` / `ConstructionSystem`; `installRealtimeStrategySystems(gathering: true)`. Producers and depots under construction are inert.
 - Studio localization mechanism: `StudioStrings.t(key)` over the engine's `LocalizationManager`; translations are `~/.game_agent/locales/<code>.json`, the language is `locale` in `studio_prefs.json`. The project window is migrated; other screens follow.
 - Studio: keyboard shortcuts are configurable. `~/.game_agent/studio_prefs.json` (`{"shortcuts": {"save": "mod+k"}}`) overrides the defaults for save, find, replace and project search; `mod` is Command on macOS and Control elsewhere. A bad binding disables that shortcut instead of breaking startup.
