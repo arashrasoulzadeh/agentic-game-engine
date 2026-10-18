@@ -251,4 +251,19 @@ void main() {
       expect((await source.scan()).keys, ['x']);
     });
   });
+
+  test('CallbackAssetHandler fires for its paths only, on change', () async {
+    final source = _MemorySource()..put('levels/a.json', [1])..put('levels/b.json', [1]);
+    final seen = <String>[];
+    final reloader = AssetHotReloader(
+      source: source,
+      handlers: [CallbackAssetHandler({'levels/a.json'}, seen.add)],
+    );
+    await reloader.start();
+    source.put('levels/a.json', [1, 2]);
+    source.put('levels/b.json', [1, 2]);
+    await reloader.poll();
+    reloader.stop();
+    expect(seen, ['levels/a.json']);
+  });
 }

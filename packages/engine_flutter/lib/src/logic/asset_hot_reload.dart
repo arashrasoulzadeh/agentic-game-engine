@@ -82,6 +82,22 @@ abstract class AssetHandler {
   Future<void> reload(String path, AssetSource source);
 }
 
+/// Runs [onChange] when any of [paths] changes. For assets a running game cannot
+/// patch in place -- a level whose entities the systems hold ids of -- the callback
+/// restarts the scene, which then reads the fresh file.
+class CallbackAssetHandler implements AssetHandler {
+  CallbackAssetHandler(this.paths, this.onChange);
+
+  final Set<String> paths;
+  final void Function(String path) onChange;
+
+  @override
+  bool handles(String path) => paths.contains(path);
+
+  @override
+  Future<void> reload(String path, AssetSource source) async => onChange(path);
+}
+
 /// Reloads a level JSON into a live `LevelHandle` when its file changes.
 ///
 /// `LevelHandle.reload` validates before it tears anything down, so a level

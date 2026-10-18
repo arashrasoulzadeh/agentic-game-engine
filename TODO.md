@@ -159,12 +159,6 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 - [ ] Not in the IDE scope yet (each its own phase): a debugger, a terminal,
       git integration, running `pub get` from the studio.
 
-### Assets, prefabs, interchange (phase 5)
-
-- [ ] **5.7** Use `AssetHotReloader` (engine side done) in the studio's
-      play-test: start it against the project's `assets/` with a
-      `LevelAssetHandler` and `AtlasAssetHandler` per atlas, and surface its
-      errors in the studio.
 
 ### Behaviors, profiling, polish (phase 6)
 

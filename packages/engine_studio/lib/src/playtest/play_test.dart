@@ -14,11 +14,16 @@ const playtestLogFile = 'playtest.log';
 
 /// The `flutter run` arguments that start a game on a play-test snapshot. Pure, so
 /// the exact command is tested without launching anything.
-List<String> playTestArguments({required String device}) => [
+///
+/// [assetDir] is the project's `assets` folder. Passing it as `ASSET_DIR` makes the
+/// game read levels from disk and watch them, so saving a level in the studio updates
+/// the running game without a restart.
+List<String> playTestArguments({required String device, String? assetDir}) => [
   'run',
   '-d',
   device,
   '--dart-define=PLAYTEST_LEVEL=$playtestLevelFile',
+  if (assetDir != null) '--dart-define=ASSET_DIR=$assetDir',
 ];
 
 /// Starts a process. Injected so tests can record the command instead of running it.
@@ -67,7 +72,10 @@ class PlayTest {
     snapshot.writeAsStringSync(encodeLevelJson(document.toJson()));
     final process = await _start(
       flutter,
-      playTestArguments(device: device),
+      playTestArguments(
+        device: device,
+        assetDir: p.join(project.root, 'assets'),
+      ),
       workingDirectory: project.root,
     );
     _capture(process, project);

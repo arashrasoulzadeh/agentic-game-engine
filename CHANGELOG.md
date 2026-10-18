@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Play-test hot reload: the studio passes `ASSET_DIR` to the game; the generated game reads levels from disk and restarts its scene when the level file is saved. `CallbackAssetHandler` (`engine_flutter`).
 - Studio assets: an asset browser (sprite sheets with their sprites, other files by
   kind), a sprite picker behind the inspector's `sprite` field, level problems for
   sprites/atlases that do not exist, tile and prefab brushes with a stamp tool

@@ -56,6 +56,10 @@ void main() {
         '--dart-define=PLAYTEST_LEVEL=playtest.level.json',
       ]);
     });
+
+    test('an asset dir turns on hot reload in the game', () {
+      expect(playTestArguments(device: 'macos', assetDir: '/p/assets'), contains('--dart-define=ASSET_DIR=/p/assets'));
+    });
   });
 
   group('PlayTest.launch', () {
@@ -79,7 +83,7 @@ void main() {
           reason: 'the unsaved edit is in the snapshot',
         );
         expect(recorder.executable, '/sdk/bin/flutter');
-        expect(recorder.arguments, playTestArguments(device: 'macos'));
+        expect(recorder.arguments, playTestArguments(device: 'macos', assetDir: '${root.path}/assets'));
         expect(recorder.workingDirectory, root.path);
       },
     );
