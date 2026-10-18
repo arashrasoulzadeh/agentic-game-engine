@@ -152,4 +152,83 @@ void main() {
       expect(find.byKey(const Key('preview-canvas')), findsNothing);
     });
   });
+
+  group('run game button', () {
+    Future<void> open(
+      WidgetTester tester,
+      String path,
+      PlayTest? pt, {
+      String? projectRoot,
+    }) => tester.pumpWidget(
+      MaterialApp(
+        home: LevelScreen(
+          levelPath: path,
+          projectRoot: projectRoot,
+          autosaveInterval: null,
+          playTest: pt,
+        ),
+      ),
+    );
+
+    testWidgets(
+      'starts the game on the unsaved level and says where the log is',
+      (tester) async {
+        final path = '${root.path}/assets/levels/level.json';
+        File(path).writeAsStringSync(jsonEncode(_level()));
+        final recorder = _Recorder();
+        await open(
+          tester,
+          path,
+          PlayTest(start: recorder.start),
+          projectRoot: root.path,
+        );
+
+        await tester.tap(find.byKey(const Key('run-game')));
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+        await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+        expect(recorder.workingDirectory, root.path);
+        expect(
+          recorder.arguments,
+          playTestArguments(device: 'macos', assetDir: '${root.path}/assets'),
+        );
+        expect(
+          File('${root.path}/assets/levels/$playtestLevelFile').existsSync(),
+          isTrue,
+        );
+        expect(find.byKey(const Key('run-game-started')), findsOneWidget);
+      },
+    );
+
+    testWidgets('a launcher failure is shown, not thrown', (tester) async {
+      final path = '${root.path}/assets/levels/level.json';
+      File(path).writeAsStringSync(jsonEncode(_level()));
+      final broken = PlayTest(
+        start: (exe, args, {required workingDirectory}) async =>
+            throw const ProcessException('flutter', [], 'not found'),
+      );
+      await open(tester, path, broken, projectRoot: root.path);
+
+      await tester.tap(find.byKey(const Key('run-game')));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('run-game-failed')), findsOneWidget);
+      expect(find.textContaining('not found'), findsOneWidget);
+    });
+
+    testWidgets('a level outside any project has no Run game button', (
+      tester,
+    ) async {
+      final path = '${root.path}/assets/levels/level.json';
+      File(path).writeAsStringSync(jsonEncode(_level()));
+      await open(tester, path, null);
+      expect(find.byKey(const Key('run-game')), findsNothing);
+    });
+  });
 }

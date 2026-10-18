@@ -163,9 +163,9 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
       entity count, step-time sparkline, slowest systems). Not done: `FrameStats` /
       `FrameTimingMonitor` render metrics, and profiling a *separate* play-test process (the
       external `PlayTest` is not wired into the studio UI yet, so there is no channel to build).
-- [ ] **Play-test button** — `PlayTest` (separate game process with hot reload, see the user guide)
-      has no entry point in the studio UI; add a "Run game" action that uses it, and surface
-      `.studio/playtest.log`.
+- [ ] **Run game, remaining** — the device is fixed to `macos` and the game process is not
+      stopped when the studio closes or the button is pressed again; add a device choice and
+      process management.
 - [ ] **6.6** (remaining) Move the rest of the studio's strings to `StudioStrings`
       (the mechanism and the project window are done; level, graph, code and
       inspector screens still hold English literals) and ship a first non-English

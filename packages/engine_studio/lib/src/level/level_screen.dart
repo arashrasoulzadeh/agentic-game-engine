@@ -14,6 +14,7 @@ import '../assets/project_stores.dart';
 import '../palette/entity_palette.dart';
 import '../validation/validation_panel.dart';
 import '../playtest/play_test.dart';
+import '../project/studio_project.dart';
 import '../preview/preview_view.dart';
 import 'editor_shortcuts.dart';
 import 'level_canvas.dart';
@@ -33,7 +34,8 @@ class LevelScreen extends StatefulWidget {
   /// How often a dirty level is backed up. Null turns autosave off.
   final Duration? autosaveInterval;
 
-  /// Starts the game on the level. Null uses the real launcher; tests pass a fake.
+  /// Starts the game process on the level (the "Run game" button). Null uses the real
+  /// launcher; tests pass one with a recording process starter.
   final PlayTest? playTest;
 
   const LevelScreen({
@@ -104,6 +106,35 @@ class _LevelScreenState extends State<LevelScreen> {
       _previewing = true;
       _running = true;
     });
+  }
+
+  /// Runs the project's own game on the level as it is now, in a separate process (a
+  /// crash there cannot take the studio down). Needs the level to belong to a project: the
+  /// snapshot is written into it.
+  Future<void> _runGame() async {
+    final editor = _editor;
+    final root = widget.projectRoot;
+    if (editor == null || root == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await (widget.playTest ?? PlayTest()).launch(
+        StudioProject.open(root),
+        editor.document,
+      );
+      messenger.showSnackBar(
+        const SnackBar(
+          key: Key('run-game-started'),
+          content: Text('Game started. Its output is in .studio/playtest.log.'),
+        ),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          key: const Key('run-game-failed'),
+          content: Text('Could not start the game: $e'),
+        ),
+      );
+    }
   }
 
   /// Writes the level file. A failure stays on screen rather than being lost, and
@@ -180,6 +211,13 @@ class _LevelScreenState extends State<LevelScreen> {
               onPressed: _playTest,
               icon: const Icon(Icons.play_arrow),
             ),
+            if (widget.projectRoot != null)
+              IconButton(
+                key: const Key('run-game'),
+                tooltip: 'Run the game on this level (a separate process)',
+                onPressed: _runGame,
+                icon: const Icon(Icons.rocket_launch_outlined),
+              ),
             IconButton(
               key: const Key('save'),
               tooltip: 'Save (Cmd/Ctrl+S)',

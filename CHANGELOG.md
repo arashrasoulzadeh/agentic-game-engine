@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Studio: a **Run game** button starts the project's own game as a separate process on the level being edited (unsaved edits included); failures are shown, not thrown.
 - Studio: a Profiler switch in the preview shows live `WorldProfiler` data - step time, entity count, a step-time sparkline and the slowest systems.
 - Networking: interest management. `StateSyncServer.addClient(interest: ...)` sends a client only the entities a rule admits (`nearbyInterest` for radius-based views); deltas are taken against what that client was sent, so departures are removed cleanly.
 - Real-time strategy: gathering and building. `ResourceNode`, `Depot`, `Gatherer` with `assignGather` and `GatherSystem` (walk, harvest, haul to the nearest depot, deliver to the team `Treasury`); `placeBuilding` with `BuildFailure` reasons and `Construction` / `ConstructionSystem`; `installRealtimeStrategySystems(gathering: true)`. Producers and depots under construction are inert.

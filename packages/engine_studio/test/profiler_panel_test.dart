@@ -69,8 +69,8 @@ void main() {
       expect(find.byKey(const Key('profiler-panel')), findsNothing);
 
       await tester.ensureVisible(find.byKey(const Key('profiler-toggle')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('profiler-toggle')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('profiler-toggle')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pump(const Duration(milliseconds: 50));

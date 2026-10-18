@@ -106,13 +106,18 @@ declared sprite sheets, and **Profiler** shows live simulation timings: the step
 count, a sparkline of recent step times and the slowest systems. Pressing play always rebuilds
 the world from the level as it is now, saved or not.
 
-!!! note "Running the real game"
-    The studio also has a `PlayTest` class that writes the level you are editing to
-    `assets/levels/playtest.level.json` and starts your game as its own process with
-    `--dart-define=PLAYTEST_LEVEL=...` and `--dart-define=ASSET_DIR=<project>/assets`. The
-    generated game template reads the level from disk in that mode and **restarts its scene when
-    the level file is saved**. It is not on a button in the studio yet (see `TODO.md`); you can
-    use the same defines yourself with `flutter run`.
+### Run game
+
+The **Run game** button (rocket icon, shown for levels that belong to a project) starts your
+project's own game as a separate process on the level you are editing, saved or not. The studio
+writes the level to `assets/levels/playtest.level.json` (never listed as one of your levels) and
+runs `flutter run -d macos` with `--dart-define=PLAYTEST_LEVEL=...` and
+`--dart-define=ASSET_DIR=<project>/assets`. The game's output goes to `.studio/playtest.log`.
+
+The generated game template reads the level from disk in this mode and **restarts its scene when
+the level file is saved**, so you can leave the game running while you edit. A game not built from
+the template needs to do the same (`AssetHotReloader` and `CallbackAssetHandler` in
+`engine_flutter`). The device is `macos` for now, and `flutter` must be on the PATH of the app.
 
 ## Code editor
 
