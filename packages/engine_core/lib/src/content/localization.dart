@@ -154,7 +154,8 @@ class LocalizationManager {
   /// All available locales.
   List<LocaleInfo> get availableLocales => List.unmodifiable(_availableLocales);
 
-  /// Add a resource file (JSON/CSV/ARB).
+  /// Adds (or replaces) one localized string. File formats are handled by
+  /// [loadFromJson]; JSON is the only supported format.
   Future<void> addResource(LocalizedString resource) {
     _resources[resource.key] = resource;
     return Future.value();

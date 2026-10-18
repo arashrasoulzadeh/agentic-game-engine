@@ -191,7 +191,6 @@ Site: <https://meetarash.ir/agentic-game-engine/> (MkDocs Material, built from
 None of these appear anywhere under `docs/` today. Each needs a concept page
 (or a section) and, where it has runtime behaviour, a tested recipe:
 
-- [ ] Localization (`LocalizationManager`, RTL, plurals, ARB/CSV/JSON).
 - [ ] Dialogue (`DialogueGraph`, `DialogueRunner`, `DialogueBoxScene`) and the
       visual-scripting graph compiler.
 - [ ] Procedural level generation (BSP, cellular automata, WFC).

@@ -86,6 +86,7 @@ nav:
       - Architecture: concepts/architecture.md
       - The ECS: concepts/ecs.md
       - Content as data: concepts/content-as-data.md
+      - Localization: concepts/localization.md
       - The agent API: concepts/agent-api.md
       - Rendering: concepts/rendering.md
       - Platformer gameplay: concepts/platformer.md
