@@ -215,9 +215,6 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 - [ ] **Execute the platformer samples** — tutorial 1 and the older recipes
       are checked by hand; give them the same test treatment as the
       turn-based ones (`doc_examples_test.dart`), and fix any drift found.
-- [ ] **Generate the events reference** — `docs/reference/events.md` is
-      hand-written and can drift; generate it from source (like the component
-      reference) or add a test that every `*Event` class is listed.
 - [ ] **Doc-comment audit** — several `dart doc` warnings remain in
       `engine_core` (unresolved references); `dart doc` should be clean in CI.
 - [ ] **API docs for the Flutter packages** — only `engine_core` and

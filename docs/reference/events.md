@@ -45,6 +45,13 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 
 `OrderFailure` is one of `blocked`, `outOfRange`, `invalidTarget`.
 
+## engine_core — AI and analytics
+
+| Type | Fields | Notes |
+|---|---|---|
+| `SoundEvent` | `x`, `y`, `loudness`, `tag?`, `data?` | A world event your game emits when something makes noise; `HearingSystem` delivers it to listeners (see `InvestigateBehavior`). |
+| `AnalyticsEvent` | `name`, `payload`, `timestamp`, `userId?`, `sessionId?` | **Not** a `world.events` event: a record handed to analytics providers by `AnalyticsManager`. Listed because of its name. |
+
 ## engine_platformer
 
 | Event | Fields | Emitted by |
