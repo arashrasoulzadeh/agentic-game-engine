@@ -2,11 +2,12 @@ import 'dart:io';
 
 /// Process boundary used by commands so tests can verify their invocations
 /// without creating a Flutter project or fetching remote dependencies.
-typedef CommandProcessRunner = Future<void> Function(
-  String executable,
-  List<String> args, {
-  String? workingDirectory,
-});
+typedef CommandProcessRunner =
+    Future<void> Function(
+      String executable,
+      List<String> args, {
+      String? workingDirectory,
+    });
 
 /// Runs [executable] with [args] in [workingDirectory], streaming its
 /// stdout/stderr straight to this process's so the user sees exactly what

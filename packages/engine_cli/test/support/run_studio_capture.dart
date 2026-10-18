@@ -20,20 +20,20 @@ Future<StudioResult> _runProcess(List<String> args) async {
     args,
     runInShell: false,
   );
-  
+
   final stdout = StringBuffer();
   final stderr = StringBuffer();
-  
+
   process.stdout.transform(utf8.decoder).listen(stdout.write);
   process.stderr.transform(utf8.decoder).listen(stderr.write);
-  
+
   final exitCode = await process.exitCode;
-  
+
   if (exitCode != 0 && exitCode != 1) {
     print('STDOUT: ${stdout.toString()}');
     print('STDERR: ${stderr.toString()}');
   }
-  
+
   return StudioResult(exitCode, stdout.toString(), stderr.toString());
 }
 

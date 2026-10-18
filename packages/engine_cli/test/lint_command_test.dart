@@ -19,17 +19,22 @@ void main() {
 
   test('returns 0 for a valid level file', () async {
     final file = File('${tmp.path}/level.json')
-      ..writeAsStringSync('{"entities": [{"components": {"position": {"x": 1, "y": 2}}}]}');
+      ..writeAsStringSync(
+        '{"entities": [{"components": {"position": {"x": 1, "y": 2}}}]}',
+      );
 
     expect(await _runLint([file.path]), 0);
   });
 
-  test('returns 1 and reports the specific error for an invalid level file', () async {
-    final file = File('${tmp.path}/level.json')
-      ..writeAsStringSync('{"entities": "not a list"}');
+  test(
+    'returns 1 and reports the specific error for an invalid level file',
+    () async {
+      final file = File('${tmp.path}/level.json')
+        ..writeAsStringSync('{"entities": "not a list"}');
 
-    expect(await _runLint([file.path]), 1);
-  });
+      expect(await _runLint([file.path]), 1);
+    },
+  );
 
   test('returns 1 for malformed JSON', () async {
     final file = File('${tmp.path}/level.json')..writeAsStringSync('{not json');
@@ -48,13 +53,16 @@ void main() {
   group('--render', () {
     test('returns 1 when the level has no tileMap component', () async {
       final file = File('${tmp.path}/level.json')
-        ..writeAsStringSync('{"entities": [{"components": {"position": {"x": 1, "y": 2}}}]}');
+        ..writeAsStringSync(
+          '{"entities": [{"components": {"position": {"x": 1, "y": 2}}}]}',
+        );
 
       expect(await _runLint([file.path, '--render', '${tmp.path}/out.png']), 1);
     });
 
     test('draws one-way and slope tiles with their own colors', () async {
-      final file = File('${tmp.path}/level.json')..writeAsStringSync('''
+      final file = File('${tmp.path}/level.json')
+        ..writeAsStringSync('''
 {
   "entities": [
     {
@@ -80,22 +88,26 @@ void main() {
       expect(File(outPath).existsSync(), isTrue);
     });
 
-    test('writes a PNG sized to the TileMap grid when one is present', () async {
-      final file = File('${tmp.path}/level.json')
-        ..writeAsStringSync(jsonEncodeLevel);
-      final outPath = '${tmp.path}/out.png';
+    test(
+      'writes a PNG sized to the TileMap grid when one is present',
+      () async {
+        final file = File('${tmp.path}/level.json')
+          ..writeAsStringSync(jsonEncodeLevel);
+        final outPath = '${tmp.path}/out.png';
 
-      expect(await _runLint([file.path, '--render', outPath]), 0);
+        expect(await _runLint([file.path, '--render', outPath]), 0);
 
-      final outFile = File(outPath);
-      expect(outFile.existsSync(), isTrue);
-      // PNG signature bytes.
-      final bytes = outFile.readAsBytesSync();
-      expect(bytes.take(8), [137, 80, 78, 71, 13, 10, 26, 10]);
-    });
+        final outFile = File(outPath);
+        expect(outFile.existsSync(), isTrue);
+        // PNG signature bytes.
+        final bytes = outFile.readAsBytesSync();
+        expect(bytes.take(8), [137, 80, 78, 71, 13, 10, 26, 10]);
+      },
+    );
 
     test('does not render when --render is not passed', () async {
-      final file = File('${tmp.path}/level.json')..writeAsStringSync(jsonEncodeLevel);
+      final file = File('${tmp.path}/level.json')
+        ..writeAsStringSync(jsonEncodeLevel);
 
       expect(await _runLint([file.path]), 0);
       expect(File('${tmp.path}/out.png').existsSync(), isFalse);
@@ -105,25 +117,35 @@ void main() {
   group('--playable', () {
     test('returns 1 when the level has no tileMap component', () async {
       final file = File('${tmp.path}/level.json')
-        ..writeAsStringSync('{"entities": [{"name": "player", "components": {"position": {"x": 1, "y": 2}}}]}');
+        ..writeAsStringSync(
+          '{"entities": [{"name": "player", "components": {"position": {"x": 1, "y": 2}}}]}',
+        );
 
       expect(await _runLint([file.path, '--playable']), 1);
     });
 
     test('returns 1 when there is no spawn entity', () async {
-      final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
-        rows: ['...', '...'],
-        entities: '{"name": "coin", "components": {"position": {"x": 20, "y": 20}}}',
-      ));
+      final file = File('${tmp.path}/level.json')
+        ..writeAsStringSync(
+          _levelJson(
+            rows: ['...', '...'],
+            entities:
+                '{"name": "coin", "components": {"position": {"x": 20, "y": 20}}}',
+          ),
+        );
 
       expect(await _runLint([file.path, '--playable']), 1);
     });
 
     test('returns 1 when the spawn entity sits on a solid tile', () async {
-      final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
-        rows: ['###', '...'],
-        entities: '{"name": "player", "components": {"position": {"x": 20, "y": 20}}}',
-      ));
+      final file = File('${tmp.path}/level.json')
+        ..writeAsStringSync(
+          _levelJson(
+            rows: ['###', '...'],
+            entities:
+                '{"name": "player", "components": {"position": {"x": 20, "y": 20}}}',
+          ),
+        );
 
       expect(await _runLint([file.path, '--playable']), 1);
     });
@@ -132,54 +154,67 @@ void main() {
       // isTileReachable models gravity: an entity needs an actual floor to
       // stand on (a solid tile below it), not just "any non-solid tile" --
       // row 2 is that floor, and both entities sit in row 1, right above it.
-      final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
-        rows: ['....', '....', '####'],
-        entities: '{"name": "player", "components": {"position": {"x": 20, "y": 60}}},'
-            '{"name": "coin", "components": {"position": {"x": 140, "y": 60}}}',
-      ));
+      final file = File('${tmp.path}/level.json')
+        ..writeAsStringSync(
+          _levelJson(
+            rows: ['....', '....', '####'],
+            entities:
+                '{"name": "player", "components": {"position": {"x": 20, "y": 60}}},'
+                '{"name": "coin", "components": {"position": {"x": 140, "y": 60}}}',
+          ),
+        );
 
       expect(await _runLint([file.path, '--playable']), 0);
     });
 
-    test('returns 1 when an entity is sealed off from spawn by solid tiles', () async {
-      // The wall at column 4 spans both the ceiling (row 0) and the standing
-      // row (row 1), on top of a continuous floor (row 2) -- there is no row
-      // above it to jump through, so it still seals the two sides apart even
-      // with isTileReachable's jump model.
-      final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
-        rows: ['....#....', '....#....', '#########'],
-        entities: '{"name": "player", "components": {"position": {"x": 20, "y": 60}}},'
-            '{"name": "coin", "components": {"position": {"x": 260, "y": 60}}}',
-      ));
-
-      expect(await _runLint([file.path, '--playable']), 1);
-    });
-
     test(
-      'returns 1 for an entity floating with no floor beneath it, even '
-      'though its tile connects to spawn through open air',
+      'returns 1 when an entity is sealed off from spawn by solid tiles',
       () async {
-        // A fully open, floorless room: every tile is non-solid, so a plain
-        // non-solid-tile flood-fill (what this check used before 2.8) would
-        // call the coin reachable. isTileReachable models gravity -- a
-        // walker here never lands, so it correctly disagrees. This is the
-        // actual behavior this migration changes: the old check could pass
-        // a level nothing could ever stand in.
-        final file = File('${tmp.path}/level.json')..writeAsStringSync(_levelJson(
-          rows: ['....', '....'],
-          entities: '{"name": "player", "components": {"position": {"x": 20, "y": 20}}},'
-              '{"name": "coin", "components": {"position": {"x": 140, "y": 20}}}',
-        ));
+        // The wall at column 4 spans both the ceiling (row 0) and the standing
+        // row (row 1), on top of a continuous floor (row 2) -- there is no row
+        // above it to jump through, so it still seals the two sides apart even
+        // with isTileReachable's jump model.
+        final file = File('${tmp.path}/level.json')
+          ..writeAsStringSync(
+            _levelJson(
+              rows: ['....#....', '....#....', '#########'],
+              entities:
+                  '{"name": "player", "components": {"position": {"x": 20, "y": 60}}},'
+                  '{"name": "coin", "components": {"position": {"x": 260, "y": 60}}}',
+            ),
+          );
 
         expect(await _runLint([file.path, '--playable']), 1);
       },
     );
+
+    test('returns 1 for an entity floating with no floor beneath it, even '
+        'though its tile connects to spawn through open air', () async {
+      // A fully open, floorless room: every tile is non-solid, so a plain
+      // non-solid-tile flood-fill (what this check used before 2.8) would
+      // call the coin reachable. isTileReachable models gravity -- a
+      // walker here never lands, so it correctly disagrees. This is the
+      // actual behavior this migration changes: the old check could pass
+      // a level nothing could ever stand in.
+      final file = File('${tmp.path}/level.json')
+        ..writeAsStringSync(
+          _levelJson(
+            rows: ['....', '....'],
+            entities:
+                '{"name": "player", "components": {"position": {"x": 20, "y": 20}}},'
+                '{"name": "coin", "components": {"position": {"x": 140, "y": 20}}}',
+          ),
+        );
+
+      expect(await _runLint([file.path, '--playable']), 1);
+    });
   });
 }
 
 /// Builds a level JSON with a `tileMap` sized from [rows] (40px tiles,
 /// `.` empty / `#` solid) plus the given raw entity JSON objects.
-String _levelJson({required List<String> rows, required String entities}) => '''
+String _levelJson({required List<String> rows, required String entities}) =>
+    '''
 {
   "entities": [
     {

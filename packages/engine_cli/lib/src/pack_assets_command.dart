@@ -50,7 +50,8 @@ class PackAssetsCommand extends Command<int> {
       ..addOption(
         'input',
         abbr: 'i',
-        help: 'Directory to scan recursively for images (.png/.jpg/.jpeg/.bmp/.gif).',
+        help:
+            'Directory to scan recursively for images (.png/.jpg/.jpeg/.bmp/.gif).',
       )
       ..addOption(
         'output-image',
@@ -61,26 +62,30 @@ class PackAssetsCommand extends Command<int> {
       ..addOption(
         'output-manifest',
         abbr: 'm',
-        help: 'Where to write the region manifest JSON. Defaults to '
+        help:
+            'Where to write the region manifest JSON. Defaults to '
             '--output-image with a .json extension.',
       )
       ..addOption(
         'padding',
         defaultsTo: '2',
-        help: 'Transparent pixels left between packed regions, to avoid '
+        help:
+            'Transparent pixels left between packed regions, to avoid '
             'texture-filtering bleed between adjacent sprites at runtime.',
       )
       ..addOption(
         'max-width',
         defaultsTo: '2048',
-        help: 'Starting width hint for the packer (it grows the sheet as '
+        help:
+            'Starting width hint for the packer (it grows the sheet as '
             'needed if this turns out too small for everything to fit) — '
             'not a hard cap on the final sheet width.',
       )
       ..addOption(
         'scales',
         defaultsTo: '1.0',
-        help: 'Comma-separated resolution tiers to pack, e.g. "1.0,0.5,0.25" '
+        help:
+            'Comma-separated resolution tiers to pack, e.g. "1.0,0.5,0.25" '
             '-- each source image is resized (before packing, so the packer '
             'still sees real post-resize dimensions) and written to its own '
             'sheet + manifest pair, letting a mobile game load a smaller '
@@ -116,7 +121,8 @@ class PackAssetsCommand extends Command<int> {
 
     final outputImagePath = args['output-image'] as String;
     final outputManifestPath =
-        (args['output-manifest'] as String?) ?? _defaultManifestPath(outputImagePath);
+        (args['output-manifest'] as String?) ??
+        _defaultManifestPath(outputImagePath);
     final padding = int.parse(args['padding'] as String);
     final maxWidth = int.parse(args['max-width'] as String);
     final List<double> scales;
@@ -126,12 +132,16 @@ class PackAssetsCommand extends Command<int> {
           .map((s) => double.parse(s.trim()))
           .toList();
     } on FormatException {
-      stderr.writeln('Error: --scales must be a comma-separated list of numbers, '
-          'e.g. "1.0,0.5,0.25" (got "${args['scales']}").');
+      stderr.writeln(
+        'Error: --scales must be a comma-separated list of numbers, '
+        'e.g. "1.0,0.5,0.25" (got "${args['scales']}").',
+      );
       return 1;
     }
     if (scales.any((s) => s <= 0)) {
-      stderr.writeln('Error: --scales values must be > 0 (got "${args['scales']}").');
+      stderr.writeln(
+        'Error: --scales values must be > 0 (got "${args['scales']}").',
+      );
       return 1;
     }
 
@@ -193,16 +203,16 @@ class PackAssetsCommand extends Command<int> {
   /// full-resolution `items` list (and its decoded images) is left
   /// untouched for the next scale tier's own resize pass.
   List<_PackItem> _resized(List<_PackItem> items, double scale) => [
-        for (final item in items)
-          _PackItem(
-            item.name,
-            img.copyResize(
-              item.image,
-              width: (item.image.width * scale).round().clamp(1, 1 << 20),
-              height: (item.image.height * scale).round().clamp(1, 1 << 20),
-            ),
-          ),
-      ];
+    for (final item in items)
+      _PackItem(
+        item.name,
+        img.copyResize(
+          item.image,
+          width: (item.image.width * scale).round().clamp(1, 1 << 20),
+          height: (item.image.height * scale).round().clamp(1, 1 << 20),
+        ),
+      ),
+  ];
 
   /// `scale == 1.0` returns [path] unchanged (the plain, un-suffixed
   /// tier every existing caller already expects); any other scale
@@ -226,20 +236,25 @@ class PackAssetsCommand extends Command<int> {
 
   List<_PackItem> _loadItems(Directory inputDir) {
     final items = <_PackItem>[];
-    final files = inputDir
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((f) => _imageExtensions.contains(p.extension(f.path).toLowerCase()))
-        .toList()
-      // Deterministic packing order regardless of filesystem iteration
-      // order -- otherwise the same input directory can pack into a
-      // different-shaped sheet from one run to the next, which would
-      // make the output PNG (and its git diff) churn for no reason.
-      ..sort((a, b) => a.path.compareTo(b.path));
+    final files =
+        inputDir
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where(
+              (f) =>
+                  _imageExtensions.contains(p.extension(f.path).toLowerCase()),
+            )
+            .toList()
+          // Deterministic packing order regardless of filesystem iteration
+          // order -- otherwise the same input directory can pack into a
+          // different-shaped sheet from one run to the next, which would
+          // make the output PNG (and its git diff) churn for no reason.
+          ..sort((a, b) => a.path.compareTo(b.path));
 
     for (final file in files) {
       final decoded = img.decodeImage(file.readAsBytesSync());
-      if (decoded == null) continue; // not actually a decodable image despite the extension
+      if (decoded == null)
+        continue; // not actually a decodable image despite the extension
       items.add(_PackItem(p.basenameWithoutExtension(file.path), decoded));
     }
     return items;
@@ -267,7 +282,11 @@ class PackAssetsCommand extends Command<int> {
   /// width for the grow-and-retry loop below, kept as the same CLI flag
   /// name/meaning (an initial size hint) since a caller relying on it to
   /// roughly bound sheet width shouldn't need to change anything.
-  _PackedSheet _pack(List<_PackItem> items, {required int padding, required int maxWidth}) {
+  _PackedSheet _pack(
+    List<_PackItem> items, {
+    required int padding,
+    required int maxWidth,
+  }) {
     // Every item's own placement footprint includes its trailing
     // padding, so free-rect splitting naturally leaves the right gap
     // between adjacent placements without special-casing it at draw
@@ -276,25 +295,45 @@ class PackAssetsCommand extends Command<int> {
       ..sort((a, b) {
         final areaCompare =
             (b.image.width + padding) * (b.image.height + padding) -
-                (a.image.width + padding) * (a.image.height + padding);
+            (a.image.width + padding) * (a.image.height + padding);
         return areaCompare != 0 ? areaCompare : a.name.compareTo(b.name);
       });
 
     final totalArea = sorted.fold<int>(
-        0, (sum, item) => sum + (item.image.width + padding) * (item.image.height + padding));
-    final maxItemWidth =
-        sorted.fold<int>(0, (m, item) => item.image.width + padding > m ? item.image.width + padding : m);
-    final maxItemHeight =
-        sorted.fold<int>(0, (m, item) => item.image.height + padding > m ? item.image.height + padding : m);
+      0,
+      (sum, item) =>
+          sum + (item.image.width + padding) * (item.image.height + padding),
+    );
+    final maxItemWidth = sorted.fold<int>(
+      0,
+      (m, item) =>
+          item.image.width + padding > m ? item.image.width + padding : m,
+    );
+    final maxItemHeight = sorted.fold<int>(
+      0,
+      (m, item) =>
+          item.image.height + padding > m ? item.image.height + padding : m,
+    );
 
-    var binWidth = [maxWidth, maxItemWidth, _ceilSqrt(totalArea)].reduce((a, b) => a > b ? a : b);
-    var binHeight = [maxItemHeight, _ceilSqrt(totalArea)].reduce((a, b) => a > b ? a : b);
+    var binWidth = [
+      maxWidth,
+      maxItemWidth,
+      _ceilSqrt(totalArea),
+    ].reduce((a, b) => a > b ? a : b);
+    var binHeight = [
+      maxItemHeight,
+      _ceilSqrt(totalArea),
+    ].reduce((a, b) => a > b ? a : b);
 
     Map<String, _Rect>? placements;
     // Grow-and-retry: an initial size estimate can still be too tight
     // for a particular mix of aspect ratios: capped, not unbounded, so
     // a genuine bug elsewhere can't spin forever.
-    for (var attempt = 0; attempt < maxPackingAttempts && placements == null; attempt++) {
+    for (
+      var attempt = 0;
+      attempt < maxPackingAttempts && placements == null;
+      attempt++
+    ) {
       placements = _tryPack(sorted, padding, binWidth, binHeight);
       if (placements == null) {
         binWidth = (binWidth * 1.25).ceil();
@@ -302,9 +341,11 @@ class PackAssetsCommand extends Command<int> {
       }
     }
     if (placements == null) {
-      throw StateError('pack-assets: failed to fit ${sorted.length} images after $maxPackingAttempts grow '
-          'attempts (last tried ${binWidth}x$binHeight) -- this should not happen; '
-          'please report it.');
+      throw StateError(
+        'pack-assets: failed to fit ${sorted.length} images after $maxPackingAttempts grow '
+        'attempts (last tried ${binWidth}x$binHeight) -- this should not happen; '
+        'please report it.',
+      );
     }
 
     var sheetWidth = 0;
@@ -318,11 +359,20 @@ class PackAssetsCommand extends Command<int> {
     sheetWidth += padding;
     sheetHeight += padding;
 
-    final sheet = img.Image(width: sheetWidth, height: sheetHeight, numChannels: 4);
+    final sheet = img.Image(
+      width: sheetWidth,
+      height: sheetHeight,
+      numChannels: 4,
+    );
     for (final item in sorted) {
       final rect = placements[item.name]!;
-      img.compositeImage(sheet, item.image,
-          dstX: rect.x, dstY: rect.y, blend: img.BlendMode.direct);
+      img.compositeImage(
+        sheet,
+        item.image,
+        dstX: rect.x,
+        dstY: rect.y,
+        blend: img.BlendMode.direct,
+      );
     }
 
     return _PackedSheet(sheet, placements);
@@ -332,7 +382,12 @@ class PackAssetsCommand extends Command<int> {
   /// `null` (never partial) the moment any item doesn't fit anywhere,
   /// so the caller can grow the bin and start clean rather than reason
   /// about a half-packed state.
-  Map<String, _Rect>? _tryPack(List<_PackItem> sorted, int padding, int binWidth, int binHeight) {
+  Map<String, _Rect>? _tryPack(
+    List<_PackItem> sorted,
+    int padding,
+    int binWidth,
+    int binHeight,
+  ) {
     final freeRects = <_Rect>[_Rect(0, 0, binWidth, binHeight)];
     final placements = <String, _Rect>{};
 
@@ -361,7 +416,12 @@ class PackAssetsCommand extends Command<int> {
 
       final chosen = freeRects[bestIndex];
       final placed = _Rect(chosen.x, chosen.y, w, h);
-      placements[item.name] = _Rect(placed.x, placed.y, item.image.width, item.image.height);
+      placements[item.name] = _Rect(
+        placed.x,
+        placed.y,
+        item.image.width,
+        item.image.height,
+      );
 
       // Split every free rect that overlaps the newly placed rect into
       // the (up to 4) leftover pieces around it, then drop the ones
@@ -377,15 +437,27 @@ class PackAssetsCommand extends Command<int> {
           next.add(_Rect(free.x, free.y, placed.x - free.x, free.h));
         }
         if (placed.x + placed.w < free.x + free.w) {
-          next.add(_Rect(
-              placed.x + placed.w, free.y, free.x + free.w - (placed.x + placed.w), free.h));
+          next.add(
+            _Rect(
+              placed.x + placed.w,
+              free.y,
+              free.x + free.w - (placed.x + placed.w),
+              free.h,
+            ),
+          );
         }
         if (placed.y > free.y) {
           next.add(_Rect(free.x, free.y, free.w, placed.y - free.y));
         }
         if (placed.y + placed.h < free.y + free.h) {
-          next.add(_Rect(
-              free.x, placed.y + placed.h, free.w, free.y + free.h - (placed.y + placed.h)));
+          next.add(
+            _Rect(
+              free.x,
+              placed.y + placed.h,
+              free.w,
+              free.y + free.h - (placed.y + placed.h),
+            ),
+          );
         }
       }
       freeRects

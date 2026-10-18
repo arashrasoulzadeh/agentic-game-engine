@@ -14,7 +14,8 @@ File _level(String json) {
 Directory _project(String levelJson, {String name = 'level.json'}) {
   final dir = Directory.systemTemp.createTempSync('studio_golden_proj');
   addTearDown(() => dir.deleteSync(recursive: true));
-  final levels = Directory('${dir.path}/assets/levels')..createSync(recursive: true);
+  final levels = Directory('${dir.path}/assets/levels')
+    ..createSync(recursive: true);
   File('${levels.path}/$name').writeAsStringSync(levelJson);
   return dir;
 }
@@ -48,15 +49,25 @@ void main() {
   group('validate', () {
     test('valid level: prints OK with entity count and exits 0', () async {
       final project = _project(_withPlayer);
-      final result = await runStudioCapture(['studio', 'validate', project.path]);
+      final result = await runStudioCapture([
+        'studio',
+        'validate',
+        project.path,
+      ]);
       expect(result.exitCode, 0);
       expect(result.stdout, contains('OK (1 entities)'));
       expect(result.stdout, contains('1 level(s): 0 error(s), 0 warning(s).'));
     });
 
     test('invalid level: prints error details and exits 1', () async {
-      final project = _project('{"entities": [{"components": {"position": {"x": "left"}}}]}');
-      final result = await runStudioCapture(['studio', 'validate', project.path]);
+      final project = _project(
+        '{"entities": [{"components": {"position": {"x": "left"}}}]}',
+      );
+      final result = await runStudioCapture([
+        'studio',
+        'validate',
+        project.path,
+      ]);
       expect(result.exitCode, 1);
       expect(result.stdout, contains('error:'));
       expect(result.stdout, contains('x must be a number'));
@@ -73,7 +84,12 @@ void main() {
 }
 ''';
       final project = _project(walled);
-      final result = await runStudioCapture(['studio', 'validate', project.path, '--strict']);
+      final result = await runStudioCapture([
+        'studio',
+        'validate',
+        project.path,
+        '--strict',
+      ]);
       expect(result.exitCode, 1);
       expect(result.stdout, contains('warning:'));
       expect(result.stdout, contains('not reachable'));
@@ -83,21 +99,37 @@ void main() {
   group('add-entity', () {
     test('prints added entity message', () async {
       final file = _level(_empty);
-      final result = await runStudioCapture(['studio', 'add-entity', file.path, '--name', 'coin']);
+      final result = await runStudioCapture([
+        'studio',
+        'add-entity',
+        file.path,
+        '--name',
+        'coin',
+      ]);
       expect(result.exitCode, 0);
       expect(result.stdout, 'Added entity coin to ${file.path}.\n');
     });
 
     test('prints message without name when none given', () async {
       final file = _level(_empty);
-      final result = await runStudioCapture(['studio', 'add-entity', file.path]);
+      final result = await runStudioCapture([
+        'studio',
+        'add-entity',
+        file.path,
+      ]);
       expect(result.exitCode, 0);
       expect(result.stdout, 'Added entity to ${file.path}.\n');
     });
 
     test('unknown component: prints error to stderr and exits 1', () async {
       final file = _level(_empty);
-      final result = await runStudioCapture(['studio', 'add-entity', file.path, '--component', 'warpDrive']);
+      final result = await runStudioCapture([
+        'studio',
+        'add-entity',
+        file.path,
+        '--component',
+        'warpDrive',
+      ]);
       expect(result.exitCode, 1);
       expect(result.stderr, contains('unknown component'));
     });
@@ -106,14 +138,26 @@ void main() {
   group('remove-entity', () {
     test('prints removed entity message', () async {
       final file = _level(_withPlayer);
-      final result = await runStudioCapture(['studio', 'remove-entity', file.path, '--entity', 'player']);
+      final result = await runStudioCapture([
+        'studio',
+        'remove-entity',
+        file.path,
+        '--entity',
+        'player',
+      ]);
       expect(result.exitCode, 0);
       expect(result.stdout, 'Removed entity player from ${file.path}.\n');
     });
 
     test('missing entity: prints error to stderr and exits 1', () async {
       final file = _level(_withPlayer);
-      final result = await runStudioCapture(['studio', 'remove-entity', file.path, '--entity', 'nobody']);
+      final result = await runStudioCapture([
+        'studio',
+        'remove-entity',
+        file.path,
+        '--entity',
+        'nobody',
+      ]);
       expect(result.exitCode, 1);
       expect(result.stderr, contains('no entity named'));
     });
@@ -123,11 +167,17 @@ void main() {
     test('prints set field message', () async {
       final file = _level(_withPlayer);
       final result = await runStudioCapture([
-        'studio', 'set-field', file.path,
-        '--entity', 'player',
-        '--component', 'position',
-        '--field', 'x',
-        '--value', '99',
+        'studio',
+        'set-field',
+        file.path,
+        '--entity',
+        'player',
+        '--component',
+        'position',
+        '--field',
+        'x',
+        '--value',
+        '99',
       ]);
       expect(result.exitCode, 0);
       expect(result.stdout, 'Set player.position.x in ${file.path}.\n');
@@ -136,11 +186,17 @@ void main() {
     test('invalid value: prints error to stderr and exits 1', () async {
       final file = _level(_withPlayer);
       final result = await runStudioCapture([
-        'studio', 'set-field', file.path,
-        '--entity', 'player',
-        '--component', 'position',
-        '--field', 'x',
-        '--value', '"not a number"',
+        'studio',
+        'set-field',
+        file.path,
+        '--entity',
+        'player',
+        '--component',
+        'position',
+        '--field',
+        'x',
+        '--value',
+        '"not a number"',
       ]);
       expect(result.exitCode, 1);
       expect(result.stderr, contains('would make'));
@@ -152,10 +208,15 @@ void main() {
     test('prints moved entity message', () async {
       final file = _level(_withPlayer);
       final result = await runStudioCapture([
-        'studio', 'move-entity', file.path,
-        '--entity', 'player',
-        '--x', '40',
-        '--y', '50',
+        'studio',
+        'move-entity',
+        file.path,
+        '--entity',
+        'player',
+        '--x',
+        '40',
+        '--y',
+        '50',
       ]);
       expect(result.exitCode, 0);
       expect(result.stdout, 'Moved player to (40.0, 50.0) in ${file.path}.\n');
@@ -172,10 +233,15 @@ void main() {
 }
 ''');
       final result = await runStudioCapture([
-        'studio', 'set-layer', file.path,
-        '--entity', 'coin',
-        '--component', 'sprite',
-        '--z-index', '5',
+        'studio',
+        'set-layer',
+        file.path,
+        '--entity',
+        'coin',
+        '--component',
+        'sprite',
+        '--z-index',
+        '5',
       ]);
       expect(result.exitCode, 0);
       expect(result.stdout, 'Set coin.sprite.zIndex to 5 in ${file.path}.\n');
@@ -186,11 +252,17 @@ void main() {
     test('prints paint tile message', () async {
       final file = _level(_withTileMap);
       final result = await runStudioCapture([
-        'studio', 'paint-tile', file.path,
-        '--entity', 'map',
-        '--col', '0',
-        '--row', '0',
-        '--tile-id', '1',
+        'studio',
+        'paint-tile',
+        file.path,
+        '--entity',
+        'map',
+        '--col',
+        '0',
+        '--row',
+        '0',
+        '--tile-id',
+        '1',
       ]);
       expect(result.exitCode, 0);
       expect(result.stdout, 'Set tile (0, 0) to 1 on map in ${file.path}.\n');
@@ -201,14 +273,23 @@ void main() {
     test('prints fill region message', () async {
       final file = _level(_withTileMap);
       final result = await runStudioCapture([
-        'studio', 'fill-region', file.path,
-        '--entity', 'map',
-        '--col', '0',
-        '--row', '0',
-        '--tile-id', '2',
+        'studio',
+        'fill-region',
+        file.path,
+        '--entity',
+        'map',
+        '--col',
+        '0',
+        '--row',
+        '0',
+        '--tile-id',
+        '2',
       ]);
       expect(result.exitCode, 0);
-      expect(result.stdout, 'Filled region at (0, 0) with 2 on map in ${file.path}.\n');
+      expect(
+        result.stdout,
+        'Filled region at (0, 0) with 2 on map in ${file.path}.\n',
+      );
     });
   });
 
@@ -216,7 +297,7 @@ void main() {
     test('prints written path with dimensions', () async {
       final dir = Directory.systemTemp.createTempSync('studio_import_golden');
       addTearDown(() => dir.deleteSync(recursive: true));
-      
+
       const tmx = '''
 <map version="1.10" orientation="orthogonal" width="2" height="2" tilewidth="10" tileheight="10">
  <tileset firstgid="1" name="tiles" tilewidth="10" tileheight="10" tilecount="2" columns="2">
@@ -232,7 +313,13 @@ void main() {
 </map>
 ''';
       final tmxFile = File('${dir.path}/map.tmx')..writeAsStringSync(tmx);
-      final result = await runStudioCapture(['studio', 'import-tmx', tmxFile.path, '--project', dir.path]);
+      final result = await runStudioCapture([
+        'studio',
+        'import-tmx',
+        tmxFile.path,
+        '--project',
+        dir.path,
+      ]);
       expect(result.exitCode, 0);
       expect(result.stdout, contains('Wrote'));
       expect(result.stdout, contains('2x2 tiles'));
@@ -242,7 +329,11 @@ void main() {
   group('export-levels', () {
     test('prints written message for each level', () async {
       final project = _project(_withPlayer, name: 'main.level.json');
-      final result = await runStudioCapture(['studio', 'export-levels', project.path]);
+      final result = await runStudioCapture([
+        'studio',
+        'export-levels',
+        project.path,
+      ]);
       expect(result.exitCode, 0);
       expect(result.stdout, contains('written in canonical form'));
     });
@@ -253,10 +344,15 @@ void main() {
       final dir = Directory.systemTemp.createTempSync('studio_manifest');
       addTearDown(() => dir.deleteSync(recursive: true));
       File('${dir.path}/pubspec.yaml').writeAsStringSync('name: test_game\n');
-      final levels = Directory('${dir.path}/assets/levels')..createSync(recursive: true);
+      final levels = Directory('${dir.path}/assets/levels')
+        ..createSync(recursive: true);
       File('${levels.path}/main.level.json').writeAsStringSync(_withPlayer);
-      
-      final result = await runStudioCapture(['studio', 'project-manifest', dir.path]);
+
+      final result = await runStudioCapture([
+        'studio',
+        'project-manifest',
+        dir.path,
+      ]);
       expect(result.exitCode, 0);
       expect(result.stdout, contains('Wrote'));
       expect(result.stdout, contains('1 level(s)'));

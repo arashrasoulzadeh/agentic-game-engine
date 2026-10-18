@@ -25,19 +25,22 @@ class LintCommand extends Command<int> {
   @override
   final name = 'lint';
   @override
-  final description = 'Validate a level/content JSON file without running the game.';
+  final description =
+      'Validate a level/content JSON file without running the game.';
 
   LintCommand() {
     argParser.addOption(
       'render',
-      help: 'Also rasterize the level\'s TileMap (plus a marker per '
+      help:
+          'Also rasterize the level\'s TileMap (plus a marker per '
           'entity with a position) to a PNG at this path, so a human or '
           'agent can see the level\'s shape without running the game. '
           'Errors if the level has no tileMap component.',
     );
     argParser.addFlag(
       'playable',
-      help: 'Also check that every positioned entity is reachable from the '
+      help:
+          'Also check that every positioned entity is reachable from the '
           'spawn point (an entity whose name contains "player" or "spawn", '
           'case-insensitive) by walking, falling, and jumping over the '
           'TileMap -- the same heuristic the studio\'s own validator uses, '
@@ -53,7 +56,9 @@ class LintCommand extends Command<int> {
   Future<int> run() async {
     final args = argResults!;
     if (args.rest.isEmpty) {
-      usageException('Missing file path, e.g. `game_agent lint assets/level1.json`');
+      usageException(
+        'Missing file path, e.g. `game_agent lint assets/level1.json`',
+      );
     }
 
     final file = File(args.rest.first);
@@ -108,7 +113,8 @@ class LintCommand extends Command<int> {
     Map<String, dynamic>? tileMapJson;
     final positioned = <(String name, double x, double y)>[];
     for (final entity in entities) {
-      final components = entity['components'] as Map<String, dynamic>? ?? const {};
+      final components =
+          entity['components'] as Map<String, dynamic>? ?? const {};
       final position = components['position'] as Map<String, dynamic>?;
       final tileMap = components['tileMap'] as Map<String, dynamic>?;
       if (tileMap != null) tileMapJson = tileMap;
@@ -122,13 +128,17 @@ class LintCommand extends Command<int> {
     }
 
     if (tileMapJson == null) {
-      stderr.writeln('Error: --playable requires a "tileMap" component somewhere in this level; none found.');
+      stderr.writeln(
+        'Error: --playable requires a "tileMap" component somewhere in this level; none found.',
+      );
       return 1;
     }
     final map = TileMap.fromJson(tileMapJson);
 
     final spawnIndex = positioned.indexWhere(
-      (e) => e.$1.toLowerCase().contains('player') || e.$1.toLowerCase().contains('spawn'),
+      (e) =>
+          e.$1.toLowerCase().contains('player') ||
+          e.$1.toLowerCase().contains('spawn'),
     );
     if (spawnIndex == -1) {
       stderr.writeln(
@@ -147,7 +157,9 @@ class LintCommand extends Command<int> {
       targetY: spawn.$3,
     );
     if (spawnOnSolidTile) {
-      stderr.writeln('Error: --playable spawn entity "${spawn.$1}" sits on a solid tile.');
+      stderr.writeln(
+        'Error: --playable spawn entity "${spawn.$1}" sits on a solid tile.',
+      );
       return 1;
     }
 
@@ -172,7 +184,9 @@ class LintCommand extends Command<int> {
       );
       return 1;
     }
-    stdout.writeln('--playable: OK (all ${positioned.length - 1} other entities reachable from "${spawn.$1}")');
+    stdout.writeln(
+      '--playable: OK (all ${positioned.length - 1} other entities reachable from "${spawn.$1}")',
+    );
     return 0;
   }
 
@@ -180,7 +194,8 @@ class LintCommand extends Command<int> {
     Map<String, dynamic>? tileMapJson;
     final positions = <(double x, double y, String? name)>[];
     for (final entity in entities) {
-      final components = entity['components'] as Map<String, dynamic>? ?? const {};
+      final components =
+          entity['components'] as Map<String, dynamic>? ?? const {};
       final position = components['position'] as Map<String, dynamic>?;
       final tileMap = components['tileMap'] as Map<String, dynamic>?;
       if (tileMap != null) {
@@ -195,12 +210,17 @@ class LintCommand extends Command<int> {
     }
 
     if (tileMapJson == null) {
-      stderr.writeln('Error: --render requires a "tileMap" component somewhere in this level; none found.');
+      stderr.writeln(
+        'Error: --render requires a "tileMap" component somewhere in this level; none found.',
+      );
       return 1;
     }
 
     final map = TileMap.fromJson(tileMapJson);
-    final image = img.Image(width: map.cols * _pixelsPerTile, height: map.rows * _pixelsPerTile);
+    final image = img.Image(
+      width: map.cols * _pixelsPerTile,
+      height: map.rows * _pixelsPerTile,
+    );
     img.fill(image, color: _emptyColor);
 
     for (var row = 0; row < map.rows; row++) {
@@ -210,10 +230,10 @@ class LintCommand extends Command<int> {
         final color = map.isSolid(col, row)
             ? _solidColor
             : map.isOneWay(col, row)
-                ? _oneWayColor
-                : (map.isSlopeUpRight(col, row) || map.isSlopeUpLeft(col, row))
-                    ? _slopeColor
-                    : _emptyColor; // a tile id with no recognized collision kind
+            ? _oneWayColor
+            : (map.isSlopeUpRight(col, row) || map.isSlopeUpLeft(col, row))
+            ? _slopeColor
+            : _emptyColor; // a tile id with no recognized collision kind
         img.fillRect(
           image,
           x1: col * _pixelsPerTile,
@@ -235,12 +255,21 @@ class LintCommand extends Command<int> {
       final py = (y * scaleY).round();
       img.fillCircle(image, x: px, y: py, radius: 3, color: _entityMarkerColor);
       if (name != null) {
-        img.drawString(image, name, font: img.arial14, x: px + 5, y: py - 6, color: _entityMarkerColor);
+        img.drawString(
+          image,
+          name,
+          font: img.arial14,
+          x: px + 5,
+          y: py - 6,
+          color: _entityMarkerColor,
+        );
       }
     }
 
     File(outputPath).writeAsBytesSync(img.encodePng(image));
-    stdout.writeln('$outputPath: rendered (${map.cols}x${map.rows} tiles, ${positions.length} entity markers)');
+    stdout.writeln(
+      '$outputPath: rendered (${map.cols}x${map.rows} tiles, ${positions.length} entity markers)',
+    );
     return 0;
   }
 }

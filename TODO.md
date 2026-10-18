@@ -174,7 +174,8 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 ### Stretch (not scheduled)
 
 - [ ] **7.1** Live reload of levels into a running game over a local socket.
-- [ ] **7.2** Git-aware diff/merge view for level JSON.
+- [ ] **7.2 (remaining)** A visual diff/merge view in the studio (the engine-side `diffLevels` /
+      `mergeLevels`, `studio diff` / `studio merge` and a git merge-driver recipe are done).
 - [ ] **7.3** Collaborative editing via a shared project folder with lock
       files.
 - [ ] **7.4** Embedded play-test in a studio panel (decision D4 alternative).

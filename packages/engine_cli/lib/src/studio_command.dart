@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
 import 'studio_asset_commands.dart';
+import 'studio_diff_commands.dart';
 import 'studio_edit_commands.dart';
 
 /// `game_agent studio ...`: headless tools for the level editor's data, so CI
@@ -26,6 +27,7 @@ class StudioCommand extends Command<int> {
     addSubcommand(StudioProjectManifestCommand());
     addStudioEditCommands(this);
     addStudioAssetCommands(this);
+    addStudioDiffCommands(this);
   }
 }
 

@@ -9,11 +9,13 @@ void main() {
     addTearDown(() => tmp.deleteSync(recursive: true));
 
     final source = Directory('${tmp.path}/source')..createSync();
-    File('${source.path}/pubspec.yaml.tmpl')
-        .writeAsStringSync('name: {{PROJECT_NAME}}\n');
+    File(
+      '${source.path}/pubspec.yaml.tmpl',
+    ).writeAsStringSync('name: {{PROJECT_NAME}}\n');
     Directory('${source.path}/lib').createSync();
-    File('${source.path}/lib/main.dart.tmpl')
-        .writeAsStringSync('// {{PROJECT_NAME}} entry point\n');
+    File(
+      '${source.path}/lib/main.dart.tmpl',
+    ).writeAsStringSync('// {{PROJECT_NAME}} entry point\n');
 
     final dest = Directory('${tmp.path}/dest');
     copyTemplate(source, dest, {'PROJECT_NAME': 'my_game'});

@@ -111,6 +111,28 @@ so an agent can edit levels without opening a UI.
 | `set-field` | Set one field of one component (creates the component if absent). |
 | `set-layer` | Set an entity's draw-order `zIndex`. |
 | `paint-tile` / `fill-region` | Edit a `tileMap` (tile id `0` erases). |
-| `import-tmx` | Convert a Tiled `.tmx` map into a level file. |
+| `import-tmx` / `export-tmx` | Convert a Tiled `.tmx` map to a level file and back. |
+| `save-prefab` / `place-prefab` | Save an entity as `prefabs/<name>.json`; place a prefab into a level. |
+| `diff` | What differs between two level files, by entity and component (`--json`, `--exit-code`). |
+| `merge` | Three-way merge `<base> <ours> <theirs>` by entity and component; exits 1 on conflict. |
 | `export-levels` | Rewrite level files in canonical form (validated first). |
 | `project-manifest` | Write or update `project.json`. |
+
+### Merging level files in git
+
+Level JSON merges badly line by line (a moved entity and an edited health bar collide on a line
+neighbour). `studio merge` merges by entity and component instead, and writes the result over
+**ours** the way a git merge driver must:
+
+```gitattributes
+# .gitattributes
+*.level.json merge=level
+```
+
+```bash
+git config merge.level.name "game_agent level merge"
+git config merge.level.driver "game_agent studio merge %O %A %B"
+```
+
+Entities are matched by `name`; give the ones that matter a name. Where both sides changed the same
+component differently, ours is kept and the exit code is 1, so git marks the file conflicted.

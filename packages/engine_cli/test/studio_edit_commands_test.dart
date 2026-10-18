@@ -52,12 +52,7 @@ void main() {
     test('a --component starts at its schema defaults', () async {
       final file = _level(_empty);
       expect(
-        await runStudio([
-          'add-entity',
-          file.path,
-          '--component',
-          'pushable',
-        ]),
+        await runStudio(['add-entity', file.path, '--component', 'pushable']),
         0,
       );
       final entity = (_read(file)['entities'] as List).single as Map;
@@ -151,26 +146,29 @@ void main() {
       expect(roomExit['targetSceneId'], 'cave');
     });
 
-    test('a value that makes the level invalid is rejected, nothing written', () async {
-      final file = _level(_withPlayer);
-      final before = file.readAsStringSync();
-      expect(
-        await runStudio([
-          'set-field',
-          file.path,
-          '--entity',
-          'player',
-          '--component',
-          'position',
-          '--field',
-          'x',
-          '--value',
-          '"not a number"',
-        ]),
-        1,
-      );
-      expect(file.readAsStringSync(), before);
-    });
+    test(
+      'a value that makes the level invalid is rejected, nothing written',
+      () async {
+        final file = _level(_withPlayer);
+        final before = file.readAsStringSync();
+        expect(
+          await runStudio([
+            'set-field',
+            file.path,
+            '--entity',
+            'player',
+            '--component',
+            'position',
+            '--field',
+            'x',
+            '--value',
+            '"not a number"',
+          ]),
+          1,
+        );
+        expect(file.readAsStringSync(), before);
+      },
+    );
   });
 
   group('move-entity', () {

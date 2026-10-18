@@ -21,8 +21,8 @@ const _enginePackageNames = [
 /// capturing the `ref:` line so it can be swapped in place without
 /// disturbing the rest of pubspec.yaml.
 RegExp _refPatternFor(String packageName) => RegExp(
-      '($packageName:\\s*\\n\\s*git:\\s*\\n\\s*url:[^\\n]*\\n\\s*path:[^\\n]*\\n\\s*ref:\\s*)(\\S+)',
-    );
+  '($packageName:\\s*\\n\\s*git:\\s*\\n\\s*url:[^\\n]*\\n\\s*path:[^\\n]*\\n\\s*ref:\\s*)(\\S+)',
+);
 
 class UpgradeCommand extends Command<int> {
   @override
@@ -35,10 +35,12 @@ class UpgradeCommand extends Command<int> {
 
   /// Inject process execution to validate upgrades without fetching packages.
   UpgradeCommand({CommandProcessRunner runProcess = runStreamed})
-      : _runProcess = runProcess {
-    argParser.addOption('ref',
-        defaultsTo: 'main',
-        help: 'Git ref (branch or tag) to upgrade engine packages to.');
+    : _runProcess = runProcess {
+    argParser.addOption(
+      'ref',
+      defaultsTo: 'main',
+      help: 'Git ref (branch or tag) to upgrade engine packages to.',
+    );
   }
 
   @override
@@ -46,7 +48,8 @@ class UpgradeCommand extends Command<int> {
     final pubspecFile = File('pubspec.yaml');
     if (!pubspecFile.existsSync()) {
       stderr.writeln(
-          'Error: no pubspec.yaml in the current directory. Run this inside a project created by `game_agent create`.');
+        'Error: no pubspec.yaml in the current directory. Run this inside a project created by `game_agent create`.',
+      );
       return 1;
     }
 
@@ -74,8 +77,9 @@ class UpgradeCommand extends Command<int> {
 
     if (!foundAny) {
       stderr.writeln(
-          'Error: could not find any engine package git dependency in pubspec.yaml. '
-          'This project may not have been created by `game_agent create`.');
+        'Error: could not find any engine package git dependency in pubspec.yaml. '
+        'This project may not have been created by `game_agent create`.',
+      );
       return 1;
     }
 

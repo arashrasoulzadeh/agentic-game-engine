@@ -49,41 +49,32 @@ class BuildReleaseCommand extends Command<int> {
       )
       ..addOption(
         'build-name',
-        help: 'Build name (version name, e.g., "1.0.0"). Reads from pubspec.yaml if not provided.',
+        help:
+            'Build name (version name, e.g., "1.0.0"). Reads from pubspec.yaml if not provided.',
       )
       ..addOption(
         'build-number',
-        help: 'Build number (version code, e.g., "1"). Reads from pubspec.yaml if not provided.',
+        help:
+            'Build number (version code, e.g., "1"). Reads from pubspec.yaml if not provided.',
       )
       // Android signing options
       ..addOption(
         'keystore-path',
         help: 'Path to Android keystore file (.jks/.keystore).',
       )
-      ..addOption(
-        'keystore-password',
-        help: 'Keystore password.',
-      )
-      ..addOption(
-        'key-alias',
-        help: 'Key alias in keystore.',
-      )
-      ..addOption(
-        'key-password',
-        help: 'Key password.',
-      )
+      ..addOption('keystore-password', help: 'Keystore password.')
+      ..addOption('key-alias', help: 'Key alias in keystore.')
+      ..addOption('key-password', help: 'Key password.')
       // iOS signing options
-      ..addOption(
-        'team-id',
-        help: 'Apple Team ID for iOS signing.',
-      )
+      ..addOption('team-id', help: 'Apple Team ID for iOS signing.')
       ..addOption(
         'provisioning-profile',
         help: 'Path to provisioning profile (.mobileprovision).',
       )
       ..addOption(
         'codesign-identity',
-        help: 'Code signing identity (e.g., "Apple Distribution: Company Name").',
+        help:
+            'Code signing identity (e.g., "Apple Distribution: Company Name").',
       )
       ..addOption(
         'export-options-plist',
@@ -96,7 +87,8 @@ class BuildReleaseCommand extends Command<int> {
       )
       ..addFlag(
         'split-per-abi',
-        help: 'Split Android AAB per ABI (smaller downloads, larger total size).',
+        help:
+            'Split Android AAB per ABI (smaller downloads, larger total size).',
         defaultsTo: false,
       )
       ..addFlag(
@@ -126,7 +118,9 @@ class BuildReleaseCommand extends Command<int> {
     final dryRun = args['dry-run'] as bool;
 
     if (!projectDir.existsSync()) {
-      stderr.writeln('Error: Project directory ${projectDir.path} does not exist.');
+      stderr.writeln(
+        'Error: Project directory ${projectDir.path} does not exist.',
+      );
       return 1;
     }
 
@@ -140,7 +134,9 @@ class BuildReleaseCommand extends Command<int> {
     final pubspec = loadYaml(pubspecContent) as Map<dynamic, dynamic>;
     final pubspecVersion = pubspec['version'] as String? ?? '1.0.0+1';
     final versionParts = pubspecVersion.split('+');
-    final pubspecBuildName = versionParts.isNotEmpty ? versionParts[0] : '1.0.0';
+    final pubspecBuildName = versionParts.isNotEmpty
+        ? versionParts[0]
+        : '1.0.0';
     final pubspecBuildNumber = versionParts.length > 1 ? versionParts[1] : '1';
 
     final resolvedBuildName = buildName ?? pubspecBuildName;
@@ -218,7 +214,8 @@ class BuildReleaseCommand extends Command<int> {
     }
 
     // Android signing
-    final useSigning = keystorePath != null &&
+    final useSigning =
+        keystorePath != null &&
         keystorePassword != null &&
         keyAlias != null &&
         keyPassword != null;
@@ -234,7 +231,9 @@ class BuildReleaseCommand extends Command<int> {
       args.add('--key-alias=$keyAlias');
       args.add('--key-password=$keyPassword');
     } else if (!dryRun) {
-      stdout.writeln('Warning: Android keystore not provided, building unsigned AAB.');
+      stdout.writeln(
+        'Warning: Android keystore not provided, building unsigned AAB.',
+      );
     }
 
     if (splitPerAbi) {
@@ -283,16 +282,21 @@ class BuildReleaseCommand extends Command<int> {
       if (provisioningProfile != null) {
         final profileFile = File(provisioningProfile);
         if (!profileFile.existsSync()) {
-          stderr.writeln('Error: Provisioning profile not found at $provisioningProfile');
+          stderr.writeln(
+            'Error: Provisioning profile not found at $provisioningProfile',
+          );
           return 1;
         }
         args.add('--provisioning-profile=$provisioningProfile');
       }
-      if (codesignIdentity != null) args.add('--codesign-identity=$codesignIdentity');
+      if (codesignIdentity != null)
+        args.add('--codesign-identity=$codesignIdentity');
       if (exportOptionsPlist != null) {
         final plistFile = File(exportOptionsPlist);
         if (!plistFile.existsSync()) {
-          stderr.writeln('Error: ExportOptions.plist not found at $exportOptionsPlist');
+          stderr.writeln(
+            'Error: ExportOptions.plist not found at $exportOptionsPlist',
+          );
           return 1;
         }
         args.add('--export-options-plist=$exportOptionsPlist');
@@ -306,7 +310,11 @@ class BuildReleaseCommand extends Command<int> {
     return _runCommand(projectDir.path, args, dryRun);
   }
 
-  Future<int> _runCommand(String workingDir, List<String> args, bool dryRun) async {
+  Future<int> _runCommand(
+    String workingDir,
+    List<String> args,
+    bool dryRun,
+  ) async {
     final cmd = args.join(' ');
     stdout.writeln('Running: $cmd');
     if (dryRun) {

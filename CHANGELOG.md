@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Level diff and merge: `diffLevels`, `mergeLevels` (`engine_core`) and `game_agent studio diff` / `studio merge`, usable as a git merge driver. Entities match by name; conflicts keep ours and exit 1.
 - Studio: a **Run game** button starts the project's own game as a separate process on the level being edited (unsaved edits included); failures are shown, not thrown.
 - Studio: a Profiler switch in the preview shows live `WorldProfiler` data - step time, entity count, a step-time sparkline and the slowest systems.
 - Networking: interest management. `StateSyncServer.addClient(interest: ...)` sends a client only the entities a rule admits (`nearbyInterest` for radius-based views); deltas are taken against what that client was sent, so departures are removed cleanly.

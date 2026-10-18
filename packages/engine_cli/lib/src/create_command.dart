@@ -21,27 +21,39 @@ class CreateCommand extends Command<int> {
   CreateCommand({
     CommandProcessRunner runProcess = runStreamed,
     Directory Function(String) findTemplate = templateRoot,
-  }) : _runProcess = runProcess, _findTemplate = findTemplate {
+  }) : _runProcess = runProcess,
+       _findTemplate = findTemplate {
     argParser
-      ..addOption('template',
-          defaultsTo: 'default_game',
-          allowed: ['default_game', 'strategy_game'],
-          allowedHelp: {
-            'default_game': 'A 2D platformer starter.',
-            'strategy_game': 'A turn-based strategy skirmish (engine_strategy).',
-          },
-          help: 'Which starter project to generate.')
-      ..addOption('org',
-          defaultsTo: 'com.example',
-          help: 'Reverse-domain org for Android/iOS bundle ids.')
-      ..addOption('output-dir',
-          defaultsTo: '.', help: 'Directory to create the project in.')
-      ..addOption('engine-repo',
-          defaultsTo: defaultEngineRepoUrl,
-          help: 'Git URL of the engine repo to depend on.')
-      ..addOption('ref',
-          defaultsTo: 'main',
-          help: 'Git ref (branch or tag) of engine_core to pin to.');
+      ..addOption(
+        'template',
+        defaultsTo: 'default_game',
+        allowed: ['default_game', 'strategy_game'],
+        allowedHelp: {
+          'default_game': 'A 2D platformer starter.',
+          'strategy_game': 'A turn-based strategy skirmish (engine_strategy).',
+        },
+        help: 'Which starter project to generate.',
+      )
+      ..addOption(
+        'org',
+        defaultsTo: 'com.example',
+        help: 'Reverse-domain org for Android/iOS bundle ids.',
+      )
+      ..addOption(
+        'output-dir',
+        defaultsTo: '.',
+        help: 'Directory to create the project in.',
+      )
+      ..addOption(
+        'engine-repo',
+        defaultsTo: defaultEngineRepoUrl,
+        help: 'Git URL of the engine repo to depend on.',
+      )
+      ..addOption(
+        'ref',
+        defaultsTo: 'main',
+        help: 'Git ref (branch or tag) of engine_core to pin to.',
+      );
   }
 
   @override
@@ -66,32 +78,26 @@ class CreateCommand extends Command<int> {
     }
 
     stdout.writeln('Running flutter create...');
-    await _runProcess(
-      'flutter',
-      [
-        'create',
-        '--platforms=android,ios,web',
-        '--org',
-        args['org'] as String,
-        projectName,
-      ],
-      workingDirectory: outputDir,
-    );
+    await _runProcess('flutter', [
+      'create',
+      '--platforms=android,ios,web',
+      '--org',
+      args['org'] as String,
+      projectName,
+    ], workingDirectory: outputDir);
 
     stdout.writeln('Wiring up engine_core...');
-    copyTemplate(
-      _findTemplate(args['template'] as String),
-      projectDir,
-      {
-        'PROJECT_NAME': projectName,
-        'ENGINE_REPO_URL': args['engine-repo'] as String,
-        'ENGINE_REF': args['ref'] as String,
-      },
-    );
+    copyTemplate(_findTemplate(args['template'] as String), projectDir, {
+      'PROJECT_NAME': projectName,
+      'ENGINE_REPO_URL': args['engine-repo'] as String,
+      'ENGINE_REF': args['ref'] as String,
+    });
 
     stdout.writeln('Fetching packages...');
-    await _runProcess('flutter', ['pub', 'get'],
-        workingDirectory: projectDir.path);
+    await _runProcess('flutter', [
+      'pub',
+      'get',
+    ], workingDirectory: projectDir.path);
 
     stdout.writeln('''
 

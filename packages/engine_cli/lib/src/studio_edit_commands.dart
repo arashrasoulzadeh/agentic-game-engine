@@ -142,7 +142,8 @@ class StudioAddEntityCommand extends Command<int> {
       ..addOption('name', help: "The new entity's name.")
       ..addMultiOption(
         'component',
-        help: 'A component to give the entity, at its schema defaults. Repeatable.',
+        help:
+            'A component to give the entity, at its schema defaults. Repeatable.',
       )
       ..addOption('index', help: 'Position to insert at. Defaults to the end.');
   }
@@ -255,7 +256,10 @@ class StudioSetFieldCommand extends Command<int> {
     final component = argResults!['component'] as String?;
     final field = argResults!['field'] as String?;
     final valueText = argResults!['value'] as String?;
-    if (entityName == null || component == null || field == null || valueText == null) {
+    if (entityName == null ||
+        component == null ||
+        field == null ||
+        valueText == null) {
       stderr.writeln(
         'Error: --entity, --component, --field, and --value are all required.',
       );
@@ -360,8 +364,11 @@ class StudioSetLayerCommand extends Command<int> {
     final zIndex = parseIntOption('z-index', argResults!['z-index'] as String?);
     if (zIndex == null) return 1;
 
-    SetLayerCommand(entity: entity, component: component, zIndex: zIndex)
-        .apply(document);
+    SetLayerCommand(
+      entity: entity,
+      component: component,
+      zIndex: zIndex,
+    ).apply(document);
     if (!validateAndWrite(path, document)) return 1;
     stdout.writeln('Set $entityName.$component.zIndex to $zIndex in $path.');
     return 0;
@@ -420,8 +427,12 @@ class StudioPaintTileCommand extends Command<int> {
     if (col == null || row == null || tileId == null) return 1;
 
     _ensureFlatTileMap(document, entity);
-    SetTileCommand(entity: entity, col: col, row: row, tileId: tileId)
-        .apply(document);
+    SetTileCommand(
+      entity: entity,
+      col: col,
+      row: row,
+      tileId: tileId,
+    ).apply(document);
     if (!validateAndWrite(path, document)) return 1;
     stdout.writeln('Set tile ($col, $row) to $tileId on $entityName in $path.');
     return 0;
@@ -470,10 +481,16 @@ class StudioFillRegionCommand extends Command<int> {
     if (col == null || row == null || tileId == null) return 1;
 
     _ensureFlatTileMap(document, entity);
-    FillRegionCommand(entity: entity, col: col, row: row, tileId: tileId)
-        .apply(document);
+    FillRegionCommand(
+      entity: entity,
+      col: col,
+      row: row,
+      tileId: tileId,
+    ).apply(document);
     if (!validateAndWrite(path, document)) return 1;
-    stdout.writeln('Filled region at ($col, $row) with $tileId on $entityName in $path.');
+    stdout.writeln(
+      'Filled region at ($col, $row) with $tileId on $entityName in $path.',
+    );
     return 0;
   }
 }
