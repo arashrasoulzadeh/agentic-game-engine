@@ -38,7 +38,11 @@ void main() {
         }
       }
 
-      expect(found, isNotEmpty, reason: 'the server finds Hero and its members');
+      expect(
+        found,
+        isNotEmpty,
+        reason: 'the server finds Hero and its members',
+      );
       final names = found.map((s) => s.name).toList();
       expect(names, containsAll(['Hero', 'health', 'jump']));
 
@@ -56,17 +60,16 @@ void main() {
     timeout: const Timeout(Duration(minutes: 2)),
   );
 
-  testWidgets(
-    'the outline button is absent with no language server',
-    (tester) async {
-      final path = '${root.path}/lib/hero.dart';
-      await tester.pumpWidget(
-        MaterialApp(
-          home: CodeEditorScreen(filePath: path, useLanguageServer: false),
-        ),
-      );
-      expect(find.byKey(const Key('code-outline')), findsNothing);
-      expect(find.byKey(const Key('outline-panel')), findsNothing);
-    },
-  );
+  testWidgets('the outline button is absent with no language server', (
+    tester,
+  ) async {
+    final path = '${root.path}/lib/hero.dart';
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CodeEditorScreen(filePath: path, useLanguageServer: false),
+      ),
+    );
+    expect(find.byKey(const Key('code-outline')), findsNothing);
+    expect(find.byKey(const Key('outline-panel')), findsNothing);
+  });
 }

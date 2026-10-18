@@ -4,13 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('addNode', () {
-    test('adds a node at the given position, and the first one becomes the entry', () {
-      final editor = GraphEditor();
-      final node = editor.addNode('say', const Offset(10, 20));
-      expect(editor.nodes.single.id, node.id);
-      expect(editor.layout[node.id], const Offset(10, 20));
-      expect(editor.entryNodeId, node.id);
-    });
+    test(
+      'adds a node at the given position, and the first one becomes the entry',
+      () {
+        final editor = GraphEditor();
+        final node = editor.addNode('say', const Offset(10, 20));
+        expect(editor.nodes.single.id, node.id);
+        expect(editor.layout[node.id], const Offset(10, 20));
+        expect(editor.entryNodeId, node.id);
+      },
+    );
 
     test('ids are unique even for the same kind added twice', () {
       final editor = GraphEditor();
@@ -82,21 +85,27 @@ void main() {
       expect(editor.lastError, isNotNull);
     });
 
-    test('clicking a second output instead of an input disarms with an error', () {
-      final editor = GraphEditor();
-      final a = editor.addNode('say', Offset.zero);
-      final b = editor.addNode('say', const Offset(100, 0));
-      editor.clickPort(a.id, 'out', isOutput: true);
-      editor.clickPort(b.id, 'out', isOutput: true);
-      expect(editor.armedOutput, isNull);
-      expect(editor.edges, isEmpty);
-      expect(editor.lastError, isNotNull);
-    });
+    test(
+      'clicking a second output instead of an input disarms with an error',
+      () {
+        final editor = GraphEditor();
+        final a = editor.addNode('say', Offset.zero);
+        final b = editor.addNode('say', const Offset(100, 0));
+        editor.clickPort(a.id, 'out', isOutput: true);
+        editor.clickPort(b.id, 'out', isOutput: true);
+        expect(editor.armedOutput, isNull);
+        expect(editor.edges, isEmpty);
+        expect(editor.lastError, isNotNull);
+      },
+    );
 
     test('a type mismatch is rejected and nothing is connected', () {
       final editor = GraphEditor();
       final a = editor.addNode('say', Offset.zero); // out: flow
-      final b = editor.addNode('branch', const Offset(100, 0)); // condition: boolean
+      final b = editor.addNode(
+        'branch',
+        const Offset(100, 0),
+      ); // condition: boolean
       editor.clickPort(a.id, 'out', isOutput: true);
       editor.clickPort(b.id, 'condition', isOutput: false);
       expect(editor.edges, isEmpty);
@@ -170,21 +179,24 @@ void main() {
   });
 
   group('GraphDocument round-trip', () {
-    test('a saved and reloaded editor has the same nodes, edges, and layout', () {
-      final editor = GraphEditor();
-      final a = editor.addNode('say', const Offset(5, 6));
-      final b = editor.addNode('say', const Offset(50, 60));
-      editor.clickPort(a.id, 'out', isOutput: true);
-      editor.clickPort(b.id, 'in', isOutput: false);
+    test(
+      'a saved and reloaded editor has the same nodes, edges, and layout',
+      () {
+        final editor = GraphEditor();
+        final a = editor.addNode('say', const Offset(5, 6));
+        final b = editor.addNode('say', const Offset(50, 60));
+        editor.clickPort(a.id, 'out', isOutput: true);
+        editor.clickPort(b.id, 'in', isOutput: false);
 
-      final json = editor.document.toJson();
-      final reloaded = GraphEditor.fromDocument(GraphDocument.fromJson(json));
+        final json = editor.document.toJson();
+        final reloaded = GraphEditor.fromDocument(GraphDocument.fromJson(json));
 
-      expect(reloaded.nodes.map((n) => n.id), editor.nodes.map((n) => n.id));
-      expect(reloaded.edges.length, editor.edges.length);
-      expect(reloaded.layout[a.id], const Offset(5, 6));
-      expect(reloaded.layout[b.id], const Offset(50, 60));
-      expect(reloaded.entryNodeId, editor.entryNodeId);
-    });
+        expect(reloaded.nodes.map((n) => n.id), editor.nodes.map((n) => n.id));
+        expect(reloaded.edges.length, editor.edges.length);
+        expect(reloaded.layout[a.id], const Offset(5, 6));
+        expect(reloaded.layout[b.id], const Offset(50, 60));
+        expect(reloaded.entryNodeId, editor.entryNodeId);
+      },
+    );
   });
 }

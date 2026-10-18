@@ -63,10 +63,7 @@ void main() {
     tester,
   ) async {
     await openEditor(tester);
-    await tester.enterText(
-      find.byKey(const Key('code-text')),
-      'void run() {',
-    );
+    await tester.enterText(find.byKey(const Key('code-text')), 'void run() {');
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();
@@ -80,10 +77,7 @@ void main() {
     await openEditor(tester);
     await tester.enterText(find.byKey(const Key('code-text')), 'void run() ');
     await tester.pump();
-    await tester.enterText(
-      find.byKey(const Key('code-text')),
-      'void run() {',
-    );
+    await tester.enterText(find.byKey(const Key('code-text')), 'void run() {');
     await tester.pump();
     final controller = controllerOf(tester);
     // Auto-close should have produced "void run() {}" with the cursor

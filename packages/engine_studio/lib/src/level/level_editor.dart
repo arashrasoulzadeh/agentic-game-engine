@@ -3,11 +3,12 @@ import 'dart:ui';
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_schema/engine_schema.dart';
 
+import '../assets/asset_references.dart';
 import 'level_geometry.dart';
 
 /// What a pointer gesture does on the canvas. Each tool turns input into
 /// commands; none of them mutates the document directly.
-enum EditorTool { select, move, paintTile, eraseTile, fill, placeEntity }
+enum EditorTool { select, move, paintTile, eraseTile, fill, placeEntity, stamp }
 
 /// The editing session for one level: the document, its undo history, the
 /// active tool, and the current selection. Pure Dart, so every tool's behavior
@@ -20,6 +21,18 @@ class LevelEditor {
   final CommandHistory history;
 
   EditorTool tool = EditorTool.select;
+
+  /// The brush the [EditorTool.stamp] tool applies on a tap: a tile pattern or a
+  /// prefab. Null means the tool does nothing.
+  Brush? activeBrush;
+
+  /// Resolves a [PrefabBrush]'s project path to the prefab (the screen reads it from
+  /// disk). Null result means the prefab is missing, and the tap places nothing.
+  Prefab? Function(String path)? prefabLoader;
+
+  /// Sprite names per declared atlas, for the asset-reference check. Null when the
+  /// project declares no atlases (nothing to check against).
+  Map<String, Set<String>>? atlasRegions;
 
   /// The tile id the paint tool writes. Id 0 is empty and is what erase writes.
   int paintTileId = 1;
@@ -112,6 +125,8 @@ class LevelEditor {
         _paintCell(point, tool == EditorTool.paintTile ? paintTileId : 0);
       case EditorTool.fill:
         _fillAt(point);
+      case EditorTool.stamp:
+        _stampAt(point);
     }
   }
 
@@ -132,6 +147,7 @@ class LevelEditor {
       case EditorTool.select:
       case EditorTool.placeEntity:
       case EditorTool.fill:
+      case EditorTool.stamp:
         break;
     }
   }
@@ -189,6 +205,36 @@ class LevelEditor {
 
   /// Converts the level's tile map to flat ids the first time a tile tool is used,
   /// so tile edits can address cells. Undoable like any other edit.
+  /// Applies [activeBrush] at [point] as one undoable step: a tile pattern stamps its
+  /// cells from the tapped one (top-left), a prefab brush places the prefab with its
+  /// origin at the (snapped) point.
+  void _stampAt(Offset point) {
+    final brush = activeBrush;
+    switch (brush) {
+      case null:
+        return;
+      case TileBrush():
+        final cell = _cellAt(point);
+        if (cell == null || !_ensureFlatTileMap()) return;
+        final command = brush.stampAt(_tileMapEntity()!, cell.$1, cell.$2);
+        if (command != null) history.execute(command);
+      case PrefabBrush():
+        final prefab = prefabLoader?.call(brush.prefabPath);
+        if (prefab == null) return;
+        final at = snapped(point);
+        final command = InstantiatePrefabCommand(prefab, x: at.dx, y: at.dy);
+        history.execute(command);
+        if (command.placed.isNotEmpty) selected = command.placed.first;
+    }
+  }
+
+  /// The selected entity captured as a prefab named [name], or null with nothing
+  /// selected. Positions are stored relative to it, so it can be placed anywhere.
+  Prefab? prefabFromSelection(String name) {
+    final entity = selected;
+    return entity == null ? null : Prefab.fromEntities(name, [entity]);
+  }
+
   bool _ensureFlatTileMap() {
     final entity = _tileMapEntity();
     if (entity == null) return false;
@@ -252,8 +298,10 @@ class LevelEditor {
 
   /// Every problem in the level as it is right now, from the same validator the
   /// CLI runs, so the panel and `game_agent studio validate` agree.
-  List<LevelIssue> get issues =>
-      LevelValidator.forSchemas(allComponentSchemas).validate(document);
+  List<LevelIssue> get issues => [
+    ...LevelValidator.forSchemas(allComponentSchemas).validate(document),
+    ...checkAssetReferences(document, atlasRegions),
+  ];
 
   /// Selects the entity at [index] in the document, for problems that name one.
   void selectIndex(int index) {

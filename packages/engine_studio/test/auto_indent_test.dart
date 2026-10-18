@@ -9,23 +9,23 @@ void main() {
     expect(cursor, newText.length);
   });
 
-  test('Enter right after an unclosed opening brace indents one more level', () {
-    const text = 'void run() {';
-    final (newText, cursor) = indentedNewline(text, text.length);
-    expect(newText, 'void run() {\n  ');
-    expect(cursor, newText.length);
-  });
-
   test(
-    'Enter between an empty pair of braces splits it onto three lines',
+    'Enter right after an unclosed opening brace indents one more level',
     () {
-      const text = 'void run() {}';
-      // Cursor between '{' (index 11) and '}' (index 12).
-      final (newText, cursor) = indentedNewline(text, 12);
-      expect(newText, 'void run() {\n  \n}');
-      expect(cursor, 'void run() {\n  '.length);
+      const text = 'void run() {';
+      final (newText, cursor) = indentedNewline(text, text.length);
+      expect(newText, 'void run() {\n  ');
+      expect(cursor, newText.length);
     },
   );
+
+  test('Enter between an empty pair of braces splits it onto three lines', () {
+    const text = 'void run() {}';
+    // Cursor between '{' (index 11) and '}' (index 12).
+    final (newText, cursor) = indentedNewline(text, 12);
+    expect(newText, 'void run() {\n  \n}');
+    expect(cursor, 'void run() {\n  '.length);
+  });
 
   test('an indented block still splits at its own indent level', () {
     const text = '  if (x) {}';

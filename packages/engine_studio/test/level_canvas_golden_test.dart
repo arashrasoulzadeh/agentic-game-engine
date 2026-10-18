@@ -64,29 +64,28 @@ void main() {
     }
   });
 
-  testWidgets(
-    'the level canvas renders a fixed sample level consistently',
-    (tester) async {
-      final editor = LevelEditor(_sampleLevel());
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Center(
-            child: SizedBox(
-              width: 200,
-              height: 150,
-              child: RepaintBoundary(
-                key: const Key('level-canvas-golden'),
-                child: CustomPaint(painter: LevelCanvasPainter(editor: editor)),
-              ),
+  testWidgets('the level canvas renders a fixed sample level consistently', (
+    tester,
+  ) async {
+    final editor = LevelEditor(_sampleLevel());
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 200,
+            height: 150,
+            child: RepaintBoundary(
+              key: const Key('level-canvas-golden'),
+              child: CustomPaint(painter: LevelCanvasPainter(editor: editor)),
             ),
           ),
         ),
-      );
+      ),
+    );
 
-      await expectLater(
-        find.byKey(const Key('level-canvas-golden')),
-        matchesGoldenFile('goldens/level_canvas_sample.png'),
-      );
-    },
-  );
+    await expectLater(
+      find.byKey(const Key('level-canvas-golden')),
+      matchesGoldenFile('goldens/level_canvas_sample.png'),
+    );
+  });
 }

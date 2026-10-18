@@ -16,33 +16,37 @@ void main() {
   });
   tearDown(() => root.deleteSync(recursive: true));
 
-  test('the real server finds the class block as a foldable range', () async {
-    final session = await DartSession.open(root.path);
-    final file = '${root.path}/lib/hero.dart';
-    const source = 'class Hero {\n  void jump() {\n    return;\n  }\n}\n';
-    File(file).writeAsStringSync(source);
-    session.openFile(file, source);
+  test(
+    'the real server finds the class block as a foldable range',
+    () async {
+      final session = await DartSession.open(root.path);
+      final file = '${root.path}/lib/hero.dart';
+      const source = 'class Hero {\n  void jump() {\n    return;\n  }\n}\n';
+      File(file).writeAsStringSync(source);
+      session.openFile(file, source);
 
-    List<FoldingRange> found = const [];
-    for (var attempt = 0; attempt < 80 && found.isEmpty; attempt++) {
-      try {
-        found = await session.foldingRanges(file);
-      } on Object {
-        found = const [];
+      List<FoldingRange> found = const [];
+      for (var attempt = 0; attempt < 80 && found.isEmpty; attempt++) {
+        try {
+          found = await session.foldingRanges(file);
+        } on Object {
+          found = const [];
+        }
+        if (found.isEmpty) {
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+        }
       }
-      if (found.isEmpty) {
-        await Future<void>.delayed(const Duration(milliseconds: 500));
-      }
-    }
 
-    expect(found, isNotEmpty, reason: 'the class body is a foldable block');
-    expect(
-      found.any((r) => r.startLine == 0),
-      isTrue,
-      reason: "the class's own block starts at line 0",
-    );
-    await session.close();
-  }, timeout: const Timeout(Duration(minutes: 2)));
+      expect(found, isNotEmpty, reason: 'the class body is a foldable block');
+      expect(
+        found.any((r) => r.startLine == 0),
+        isTrue,
+        reason: "the class's own block starts at line 0",
+      );
+      await session.close();
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
 
   testWidgets('no fold indicators appear with no language server', (
     tester,

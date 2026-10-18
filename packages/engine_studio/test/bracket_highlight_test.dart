@@ -14,22 +14,21 @@ void main() {
   });
   tearDown(() => root.deleteSync(recursive: true));
 
-  testWidgets(
-    'moving the cursor next to a bracket does not crash the editor',
-    (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: CodeEditorScreen(filePath: path, useLanguageServer: false),
-        ),
-      );
-      final field = tester.widget<TextField>(find.byKey(const Key('code-text')));
-      final controller = field.controller!;
-      // Right after the '(' in "run(".
-      controller.selection = const TextSelection.collapsed(offset: 9);
-      await tester.pump();
-      expect(tester.takeException(), isNull);
-    },
-  );
+  testWidgets('moving the cursor next to a bracket does not crash the editor', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CodeEditorScreen(filePath: path, useLanguageServer: false),
+      ),
+    );
+    final field = tester.widget<TextField>(find.byKey(const Key('code-text')));
+    final controller = field.controller!;
+    // Right after the '(' in "run(".
+    controller.selection = const TextSelection.collapsed(offset: 9);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('a file with no file extension completion issues still loads', (
     tester,

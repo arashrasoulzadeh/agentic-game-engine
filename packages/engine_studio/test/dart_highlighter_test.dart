@@ -78,22 +78,19 @@ void main() {
     },
   );
 
-  test(
-    'a listener that resets searchMarks to the same value does not recurse '
-    '(regression: this froze the editor with a StackOverflowError)',
-    () {
-      final controller = DartHighlightController(text: 'var x = 1;');
-      controller.addListener(() {
-        controller.searchMarks = [
-          const TextMark(0, 3, kind: MarkKind.searchMatch),
-        ];
-      });
-      expect(
-        () => controller.searchMarks = [
-          const TextMark(0, 3, kind: MarkKind.searchMatch),
-        ],
-        returnsNormally,
-      );
-    },
-  );
+  test('a listener that resets searchMarks to the same value does not recurse '
+      '(regression: this froze the editor with a StackOverflowError)', () {
+    final controller = DartHighlightController(text: 'var x = 1;');
+    controller.addListener(() {
+      controller.searchMarks = [
+        const TextMark(0, 3, kind: MarkKind.searchMatch),
+      ];
+    });
+    expect(
+      () => controller.searchMarks = [
+        const TextMark(0, 3, kind: MarkKind.searchMatch),
+      ],
+      returnsNormally,
+    );
+  });
 }

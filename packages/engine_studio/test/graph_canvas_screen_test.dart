@@ -14,13 +14,10 @@ void main() {
   });
   tearDown(() => dir.deleteSync(recursive: true));
 
-  Future<void> openScreen(WidgetTester tester) => tester.pumpWidget(
-    MaterialApp(home: GraphCanvasScreen(graphPath: path)),
-  );
+  Future<void> openScreen(WidgetTester tester) =>
+      tester.pumpWidget(MaterialApp(home: GraphCanvasScreen(graphPath: path)));
 
-  testWidgets('starts empty when the file does not exist yet', (
-    tester,
-  ) async {
+  testWidgets('starts empty when the file does not exist yet', (tester) async {
     await openScreen(tester);
     expect(find.byKey(const Key('graph-no-selection')), findsOneWidget);
     expect(find.textContaining('graph-node-'), findsNothing);
@@ -116,13 +113,18 @@ void main() {
         .value
         .getMaxScaleOnAxis();
 
-    double nodeLeft(WidgetTester tester, String id) =>
-        tester.widget<Positioned>(find.ancestor(
-          of: find.byKey(Key('graph-node-$id')),
-          matching: find.byType(Positioned),
-        )).left!;
+    double nodeLeft(WidgetTester tester, String id) => tester
+        .widget<Positioned>(
+          find.ancestor(
+            of: find.byKey(Key('graph-node-$id')),
+            matching: find.byType(Positioned),
+          ),
+        )
+        .left!;
 
-    testWidgets('the buttons zoom in and out and the range is clamped', (tester) async {
+    testWidgets('the buttons zoom in and out and the range is clamped', (
+      tester,
+    ) async {
       await openScreen(tester);
       expect(zoomOf(tester), 1);
       await tester.tap(find.byKey(const Key('graph-zoom-in')));
@@ -138,16 +140,25 @@ void main() {
         await tester.tap(find.byKey(const Key('graph-zoom-in')));
       }
       await tester.pump();
-      expect(zoomOf(tester), closeTo(2.5, 1e-9), reason: 'never beyond the maximum');
+      expect(
+        zoomOf(tester),
+        closeTo(2.5, 1e-9),
+        reason: 'never beyond the maximum',
+      );
       for (var i = 0; i < 40; i++) {
         await tester.tap(find.byKey(const Key('graph-zoom-out')));
       }
       await tester.pump();
-      expect(zoomOf(tester), closeTo(0.25, 1e-9), reason: 'never below the minimum');
+      expect(
+        zoomOf(tester),
+        closeTo(0.25, 1e-9),
+        reason: 'never below the minimum',
+      );
     });
 
-    testWidgets('a node follows the pointer proportionally at any zoom',
-        (tester) async {
+    testWidgets('a node follows the pointer proportionally at any zoom', (
+      tester,
+    ) async {
       await openScreen(tester);
       await tester.tap(find.byKey(const Key('graph-add-node')));
       await tester.pump();
@@ -156,7 +167,9 @@ void main() {
       // slop, which would make the node move by less than the gesture did.
       Future<double> dragNode() async {
         final before = nodeLeft(tester, 'say0');
-        final gesture = await tester.startGesture(tester.getCenter(find.byKey(const Key('graph-node-say0'))));
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.byKey(const Key('graph-node-say0'))),
+        );
         await tester.pump();
         for (var i = 0; i < 12; i++) {
           await gesture.moveBy(const Offset(10, 0));
@@ -168,7 +181,11 @@ void main() {
       }
 
       final at100 = await dragNode();
-      expect(at100, greaterThan(30), reason: 'the node actually moved with the pointer');
+      expect(
+        at100,
+        greaterThan(30),
+        reason: 'the node actually moved with the pointer',
+      );
 
       for (var i = 0; i < 4; i++) {
         await tester.tap(find.byKey(const Key('graph-zoom-in')));
@@ -185,21 +202,24 @@ void main() {
       expect(atZoom, closeTo(120 / zoomed - 36, 6));
     });
 
-    testWidgets('fit shrinks the view to show every node; it never magnifies past 100%', (tester) async {
-      await openScreen(tester);
-      await tester.tap(find.byKey(const Key('graph-zoom-fit')));
-      await tester.pump();
-      expect(zoomOf(tester), 1, reason: 'an empty graph resets');
-
-      for (var i = 0; i < 6; i++) {
-        await tester.tap(find.byKey(const Key('graph-add-node')));
+    testWidgets(
+      'fit shrinks the view to show every node; it never magnifies past 100%',
+      (tester) async {
+        await openScreen(tester);
+        await tester.tap(find.byKey(const Key('graph-zoom-fit')));
         await tester.pump();
-      }
-      await tester.tap(find.byKey(const Key('graph-zoom-fit')));
-      await tester.pump();
-      expect(zoomOf(tester), lessThanOrEqualTo(1));
-      expect(zoomOf(tester), greaterThanOrEqualTo(0.25));
-    });
+        expect(zoomOf(tester), 1, reason: 'an empty graph resets');
+
+        for (var i = 0; i < 6; i++) {
+          await tester.tap(find.byKey(const Key('graph-add-node')));
+          await tester.pump();
+        }
+        await tester.tap(find.byKey(const Key('graph-zoom-fit')));
+        await tester.pump();
+        expect(zoomOf(tester), lessThanOrEqualTo(1));
+        expect(zoomOf(tester), greaterThanOrEqualTo(0.25));
+      },
+    );
 
     testWidgets('connecting ports still works after zooming', (tester) async {
       await openScreen(tester);
@@ -215,7 +235,11 @@ void main() {
       await tester.tap(find.byKey(const Key('graph-port-say1-in-in')));
       await tester.pump();
       expect(find.byKey(const Key('graph-port-error')), findsNothing);
-      expect(find.textContaining('not reachable'), findsNothing, reason: 'the edge exists');
+      expect(
+        find.textContaining('not reachable'),
+        findsNothing,
+        reason: 'the edge exists',
+      );
     });
   });
 }

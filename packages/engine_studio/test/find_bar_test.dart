@@ -72,9 +72,7 @@ void main() {
     expect(find.byKey(const Key('find-bar')), findsNothing);
   });
 
-  testWidgets('Replace All replaces every match in the buffer', (
-    tester,
-  ) async {
+  testWidgets('Replace All replaces every match in the buffer', (tester) async {
     await openEditor(tester);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyH);

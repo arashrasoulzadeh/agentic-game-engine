@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
+import '../assets/asset_browser.dart';
+import '../assets/asset_index.dart';
+import '../assets/atlas_view.dart';
 import '../code/code_editor_screen.dart';
 import '../graph/graph_canvas_screen.dart';
 import '../level/level_screen.dart';
@@ -45,6 +48,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
   final Set<String> _expanded = {};
   FileKind _filter = FileKind.all;
 
+  bool _assetsOpen = false;
+  AtlasInfo? _atlasOpen;
   bool _problemsOpen = false;
   bool _searchOpen = false;
   final TextEditingController _searchController = TextEditingController();
@@ -59,11 +64,23 @@ class _ProjectScreenState extends State<ProjectScreen> {
   void _openSearch() => setState(() {
     _searchOpen = true;
     _problemsOpen = false;
+    _assetsOpen = false;
   });
 
   void _toggleProblems() => setState(() {
     _problemsOpen = !_problemsOpen;
-    if (_problemsOpen) _searchOpen = false;
+    if (_problemsOpen) {
+      _searchOpen = false;
+      _assetsOpen = false;
+    }
+  });
+
+  void _toggleAssets() => setState(() {
+    _assetsOpen = !_assetsOpen;
+    if (_assetsOpen) {
+      _searchOpen = false;
+      _problemsOpen = false;
+    }
   });
 
   /// Opens the file a problem came from, then dismisses the problems panel.
@@ -132,6 +149,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
         appBar: AppBar(
           title: Text(p.basename(widget.project.root)),
           actions: [
+            IconButton(
+              key: const Key('project-assets'),
+              tooltip: 'Assets: sprite sheets, images, audio, prefabs',
+              onPressed: _toggleAssets,
+              icon: const Icon(Icons.perm_media_outlined),
+            ),
             PopupMenuButton<GraphType>(
               key: const Key('project-new-graph'),
               tooltip: 'New graph',
@@ -177,7 +200,22 @@ class _ProjectScreenState extends State<ProjectScreen> {
             children: [
               SizedBox(
                 width: 260,
-                child: _problemsOpen
+                child: _assetsOpen
+                    ? AssetBrowserPanel(
+                        index: AssetIndex.scan(widget.project.root),
+                        onClose: _toggleAssets,
+                        onOpenAtlas: (atlas) => setState(() {
+                          _atlasOpen = atlas;
+                          _open = null;
+                        }),
+                        onOpenFile: (path) => setState(() {
+                          _open = path;
+                          _atlasOpen = null;
+                          _jumpLine = 0;
+                          _jumpCharacter = 0;
+                        }),
+                      )
+                    : _problemsOpen
                     ? _problemsPanel()
                     : (_searchOpen ? _searchPanel() : _treePanel(shown)),
               ),
@@ -371,6 +409,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
           }
         } else {
           _open = entry.relativePath;
+          _atlasOpen = null;
           _jumpLine = 0;
           _jumpCharacter = 0;
         }
@@ -379,6 +418,27 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 
   Widget _content() {
+    final atlas = _atlasOpen;
+    if (atlas != null && _open == null) {
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              '${atlas.id} — ${atlas.regions.length} sprites (${atlas.image})',
+              key: const Key('atlas-title'),
+            ),
+          ),
+          Expanded(
+            child: AtlasView(
+              key: ValueKey('atlas-${atlas.id}'),
+              projectRoot: widget.project.root,
+              atlas: atlas,
+            ),
+          ),
+        ],
+      );
+    }
     final open = _open;
     if (open == null) {
       return const Center(

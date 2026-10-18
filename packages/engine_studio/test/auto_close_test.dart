@@ -29,9 +29,12 @@ void main() {
       expect(autoCloseResult('()', '())', 2), ('()', 2));
     });
 
-    test('typing a closing quote right before an existing one skips over it', () {
-      expect(autoCloseResult('""', '"""', 2), ('""', 2));
-    });
+    test(
+      'typing a closing quote right before an existing one skips over it',
+      () {
+        expect(autoCloseResult('""', '"""', 2), ('""', 2));
+      },
+    );
   });
 
   group('not a plain single-character insertion', () {
@@ -39,9 +42,12 @@ void main() {
       expect(autoCloseResult('f', 'f(x)', 4), isNull);
     });
 
-    test('a programmatic replace (format, rename, completion) is left alone', () {
-      expect(autoCloseResult('var x=1;', 'var x = 1;', 10), isNull);
-    });
+    test(
+      'a programmatic replace (format, rename, completion) is left alone',
+      () {
+        expect(autoCloseResult('var x=1;', 'var x = 1;', 10), isNull);
+      },
+    );
   });
 
   test('typing a letter does nothing', () {

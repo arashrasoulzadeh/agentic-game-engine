@@ -22,9 +22,7 @@ void main() {
     );
   }
 
-  testWidgets('popping a clean file closes it with no dialog', (
-    tester,
-  ) async {
+  testWidgets('popping a clean file closes it with no dialog', (tester) async {
     await openEditor(tester);
     final navigator = tester.state<NavigatorState>(find.byType(Navigator));
     navigator.maybePop();

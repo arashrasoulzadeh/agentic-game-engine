@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:engine_schema/engine_schema.dart';
 import 'package:flutter/material.dart';
 
+import '../assets/asset_index.dart';
+import '../assets/atlas_view.dart';
 import '../level/level_editor.dart';
 import 'entity_inspector.dart';
 
@@ -16,10 +18,17 @@ class InspectorPanel extends StatefulWidget {
   /// Called after an edit lands, so the level view can redraw.
   final VoidCallback onChanged;
 
+  /// The project's folder and assets. When both are given, a `sprite` component gets
+  /// a "Pick sprite" button that chooses from the declared atlases.
+  final String? projectRoot;
+  final AssetIndex? assets;
+
   const InspectorPanel({
     super.key,
     required this.editor,
     required this.onChanged,
+    this.projectRoot,
+    this.assets,
   });
 
   @override
@@ -78,6 +87,19 @@ class _InspectorPanelState extends State<InspectorPanel> {
     );
   }
 
+  Future<void> _pickSprite(InspectedComponent component) async {
+    final picked = await showSpritePicker(
+      context,
+      projectRoot: widget.projectRoot!,
+      index: widget.assets!,
+      currentAtlas: component.json['atlasId'] as String?,
+      currentRegion: component.json['region'] as String?,
+    );
+    if (picked == null) return;
+    _set('sprite', 'atlasId', picked.$1);
+    _set('sprite', 'region', picked.$2);
+  }
+
   Widget _componentSection(InspectedComponent component) {
     final schema = component.schema;
     return ExpansionTile(
@@ -93,7 +115,21 @@ class _InspectorPanelState extends State<InspectorPanel> {
               ),
               SelectableText(jsonEncode(component.json)),
             ]
-          : [for (final field in schema.fields) _fieldRow(component, field)],
+          : [
+              if (component.name == 'sprite' &&
+                  widget.assets != null &&
+                  widget.projectRoot != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const Key('pick-sprite'),
+                    icon: const Icon(Icons.image_search, size: 18),
+                    label: const Text('Pick sprite'),
+                    onPressed: () => _pickSprite(component),
+                  ),
+                ),
+              for (final field in schema.fields) _fieldRow(component, field),
+            ],
     );
   }
 

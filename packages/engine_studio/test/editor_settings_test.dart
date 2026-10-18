@@ -39,16 +39,19 @@ void main() {
       expect(decoded.formatOnSave, isFalse);
     });
 
-    test('a field of the wrong type falls back to its default instead of throwing', () {
-      final decoded = EditorSettings.fromJson({
-        'fontSize': 'not a number',
-        'tabWidth': true,
-        'formatOnSave': 5,
-      });
-      expect(decoded.fontSize, 13);
-      expect(decoded.tabWidth, 2);
-      expect(decoded.formatOnSave, isFalse);
-    });
+    test(
+      'a field of the wrong type falls back to its default instead of throwing',
+      () {
+        final decoded = EditorSettings.fromJson({
+          'fontSize': 'not a number',
+          'tabWidth': true,
+          'formatOnSave': 5,
+        });
+        expect(decoded.fontSize, 13);
+        expect(decoded.tabWidth, 2);
+        expect(decoded.formatOnSave, isFalse);
+      },
+    );
   });
 
   group('EditorSettingsStore', () {
@@ -63,7 +66,9 @@ void main() {
 
     test('a write is read back exactly, under .studio/', () {
       final store = EditorSettingsStore(dir.path);
-      store.write(const EditorSettings(fontSize: 18, tabWidth: 4, formatOnSave: true));
+      store.write(
+        const EditorSettings(fontSize: 18, tabWidth: 4, formatOnSave: true),
+      );
 
       final file = File('${dir.path}/.studio/editor_settings.json');
       expect(file.existsSync(), isTrue);
@@ -74,13 +79,16 @@ void main() {
       expect(read.formatOnSave, isTrue);
     });
 
-    test('a corrupted settings file falls back to defaults rather than throwing', () {
-      final file = File('${dir.path}/.studio/editor_settings.json')
-        ..createSync(recursive: true);
-      file.writeAsStringSync('{ not json');
-      final store = EditorSettingsStore(dir.path);
-      expect(() => store.read(), returnsNormally);
-      expect(store.read().fontSize, 13);
-    });
+    test(
+      'a corrupted settings file falls back to defaults rather than throwing',
+      () {
+        final file = File('${dir.path}/.studio/editor_settings.json')
+          ..createSync(recursive: true);
+        file.writeAsStringSync('{ not json');
+        final store = EditorSettingsStore(dir.path);
+        expect(() => store.read(), returnsNormally);
+        expect(store.read().fontSize, 13);
+      },
+    );
   });
 }

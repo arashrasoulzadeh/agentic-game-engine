@@ -9,6 +9,10 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Studio assets: an asset browser (sprite sheets with their sprites, other files by
+  kind), a sprite picker behind the inspector's `sprite` field, level problems for
+  sprites/atlases that do not exist, tile and prefab brushes with a stamp tool
+  (one undo step per stamp), and "Save as prefab" from the selection.
 - Studio: graphs are typed. Behavior trees and state machines are edited on the same
   pan/zoom canvas as dialogue graphs, validated for their own rules, exported to
   engine JSON in `assets/ai/` and (trees) imported from existing JSON. The project

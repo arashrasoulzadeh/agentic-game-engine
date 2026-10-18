@@ -17,36 +17,37 @@ void main() {
     return editor;
   }
 
-  testWidgets('a bool field renders a Switch, and toggling it edits and undoes', (
-    tester,
-  ) async {
-    final entity = LevelEntity(
-      name: 'wall',
-      components: {
-        'collider': {'radius': 4.0, 'blocksLight': false},
-      },
-    );
-    final editor = editorWith(entity);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: InspectorPanel(editor: editor, onChanged: () {}),
+  testWidgets(
+    'a bool field renders a Switch, and toggling it edits and undoes',
+    (tester) async {
+      final entity = LevelEntity(
+        name: 'wall',
+        components: {
+          'collider': {'radius': 4.0, 'blocksLight': false},
+        },
+      );
+      final editor = editorWith(entity);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: InspectorPanel(editor: editor, onChanged: () {}),
+          ),
         ),
-      ),
-    );
+      );
 
-    final switchFinder = find.byKey(const Key('field-collider.blocksLight'));
-    expect(switchFinder, findsOneWidget);
-    expect(tester.widget<Switch>(switchFinder).value, false);
+      final switchFinder = find.byKey(const Key('field-collider.blocksLight'));
+      expect(switchFinder, findsOneWidget);
+      expect(tester.widget<Switch>(switchFinder).value, false);
 
-    await tester.tap(switchFinder);
-    await tester.pump();
+      await tester.tap(switchFinder);
+      await tester.pump();
 
-    expect(entity.components['collider']!['blocksLight'], true);
-    expect(editor.history.canUndo, isTrue);
-    editor.history.undo();
-    expect(entity.components['collider']!['blocksLight'], false);
-  });
+      expect(entity.components['collider']!['blocksLight'], true);
+      expect(editor.history.canUndo, isTrue);
+      editor.history.undo();
+      expect(entity.components['collider']!['blocksLight'], false);
+    },
+  );
 
   testWidgets(
     'an enumeration field renders a DropdownButton, and picking an option edits it',
@@ -54,10 +55,7 @@ void main() {
       final entity = LevelEntity(
         name: 'emitter',
         components: {
-          'particleEmitter': {
-            'lifetime': 1.0,
-            'emissionShape': 'point',
-          },
+          'particleEmitter': {'lifetime': 1.0, 'emissionShape': 'point'},
         },
       );
       final editor = editorWith(entity);
@@ -84,10 +82,7 @@ void main() {
       dropdown.onChanged!('circle');
       await tester.pump();
 
-      expect(
-        entity.components['particleEmitter']!['emissionShape'],
-        'circle',
-      );
+      expect(entity.components['particleEmitter']!['emissionShape'], 'circle');
       expect(editor.history.canUndo, isTrue);
     },
   );
@@ -120,26 +115,29 @@ void main() {
     },
   );
 
-  testWidgets('a list/object field is shown read-only, not an editable control', (
-    tester,
-  ) async {
-    final entity = LevelEntity(
-      name: 'player',
-      components: {
-        'inventory': {'items': <String, dynamic>{'sword': 1}},
-      },
-    );
-    final editor = editorWith(entity);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: InspectorPanel(editor: editor, onChanged: () {}),
+  testWidgets(
+    'a list/object field is shown read-only, not an editable control',
+    (tester) async {
+      final entity = LevelEntity(
+        name: 'player',
+        components: {
+          'inventory': {
+            'items': <String, dynamic>{'sword': 1},
+          },
+        },
+      );
+      final editor = editorWith(entity);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: InspectorPanel(editor: editor, onChanged: () {}),
+          ),
         ),
-      ),
-    );
+      );
 
-    final fieldFinder = find.byKey(const Key('field-inventory.items'));
-    expect(fieldFinder, findsOneWidget);
-    expect(tester.widget(fieldFinder), isA<SelectableText>());
-  });
+      final fieldFinder = find.byKey(const Key('field-inventory.items'));
+      expect(fieldFinder, findsOneWidget);
+      expect(tester.widget(fieldFinder), isA<SelectableText>());
+    },
+  );
 }

@@ -40,7 +40,10 @@ void main() {
     });
 
     test('a replacement of different length still lines up', () {
-      expect(replaceAllMatches('one two one', 'one', 'three'), 'three two three');
+      expect(
+        replaceAllMatches('one two one', 'one', 'three'),
+        'three two three',
+      );
     });
 
     test('text with no matches is unchanged', () {

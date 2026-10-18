@@ -161,21 +161,10 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 
 ### Assets, prefabs, interchange (phase 5)
 
-- [ ] **5.1** Asset browser: lists `assets/`, previews atlases, shows sprite
-      names from `pack-assets` output.
-- [ ] **5.2** Sprite picker used by the `Sprite` field in the inspector.
-- [ ] **5.3** Validator: referenced sprite/atlas missing → error with
-      jump-to-reference.
-- [ ] **5.4** Prefabs: save an entity group as `prefabs/*.json`; place as one
-      command (`InstantiatePrefab`), undoable as one step.
-- [ ] **5.5** Brush library: tile and prefab brushes, reusable across levels.
-- [ ] **5.6** Tiled export (`studio export-tmx`) with a round-trip test
-      against `tmx_import.dart`.
 - [ ] **5.7** Use `AssetHotReloader` (engine side done) in the studio's
       play-test: start it against the project's `assets/` with a
       `LevelAssetHandler` and `AtlasAssetHandler` per atlas, and surface its
       errors in the studio.
-- [ ] **5.8** Tests for prefab undo as a single step.
 
 ### Behaviors, profiling, polish (phase 6)
 

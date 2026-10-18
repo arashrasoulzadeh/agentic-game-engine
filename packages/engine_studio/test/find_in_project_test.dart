@@ -79,11 +79,7 @@ void main() {
       'Enemy',
     );
     await tester.pump();
-    await tester.tap(
-      find.byKey(
-        const Key('project-match-lib/enemy.dart-0-6'),
-      ),
-    );
+    await tester.tap(find.byKey(const Key('project-match-lib/enemy.dart-0-6')));
     await tester.pump();
     expect(find.byKey(const Key('code-text')), findsOneWidget);
   });

@@ -8,6 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../inspector/inspector_panel.dart';
+import '../assets/asset_index.dart';
+import '../assets/brush_panel.dart';
+import '../assets/project_stores.dart';
 import '../palette/entity_palette.dart';
 import '../validation/validation_panel.dart';
 import '../playtest/play_test.dart';
@@ -47,6 +50,7 @@ class LevelScreen extends StatefulWidget {
 
 class _LevelScreenState extends State<LevelScreen> {
   LevelEditor? _editor;
+  AssetIndex? _assets;
   String? _loadError;
   Timer? _autosave;
   bool _previewing = false;
@@ -62,7 +66,17 @@ class _LevelScreenState extends State<LevelScreen> {
       final json =
           jsonDecode(File(widget.levelPath).readAsStringSync())
               as Map<String, dynamic>;
-      _editor = LevelEditor(LevelDocument.fromJson(json));
+      final editor = LevelEditor(LevelDocument.fromJson(json));
+      final root = widget.projectRoot;
+      if (root != null) {
+        // Project-level help for the editor: which sprites exist (so a missing one is
+        // flagged) and how to load a prefab for a prefab brush.
+        _assets = AssetIndex.scan(root);
+        editor
+          ..atlasRegions = _assets!.declaredRegions
+          ..prefabLoader = PrefabStore(root).load;
+      }
+      _editor = editor;
     } on Object catch (e) {
       _loadError = 'Could not open ${widget.levelPath}: $e';
     }
@@ -255,9 +269,28 @@ class _LevelScreenState extends State<LevelScreen> {
                         Expanded(
                           child: Row(
                             children: [
-                              EntityPalette(
-                                editor: editor,
-                                onChanged: () => setState(() {}),
+                              SizedBox(
+                                width: 200,
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      flex: 3,
+                                      child: EntityPalette(
+                                        editor: editor,
+                                        onChanged: () => setState(() {}),
+                                      ),
+                                    ),
+                                    if (widget.projectRoot != null)
+                                      Expanded(
+                                        flex: 2,
+                                        child: BrushPanel(
+                                          editor: editor,
+                                          projectRoot: widget.projectRoot!,
+                                          onChanged: () => setState(() {}),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                               Expanded(
                                 child: Scrollbar(
@@ -307,6 +340,8 @@ class _LevelScreenState extends State<LevelScreen> {
                               InspectorPanel(
                                 editor: editor,
                                 onChanged: () => setState(() {}),
+                                projectRoot: widget.projectRoot,
+                                assets: _assets,
                               ),
                             ],
                           ),

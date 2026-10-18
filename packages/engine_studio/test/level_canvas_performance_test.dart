@@ -42,7 +42,10 @@ LevelDocument _bigLevel({required int size}) {
         LevelEntity(
           name: 'entity$i',
           components: {
-            'position': {'x': (i * 37 % size) * 16.0, 'y': (i * 53 % size) * 16.0},
+            'position': {
+              'x': (i * 37 % size) * 16.0,
+              'y': (i * 53 % size) * 16.0,
+            },
           },
         ),
     ],
@@ -50,39 +53,36 @@ LevelDocument _bigLevel({required int size}) {
 }
 
 void main() {
-  test(
-    'LevelCanvasPainter.paint on a 500x500 level stays fast enough across '
-    'many simulated frames',
-    () {
-      final editor = LevelEditor(_bigLevel(size: 500));
-      final painter = LevelCanvasPainter(editor: editor);
-      const viewport = Size(1200, 800);
-      const frames = 60;
+  test('LevelCanvasPainter.paint on a 500x500 level stays fast enough across '
+      'many simulated frames', () {
+    final editor = LevelEditor(_bigLevel(size: 500));
+    final painter = LevelCanvasPainter(editor: editor);
+    const viewport = Size(1200, 800);
+    const frames = 60;
 
-      final stopwatch = Stopwatch()..start();
-      for (var i = 0; i < frames; i++) {
-        final recorder = ui.PictureRecorder();
-        final canvas = Canvas(recorder);
-        painter.paint(canvas, viewport);
-        recorder.endRecording().dispose();
-      }
-      stopwatch.stop();
+    final stopwatch = Stopwatch()..start();
+    for (var i = 0; i < frames; i++) {
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      painter.paint(canvas, viewport);
+      recorder.endRecording().dispose();
+    }
+    stopwatch.stop();
 
-      final perFrameMs = stopwatch.elapsedMicroseconds / frames / 1000;
-      // ignore: avoid_print
-      print(
-        'LevelCanvasPainter on a 500x500 level: '
-        '${perFrameMs.toStringAsFixed(2)}ms/frame average over $frames frames '
-        '(60fps budget is ${(1000 / 60).toStringAsFixed(1)}ms/frame).',
-      );
-      expect(
-        perFrameMs,
-        lessThan(100),
-        reason:
-            'a 500x500-tile frame took ${perFrameMs.toStringAsFixed(1)}ms, '
-            'which is far outside even a generous budget -- something got '
-            'much slower, not just "not quite 60fps on this machine"',
-      );
-    },
-  );
+    final perFrameMs = stopwatch.elapsedMicroseconds / frames / 1000;
+    // ignore: avoid_print
+    print(
+      'LevelCanvasPainter on a 500x500 level: '
+      '${perFrameMs.toStringAsFixed(2)}ms/frame average over $frames frames '
+      '(60fps budget is ${(1000 / 60).toStringAsFixed(1)}ms/frame).',
+    );
+    expect(
+      perFrameMs,
+      lessThan(100),
+      reason:
+          'a 500x500-tile frame took ${perFrameMs.toStringAsFixed(1)}ms, '
+          'which is far outside even a generous budget -- something got '
+          'much slower, not just "not quite 60fps on this machine"',
+    );
+  });
 }
