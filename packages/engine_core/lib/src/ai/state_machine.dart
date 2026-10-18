@@ -33,7 +33,11 @@ class FSMState {
         'transitions': transitions.map((k, v) => MapEntry(k, v.toJson())),
       };
 
-  factory FSMState.fromJson(Map<String, dynamic> json, BehaviorRegistry registry) {
+  factory FSMState.fromJson(
+    Map<String, dynamic> json,
+    BehaviorRegistry registry, {
+    Map<String, bool Function(BTContext)>? conditions,
+  }) {
     BTNode? tree;
     Behavior? behavior;
     if (json['behaviorTree'] != null) {
@@ -46,7 +50,10 @@ class FSMState {
     if (json['transitions'] != null) {
       final trans = json['transitions'] as Map<String, dynamic>;
       for (final entry in trans.entries) {
-        transitions[entry.key] = FSMTransition.fromJson(entry.value as Map<String, dynamic>);
+        transitions[entry.key] = FSMTransition.fromJson(
+          entry.value as Map<String, dynamic>,
+          conditions: conditions,
+        );
       }
     }
     return FSMState(
@@ -63,18 +70,33 @@ class FSMTransition {
   final String toState;
   final bool Function(BTContext) condition;
 
-  FSMTransition(this.toState, this.condition);
+  /// The name this transition's [condition] is bound by when the machine is loaded from
+  /// JSON (see [FSMTransition.fromJson]). Null for a condition written directly in Dart.
+  final String? conditionName;
 
+  FSMTransition(this.toState, this.condition, {this.conditionName});
+
+  /// Conditions are code, so only their *name* is serialized; the game supplies the
+  /// function for each name when it loads the machine.
   Map<String, dynamic> toJson() => {
         'toState': toState,
-        // Note: conditions are not serialized - they need to be re-registered
+        if (conditionName != null) 'condition': conditionName,
       };
 
-  factory FSMTransition.fromJson(Map<String, dynamic> json) => FSMTransition(
-        json['toState'] as String,
-        // Conditions need to be registered separately
-        (context) => false,
-      );
+  /// Loads a transition, binding its named `condition` to the function in [conditions].
+  /// A name with no function bound -- or no name -- gives a transition that never fires,
+  /// so a typo in a name leaves the machine idle rather than throwing mid-game.
+  factory FSMTransition.fromJson(
+    Map<String, dynamic> json, {
+    Map<String, bool Function(BTContext)>? conditions,
+  }) {
+    final name = json['condition'] as String?;
+    return FSMTransition(
+      json['toState'] as String,
+      (name == null ? null : conditions?[name]) ?? (context) => false,
+      conditionName: name,
+    );
+  }
 }
 
 /// A finite state machine that can run behavior trees or custom behaviors per state.
@@ -137,11 +159,19 @@ class StateMachine {
         'states': states.map((k, v) => MapEntry(k, v.toJson())),
       };
 
-  factory StateMachine.fromJson(Map<String, dynamic> json, BehaviorRegistry registry) {
+  factory StateMachine.fromJson(
+    Map<String, dynamic> json,
+    BehaviorRegistry registry, {
+    Map<String, bool Function(BTContext)>? conditions,
+  }) {
     final states = <String, FSMState>{};
     final statesJson = json['states'] as Map<String, dynamic>;
     for (final entry in statesJson.entries) {
-      states[entry.key] = FSMState.fromJson(entry.value as Map<String, dynamic>, registry);
+      states[entry.key] = FSMState.fromJson(
+        entry.value as Map<String, dynamic>,
+        registry,
+        conditions: conditions,
+      );
     }
     return StateMachine(
       id: json['id'] as String,
@@ -197,11 +227,16 @@ class _RunStateMachineAction implements Action {
   }
 }
 
-/// System that runs StateMachines stored in AIState.memory`'_fsm_root'`.
+/// System that runs state machines stored as JSON in `AIState.memory['_fsm_root']`.
+///
+/// [conditions] binds the condition names in that JSON to functions (see
+/// [FSMTransition.fromJson]). The machine's current state is written back to the JSON
+/// after each tick, so a transition sticks instead of resetting next frame.
 class StateMachineSystem implements System {
   final BehaviorRegistry registry;
+  final Map<String, bool Function(BTContext)> conditions;
 
-  StateMachineSystem(this.registry);
+  StateMachineSystem(this.registry, {this.conditions = const {}});
 
   @override
   String get name => 'stateMachine';
@@ -216,7 +251,11 @@ class StateMachineSystem implements System {
       final rootJson = (state.memory['_fsm_root'] as Map?)?.cast<String, dynamic>();
       if (rootJson == null) continue;
 
-      final stateMachine = StateMachine.fromJson(rootJson, registry);
+      final stateMachine = StateMachine.fromJson(
+        rootJson,
+        registry,
+        conditions: conditions,
+      );
 
       final rawBlackboard = state.memory['_fsm_blackboard'];
       final blackboard = (rawBlackboard as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
@@ -236,6 +275,7 @@ class StateMachineSystem implements System {
 
       // Store updated blackboard
       state.memory['_fsm_blackboard'] = blackboard;
+      rootJson['currentState'] = stateMachine.currentStateName;
     }
   }
 }

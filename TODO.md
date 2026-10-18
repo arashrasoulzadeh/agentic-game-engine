@@ -193,8 +193,9 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 
 - [ ] Real Wave Function Collapse: `WFCGenerator` has no adjacency rules (placeholder, documented
       in `docs/concepts/procedural-generation.md`).
-- [ ] AI building blocks: behavior trees, state machines, steering, hearing /
-      sound propagation, `InvestigateBehavior`, pathfinding.
+- [ ] AI building blocks, remaining: steering, hearing / sound propagation,
+      `InvestigateBehavior`, `FleeBehavior`, pathfinding (behavior trees and state
+      machines are done: `docs/concepts/ai.md`).
 - [ ] Particles, tweening, cinematics, scene transitions, video playback.
 - [ ] Settings menus, `PlayerOptions` persistence and accessibility options
       (colorblind modes, text scaling, remapping).

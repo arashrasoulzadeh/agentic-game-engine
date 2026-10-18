@@ -747,7 +747,7 @@ class BehaviorTreeBehavior implements Behavior {
   }
 }
 
-/// System that runs behavior trees stored in AIState.memory`'_bt_root'`.
+/// System that runs behavior trees stored in `AIState.memory['_bt_root']`.
 /// For each entity with AIState and a '_bt_root' key, it executes the tree.
 class BehaviorTreeSystem implements System {
   final BehaviorRegistry registry;

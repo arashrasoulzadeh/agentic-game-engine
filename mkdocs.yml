@@ -89,6 +89,7 @@ nav:
       - Localization: concepts/localization.md
       - Dialogue: concepts/dialogue.md
       - Procedural generation: concepts/procedural-generation.md
+      - AI trees and state machines: concepts/ai.md
       - The agent API: concepts/agent-api.md
       - Rendering: concepts/rendering.md
       - Platformer gameplay: concepts/platformer.md
