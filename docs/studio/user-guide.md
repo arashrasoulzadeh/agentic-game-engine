@@ -154,6 +154,30 @@ Per-user settings live outside any project, in `~/.game_agent/`:
   Keys are the ones in `StudioStrings` (`packages/engine_studio/lib/src/prefs/strings.dart`);
   anything not translated stays English. Only the project window is translatable so far.
 
+## Updates and downloads
+
+The **Updates** button on the open-project screen shows what a release server offers: templates,
+packs, studio versions. For each item you see its size and whether it is new or an update, and
+choose **Accept**, **Later** or **Skip**. Nothing downloads until you accept it and press
+**Install accepted**. Each file's SHA-256 must match the signed release list before it replaces
+the installed copy; a bad or interrupted download leaves the old version in place and shows a
+**Retry**. **Skip** is remembered for that exact version, and a newer version asks again.
+
+If the server cannot be reached the window says so and the studio keeps working with what is
+already downloaded, so existing projects always open. A release list that is unsigned or signed
+with the wrong key offers nothing and says why.
+
+This is off until you configure it: with no server and key, the studio makes no network requests.
+In `~/.game_agent/studio_prefs.json`:
+
+```json
+{ "updates": { "manifestUrl": "https://example.com/studio/manifest.json",
+               "publicKey": "<base64 of the publisher's 32-byte Ed25519 key>" } }
+```
+
+The signature is fetched from `<manifestUrl>.sig` (base64). Downloads are cached in
+`~/.game_agent/cache`. There is no official release server yet; this is the client side.
+
 ## Doing the same from the command line
 
 Every studio action has a CLI equivalent, which is what makes the editor agent-friendly:

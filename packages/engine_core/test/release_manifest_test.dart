@@ -18,6 +18,7 @@ ReleaseManifest _manifest() => const ReleaseManifest(
 );
 
 void main() {
+  keyBytesTests();
   group('ReleaseManifest JSON round-trip', () {
     test('toJson/fromJson preserves every field', () {
       final manifest = _manifest();
@@ -134,5 +135,21 @@ void main() {
       expect(result.ok, isFalse);
       expect(result.rejection, ManifestRejection.checksumMismatch);
     });
+  });
+}
+
+void keyBytesTests() {
+  test('a verifier built from raw public-key bytes accepts the matching signature only', () async {
+    final pair = await ReleaseManifestSigner.generateKeyPair();
+    final bytes = (await pair.extractPublicKey()).bytes;
+    final manifest = _manifest();
+    final sig = await ReleaseManifestSigner.sign(manifest, pair);
+
+    final verifier = ReleaseManifestVerifier.fromPublicKeyBytes(bytes);
+    expect((await verifier.verify(manifest, sig)).ok, isTrue);
+
+    final other = await ReleaseManifestSigner.generateKeyPair();
+    final wrong = ReleaseManifestVerifier.fromPublicKeyBytes((await other.extractPublicKey()).bytes);
+    expect((await wrong.verify(manifest, sig)).rejection, ManifestRejection.invalidSignature);
   });
 }

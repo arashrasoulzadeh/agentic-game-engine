@@ -134,15 +134,14 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 
 ### Distribution (phase 3)
 
-- [ ] **3.18** Bootstrap window: lists required downloads, shows progress,
-      size and checksum result per item; retry on failure (design §2.13).
-- [ ] **3.20** Update notices: the bootstrap window lists version changes with
-      per-item accept/defer/skip; nothing installs without confirmation.
-- [ ] **3.21** Offline mode: previously cached versions open existing projects
-      when the manifest server is unreachable; test with a fake unreachable
-      server.
-- [ ] **3.22** Packaging scripts for `.dmg` first; `.msi` and `.AppImage`
-      added once the macOS flow is verified end to end.
+- [ ] **3.22 (remaining)** The `.dmg` script's packing step is verified (with a stand-in app), but a
+      real `flutter build macos --release` failed here with Flutter's "does not contain
+      architectures arm64 x86_64" check on `FlutterMacOS.framework` (it lists `x86_64 arm64`), so
+      end-to-end packaging is unverified; `hdiutil create` is also deprecated in favour of
+      `diskutil image create`. Also: `.msi` and `.AppImage` packaging, code signing and notarization for the
+      `.dmg` (`engine_studio/tool/package_macos.sh` builds an unsigned one), and an actual release
+      server / signing key: the client (bootstrap window, offline mode, update decisions) is done
+      but has nothing to talk to yet.
 
 ### Code editor (phase 3B)
 
@@ -203,7 +202,8 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       (colorblind modes, text scaling, remapping).
 - [ ] Viewport / aspect-ratio / safe-area handling.
 - [ ] Error reporting and analytics hooks.
-- [ ] Performance: archetypes, the job system, the benchmark suite.
+- [ ] `JobSystem` (worker isolates): no tests and no guidance; the performance guide
+      (`docs/concepts/performance.md`) covers the profiler, benchmarks and fixed timestep.
 - [ ] Lighting deep-dive (`Light2D`, shadows, single-pass shader, day/night)
       beyond the overview in `concepts/rendering.md`.
 - [ ] Release pipeline (`build-release`) walkthrough: signing for Android and

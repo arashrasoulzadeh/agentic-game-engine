@@ -502,6 +502,16 @@ Goal: a designer builds, saves, and play-tests a level.
   and a verifier in `engine_core`, with tests for valid, unsigned,
   tampered, and checksum-mismatch manifests.
 
+- [x] **3.18 / 3.20 / 3.21** (`lib/src/bootstrap/`: `Bootstrapper` over an injected
+  `ReleaseServer`, `BootstrapScreen`, `UpdateConfig`.) Bootstrap window with per-item size,
+  progress, checksum result and Retry; update items offered as New / Update with
+  Accept / Later / Skip, nothing downloaded until accepted, Skip remembered per exact version;
+  offline mode: an unreachable server or a manifest that fails verification offers nothing and
+  says why, while the cache (atomic, checksum-verified installs) keeps existing projects
+  opening. Tested against a fake server, including unreachable, unsigned, forged, corrupt and
+  failing downloads. Off until `updates` is set in `studio_prefs.json`; there is no release
+  server yet.
+
 **Phase 3 exit criteria:** PRD metrics 1.6 (10-minute build + play-test)
 and the undo coverage test are both green.
 

@@ -98,6 +98,10 @@ class ReleaseManifestVerifier {
 
   const ReleaseManifestVerifier(this.publicKey);
 
+  /// A verifier for the publisher's raw 32-byte Ed25519 public key (what a config file holds).
+  factory ReleaseManifestVerifier.fromPublicKeyBytes(List<int> bytes) =>
+      ReleaseManifestVerifier(SimplePublicKey(bytes, type: KeyPairType.ed25519));
+
   /// Checks [manifest]'s [signature] (raw bytes, not base64/hex) against
   /// [publicKey]. A null or empty signature is reported as `unsigned`,
   /// distinct from a present-but-wrong one (`invalidSignature`), since the

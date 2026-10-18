@@ -1,6 +1,9 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
+import '../bootstrap/bootstrap_screen.dart';
+import '../bootstrap/update_config.dart';
+import '../prefs/shortcuts.dart' show studioPrefsFile;
 import 'project_screen.dart';
 import 'studio_project.dart';
 
@@ -12,7 +15,15 @@ class ProjectOpenScreen extends StatefulWidget {
   /// tests pass their own.
   final void Function(BuildContext context, StudioProject project) onOpened;
 
-  const ProjectOpenScreen({super.key, required this.onOpened});
+  /// Where the "Updates" window checks. Null reads `updates` from `studio_prefs.json`; tests
+  /// pass their own so no real file or network is involved.
+  final UpdateConfig? Function()? updateConfig;
+
+  const ProjectOpenScreen({
+    super.key,
+    required this.onOpened,
+    this.updateConfig,
+  });
 
   /// Opens the project's level list. Shared by the app and tests that don't
   /// need to override it.
@@ -47,6 +58,41 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
     });
   }
 
+  /// Opens the updates window, or says why it cannot: with no server and key configured the
+  /// studio makes no network requests at all.
+  void _openUpdates() {
+    final config =
+        (widget.updateConfig ?? () => UpdateConfig.load(studioPrefsFile()))();
+    if (config == null) {
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          key: const Key('updates-not-configured'),
+          title: const Text('No update server configured'),
+          content: const Text(
+            'Add an "updates" section with "manifestUrl" and "publicKey" to '
+            '~/.game_agent/studio_prefs.json. Without the publisher\'s key nothing '
+            'downloaded could be verified, so the studio does not check.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BootstrapScreen(
+          bootstrapper: config.bootstrapper(studioCacheDir()),
+        ),
+      ),
+    );
+  }
+
   void _open() {
     try {
       final project = StudioProject.open(_path.text.trim());
@@ -59,7 +105,17 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Open project')),
+      appBar: AppBar(
+        title: const Text('Open project'),
+        actions: [
+          IconButton(
+            key: const Key('open-updates'),
+            tooltip: 'Updates and downloads',
+            onPressed: _openUpdates,
+            icon: const Icon(Icons.system_update_alt),
+          ),
+        ],
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
