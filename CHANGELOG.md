@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Shared-folder editing: `FileLock` (`engine_core_io`) advisory `<file>.lock`; the studio locks a level while open (banner, no saving, Take over when held by someone else); `studio lock` / `unlock`.
 - Level diff and merge: `diffLevels`, `mergeLevels` (`engine_core`) and `game_agent studio diff` / `studio merge`, usable as a git merge driver. Entities match by name; conflicts keep ours and exit 1.
 - Studio: a **Run game** button starts the project's own game as a separate process on the level being edited (unsaved edits included); failures are shown, not thrown.
 - Studio: a Profiler switch in the preview shows live `WorldProfiler` data - step time, entity count, a step-time sparkline and the slowest systems.

@@ -114,6 +114,7 @@ so an agent can edit levels without opening a UI.
 | `import-tmx` / `export-tmx` | Convert a Tiled `.tmx` map to a level file and back. |
 | `save-prefab` / `place-prefab` | Save an entity as `prefabs/<name>.json`; place a prefab into a level. |
 | `diff` | What differs between two level files, by entity and component (`--json`, `--exit-code`). |
+| `lock` / `unlock` | Claim / release a level in a shared folder (advisory `<level>.lock`; exit 1 if someone else has it). |
 | `merge` | Three-way merge `<base> <ours> <theirs>` by entity and component; exits 1 on conflict. |
 | `export-levels` | Rewrite level files in canonical form (validated first). |
 | `project-manifest` | Write or update `project.json`. |

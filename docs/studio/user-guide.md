@@ -61,6 +61,18 @@ as `game_agent studio validate`: unknown components, wrong field types, and — 
 project declares its sprite sheets — sprites and atlases that do not exist. Clicking a
 problem selects the entity it is about.
 
+### Sharing a project folder
+
+When several people edit one project in a shared or synced folder, the studio takes an
+**advisory lock** on a level while it is open (`<level>.lock` next to it, naming `user@host` and
+the time). If someone else holds it you get a banner, saving is switched off so nobody overwrites
+the other's work, and you can **Take over** (when their editor crashed). A lock older than two
+hours counts as abandoned. `game_agent studio lock` / `unlock` do the same from the command line.
+
+The lock is advisory (nothing stops a tool that ignores it) and meant for shared folders. With
+git, use `studio merge` as a merge driver instead (see the [CLI reference](../reference/cli.md)),
+and keep `*.lock` out of version control.
+
 ## Assets, prefabs and brushes
 
 The **asset browser** lists the project's sprite sheets (with how many sprites each has),

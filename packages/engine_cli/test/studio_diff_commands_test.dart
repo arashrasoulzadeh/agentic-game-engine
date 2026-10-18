@@ -99,4 +99,39 @@ void main() {
       await expectLater(runStudio(['diff', a]), throwsA(anything));
     });
   });
+
+  group('studio lock / unlock', () {
+    test(
+      'lock claims a level; a second person is refused; unlock releases',
+      () async {
+        final d = _dir();
+        final level = _level(d, 'one', [_ent('p', 1)]);
+        expect(await runStudio(['lock', level, '--as', 'ann@a']), 0);
+        expect(File('$level.lock').existsSync(), isTrue);
+        expect(await runStudio(['lock', level, '--as', 'bob@b']), 1);
+        expect(
+          await runStudio(['lock', level, '--as', 'ann@a']),
+          0,
+          reason: 'renewing your own',
+        );
+
+        expect(await runStudio(['unlock', level, '--as', 'bob@b']), 1);
+        expect(File('$level.lock').existsSync(), isTrue);
+        expect(
+          await runStudio(['unlock', level, '--as', 'bob@b', '--force']),
+          0,
+        );
+        expect(File('$level.lock').existsSync(), isFalse);
+      },
+    );
+
+    test('the owner can unlock; unlocking an unlocked level is fine', () async {
+      final d = _dir();
+      final level = _level(d, 'one', []);
+      expect(await runStudio(['unlock', level, '--as', 'ann@a']), 0);
+      await runStudio(['lock', level, '--as', 'ann@a']);
+      expect(await runStudio(['unlock', level, '--as', 'ann@a']), 0);
+      expect(File('$level.lock').existsSync(), isFalse);
+    });
+  });
 }

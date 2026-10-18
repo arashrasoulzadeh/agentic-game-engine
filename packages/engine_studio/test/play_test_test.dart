@@ -188,7 +188,7 @@ void main() {
           () => Future<void>.delayed(const Duration(milliseconds: 100)),
         );
         await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
+        await tester.pump(const Duration(milliseconds: 50));
 
         expect(recorder.workingDirectory, root.path);
         expect(

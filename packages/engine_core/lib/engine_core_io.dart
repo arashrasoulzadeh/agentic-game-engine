@@ -1,4 +1,4 @@
-/// Network transports that need `dart:io` (sockets). Import this alongside
+/// Pieces that need `dart:io`: network transports (sockets) and advisory file locks. Import this alongside
 /// `package:engine_core/engine_core.dart` in a server, a command-line tool or a
 /// desktop/mobile game; it is deliberately not exported from the main library so
 /// that library keeps compiling for the web.
@@ -13,6 +13,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'engine_core.dart';
+
+export 'src/io/file_lock.dart';
 
 /// A [NetEndpoint] over a `dart:io` [WebSocket]: each message is one JSON text frame.
 ///

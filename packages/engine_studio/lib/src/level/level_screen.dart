@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:engine_core/engine_core.dart';
+import 'package:engine_core/engine_core_io.dart'
+    show FileLock, LockInfo, lockOwner;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -38,12 +40,16 @@ class LevelScreen extends StatefulWidget {
   /// launcher; tests pass one with a recording process starter.
   final PlayTest? playTest;
 
+  /// Who is editing, for the advisory file lock (see [FileLock]). Null uses `user@host`.
+  final String? lockedAs;
+
   const LevelScreen({
     super.key,
     required this.levelPath,
     this.projectRoot,
     this.autosaveInterval = const Duration(seconds: 30),
     this.playTest,
+    this.lockedAs,
   });
 
   @override
@@ -60,6 +66,12 @@ class _LevelScreenState extends State<LevelScreen> {
   final _vertical = ScrollController();
   final _horizontal = ScrollController();
   String? _saveError;
+  late final FileLock _lock = FileLock(widget.levelPath);
+  late final String _me = widget.lockedAs ?? lockOwner();
+
+  /// Set when someone else holds the level's lock: this editor is then view-only.
+  LockInfo? _lockedBy;
+  bool _holdsLock = false;
 
   @override
   void initState() {
@@ -82,6 +94,11 @@ class _LevelScreenState extends State<LevelScreen> {
     } on Object catch (e) {
       _loadError = 'Could not open ${widget.levelPath}: $e';
     }
+    if (_editor != null && widget.projectRoot != null) {
+      final result = _lock.acquire(_me);
+      _holdsLock = result.acquired;
+      _lockedBy = result.acquired ? null : result.holder;
+    }
     final interval = widget.autosaveInterval;
     if (interval != null && widget.projectRoot != null) {
       _autosave = Timer.periodic(interval, (_) => _backUpIfDirty());
@@ -91,6 +108,7 @@ class _LevelScreenState extends State<LevelScreen> {
   @override
   void dispose() {
     _autosave?.cancel();
+    if (_holdsLock) _lock.release(_me);
     _vertical.dispose();
     _horizontal.dispose();
     super.dispose();
@@ -137,11 +155,21 @@ class _LevelScreenState extends State<LevelScreen> {
     }
   }
 
+  /// Takes the lock from whoever has it, for when their editor crashed or they walked away.
+  void _takeOver() {
+    _lock.release(_me, force: true);
+    final result = _lock.acquire(_me);
+    setState(() {
+      _holdsLock = result.acquired;
+      _lockedBy = result.acquired ? null : result.holder;
+    });
+  }
+
   /// Writes the level file. A failure stays on screen rather than being lost, and
   /// the level stays dirty so nothing is marked saved that was not.
   void _save() {
     final editor = _editor;
-    if (editor == null) return;
+    if (editor == null || _lockedBy != null) return;
     try {
       LevelSaver.save(widget.levelPath, editor.document);
       editor.markSaved();
@@ -221,7 +249,7 @@ class _LevelScreenState extends State<LevelScreen> {
             IconButton(
               key: const Key('save'),
               tooltip: 'Save (Cmd/Ctrl+S)',
-              onPressed: editor.isDirty ? _save : null,
+              onPressed: editor.isDirty && _lockedBy == null ? _save : null,
               icon: const Icon(Icons.save_outlined),
             ),
             IconButton(
@@ -284,6 +312,21 @@ class _LevelScreenState extends State<LevelScreen> {
         ),
         body: Column(
           children: [
+            if (_lockedBy != null)
+              MaterialBanner(
+                key: const Key('level-locked'),
+                content: Text(
+                  '${_lockedBy!.owner} is editing this level (since ${_lockedBy!.acquiredAt.toLocal().toString().substring(0, 16)}). '
+                  'Saving is off so you do not overwrite their work.',
+                ),
+                actions: [
+                  TextButton(
+                    key: const Key('lock-take-over'),
+                    onPressed: _takeOver,
+                    child: const Text('Take over'),
+                  ),
+                ],
+              ),
             _ModeSwitch(
               previewing: _previewing,
               onChanged: (previewing) => setState(() {

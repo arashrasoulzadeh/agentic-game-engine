@@ -3,15 +3,18 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:engine_core/engine_core.dart';
+import 'package:engine_core/engine_core_io.dart' show FileLock, lockOwner;
 
 import 'studio_command.dart' show canonicalJson;
 import 'studio_edit_commands.dart' show loadLevelOrNull;
 
-/// Registers `diff` and `merge` on the `studio` command.
+/// Registers `diff`, `merge`, `lock` and `unlock` on the `studio` command.
 void addStudioDiffCommands(Command<int> studio) {
   studio
     ..addSubcommand(StudioDiffCommand())
-    ..addSubcommand(StudioMergeCommand());
+    ..addSubcommand(StudioMergeCommand())
+    ..addSubcommand(StudioLockCommand())
+    ..addSubcommand(StudioUnlockCommand());
 }
 
 /// `game_agent studio diff <before> <after>`: what changed between two level files, by entity
@@ -96,5 +99,71 @@ class StudioMergeCommand extends Command<int> {
       );
     }
     return result.hasConflicts ? 1 : 0;
+  }
+}
+
+/// `game_agent studio lock <level>`: claim a level in a shared folder so teammates (and the
+/// studio) see it is being edited. Exits 1 when someone else holds it.
+class StudioLockCommand extends Command<int> {
+  @override
+  final name = 'lock';
+  @override
+  final description =
+      'Claim a level file (advisory lock in <level>.lock); exits 1 if someone else holds it.';
+
+  StudioLockCommand() {
+    argParser.addOption('as', help: 'Who is locking (default: user@host).');
+  }
+
+  @override
+  Future<int> run() async {
+    final rest = argResults!.rest;
+    if (rest.length != 1)
+      usageException('Give one level file: studio lock <level>.');
+    final owner = (argResults!['as'] as String?) ?? lockOwner();
+    final result = FileLock(rest.single).acquire(owner);
+    if (!result.acquired) {
+      stderr.writeln(
+        'Locked by ${result.holder.owner} since ${result.holder.acquiredAt.toLocal()}.',
+      );
+      return 1;
+    }
+    stdout.writeln('Locked ${rest.single} as $owner.');
+    return 0;
+  }
+}
+
+/// `game_agent studio unlock <level>`: release your lock (or `--force` someone else's).
+class StudioUnlockCommand extends Command<int> {
+  @override
+  final name = 'unlock';
+  @override
+  final description =
+      'Release the lock on a level file; --force removes someone else\'s.';
+
+  StudioUnlockCommand() {
+    argParser
+      ..addOption('as', help: 'Who is unlocking (default: user@host).')
+      ..addFlag(
+        'force',
+        negatable: false,
+        help: 'Remove the lock even if someone else holds it.',
+      );
+  }
+
+  @override
+  Future<int> run() async {
+    final rest = argResults!.rest;
+    if (rest.length != 1)
+      usageException('Give one level file: studio unlock <level>.');
+    final owner = (argResults!['as'] as String?) ?? lockOwner();
+    final released = FileLock(
+      rest.single,
+    ).release(owner, force: argResults!['force'] as bool);
+    if (!released) {
+      stderr.writeln('Held by someone else; use --force to remove it.');
+      return 1;
+    }
+    return 0;
   }
 }
