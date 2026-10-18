@@ -9,7 +9,7 @@ import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
 
-/// Spawns particles from every `ParticleEmitter` (continuous [rate] and
+/// Spawns particles from every `ParticleEmitter` (continuous `rate` and
 /// one-shot `burstCount`), then ages and destroys every `Particle`
 /// whose lifetime has elapsed. Relies on `MovementSystem` (also
 /// registered by you, same as any other system) to actually move

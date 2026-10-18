@@ -23,3 +23,7 @@ jobs:
       - run: dart pub get
       - run: dart analyze --fatal-infos
       - run: dart test
+      - name: dart doc has no warnings
+        run: |
+          dart doc --dry-run 2>&1 | tee doc.log
+          ! grep -q "warning:" doc.log

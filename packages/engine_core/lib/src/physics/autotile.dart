@@ -26,7 +26,7 @@ int autotileBitmask(TileMap map, int col, int row, Set<int> wallTileIds) {
 /// under this naming scheme for each autotiled base tile.
 String autotileRegionName(String baseName, int bitmask) => '${baseName}_$bitmask';
 
-/// The synthetic tile id [withAutotile] substitutes for [baseTileId] at
+/// The synthetic tile id `withAutotile` substitutes for [baseTileId] at
 /// a cell whose neighbor [bitmask] was computed by [autotileBitmask].
 /// Reserves ids at `1000000 + baseTileId*16 + bitmask` and up — comfortably
 /// above any id a hand-authored or generated level in this engine

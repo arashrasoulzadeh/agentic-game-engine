@@ -18,7 +18,7 @@ class GameState {
 
   /// Schema migration version for save/load. Increment this when
   /// [data] changes shape in a way that breaks old saves.
-  /// [SaveGame.load] will call [migrate] if the save's version differs
+  /// `SaveGame.load` will call `migrate` if the save's version differs
   /// from this value.
   final int migrationVersion;
 

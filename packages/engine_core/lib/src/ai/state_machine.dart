@@ -197,7 +197,7 @@ class _RunStateMachineAction implements Action {
   }
 }
 
-/// System that runs StateMachines stored in AIState.memory['_fsm_root'].
+/// System that runs StateMachines stored in AIState.memory`'_fsm_root'`.
 class StateMachineSystem implements System {
   final BehaviorRegistry registry;
 

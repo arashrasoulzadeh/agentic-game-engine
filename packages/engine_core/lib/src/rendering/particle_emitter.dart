@@ -22,10 +22,10 @@ enum EmissionShape {
 /// `PlatformerController.jumpRequested`). Both can be used on the same
 /// emitter (e.g. a steady trickle plus an occasional burst).
 ///
-/// New particles get a random angle in [angleMin, angleMax] (radians)
-/// and speed in [speedMin, speedMax], then age from [startScale]/
+/// New particles get a random angle in `angleMin, angleMax` (radians)
+/// and speed in `speedMin, speedMax`, then age from [startScale]/
 /// [startAlpha] to [endScale]/[endAlpha] over a random lifetime in
-/// [lifetimeMin, lifetimeMax] — see `Particle` for how that ramp is
+/// `lifetimeMin, lifetimeMax` — see `Particle` for how that ramp is
 /// computed.
 ///
 /// Supports multiple [EmissionShape]s (point, circle, rect, edge) and

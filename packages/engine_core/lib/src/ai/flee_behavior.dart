@@ -1,6 +1,6 @@
 import 'package:engine_core/engine_core.dart';
 
-/// Flees from [target] at [speed] — the opposite of [FollowBehavior].
+/// Flees from [target] at [speed] — the opposite of `FollowBehavior`.
 /// Only touches `Velocity.x` (via [_SetVelocityXAction]), leaving `.y`
 /// alone so it doesn't fight gravity/jump every tick.
 ///

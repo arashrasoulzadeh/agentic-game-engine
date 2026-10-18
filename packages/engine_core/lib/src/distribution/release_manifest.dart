@@ -99,14 +99,14 @@ class ReleaseManifestVerifier {
   const ReleaseManifestVerifier(this.publicKey);
 
   /// Checks [manifest]'s [signature] (raw bytes, not base64/hex) against
-  /// [publicKey]. A null or empty signature is reported as [unsigned],
-  /// distinct from a present-but-wrong one ([invalidSignature]), since the
+  /// [publicKey]. A null or empty signature is reported as `unsigned`,
+  /// distinct from a present-but-wrong one (`invalidSignature`), since the
   /// bootstrap window should say "this manifest isn't signed at all"
   /// differently from "this manifest's signature doesn't check out."
   ///
   /// [signature] is untrusted input straight from wherever the manifest
   /// came from, so a malformed one (wrong length, garbage bytes) must come
-  /// back as [invalidSignature] like any other forged signature, not throw
+  /// back as `invalidSignature` like any other forged signature, not throw
   /// — `Ed25519.verify` throws a bare `StateError` on a wrong-length
   /// signature rather than returning false, which would otherwise crash
   /// the bootstrap window instead of just rejecting the manifest.

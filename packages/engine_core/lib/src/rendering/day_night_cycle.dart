@@ -5,7 +5,7 @@ enum Weather { clear, overcast, rain, fog }
 /// Drives a looping day/night clock and current weather, computing the
 /// ambient brightness/tint a renderer should wash the scene with each
 /// frame. A plain mutable object the game owns and advances -- like
-/// [Camera] (see `engine_flutter`), not an ECS component, since a world
+/// `Camera` (see `engine_flutter`), not an ECS component, since a world
 /// has exactly one of these, not one per entity.
 ///
 /// `EngineView.dayNightCycle` (`engine_flutter`) reads [ambientBrightness]/

@@ -162,7 +162,7 @@ class BTSelector extends BTNode {
 }
 
 /// Composite node that ticks all children each tick.
-/// Succeeds if [requiredSuccess] children succeed; fails if [children.length - requiredSuccess + 1] fail.
+/// Succeeds if [requiredSuccess] children succeed; fails if `children.length - requiredSuccess + 1` fail.
 class BTParallel extends BTNode {
   final List<BTNode> children;
   final int requiredSuccess;
@@ -747,7 +747,7 @@ class BehaviorTreeBehavior implements Behavior {
   }
 }
 
-/// System that runs behavior trees stored in AIState.memory['_bt_root'].
+/// System that runs behavior trees stored in AIState.memory`'_bt_root'`.
 /// For each entity with AIState and a '_bt_root' key, it executes the tree.
 class BehaviorTreeSystem implements System {
   final BehaviorRegistry registry;

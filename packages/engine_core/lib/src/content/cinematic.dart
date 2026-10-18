@@ -115,7 +115,7 @@ class TweenStep extends CinematicStep {
 /// Moves the camera to target [targetX]/[targetY] over [duration] seconds,
 /// using [easing]. If [followEntity] is provided, targets that entity's
 /// position instead of fixed coordinates. The camera is assumed to be
-/// whatever entity [Scene.cameraFollowEntity] points at (or a given
+/// whatever entity `Scene.cameraFollowEntity` points at (or a given
 /// [cameraEntity] override).
 class MoveCameraStep extends CinematicStep {
   final double? targetX;
@@ -220,7 +220,7 @@ class MoveCameraStep extends CinematicStep {
 }
 
 /// Spawns an entity from a template [templateId] (registered in
-/// [Level] or via [EntityTemplateRegistry]). Completes immediately.
+/// [Level] or via `EntityTemplateRegistry`). Completes immediately.
 /// Useful for spawning enemies, props, or effects at specific cinematic beats.
 class SpawnEntityStep extends CinematicStep {
   final String templateId;
