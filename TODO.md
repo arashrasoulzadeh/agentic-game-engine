@@ -212,9 +212,10 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 
 ### Quality of the docs themselves
 
-- [ ] **Execute the platformer samples** — tutorial 1 and the older recipes
-      are checked by hand; give them the same test treatment as the
-      turn-based ones (`doc_examples_test.dart`), and fix any drift found.
+- [ ] **Execute the remaining platformer samples** — tutorial 1 is now test-executed
+      (`engine_platformer/test/doc_examples_test.dart`, which found and fixed an
+      `InputState`/`InputController` mix-up); `docs/concepts/platformer.md` and the
+      platformer recipes under `docs/examples/` still are not.
 - [ ] **API docs for the Flutter packages** — only `engine_core` and
       `engine_schema` are generated on the site. Add `engine_flutter`,
       `engine_platformer`, `engine_strategy` via the Flutter SDK in the docs

@@ -45,7 +45,7 @@ constructor, the same pattern `spawnPlayer` expects (`input:` takes an
 ```dart
 class MainScene extends Scene {
   MainScene(this.input);
-  final InputState input;
+  final InputController input;
   late final EntityId player;
   final behaviors = BehaviorRegistry();
 
@@ -58,7 +58,7 @@ class MainScene extends Scene {
     player = spawnPlayer(
       world,
       x: 100, y: 100,
-      input: input,
+      input: input.state,
       jumpSpeed: 480,
       maxHealth: 100,
     );
