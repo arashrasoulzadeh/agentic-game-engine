@@ -146,6 +146,15 @@ class ProductionStalledEvent {
   ProductionStalledEvent(this.producer, this.missing);
 }
 
+/// The [Treasury] that belongs to [team], or null if that team has none.
+Treasury? treasuryOf(World world, String team) {
+  final store = world.storeOf<Treasury>();
+  for (var i = 0; i < store.length; i++) {
+    if (store.denseAt(i).team == team) return store.denseAt(i);
+  }
+  return null;
+}
+
 /// Queues [count] more units at [producer]. Returns false if it isn't a producer
 /// or [count] isn't positive.
 bool queueProduction(World world, EntityId producer, [int count = 1]) {
@@ -186,23 +195,15 @@ class ProductionSystem extends System {
     final ids = [for (var i = 0; i < producers.length; i++) producers.entityAt(i)]..sort();
     for (final id in ids) {
       final p = producers.get(id);
-      if (p != null && p.queued > 0) _work(world, id, p, dt);
+      if (p != null && p.queued > 0 && !world.storeOf<Construction>().has(id)) _work(world, id, p, dt);
     }
-  }
-
-  Treasury? _treasuryOf(World world, String team) {
-    final store = world.storeOf<Treasury>();
-    for (var i = 0; i < store.length; i++) {
-      if (store.denseAt(i).team == team) return store.denseAt(i);
-    }
-    return null;
   }
 
   void _work(World world, EntityId id, Producer p, double dt) {
     final team = world.storeOf<Team>().get(id)?.id;
     if (team == null) return;
     if (!p.paid) {
-      final treasury = _treasuryOf(world, team);
+      final treasury = treasuryOf(world, team);
       if (treasury == null || !treasury.spend(p.cost)) {
         if (_stalled.add(id)) {
           world.events.emit(ProductionStalledEvent(id, {

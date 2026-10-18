@@ -168,7 +168,57 @@ queueProduction(world, barracks, 3);
 - Producers run in entity-id order, so two barracks competing for the last 30 gold
   resolve the same way everywhere.
 
+## Gathering and building
+
+Pass `gathering: true` to `installRealtimeStrategySystems` to add the harvest loop and
+construction. (`production: true` also adds `ConstructionSystem`.)
+
+```dart
+final mine = world.spawn();
+world.components.applyToEntity(mine, {
+  'resourceNode': {'resource': 'gold', 'amount': 200},
+  'gridPosition': {'col': 12, 'row': 4},
+});
+
+// A town hall: any team building with a `depot` takes deliveries into its team's Treasury.
+world.components.applyToEntity(world.spawn(), {
+  'depot': {},                       // or {'accepts': ['gold']}
+  'team': {'id': 'red'},
+  'gridPosition': {'col': 3, 'row': 4},
+});
+
+// A worker is a unit (with realtimeStats and an orderQueue) that also has a `gatherer`.
+world.components.applyToEntity(worker, {'gatherer': {'capacity': 10, 'secondsPerUnit': 1}});
+assignGather(world, worker, mine);   // false if it is not a gatherer or the node is empty
+```
+
+The worker walks next to the node, harvests one unit per `secondsPerUnit` until it carries
+`capacity` (or the node runs dry), walks to the **nearest completed depot of its own team**,
+delivers (a `ResourceDeliveredEvent`), and goes back until the node is gone. The empty node is
+removed (`ResourceDepletedEvent`). If there is no depot it waits holding the haul. All of its
+state, including mid-swing progress, is in the component, so a saved game or a rollback
+resumes exactly.
+
+Placing a building:
+
+```dart
+final result = placeBuilding(world, navigator,
+    team: 'red', template: barracksTemplate, col: 8, row: 8,
+    cost: {'gold': 150}, buildSeconds: 20);
+
+if (result.failure case final why?) {
+  // outOfBounds | blocked (terrain) | occupied (another entity there) | noTreasury | cantAfford
+}
+```
+
+It is all-or-nothing: a refusal spends nothing and creates nothing. With `buildSeconds > 0` the
+building carries a `Construction` component; it counts down in `ConstructionSystem`, a producer
+or depot on it does nothing until done, and `BuildingCompletedEvent` fires once.
+
+Buildings here appear instantly and build themselves: there is no builder unit who must stand
+there (a `Gatherer`-style "builder" would be the next step).
+
 ## Not built yet
 
-Gathering units that walk resources home, building placement, unit collision radii
-beyond one unit per cell, and tech trees.
+Builder units that must be present to construct, unit collision radii beyond one unit per
+cell, and tech trees.

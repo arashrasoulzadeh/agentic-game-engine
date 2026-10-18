@@ -136,7 +136,9 @@ class RealtimeInstall {
 ///
 /// Order, and why: `VisionSystem` (with fog) first so visibility is current;
 /// `ProductionSystem` (with `production: true`: team `Treasury` income and
-/// `Producer` buildings) so a finished unit exists before the AI looks;
+/// `Producer` buildings, preceded by `ConstructionSystem` so a building finished this tick
+/// already works) so a finished unit exists before the AI looks; `GatherSystem` (with
+/// `gathering: true`) so a worker's next move is queued before orders run;
 /// `RealtimeAISystem` (with `aiTeams`) so its orders start this tick;
 /// `RealtimeOrderSystem` (movement and combat, sharing one `FlowField` per
 /// destination); `LastTeamStandingSystem` after this tick's kills;
@@ -159,6 +161,7 @@ RealtimeInstall installRealtimeStrategySystems(
   Map<String, TurnAI> aiTeams = const {},
   double aiInterval = 1.0,
   bool production = false,
+  bool gathering = false,
   bool smoothMotion = true,
   bool fog = false,
   bool Function(int col, int row)? blocksSight,
@@ -180,7 +183,11 @@ RealtimeInstall installRealtimeStrategySystems(
   final fields = FlowFieldCache(navigator);
   // Income and production first: a unit finished this tick can be ordered by the AI
   // (below) in the same tick.
+  // Construction before production, so a building finished this tick can start work.
+  if (production || gathering) world.addSystem(ConstructionSystem());
   if (production) world.addSystem(ProductionSystem(navigator));
+  // Gatherers queue their moves before the order system runs, so they start this tick.
+  if (gathering) world.addSystem(GatherSystem(navigator));
   // The AI decides first, so its new orders start executing this very tick.
   if (aiTeams.isNotEmpty) world.addSystem(RealtimeAISystem(aiTeams, interval: aiInterval));
   world.addSystem(RealtimeOrderSystem(fields: fields, attackRange: attackRange, autoEngage: autoEngage));

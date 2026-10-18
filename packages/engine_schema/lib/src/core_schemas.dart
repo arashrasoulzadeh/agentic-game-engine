@@ -281,3 +281,30 @@ const producerSchema = ComponentSchema('producer', [
   FieldSchema('progress', FieldType.double, min: 0),
   FieldSchema('paid', FieldType.bool),
 ]);
+
+const resourceNodeSchema = ComponentSchema('resourceNode', [
+  FieldSchema('resource', FieldType.string, required: true),
+  FieldSchema('amount', FieldType.int, min: 0, required: true),
+]);
+
+const depotSchema = ComponentSchema('depot', [
+  FieldSchema('accepts', FieldType.list),
+]);
+
+const gathererSchema = ComponentSchema('gatherer', [
+  FieldSchema('capacity', FieldType.int, min: 1),
+  FieldSchema('secondsPerUnit', FieldType.double, min: 0),
+  FieldSchema('node', FieldType.int, optional: true),
+  FieldSchema(
+    'phase',
+    FieldType.enumeration,
+    options: ['idle', 'toNode', 'harvesting', 'toDepot'],
+  ),
+  FieldSchema('carrying', FieldType.string, optional: true),
+  FieldSchema('carried', FieldType.int, min: 0),
+  FieldSchema('progress', FieldType.double, min: 0),
+]);
+
+const constructionSchema = ComponentSchema('construction', [
+  FieldSchema('remaining', FieldType.double, min: 0, required: true),
+]);

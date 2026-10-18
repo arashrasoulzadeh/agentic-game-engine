@@ -123,11 +123,9 @@ The turn-based layer is feature-complete for a first release (turn clock,
 orders, grid navigation, combat, fog of war, selection, AI turns,
 `engine_strategy`, `strategy_game` template). Left:
 
-- [ ] **Real-time strategy: gathering and building** — movement, combat, fog,
-      flow fields, formations, smooth motion, a real-time AI driver and
-      income/production all work (see the concept guide). Missing: units that
-      gather a resource node and carry it home, placing buildings, per-unit
-      collision radii larger than one cell, and tech trees.
+- [ ] **Real-time strategy, remaining** — gathering and building are done (see the concept
+      guide). Missing: builder units that must be present to construct, per-unit collision
+      radii larger than one cell, and tech trees.
 
 ## Studio
 

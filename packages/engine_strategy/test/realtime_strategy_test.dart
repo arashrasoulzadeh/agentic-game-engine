@@ -201,7 +201,7 @@ void economyTests() {
   test('production: true wires income and Producer buildings into the real-time game', () {
     final w = _world();
     installRealtimeStrategySystems(w, navigator: _nav(), cellSize: 32, production: true);
-    expect(w.systemOrder.first, 'production');
+    expect(w.systemOrder.take(2), ['construction', 'production']);
 
     w.storeOf<Treasury>().set(w.spawn(), Treasury('red', amounts: {'gold': 50}, incomePerSecond: {'gold': 1}));
     final barracks = w.spawn();
@@ -223,10 +223,44 @@ void economyTests() {
     expect(gold, inInclusiveRange(20, 24), reason: '50 - 30 spent + about 2 s of income');
   });
 
+  test('gathering: true adds the gather system before orders, and workers feed the treasury', () {
+    final w = _world();
+    installRealtimeStrategySystems(w, navigator: _nav(), cellSize: 32, gathering: true);
+    expect(w.systemOrder.indexOf('gather'), lessThan(w.systemOrder.indexOf('realtimeOrders')));
+    expect(w.systemOrder.indexOf('construction'), lessThan(w.systemOrder.indexOf('gather')));
+
+    final treasury = Treasury('red');
+    w.storeOf<Treasury>().set(w.spawn(), treasury);
+    final worker = w.spawn();
+    w.components.applyToEntity(worker, {
+      'team': {'id': 'red'},
+      'gridPosition': {'col': 2, 'row': 2},
+      'orderQueue': {'orders': []},
+      'realtimeStats': {'speed': 6.0, 'attackInterval': 1.0},
+      'gatherer': {'capacity': 3, 'secondsPerUnit': 0.5},
+    });
+    final mine = w.spawn();
+    w.components.applyToEntity(mine, {
+      'resourceNode': {'resource': 'wood', 'amount': 3},
+      'gridPosition': {'col': 6, 'row': 2},
+    });
+    w.components.applyToEntity(w.spawn(), {
+      'depot': {},
+      'team': {'id': 'red'},
+      'gridPosition': {'col': 2, 'row': 6},
+    });
+    assignGather(w, worker, mine);
+    for (var i = 0; i < 20 * 20; i++) {
+      w.step(1 / 20);
+    }
+    expect(treasury.of('wood'), 3);
+  });
+
   test('without production: true there is no economy system', () {
     final w = _world();
     installRealtimeStrategySystems(w, navigator: _nav(), cellSize: 32);
     expect(w.systemOrder.contains('production'), isFalse);
+    expect(w.systemOrder.contains('gather'), isFalse);
   });
 
   test('aiTeams adds the real-time AI before the orders so its commands run the same tick', () {

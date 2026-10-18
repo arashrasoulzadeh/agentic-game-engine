@@ -92,3 +92,16 @@ class TurnEndedEvent {
   final int round;
   TurnEndedEvent(this.team, this.round);
 }
+
+/// A building that is still being put up: it exists and occupies its cell, but producers and
+/// depots on it do nothing until [remaining] reaches zero.
+class Construction {
+  /// Seconds still to go.
+  double remaining;
+
+  Construction(this.remaining);
+
+  Map<String, dynamic> toJson() => {'remaining': remaining};
+  factory Construction.fromJson(Map<String, dynamic> json) =>
+      Construction((json['remaining'] as num).toDouble());
+}

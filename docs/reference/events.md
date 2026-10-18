@@ -42,6 +42,9 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | `ProductionStalledEvent` | `producer`, `missing` | `ProductionSystem` (once per stall) |
 | `StatusAppliedEvent` | `entity`, `id` | `applyStatus` |
 | `StatusExpiredEvent` | `entity`, `id` | turn clock (`tickStatusEffects`) |
+| `ResourceDeliveredEvent` | `unit`, `team`, `resource`, `amount` | `GatherSystem` (haul handed to a depot) |
+| `ResourceDepletedEvent` | `node` | `GatherSystem` (just before the node is destroyed) |
+| `BuildingCompletedEvent` | `building` | `ConstructionSystem` |
 
 `OrderFailure` is one of `blocked`, `outOfRange`, `invalidTarget`.
 

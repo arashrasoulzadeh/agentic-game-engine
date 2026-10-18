@@ -4,7 +4,7 @@
 
 Every built-in component and the exact JSON shape it serializes to — what you see in `World.toJson()` and what `applyPatch` / `Level.loadInto` accept. This page is generated from `engine_schema`, the same schemas the studio and `game_agent lint` validate against, so it is always current.
 
-**68 components** across 3 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer)
+**72 components** across 3 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer)
 
 ## engine_core
 
@@ -355,6 +355,37 @@ A marker: present or absent, no fields.
 | `queued` | `int` | 0 to ∞ |
 | `progress` | `double` | 0 to ∞ |
 | `paid` | `bool` |  |
+
+### `resourceNode`
+
+| Field | Type | Notes |
+|---|---|---|
+| `resource` | `string` | required |
+| `amount` | `int` | required; 0 to ∞ |
+
+### `depot`
+
+| Field | Type | Notes |
+|---|---|---|
+| `accepts` | `list` |  |
+
+### `gatherer`
+
+| Field | Type | Notes |
+|---|---|---|
+| `capacity` | `int` | 1 to ∞ |
+| `secondsPerUnit` | `double` | 0 to ∞ |
+| `node` | `int` | may be null |
+| `phase` | `enumeration` | one of `idle`, `toNode`, `harvesting`, `toDepot` |
+| `carrying` | `string` | may be null |
+| `carried` | `int` | 0 to ∞ |
+| `progress` | `double` | 0 to ∞ |
+
+### `construction`
+
+| Field | Type | Notes |
+|---|---|---|
+| `remaining` | `double` | required; 0 to ∞ |
 
 ## engine_flutter
 

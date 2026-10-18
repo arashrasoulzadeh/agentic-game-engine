@@ -98,6 +98,8 @@ export 'src/turn/grid_navigation.dart';
 export 'src/turn/flow_field.dart';
 export 'src/turn/formation.dart';
 export 'src/turn/economy.dart';
+export 'src/turn/gathering.dart';
+export 'src/turn/construction.dart';
 export 'src/turn/realtime.dart';
 export 'src/turn/occupancy.dart';
 export 'src/turn/selection.dart';
@@ -133,6 +135,7 @@ import 'src/turn/status.dart';
 import 'src/turn/objectives.dart';
 import 'src/turn/carry.dart';
 import 'src/turn/economy.dart';
+import 'src/turn/gathering.dart';
 import 'src/turn/realtime.dart';
 import 'src/turn/fog_of_war.dart';
 
@@ -387,5 +390,29 @@ void registerCoreComponents(World world) {
     (p) => p.toJson(),
     Producer.fromJson,
     schema: producerSchema,
+  );
+  world.components.register<ResourceNode>(
+    'resourceNode',
+    (n) => n.toJson(),
+    ResourceNode.fromJson,
+    schema: resourceNodeSchema,
+  );
+  world.components.register<Depot>(
+    'depot',
+    (d) => d.toJson(),
+    Depot.fromJson,
+    schema: depotSchema,
+  );
+  world.components.register<Gatherer>(
+    'gatherer',
+    (g) => g.toJson(),
+    Gatherer.fromJson,
+    schema: gathererSchema,
+  );
+  world.components.register<Construction>(
+    'construction',
+    (c) => c.toJson(),
+    Construction.fromJson,
+    schema: constructionSchema,
   );
 }
