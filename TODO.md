@@ -159,10 +159,13 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 
 ### Behaviors, profiling, polish (phase 6)
 
-- [ ] **6.2 / 6.3** Studio profiler panel: show `WorldProfiler.report()`,
-      `FrameStats` history and `FrameTimingMonitor` data from a running
-      play-test (the engine side is done: `world.profiler`, `DebugOverlay`).
-      Needs a channel from the play-test process to the studio.
+- [ ] **6.2 / 6.3 (remaining)** The preview now has a profiler panel (`WorldProfiler`: step cost,
+      entity count, step-time sparkline, slowest systems). Not done: `FrameStats` /
+      `FrameTimingMonitor` render metrics, and profiling a *separate* play-test process (the
+      external `PlayTest` is not wired into the studio UI yet, so there is no channel to build).
+- [ ] **Play-test button** — `PlayTest` (separate game process with hot reload, see the user guide)
+      has no entry point in the studio UI; add a "Run game" action that uses it, and surface
+      `.studio/playtest.log`.
 - [ ] **6.6** (remaining) Move the rest of the studio's strings to `StudioStrings`
       (the mechanism and the project window are done; level, graph, code and
       inspector screens still hold English literals) and ship a first non-English

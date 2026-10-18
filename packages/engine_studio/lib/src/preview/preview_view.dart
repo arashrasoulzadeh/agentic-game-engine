@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../level/level_geometry.dart';
 import '../textures/atlas_catalog.dart';
+import 'profiler_panel.dart';
 import 'preview_world.dart';
 
 /// The game actions the preview's controls send, keyed by the names the platformer
@@ -53,6 +54,7 @@ class _PreviewViewState extends State<PreviewView>
   String? _error;
   bool _fitWidth = true;
   bool _textures = true;
+  bool _profiler = false;
   Map<String, SpriteAtlas> _atlases = const {};
 
   @override
@@ -169,6 +171,8 @@ class _PreviewViewState extends State<PreviewView>
             textures: _textures,
             hasTextures: _atlases.isNotEmpty,
             onTexturesChanged: (value) => setState(() => _textures = value),
+            profiler: _profiler,
+            onProfilerChanged: (value) => setState(() => _profiler = value),
             onHold: _hold,
           ),
           Expanded(
@@ -179,15 +183,27 @@ class _PreviewViewState extends State<PreviewView>
                     ? constraints.maxWidth / levelWidth
                     : 1.0;
                 return ClipRect(
-                  child: CustomPaint(
-                    key: const Key('preview-canvas'),
-                    size: Size.infinite,
-                    painter: _PreviewPainter(
-                      geometry: geometry,
-                      drawables: drawables,
-                      scale: scale,
-                      atlases: _textures ? _atlases : const {},
-                    ),
+                  child: Stack(
+                    children: [
+                      CustomPaint(
+                        key: const Key('preview-canvas'),
+                        size: Size.infinite,
+                        painter: _PreviewPainter(
+                          geometry: geometry,
+                          drawables: drawables,
+                          scale: scale,
+                          atlases: _textures ? _atlases : const {},
+                        ),
+                      ),
+                      if (_profiler && preview.world.profiler != null)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: ProfilerPanel(
+                            profiler: preview.world.profiler!,
+                          ),
+                        ),
+                    ],
                   ),
                 );
               },
@@ -214,6 +230,8 @@ class _Controls extends StatelessWidget {
   final bool textures;
   final bool hasTextures;
   final ValueChanged<bool> onTexturesChanged;
+  final bool profiler;
+  final ValueChanged<bool> onProfilerChanged;
   final void Function(String action, bool down) onHold;
 
   const _Controls({
@@ -222,6 +240,8 @@ class _Controls extends StatelessWidget {
     required this.textures,
     required this.hasTextures,
     required this.onTexturesChanged,
+    required this.profiler,
+    required this.onProfilerChanged,
     required this.onHold,
   });
 
@@ -266,6 +286,13 @@ class _Controls extends StatelessWidget {
               key: const Key('textures'),
               value: textures && hasTextures,
               onChanged: hasTextures ? onTexturesChanged : null,
+            ),
+            const SizedBox(width: 8),
+            const Text('Profiler'),
+            Switch(
+              key: const Key('profiler-toggle'),
+              value: profiler,
+              onChanged: onProfilerChanged,
             ),
           ],
         ),

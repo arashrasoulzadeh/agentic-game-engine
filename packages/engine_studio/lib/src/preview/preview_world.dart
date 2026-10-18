@@ -27,7 +27,8 @@ class PreviewWorld {
     required double width,
     required double height,
   }) {
-    final world = World(width: width, height: height);
+    final world = World(width: width, height: height)
+      ..profiler = WorldProfiler();
     registerCoreComponents(world);
     registerFlutterComponents(world);
     registerPlatformerComponents(world);

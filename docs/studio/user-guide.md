@@ -99,17 +99,20 @@ problems.
 
 ## Play-test
 
-The play button in the level editor switches to a **Preview** that runs the level in the
-engine, and the project can launch the real game on the level you are editing — including
-unsaved edits, because it runs a snapshot of the editor's current state
-(`assets/levels/playtest.level.json`, which is never listed as one of your levels). The game
-runs as its own process, so a crash in the game cannot take the studio down; its output is
-kept in `.studio/playtest.log`.
+The play button in the level editor switches to a **Preview** that runs the level in the engine,
+inside the studio, using the platformer systems. Arrow keys or A/D move, Space or W jumps, and
+on-screen buttons do the same. **Fit width** scales the whole level into view, **Textures** draws
+declared sprite sheets, and **Profiler** shows live simulation timings: the step cost, the entity
+count, a sparkline of recent step times and the slowest systems. Pressing play always rebuilds
+the world from the level as it is now, saved or not.
 
-The play-test passes `ASSET_DIR` to the game. The generated game template then reads its
-level from disk and **restarts the scene when the level file is saved**, so you can keep the
-game open while editing. A game that is not built from the template needs to do the same
-(see `AssetHotReloader` and `CallbackAssetHandler` in `engine_flutter`).
+!!! note "Running the real game"
+    The studio also has a `PlayTest` class that writes the level you are editing to
+    `assets/levels/playtest.level.json` and starts your game as its own process with
+    `--dart-define=PLAYTEST_LEVEL=...` and `--dart-define=ASSET_DIR=<project>/assets`. The
+    generated game template reads the level from disk in that mode and **restarts its scene when
+    the level file is saved**. It is not on a button in the studio yet (see `TODO.md`); you can
+    use the same defines yourself with `flutter run`.
 
 ## Code editor
 
