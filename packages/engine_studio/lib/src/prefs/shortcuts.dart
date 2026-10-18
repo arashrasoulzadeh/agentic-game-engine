@@ -164,3 +164,14 @@ void saveShortcuts(File file, ShortcutMap map) {
     const JsonEncoder.withIndent('  ').convert(map.toJson()),
   );
 }
+
+/// The `locale` the user chose in [file], or `en` when unset or unreadable.
+String loadLocale(File file) {
+  try {
+    final json = jsonDecode(file.readAsStringSync());
+    final v = json is Map ? json['locale'] : null;
+    return v is String && v.isNotEmpty ? v : 'en';
+  } on Object {
+    return 'en';
+  }
+}

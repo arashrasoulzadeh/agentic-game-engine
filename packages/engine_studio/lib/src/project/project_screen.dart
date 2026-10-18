@@ -1,4 +1,5 @@
 import '../prefs/shortcuts.dart';
+import '../prefs/strings.dart';
 import 'dart:io';
 
 import 'package:engine_core/engine_core.dart' show GraphType;
@@ -145,42 +146,42 @@ class _ProjectScreenState extends State<ProjectScreen> {
           actions: [
             IconButton(
               key: const Key('project-assets'),
-              tooltip: 'Assets: sprite sheets, images, audio, prefabs',
+              tooltip: StudioStrings.t('project.assets'),
               onPressed: _toggleAssets,
               icon: const Icon(Icons.perm_media_outlined),
             ),
             PopupMenuButton<GraphType>(
               key: const Key('project-new-graph'),
-              tooltip: 'New graph',
+              tooltip: StudioStrings.t('project.newGraph'),
               icon: const Icon(Icons.account_tree_outlined),
               onSelected: _newGraph,
-              itemBuilder: (_) => const [
+              itemBuilder: (_) => [
                 PopupMenuItem(
                   key: Key('new-graph-dialogue'),
                   value: GraphType.dialogue,
-                  child: Text('Dialogue / cutscene graph'),
+                  child: Text(StudioStrings.t('project.newGraph.dialogue')),
                 ),
                 PopupMenuItem(
                   key: Key('new-graph-behaviorTree'),
                   value: GraphType.behaviorTree,
-                  child: Text('Behavior tree'),
+                  child: Text(StudioStrings.t('project.newGraph.behaviorTree')),
                 ),
                 PopupMenuItem(
                   key: Key('new-graph-stateMachine'),
                   value: GraphType.stateMachine,
-                  child: Text('State machine'),
+                  child: Text(StudioStrings.t('project.newGraph.stateMachine')),
                 ),
               ],
             ),
             IconButton(
               key: const Key('project-problems'),
-              tooltip: 'Problems in levels and graphs',
+              tooltip: StudioStrings.t('project.problems'),
               onPressed: _toggleProblems,
               icon: const Icon(Icons.rule),
             ),
             IconButton(
               key: const Key('project-search'),
-              tooltip: 'Find in project (Cmd/Ctrl+Shift+F)',
+              tooltip: StudioStrings.t('project.search'),
               onPressed: _openSearch,
               icon: const Icon(Icons.search),
             ),
@@ -259,7 +260,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
           ),
           trailing: IconButton(
             key: const Key('project-problems-close'),
-            tooltip: 'Close',
+            tooltip: StudioStrings.t('project.close'),
             iconSize: 16,
             onPressed: _toggleProblems,
             icon: const Icon(Icons.close),
@@ -324,7 +325,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
               ),
               IconButton(
                 key: const Key('project-search-close'),
-                tooltip: 'Close',
+                tooltip: StudioStrings.t('project.close'),
                 iconSize: 16,
                 onPressed: _closeSearch,
                 icon: const Icon(Icons.close),
@@ -435,9 +436,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
     }
     final open = _open;
     if (open == null) {
-      return const Center(
-        key: Key('no-file-open'),
-        child: Text('Pick a file on the left to open it.'),
+      return Center(
+        key: const Key('no-file-open'),
+        child: Text(StudioStrings.t('project.noFile')),
       );
     }
     final fullPath = p.join(widget.project.root, open);
@@ -471,7 +472,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         initialCharacter: _jumpCharacter,
       );
     }
-    return const Center(child: Text('That file no longer exists.'));
+    return Center(child: Text(StudioStrings.t('project.fileGone')));
   }
 
   IconData _iconFor(String name) {

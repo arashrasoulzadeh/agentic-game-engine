@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Studio localization mechanism: `StudioStrings.t(key)` over the engine's `LocalizationManager`; translations are `~/.game_agent/locales/<code>.json`, the language is `locale` in `studio_prefs.json`. The project window is migrated; other screens follow.
 - Studio: keyboard shortcuts are configurable. `~/.game_agent/studio_prefs.json` (`{"shortcuts": {"save": "mod+k"}}`) overrides the defaults for save, find, replace and project search; `mod` is Command on macOS and Control elsewhere. A bad binding disables that shortcut instead of breaking startup.
 - Play-test hot reload: the studio passes `ASSET_DIR` to the game; the generated game reads levels from disk and restarts its scene when the level file is saved. `CallbackAssetHandler` (`engine_flutter`).
 - Studio assets: an asset browser (sprite sheets with their sprites, other files by

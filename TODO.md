@@ -166,8 +166,10 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
       `FrameStats` history and `FrameTimingMonitor` data from a running
       play-test (the engine side is done: `world.profiler`, `DebugOverlay`).
       Needs a channel from the play-test process to the studio.
-- [ ] **6.6** Localization of studio strings via the existing
-      `LocalizationManager`.
+- [ ] **6.6** (remaining) Move the rest of the studio's strings to `StudioStrings`
+      (the mechanism and the project window are done; level, graph, code and
+      inspector screens still hold English literals) and ship a first non-English
+      catalog.
 - [ ] **6.7** Studio user guide — see Documentation.
 
 ### Stretch (not scheduled)
