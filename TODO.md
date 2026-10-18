@@ -196,7 +196,8 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 - [ ] AI building blocks, remaining: steering, hearing / sound propagation,
       `InvestigateBehavior`, `FleeBehavior`, pathfinding (behavior trees and state
       machines are done: `docs/concepts/ai.md`).
-- [ ] Particles, tweening, cinematics, scene transitions, video playback.
+- [ ] Cinematics, scene transitions, video playback (tweens and particles are done:
+      `docs/concepts/effects.md`).
 - [ ] Settings menus, `PlayerOptions` persistence and accessibility options
       (colorblind modes, text scaling, remapping).
 - [ ] Viewport / aspect-ratio / safe-area handling.
