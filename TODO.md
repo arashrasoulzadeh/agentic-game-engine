@@ -216,10 +216,6 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       (`engine_platformer/test/doc_examples_test.dart`, which found and fixed an
       `InputState`/`InputController` mix-up); `docs/concepts/platformer.md` and the
       platformer recipes under `docs/examples/` still are not.
-- [ ] **API docs for the Flutter packages** — only `engine_core` and
-      `engine_schema` are generated on the site. Add `engine_flutter`,
-      `engine_platformer`, `engine_strategy` via the Flutter SDK in the docs
-      workflow.
 - [ ] **Versioned docs** — publish per-release versions (e.g. with `mike`)
       once tags exist; the site is single-version today.
 - [ ] **Publish or retire the unpublished pages** — `docs/proposals/` and

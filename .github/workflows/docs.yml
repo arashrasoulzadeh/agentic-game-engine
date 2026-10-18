@@ -9,6 +9,9 @@ on:
       - "hooks/**"
       - "packages/engine_core/lib/**"
       - "packages/engine_schema/lib/**"
+      - "packages/engine_flutter/lib/**"
+      - "packages/engine_platformer/lib/**"
+      - "packages/engine_strategy/lib/**"
       - ".github/workflows/docs.yml"
   pull_request:
     paths:
@@ -43,12 +46,16 @@ jobs:
       - name: Build site (broken links fail the build)
         run: mkdocs build --strict
 
-      - uses: dart-lang/setup-dart@v1
+      # The Flutter SDK bundles Dart, so one setup documents every package; the
+      # Flutter-dependent ones need `flutter pub get` rather than `dart pub get`.
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
 
-      - name: Generate API docs for the pure-Dart packages
+      - name: Generate API docs
         run: |
-          for pkg in engine_schema engine_core; do
-            (cd packages/$pkg && dart pub get && dart doc . )
+          for pkg in engine_schema engine_core engine_flutter engine_platformer engine_strategy; do
+            (cd packages/$pkg && flutter pub get && dart doc . )
             mkdir -p site/api/$pkg
             cp -r packages/$pkg/doc/api/. site/api/$pkg/
           done

@@ -10,13 +10,14 @@ Browse them three ways.
 |---|---|
 | `engine_core` | [engine_core API](https://meetarash.ir/agentic-game-engine/api/engine_core/) |
 | `engine_schema` | [engine_schema API](https://meetarash.ir/agentic-game-engine/api/engine_schema/) |
+| `engine_flutter` | [engine_flutter API](https://meetarash.ir/agentic-game-engine/api/engine_flutter/) |
+| `engine_platformer` | [engine_platformer API](https://meetarash.ir/agentic-game-engine/api/engine_platformer/) |
+| `engine_strategy` | [engine_strategy API](https://meetarash.ir/agentic-game-engine/api/engine_strategy/) |
 
-These are rebuilt from `main` by the docs workflow. The Flutter-dependent
-packages (`engine_flutter`, `engine_platformer`, `engine_strategy`) need the
-Flutter SDK to document, so generate those locally:
+These are rebuilt from `main` by the docs workflow. To build one locally:
 
 ```bash
-cd packages/engine_flutter      # or engine_platformer / engine_strategy
+cd packages/engine_flutter      # or any package
 flutter pub get
 dart doc .                      # → doc/api/index.html
 ```
