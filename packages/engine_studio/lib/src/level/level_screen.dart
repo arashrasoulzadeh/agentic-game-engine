@@ -218,7 +218,7 @@ class _LevelScreenState extends State<LevelScreen> {
         appBar: AppBar(
           title: Row(
             children: [
-              Text(title),
+              Flexible(child: Text(title, overflow: TextOverflow.ellipsis)),
               if (editor.isDirty)
                 Padding(
                   padding: const EdgeInsets.only(left: 8),

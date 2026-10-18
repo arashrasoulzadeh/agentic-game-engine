@@ -126,4 +126,24 @@ void main() {
     await open(tester, root: dir.path);
     expect(find.byKey(const Key('level-locked')), findsNothing);
   });
+
+  testWidgets(
+    'a narrow window shortens the title instead of overflowing the app bar',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LevelScreen(
+            levelPath: level,
+            projectRoot: dir.path,
+            autosaveInterval: null,
+            lockedAs: 'ann@a',
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
