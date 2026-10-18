@@ -72,7 +72,7 @@ class BSPGenerator {
   /// Generates a dungeon layout within the given bounds.
   /// Returns a map of tile positions to tile types (0 = empty, 1 = floor, 2 = wall).
   Map<int, int> generate(int width, int height, {Set<int>? wallIds}) {
-    final wallId = wallIds?.first ?? 1;
+    final wallId = wallIds?.first ?? 2;
     final tiles = <int, int>{};
 
     // Initialize all as walls
@@ -349,6 +349,10 @@ class TilePattern {
 }
 
 /// Generates levels using Wave Function Collapse.
+///
+/// **Placeholder:** `_areCompatible` allows every pairing, so this currently picks
+/// seeded random tiles from `tileIds` with no adjacency rules. Use it for noise or
+/// as the hook for real rules, not for coherent output.
 class WFCGenerator {
   final Random _rng;
   final WFCConfig _config;
