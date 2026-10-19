@@ -20,22 +20,25 @@ void main() {
   });
 
   group('CameraPanStep', () {
-    test('pans camera.x/.y from its current position to the target over duration', () {
-      final world = _buildWorld();
-      final camera = Camera(x: 0, y: 0);
-      final step = CameraPanStep(camera, toX: 100, toY: 200, duration: 2);
+    test(
+      'pans camera.x/.y from its current position to the target over duration',
+      () {
+        final world = _buildWorld();
+        final camera = Camera(x: 0, y: 0);
+        final step = CameraPanStep(camera, toX: 100, toY: 200, duration: 2);
 
-      step.start(world);
-      final done1 = step.update(world, 1); // halfway
-      expect(done1, isFalse);
-      expect(camera.x, 50);
-      expect(camera.y, 100);
+        step.start(world);
+        final done1 = step.update(world, 1); // halfway
+        expect(done1, isFalse);
+        expect(camera.x, 50);
+        expect(camera.y, 100);
 
-      final done2 = step.update(world, 1); // fully elapsed
-      expect(done2, isTrue);
-      expect(camera.x, 100);
-      expect(camera.y, 200);
-    });
+        final done2 = step.update(world, 1); // fully elapsed
+        expect(done2, isTrue);
+        expect(camera.x, 100);
+        expect(camera.y, 200);
+      },
+    );
 
     test('captures the from position at start(), so a chained pan starts from '
         'wherever the camera actually is, not (0, 0)', () {
@@ -44,7 +47,10 @@ void main() {
       final step = CameraPanStep(camera, toX: 600, toY: 300, duration: 1);
 
       step.start(world);
-      step.update(world, 0); // t=0, should read back the captured start position
+      step.update(
+        world,
+        0,
+      ); // t=0, should read back the captured start position
 
       expect(camera.x, 500);
     });
@@ -62,19 +68,22 @@ void main() {
   });
 
   group('CameraZoomStep', () {
-    test('animates camera.zoom from its current value to the target over duration', () {
-      final world = _buildWorld();
-      final camera = Camera(zoom: 1);
-      final step = CameraZoomStep(camera, toZoom: 3, duration: 2);
+    test(
+      'animates camera.zoom from its current value to the target over duration',
+      () {
+        final world = _buildWorld();
+        final camera = Camera(zoom: 1);
+        final step = CameraZoomStep(camera, toZoom: 3, duration: 2);
 
-      step.start(world);
-      step.update(world, 1);
-      expect(camera.zoom, 2);
+        step.start(world);
+        step.update(world, 1);
+        expect(camera.zoom, 2);
 
-      final done = step.update(world, 1);
-      expect(done, isTrue);
-      expect(camera.zoom, 3);
-    });
+        final done = step.update(world, 1);
+        expect(done, isTrue);
+        expect(camera.zoom, 3);
+      },
+    );
 
     test('skip jumps straight to the target zoom', () {
       final world = _buildWorld();
@@ -98,26 +107,33 @@ void main() {
       // land on exactly (50, 50) by chance with magnitude 10).
       expect(screen, isNot(const Offset(50, 50)));
 
-      expect(step.update(world, 0.3), isFalse, reason: 'duration not elapsed yet');
+      expect(
+        step.update(world, 0.3),
+        isFalse,
+        reason: 'duration not elapsed yet',
+      );
       expect(step.update(world, 0.3), isTrue, reason: 'duration now elapsed');
     });
   });
 
   group('CameraFollowStep', () {
-    test('hard-snaps to the target entity\'s Position every tick when smoothing '
-        'is 1.0 (default)', () {
-      final world = _buildWorld();
-      final camera = Camera(x: 0, y: 0);
-      final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(300, 400));
+    test(
+      'hard-snaps to the target entity\'s Position every tick when smoothing '
+      'is 1.0 (default)',
+      () {
+        final world = _buildWorld();
+        final camera = Camera(x: 0, y: 0);
+        final target = world.spawn();
+        world.storeOf<Position>().set(target, Position(300, 400));
 
-      final step = CameraFollowStep(camera, target, duration: 1);
-      final done = step.update(world, 0.5);
+        final step = CameraFollowStep(camera, target, duration: 1);
+        final done = step.update(world, 0.5);
 
-      expect(done, isFalse);
-      expect(camera.x, 300);
-      expect(camera.y, 400);
-    });
+        expect(done, isFalse);
+        expect(camera.x, 300);
+        expect(camera.y, 400);
+      },
+    );
 
     test('lower smoothing trails behind the target instead of snapping', () {
       final world = _buildWorld();
@@ -125,7 +141,12 @@ void main() {
       final target = world.spawn();
       world.storeOf<Position>().set(target, Position(100, 0));
 
-      final step = CameraFollowStep(camera, target, duration: 5, smoothing: 0.1);
+      final step = CameraFollowStep(
+        camera,
+        target,
+        duration: 5,
+        smoothing: 0.1,
+      );
       step.update(world, 0.1);
 
       expect(camera.x, 10); // 0 + (100 - 0) * 0.1
@@ -157,52 +178,72 @@ void main() {
   });
 
   group('ScreenTintStep', () {
-    test('spawns a ScreenTint entity on start and fades its alpha over duration', () {
-      final world = _buildWorld();
-      final step = ScreenTintStep(
-        colorArgb: 0x00FF0000, // red; alpha portion ignored, fromAlpha/toAlpha drive it
-        fromAlpha: 0,
-        toAlpha: 1,
-        duration: 2,
-      );
+    test(
+      'spawns a ScreenTint entity on start and fades its alpha over duration',
+      () {
+        final world = _buildWorld();
+        final step = ScreenTintStep(
+          colorArgb:
+              0x00FF0000, // red; alpha portion ignored, fromAlpha/toAlpha drive it
+          fromAlpha: 0,
+          toAlpha: 1,
+          duration: 2,
+        );
 
-      step.start(world);
-      final tints = world.storeOf<ScreenTint>();
-      expect(tints.length, 1);
-      expect(Color(tints.denseAt(0).colorArgb).a, 0);
+        step.start(world);
+        final tints = world.storeOf<ScreenTint>();
+        expect(tints.length, 1);
+        expect(Color(tints.denseAt(0).colorArgb).a, 0);
 
-      step.update(world, 1); // halfway
-      expect(Color(tints.denseAt(0).colorArgb).a, closeTo(0.5, 0.01));
-      // Hue preserved throughout.
-      expect(tints.denseAt(0).colorArgb & 0x00FFFFFF, 0x00FF0000 & 0x00FFFFFF);
+        step.update(world, 1); // halfway
+        expect(Color(tints.denseAt(0).colorArgb).a, closeTo(0.5, 0.01));
+        // Hue preserved throughout.
+        expect(
+          tints.denseAt(0).colorArgb & 0x00FFFFFF,
+          0x00FF0000 & 0x00FFFFFF,
+        );
 
-      final done = step.update(world, 1);
-      expect(done, isTrue);
-      expect(Color(tints.denseAt(0).colorArgb).a, closeTo(1.0, 0.01));
-    });
+        final done = step.update(world, 1);
+        expect(done, isTrue);
+        expect(Color(tints.denseAt(0).colorArgb).a, closeTo(1.0, 0.01));
+      },
+    );
 
-    test('skip spawns the entity (if start() never ran) and jumps to toAlpha', () {
-      final world = _buildWorld();
-      final step = ScreenTintStep(
-        colorArgb: 0xFF000000,
-        fromAlpha: 0,
-        toAlpha: 0.8,
-        duration: 3,
-      );
+    test(
+      'skip spawns the entity (if start() never ran) and jumps to toAlpha',
+      () {
+        final world = _buildWorld();
+        final step = ScreenTintStep(
+          colorArgb: 0xFF000000,
+          fromAlpha: 0,
+          toAlpha: 0.8,
+          duration: 3,
+        );
 
-      step.skip(world);
+        step.skip(world);
 
-      final tints = world.storeOf<ScreenTint>();
-      expect(tints.length, 1);
-      expect(Color(tints.denseAt(0).colorArgb).a, closeTo(0.8, 0.01));
-    });
+        final tints = world.storeOf<ScreenTint>();
+        expect(tints.length, 1);
+        expect(Color(tints.denseAt(0).colorArgb).a, closeTo(0.8, 0.01));
+      },
+    );
 
     test('two independent steps (no shared entity) spawn two separate entities '
         '-- the first is left stuck at its own toAlpha once the second one '
         'starts animating a different entity entirely', () {
       final world = _buildWorld();
-      final up = ScreenTintStep(colorArgb: 0xFFFF0000, fromAlpha: 0, toAlpha: 0.5, duration: 1);
-      final down = ScreenTintStep(colorArgb: 0xFFFF0000, fromAlpha: 0.5, toAlpha: 0, duration: 1);
+      final up = ScreenTintStep(
+        colorArgb: 0xFFFF0000,
+        fromAlpha: 0,
+        toAlpha: 0.5,
+        duration: 1,
+      );
+      final down = ScreenTintStep(
+        colorArgb: 0xFFFF0000,
+        fromAlpha: 0.5,
+        toAlpha: 0,
+        duration: 1,
+      );
 
       up.start(world);
       up.update(world, 1); // completes at alpha 0.5
@@ -210,9 +251,16 @@ void main() {
       down.update(world, 1); // completes at alpha 0 -- but on its OWN entity
 
       expect(world.storeOf<ScreenTint>().length, 2);
-      expect(Color(world.storeOf<ScreenTint>().get(up.entity!)!.colorArgb).a, closeTo(0.5, 0.01),
-          reason: "the first step's entity is never touched again -- stuck at 0.5");
-      expect(Color(world.storeOf<ScreenTint>().get(down.entity!)!.colorArgb).a, closeTo(0, 0.01));
+      expect(
+        Color(world.storeOf<ScreenTint>().get(up.entity!)!.colorArgb).a,
+        closeTo(0.5, 0.01),
+        reason:
+            "the first step's entity is never touched again -- stuck at 0.5",
+      );
+      expect(
+        Color(world.storeOf<ScreenTint>().get(down.entity!)!.colorArgb).a,
+        closeTo(0, 0.01),
+      );
     });
 
     test('a flash (up then down) sharing one entity via the entity parameter '
@@ -239,7 +287,11 @@ void main() {
       down.start(world);
       down.update(world, 1);
 
-      expect(world.storeOf<ScreenTint>().length, 1, reason: 'one shared entity, not two');
+      expect(
+        world.storeOf<ScreenTint>().length,
+        1,
+        reason: 'one shared entity, not two',
+      );
       expect(
         Color(world.storeOf<ScreenTint>().get(flashEntity)!.colorArgb).a,
         closeTo(0, 0.01),

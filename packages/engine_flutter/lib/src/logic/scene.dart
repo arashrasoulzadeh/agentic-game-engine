@@ -131,7 +131,8 @@ abstract class Scene {
 /// `GameRunner`.
 class SceneController {
   void Function(Scene next)? _loadScene;
-  void Function(Scene next, SceneTransitionConfig? transition)? _loadSceneWithTransition;
+  void Function(Scene next, SceneTransitionConfig? transition)?
+  _loadSceneWithTransition;
   void Function(Scene overlay)? _pushOverlay;
   void Function()? _popOverlay;
   Future<Uint8List?> Function({double pixelRatio})? _captureScreenshot;
@@ -141,7 +142,8 @@ class SceneController {
     required void Function(Scene next) loadScene,
     required void Function(Scene overlay) pushOverlay,
     required void Function() popOverlay,
-    void Function(Scene next, SceneTransitionConfig? transition)? loadSceneWithTransition,
+    void Function(Scene next, SceneTransitionConfig? transition)?
+    loadSceneWithTransition,
     Future<Uint8List?> Function({double pixelRatio})? captureScreenshot,
   }) {
     _loadScene = loadScene;
@@ -162,7 +164,8 @@ class SceneController {
     final loadScene = _loadScene;
     if (loadScene == null) {
       throw StateError(
-          'SceneController.loadScene called before it was attached to a running GameRunner');
+        'SceneController.loadScene called before it was attached to a running GameRunner',
+      );
     }
     loadScene(next);
   }
@@ -176,7 +179,10 @@ class SceneController {
   /// all. See `GameRunner._loadSceneWithTransition` for the actual
   /// two-phase sequencing; this just forwards to whatever `GameRunner`
   /// wired up via [attach].
-  void loadSceneWithTransition(Scene next, {SceneTransitionConfig? transition}) {
+  void loadSceneWithTransition(
+    Scene next, {
+    SceneTransitionConfig? transition,
+  }) {
     final loadSceneWithTransition = _loadSceneWithTransition;
     if (loadSceneWithTransition == null) {
       // Fall back to immediate switch if transition callback isn't wired
@@ -203,7 +209,8 @@ class SceneController {
     final pushOverlay = _pushOverlay;
     if (pushOverlay == null) {
       throw StateError(
-          'SceneController.pushOverlay called before it was attached to a running GameRunner');
+        'SceneController.pushOverlay called before it was attached to a running GameRunner',
+      );
     }
     pushOverlay(overlay);
   }
@@ -214,7 +221,8 @@ class SceneController {
     final popOverlay = _popOverlay;
     if (popOverlay == null) {
       throw StateError(
-          'SceneController.popOverlay called before it was attached to a running GameRunner');
+        'SceneController.popOverlay called before it was attached to a running GameRunner',
+      );
     }
     popOverlay();
   }

@@ -38,24 +38,50 @@ class SnapshotTransitionPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final src = Rect.fromLTWH(0, 0, snapshot.width.toDouble(), snapshot.height.toDouble());
+    final src = Rect.fromLTWH(
+      0,
+      0,
+      snapshot.width.toDouble(),
+      snapshot.height.toDouble(),
+    );
     final dst = Offset.zero & size;
     final t = progress.clamp(0.0, 1.0);
     switch (type) {
       case SceneTransitionType.slideLeft:
-        canvas.drawImageRect(snapshot, src, dst.shift(Offset(-size.width * t, 0)), Paint());
+        canvas.drawImageRect(
+          snapshot,
+          src,
+          dst.shift(Offset(-size.width * t, 0)),
+          Paint(),
+        );
       case SceneTransitionType.slideRight:
-        canvas.drawImageRect(snapshot, src, dst.shift(Offset(size.width * t, 0)), Paint());
+        canvas.drawImageRect(
+          snapshot,
+          src,
+          dst.shift(Offset(size.width * t, 0)),
+          Paint(),
+        );
       case SceneTransitionType.slideUp:
-        canvas.drawImageRect(snapshot, src, dst.shift(Offset(0, -size.height * t)), Paint());
+        canvas.drawImageRect(
+          snapshot,
+          src,
+          dst.shift(Offset(0, -size.height * t)),
+          Paint(),
+        );
       case SceneTransitionType.slideDown:
-        canvas.drawImageRect(snapshot, src, dst.shift(Offset(0, size.height * t)), Paint());
+        canvas.drawImageRect(
+          snapshot,
+          src,
+          dst.shift(Offset(0, size.height * t)),
+          Paint(),
+        );
       case SceneTransitionType.crossfade:
         canvas.drawImageRect(
           snapshot,
           src,
           dst,
-          Paint()..color = Color.fromARGB(((1 - t) * 255).round(), 255, 255, 255),
+          Paint()
+            ..color = Color.fromARGB(((1 - t) * 255).round(), 255, 255, 255),
         );
       case SceneTransitionType.pixelDissolve:
         _paintDissolve(canvas, size, src, t);
@@ -76,11 +102,20 @@ class SnapshotTransitionPainter extends CustomPainter {
     for (var r = 0; r < rows; r++) {
       for (var c = 0; c < cols; c++) {
         if (dissolveThreshold(c, r, seed) < t) continue;
-        final dst = Rect.fromLTWH(c * pixelSize, r * pixelSize, pixelSize, pixelSize)
-            .intersect(Offset.zero & size);
+        final dst = Rect.fromLTWH(
+          c * pixelSize,
+          r * pixelSize,
+          pixelSize,
+          pixelSize,
+        ).intersect(Offset.zero & size);
         canvas.drawImageRect(
           snapshot,
-          Rect.fromLTRB(dst.left * sx, dst.top * sy, dst.right * sx, dst.bottom * sy),
+          Rect.fromLTRB(
+            dst.left * sx,
+            dst.top * sy,
+            dst.right * sx,
+            dst.bottom * sy,
+          ),
           dst,
           paint,
         );
@@ -122,7 +157,8 @@ class SnapshotTransition extends StatefulWidget {
   State<SnapshotTransition> createState() => _SnapshotTransitionState();
 }
 
-class _SnapshotTransitionState extends State<SnapshotTransition> with SingleTickerProviderStateMixin {
+class _SnapshotTransitionState extends State<SnapshotTransition>
+    with SingleTickerProviderStateMixin {
   late final Ticker _ticker;
   late final Tween _tween;
   Duration _last = Duration.zero;
@@ -131,7 +167,12 @@ class _SnapshotTransitionState extends State<SnapshotTransition> with SingleTick
   @override
   void initState() {
     super.initState();
-    _tween = Tween(from: 0.0, to: 1.0, duration: widget.config.duration, easing: widget.config.easing);
+    _tween = Tween(
+      from: 0.0,
+      to: 1.0,
+      duration: widget.config.duration,
+      easing: widget.config.easing,
+    );
     _ticker = createTicker((elapsed) {
       _tween.elapsed += (elapsed - _last).inMicroseconds / 1e6;
       _last = elapsed;

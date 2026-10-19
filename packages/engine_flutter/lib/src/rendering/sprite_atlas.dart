@@ -24,8 +24,12 @@ class SpriteAtlas {
   /// `{"regions": {"name": {"x":, "y":, "w":, "h":}}}` against an
   /// already-decoded [image]. Split out from [loadFromAssets] so the
   /// parsing logic is testable without real asset I/O.
-  factory SpriteAtlas.fromManifest(ui.Image image, Map<String, dynamic> manifest) {
-    final regionsJson = (manifest['regions'] as Map?)?.cast<String, dynamic>() ??
+  factory SpriteAtlas.fromManifest(
+    ui.Image image,
+    Map<String, dynamic> manifest,
+  ) {
+    final regionsJson =
+        (manifest['regions'] as Map?)?.cast<String, dynamic>() ??
         const <String, dynamic>{};
     final regions = <String, ui.Rect>{};
     regionsJson.forEach((name, value) {
@@ -77,7 +81,8 @@ class AtlasRegistry {
     final atlas = _atlases[id];
     if (atlas == null) {
       throw ArgumentError(
-          'No SpriteAtlas registered for id "$id". Call registry.register() first.');
+        'No SpriteAtlas registered for id "$id". Call registry.register() first.',
+      );
     }
     return atlas;
   }

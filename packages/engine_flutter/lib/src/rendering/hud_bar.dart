@@ -49,24 +49,25 @@ class HudBar {
   double get fraction => maxValue <= 0 ? 0 : (value / maxValue).clamp(0, 1);
 
   Map<String, dynamic> toJson() => {
-        'value': value,
-        'maxValue': maxValue,
-        'width': width,
-        'height': height,
-        'fillColorArgb': fillColorArgb,
-        'backgroundColorArgb': backgroundColorArgb,
-        'screenSpace': screenSpace,
-        'zIndex': zIndex,
-      };
+    'value': value,
+    'maxValue': maxValue,
+    'width': width,
+    'height': height,
+    'fillColorArgb': fillColorArgb,
+    'backgroundColorArgb': backgroundColorArgb,
+    'screenSpace': screenSpace,
+    'zIndex': zIndex,
+  };
 
   factory HudBar.fromJson(Map<String, dynamic> json) => HudBar(
-        value: (json['value'] as num).toDouble(),
-        maxValue: (json['maxValue'] as num).toDouble(),
-        width: (json['width'] as num?)?.toDouble() ?? 100,
-        height: (json['height'] as num?)?.toDouble() ?? 12,
-        fillColorArgb: (json['fillColorArgb'] as num?)?.toInt() ?? 0xFFE0304C,
-        backgroundColorArgb: (json['backgroundColorArgb'] as num?)?.toInt() ?? 0x80000000,
-        screenSpace: json['screenSpace'] as bool? ?? true,
-        zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
-      );
+    value: (json['value'] as num).toDouble(),
+    maxValue: (json['maxValue'] as num).toDouble(),
+    width: (json['width'] as num?)?.toDouble() ?? 100,
+    height: (json['height'] as num?)?.toDouble() ?? 12,
+    fillColorArgb: (json['fillColorArgb'] as num?)?.toInt() ?? 0xFFE0304C,
+    backgroundColorArgb:
+        (json['backgroundColorArgb'] as num?)?.toInt() ?? 0x80000000,
+    screenSpace: json['screenSpace'] as bool? ?? true,
+    zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
+  );
 }

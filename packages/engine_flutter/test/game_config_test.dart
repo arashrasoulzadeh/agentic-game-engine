@@ -9,11 +9,12 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('loadFromAsset reads and decodes the bundled JSON asset', () async {
-    const jsonContent = '{"worldWidth": 320, "worldHeight": 240, "title": "Asset Game"}';
+    const jsonContent =
+        '{"worldWidth": 320, "worldHeight": 240, "title": "Asset Game"}';
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler('flutter/assets', (message) async {
-      return const StringCodec().encodeMessage(jsonContent);
-    });
+          return const StringCodec().encodeMessage(jsonContent);
+        });
     addTearDown(() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMessageHandler('flutter/assets', null);
@@ -26,53 +27,66 @@ void main() {
     expect(config.worldHeight, 240);
   });
 
-  test('applyOrientation requests the platform orientation for portrait/landscape/auto',
-      () async {
-    final requests = <String>[];
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-      if (call.method == 'SystemChrome.setPreferredOrientations') {
-        requests.add(call.method);
-      }
-      return null;
-    });
-    addTearDown(() {
+  test(
+    'applyOrientation requests the platform orientation for portrait/landscape/auto',
+    () async {
+      final requests = <String>[];
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(SystemChannels.platform, null);
-    });
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            if (call.method == 'SystemChrome.setPreferredOrientations') {
+              requests.add(call.method);
+            }
+            return null;
+          });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null);
+      });
 
-    for (final orientation in GameOrientation.values) {
-      await GameConfig(orientation: orientation, worldWidth: 1, worldHeight: 1)
-          .applyOrientation();
-    }
-
-    expect(requests.length, GameOrientation.values.length);
-  });
-
-  test('applyFullscreen requests immersiveSticky when true, edgeToEdge when false',
-      () async {
-    final requests = <String>[];
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-      if (call.method == 'SystemChrome.setEnabledSystemUIMode') {
-        requests.add(jsonEncode(call.arguments));
+      for (final orientation in GameOrientation.values) {
+        await GameConfig(
+          orientation: orientation,
+          worldWidth: 1,
+          worldHeight: 1,
+        ).applyOrientation();
       }
-      return null;
-    });
-    addTearDown(() {
+
+      expect(requests.length, GameOrientation.values.length);
+    },
+  );
+
+  test(
+    'applyFullscreen requests immersiveSticky when true, edgeToEdge when false',
+    () async {
+      final requests = <String>[];
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(SystemChannels.platform, null);
-    });
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            if (call.method == 'SystemChrome.setEnabledSystemUIMode') {
+              requests.add(jsonEncode(call.arguments));
+            }
+            return null;
+          });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null);
+      });
 
-    await const GameConfig(fullscreen: true, worldWidth: 1, worldHeight: 1)
-        .applyFullscreen();
-    await const GameConfig(fullscreen: false, worldWidth: 1, worldHeight: 1)
-        .applyFullscreen();
+      await const GameConfig(
+        fullscreen: true,
+        worldWidth: 1,
+        worldHeight: 1,
+      ).applyFullscreen();
+      await const GameConfig(
+        fullscreen: false,
+        worldWidth: 1,
+        worldHeight: 1,
+      ).applyFullscreen();
 
-    expect(requests.length, 2);
-    expect(requests[0], contains('immersiveSticky'));
-    expect(requests[1], contains('edgeToEdge'));
-  });
+      expect(requests.length, 2);
+      expect(requests[0], contains('immersiveSticky'));
+      expect(requests[1], contains('edgeToEdge'));
+    },
+  );
 
   test('round-trips through toJson/fromJson', () {
     const config = GameConfig(
@@ -132,10 +146,13 @@ void main() {
     expect(config.maxFps, isNull);
   });
 
-  test('maxFps null (default) is omitted from toJson entirely, not serialized as null', () {
-    const config = GameConfig(worldWidth: 1, worldHeight: 1);
-    expect(config.toJson().containsKey('maxFps'), isFalse);
-  });
+  test(
+    'maxFps null (default) is omitted from toJson entirely, not serialized as null',
+    () {
+      const config = GameConfig(worldWidth: 1, worldHeight: 1);
+      expect(config.toJson().containsKey('maxFps'), isFalse);
+    },
+  );
 
   test('packedAtlas* fields default to null and are omitted from toJson', () {
     const config = GameConfig(worldWidth: 1, worldHeight: 1);

@@ -51,10 +51,10 @@ class GamepadController {
     Map<int, double>? axisDeadzones,
     this.defaultDeadzone = 0.2,
     this.haptics,
-  })  : buttonBindings = buttonBindings ?? defaultButtonBindings(),
-        axisBindings = axisBindings ?? defaultAxisBindings(),
-        axisNames = axisNames ?? defaultAxisNames(),
-        axisDeadzones = axisDeadzones ?? {};
+  }) : buttonBindings = buttonBindings ?? defaultButtonBindings(),
+       axisBindings = axisBindings ?? defaultAxisBindings(),
+       axisNames = axisNames ?? defaultAxisNames(),
+       axisDeadzones = axisDeadzones ?? {};
 
   /// A standard-layout gamepad's face/d-pad buttons — `0`-`3` the
   /// four face buttons (A/B/X/Y or ✕/○/□/△ depending on platform),
@@ -64,27 +64,24 @@ class GamepadController {
   /// convention most gamepad plugins already follow or can be
   /// remapped into.
   static Map<int, String> defaultButtonBindings() => {
-        0: 'jump',
-        1: 'attack',
-        2: 'interact',
-        3: 'pause',
-        12: 'up',
-        13: 'down',
-        14: 'left',
-        15: 'right',
-      };
+    0: 'jump',
+    1: 'attack',
+    2: 'interact',
+    3: 'pause',
+    12: 'up',
+    13: 'down',
+    14: 'left',
+    15: 'right',
+  };
 
   /// The W3C standard mapping's left analog stick: axis `0` is
   /// horizontal, axis `1` vertical.
   static Map<int, (String, String)> defaultAxisBindings() => {
-        0: ('right', 'left'),
-        1: ('down', 'up'),
-      };
+    0: ('right', 'left'),
+    1: ('down', 'up'),
+  };
 
-  static Map<int, String> defaultAxisNames() => {
-        0: 'moveX',
-        1: 'moveY',
-      };
+  static Map<int, String> defaultAxisNames() => {0: 'moveX', 1: 'moveY'};
 
   /// Returns the deadzone for a specific axis id.
   double getDeadzone(int axisId) => axisDeadzones[axisId] ?? defaultDeadzone;
@@ -215,8 +212,5 @@ class NoOpHaptics implements GamepadHaptics {
 /// or headless environments where no gamepad plugin is available.
 class NoOpGamepadController extends GamepadController {
   NoOpGamepadController()
-      : super(
-          input: InputController(),
-          haptics: const NoOpHaptics(),
-        );
+    : super(input: InputController(), haptics: const NoOpHaptics());
 }

@@ -16,23 +16,24 @@ class InputState {
   final Map<String, double> axisValues;
 
   InputState([Set<String>? pressedActions, Map<String, double>? axisValues])
-      : pressedActions = pressedActions ?? <String>{},
-        axisValues = axisValues ?? <String, double>{};
+    : pressedActions = pressedActions ?? <String>{},
+      axisValues = axisValues ?? <String, double>{};
 
   bool isPressed(String action) => pressedActions.contains(action);
 
   double axis(String name) => axisValues[name] ?? 0.0;
 
   Map<String, dynamic> toJson() => {
-        'pressed': pressedActions.toList(),
-        'axes': axisValues,
-      };
+    'pressed': pressedActions.toList(),
+    'axes': axisValues,
+  };
 
   factory InputState.fromJson(Map<String, dynamic> json) => InputState(
-        ((json['pressed'] as List?) ?? const []).cast<String>().toSet(),
-        ((json['axes'] as Map?) ?? const {})
-            .map((k, v) => MapEntry(k as String, (v as num).toDouble())),
-      );
+    ((json['pressed'] as List?) ?? const []).cast<String>().toSet(),
+    ((json['axes'] as Map?) ?? const {}).map(
+      (k, v) => MapEntry(k as String, (v as num).toDouble()),
+    ),
+  );
 }
 
 /// Translates raw Flutter key events into an [InputState] via a
@@ -52,17 +53,17 @@ class InputController {
     InputState? state,
     Map<LogicalKeyboardKey, String>? bindings,
     ActionAliases? aliases,
-  })  : state = state ?? InputState(),
-        bindings = bindings ?? defaultBindings(),
-        aliases = aliases ?? ActionAliases();
+  }) : state = state ?? InputState(),
+       bindings = bindings ?? defaultBindings(),
+       aliases = aliases ?? ActionAliases();
 
   static Map<LogicalKeyboardKey, String> defaultBindings() => {
-        LogicalKeyboardKey.arrowLeft: 'left',
-        LogicalKeyboardKey.arrowRight: 'right',
-        LogicalKeyboardKey.arrowUp: 'up',
-        LogicalKeyboardKey.arrowDown: 'down',
-        LogicalKeyboardKey.space: 'jump',
-      };
+    LogicalKeyboardKey.arrowLeft: 'left',
+    LogicalKeyboardKey.arrowRight: 'right',
+    LogicalKeyboardKey.arrowUp: 'up',
+    LogicalKeyboardKey.arrowDown: 'down',
+    LogicalKeyboardKey.space: 'jump',
+  };
 
   /// Set by a control-remapping UI (see `RemapMenuScene`) to capture
   /// the *next* physical key pressed, regardless of whether it's

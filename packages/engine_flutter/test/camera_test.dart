@@ -19,16 +19,26 @@ void main() {
 
   test('follow centers on target when world is smaller than viewport', () {
     final camera = Camera();
-    camera.follow(999, 999,
-        viewportSize: const Size(800, 600), worldWidth: 400, worldHeight: 300);
+    camera.follow(
+      999,
+      999,
+      viewportSize: const Size(800, 600),
+      worldWidth: 400,
+      worldHeight: 300,
+    );
     expect(camera.x, 200);
     expect(camera.y, 150);
   });
 
   test('follow clamps so the viewport never shows past world bounds', () {
     final camera = Camera();
-    camera.follow(10, 10,
-        viewportSize: const Size(800, 600), worldWidth: 2000, worldHeight: 2000);
+    camera.follow(
+      10,
+      10,
+      viewportSize: const Size(800, 600),
+      worldWidth: 2000,
+      worldHeight: 2000,
+    );
     expect(camera.x, 400); // clamped to half-viewport-width
     expect(camera.y, 300);
   });
@@ -49,7 +59,10 @@ void main() {
     test('before shake() is called, worldToScreen is unaffected', () {
       final camera = Camera(x: 0, y: 0, zoom: 1, random: Random(1));
       camera.update(0.016);
-      expect(camera.worldToScreen(0, 0, const Size(800, 600)), const Offset(400, 300));
+      expect(
+        camera.worldToScreen(0, 0, const Size(800, 600)),
+        const Offset(400, 300),
+      );
     });
 
     test('an active shake perturbs worldToScreen by a bounded jitter', () {
@@ -70,34 +83,53 @@ void main() {
       camera.shake(magnitude: 20, duration: 1);
       camera.update(1.5); // past the full 1-second duration
 
-      expect(camera.worldToScreen(0, 0, const Size(800, 600)), const Offset(400, 300));
+      expect(
+        camera.worldToScreen(0, 0, const Size(800, 600)),
+        const Offset(400, 300),
+      );
     });
 
-    test('calling shake again replaces the running shake instead of stacking', () {
-      final camera = Camera(x: 0, y: 0, zoom: 1, random: Random(1));
-      camera.shake(magnitude: 5, duration: 10); // long-running, small magnitude
-      camera.update(0.016);
-      camera.shake(magnitude: 50, duration: 1); // a bigger hit lands mid-shake
-      camera.update(0.016);
+    test(
+      'calling shake again replaces the running shake instead of stacking',
+      () {
+        final camera = Camera(x: 0, y: 0, zoom: 1, random: Random(1));
+        camera.shake(
+          magnitude: 5,
+          duration: 10,
+        ); // long-running, small magnitude
+        camera.update(0.016);
+        camera.shake(
+          magnitude: 50,
+          duration: 1,
+        ); // a bigger hit lands mid-shake
+        camera.update(0.016);
 
-      final screen = camera.worldToScreen(0, 0, const Size(800, 600));
-      // Bounded by the *new* magnitude, not the sum of both.
-      expect((screen.dx - 400).abs(), lessThanOrEqualTo(50));
-      expect((screen.dy - 300).abs(), lessThanOrEqualTo(50));
-    });
+        final screen = camera.worldToScreen(0, 0, const Size(800, 600));
+        // Bounded by the *new* magnitude, not the sum of both.
+        expect((screen.dx - 400).abs(), lessThanOrEqualTo(50));
+        expect((screen.dy - 300).abs(), lessThanOrEqualTo(50));
+      },
+    );
 
-    test('screenToWorld remains the exact inverse of worldToScreen during an active shake', () {
-      final camera = Camera(x: 120, y: -40, zoom: 1.5, random: Random(7));
-      camera.shake(magnitude: 30, duration: 1);
-      camera.update(0.016);
-      const viewport = Size(800, 600);
-      const worldPoint = Offset(37, 210);
+    test(
+      'screenToWorld remains the exact inverse of worldToScreen during an active shake',
+      () {
+        final camera = Camera(x: 120, y: -40, zoom: 1.5, random: Random(7));
+        camera.shake(magnitude: 30, duration: 1);
+        camera.update(0.016);
+        const viewport = Size(800, 600);
+        const worldPoint = Offset(37, 210);
 
-      final screen = camera.worldToScreen(worldPoint.dx, worldPoint.dy, viewport);
-      final backToWorld = camera.screenToWorld(screen, viewport);
+        final screen = camera.worldToScreen(
+          worldPoint.dx,
+          worldPoint.dy,
+          viewport,
+        );
+        final backToWorld = camera.screenToWorld(screen, viewport);
 
-      expect(backToWorld.dx, closeTo(worldPoint.dx, 1e-9));
-      expect(backToWorld.dy, closeTo(worldPoint.dy, 1e-9));
-    });
+        expect(backToWorld.dx, closeTo(worldPoint.dx, 1e-9));
+        expect(backToWorld.dy, closeTo(worldPoint.dy, 1e-9));
+      },
+    );
   });
 }

@@ -65,24 +65,24 @@ class ParallaxLayer {
   });
 
   Map<String, dynamic> toJson() => {
-        'atlasId': atlasId,
-        'region': region,
-        'scrollFactorX': scrollFactorX,
-        'scrollFactorY': scrollFactorY,
-        'tileX': tileX,
-        'tileY': tileY,
-        'fitHeight': fitHeight,
-        'zIndex': zIndex,
-      };
+    'atlasId': atlasId,
+    'region': region,
+    'scrollFactorX': scrollFactorX,
+    'scrollFactorY': scrollFactorY,
+    'tileX': tileX,
+    'tileY': tileY,
+    'fitHeight': fitHeight,
+    'zIndex': zIndex,
+  };
 
   factory ParallaxLayer.fromJson(Map<String, dynamic> json) => ParallaxLayer(
-        json['atlasId'] as String,
-        json['region'] as String,
-        scrollFactorX: (json['scrollFactorX'] as num?)?.toDouble() ?? 0.5,
-        scrollFactorY: (json['scrollFactorY'] as num?)?.toDouble() ?? 0,
-        tileX: json['tileX'] as bool? ?? true,
-        tileY: json['tileY'] as bool? ?? false,
-        fitHeight: json['fitHeight'] as bool? ?? false,
-        zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
-      );
+    json['atlasId'] as String,
+    json['region'] as String,
+    scrollFactorX: (json['scrollFactorX'] as num?)?.toDouble() ?? 0.5,
+    scrollFactorY: (json['scrollFactorY'] as num?)?.toDouble() ?? 0,
+    tileX: json['tileX'] as bool? ?? true,
+    tileY: json['tileY'] as bool? ?? false,
+    fitHeight: json['fitHeight'] as bool? ?? false,
+    zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
+  );
 }

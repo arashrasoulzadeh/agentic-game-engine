@@ -7,7 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:engine_flutter/src/rendering/text.dart' as ef_text;
 
 class _TestDialogueBoxScene extends DialogueBoxScene {
-  _TestDialogueBoxScene(this.runner, this.stringTable, {this.atlasIds = const []});
+  _TestDialogueBoxScene(
+    this.runner,
+    this.stringTable, {
+    this.atlasIds = const [],
+  });
 
   @override
   late final DialogueRunner runner;
@@ -21,7 +25,11 @@ class _TestDialogueBoxScene extends DialogueBoxScene {
   List<String> get requiredAtlasIds => atlasIds;
 
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {
     await super.populate(world, scenes, state);
   }
 }
@@ -47,17 +55,36 @@ void main() {
             id: 'start',
             textKey: 'greeting',
             choices: [
-              DialogueChoice(textKey: 'choice_yes', onSelectEvent: 'give_reward', nextNodeId: 'rewarded'),
-              DialogueChoice(textKey: 'choice_no', onSelectEvent: 'decline_reward', nextNodeId: 'declined'),
+              DialogueChoice(
+                textKey: 'choice_yes',
+                onSelectEvent: 'give_reward',
+                nextNodeId: 'rewarded',
+              ),
+              DialogueChoice(
+                textKey: 'choice_no',
+                onSelectEvent: 'decline_reward',
+                nextNodeId: 'declined',
+              ),
             ],
           ),
-          'rewarded': DialogueNode(id: 'rewarded', textKey: 'node2_text', choices: []),
-          'declined': DialogueNode(id: 'declined', textKey: 'node3_text', choices: []),
+          'rewarded': DialogueNode(
+            id: 'rewarded',
+            textKey: 'node2_text',
+            choices: [],
+          ),
+          'declined': DialogueNode(
+            id: 'declined',
+            textKey: 'node3_text',
+            choices: [],
+          ),
         },
         startNodeId: 'start',
       );
 
-      scene = _TestDialogueBoxScene(DialogueRunner(graph: graph, stringTable: stringTable), stringTable);
+      scene = _TestDialogueBoxScene(
+        DialogueRunner(graph: graph, stringTable: stringTable),
+        stringTable,
+      );
     });
 
     testWidgets('renders dialogue text and choice buttons', (tester) async {
@@ -100,12 +127,13 @@ void main() {
       final textEntities = view.entitiesWith<ef_text.Text>().toList();
       expect(textEntities, isNotEmpty);
 
-      final textComponent = world.storeOf<ef_text.Text>().get(textEntities.first)!;
+      final textComponent = world.storeOf<ef_text.Text>().get(
+        textEntities.first,
+      )!;
       expect(textComponent.text, 'Hello, {name}!');
     });
 
-    testWidgets(
-        'positions dialogue background/text against the fixed screen '
+    testWidgets('positions dialogue background/text against the fixed screen '
         'reference, not World.width/height (regression: a large level '
         'world used to send the dialogue background and text thousands '
         'of pixels off-screen, leaving only the portrait -- positioned '
@@ -170,13 +198,24 @@ void main() {
               ),
             ],
           ),
-          'rewarded': DialogueNode(id: 'rewarded', textKey: 'node2_text', choices: []),
-          'declined': DialogueNode(id: 'declined', textKey: 'node3_text', choices: []),
+          'rewarded': DialogueNode(
+            id: 'rewarded',
+            textKey: 'node2_text',
+            choices: [],
+          ),
+          'declined': DialogueNode(
+            id: 'declined',
+            textKey: 'node3_text',
+            choices: [],
+          ),
         },
         startNodeId: 'start',
       );
 
-      final sceneWithFlag = _TestDialogueBoxScene(DialogueRunner(graph: graphWithFlag, stringTable: stringTable), stringTable);
+      final sceneWithFlag = _TestDialogueBoxScene(
+        DialogueRunner(graph: graphWithFlag, stringTable: stringTable),
+        stringTable,
+      );
       final world = World(width: 800, height: 600);
       registerCoreComponents(world);
       registerFlutterComponents(world);
@@ -199,7 +238,9 @@ void main() {
       expect(buttons.length, 2);
     });
 
-    testWidgets('onChoiceSelected advances dialogue and emits event', (tester) async {
+    testWidgets('onChoiceSelected advances dialogue and emits event', (
+      tester,
+    ) async {
       final world = World(width: 800, height: 600);
       registerCoreComponents(world);
       registerFlutterComponents(world);
@@ -217,24 +258,36 @@ void main() {
       scene.onChoiceSelected(choice, world, controller);
 
       expect(scene.runner.currentNode!.id, 'rewarded');
-      expect(scene.runner.currentText(WorldView(world)), 'Great! Here is your reward.');
+      expect(
+        scene.runner.currentText(WorldView(world)),
+        'Great! Here is your reward.',
+      );
     });
 
-    testWidgets('onChoiceSelected ends dialogue when nextNodeId is null', (tester) async {
+    testWidgets('onChoiceSelected ends dialogue when nextNodeId is null', (
+      tester,
+    ) async {
       final endGraph = DialogueGraph(
         nodes: {
           'start': DialogueNode(
             id: 'start',
             textKey: 'greeting',
             choices: [
-              DialogueChoice(textKey: 'choice_yes', onSelectEvent: 'end_dialogue', nextNodeId: null),
+              DialogueChoice(
+                textKey: 'choice_yes',
+                onSelectEvent: 'end_dialogue',
+                nextNodeId: null,
+              ),
             ],
           ),
         },
         startNodeId: 'start',
       );
 
-      final endScene = _TestDialogueBoxScene(DialogueRunner(graph: endGraph, stringTable: stringTable), stringTable);
+      final endScene = _TestDialogueBoxScene(
+        DialogueRunner(graph: endGraph, stringTable: stringTable),
+        stringTable,
+      );
       final world = World(width: 800, height: 600);
       registerCoreComponents(world);
       registerFlutterComponents(world);
@@ -260,8 +313,7 @@ void main() {
       expect(endScene.runner.currentText(WorldView(world)), isNull);
     });
 
-    testWidgets(
-        'loadAssets registers the generated choice-button atlas '
+    testWidgets('loadAssets registers the generated choice-button atlas '
         '(regression: overriding loadAssets without calling '
         "super.loadAssets() left every choice button's Sprite pointing "
         'at an unregistered kMenuButtonAtlasId -- AtlasRegistry.resolve '
@@ -286,40 +338,42 @@ void main() {
     });
 
     testWidgets(
-        "update() re-spawns choice buttons once the current node changes "
-        '(regression: ButtonMenuScene.populate only ever spawns buttons '
-        'once, so a tap that correctly advanced the DialogueRunner to a '
-        "new node used to leave the previous node's now-stale buttons "
-        'on screen -- the actual "dialogue advances internally but the '
-        'player can\'t act on it / can\'t skip" bug)', (tester) async {
-      final world = World(width: 800, height: 600);
-      registerCoreComponents(world);
-      registerFlutterComponents(world);
+      "update() re-spawns choice buttons once the current node changes "
+      '(regression: ButtonMenuScene.populate only ever spawns buttons '
+      'once, so a tap that correctly advanced the DialogueRunner to a '
+      "new node used to leave the previous node's now-stale buttons "
+      'on screen -- the actual "dialogue advances internally but the '
+      'player can\'t act on it / can\'t skip" bug)',
+      (tester) async {
+        final world = World(width: 800, height: 600);
+        registerCoreComponents(world);
+        registerFlutterComponents(world);
 
-      final gameState = GameState({});
-      final controller = SceneController();
+        final gameState = GameState({});
+        final controller = SceneController();
 
-      await scene.populate(world, controller, gameState);
-      await tester.pump(const Duration(milliseconds: 16));
+        await scene.populate(world, controller, gameState);
+        await tester.pump(const Duration(milliseconds: 16));
 
-      final buttonsBefore = world.storeOf<Button>().length;
-      final actionIdsBefore = scene.buttons().map((b) => b.actionId).toSet();
-      expect(actionIdsBefore, {'choice_yes', 'choice_no'});
+        final buttonsBefore = world.storeOf<Button>().length;
+        final actionIdsBefore = scene.buttons().map((b) => b.actionId).toSet();
+        expect(actionIdsBefore, {'choice_yes', 'choice_no'});
 
-      // Advance to a node with a different set of choices (none here,
-      // since 'rewarded' is a dead end) by going through the same path
-      // a real tap takes: onButtonPressed -> onChoiceSelected -> advance.
-      scene.onButtonPressed('choice_yes', controller);
-      scene.update(0.016, world);
+        // Advance to a node with a different set of choices (none here,
+        // since 'rewarded' is a dead end) by going through the same path
+        // a real tap takes: onButtonPressed -> onChoiceSelected -> advance.
+        scene.onButtonPressed('choice_yes', controller);
+        scene.update(0.016, world);
 
-      expect(scene.runner.currentNode!.id, 'rewarded');
-      expect(buttonsBefore, 2);
-      // 'rewarded' has no choices -- the old node's buttons must be
-      // actually destroyed, not just superseded by new ones left
-      // stacked on top underneath.
-      expect(scene.buttons(), isEmpty);
-      expect(world.storeOf<Button>().length, 0);
-    });
+        expect(scene.runner.currentNode!.id, 'rewarded');
+        expect(buttonsBefore, 2);
+        // 'rewarded' has no choices -- the old node's buttons must be
+        // actually destroyed, not just superseded by new ones left
+        // stacked on top underneath.
+        expect(scene.buttons(), isEmpty);
+        expect(world.storeOf<Button>().length, 0);
+      },
+    );
 
     test('loadAssets skips a missing atlas instead of throwing', () async {
       final scene = _TestDialogueBoxScene(

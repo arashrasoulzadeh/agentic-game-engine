@@ -170,6 +170,7 @@ class AnalyticsManager {
   String? _userId;
   bool _initialized = false;
   bool _isPaused = false;
+  bool _consent = true;
 
   AnalyticsManager._() : _maxQueueSize = 1000 {
     _sessionId = _generateSessionId();
@@ -210,6 +211,21 @@ class AnalyticsManager {
     _initialized = true;
   }
 
+  /// Whether the player allows analytics. See [setConsent].
+  bool get hasConsent => _consent;
+
+  /// Turns analytics on or off for the player's choice (a consent dialog, a settings toggle).
+  ///
+  /// While off, [logEvent] drops everything - nothing is queued and no provider sees an event.
+  /// Turning it off also **discards what is already queued**, so events recorded before the player
+  /// said no are not delivered later. Defaults to on, since analytics only does anything once the
+  /// game registers a provider; a game that must ask first should call `setConsent(false)` before
+  /// [initialize] and `setConsent(true)` when the player agrees.
+  void setConsent(bool granted) {
+    _consent = granted;
+    if (!granted) _eventQueue.clear();
+  }
+
   /// Logs an event to all providers. Dropped while [onPause] has been
   /// called and [onResume] hasn't yet — avoids recording engagement
   /// events (and growing the offline queue) for a backgrounded session.
@@ -217,7 +233,7 @@ class AnalyticsManager {
   /// marker events before/after toggling this, so those two always get
   /// through regardless of pause state.
   Future<void> logEvent(AnalyticsEvent event) async {
-    if (_isPaused) return;
+    if (_isPaused || !_consent) return;
 
     final enriched = AnalyticsEvent(
       name: event.name,

@@ -84,15 +84,19 @@ class ViewportLayout {
 
   /// Transforms a world coordinate to screen coordinate within the viewport.
   Offset worldToScreen(Offset world, Offset worldOrigin, double zoom) {
-    final scaledX = (world.dx - worldOrigin.dx) * zoom * scale + contentRect.left;
-    final scaledY = (world.dy - worldOrigin.dy) * zoom * scale + contentRect.top;
+    final scaledX =
+        (world.dx - worldOrigin.dx) * zoom * scale + contentRect.left;
+    final scaledY =
+        (world.dy - worldOrigin.dy) * zoom * scale + contentRect.top;
     return Offset(scaledX, scaledY);
   }
 
   /// Transforms a screen coordinate to world coordinate within the viewport.
   Offset screenToWorld(Offset screen, Offset worldOrigin, double zoom) {
-    final worldX = (screen.dx - contentRect.left) / (zoom * scale) + worldOrigin.dx;
-    final worldY = (screen.dy - contentRect.top) / (zoom * scale) + worldOrigin.dy;
+    final worldX =
+        (screen.dx - contentRect.left) / (zoom * scale) + worldOrigin.dx;
+    final worldY =
+        (screen.dy - contentRect.top) / (zoom * scale) + worldOrigin.dy;
     return Offset(worldX, worldY);
   }
 }
@@ -104,10 +108,7 @@ class ViewportManager {
   ViewportManager(this._config);
 
   /// Computes the viewport layout for the given screen size and safe area.
-  ViewportLayout computeLayout(
-    ui.Size screenSize,
-    ui.RRect? safeArea,
-  ) {
+  ViewportLayout computeLayout(ui.Size screenSize, ui.RRect? safeArea) {
     final screenWidth = screenSize.width;
     final screenHeight = screenSize.height;
 

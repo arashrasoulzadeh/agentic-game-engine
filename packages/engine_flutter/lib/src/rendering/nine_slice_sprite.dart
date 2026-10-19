@@ -45,18 +45,19 @@ class NineSliceSprite {
   });
 
   Map<String, dynamic> toJson() => {
-        'atlasId': atlasId,
-        'region': region,
-        'width': width,
-        'height': height,
-        'insetLeft': insetLeft,
-        'insetTop': insetTop,
-        'insetRight': insetRight,
-        'insetBottom': insetBottom,
-        'zIndex': zIndex,
-      };
+    'atlasId': atlasId,
+    'region': region,
+    'width': width,
+    'height': height,
+    'insetLeft': insetLeft,
+    'insetTop': insetTop,
+    'insetRight': insetRight,
+    'insetBottom': insetBottom,
+    'zIndex': zIndex,
+  };
 
-  factory NineSliceSprite.fromJson(Map<String, dynamic> json) => NineSliceSprite(
+  factory NineSliceSprite.fromJson(Map<String, dynamic> json) =>
+      NineSliceSprite(
         json['atlasId'] as String,
         json['region'] as String,
         width: (json['width'] as num).toDouble(),

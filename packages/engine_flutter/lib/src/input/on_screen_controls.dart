@@ -37,15 +37,15 @@ class OnScreenButtonSpec {
   final String? pressedRegion;
 
   const OnScreenButtonSpec(this.action, [this.label])
-      : idleColor = const Color(0x33FFFFFF),
-        pressedColor = const Color(0x88FFFFFF),
-        diameter = 64,
-        shape = BoxShape.circle,
-        borderRadius = null,
-        labelStyle = null,
-        atlasId = null,
-        region = null,
-        pressedRegion = null;
+    : idleColor = const Color(0x33FFFFFF),
+      pressedColor = const Color(0x88FFFFFF),
+      diameter = 64,
+      shape = BoxShape.circle,
+      borderRadius = null,
+      labelStyle = null,
+      atlasId = null,
+      region = null,
+      pressedRegion = null;
 
   const OnScreenButtonSpec.custom(
     this.action, {
@@ -142,8 +142,14 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
       // only runs once per drag (onPanStart), not on every move.
       setState(() {
         _origin = Offset(
-          localPosition.dx.clamp(widget.baseRadius, bounds.width - widget.baseRadius),
-          localPosition.dy.clamp(widget.baseRadius, bounds.height - widget.baseRadius),
+          localPosition.dx.clamp(
+            widget.baseRadius,
+            bounds.width - widget.baseRadius,
+          ),
+          localPosition.dy.clamp(
+            widget.baseRadius,
+            bounds.height - widget.baseRadius,
+          ),
         );
       });
     }
@@ -186,9 +192,15 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
       ..addAll(next);
 
     if (widget.analogOutput) {
-      widget.controller.setAxis('moveX', (delta.dx / widget.baseRadius).clamp(-1.0, 1.0));
+      widget.controller.setAxis(
+        'moveX',
+        (delta.dx / widget.baseRadius).clamp(-1.0, 1.0),
+      );
       if (widget.verticalEnabled) {
-        widget.controller.setAxis('moveY', (delta.dy / widget.baseRadius).clamp(-1.0, 1.0));
+        widget.controller.setAxis(
+          'moveY',
+          (delta.dy / widget.baseRadius).clamp(-1.0, 1.0),
+        );
       }
     }
   }
@@ -254,7 +266,8 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
         _circle(size, const Color(0x33FFFFFF)),
         ValueListenableBuilder<Offset>(
           valueListenable: _knobOffset,
-          builder: (context, offset, child) => Transform.translate(offset: offset, child: child),
+          builder: (context, offset, child) =>
+              Transform.translate(offset: offset, child: child),
           child: _circle(widget.knobRadius * 2, const Color(0x88FFFFFF)),
         ),
       ],
@@ -264,20 +277,22 @@ class _VirtualJoystickState extends State<VirtualJoystick> {
       // Fixed mode: bottom-left of whatever space this widget occupies.
       return Align(alignment: Alignment.bottomLeft, child: base);
     }
-    return Stack(children: [
-      Positioned(
-        left: floatingOrigin.dx - widget.baseRadius,
-        top: floatingOrigin.dy - widget.baseRadius,
-        child: base,
-      ),
-    ]);
+    return Stack(
+      children: [
+        Positioned(
+          left: floatingOrigin.dx - widget.baseRadius,
+          top: floatingOrigin.dy - widget.baseRadius,
+          child: base,
+        ),
+      ],
+    );
   }
 
   Widget _circle(double diameter, Color color) => Container(
-        width: diameter,
-        height: diameter,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      );
+    width: diameter,
+    height: diameter,
+    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  );
 }
 
 /// An on-screen button that sets [spec.action] pressed for as long as
@@ -333,8 +348,9 @@ class _VirtualButtonState extends State<VirtualButton> {
   @override
   Widget build(BuildContext context) {
     final spec = widget.spec;
-    final activeRegion =
-        (_pressed ? spec.pressedRegion ?? spec.region : spec.region);
+    final activeRegion = (_pressed
+        ? spec.pressedRegion ?? spec.region
+        : spec.region);
     final atlas = activeRegion == null ? null : _resolveAtlas();
 
     final Widget visual;
@@ -348,14 +364,17 @@ class _VirtualButtonState extends State<VirtualButton> {
         decoration: BoxDecoration(
           color: _pressed ? spec.pressedColor : spec.idleColor,
           shape: spec.shape,
-          borderRadius: spec.shape == BoxShape.rectangle ? spec.borderRadius : null,
+          borderRadius: spec.shape == BoxShape.rectangle
+              ? spec.borderRadius
+              : null,
         ),
         child: spec.label == null
             ? null
             : Center(
                 child: Text(
                   spec.label!,
-                  style: spec.labelStyle ??
+                  style:
+                      spec.labelStyle ??
                       const TextStyle(
                         color: Color(0xFFFFFFFF),
                         fontSize: 12,
@@ -374,7 +393,11 @@ class _VirtualButtonState extends State<VirtualButton> {
         scale: _pressed ? 0.9 : 1.0,
         duration: const Duration(milliseconds: 80),
         curve: Curves.easeOut,
-        child: SizedBox(width: spec.diameter, height: spec.diameter, child: visual),
+        child: SizedBox(
+          width: spec.diameter,
+          height: spec.diameter,
+          child: visual,
+        ),
       ),
     );
   }

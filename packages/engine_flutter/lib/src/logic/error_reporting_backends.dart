@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:http/http.dart' as http;
@@ -25,11 +24,11 @@ class SentryErrorReporter extends ErrorReporter {
     String? release,
     bool debug = false,
     http.Client? httpClient,
-  })  : _dsn = dsn,
-        _environment = environment,
-        _release = release,
-        _debug = debug,
-        _httpClient = httpClient ?? http.Client();
+  }) : _dsn = dsn,
+       _environment = environment,
+       _release = release,
+       _debug = debug,
+       _httpClient = httpClient ?? http.Client();
 
   @override
   Future<void> init() async {
@@ -39,7 +38,9 @@ class SentryErrorReporter extends ErrorReporter {
       throw ArgumentError('Sentry DSN cannot be empty');
     }
     if (_debug) {
-      print('[SentryErrorReporter] Initialized with DSN: ${_dsn.substring(0, 20)}...');
+      print(
+        '[SentryErrorReporter] Initialized with DSN: ${_dsn.substring(0, 20)}...',
+      );
     }
   }
 
@@ -48,7 +49,9 @@ class SentryErrorReporter extends ErrorReporter {
     final payload = _buildPayload(error);
 
     try {
-      final uri = Uri.parse(_dsn).replace(path: '/api/${_extractProjectId(_dsn)}/envelope/');
+      final uri = Uri.parse(
+        _dsn,
+      ).replace(path: '/api/${_extractProjectId(_dsn)}/envelope/');
       final response = await _httpClient!.post(
         uri,
         headers: {
@@ -59,7 +62,9 @@ class SentryErrorReporter extends ErrorReporter {
       );
 
       if (response.statusCode >= 400) {
-        throw Exception('Sentry returned ${response.statusCode}: ${response.body}');
+        throw Exception(
+          'Sentry returned ${response.statusCode}: ${response.body}',
+        );
       }
     } catch (e) {
       // Don't crash the app if Sentry is down
@@ -95,9 +100,12 @@ class SentryErrorReporter extends ErrorReporter {
             'type': error.error.runtimeType.toString(),
             'value': error.error.toString(),
             'stacktrace': error.stackTrace?.toString() ?? '',
-            'mechanism': {'type': 'flutter', 'handled': error.severity != ErrorSeverity.fatal},
-          }
-        ]
+            'mechanism': {
+              'type': 'flutter',
+              'handled': error.severity != ErrorSeverity.fatal,
+            },
+          },
+        ],
       },
       // error.userId (per-report) wins over the reporter-wide
       // setUserContext value -- a caller supplying one explicitly for
@@ -112,10 +120,7 @@ class SentryErrorReporter extends ErrorReporter {
           'build_number': error.buildNumber,
           'platform': error.platform,
         },
-        'device': {
-          'os': Platform.operatingSystem,
-          'os_version': Platform.operatingSystemVersion,
-        },
+        'device': {'os': currentPlatformName()},
         'session': error.sessionId != null ? {'id': error.sessionId} : null,
       },
       'extra': error.extra,
@@ -288,14 +293,15 @@ class CustomHttpReporter extends ErrorReporter {
     Map<String, String>? headers,
     http.Client? httpClient,
     bool debug = false,
-  })  : _endpoint = endpoint,
-        _headers = headers ?? {'Content-Type': 'application/json'},
-        _httpClient = httpClient ?? http.Client(),
-        _debug = debug;
+  }) : _endpoint = endpoint,
+       _headers = headers ?? {'Content-Type': 'application/json'},
+       _httpClient = httpClient ?? http.Client(),
+       _debug = debug;
 
   @override
   Future<void> init() async {
-    if (_debug) print('[CustomHttpReporter] Initialized with endpoint: $_endpoint');
+    if (_debug)
+      print('[CustomHttpReporter] Initialized with endpoint: $_endpoint');
   }
 
   @override
@@ -308,7 +314,9 @@ class CustomHttpReporter extends ErrorReporter {
       );
 
       if (response.statusCode >= 400) {
-        throw Exception('Custom endpoint returned ${response.statusCode}: ${response.body}');
+        throw Exception(
+          'Custom endpoint returned ${response.statusCode}: ${response.body}',
+        );
       }
     } catch (e) {
       if (_debug) print('[CustomHttpReporter] Failed to report: $e');
@@ -346,8 +354,8 @@ class MultiErrorReporter extends ErrorReporter {
   MultiErrorReporter({
     required List<ErrorReporter> reporters,
     bool stopOnFirstSuccess = false,
-  })  : _reporters = reporters,
-        _stopOnFirstSuccess = stopOnFirstSuccess;
+  }) : _reporters = reporters,
+       _stopOnFirstSuccess = stopOnFirstSuccess;
 
   @override
   Future<void> init() async {

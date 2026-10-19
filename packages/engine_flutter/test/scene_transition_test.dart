@@ -15,7 +15,10 @@ void main() {
     test('fade covering phase animates alpha from 0 to 255 then cleans up', () {
       final entity = world.spawn();
       final transition = SceneTransition(
-        config: const SceneTransitionConfig(type: SceneTransitionType.fade, duration: 0.5),
+        config: const SceneTransitionConfig(
+          type: SceneTransitionType.fade,
+          duration: 0.5,
+        ),
         covering: true,
       );
       world.storeOf<SceneTransition>().set(entity, transition);
@@ -43,7 +46,10 @@ void main() {
     test('fade revealing phase animates alpha from 255 down to 0', () {
       final entity = world.spawn();
       final transition = SceneTransition(
-        config: const SceneTransitionConfig(type: SceneTransitionType.fade, duration: 0.5),
+        config: const SceneTransitionConfig(
+          type: SceneTransitionType.fade,
+          duration: 0.5,
+        ),
         covering: false,
       );
       world.storeOf<SceneTransition>().set(entity, transition);
@@ -60,7 +66,10 @@ void main() {
     test('iris covering phase shrinks the reveal radius to 0', () {
       final entity = world.spawn();
       final transition = SceneTransition(
-        config: const SceneTransitionConfig(type: SceneTransitionType.iris, duration: 0.5),
+        config: const SceneTransitionConfig(
+          type: SceneTransitionType.iris,
+          duration: 0.5,
+        ),
         covering: true,
       );
       world.storeOf<SceneTransition>().set(entity, transition);
@@ -85,7 +94,10 @@ void main() {
     test('iris revealing phase grows the reveal radius from 0', () {
       final entity = world.spawn();
       final transition = SceneTransition(
-        config: const SceneTransitionConfig(type: SceneTransitionType.iris, duration: 0.5),
+        config: const SceneTransitionConfig(
+          type: SceneTransitionType.iris,
+          duration: 0.5,
+        ),
         covering: false,
       );
       world.storeOf<SceneTransition>().set(entity, transition);
@@ -102,7 +114,10 @@ void main() {
     test('SceneTransitionSystem only advances running transitions', () {
       final entity = world.spawn();
       final transition = SceneTransition(
-        config: const SceneTransitionConfig(type: SceneTransitionType.fade, duration: 1),
+        config: const SceneTransitionConfig(
+          type: SceneTransitionType.fade,
+          duration: 1,
+        ),
         covering: true,
       );
       world.storeOf<SceneTransition>().set(entity, transition);
@@ -132,29 +147,34 @@ void main() {
       expect(restored.fadeColorArgb, config.fadeColorArgb);
     });
 
-    test('SceneTransition component is registered and round-trips via World.toJson', () {
-      final entity = world.spawn();
-      final transition = SceneTransition(
-        config: const SceneTransitionConfig(),
-        covering: true,
-      );
-      transition.start(world);
-      world.storeOf<SceneTransition>().set(entity, transition);
+    test(
+      'SceneTransition component is registered and round-trips via World.toJson',
+      () {
+        final entity = world.spawn();
+        final transition = SceneTransition(
+          config: const SceneTransitionConfig(),
+          covering: true,
+        );
+        transition.start(world);
+        world.storeOf<SceneTransition>().set(entity, transition);
 
-      final json = world.toJson();
-      final restored = World(width: 800, height: 600);
-      registerCoreComponents(restored);
-      registerFlutterComponents(restored);
-      // applyPatch only writes components onto entities that already
-      // exist in the target World -- it's a patch mechanism, not a
-      // "recreate the world from scratch" one -- so spawn matching
-      // entities first.
-      restored.spawn();
-      restored.applyPatch(json);
+        final json = world.toJson();
+        final restored = World(width: 800, height: 600);
+        registerCoreComponents(restored);
+        registerFlutterComponents(restored);
+        // applyPatch only writes components onto entities that already
+        // exist in the target World -- it's a patch mechanism, not a
+        // "recreate the world from scratch" one -- so spawn matching
+        // entities first.
+        restored.spawn();
+        restored.applyPatch(json);
 
-      final restoredTransition = restored.storeOf<SceneTransition>().denseAt(0);
-      expect(restoredTransition.covering, isTrue);
-      expect(restoredTransition.isRunning, isTrue);
-    });
+        final restoredTransition = restored.storeOf<SceneTransition>().denseAt(
+          0,
+        );
+        expect(restoredTransition.covering, isTrue);
+        expect(restoredTransition.isRunning, isTrue);
+      },
+    );
   });
 }

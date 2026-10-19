@@ -109,8 +109,12 @@ class AttributionAnalyticsProvider extends PlatformAnalyticsProvider {
   /// implementation that wants a dedicated revenue-tracking call
   /// overrides [logEvent] and dispatches on `event.name == 'purchase'`
   /// instead of this, which nothing calls.
-  Future<void> logPurchase(String productId, double price, String currency,
-      {Map<String, dynamic>? extra}) async {
+  Future<void> logPurchase(
+    String productId,
+    double price,
+    String currency, {
+    Map<String, dynamic>? extra,
+  }) async {
     // Track revenue for attribution
   }
 }

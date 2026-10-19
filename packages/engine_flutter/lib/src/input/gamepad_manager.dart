@@ -9,16 +9,14 @@ class GamepadManager {
   final InputController input;
   final List<GamepadController?> _controllers = List.filled(4, null);
   final List<GamepadHaptics?> _haptics = List.filled(4, null);
-  
+
   /// Called when a gamepad is connected at [index].
   void Function(int index)? onGamepadConnectedCallback;
-  
+
   /// Called when a gamepad is disconnected at [index].
   void Function(int index)? onGamepadDisconnectedCallback;
 
-  GamepadManager({
-    required this.input,
-  });
+  GamepadManager({required this.input});
 
   /// Returns the controller for the given player index (0-3), or null if not connected.
   GamepadController? getController(int index) {
@@ -51,19 +49,19 @@ class GamepadManager {
     required int axisCount,
   }) {
     if (index < 0 || index >= _controllers.length) return;
-    
+
     // If already connected, disconnect first
     if (_controllers[index] != null) {
       onGamepadDisconnected(index);
     }
-    
+
     // Create a new controller for this gamepad
     final controller = GamepadController(input: InputController());
     _controllers[index] = controller;
-    
+
     // Try to initialize haptics if supported
     _initHaptics(index);
-    
+
     if (onGamepadConnectedCallback != null) {
       onGamepadConnectedCallback!(index);
     }
@@ -72,7 +70,7 @@ class GamepadManager {
   /// Called by the platform when a gamepad is disconnected.
   void onGamepadDisconnected(int index) {
     if (index < 0 || index >= _controllers.length) return;
-    
+
     final controller = _controllers[index];
     if (controller != null) {
       // Stop any ongoing haptics
@@ -81,11 +79,11 @@ class GamepadManager {
       }
       _controllers[index] = null;
     }
-    
+
     if (_haptics[index] != null) {
       _haptics[index] = null;
     }
-    
+
     if (onGamepadDisconnectedCallback != null) {
       onGamepadDisconnectedCallback!(index);
     }
@@ -162,12 +160,14 @@ class GamepadRemapManager {
   void startGamepadRebind(String action, int playerIndex) {
     final controller = gamepadManager.getController(playerIndex);
     if (controller == null) return;
-    
+
     controller.captureNextButtonDown = (buttonId) {
       // Remove any existing binding for this action
-      gamepadManager.getController(playerIndex)?.buttonBindings
+      gamepadManager
+          .getController(playerIndex)
+          ?.buttonBindings
           .removeWhere((_, boundAction) => boundAction == action);
-      
+
       // Add the new binding
       // We need to find the buttonId that was just pressed
       // This would be called from the capture callback
@@ -178,7 +178,7 @@ class GamepadRemapManager {
   Future<void> saveGamepadBindings(int playerIndex) async {
     final controller = gamepadManager.getController(playerIndex);
     if (controller == null) return;
-    
+
     // Save button bindings
     // Save axis bindings
     // This would use shared_preferences similar to InputBindingsStorage
@@ -188,7 +188,7 @@ class GamepadRemapManager {
   Future<void> loadGamepadBindings(int playerIndex) async {
     final controller = gamepadManager.getController(playerIndex);
     if (controller == null) return;
-    
+
     // Load button bindings
     // Load axis bindings
   }

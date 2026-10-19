@@ -51,8 +51,9 @@ abstract class Game {
   /// Buttons shown by the default on-screen control overlay (see
   /// `GameConfig.onScreenControls`). Defaults to a single jump button —
   /// override for a game with more/different actions.
-  List<OnScreenButtonSpec> onScreenButtons() =>
-      const [OnScreenButtonSpec('jump', 'JUMP')];
+  List<OnScreenButtonSpec> onScreenButtons() => const [
+    OnScreenButtonSpec('jump', 'JUMP'),
+  ];
 
   /// Whether the on-screen joystick also sets `"up"`/`"down"`. Off by
   /// default (the common platformer case, where vertical movement is
@@ -101,7 +102,13 @@ class _LoadedGame {
   final InputController? inputController;
   final Scene scene;
 
-  _LoadedGame(this.world, this.atlasRegistry, this.camera, this.inputController, this.scene);
+  _LoadedGame(
+    this.world,
+    this.atlasRegistry,
+    this.camera,
+    this.inputController,
+    this.scene,
+  );
 }
 
 /// Hosts a [Game]: applies orientation, loads assets, then renders via
@@ -202,7 +209,10 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   /// [next] underneath, then play the effect over it (see
   /// `SnapshotTransitionPainter`). If no frame has painted yet there is nothing to
   /// snapshot, so it degrades to a plain scene load.
-  Future<void> _loadSceneWithSnapshot(Scene next, SceneTransitionConfig transition) async {
+  Future<void> _loadSceneWithSnapshot(
+    Scene next,
+    SceneTransitionConfig transition,
+  ) async {
     final snapshot = await _captureImage();
     _loadScene(next);
     if (snapshot == null) return;
@@ -232,10 +242,19 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     required bool covering,
   }) async {
     final entity = world.spawn();
-    final sceneTransition = SceneTransition(config: transition, covering: covering);
-    sceneTransition.start(world, cameraX: world.width / 2, cameraY: world.height / 2);
+    final sceneTransition = SceneTransition(
+      config: transition,
+      covering: covering,
+    );
+    sceneTransition.start(
+      world,
+      cameraX: world.width / 2,
+      cameraY: world.height / 2,
+    );
     world.storeOf<SceneTransition>().set(entity, sceneTransition);
-    await Future.delayed(Duration(milliseconds: (transition.duration * 1000).round()));
+    await Future.delayed(
+      Duration(milliseconds: (transition.duration * 1000).round()),
+    );
     if (world.entities.isAlive(entity)) world.destroy(entity);
   }
 
@@ -280,7 +299,8 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   /// The base scene's current frame as a `ui.Image` (caller disposes), or null
   /// before the first paint. Shared by screenshots and snapshot transitions.
   Future<ui.Image?> _captureImage({double pixelRatio = 1.0}) async {
-    final renderObject = _engineViewRepaintKey.currentContext?.findRenderObject();
+    final renderObject = _engineViewRepaintKey.currentContext
+        ?.findRenderObject();
     if (renderObject is! RenderRepaintBoundary) return null;
     return renderObject.toImage(pixelRatio: pixelRatio);
   }
@@ -337,17 +357,19 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     // would otherwise hang every later `GameRunner` test for the rest
     // of that 10-minute-timeout-bounded suite run instead of just this
     // one scene failing to get its font.
-    return future.timeout(const Duration(seconds: 5), onTimeout: () {}).catchError(
-      (Object error, StackTrace stackTrace) {
-        _defaultFontFuture = null;
-      },
-    );
+    return future
+        .timeout(const Duration(seconds: 5), onTimeout: () {})
+        .catchError((Object error, StackTrace stackTrace) {
+          _defaultFontFuture = null;
+        });
   }
 
   static Future<void> _loadDefaultFont() async {
     final loader = FontLoader('packages/engine_flutter/EngineDefault')
       ..addFont(
-        rootBundle.load('packages/engine_flutter/assets/fonts/EngineDefault-Regular.ttf'),
+        rootBundle.load(
+          'packages/engine_flutter/assets/fonts/EngineDefault-Regular.ttf',
+        ),
       );
     await loader.load();
   }
@@ -388,7 +410,10 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     final id = config.packedAtlasId;
     final imagePath = config.packedAtlasImage;
     final manifestPath = config.packedAtlasManifest;
-    if (!usePackedAtlas || id == null || imagePath == null || manifestPath == null) {
+    if (!usePackedAtlas ||
+        id == null ||
+        imagePath == null ||
+        manifestPath == null) {
       return;
     }
     if (atlasRegistry.has(id)) return;
@@ -449,12 +474,14 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
         // as a framework-caught build error would.
         if (snapshot.hasError && !identical(_reportedErrorFor, _future)) {
           _reportedErrorFor = _future;
-          FlutterError.reportError(FlutterErrorDetails(
-            exception: snapshot.error!,
-            stack: snapshot.stackTrace,
-            library: 'engine_flutter',
-            context: ErrorDescription('while loading a Scene in GameRunner'),
-          ));
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: snapshot.error!,
+              stack: snapshot.stackTrace,
+              library: 'engine_flutter',
+              context: ErrorDescription('while loading a Scene in GameRunner'),
+            ),
+          );
         }
         final loaded = snapshot.data;
         if (loaded == null) {
@@ -484,12 +511,17 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
             // tree-shakes the disabled branch from entirely in a release
             // build, not a runtime check with any cost.
             showFpsOverlay: !kReleaseMode && widget.game.config.showFpsOverlay,
-            showColliderDebug: !kReleaseMode && widget.game.config.showColliderDebug,
-            showPerformanceOverlay: !kReleaseMode && widget.game.config.showPerformanceOverlay,
-            showAutoTileBitmask: !kReleaseMode &&
-                (widget.game.config.showAutoTileBitmask || loaded.scene.showAutoTileBitmask),
+            showColliderDebug:
+                !kReleaseMode && widget.game.config.showColliderDebug,
+            showPerformanceOverlay:
+                !kReleaseMode && widget.game.config.showPerformanceOverlay,
+            showAutoTileBitmask:
+                !kReleaseMode &&
+                (widget.game.config.showAutoTileBitmask ||
+                    loaded.scene.showAutoTileBitmask),
             ambientBrightness:
-                loaded.scene.ambientBrightness ?? widget.game.config.ambientBrightness,
+                loaded.scene.ambientBrightness ??
+                widget.game.config.ambientBrightness,
             dayNightCycle: loaded.scene.dayNightCycle,
             maxFps: widget.game.config.maxFps,
             fixedTimestepSeconds: widget.game.config.fixedTimestepSeconds,
@@ -499,8 +531,11 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
             // interactive, so the paused scene underneath can't be
             // accidentally poked through it.
             onWorldTap: overlay == null
-                ? (worldPosition) =>
-                    loaded.scene.handleTap(loaded.world, _sceneController, worldPosition)
+                ? (worldPosition) => loaded.scene.handleTap(
+                    loaded.world,
+                    _sceneController,
+                    worldPosition,
+                  )
                 : null,
             // Call scene's update method after each world step for per-frame logic
             onPostTick: (dt, world) => loaded.scene.update(dt, world),
@@ -513,7 +548,8 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
         // none for the current scene (base or overlay) when it opts out
         // via `Scene.showOnScreenControls` (every `ButtonMenuScene` does
         // — a menu is tap-driven, not movement/action-driven).
-        final showControls = controller != null &&
+        final showControls =
+            controller != null &&
             _shouldShowOnScreenControls() &&
             overlay == null &&
             loaded.scene.showOnScreenControls;
@@ -538,20 +574,25 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
               maxFps: widget.game.config.maxFps,
               fixedTimestepSeconds: widget.game.config.fixedTimestepSeconds,
               singlePassLighting: widget.game.config.singlePassLighting,
-              onWorldTap: (worldPosition) =>
-                  overlay.scene.handleTap(overlay.world, _sceneController, worldPosition),
+              onWorldTap: (worldPosition) => overlay.scene.handleTap(
+                overlay.world,
+                _sceneController,
+                worldPosition,
+              ),
               onPostTick: (dt, world) => overlay.scene.update(dt, world),
             ),
         ];
         final transition = _snapshotTransition;
         if (transition != null) {
-          children.add(Positioned.fill(
-            child: SnapshotTransition(
-              snapshot: transition.$1,
-              config: transition.$2,
-              onDone: _finishSnapshotTransition,
+          children.add(
+            Positioned.fill(
+              child: SnapshotTransition(
+                snapshot: transition.$1,
+                config: transition.$2,
+                onDone: _finishSnapshotTransition,
+              ),
             ),
-          ));
+          );
         }
         return children.length == 1 ? engineView : Stack(children: children);
       },
@@ -581,20 +622,25 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
 /// packed build. Meaningless unless `GameConfig.packedAtlasId` is also
 /// set — this only gates *using* a packed atlas that's configured, it
 /// can't summon one that isn't.
-const bool usePackedAtlas = bool.fromEnvironment('USE_PACKED_ATLAS', defaultValue: true);
+const bool usePackedAtlas = bool.fromEnvironment(
+  'USE_PACKED_ATLAS',
+  defaultValue: true,
+);
 
 /// One-line entry point: `void main() => runGame(MyGame());`. Wraps
 /// [GameRunner] in a `MaterialApp`/`Scaffold` sized to fill the screen —
 /// use `GameRunner` directly if you need to embed the game inside a
 /// larger app instead of owning the whole screen.
 void runGame(Game game) {
-  runApp(MaterialApp(
-    title: game.config.title,
-    debugShowCheckedModeBanner: false,
-    theme: ThemeData(scaffoldBackgroundColor: game.config.backgroundColor),
-    home: Scaffold(
-      backgroundColor: game.config.backgroundColor,
-      body: GameRunner(game: game),
+  runApp(
+    MaterialApp(
+      title: game.config.title,
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(scaffoldBackgroundColor: game.config.backgroundColor),
+      home: Scaffold(
+        backgroundColor: game.config.backgroundColor,
+        body: GameRunner(game: game),
+      ),
     ),
-  ));
+  );
 }

@@ -21,32 +21,38 @@ void main() {
     expect(await SaveGame.hasSave(), isFalse);
   });
 
-  test('save then load restores entity component data into a fresh world', () async {
-    final original = _buildWorld();
-    final id = original.spawn();
-    original.storeOf<Position>().set(id, Position(10, 20));
-    original.storeOf<Collider>().set(id, Collider(5));
+  test(
+    'save then load restores entity component data into a fresh world',
+    () async {
+      final original = _buildWorld();
+      final id = original.spawn();
+      original.storeOf<Position>().set(id, Position(10, 20));
+      original.storeOf<Collider>().set(id, Collider(5));
 
-    await SaveGame.save(original);
-    expect(await SaveGame.hasSave(), isTrue);
+      await SaveGame.save(original);
+      expect(await SaveGame.hasSave(), isTrue);
 
-    final restored = _buildWorld();
-    final loaded = await SaveGame.load(restored);
+      final restored = _buildWorld();
+      final loaded = await SaveGame.load(restored);
 
-    expect(loaded, isTrue);
-    expect(restored.entities.count, 1);
-    final restoredId = restored.entities.all.first;
-    expect(restored.storeOf<Position>().get(restoredId)!.x, 10);
-    expect(restored.storeOf<Position>().get(restoredId)!.y, 20);
-    expect(restored.storeOf<Collider>().get(restoredId)!.radius, 5);
-  });
+      expect(loaded, isTrue);
+      expect(restored.entities.count, 1);
+      final restoredId = restored.entities.all.first;
+      expect(restored.storeOf<Position>().get(restoredId)!.x, 10);
+      expect(restored.storeOf<Position>().get(restoredId)!.y, 20);
+      expect(restored.storeOf<Collider>().get(restoredId)!.radius, 5);
+    },
+  );
 
-  test('load returns false and does nothing when no save exists for the slot', () async {
-    final world = _buildWorld();
-    final loaded = await SaveGame.load(world, slot: 'nonexistent');
-    expect(loaded, isFalse);
-    expect(world.entities.count, 0);
-  });
+  test(
+    'load returns false and does nothing when no save exists for the slot',
+    () async {
+      final world = _buildWorld();
+      final loaded = await SaveGame.load(world, slot: 'nonexistent');
+      expect(loaded, isFalse);
+      expect(world.entities.count, 0);
+    },
+  );
 
   test('slots are independent', () async {
     final worldA = _buildWorld()..spawn();
@@ -63,14 +69,17 @@ void main() {
     expect(await SaveGame.hasSave(), isFalse);
   });
 
-  test('listSlots returns every slot with a stored save, and nothing else', () async {
-    expect(await SaveGame.listSlots(), isEmpty);
+  test(
+    'listSlots returns every slot with a stored save, and nothing else',
+    () async {
+      expect(await SaveGame.listSlots(), isEmpty);
 
-    await SaveGame.save(_buildWorld()..spawn(), slot: 'a');
-    await SaveGame.save(_buildWorld()..spawn(), slot: 'b');
+      await SaveGame.save(_buildWorld()..spawn(), slot: 'a');
+      await SaveGame.save(_buildWorld()..spawn(), slot: 'b');
 
-    expect(await SaveGame.listSlots(), unorderedEquals(['a', 'b']));
-  });
+      expect(await SaveGame.listSlots(), unorderedEquals(['a', 'b']));
+    },
+  );
 
   test('listSlots omits a slot after it is deleted', () async {
     await SaveGame.save(_buildWorld()..spawn(), slot: 'a');
@@ -80,19 +89,28 @@ void main() {
     expect(await SaveGame.listSlots(), ['b']);
   });
 
-  test('load throws LevelLoadException on corrupted (non-object) save data', () async {
-    SharedPreferences.setMockInitialValues({'engine_save_default': '"just a string"'});
-    final world = _buildWorld();
-    expect(() => SaveGame.load(world), throwsA(isA<LevelLoadException>()));
-  });
+  test(
+    'load throws LevelLoadException on corrupted (non-object) save data',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'engine_save_default': '"just a string"',
+      });
+      final world = _buildWorld();
+      expect(() => SaveGame.load(world), throwsA(isA<LevelLoadException>()));
+    },
+  );
 
-  test('load throws LevelLoadException when the saved snapshot has a malformed entity', () async {
-    SharedPreferences.setMockInitialValues({
-      'engine_save_default': '{"entities": [{"id": 0, "components": "not an object"}]}',
-    });
-    final world = _buildWorld();
-    expect(() => SaveGame.load(world), throwsA(isA<LevelLoadException>()));
-  });
+  test(
+    'load throws LevelLoadException when the saved snapshot has a malformed entity',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'engine_save_default':
+            '{"entities": [{"id": 0, "components": "not an object"}]}',
+      });
+      final world = _buildWorld();
+      expect(() => SaveGame.load(world), throwsA(isA<LevelLoadException>()));
+    },
+  );
 
   group('schema versioning', () {
     test('save/load round-trip works at a non-default version', () async {
@@ -105,60 +123,84 @@ void main() {
       final loaded = await SaveGame.load(restored, version: 3);
 
       expect(loaded, isTrue);
-      expect(restored.storeOf<Position>().get(restored.entities.all.first)!.x, 5);
-    });
-
-    test('a version mismatch with no migrate throws SaveVersionException', () async {
-      final original = _buildWorld()..spawn();
-      await SaveGame.save(original, version: 1);
-
-      final restored = _buildWorld();
       expect(
-        () => SaveGame.load(restored, version: 2),
-        throwsA(isA<SaveVersionException>()
-            .having((e) => e.savedVersion, 'savedVersion', 1)
-            .having((e) => e.currentVersion, 'currentVersion', 2)),
+        restored.storeOf<Position>().get(restored.entities.all.first)!.x,
+        5,
       );
     });
 
-    test('a version mismatch calls migrate and loads the migrated data', () async {
-      final original = _buildWorld();
-      final id = original.spawn();
-      original.storeOf<Position>().set(id, Position(1, 1));
-      await SaveGame.save(original, version: 1);
+    test(
+      'a version mismatch with no migrate throws SaveVersionException',
+      () async {
+        final original = _buildWorld()..spawn();
+        await SaveGame.save(original, version: 1);
 
-      final restored = _buildWorld();
-      var migrateCalledWithVersion = -1;
-      final loaded = await SaveGame.load(
-        restored,
-        version: 2,
-        migrate: (savedWorldJson, savedVersion) {
-          migrateCalledWithVersion = savedVersion;
-          return savedWorldJson; // no real shape change in this test
-        },
-      );
+        final restored = _buildWorld();
+        expect(
+          () => SaveGame.load(restored, version: 2),
+          throwsA(
+            isA<SaveVersionException>()
+                .having((e) => e.savedVersion, 'savedVersion', 1)
+                .having((e) => e.currentVersion, 'currentVersion', 2),
+          ),
+        );
+      },
+    );
 
-      expect(loaded, isTrue);
-      expect(migrateCalledWithVersion, 1);
-      expect(restored.storeOf<Position>().get(restored.entities.all.first)!.x, 1);
-    });
+    test(
+      'a version mismatch calls migrate and loads the migrated data',
+      () async {
+        final original = _buildWorld();
+        final id = original.spawn();
+        original.storeOf<Position>().set(id, Position(1, 1));
+        await SaveGame.save(original, version: 1);
 
-    test('a save written before versioning existed (no envelope) is treated as version 1', () async {
-      // What SaveGame.save produced before this parameter existed --
-      // the raw World JSON with no {schemaVersion, world} wrapper.
-      SharedPreferences.setMockInitialValues({
-        'engine_save_default': '{"tick": 0, "width": 200, "height": 200, "entities": []}',
-      });
-      final world = _buildWorld();
+        final restored = _buildWorld();
+        var migrateCalledWithVersion = -1;
+        final loaded = await SaveGame.load(
+          restored,
+          version: 2,
+          migrate: (savedWorldJson, savedVersion) {
+            migrateCalledWithVersion = savedVersion;
+            return savedWorldJson; // no real shape change in this test
+          },
+        );
 
-      final loaded = await SaveGame.load(world, version: 1);
-      expect(loaded, isTrue);
+        expect(loaded, isTrue);
+        expect(migrateCalledWithVersion, 1);
+        expect(
+          restored.storeOf<Position>().get(restored.entities.all.first)!.x,
+          1,
+        );
+      },
+    );
 
-      expect(
-        () => SaveGame.load(_buildWorld(), version: 2),
-        throwsA(isA<SaveVersionException>().having((e) => e.savedVersion, 'savedVersion', 1)),
-      );
-    });
+    test(
+      'a save written before versioning existed (no envelope) is treated as version 1',
+      () async {
+        // What SaveGame.save produced before this parameter existed --
+        // the raw World JSON with no {schemaVersion, world} wrapper.
+        SharedPreferences.setMockInitialValues({
+          'engine_save_default':
+              '{"tick": 0, "width": 200, "height": 200, "entities": []}',
+        });
+        final world = _buildWorld();
+
+        final loaded = await SaveGame.load(world, version: 1);
+        expect(loaded, isTrue);
+
+        expect(
+          () => SaveGame.load(_buildWorld(), version: 2),
+          throwsA(
+            isA<SaveVersionException>().having(
+              (e) => e.savedVersion,
+              'savedVersion',
+              1,
+            ),
+          ),
+        );
+      },
+    );
   });
 
   group('checksum validation', () {
@@ -192,30 +234,39 @@ void main() {
       final world = _buildWorld();
       expect(
         () => SaveGame.load(world),
-        throwsA(isA<LevelLoadException>().having((e) => e.toString(), 'message', contains('checksum'))),
+        throwsA(
+          isA<LevelLoadException>().having(
+            (e) => e.toString(),
+            'message',
+            contains('checksum'),
+          ),
+        ),
       );
     });
 
-    test('load skips checksum verification when verifyChecksum=false', () async {
-      final original = _buildWorld();
-      final id = original.spawn();
-      original.storeOf<Position>().set(id, Position(1, 2));
+    test(
+      'load skips checksum verification when verifyChecksum=false',
+      () async {
+        final original = _buildWorld();
+        final id = original.spawn();
+        original.storeOf<Position>().set(id, Position(1, 2));
 
-      await SaveGame.save(original);
+        await SaveGame.save(original);
 
-      // Corrupt the save data
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString('engine_save_default')!;
-      final decoded = jsonDecode(raw) as Map<String, dynamic>;
-      decoded['world']['entities'][0]['components']['position']['x'] = 999;
-      final corrupted = jsonEncode(decoded);
-      await prefs.setString('engine_save_default', corrupted);
+        // Corrupt the save data
+        final prefs = await SharedPreferences.getInstance();
+        final raw = prefs.getString('engine_save_default')!;
+        final decoded = jsonDecode(raw) as Map<String, dynamic>;
+        decoded['world']['entities'][0]['components']['position']['x'] = 999;
+        final corrupted = jsonEncode(decoded);
+        await prefs.setString('engine_save_default', corrupted);
 
-      final world = _buildWorld();
-      // Should load without throwing when verifyChecksum=false
-      final loaded = await SaveGame.load(world, verifyChecksum: false);
-      expect(loaded, isTrue);
-    });
+        final world = _buildWorld();
+        // Should load without throwing when verifyChecksum=false
+        final loaded = await SaveGame.load(world, verifyChecksum: false);
+        expect(loaded, isTrue);
+      },
+    );
   });
 
   group('thumbnail support', () {
@@ -224,7 +275,12 @@ void main() {
       final id = original.spawn();
       original.storeOf<Position>().set(id, Position(1, 2));
 
-      final thumbnail = Uint8List.fromList([0x89, 0x50, 0x4E, 0x47]); // PNG magic bytes
+      final thumbnail = Uint8List.fromList([
+        0x89,
+        0x50,
+        0x4E,
+        0x47,
+      ]); // PNG magic bytes
       await SaveGame.save(original, thumbnail: thumbnail);
 
       final retrieved = await SaveGame.getThumbnail();

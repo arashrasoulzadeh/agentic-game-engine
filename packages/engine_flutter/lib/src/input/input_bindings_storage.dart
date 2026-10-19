@@ -20,7 +20,8 @@ class InputBindingsStorage {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final json = {
-      for (final entry in controller.bindings.entries) entry.key.keyId.toString(): entry.value,
+      for (final entry in controller.bindings.entries)
+        entry.key.keyId.toString(): entry.value,
     };
     await prefs.setString(key, jsonEncode(json));
   }

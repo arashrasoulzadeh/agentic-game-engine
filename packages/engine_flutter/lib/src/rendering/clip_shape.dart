@@ -46,23 +46,23 @@ class ClipShape {
   });
 
   Map<String, dynamic> toJson() => {
-        'isCircle': isCircle,
-        'radius': radius,
-        'width': width,
-        'height': height,
-        'mode': mode.name,
-        'softness': softness,
-      };
+    'isCircle': isCircle,
+    'radius': radius,
+    'width': width,
+    'height': height,
+    'mode': mode.name,
+    'softness': softness,
+  };
 
   factory ClipShape.fromJson(Map<String, dynamic> json) => ClipShape(
-        isCircle: json['isCircle'] as bool? ?? true,
-        radius: (json['radius'] as num?)?.toDouble() ?? 100,
-        width: (json['width'] as num?)?.toDouble() ?? 200,
-        height: (json['height'] as num?)?.toDouble() ?? 200,
-        mode: ClipShapeMode.values.firstWhere(
-          (m) => m.name == json['mode'],
-          orElse: () => ClipShapeMode.reveal,
-        ),
-        softness: (json['softness'] as num?)?.toDouble() ?? 0,
-      );
+    isCircle: json['isCircle'] as bool? ?? true,
+    radius: (json['radius'] as num?)?.toDouble() ?? 100,
+    width: (json['width'] as num?)?.toDouble() ?? 200,
+    height: (json['height'] as num?)?.toDouble() ?? 200,
+    mode: ClipShapeMode.values.firstWhere(
+      (m) => m.name == json['mode'],
+      orElse: () => ClipShapeMode.reveal,
+    ),
+    softness: (json['softness'] as num?)?.toDouble() ?? 0,
+  );
 }

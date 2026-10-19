@@ -25,7 +25,8 @@ class GpuLightShader {
   /// consuming app's isolate — a package's own declared assets/shaders
   /// live under `packages/<package name>/<path>` in the merged asset
   /// bundle, not the bare path the package's `pubspec.yaml` lists.
-  static const String _defaultAssetKey = 'packages/engine_flutter/shaders/light_shadow.frag';
+  static const String _defaultAssetKey =
+      'packages/engine_flutter/shaders/light_shadow.frag';
 
   /// Override the asset key for testing (e.g., to trigger the error path).
   /// Only for testing — production code should never call this.

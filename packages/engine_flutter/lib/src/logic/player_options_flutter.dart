@@ -6,8 +6,7 @@ import 'package:engine_core/engine_core.dart';
 
 /// shared_preferences-backed storage for PlayerOptions.
 /// Works on Android, iOS, Web, Windows, macOS, Linux.
-class SharedPreferencesPlayerOptionsStorage
-    implements PlayerOptionsStorage {
+class SharedPreferencesPlayerOptionsStorage implements PlayerOptionsStorage {
   static const _key = 'player_options';
 
   final SharedPreferences _prefs;
@@ -20,7 +19,8 @@ class SharedPreferencesPlayerOptionsStorage
     if (jsonString == null) return null;
     try {
       return PlayerOptions.fromJson(
-          Map<String, dynamic>.from(json.decode(jsonString)));
+        Map<String, dynamic>.from(json.decode(jsonString)),
+      );
     } catch (_) {
       return null;
     }

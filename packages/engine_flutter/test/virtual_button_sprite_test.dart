@@ -45,41 +45,67 @@ void main() {
     expect(spec.shape, BoxShape.rectangle);
   });
 
-  testWidgets('falls back to color+label when atlasRegistry is not given', (tester) async {
+  testWidgets('falls back to color+label when atlasRegistry is not given', (
+    tester,
+  ) async {
     final controller = InputController();
-    await tester.pumpWidget(_wrap(VirtualButton(
-      controller: controller,
-      spec: const OnScreenButtonSpec.custom('jump', label: 'JUMP', atlasId: 'ui', region: 'jump'),
-    )));
+    await tester.pumpWidget(
+      _wrap(
+        VirtualButton(
+          controller: controller,
+          spec: const OnScreenButtonSpec.custom(
+            'jump',
+            label: 'JUMP',
+            atlasId: 'ui',
+            region: 'jump',
+          ),
+        ),
+      ),
+    );
 
     expect(find.text('JUMP'), findsOneWidget);
     expect(
-      find.descendant(of: find.byType(VirtualButton), matching: find.byType(CustomPaint)),
+      find.descendant(
+        of: find.byType(VirtualButton),
+        matching: find.byType(CustomPaint),
+      ),
       findsNothing,
     );
   });
 
-  testWidgets('renders the sprite region when the atlas is registered', (tester) async {
+  testWidgets('renders the sprite region when the atlas is registered', (
+    tester,
+  ) async {
     final controller = InputController();
     final registry = AtlasRegistry();
-    registry.register('ui', SpriteAtlas(await _tinyImage(), {
-      'jump_idle': const Rect.fromLTWH(0, 0, 2, 2),
-      'jump_pressed': const Rect.fromLTWH(2, 0, 2, 2),
-    }));
+    registry.register(
+      'ui',
+      SpriteAtlas(await _tinyImage(), {
+        'jump_idle': const Rect.fromLTWH(0, 0, 2, 2),
+        'jump_pressed': const Rect.fromLTWH(2, 0, 2, 2),
+      }),
+    );
 
-    await tester.pumpWidget(_wrap(VirtualButton(
-      controller: controller,
-      atlasRegistry: registry,
-      spec: const OnScreenButtonSpec.custom(
-        'jump',
-        atlasId: 'ui',
-        region: 'jump_idle',
-        pressedRegion: 'jump_pressed',
+    await tester.pumpWidget(
+      _wrap(
+        VirtualButton(
+          controller: controller,
+          atlasRegistry: registry,
+          spec: const OnScreenButtonSpec.custom(
+            'jump',
+            atlasId: 'ui',
+            region: 'jump_idle',
+            pressedRegion: 'jump_pressed',
+          ),
+        ),
       ),
-    )));
+    );
 
     expect(
-      find.descendant(of: find.byType(VirtualButton), matching: find.byType(CustomPaint)),
+      find.descendant(
+        of: find.byType(VirtualButton),
+        matching: find.byType(CustomPaint),
+      ),
       findsOneWidget,
     );
     expect(find.text('JUMP'), findsNothing);
@@ -89,26 +115,35 @@ void main() {
     final controller = InputController();
     final registry = AtlasRegistry();
     final image = await _tinyImage();
-    registry.register('ui', SpriteAtlas(image, {
-      'jump_idle': const Rect.fromLTWH(0, 0, 2, 2),
-      'jump_pressed': const Rect.fromLTWH(2, 0, 2, 2),
-    }));
+    registry.register(
+      'ui',
+      SpriteAtlas(image, {
+        'jump_idle': const Rect.fromLTWH(0, 0, 2, 2),
+        'jump_pressed': const Rect.fromLTWH(2, 0, 2, 2),
+      }),
+    );
 
-    await tester.pumpWidget(_wrap(VirtualButton(
-      controller: controller,
-      atlasRegistry: registry,
-      spec: const OnScreenButtonSpec.custom(
-        'jump',
-        atlasId: 'ui',
-        region: 'jump_idle',
-        pressedRegion: 'jump_pressed',
+    await tester.pumpWidget(
+      _wrap(
+        VirtualButton(
+          controller: controller,
+          atlasRegistry: registry,
+          spec: const OnScreenButtonSpec.custom(
+            'jump',
+            atlasId: 'ui',
+            region: 'jump_idle',
+            pressedRegion: 'jump_pressed',
+          ),
+        ),
       ),
-    )));
+    );
 
     expect(find.byKey(const ValueKey('jump_idle')), findsOneWidget);
     expect(find.byKey(const ValueKey('jump_pressed')), findsNothing);
 
-    final gesture = await tester.startGesture(tester.getCenter(find.byType(VirtualButton)));
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(VirtualButton)),
+    );
     await tester.pump();
 
     expect(find.byKey(const ValueKey('jump_pressed')), findsOneWidget);

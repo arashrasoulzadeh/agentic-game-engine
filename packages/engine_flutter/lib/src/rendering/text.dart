@@ -58,27 +58,27 @@ class Text {
   });
 
   Map<String, dynamic> toJson() => {
-        'text': text,
-        'fontSize': fontSize,
-        'colorArgb': colorArgb,
-        'align': align.name,
-        'screenSpace': screenSpace,
-        'zIndex': zIndex,
-        'textScale': textScale,
-        if (maxWidth != null) 'maxWidth': maxWidth,
-      };
+    'text': text,
+    'fontSize': fontSize,
+    'colorArgb': colorArgb,
+    'align': align.name,
+    'screenSpace': screenSpace,
+    'zIndex': zIndex,
+    'textScale': textScale,
+    if (maxWidth != null) 'maxWidth': maxWidth,
+  };
 
   factory Text.fromJson(Map<String, dynamic> json) => Text(
-        json['text'] as String,
-        fontSize: (json['fontSize'] as num?)?.toDouble() ?? 16,
-        colorArgb: (json['colorArgb'] as num?)?.toInt() ?? 0xFFFFFFFF,
-        align: TextAlignment.values.firstWhere(
-          (a) => a.name == json['align'],
-          orElse: () => TextAlignment.center,
-        ),
-        screenSpace: json['screenSpace'] as bool? ?? false,
-        zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
-        maxWidth: (json['maxWidth'] as num?)?.toDouble(),
-        textScale: (json['textScale'] as num?)?.toDouble() ?? 1.0,
-      );
+    json['text'] as String,
+    fontSize: (json['fontSize'] as num?)?.toDouble() ?? 16,
+    colorArgb: (json['colorArgb'] as num?)?.toInt() ?? 0xFFFFFFFF,
+    align: TextAlignment.values.firstWhere(
+      (a) => a.name == json['align'],
+      orElse: () => TextAlignment.center,
+    ),
+    screenSpace: json['screenSpace'] as bool? ?? false,
+    zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
+    maxWidth: (json['maxWidth'] as num?)?.toDouble(),
+    textScale: (json['textScale'] as num?)?.toDouble() ?? 1.0,
+  );
 }

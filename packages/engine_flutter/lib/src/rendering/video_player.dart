@@ -91,9 +91,12 @@ class VideoPlayer {
   void seek(Duration position) {
     final min = Duration.zero;
     final max = duration ?? Duration.zero;
-    if (position < min) this.position = min;
-    else if (position > max) this.position = max;
-    else this.position = position;
+    if (position < min)
+      this.position = min;
+    else if (position > max)
+      this.position = max;
+    else
+      this.position = position;
     // Platform-specific seek implementation
   }
 
@@ -140,19 +143,19 @@ class PlayVideoStep extends CinematicStep {
   final VideoPlayer video;
   final bool skipOnTap;
 
-  PlayVideoStep({
-    required this.video,
-    this.skipOnTap = true,
-  });
+  PlayVideoStep({required this.video, this.skipOnTap = true});
 
   @override
   void start(World world) {
-    video.initialize().then((_) {
-      video.play();
-    }).catchError((e) {
-      video.onError?.call(e);
-      complete(world);
-    });
+    video
+        .initialize()
+        .then((_) {
+          video.play();
+        })
+        .catchError((e) {
+          video.onError?.call(e);
+          complete(world);
+        });
   }
 
   @override
@@ -189,7 +192,11 @@ class VideoScene extends Scene {
   });
 
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {
     await video.initialize();
     if (autoPlay) {
       video.play();

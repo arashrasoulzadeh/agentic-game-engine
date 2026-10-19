@@ -16,12 +16,15 @@ void main() {
     final id = world.spawn();
     world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
     world.storeOf<AnimationState>().set(
-          id,
-          AnimationState(
-            AnimationClip('walk', ['frame0', 'frame1', 'frame2'],
-                frameDurationSeconds: 0.1),
-          ),
-        );
+      id,
+      AnimationState(
+        AnimationClip('walk', [
+          'frame0',
+          'frame1',
+          'frame2',
+        ], frameDurationSeconds: 0.1),
+      ),
+    );
 
     world.step(0.05); // not yet a full frame
     expect(world.storeOf<Sprite>().get(id)!.region, 'frame0');
@@ -35,13 +38,17 @@ void main() {
     final id = world.spawn();
     world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
     world.storeOf<AnimationState>().set(
-          id,
-          AnimationState(
-            AnimationClip('walk', ['frame0', 'frame1'],
-                frameDurationSeconds: 0.1, loop: true),
-            frameIndex: 1,
-          ),
-        );
+      id,
+      AnimationState(
+        AnimationClip(
+          'walk',
+          ['frame0', 'frame1'],
+          frameDurationSeconds: 0.1,
+          loop: true,
+        ),
+        frameIndex: 1,
+      ),
+    );
 
     world.step(0.1);
     expect(world.storeOf<Sprite>().get(id)!.region, 'frame0');
@@ -52,8 +59,12 @@ void main() {
     final id = world.spawn();
     world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
     final state = AnimationState(
-      AnimationClip('hit', ['frame0', 'frame1'],
-          frameDurationSeconds: 0.1, loop: false),
+      AnimationClip(
+        'hit',
+        ['frame0', 'frame1'],
+        frameDurationSeconds: 0.1,
+        loop: false,
+      ),
       frameIndex: 1,
     );
     world.storeOf<AnimationState>().set(id, state);
@@ -83,17 +94,17 @@ void main() {
     final id = world.spawn();
     world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
     world.storeOf<AnimationState>().set(
-          id,
-          AnimationState(
-            AnimationClip(
-              'walk',
-              ['frame0', 'frame1'],
-              frameDurationSeconds: 0.1,
-              frameOffsetsX: [2, -3],
-              frameOffsetsY: [10, 25],
-            ),
-          ),
-        );
+      id,
+      AnimationState(
+        AnimationClip(
+          'walk',
+          ['frame0', 'frame1'],
+          frameDurationSeconds: 0.1,
+          frameOffsetsX: [2, -3],
+          frameOffsetsY: [10, 25],
+        ),
+      ),
+    );
 
     world.step(0); // AnimationSystem only writes region/offset on a step
     final sprite = world.storeOf<Sprite>().get(id)!;
@@ -110,9 +121,11 @@ void main() {
     final id = world.spawn();
     world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0', offsetY: 99));
     world.storeOf<AnimationState>().set(
-          id,
-          AnimationState(AnimationClip('idle', ['frame0'], frameDurationSeconds: 0.1)),
-        );
+      id,
+      AnimationState(
+        AnimationClip('idle', ['frame0'], frameDurationSeconds: 0.1),
+      ),
+    );
 
     // A clip with null frameOffsets resets a Sprite's offset back to 0
     // every tick it's driven, same as it always wrote `region` outright

@@ -34,7 +34,13 @@ class SplitScreenLayout {
     SplitOrientation orientation = SplitOrientation.auto,
   }) {
     if (players < 1 || players > 4) {
-      throw RangeError.range(players, 1, 4, 'players', 'split-screen supports 1 to 4 players');
+      throw RangeError.range(
+        players,
+        1,
+        4,
+        'players',
+        'split-screen supports 1 to 4 players',
+      );
     }
     final full = Offset.zero & size;
     if (players == 1) return [full];
@@ -47,10 +53,16 @@ class SplitScreenLayout {
       };
       if (horizontal) {
         final w = (size.width - gap) / 2;
-        return [Rect.fromLTWH(0, 0, w, size.height), Rect.fromLTWH(w + gap, 0, w, size.height)];
+        return [
+          Rect.fromLTWH(0, 0, w, size.height),
+          Rect.fromLTWH(w + gap, 0, w, size.height),
+        ];
       }
       final h = (size.height - gap) / 2;
-      return [Rect.fromLTWH(0, 0, size.width, h), Rect.fromLTWH(0, h + gap, size.width, h)];
+      return [
+        Rect.fromLTWH(0, 0, size.width, h),
+        Rect.fromLTWH(0, h + gap, size.width, h),
+      ];
     }
 
     final w = (size.width - gap) / 2;
@@ -88,7 +100,10 @@ class SplitScreenView extends StatelessWidget {
     this.orientation = SplitOrientation.auto,
     this.backgroundColor = const Color(0xFF000000),
     this.fixedTimestepSeconds,
-  }) : assert(cameras.length == followEntities.length, 'one camera and one entity per player');
+  }) : assert(
+         cameras.length == followEntities.length,
+         'one camera and one entity per player',
+       );
 
   final World world;
   final AtlasRegistry atlasRegistry;
@@ -112,35 +127,46 @@ class SplitScreenView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final size = Size(constraints.maxWidth, constraints.maxHeight);
-      final rects = SplitScreenLayout.rects(cameras.length, size, gap: gap, orientation: orientation);
-      var keyboardGiven = false;
-      return Stack(children: [
-        Positioned.fill(child: ColoredBox(color: dividerColor)),
-        for (var i = 0; i < rects.length; i++)
-          Positioned.fromRect(
-            rect: rects[i],
-            child: ClipRect(
-              child: EngineView(
-                key: ValueKey('split-view-$i'),
-                world: world,
-                atlasRegistry: atlasRegistry,
-                camera: cameras[i],
-                cameraFollowEntity: followEntities[i],
-                stepsWorld: i == 0,
-                backgroundColor: backgroundColor,
-                fixedTimestepSeconds: fixedTimestepSeconds,
-                inputController: () {
-                  final c = i < inputControllers.length ? inputControllers[i] : null;
-                  if (c == null || keyboardGiven) return null;
-                  keyboardGiven = true;
-                  return c;
-                }(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        final rects = SplitScreenLayout.rects(
+          cameras.length,
+          size,
+          gap: gap,
+          orientation: orientation,
+        );
+        var keyboardGiven = false;
+        return Stack(
+          children: [
+            Positioned.fill(child: ColoredBox(color: dividerColor)),
+            for (var i = 0; i < rects.length; i++)
+              Positioned.fromRect(
+                rect: rects[i],
+                child: ClipRect(
+                  child: EngineView(
+                    key: ValueKey('split-view-$i'),
+                    world: world,
+                    atlasRegistry: atlasRegistry,
+                    camera: cameras[i],
+                    cameraFollowEntity: followEntities[i],
+                    stepsWorld: i == 0,
+                    backgroundColor: backgroundColor,
+                    fixedTimestepSeconds: fixedTimestepSeconds,
+                    inputController: () {
+                      final c = i < inputControllers.length
+                          ? inputControllers[i]
+                          : null;
+                      if (c == null || keyboardGiven) return null;
+                      keyboardGiven = true;
+                      return c;
+                    }(),
+                  ),
+                ),
               ),
-            ),
-          ),
-      ]);
-    });
+          ],
+        );
+      },
+    );
   }
 }

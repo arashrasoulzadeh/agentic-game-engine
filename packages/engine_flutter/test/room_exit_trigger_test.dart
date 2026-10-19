@@ -4,7 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 class _NextScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {}
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {}
 }
 
 World _buildWorld() {
@@ -15,40 +19,46 @@ World _buildWorld() {
 }
 
 void main() {
-  test('touching a RoomExit calls loadScene with its target and records spawnPoint in state', () {
-    final world = _buildWorld();
-    final player = world.spawn();
-    world.storeOf<Position>().set(player, Position(0, 0));
-    world.storeOf<Collider>().set(player, Collider(10));
+  test(
+    'touching a RoomExit calls loadScene with its target and records spawnPoint in state',
+    () {
+      final world = _buildWorld();
+      final player = world.spawn();
+      world.storeOf<Position>().set(player, Position(0, 0));
+      world.storeOf<Collider>().set(player, Collider(10));
 
-    final door = world.spawn();
-    world.storeOf<Position>().set(door, Position(5, 0));
-    world.storeOf<Collider>().set(door, Collider(10));
-    world.storeOf<RoomExit>().set(door, RoomExit('cave', 'doorFromOverworld'));
+      final door = world.spawn();
+      world.storeOf<Position>().set(door, Position(5, 0));
+      world.storeOf<Collider>().set(door, Collider(10));
+      world.storeOf<RoomExit>().set(
+        door,
+        RoomExit('cave', 'doorFromOverworld'),
+      );
 
-    final scenes = SceneController();
-    Scene? loaded;
-    scenes.attach(
-      loadScene: (next) => loaded = next,
-      pushOverlay: (_) {},
-      popOverlay: () {},
-    );
-    final state = GameState();
-    final nextScene = _NextScene();
+      final scenes = SceneController();
+      Scene? loaded;
+      scenes.attach(
+        loadScene: (next) => loaded = next,
+        pushOverlay: (_) {},
+        popOverlay: () {},
+      );
+      final state = GameState();
+      final nextScene = _NextScene();
 
-    installRoomExitTrigger(
-      world,
-      player: player,
-      scenes: scenes,
-      state: state,
-      scenesById: {'cave': () => nextScene},
-    );
+      installRoomExitTrigger(
+        world,
+        player: player,
+        scenes: scenes,
+        state: state,
+        scenesById: {'cave': () => nextScene},
+      );
 
-    world.step(0.016);
+      world.step(0.016);
 
-    expect(identical(loaded, nextScene), isTrue);
-    expect(state.data['enteredAt'], 'doorFromOverworld');
-  });
+      expect(identical(loaded, nextScene), isTrue);
+      expect(state.data['enteredAt'], 'doorFromOverworld');
+    },
+  );
 
   test('colliding with a non-RoomExit entity is a no-op', () {
     final world = _buildWorld();

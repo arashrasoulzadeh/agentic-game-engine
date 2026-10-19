@@ -6,7 +6,8 @@ import 'asset_hot_reload.dart';
 /// Scans [path] recursively; asset paths are relative to it, with forward
 /// slashes on every platform. Returns an empty scan if the directory does not
 /// exist (yet), so starting before the first asset is saved is fine.
-AssetSource? directoryAssetSource(String path) => _DirectoryAssetSource(Directory(path));
+AssetSource? directoryAssetSource(String path) =>
+    _DirectoryAssetSource(Directory(path));
 
 class _DirectoryAssetSource implements AssetSource {
   _DirectoryAssetSource(this.root);
@@ -24,14 +25,21 @@ class _DirectoryAssetSource implements AssetSource {
   Future<Map<String, AssetStamp>> scan() async {
     if (!await root.exists()) return {};
     final stamps = <String, AssetStamp>{};
-    await for (final e in root.absolute.list(recursive: true, followLinks: false)) {
+    await for (final e in root.absolute.list(
+      recursive: true,
+      followLinks: false,
+    )) {
       if (e is! File) continue;
       final stat = await e.stat();
-      stamps[_relative(e.path)] = AssetStamp(stat.modified.millisecondsSinceEpoch, stat.size);
+      stamps[_relative(e.path)] = AssetStamp(
+        stat.modified.millisecondsSinceEpoch,
+        stat.size,
+      );
     }
     return stamps;
   }
 
   @override
-  Future<Uint8List> read(String path) => File('${root.absolute.path}/$path').readAsBytes();
+  Future<Uint8List> read(String path) =>
+      File('${root.absolute.path}/$path').readAsBytes();
 }

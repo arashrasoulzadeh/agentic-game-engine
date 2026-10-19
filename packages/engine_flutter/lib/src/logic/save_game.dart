@@ -105,9 +105,14 @@ class SaveGame {
     World world, {
     String slot = 'default',
     int version = 1,
-    Map<String, dynamic> Function(Map<String, dynamic> savedWorldJson, int savedVersion)? migrate,
+    Map<String, dynamic> Function(
+      Map<String, dynamic> savedWorldJson,
+      int savedVersion,
+    )?
+    migrate,
     bool verifyChecksum = true,
-    Future<void> Function(String slot, Map<String, dynamic> worldJson)? onCloudSync,
+    Future<void> Function(String slot, Map<String, dynamic> worldJson)?
+    onCloudSync,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key(slot));
@@ -124,8 +129,12 @@ class SaveGame {
     // the whole decoded map *is* the World JSON (which never itself
     // has a "world" key), so its implicit version is 1.
     final hasEnvelope = decoded['world'] is Map<String, dynamic>;
-    final savedVersion = hasEnvelope ? (decoded['schemaVersion'] as num?)?.toInt() ?? 1 : 1;
-    var worldJson = hasEnvelope ? decoded['world'] as Map<String, dynamic> : decoded;
+    final savedVersion = hasEnvelope
+        ? (decoded['schemaVersion'] as num?)?.toInt() ?? 1
+        : 1;
+    var worldJson = hasEnvelope
+        ? decoded['world'] as Map<String, dynamic>
+        : decoded;
 
     if (verifyChecksum && hasEnvelope) {
       final storedChecksum = decoded['checksum'] as String?;

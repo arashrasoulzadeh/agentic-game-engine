@@ -7,12 +7,20 @@ import 'package:flutter_test/flutter_test.dart';
 
 class _EmptyScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {}
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {}
 }
 
 class _SlowLoadingScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {}
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {}
 
   @override
   Future<AtlasRegistry> loadAssets() async {
@@ -23,7 +31,11 @@ class _SlowLoadingScene extends Scene {
 
 class _FailingScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {
     throw StateError('populate failed on purpose');
   }
 }
@@ -83,7 +95,11 @@ class _DayNightScene extends Scene {
   final DayNightCycle cycle = DayNightCycle(hour: 2);
 
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {}
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {}
 
   @override
   DayNightCycle? get dayNightCycle => cycle;
@@ -98,19 +114,29 @@ class _DayNightGame extends _TestGame {
 
 class _PerformanceOverlayGame extends _TestGame {
   @override
-  GameConfig get config =>
-      const GameConfig(worldWidth: 200, worldHeight: 100, showPerformanceOverlay: true);
+  GameConfig get config => const GameConfig(
+    worldWidth: 200,
+    worldHeight: 100,
+    showPerformanceOverlay: true,
+  );
 }
 
 class _AutoTileBitmaskConfigGame extends _TestGame {
   @override
-  GameConfig get config =>
-      const GameConfig(worldWidth: 200, worldHeight: 100, showAutoTileBitmask: true);
+  GameConfig get config => const GameConfig(
+    worldWidth: 200,
+    worldHeight: 100,
+    showAutoTileBitmask: true,
+  );
 }
 
 class _AutoTileBitmaskScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {}
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {}
 
   @override
   bool get showAutoTileBitmask => true;
@@ -136,7 +162,9 @@ void main() {
     game.onResume();
   });
 
-  testWidgets('runGame wraps GameRunner in a MaterialApp/Scaffold', (tester) async {
+  testWidgets('runGame wraps GameRunner in a MaterialApp/Scaffold', (
+    tester,
+  ) async {
     final game = _DefaultCallbacksGame();
     runGame(game);
     await tester.pump();
@@ -146,107 +174,130 @@ void main() {
     expect(find.byType(GameRunner), findsOneWidget);
   });
 
-  testWidgets("GameConfig.showPerformanceOverlay reaches EngineView through GameRunner",
-      (tester) async {
-    final game = _PerformanceOverlayGame();
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
+  testWidgets(
+    "GameConfig.showPerformanceOverlay reaches EngineView through GameRunner",
+    (tester) async {
+      final game = _PerformanceOverlayGame();
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
 
-    final engineView = tester.widget<EngineView>(find.byType(EngineView));
-    expect(engineView.showPerformanceOverlay, isTrue);
-  });
-
-  testWidgets("GameConfig.showAutoTileBitmask reaches EngineView through GameRunner",
-      (tester) async {
-    final game = _AutoTileBitmaskConfigGame();
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
-
-    final engineView = tester.widget<EngineView>(find.byType(EngineView));
-    expect(engineView.showAutoTileBitmask, isTrue);
-  });
+      final engineView = tester.widget<EngineView>(find.byType(EngineView));
+      expect(engineView.showPerformanceOverlay, isTrue);
+    },
+  );
 
   testWidgets(
-      "Scene.showAutoTileBitmask reaches EngineView through GameRunner even when "
-      "GameConfig.showAutoTileBitmask is false", (tester) async {
-    final game = _AutoTileBitmaskSceneGame();
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
+    "GameConfig.showAutoTileBitmask reaches EngineView through GameRunner",
+    (tester) async {
+      final game = _AutoTileBitmaskConfigGame();
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
 
-    expect(game.config.showAutoTileBitmask, isFalse);
-    final engineView = tester.widget<EngineView>(find.byType(EngineView));
-    expect(engineView.showAutoTileBitmask, isTrue);
-  });
+      final engineView = tester.widget<EngineView>(find.byType(EngineView));
+      expect(engineView.showAutoTileBitmask, isTrue);
+    },
+  );
 
   testWidgets(
-      'a Scene.populate exception is reported via FlutterError.reportError, not silently '
-      'swallowed -- GameRunner would otherwise just hang on the loading screen forever '
-      'with no diagnostic at all', (tester) async {
-    final reported = <FlutterErrorDetails>[];
-    final previousOnError = FlutterError.onError;
-    FlutterError.onError = reported.add;
-    addTearDown(() => FlutterError.onError = previousOnError);
+    "Scene.showAutoTileBitmask reaches EngineView through GameRunner even when "
+    "GameConfig.showAutoTileBitmask is false",
+    (tester) async {
+      final game = _AutoTileBitmaskSceneGame();
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
 
-    final game = _FailingSceneGame();
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
-    // Several more rebuilds (the loading screen's own spinner animates,
-    // so `build` keeps re-running) -- the same failed load must only
-    // ever be reported once, not once per frame.
-    await tester.pump();
-    await tester.pump();
-    await tester.pump();
+      expect(game.config.showAutoTileBitmask, isFalse);
+      final engineView = tester.widget<EngineView>(find.byType(EngineView));
+      expect(engineView.showAutoTileBitmask, isTrue);
+    },
+  );
 
-    expect(reported, hasLength(1));
-    expect(reported.first.exception, isA<StateError>());
-    // Still shows the loading screen, not a crash -- the fix is making
-    // the failure observable, not changing what the UI does with it.
-    expect(find.byType(EngineView), findsNothing);
-  });
+  testWidgets(
+    'a Scene.populate exception is reported via FlutterError.reportError, not silently '
+    'swallowed -- GameRunner would otherwise just hang on the loading screen forever '
+    'with no diagnostic at all',
+    (tester) async {
+      final reported = <FlutterErrorDetails>[];
+      final previousOnError = FlutterError.onError;
+      FlutterError.onError = reported.add;
+      addTearDown(() => FlutterError.onError = previousOnError);
 
-  testWidgets('Game.frameStats defaults to null and GameRunner does not require one',
-      (tester) async {
-    final game = _TestGame();
-    expect(game.frameStats, isNull);
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
+      final game = _FailingSceneGame();
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
+      // Several more rebuilds (the loading screen's own spinner animates,
+      // so `build` keeps re-running) -- the same failed load must only
+      // ever be reported once, not once per frame.
+      await tester.pump();
+      await tester.pump();
+      await tester.pump();
 
-    expect(find.byType(EngineView), findsOneWidget);
-  });
+      expect(reported, hasLength(1));
+      expect(reported.first.exception, isA<StateError>());
+      // Still shows the loading screen, not a crash -- the fix is making
+      // the failure observable, not changing what the UI does with it.
+      expect(find.byType(EngineView), findsNothing);
+    },
+  );
 
-  testWidgets("GameRunner keeps a Game's own FrameStats instance updated every frame",
-      (tester) async {
-    final game = _FrameStatsGame();
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
+  testWidgets(
+    'Game.frameStats defaults to null and GameRunner does not require one',
+    (tester) async {
+      final game = _TestGame();
+      expect(game.frameStats, isNull);
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
 
-    expect(game.stats.stepMs, greaterThanOrEqualTo(0),
-        reason: 'the exact same instance returned by frameStats was passed into '
-            'EngineView and actually written to by a real rendered frame');
-    expect(game.stats.paintMs, greaterThanOrEqualTo(0));
-  });
+      expect(find.byType(EngineView), findsOneWidget);
+    },
+  );
 
-  testWidgets("GameRunner advances a Scene's own DayNightCycle every frame",
-      (tester) async {
+  testWidgets(
+    "GameRunner keeps a Game's own FrameStats instance updated every frame",
+    (tester) async {
+      final game = _FrameStatsGame();
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(
+        game.stats.stepMs,
+        greaterThanOrEqualTo(0),
+        reason:
+            'the exact same instance returned by frameStats was passed into '
+            'EngineView and actually written to by a real rendered frame',
+      );
+      expect(game.stats.paintMs, greaterThanOrEqualTo(0));
+    },
+  );
+
+  testWidgets("GameRunner advances a Scene's own DayNightCycle every frame", (
+    tester,
+  ) async {
     final game = _DayNightGame();
     await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
 
     final engineView = tester.widget<EngineView>(find.byType(EngineView));
-    expect(identical(engineView.dayNightCycle, game.scene.cycle), isTrue,
-        reason: 'the exact same instance the Scene returns was passed into EngineView, '
-            'not a copy -- so a game reading scene.dayNightCycle back later sees the '
-            'live-advanced value');
+    expect(
+      identical(engineView.dayNightCycle, game.scene.cycle),
+      isTrue,
+      reason:
+          'the exact same instance the Scene returns was passed into EngineView, '
+          'not a copy -- so a game reading scene.dayNightCycle back later sees the '
+          'live-advanced value',
+    );
   });
 
-  testWidgets('GameRunner loads the game and renders EngineView', (tester) async {
+  testWidgets('GameRunner loads the game and renders EngineView', (
+    tester,
+  ) async {
     final game = _TestGame();
     await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
     // EngineView's Ticker runs continuously by design, so pumpAndSettle
@@ -259,8 +310,9 @@ void main() {
     expect(find.byType(EngineView), findsOneWidget);
   });
 
-  testWidgets('GameRunner calls onPause/onResume on app lifecycle changes',
-      (tester) async {
+  testWidgets('GameRunner calls onPause/onResume on app lifecycle changes', (
+    tester,
+  ) async {
     final game = _TestGame();
     await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
     // EngineView's Ticker runs continuously by design, so pumpAndSettle
@@ -270,19 +322,18 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    tester.binding
-        .handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
     expect(game.paused, isTrue);
 
-    tester.binding
-        .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(game.resumed, isTrue);
   });
 
-  testWidgets('shows the default loading screen until assets finish loading',
-      (tester) async {
+  testWidgets('shows the default loading screen until assets finish loading', (
+    tester,
+  ) async {
     final game = _SlowLoadingGame();
     await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
     await tester.pump();
@@ -311,123 +362,136 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('SceneController.loadScene swaps the running World for a new scene',
-      (tester) async {
-    final firstScene = _MarkerScene('first');
-    final game = _SwitchingGame(firstScene);
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
+  testWidgets(
+    'SceneController.loadScene swaps the running World for a new scene',
+    (tester) async {
+      final firstScene = _MarkerScene('first');
+      final game = _SwitchingGame(firstScene);
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
 
-    expect(firstScene.markerId, isNotNull);
-    final world = tester
-        .widget<EngineView>(find.byType(EngineView))
-        .world;
-    expect(world.entities.count, 1);
+      expect(firstScene.markerId, isNotNull);
+      final world = tester.widget<EngineView>(find.byType(EngineView)).world;
+      expect(world.entities.count, 1);
 
-    final secondScene = _MarkerScene('second');
-    firstScene.scenes!.loadScene(secondScene);
-    await tester.pump();
-    await tester.pump();
+      final secondScene = _MarkerScene('second');
+      firstScene.scenes!.loadScene(secondScene);
+      await tester.pump();
+      await tester.pump();
 
-    final newWorld = tester
-        .widget<EngineView>(find.byType(EngineView))
-        .world;
-    // A brand-new World, not the same instance bulk-cleared -- proves
-    // the switch didn't reuse/leak state from the old scene.
-    expect(identical(newWorld, world), isFalse);
-    expect(newWorld.entities.count, 1);
-    expect(secondScene.markerId, isNotNull);
-    expect(
-      newWorld.storeOf<Sprite>().get(secondScene.markerId!)?.region,
-      'second',
-    );
-  });
-
-  testWidgets('GameState is the same instance across a loadScene switch, unlike World',
-      (tester) async {
-    final firstScene = _MarkerScene('first');
-    final game = _SwitchingGame(firstScene);
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
-
-    firstScene.state!.data['coinsCollected'] = 3;
-
-    final secondScene = _MarkerScene('second');
-    firstScene.scenes!.loadScene(secondScene);
-    await tester.pump();
-    await tester.pump();
-
-    // The whole point of GameState (unlike World, which is deliberately
-    // rebuilt fresh per scene -- see the test above) is that it's the
-    // one thing carried forward untouched by a scene switch.
-    expect(identical(secondScene.state, firstScene.state), isTrue);
-    expect(secondScene.state!.data['coinsCollected'], 3);
-  });
-
-  testWidgets('SceneController.pushOverlay pauses the base scene without replacing its World',
-      (tester) async {
-    final baseScene = _MarkerScene('base');
-    final game = _SwitchingGame(baseScene);
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
-
-    final baseWorld = tester.widgetList<EngineView>(find.byType(EngineView)).single.world;
-
-    final overlayScene = _MarkerScene('overlay');
-    baseScene.scenes!.pushOverlay(overlayScene);
-    await tester.pump();
-    await tester.pump();
-
-    final views = tester.widgetList<EngineView>(find.byType(EngineView)).toList();
-    expect(views, hasLength(2));
-    // The base scene's World is the exact same instance, and it's
-    // paused -- pushOverlay must not rebuild/replace it the way
-    // loadScene does, or "resume" wouldn't resume anything.
-    final baseView = views.firstWhere((v) => identical(v.world, baseWorld));
-    expect(baseView.paused, isTrue);
-    expect(overlayScene.markerId, isNotNull);
-
-    baseScene.scenes!.popOverlay();
-    await tester.pump();
-    await tester.pump();
-
-    final afterPop = tester.widgetList<EngineView>(find.byType(EngineView)).single;
-    expect(identical(afterPop.world, baseWorld), isTrue);
-    expect(afterPop.paused, isFalse);
-  });
-
-  test('SceneController.captureScreenshot returns null before GameRunner attaches it', () async {
-    final scenes = SceneController();
-    expect(await scenes.captureScreenshot(), isNull);
-  });
+      final newWorld = tester.widget<EngineView>(find.byType(EngineView)).world;
+      // A brand-new World, not the same instance bulk-cleared -- proves
+      // the switch didn't reuse/leak state from the old scene.
+      expect(identical(newWorld, world), isFalse);
+      expect(newWorld.entities.count, 1);
+      expect(secondScene.markerId, isNotNull);
+      expect(
+        newWorld.storeOf<Sprite>().get(secondScene.markerId!)?.region,
+        'second',
+      );
+    },
+  );
 
   testWidgets(
-      'SceneController.captureScreenshot returns the base scene\'s rendered frame as PNG bytes',
-      (tester) async {
-    final scene = _MarkerScene('captured');
-    final game = _SwitchingGame(scene);
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
+    'GameState is the same instance across a loadScene switch, unlike World',
+    (tester) async {
+      final firstScene = _MarkerScene('first');
+      final game = _SwitchingGame(firstScene);
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
 
-    // RenderRepaintBoundary.toImage's real rasterizer round-trip
-    // deadlocks inside testWidgets' fake-async zone combined with
-    // GameRunner's own continuously-rescheduling Ticker -- the same
-    // class of issue sprite_atlas_test.dart documents for
-    // ui.instantiateImageCodec -- so it needs tester.runAsync here too.
-    Uint8List? bytes;
-    await tester.runAsync(() async {
-      bytes = await scene.scenes!.captureScreenshot();
-    });
+      firstScene.state!.data['coinsCollected'] = 3;
 
-    expect(bytes, isNotNull);
-    // PNG magic number -- proves this is real encoded image data, not
-    // just raw pixels or an empty buffer.
-    expect(bytes!.sublist(0, 4), [0x89, 0x50, 0x4E, 0x47]);
-  });
+      final secondScene = _MarkerScene('second');
+      firstScene.scenes!.loadScene(secondScene);
+      await tester.pump();
+      await tester.pump();
+
+      // The whole point of GameState (unlike World, which is deliberately
+      // rebuilt fresh per scene -- see the test above) is that it's the
+      // one thing carried forward untouched by a scene switch.
+      expect(identical(secondScene.state, firstScene.state), isTrue);
+      expect(secondScene.state!.data['coinsCollected'], 3);
+    },
+  );
+
+  testWidgets(
+    'SceneController.pushOverlay pauses the base scene without replacing its World',
+    (tester) async {
+      final baseScene = _MarkerScene('base');
+      final game = _SwitchingGame(baseScene);
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
+
+      final baseWorld = tester
+          .widgetList<EngineView>(find.byType(EngineView))
+          .single
+          .world;
+
+      final overlayScene = _MarkerScene('overlay');
+      baseScene.scenes!.pushOverlay(overlayScene);
+      await tester.pump();
+      await tester.pump();
+
+      final views = tester
+          .widgetList<EngineView>(find.byType(EngineView))
+          .toList();
+      expect(views, hasLength(2));
+      // The base scene's World is the exact same instance, and it's
+      // paused -- pushOverlay must not rebuild/replace it the way
+      // loadScene does, or "resume" wouldn't resume anything.
+      final baseView = views.firstWhere((v) => identical(v.world, baseWorld));
+      expect(baseView.paused, isTrue);
+      expect(overlayScene.markerId, isNotNull);
+
+      baseScene.scenes!.popOverlay();
+      await tester.pump();
+      await tester.pump();
+
+      final afterPop = tester
+          .widgetList<EngineView>(find.byType(EngineView))
+          .single;
+      expect(identical(afterPop.world, baseWorld), isTrue);
+      expect(afterPop.paused, isFalse);
+    },
+  );
+
+  test(
+    'SceneController.captureScreenshot returns null before GameRunner attaches it',
+    () async {
+      final scenes = SceneController();
+      expect(await scenes.captureScreenshot(), isNull);
+    },
+  );
+
+  testWidgets(
+    'SceneController.captureScreenshot returns the base scene\'s rendered frame as PNG bytes',
+    (tester) async {
+      final scene = _MarkerScene('captured');
+      final game = _SwitchingGame(scene);
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
+
+      // RenderRepaintBoundary.toImage's real rasterizer round-trip
+      // deadlocks inside testWidgets' fake-async zone combined with
+      // GameRunner's own continuously-rescheduling Ticker -- the same
+      // class of issue sprite_atlas_test.dart documents for
+      // ui.instantiateImageCodec -- so it needs tester.runAsync here too.
+      Uint8List? bytes;
+      await tester.runAsync(() async {
+        bytes = await scene.scenes!.captureScreenshot();
+      });
+
+      expect(bytes, isNotNull);
+      // PNG magic number -- proves this is real encoded image data, not
+      // just raw pixels or an empty buffer.
+      expect(bytes!.sublist(0, 4), [0x89, 0x50, 0x4E, 0x47]);
+    },
+  );
 }
 
 /// Spawns exactly one entity (tagged via its `Sprite` region so tests
@@ -442,7 +506,11 @@ class _MarkerScene extends Scene {
   EntityId? markerId;
 
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {
     this.scenes = scenes;
     this.state = state;
     markerId = world.spawn();

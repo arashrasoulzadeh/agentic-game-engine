@@ -158,11 +158,7 @@ class SettingsKeyBindingSpec extends SettingsWidgetSpec {
 }
 
 /// The type of input device for key bindings.
-enum InputType {
-  keyboard,
-  gamepad,
-  touch,
-}
+enum InputType { keyboard, gamepad, touch }
 
 /// Base class for settings menus that automatically binds widgets to PlayerOptions.
 /// Subclass and override [widgets] to define the settings UI.
@@ -186,12 +182,14 @@ abstract class SettingsMenuScene extends ButtonMenuScene {
     final specs = <MenuButtonSpec>[];
 
     if (title != null) {
-      specs.add(MenuButtonSpec(
-        label: title!,
-        actionId: '__title__',
-        labelFontSize: 28,
-        labelColorArgb: 0xFFFFFF00,
-      ));
+      specs.add(
+        MenuButtonSpec(
+          label: title!,
+          actionId: '__title__',
+          labelFontSize: 28,
+          labelColorArgb: 0xFFFFFF00,
+        ),
+      );
     }
 
     for (final widget in widgets) {
@@ -199,11 +197,9 @@ abstract class SettingsMenuScene extends ButtonMenuScene {
     }
 
     // Always add a "Back" button at the bottom
-    specs.add(MenuButtonSpec(
-      label: 'Back',
-      actionId: '__back__',
-      labelFontSize: 20,
-    ));
+    specs.add(
+      MenuButtonSpec(label: 'Back', actionId: '__back__', labelFontSize: 20),
+    );
 
     return specs;
   }
@@ -214,7 +210,8 @@ abstract class SettingsMenuScene extends ButtonMenuScene {
 
     if (widget is SettingsToggleSpec) {
       final isOn = currentValue == true;
-      displayLabel = '${widget.label}: ${isOn ? widget.onLabel : widget.offLabel}';
+      displayLabel =
+          '${widget.label}: ${isOn ? widget.onLabel : widget.offLabel}';
     } else if (widget is SettingsSliderSpec) {
       final value = (currentValue as num?)?.toDouble() ?? widget.min;
       displayLabel =
@@ -264,14 +261,19 @@ abstract class SettingsMenuScene extends ButtonMenuScene {
     } else if (widget is SettingsSliderSpec) {
       // For slider, we'd need a more complex interaction (drag)
       // For now, cycle through steps or min/max
-      final current = (optionsManager.getOption(widget.optionKey) as num?)?.toDouble() ?? widget.min;
+      final current =
+          (optionsManager.getOption(widget.optionKey) as num?)?.toDouble() ??
+          widget.min;
       double nextValue;
       if (widget.steps != null) {
         final stepSize = (widget.max - widget.min) / widget.steps!;
         nextValue = (current + stepSize).clamp(widget.min, widget.max);
         if (nextValue > widget.max) nextValue = widget.min;
       } else {
-        nextValue = (current + (widget.max - widget.min) * 0.1).clamp(widget.min, widget.max);
+        nextValue = (current + (widget.max - widget.min) * 0.1).clamp(
+          widget.min,
+          widget.max,
+        );
       }
       optionsManager.setOption(widget.optionKey, nextValue);
       onValueChanged(widget.optionKey, nextValue);
@@ -396,11 +398,7 @@ class AccessibilitySettingsMenu extends SettingsMenuScene {
       id: 'controlScheme',
       label: 'Control Scheme',
       optionKey: 'controlScheme',
-      options: {
-        'keyboard': 'Keyboard',
-        'gamepad': 'Gamepad',
-        'touch': 'Touch',
-      },
+      options: {'keyboard': 'Keyboard', 'gamepad': 'Gamepad', 'touch': 'Touch'},
     ),
     SettingsKeyBindingSpec(
       id: 'bindJump',

@@ -28,10 +28,14 @@ class GamepadRemapMenuScene extends ButtonMenuScene {
 
   @override
   List<MenuButtonSpec> buttons() => [
-        for (final action in actions)
-          MenuButtonSpec(label: '${controller.input.aliases.labelFor(action).toUpperCase()}: ${_buttonLabelFor(action)}', actionId: action),
-        const MenuButtonSpec(label: 'DONE', actionId: '_gamepadRemapDone'),
-      ];
+    for (final action in actions)
+      MenuButtonSpec(
+        label:
+            '${controller.input.aliases.labelFor(action).toUpperCase()}: ${_buttonLabelFor(action)}',
+        actionId: action,
+      ),
+    const MenuButtonSpec(label: 'DONE', actionId: '_gamepadRemapDone'),
+  ];
 
   String _buttonLabelFor(String action) {
     for (final entry in controller.buttonBindings.entries) {
@@ -50,10 +54,14 @@ class GamepadRemapMenuScene extends ButtonMenuScene {
       // An action can only be bound to one button at a time -- drop any
       // existing binding for it before adding the new one, same as a
       // real "rebind" rather than "also bind."
-      controller.buttonBindings.removeWhere((_, boundAction) => boundAction == actionId);
+      controller.buttonBindings.removeWhere(
+        (_, boundAction) => boundAction == actionId,
+      );
       controller.buttonBindings[buttonId] = actionId;
       GamepadBindingsStorage.save(controller);
-      scenes.loadScene(GamepadRemapMenuScene(controller, actions, onDone: onDone));
+      scenes.loadScene(
+        GamepadRemapMenuScene(controller, actions, onDone: onDone),
+      );
     };
   }
 }

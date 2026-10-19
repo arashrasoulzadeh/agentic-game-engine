@@ -36,10 +36,13 @@ import 'package:engine_core/engine_core.dart';
 enum AttenuationModel {
   /// Linear falloff: volume = base * (1 - distance / maxDistance)
   linear,
+
   /// Inverse square falloff: volume = base / (1 + distance^2)
   inverseSquare,
+
   /// Logarithmic falloff: volume = base * max(0, 1 - log(distance + 1) / log(maxDistance + 1))
   logarithmic,
+
   /// Custom curve via callback
   custom,
 }
@@ -102,22 +105,22 @@ Future<bool> checkLineOfSight({
   final dx = listenerX - sourceX;
   final dy = listenerY - sourceY;
   final distance = math.sqrt(dx * dx + dy * dy);
-  
+
   if (distance == 0) return true;
-  
+
   final steps = (distance / (tileMap.tileWidth * 0.5)).ceil();
   for (int i = 1; i <= steps; i++) {
     final t = i / steps;
     final checkX = sourceX + dx * t;
     final checkY = sourceY + dy * t;
-    
+
     final col = ((checkX - tileMapOrigin.x) / tileMap.tileWidth).floor();
     final row = ((checkY - tileMapOrigin.y) / tileMap.tileHeight).floor();
-    
+
     if (col < 0 || col >= tileMap.cols || row < 0 || row >= tileMap.rows) {
       continue;
     }
-    
+
     if (tileMap.solidTileIds.contains(tileMap.tileAt(col, row))) {
       return false;
     }
@@ -142,7 +145,7 @@ SpatialAudioParams calculateSpatialAudioParams({
   final dx = sourceX - listenerX;
   final dy = sourceY - listenerY;
   final distance = math.sqrt(dx * dx + dy * dy);
-  
+
   // Volume attenuation
   double falloff;
   switch (config.attenuation) {
@@ -150,25 +153,34 @@ SpatialAudioParams calculateSpatialAudioParams({
       falloff = (1.0 - distance / config.maxDistance).clamp(0.0, 1.0);
       break;
     case AttenuationModel.inverseSquare:
-      falloff = 1.0 / (1.0 + (distance * distance) / (config.maxDistance * config.maxDistance));
+      falloff =
+          1.0 /
+          (1.0 +
+              (distance * distance) /
+                  (config.maxDistance * config.maxDistance));
       break;
     case AttenuationModel.logarithmic:
-      falloff = (1.0 - math.log(distance + 1) / math.log(config.maxDistance + 1)).clamp(0.0, 1.0);
+      falloff =
+          (1.0 - math.log(distance + 1) / math.log(config.maxDistance + 1))
+              .clamp(0.0, 1.0);
       break;
     case AttenuationModel.custom:
       falloff = 1.0; // Handled externally
       break;
   }
-  
-  double volume = (config.baseVolume * falloff).clamp(config.minVolume, config.baseVolume);
-  
+
+  double volume = (config.baseVolume * falloff).clamp(
+    config.minVolume,
+    config.baseVolume,
+  );
+
   // Stereo balance (horizontal only)
   final balance = (dx / config.maxDistance).clamp(-1.0, 1.0);
-  
+
   // Occlusion check
   double lowPassFrequency = 0.0;
   double reverbSend = 0.0;
-  
+
   if (config.enableOcclusion && tileMap != null && tileMapOrigin != null) {
     // Note: In real implementation, this would be async. For now, we'll
     // compute a simplified occlusion based on distance and tile checks.
@@ -181,30 +193,34 @@ SpatialAudioParams calculateSpatialAudioParams({
       listenerX: listenerX,
       listenerY: listenerY,
     );
-    
+
     if (!hasLineOfSight) {
       lowPassFrequency = config.occlusionLowPassFreq;
       volume *= (1.0 - config.occlusionVolumeReduction);
     }
   }
-  
+
   // Doppler effect
   double dopplerShift = 1.0;
   if (config.enableDoppler && config.speedOfSound > 0) {
     // Relative velocity along the line of sight
     final distance = math.sqrt(dx * dx + dy * dy);
     if (distance > 0) {
-      final sourceVelAlong = (sourceVelocityX * dx + sourceVelocityY * dy) / distance;
-      final listenerVelAlong = (listenerVelocityX * dx + listenerVelocityY * dy) / distance;
+      final sourceVelAlong =
+          (sourceVelocityX * dx + sourceVelocityY * dy) / distance;
+      final listenerVelAlong =
+          (listenerVelocityX * dx + listenerVelocityY * dy) / distance;
       final relativeVel = listenerVelAlong - sourceVelAlong;
-      dopplerShift = (config.speedOfSound + config.dopplerFactor * relativeVel) / config.speedOfSound;
+      dopplerShift =
+          (config.speedOfSound + config.dopplerFactor * relativeVel) /
+          config.speedOfSound;
       dopplerShift = dopplerShift.clamp(0.1, 3.0); // Clamp to reasonable range
     }
   }
-  
+
   // Simple reverb send based on distance (farther = more reverb)
   reverbSend = (distance / config.maxDistance).clamp(0.0, 1.0) * 0.5;
-  
+
   return SpatialAudioParams(
     volume: volume,
     balance: balance,
@@ -226,24 +242,24 @@ bool checkLineOfSightSync({
   final dx = listenerX - sourceX;
   final dy = listenerY - sourceY;
   final distance = math.sqrt(dx * dx + dy * dy);
-  
+
   if (distance == 0) return true;
-  
+
   final tileSize = math.min(tileMap.tileWidth, tileMap.tileHeight);
   final steps = (distance / (tileSize * 0.5)).ceil();
-  
+
   for (int i = 1; i <= steps; i++) {
     final t = i / steps;
     final checkX = sourceX + dx * t;
     final checkY = sourceY + dy * t;
-    
+
     final col = ((checkX - tileMapOrigin.x) / tileMap.tileWidth).floor();
     final row = ((checkY - tileMapOrigin.y) / tileMap.tileHeight).floor();
-    
+
     if (col < 0 || col >= tileMap.cols || row < 0 || row >= tileMap.rows) {
       continue;
     }
-    
+
     if (tileMap.solidTileIds.contains(tileMap.tileAt(col, row))) {
       return false;
     }

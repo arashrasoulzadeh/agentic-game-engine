@@ -28,28 +28,39 @@ void main() {
       expect(camera.shakeOffset, Offset.zero);
     });
 
-    test('Camera.shake sustained decays slower than impulse over the same span', () {
-      // Same seed and update sequence on both, so they draw identical
-      // underlying jitter fractions — any difference in the resulting
-      // offset is purely down to impulse's quadratic vs. sustained's
-      // linear (decay: 1.0, the default) falloff curve.
-      final impulse = Camera(random: Random(1));
-      impulse.shake(magnitude: 20, duration: 1.0, impulse: true);
+    test(
+      'Camera.shake sustained decays slower than impulse over the same span',
+      () {
+        // Same seed and update sequence on both, so they draw identical
+        // underlying jitter fractions — any difference in the resulting
+        // offset is purely down to impulse's quadratic vs. sustained's
+        // linear (decay: 1.0, the default) falloff curve.
+        final impulse = Camera(random: Random(1));
+        impulse.shake(magnitude: 20, duration: 1.0, impulse: true);
 
-      final sustained = Camera(random: Random(1));
-      sustained.shake(magnitude: 20, duration: 1.0, impulse: false);
+        final sustained = Camera(random: Random(1));
+        sustained.shake(magnitude: 20, duration: 1.0, impulse: false);
 
-      for (int i = 0; i < 30; i++) {
-        impulse.update(0.016);
-        sustained.update(0.016);
-      }
+        for (int i = 0; i < 30; i++) {
+          impulse.update(0.016);
+          sustained.update(0.016);
+        }
 
-      expect(sustained.shakeOffset.distance, greaterThan(impulse.shakeOffset.distance));
-    });
+        expect(
+          sustained.shakeOffset.distance,
+          greaterThan(impulse.shakeOffset.distance),
+        );
+      },
+    );
 
     test('Camera.shake with per-axis control', () {
       final camera = Camera(random: Random(1));
-      camera.shake(magnitude: 20, duration: 0.5, impulse: true, axis: ShakeAxis.x);
+      camera.shake(
+        magnitude: 20,
+        duration: 0.5,
+        impulse: true,
+        axis: ShakeAxis.x,
+      );
 
       camera.update(0.016);
       final offset = camera.shakeOffset;
@@ -86,7 +97,8 @@ void main() {
       // Higher frequency should produce more oscillations
       int signChanges = 0;
       for (int i = 1; i < offsets.length; i++) {
-        if ((offsets[i] - offsets[i-1]).sign != (offsets[i-1] - (i >= 2 ? offsets[i-2] : 0)).sign) {
+        if ((offsets[i] - offsets[i - 1]).sign !=
+            (offsets[i - 1] - (i >= 2 ? offsets[i - 2] : 0)).sign) {
           signChanges++;
         }
       }
@@ -124,7 +136,10 @@ void main() {
         slow.update(0.016);
       }
 
-      expect(slow.shakeOffset.distance, greaterThan(linear.shakeOffset.distance));
+      expect(
+        slow.shakeOffset.distance,
+        greaterThan(linear.shakeOffset.distance),
+      );
     });
   });
 }

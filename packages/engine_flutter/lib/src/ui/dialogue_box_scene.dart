@@ -44,7 +44,10 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
   /// By default, calls [runner.advance] and emits the choice's event.
   /// Override to add custom logic (e.g. playing a sound, updating quest state).
   void onChoiceSelected(
-      DialogueChoice choice, World world, SceneController scenes) {
+    DialogueChoice choice,
+    World world,
+    SceneController scenes,
+  ) {
     runner.advance(world, _choiceIndex(choice));
     // If dialogue ended, typically pop this overlay or load next scene
     if (runner.currentNode == null) {
@@ -68,7 +71,8 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     return choices.map((choice) {
       return MenuButtonSpec(
         label: stringTable.resolve(choice.textKey),
-        actionId: choice.textKey, // use textKey as actionId; choice object matched in onButtonPressed
+        actionId: choice
+            .textKey, // use textKey as actionId; choice object matched in onButtonPressed
         labelFontSize: 18,
       );
     }).toList();
@@ -109,7 +113,11 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
   static const double _kScreenHeight = 600;
 
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {
     _world = world;
 
     // Add dialogue box background if specified (screen-space, at bottom).
@@ -123,27 +131,37 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
       final bgHeight = _kScreenHeight * 0.3;
       final bgY = _kScreenHeight - bgHeight / 2;
       world.storeOf<Position>().set(bg, Position(_kScreenWidth / 2, bgY));
-      world.storeOf<Sprite>().set(bg, Sprite(
-        dialogueBoxAtlasId!,
-        dialogueBoxRegion!,
-        zIndex: -5,
-        scaleX: _kScreenWidth / 200, // atlas regions are authored at ~200x92px
-        scaleY: bgHeight / 92,
-        screenSpace: true,
-      ));
+      world.storeOf<Sprite>().set(
+        bg,
+        Sprite(
+          dialogueBoxAtlasId!,
+          dialogueBoxRegion!,
+          zIndex: -5,
+          scaleX:
+              _kScreenWidth / 200, // atlas regions are authored at ~200x92px
+          scaleY: bgHeight / 92,
+          screenSpace: true,
+        ),
+      );
     }
 
     // Add dialogue text as a Text entity (screen-space, at bottom)
     textEntityId = world.spawn();
     final textY = _kScreenHeight - 120; // Near bottom
-    world.storeOf<Position>().set(textEntityId!, Position(_kScreenWidth / 2, textY));
-    world.storeOf<Text>().set(textEntityId!, Text(
-      runner.visibleText(WorldView(world)) ?? '',
-      colorArgb: 0xFFFFFFFF,
-      fontSize: 22,
-      align: TextAlignment.center,
-      screenSpace: true,
-    ));
+    world.storeOf<Position>().set(
+      textEntityId!,
+      Position(_kScreenWidth / 2, textY),
+    );
+    world.storeOf<Text>().set(
+      textEntityId!,
+      Text(
+        runner.visibleText(WorldView(world)) ?? '',
+        colorArgb: 0xFFFFFFFF,
+        fontSize: 22,
+        align: TextAlignment.center,
+        screenSpace: true,
+      ),
+    );
 
     // Add portrait entity if specified
     await _addPortraitEntity(world);
@@ -222,15 +240,21 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     // Just create the sprite with the atlas ID and region.
     // Resolution happens at render time via EngineView's AtlasRegistry.
     final portraitEntity = world.spawn();
-    world.storeOf<Position>().set(portraitEntity, Position(100, 100)); // Top-left by default
-    world.storeOf<Sprite>().set(portraitEntity, Sprite(
-      atlasId,
-      portraitRegion,
-      zIndex: 10,
-      scaleX: 0.5,
-      scaleY: 0.5,
-      screenSpace: true,
-    ));
+    world.storeOf<Position>().set(
+      portraitEntity,
+      Position(100, 100),
+    ); // Top-left by default
+    world.storeOf<Sprite>().set(
+      portraitEntity,
+      Sprite(
+        atlasId,
+        portraitRegion,
+        zIndex: 10,
+        scaleX: 0.5,
+        scaleY: 0.5,
+        screenSpace: true,
+      ),
+    );
 
     return portraitEntity;
   }
@@ -241,7 +265,7 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     final view = WorldView(world);
     final wasComplete = runner.isTypewriterComplete;
     runner.updateTypewriter(dt, view);
-    
+
     // Update the text entity with the new visible text
     if (textEntityId != null) {
       final textStore = world.storeOf<Text>();
@@ -249,15 +273,18 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
       if (textComponent != null) {
         final newVisibleText = runner.visibleText(view) ?? '';
         if (textComponent.text != newVisibleText) {
-          textStore.set(textEntityId!, Text(
-            newVisibleText,
-            colorArgb: textComponent.colorArgb,
-            fontSize: textComponent.fontSize,
-            align: textComponent.align,
-          ));
+          textStore.set(
+            textEntityId!,
+            Text(
+              newVisibleText,
+              colorArgb: textComponent.colorArgb,
+              fontSize: textComponent.fontSize,
+              align: textComponent.align,
+            ),
+          );
         }
       }
-      
+
       // Update portrait if node changed
       _updatePortraitIfNeeded(world);
     }
@@ -276,7 +303,8 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     }
 
     // If typewriter just completed, the full text is now shown
-    if (wasComplete != runner.isTypewriterComplete && runner.isTypewriterComplete) {
+    if (wasComplete != runner.isTypewriterComplete &&
+        runner.isTypewriterComplete) {
       // Typewriter just finished - full text is visible
     }
   }
@@ -290,10 +318,10 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
   void _updatePortraitIfNeeded(World world) {
     final node = runner.currentNode;
     if (node == null) return;
-    
+
     final portraitRegion = runner.getCurrentPortraitRegion();
     final portraitAtlasId = runner.getCurrentPortraitAtlasId();
-    
+
     final atlasId = portraitAtlasId ?? dialogueBoxAtlasId;
     if (portraitRegion == null || atlasId == null) {
       // No portrait for current node - remove existing
@@ -308,29 +336,35 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
       // Create new portrait
       final portraitEntity = world.spawn();
       world.storeOf<Position>().set(portraitEntity, Position(100, 100));
-      world.storeOf<Sprite>().set(portraitEntity, Sprite(
-        atlasId,
-        portraitRegion,
-        zIndex: 10,
-        scaleX: 0.5,
-        scaleY: 0.5,
-        screenSpace: true,
-      ));
-      portraitEntityId = portraitEntity;
-    } else {
-      // Update existing portrait
-      final spriteStore = world.storeOf<Sprite>();
-      final sprite = spriteStore.get(portraitEntityId!);
-      if (sprite != null) {
-        spriteStore.set(portraitEntityId!, Sprite(
+      world.storeOf<Sprite>().set(
+        portraitEntity,
+        Sprite(
           atlasId,
           portraitRegion,
           zIndex: 10,
           scaleX: 0.5,
           scaleY: 0.5,
           screenSpace: true,
-        ));
-}
+        ),
+      );
+      portraitEntityId = portraitEntity;
+    } else {
+      // Update existing portrait
+      final spriteStore = world.storeOf<Sprite>();
+      final sprite = spriteStore.get(portraitEntityId!);
+      if (sprite != null) {
+        spriteStore.set(
+          portraitEntityId!,
+          Sprite(
+            atlasId,
+            portraitRegion,
+            zIndex: 10,
+            scaleX: 0.5,
+            scaleY: 0.5,
+            screenSpace: true,
+          ),
+        );
+      }
     }
   }
 }

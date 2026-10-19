@@ -41,20 +41,22 @@ class AnimationTransition {
   /// Fade progress, `1` (fully opaque) at the moment of the swap down
   /// to `0` (invisible) as `remainingSeconds` runs out. `totalSeconds
   /// <= 0` reads as already-finished rather than dividing by zero.
-  double get alpha => totalSeconds <= 0 ? 0 : (remainingSeconds / totalSeconds).clamp(0, 1);
+  double get alpha =>
+      totalSeconds <= 0 ? 0 : (remainingSeconds / totalSeconds).clamp(0, 1);
 
   Map<String, dynamic> toJson() => {
-        'atlasId': atlasId,
-        'region': region,
-        'scaleX': scaleX,
-        'scaleY': scaleY,
-        'rotation': rotation,
-        'zIndex': zIndex,
-        'remainingSeconds': remainingSeconds,
-        'totalSeconds': totalSeconds,
-      };
+    'atlasId': atlasId,
+    'region': region,
+    'scaleX': scaleX,
+    'scaleY': scaleY,
+    'rotation': rotation,
+    'zIndex': zIndex,
+    'remainingSeconds': remainingSeconds,
+    'totalSeconds': totalSeconds,
+  };
 
-  factory AnimationTransition.fromJson(Map<String, dynamic> json) => AnimationTransition(
+  factory AnimationTransition.fromJson(Map<String, dynamic> json) =>
+      AnimationTransition(
         json['atlasId'] as String,
         json['region'] as String,
         scaleX: (json['scaleX'] as num?)?.toDouble() ?? 1,

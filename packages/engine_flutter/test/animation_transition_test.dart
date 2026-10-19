@@ -54,56 +54,90 @@ void main() {
   });
 
   group('EngineView AnimationTransition rendering', () {
-    testWidgets('renders a fading ghost frame without crashing', (tester) async {
+    testWidgets('renders a fading ghost frame without crashing', (
+      tester,
+    ) async {
       final world = World(width: 400, height: 300);
       registerCoreComponents(world);
       registerFlutterComponents(world);
 
       final registry = AtlasRegistry();
-      registry.register('atlas', SpriteAtlas(await _tinyImage(), {
-        'idle_0': const Rect.fromLTWH(0, 0, 8, 8),
-      }));
+      registry.register(
+        'atlas',
+        SpriteAtlas(await _tinyImage(), {
+          'idle_0': const Rect.fromLTWH(0, 0, 8, 8),
+        }),
+      );
 
       final id = world.spawn();
       world.storeOf<Position>().set(id, Position(50, 50));
       world.storeOf<AnimationTransition>().set(
-            id,
-            AnimationTransition('atlas', 'idle_0', remainingSeconds: 0.1, totalSeconds: 0.2),
-          );
+        id,
+        AnimationTransition(
+          'atlas',
+          'idle_0',
+          remainingSeconds: 0.1,
+          totalSeconds: 0.2,
+        ),
+      );
 
-      await tester.pumpWidget(MaterialApp(
-        home: EngineView(world: world, atlasRegistry: registry, camera: Camera()),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: EngineView(
+            world: world,
+            atlasRegistry: registry,
+            camera: Camera(),
+          ),
+        ),
+      );
       await tester.pump(const Duration(milliseconds: 16));
 
       expect(find.byType(EngineView), findsOneWidget);
     });
 
-    testWidgets('renders gracefully (skipped) with no Position or an unregistered atlas',
-        (tester) async {
-      final world = World(width: 400, height: 300);
-      registerCoreComponents(world);
-      registerFlutterComponents(world);
+    testWidgets(
+      'renders gracefully (skipped) with no Position or an unregistered atlas',
+      (tester) async {
+        final world = World(width: 400, height: 300);
+        registerCoreComponents(world);
+        registerFlutterComponents(world);
 
-      final noPosition = world.spawn();
-      world.storeOf<AnimationTransition>().set(
-            noPosition,
-            AnimationTransition('atlas', 'idle_0', remainingSeconds: 0.1, totalSeconds: 0.2),
-          );
+        final noPosition = world.spawn();
+        world.storeOf<AnimationTransition>().set(
+          noPosition,
+          AnimationTransition(
+            'atlas',
+            'idle_0',
+            remainingSeconds: 0.1,
+            totalSeconds: 0.2,
+          ),
+        );
 
-      final missingAtlas = world.spawn();
-      world.storeOf<Position>().set(missingAtlas, Position(10, 10));
-      world.storeOf<AnimationTransition>().set(
-            missingAtlas,
-            AnimationTransition('missing', 'idle_0', remainingSeconds: 0.1, totalSeconds: 0.2),
-          );
+        final missingAtlas = world.spawn();
+        world.storeOf<Position>().set(missingAtlas, Position(10, 10));
+        world.storeOf<AnimationTransition>().set(
+          missingAtlas,
+          AnimationTransition(
+            'missing',
+            'idle_0',
+            remainingSeconds: 0.1,
+            totalSeconds: 0.2,
+          ),
+        );
 
-      await tester.pumpWidget(MaterialApp(
-        home: EngineView(world: world, atlasRegistry: AtlasRegistry(), camera: Camera()),
-      ));
-      await tester.pump(const Duration(milliseconds: 16));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: EngineView(
+              world: world,
+              atlasRegistry: AtlasRegistry(),
+              camera: Camera(),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 16));
 
-      expect(find.byType(EngineView), findsOneWidget);
-    });
+        expect(find.byType(EngineView), findsOneWidget);
+      },
+    );
   });
 }

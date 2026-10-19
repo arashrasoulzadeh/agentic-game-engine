@@ -17,13 +17,17 @@ void main() {
   });
 
   test('Sprite.fromJson honors explicit offsetX/offsetY', () {
-    final decoded = Sprite.fromJson(Sprite('atlas', 'idle', offsetX: -4, offsetY: 12).toJson());
+    final decoded = Sprite.fromJson(
+      Sprite('atlas', 'idle', offsetX: -4, offsetY: 12).toJson(),
+    );
     expect(decoded.offsetX, -4);
     expect(decoded.offsetY, 12);
   });
 
   test('Sprite.fromJson honors explicit screenSpace', () {
-    final decoded = Sprite.fromJson(Sprite('atlas', 'idle', screenSpace: true).toJson());
+    final decoded = Sprite.fromJson(
+      Sprite('atlas', 'idle', screenSpace: true).toJson(),
+    );
     expect(decoded.screenSpace, isTrue);
   });
 

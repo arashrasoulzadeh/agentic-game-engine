@@ -26,9 +26,9 @@ class _RecordingSaveSlotMenu extends SaveSlotMenuScene {
 
   @override
   List<SaveSlotSpec> slots() => const [
-        SaveSlotSpec(slot: 'a', label: 'Slot A'),
-        SaveSlotSpec(slot: 'b', label: 'Slot B'),
-      ];
+    SaveSlotSpec(slot: 'a', label: 'Slot A'),
+    SaveSlotSpec(slot: 'b', label: 'Slot B'),
+  ];
 
   @override
   void onSlotSelected(String slot, bool hasSave, SceneController scenes) {
@@ -48,7 +48,9 @@ void main() {
 
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('populate labels each slot as empty when no save exists', (tester) async {
+  testWidgets('populate labels each slot as empty when no save exists', (
+    tester,
+  ) async {
     final menu = _RecordingSaveSlotMenu();
     final world = _buildWorld();
     await menu.populate(world, SceneController(), GameState());
@@ -57,10 +59,15 @@ void main() {
     // job); the labels themselves are read back via buttons() below,
     // same as loadAssets does to build the menu's atlas.
     expect(world.storeOf<Button>().length, 2);
-    expect(menu.buttons().map((b) => b.label), ['Slot A (empty)', 'Slot B (empty)']);
+    expect(menu.buttons().map((b) => b.label), [
+      'Slot A (empty)',
+      'Slot B (empty)',
+    ]);
   });
 
-  testWidgets('populate labels a slot that holds a save without "(empty)"', (tester) async {
+  testWidgets('populate labels a slot that holds a save without "(empty)"', (
+    tester,
+  ) async {
     final saved = _buildWorld()..spawn();
     await SaveGame.save(saved, slot: 'a');
 
@@ -71,28 +78,35 @@ void main() {
     expect(menu.buttons().map((b) => b.label), ['Slot A', 'Slot B (empty)']);
   });
 
-  testWidgets('onButtonPressed reports the tapped slot id and its hasSave state',
-      (tester) async {
-    final saved = _buildWorld()..spawn();
-    await SaveGame.save(saved, slot: 'a');
+  testWidgets(
+    'onButtonPressed reports the tapped slot id and its hasSave state',
+    (tester) async {
+      final saved = _buildWorld()..spawn();
+      await SaveGame.save(saved, slot: 'a');
 
-    final menu = _RecordingSaveSlotMenu();
-    final world = _buildWorld();
-    final scenes = SceneController();
-    await menu.populate(world, scenes, GameState());
+      final menu = _RecordingSaveSlotMenu();
+      final world = _buildWorld();
+      final scenes = SceneController();
+      await menu.populate(world, scenes, GameState());
 
-    final slotAPos = world.storeOf<Position>().get(
-          world.storeOf<Button>().entityAt(0),
-        )!;
-    menu.handleTap(world, scenes, Offset(slotAPos.x, slotAPos.y));
+      final slotAPos = world.storeOf<Position>().get(
+        world.storeOf<Button>().entityAt(0),
+      )!;
+      menu.handleTap(world, scenes, Offset(slotAPos.x, slotAPos.y));
 
-    expect(menu.selections, [('a', true)]);
-  });
+      expect(menu.selections, [('a', true)]);
+    },
+  );
 
-  testWidgets('a return trip reflects a save made since the last populate', (tester) async {
+  testWidgets('a return trip reflects a save made since the last populate', (
+    tester,
+  ) async {
     final menu1 = _RecordingSaveSlotMenu();
     await menu1.populate(_buildWorld(), SceneController(), GameState());
-    expect(menu1.buttons().map((b) => b.label), ['Slot A (empty)', 'Slot B (empty)']);
+    expect(menu1.buttons().map((b) => b.label), [
+      'Slot A (empty)',
+      'Slot B (empty)',
+    ]);
 
     final saved = _buildWorld()..spawn();
     await SaveGame.save(saved, slot: 'b');
@@ -109,46 +123,52 @@ void main() {
   // combined with GameRunner's continuously-rescheduling Ticker that
   // deadlocks real codec work (see packed_atlas_test.dart's doc
   // comment), and nothing here ever mounts a GameRunner/Ticker.
-  test('loadAssets registers a thumbnail atlas for a slot with a saved screenshot, '
-      'and onButtonSpawned positions it to the left of that slot\'s button', () async {
-    final thumbnail = await _tinyPng(width: 80, height: 40);
-    final saved = _buildWorld()..spawn();
-    await SaveGame.save(saved, slot: 'a', thumbnail: thumbnail);
+  test(
+    'loadAssets registers a thumbnail atlas for a slot with a saved screenshot, '
+    'and onButtonSpawned positions it to the left of that slot\'s button',
+    () async {
+      final thumbnail = await _tinyPng(width: 80, height: 40);
+      final saved = _buildWorld()..spawn();
+      await SaveGame.save(saved, slot: 'a', thumbnail: thumbnail);
 
-    final menu = _RecordingSaveSlotMenu();
-    final world = _buildWorld();
-    await menu.populate(world, SceneController(), GameState());
-    final registry = await menu.loadAssets();
+      final menu = _RecordingSaveSlotMenu();
+      final world = _buildWorld();
+      await menu.populate(world, SceneController(), GameState());
+      final registry = await menu.loadAssets();
 
-    expect(registry.has('save_slot_thumbnail_a'), isTrue);
-    expect(registry.has('save_slot_thumbnail_b'), isFalse);
+      expect(registry.has('save_slot_thumbnail_a'), isTrue);
+      expect(registry.has('save_slot_thumbnail_b'), isFalse);
 
-    final buttonEntity = world.storeOf<Button>().entityAt(0);
-    final buttonPos = world.storeOf<Position>().get(buttonEntity)!;
+      final buttonEntity = world.storeOf<Button>().entityAt(0);
+      final buttonPos = world.storeOf<Position>().get(buttonEntity)!;
 
-    // onButtonSpawned already ran during populate (ButtonMenuScene
-    // spawns buttons before loadAssets is ever called). Both slots'
-    // generated-rect buttons each carry their own Sprite too (the
-    // engine's own runtime-built button art), so the thumbnail is
-    // found by its distinct atlas id, not by entity count alone.
-    final sprites = world.storeOf<Sprite>();
-    expect(sprites.length, 3); // 2 buttons + 1 thumbnail
-    final thumbEntity = [
-      for (var i = 0; i < sprites.length; i++) sprites.entityAt(i),
-    ].firstWhere((e) => sprites.get(e)!.atlasId == 'save_slot_thumbnail_a');
+      // onButtonSpawned already ran during populate (ButtonMenuScene
+      // spawns buttons before loadAssets is ever called). Both slots'
+      // generated-rect buttons each carry their own Sprite too (the
+      // engine's own runtime-built button art), so the thumbnail is
+      // found by its distinct atlas id, not by entity count alone.
+      final sprites = world.storeOf<Sprite>();
+      expect(sprites.length, 3); // 2 buttons + 1 thumbnail
+      final thumbEntity = [
+        for (var i = 0; i < sprites.length; i++) sprites.entityAt(i),
+      ].firstWhere((e) => sprites.get(e)!.atlasId == 'save_slot_thumbnail_a');
 
-    final thumbPos = world.storeOf<Position>().get(thumbEntity)!;
-    expect(thumbPos.x, lessThan(buttonPos.x));
-    expect(thumbPos.y, buttonPos.y);
-  });
+      final thumbPos = world.storeOf<Position>().get(thumbEntity)!;
+      expect(thumbPos.x, lessThan(buttonPos.x));
+      expect(thumbPos.y, buttonPos.y);
+    },
+  );
 
-  test('a slot with no saved thumbnail spawns no extra Sprite entity for it', () async {
-    final menu = _RecordingSaveSlotMenu();
-    final world = _buildWorld();
-    await menu.populate(world, SceneController(), GameState());
-    await menu.loadAssets();
+  test(
+    'a slot with no saved thumbnail spawns no extra Sprite entity for it',
+    () async {
+      final menu = _RecordingSaveSlotMenu();
+      final world = _buildWorld();
+      await menu.populate(world, SceneController(), GameState());
+      await menu.loadAssets();
 
-    // Just the 2 generated-rect buttons' own Sprites, no thumbnails.
-    expect(world.storeOf<Sprite>().length, 2);
-  });
+      // Just the 2 generated-rect buttons' own Sprites, no thumbnails.
+      expect(world.storeOf<Sprite>().length, 2);
+    },
+  );
 }

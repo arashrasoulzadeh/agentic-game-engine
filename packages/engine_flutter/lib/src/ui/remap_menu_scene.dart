@@ -42,10 +42,14 @@ class RemapMenuScene extends ButtonMenuScene {
 
   @override
   List<MenuButtonSpec> buttons() => [
-        for (final action in actions)
-          MenuButtonSpec(label: '${inputController.aliases.labelFor(action).toUpperCase()}: ${_keyLabelFor(action)}', actionId: action),
-        const MenuButtonSpec(label: 'DONE', actionId: '_remapDone'),
-      ];
+    for (final action in actions)
+      MenuButtonSpec(
+        label:
+            '${inputController.aliases.labelFor(action).toUpperCase()}: ${_keyLabelFor(action)}',
+        actionId: action,
+      ),
+    const MenuButtonSpec(label: 'DONE', actionId: '_remapDone'),
+  ];
 
   String _keyLabelFor(String action) {
     for (final entry in inputController.bindings.entries) {
@@ -64,10 +68,14 @@ class RemapMenuScene extends ButtonMenuScene {
       // An action can only be bound to one key at a time -- drop any
       // existing binding for it before adding the new one, same as a
       // real "rebind" rather than "also bind."
-      inputController.bindings.removeWhere((_, boundAction) => boundAction == actionId);
+      inputController.bindings.removeWhere(
+        (_, boundAction) => boundAction == actionId,
+      );
       inputController.bindings[key] = actionId;
       InputBindingsStorage.save(inputController);
-      scenes.loadScene(RemapMenuScene(inputController, actions, onDone: onDone));
+      scenes.loadScene(
+        RemapMenuScene(inputController, actions, onDone: onDone),
+      );
     };
   }
 }

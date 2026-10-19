@@ -78,7 +78,11 @@ abstract class SaveSlotMenuScene extends ButtonMenuScene {
   final Map<String, ui.Image> _thumbnailImageBySlot = {};
 
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {
     final specs = slots();
     final hasSaveBySlot = <String, bool>{};
     for (final spec in specs) {
@@ -96,12 +100,12 @@ abstract class SaveSlotMenuScene extends ButtonMenuScene {
 
   @override
   List<MenuButtonSpec> buttons() => [
-        for (final spec in slots())
-          MenuButtonSpec(
-            label: slotLabel(spec, _hasSaveBySlot[spec.slot] ?? false),
-            actionId: spec.slot,
-          ),
-      ];
+    for (final spec in slots())
+      MenuButtonSpec(
+        label: slotLabel(spec, _hasSaveBySlot[spec.slot] ?? false),
+        actionId: spec.slot,
+      ),
+  ];
 
   @override
   void onButtonPressed(String actionId, SceneController scenes) {
@@ -116,7 +120,12 @@ abstract class SaveSlotMenuScene extends ButtonMenuScene {
       registry.register(
         _thumbnailAtlasId(entry.key),
         SpriteAtlas(image, {
-          'thumb': ui.Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+          'thumb': ui.Rect.fromLTWH(
+            0,
+            0,
+            image.width.toDouble(),
+            image.height.toDouble(),
+          ),
         }),
       );
     }
@@ -124,7 +133,12 @@ abstract class SaveSlotMenuScene extends ButtonMenuScene {
   }
 
   @override
-  void onButtonSpawned(World world, MenuButtonSpec spec, int index, ui.Offset position) {
+  void onButtonSpawned(
+    World world,
+    MenuButtonSpec spec,
+    int index,
+    ui.Offset position,
+  ) {
     final image = _thumbnailImageBySlot[spec.actionId];
     if (image == null) return;
 
@@ -132,16 +146,21 @@ abstract class SaveSlotMenuScene extends ButtonMenuScene {
     final buttonWidth = spec.width ?? kMenuButtonWidth;
     final entity = world.spawn();
     world.storeOf<Position>().set(
-          entity,
-          Position(
-            position.dx - buttonWidth / 2 - thumbnailGap - thumbnailWidth / 2,
-            position.dy,
-          ),
-        );
+      entity,
+      Position(
+        position.dx - buttonWidth / 2 - thumbnailGap - thumbnailWidth / 2,
+        position.dy,
+      ),
+    );
     world.storeOf<Sprite>().set(
-          entity,
-          Sprite(_thumbnailAtlasId(spec.actionId), 'thumb', scaleX: scale, scaleY: scale),
-        );
+      entity,
+      Sprite(
+        _thumbnailAtlasId(spec.actionId),
+        'thumb',
+        scaleX: scale,
+        scaleY: scale,
+      ),
+    );
     trackExtraEntity(entity);
   }
 

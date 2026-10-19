@@ -19,17 +19,20 @@ EntityId _unit(World w, String team, int c, int r) {
 }
 
 void main() {
-  test('tap selects own unit, then commands a move, ignores empty with no selection', () {
-    final w = _world();
-    final a = _unit(w, 'red', 1, 1);
-    startTurnBasedGame(w, ['red', 'blue']);
-    final c = GridTapController(32);
-    expect(c.handleTap(w, const Offset(200, 200)), GridTapResult.ignored);
-    expect(c.handleTap(w, const Offset(48, 48)), GridTapResult.selected);
-    expect(c.handleTap(w, const Offset(130, 40)), GridTapResult.commanded);
-    final order = w.storeOf<OrderQueue>().get(a)!.orders.single as MoveOrder;
-    expect((order.col, order.row), (4, 1));
-  });
+  test(
+    'tap selects own unit, then commands a move, ignores empty with no selection',
+    () {
+      final w = _world();
+      final a = _unit(w, 'red', 1, 1);
+      startTurnBasedGame(w, ['red', 'blue']);
+      final c = GridTapController(32);
+      expect(c.handleTap(w, const Offset(200, 200)), GridTapResult.ignored);
+      expect(c.handleTap(w, const Offset(48, 48)), GridTapResult.selected);
+      expect(c.handleTap(w, const Offset(130, 40)), GridTapResult.commanded);
+      final order = w.storeOf<OrderQueue>().get(a)!.orders.single as MoveOrder;
+      expect((order.col, order.row), (4, 1));
+    },
+  );
 
   test('origin offset shifts the cell mapping', () {
     final c = GridTapController(32, originX: 100, originY: 50);
@@ -42,34 +45,42 @@ void main() {
     _unit(w, 'red', 0, 0);
     _unit(w, 'red', 1, 1);
     startTurnBasedGame(w, ['red']);
-    expect(GridTapController(32).handleDrag(w, const Offset(60, 60), const Offset(2, 2)), 2);
+    expect(
+      GridTapController(
+        32,
+      ).handleDrag(w, const Offset(60, 60), const Offset(2, 2)),
+      2,
+    );
   });
 
-  test('markers are created per selection, follow the unit, and are removed on deselect', () {
-    final w = _world();
-    final a = _unit(w, 'red', 2, 3);
-    startTurnBasedGame(w, ['red']);
-    w.addSystem(SelectionMarkerSystem(32));
-    w.storeOf<Selected>().set(a, const Selected());
-    w.step(0.1);
-    w.step(0.1);
-    final markers = w.storeOf<SelectionMarker>();
-    expect(markers.length, 1);
-    final m = markers.entityAt(0);
-    final bar = w.storeOf<HudBar>().get(m)!;
-    expect(bar.screenSpace, isFalse);
-    final mp = w.storeOf<Position>().get(m)!;
-    expect((mp.x, mp.y), (64.0, 3 * 32.0 + 32 - 4));
+  test(
+    'markers are created per selection, follow the unit, and are removed on deselect',
+    () {
+      final w = _world();
+      final a = _unit(w, 'red', 2, 3);
+      startTurnBasedGame(w, ['red']);
+      w.addSystem(SelectionMarkerSystem(32));
+      w.storeOf<Selected>().set(a, const Selected());
+      w.step(0.1);
+      w.step(0.1);
+      final markers = w.storeOf<SelectionMarker>();
+      expect(markers.length, 1);
+      final m = markers.entityAt(0);
+      final bar = w.storeOf<HudBar>().get(m)!;
+      expect(bar.screenSpace, isFalse);
+      final mp = w.storeOf<Position>().get(m)!;
+      expect((mp.x, mp.y), (64.0, 3 * 32.0 + 32 - 4));
 
-    w.storeOf<Position>().get(a)!.x += 32;
-    w.step(0.1);
-    expect(w.storeOf<Position>().get(m)!.x, 96.0);
+      w.storeOf<Position>().get(a)!.x += 32;
+      w.step(0.1);
+      expect(w.storeOf<Position>().get(m)!.x, 96.0);
 
-    clearSelection(w);
-    w.step(0.1);
-    expect(markers.length, 0);
-    expect(w.storeOf<HudBar>().length, 0);
-  });
+      clearSelection(w);
+      w.step(0.1);
+      expect(markers.length, 0);
+      expect(w.storeOf<HudBar>().length, 0);
+    },
+  );
 
   test('marker for a destroyed unit is cleaned up', () {
     final w = _world();

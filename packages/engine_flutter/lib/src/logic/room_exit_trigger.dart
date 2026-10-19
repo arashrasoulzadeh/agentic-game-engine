@@ -40,8 +40,9 @@ void installRoomExitTrigger(
     final factory = scenesById[exit.targetSceneId];
     if (factory == null) {
       throw StateError(
-          'RoomExit references unknown scene id "${exit.targetSceneId}" -- '
-          'registered ids: ${scenesById.keys}');
+        'RoomExit references unknown scene id "${exit.targetSceneId}" -- '
+        'registered ids: ${scenesById.keys}',
+      );
     }
 
     state.data['enteredAt'] = exit.spawnPoint;

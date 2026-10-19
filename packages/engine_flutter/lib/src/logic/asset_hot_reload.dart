@@ -17,7 +17,9 @@ class AssetStamp {
 
   @override
   bool operator ==(Object other) =>
-      other is AssetStamp && other.modifiedMs == modifiedMs && other.size == size;
+      other is AssetStamp &&
+      other.modifiedMs == modifiedMs &&
+      other.size == size;
 
   @override
   int get hashCode => Object.hash(modifiedMs, size);
@@ -61,7 +63,8 @@ class AssetChangeTracker {
         else if (_known[e.key] != e.value)
           AssetChange(e.key, AssetChangeKind.changed),
       for (final path in _known.keys)
-        if (!current.containsKey(path)) AssetChange(path, AssetChangeKind.removed),
+        if (!current.containsKey(path))
+          AssetChange(path, AssetChangeKind.removed),
     ]..sort((a, b) => a.path.compareTo(b.path));
     _known = Map.of(current);
     return changes;
@@ -113,7 +116,8 @@ class LevelAssetHandler implements AssetHandler {
 
   @override
   Future<void> reload(String p, AssetSource source) async {
-    final json = jsonDecode(utf8.decode(await source.read(p))) as Map<String, dynamic>;
+    final json =
+        jsonDecode(utf8.decode(await source.read(p))) as Map<String, dynamic>;
     handle.reload(json);
   }
 }
@@ -141,7 +145,9 @@ class AtlasAssetHandler implements AssetHandler {
 
   @override
   Future<void> reload(String p, AssetSource source) async {
-    final manifest = jsonDecode(utf8.decode(await source.read(manifestPath))) as Map<String, dynamic>;
+    final manifest =
+        jsonDecode(utf8.decode(await source.read(manifestPath)))
+            as Map<String, dynamic>;
     final codec = await ui.instantiateImageCodec(await source.read(imagePath));
     final frame = await codec.getNextFrame();
     final fresh = SpriteAtlas.fromManifest(frame.image, manifest);

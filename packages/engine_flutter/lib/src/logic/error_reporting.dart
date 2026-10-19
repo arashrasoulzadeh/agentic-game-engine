@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:developer' as developer;
-import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'dart:ui' show PlatformDispatcher;
 
-import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails;
+import 'package:flutter/foundation.dart'
+    show FlutterError, FlutterErrorDetails, defaultTargetPlatform, kIsWeb;
 
 /// Error severity levels.
 enum ErrorSeverity {
@@ -20,6 +20,12 @@ enum ErrorSeverity {
   /// Critical error that crashes or severely impacts the app.
   fatal,
 }
+
+/// The running platform's name (`android`, `ios`, `macos`, ... or `web`). Unlike `dart:io`'s
+/// `Platform`, which throws on the web, this works everywhere, so building a [CapturedError]
+/// can never itself fail.
+String currentPlatformName() =>
+    kIsWeb ? 'web' : defaultTargetPlatform.name.toLowerCase();
 
 /// A captured error with context.
 class CapturedError {
@@ -47,26 +53,25 @@ class CapturedError {
     String? platform,
     this.appVersion,
     this.buildNumber,
-  })  : timestamp = timestamp ?? DateTime.now(),
-        platform = platform ?? Platform.operatingSystem;
+  }) : timestamp = timestamp ?? DateTime.now(),
+       platform = platform ?? currentPlatformName();
 
   Map<String, dynamic> toJson() => {
-        'severity': severity.name,
-        'error': error.toString(),
-        'stackTrace': stackTrace?.toString(),
-        'context': context,
-        'extra': extra,
-        'timestamp': timestamp.toIso8601String(),
-        'userId': userId,
-        'sessionId': sessionId,
-        'platform': platform,
-        'appVersion': appVersion,
-        'buildNumber': buildNumber,
-      };
+    'severity': severity.name,
+    'error': error.toString(),
+    'stackTrace': stackTrace?.toString(),
+    'context': context,
+    'extra': extra,
+    'timestamp': timestamp.toIso8601String(),
+    'userId': userId,
+    'sessionId': sessionId,
+    'platform': platform,
+    'appVersion': appVersion,
+    'buildNumber': buildNumber,
+  };
 
   @override
-  String toString() =>
-      'CapturedError(${severity.name}): $error\n$stackTrace';
+  String toString() => 'CapturedError(${severity.name}): $error\n$stackTrace';
 }
 
 /// Interface for error reporting backends (Sentry, Crashlytics, custom, etc.).
@@ -85,13 +90,15 @@ abstract class ErrorReporter {
     Map<String, dynamic>? extra,
     ErrorSeverity severity = ErrorSeverity.error,
   }) {
-    return report(CapturedError(
-      severity: severity,
-      error: error,
-      stackTrace: stackTrace,
-      context: context,
-      extra: extra,
-    ));
+    return report(
+      CapturedError(
+        severity: severity,
+        error: error,
+        stackTrace: stackTrace,
+        context: context,
+        extra: extra,
+      ),
+    );
   }
 
   /// Reports a message (info/warning) without an error object.
@@ -101,12 +108,14 @@ abstract class ErrorReporter {
     String? context,
     Map<String, dynamic>? extra,
   }) {
-    return report(CapturedError(
-      severity: severity,
-      error: message,
-      context: context,
-      extra: extra,
-    ));
+    return report(
+      CapturedError(
+        severity: severity,
+        error: message,
+        context: context,
+        extra: extra,
+      ),
+    );
   }
 
   /// Sets user context for subsequent reports.
@@ -138,8 +147,8 @@ class ConsoleErrorReporter extends ErrorReporter {
   ConsoleErrorReporter({
     bool printToConsole = true,
     bool includeStackTrace = true,
-  })  : _printToConsole = printToConsole,
-        _includeStackTrace = includeStackTrace;
+  }) : _printToConsole = printToConsole,
+       _includeStackTrace = includeStackTrace;
 
   @override
   Future<void> init() async {
@@ -159,8 +168,7 @@ class ConsoleErrorReporter extends ErrorReporter {
         ? '\nStack: ${error.stackTrace}'
         : '';
 
-    final message =
-        '$prefix${contextStr}: ${error.error}$extraStr$stackStr';
+    final message = '$prefix${contextStr}: ${error.error}$extraStr$stackStr';
 
     switch (error.severity) {
       case ErrorSeverity.info:

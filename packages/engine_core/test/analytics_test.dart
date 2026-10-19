@@ -70,6 +70,45 @@ void main() {
     });
   });
 
+  group('AnalyticsManager consent', () {
+    late AnalyticsManager manager;
+    late _FakeProvider provider;
+
+    setUp(() async {
+      manager = AnalyticsManager.instance;
+      provider = _FakeProvider();
+      await manager.initialize(providers: [provider]);
+      manager.clearQueue();
+      provider.events.clear();
+    });
+
+    tearDown(() async {
+      manager.setConsent(true);
+      await manager.shutdown();
+    });
+
+    test('without consent nothing is queued or sent to any provider', () async {
+      manager.setConsent(false);
+      expect(manager.hasConsent, isFalse);
+      await manager.log('level_start');
+      await manager.logLevelComplete('1-1', score: 10);
+      expect(manager.getQueuedEvents(), isEmpty);
+      expect(provider.events, isEmpty);
+    });
+
+    test('withdrawing consent discards events recorded before; granting resumes', () async {
+      await manager.log('before');
+      expect(manager.getQueuedEvents(), isNotEmpty);
+      manager.setConsent(false);
+      expect(manager.getQueuedEvents(), isEmpty, reason: 'earlier events are not delivered later');
+
+      manager.setConsent(true);
+      await manager.log('after');
+      expect(manager.getQueuedEvents().map((e) => e.name), ['after']);
+      expect(provider.events.map((e) => e.name), contains('after'));
+    });
+  });
+
   group('ConsoleAnalyticsProvider verbosity', () {
     test('prints nothing when verbose is false', () async {
       final provider = ConsoleAnalyticsProvider(verbose: false);

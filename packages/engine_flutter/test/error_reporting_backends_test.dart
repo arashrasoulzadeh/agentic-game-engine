@@ -25,54 +25,87 @@ void main() {
 
     test('setUserContext is included in the next report\'s payload', () async {
       await reporter.setUserContext(userId: 'player-42');
-      await reporter.report(CapturedError(severity: ErrorSeverity.error, error: 'boom'));
+      await reporter.report(
+        CapturedError(severity: ErrorSeverity.error, error: 'boom'),
+      );
 
       expect(sentPayloads, hasLength(1));
       expect(sentPayloads.single['user'], {'id': 'player-42'});
     });
 
-    test("a report's own userId wins over the reporter-wide setUserContext value", () async {
-      await reporter.setUserContext(userId: 'ambient-user');
-      await reporter.report(CapturedError(
-        severity: ErrorSeverity.error,
-        error: 'boom',
-        userId: 'specific-user',
-      ));
+    test(
+      "a report's own userId wins over the reporter-wide setUserContext value",
+      () async {
+        await reporter.setUserContext(userId: 'ambient-user');
+        await reporter.report(
+          CapturedError(
+            severity: ErrorSeverity.error,
+            error: 'boom',
+            userId: 'specific-user',
+          ),
+        );
 
-      expect(sentPayloads.single['user'], {'id': 'specific-user'});
-    });
+        expect(sentPayloads.single['user'], {'id': 'specific-user'});
+      },
+    );
 
     test('clearUserContext removes the user from subsequent reports', () async {
       await reporter.setUserContext(userId: 'player-42');
       await reporter.clearUserContext();
-      await reporter.report(CapturedError(severity: ErrorSeverity.error, error: 'boom'));
+      await reporter.report(
+        CapturedError(severity: ErrorSeverity.error, error: 'boom'),
+      );
 
       expect(sentPayloads.single['user'], isNull);
     });
 
     test('setTags are included in the next report\'s payload', () async {
       await reporter.setTags({'level': '3'});
-      await reporter.report(CapturedError(severity: ErrorSeverity.error, error: 'boom'));
+      await reporter.report(
+        CapturedError(severity: ErrorSeverity.error, error: 'boom'),
+      );
 
       expect(sentPayloads.single['tags'], {'level': '3'});
     });
 
-    test('setTags accumulate across calls and merge with per-error tags', () async {
-      await reporter.setTags({'level': '3'});
-      await reporter.setTags({'build': 'debug'});
-      await reporter.report(CapturedError(
-        severity: ErrorSeverity.error,
-        error: 'boom',
-        extra: {
-          'tags': {'session': 'abc'},
-        },
-      ));
+    test(
+      'setTags accumulate across calls and merge with per-error tags',
+      () async {
+        await reporter.setTags({'level': '3'});
+        await reporter.setTags({'build': 'debug'});
+        await reporter.report(
+          CapturedError(
+            severity: ErrorSeverity.error,
+            error: 'boom',
+            extra: {
+              'tags': {'session': 'abc'},
+            },
+          ),
+        );
 
-      expect(sentPayloads.single['tags'], {
-        'session': 'abc',
-        'level': '3',
-        'build': 'debug',
-      });
-    });
+        expect(sentPayloads.single['tags'], {
+          'session': 'abc',
+          'level': '3',
+          'build': 'debug',
+        });
+      },
+    );
   });
+
+  test(
+    'CapturedError names its platform without dart:io, so it also works on the web',
+    () {
+      final e = CapturedError(severity: ErrorSeverity.error, error: 'x');
+      expect(e.platform, currentPlatformName());
+      expect(e.platform, isNotEmpty);
+      expect(
+        CapturedError(
+          severity: ErrorSeverity.info,
+          error: 'y',
+          platform: 'custom',
+        ).platform,
+        'custom',
+      );
+    },
+  );
 }

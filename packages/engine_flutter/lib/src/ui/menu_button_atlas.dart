@@ -35,7 +35,12 @@ Future<SpriteAtlas> buildMenuButtonAtlas(
   final regions = <String, Rect>{};
 
   for (var i = 0; i < labels.length; i++) {
-    final rect = Rect.fromLTWH(0, i * kMenuButtonHeight, kMenuButtonWidth, kMenuButtonHeight);
+    final rect = Rect.fromLTWH(
+      0,
+      i * kMenuButtonHeight,
+      kMenuButtonWidth,
+      kMenuButtonHeight,
+    );
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect.deflate(4), const Radius.circular(10)),
       Paint()..color = backgroundColor,
@@ -43,20 +48,28 @@ Future<SpriteAtlas> buildMenuButtonAtlas(
     final painter = TextPainter(
       text: TextSpan(
         text: labels[i],
-        style: TextStyle(color: textColor, fontSize: 20, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: textColor,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
     painter.paint(
       canvas,
-      Offset(rect.left + (kMenuButtonWidth - painter.width) / 2, rect.top + (kMenuButtonHeight - painter.height) / 2),
+      Offset(
+        rect.left + (kMenuButtonWidth - painter.width) / 2,
+        rect.top + (kMenuButtonHeight - painter.height) / 2,
+      ),
     );
     regions[labels[i]] = rect;
   }
 
-  final image = await recorder
-      .endRecording()
-      .toImage(kMenuButtonWidth.toInt(), (kMenuButtonHeight * labels.length).toInt());
+  final image = await recorder.endRecording().toImage(
+    kMenuButtonWidth.toInt(),
+    (kMenuButtonHeight * labels.length).toInt(),
+  );
   return SpriteAtlas(image, regions);
 }
 
@@ -130,24 +143,29 @@ SpawnedMenuButton spawnMenuButton(
   EntityId? labelId;
   if (atlasId != null && region != null) {
     world.storeOf<ButtonHitBox>().set(
-          id,
-          ButtonHitBox(width ?? kMenuButtonWidth, height ?? kMenuButtonHeight),
-        );
-    world.storeOf<Sprite>().set(id, Sprite(atlasId, region, scaleX: scaleX, scaleY: scaleY));
+      id,
+      ButtonHitBox(width ?? kMenuButtonWidth, height ?? kMenuButtonHeight),
+    );
+    world.storeOf<Sprite>().set(
+      id,
+      Sprite(atlasId, region, scaleX: scaleX, scaleY: scaleY),
+    );
     if (label.isNotEmpty) {
       labelId = world.spawn();
-      world.storeOf<Position>().set(labelId, Position(position.dx, position.dy));
+      world.storeOf<Position>().set(
+        labelId,
+        Position(position.dx, position.dy),
+      );
       world.storeOf<txt.Text>().set(
-            labelId,
-            txt.Text(
-              label,
-              fontSize: labelFontSize,
-              colorArgb: labelColorArgb,
-            ),
-          );
+        labelId,
+        txt.Text(label, fontSize: labelFontSize, colorArgb: labelColorArgb),
+      );
     }
   } else {
-    world.storeOf<Collider>().set(id, Collider((height ?? kMenuButtonHeight) / 2));
+    world.storeOf<Collider>().set(
+      id,
+      Collider((height ?? kMenuButtonHeight) / 2),
+    );
     world.storeOf<Sprite>().set(id, Sprite(kMenuButtonAtlasId, label));
   }
   return (button: id, label: labelId);

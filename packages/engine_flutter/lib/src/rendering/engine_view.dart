@@ -432,7 +432,9 @@ class _EngineViewState extends State<EngineView>
         );
       }
       final vel = widget.world.storeOf<Velocity>().get(followId);
-      _frameStats.followedSpeed = vel == null ? null : sqrt(vel.x * vel.x + vel.y * vel.y);
+      _frameStats.followedSpeed = vel == null
+          ? null
+          : sqrt(vel.x * vel.x + vel.y * vel.y);
     } else {
       _frameStats.followedSpeed = null;
     }
@@ -498,7 +500,8 @@ class _EngineViewState extends State<EngineView>
       'entities: ${world.entities.count}',
       'sprites: ${world.storeOf<Sprite>().length}',
       'particles: ${world.storeOf<Particle>().length}',
-      if (_memoryBytes case final mem?) 'mem: ${(mem / (1024 * 1024)).toStringAsFixed(1)} MB',
+      if (_memoryBytes case final mem?)
+        'mem: ${(mem / (1024 * 1024)).toStringAsFixed(1)} MB',
       // One line per FrameStats field here (unlike FrameStats.toString()
       // itself, which stays a single line -- that's also what the
       // `debugPrint('DIAG $_frameStats')`-style console logging reads,
@@ -575,11 +578,14 @@ class _EngineViewState extends State<EngineView>
                 width: layout.contentRect.width,
                 height: layout.contentRect.height,
                 child: ClipRect(
-                  child: CustomPaint(painter: painter, size: layout.contentRect.size),
+                  child: CustomPaint(
+                    painter: painter,
+                    size: layout.contentRect.size,
+                  ),
                 ),
               ),
               // FPS overlay (on top of everything)
-if (widget.showFpsOverlay)
+              if (widget.showFpsOverlay)
                 Positioned(
                   left: layout.contentRect.left + 4,
                   top: layout.contentRect.top + 4,
@@ -636,7 +642,12 @@ if (widget.showFpsOverlay)
         behavior: HitTestBehavior.translucent,
         onTapUp: (details) {
           final box = context.findRenderObject() as RenderBox?;
-          onWorldTap(widget.camera.screenToWorld(details.localPosition, box?.size ?? Size.zero));
+          onWorldTap(
+            widget.camera.screenToWorld(
+              details.localPosition,
+              box?.size ?? Size.zero,
+            ),
+          );
         },
         child: child,
       );
@@ -657,10 +668,7 @@ if (widget.showFpsOverlay)
           top: 0,
           left: 0,
           right: 0,
-          child: SizedBox(
-            height: 150,
-            child: PerformanceOverlay.allEnabled(),
-          ),
+          child: SizedBox(height: 150, child: PerformanceOverlay.allEnabled()),
         ),
       ],
     );
@@ -846,7 +854,8 @@ class _EnginePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paintStopwatch = Stopwatch()..start();
-    frameStats?.lightingMs = 0; // accumulated across every _drawLighting call this frame
+    frameStats?.lightingMs =
+        0; // accumulated across every _drawLighting call this frame
     final positions = world.storeOf<Position>();
     final clipShapes = world.storeOf<ClipShape>();
     final reveals = <_ClipShapeInfo>[];
@@ -856,7 +865,10 @@ class _EnginePainter extends CustomPainter {
       final shape = clipShapes.denseAt(i);
       final worldPos = positions.get(entity);
       if (worldPos == null) continue;
-      final info = _ClipShapeInfo(shape, camera.worldToScreen(worldPos.x, worldPos.y, size));
+      final info = _ClipShapeInfo(
+        shape,
+        camera.worldToScreen(worldPos.x, worldPos.y, size),
+      );
       (shape.mode == ClipShapeMode.reveal ? reveals : cutouts).add(info);
     }
 
@@ -893,7 +905,13 @@ class _EnginePainter extends CustomPainter {
     order = _collectTileMapItems(items, order, size, positions);
     order = _collectAnimationTransitionItems(items, order, size, positions);
     order = _collectSpriteItems(items, order, size, positions, lights);
-    order = _collectNormalMappedSpriteItems(items, order, size, positions, lights);
+    order = _collectNormalMappedSpriteItems(
+      items,
+      order,
+      size,
+      positions,
+      lights,
+    );
     order = _collectParticleItems(items, order, size, positions);
     order = _collectTextItems(items, order, size, positions);
     order = _collectHudBarItems(items, order, size, positions);
@@ -945,8 +963,10 @@ class _EnginePainter extends CustomPainter {
       for (final info in cutouts) {
         final paint = Paint()..blendMode = BlendMode.dstOut;
         if (info.shape.softness > 0) {
-          paint.maskFilter =
-              ui.MaskFilter.blur(ui.BlurStyle.normal, info.shape.softness * camera.zoom);
+          paint.maskFilter = ui.MaskFilter.blur(
+            ui.BlurStyle.normal,
+            info.shape.softness * camera.zoom,
+          );
         }
         canvas.drawPath(_clipShapePath(info), paint);
       }
@@ -964,13 +984,20 @@ class _EnginePainter extends CustomPainter {
     final shape = info.shape;
     final path = Path();
     if (shape.isCircle) {
-      path.addOval(Rect.fromCircle(center: info.screenPos, radius: shape.radius * camera.zoom));
+      path.addOval(
+        Rect.fromCircle(
+          center: info.screenPos,
+          radius: shape.radius * camera.zoom,
+        ),
+      );
     } else {
-      path.addRect(Rect.fromCenter(
-        center: info.screenPos,
-        width: shape.width * camera.zoom,
-        height: shape.height * camera.zoom,
-      ));
+      path.addRect(
+        Rect.fromCenter(
+          center: info.screenPos,
+          width: shape.width * camera.zoom,
+          height: shape.height * camera.zoom,
+        ),
+      );
     }
     return path;
   }
@@ -1031,7 +1058,8 @@ class _EnginePainter extends CustomPainter {
         size,
         positions,
         lightFilter: (light) =>
-            bandZ >= (light.minZIndex ?? _negInfZ) && bandZ <= (light.maxZIndex ?? _posInfZ),
+            bandZ >= (light.minZIndex ?? _negInfZ) &&
+            bandZ <= (light.maxZIndex ?? _posInfZ),
       );
       canvas.restore();
     }
@@ -1100,7 +1128,9 @@ class _EnginePainter extends CustomPainter {
       final fullRect = Offset.zero & size;
       if (!_circleIntersectsRect(screenPos, screenRadius, fullRect)) continue;
       final clipPath = _lightClipPath(light, worldPos, size, entity);
-      infos.add(_LightRenderInfo(light, screenPos, screenRadius, clipPath, worldPos));
+      infos.add(
+        _LightRenderInfo(light, screenPos, screenRadius, clipPath, worldPos),
+      );
     }
     return infos;
   }
@@ -1121,8 +1151,9 @@ class _EnginePainter extends CustomPainter {
     // Single-pass shader path: enabled when singlePassLighting=true,
     // not z-banded (lightFilter==null), and no lights use features the
     // shader doesn't support (castsShadows, coneAngle, useGpuShadows).
-// Falls back to legacy multi-pass otherwise.
-    final bool useSinglePass = singlePassLighting &&
+    // Falls back to legacy multi-pass otherwise.
+    final bool useSinglePass =
+        singlePassLighting &&
         lightFilter == null &&
         !_hasUnsupportedLights(lights, lightFilter);
 
@@ -1130,7 +1161,8 @@ class _EnginePainter extends CustomPainter {
       _drawLightingSinglePass(canvas, size, positions, lights, lightFilter);
       lightingStopwatch.stop();
       final stats = frameStats;
-      if (stats != null) stats.lightingMs += lightingStopwatch.elapsedMicroseconds / 1000;
+      if (stats != null)
+        stats.lightingMs += lightingStopwatch.elapsedMicroseconds / 1000;
       return;
     }
 
@@ -1145,9 +1177,10 @@ class _EnginePainter extends CustomPainter {
     );
     canvas.drawRect(
       fullRect,
-      Paint()..color = Color(_effectiveAmbientColorArgb).withValues(
-        alpha: (1 - _effectiveAmbientBrightness).clamp(0, 1),
-      ),
+      Paint()
+        ..color = Color(
+          _effectiveAmbientColorArgb,
+        ).withValues(alpha: (1 - _effectiveAmbientBrightness).clamp(0, 1)),
     );
 
     for (final info in infos) {
@@ -1293,19 +1326,30 @@ class _EnginePainter extends CustomPainter {
         }
       }
 
-      final lightRect = Rect.fromCircle(center: info.screenPos, radius: info.screenRadius);
-      canvas.drawRect(lightRect, Paint()..shader = shader..blendMode = BlendMode.screen);
+      final lightRect = Rect.fromCircle(
+        center: info.screenPos,
+        radius: info.screenRadius,
+      );
+      canvas.drawRect(
+        lightRect,
+        Paint()
+          ..shader = shader
+          ..blendMode = BlendMode.screen,
+      );
     }
     lightingStopwatch.stop();
     final stats = frameStats;
-    if (stats != null) stats.lightingMs += lightingStopwatch.elapsedMicroseconds / 1000;
+    if (stats != null)
+      stats.lightingMs += lightingStopwatch.elapsedMicroseconds / 1000;
   }
 
   /// Returns true if any light in [lights] uses features not supported
   /// by the single-pass shader (castsShadows, coneAngle, useGpuShadows).
   /// Such lights require the legacy multi-pass path.
   bool _hasUnsupportedLights(
-      ComponentStore<Light2D> lights, bool Function(Light2D)? lightFilter) {
+    ComponentStore<Light2D> lights,
+    bool Function(Light2D)? lightFilter,
+  ) {
     for (var i = 0; i < lights.length; i++) {
       final light = lights.denseAt(i);
       if (lightFilter != null && !lightFilter(light)) continue;
@@ -1400,9 +1444,10 @@ class _EnginePainter extends CustomPainter {
       // No visible lights — draw plain ambient darkness
       canvas.drawRect(
         fullRect,
-        Paint()..color = Color(_effectiveAmbientColorArgb).withValues(
-          alpha: (1 - _effectiveAmbientBrightness).clamp(0, 1),
-        ),
+        Paint()
+          ..color = Color(
+            _effectiveAmbientColorArgb,
+          ).withValues(alpha: (1 - _effectiveAmbientBrightness).clamp(0, 1)),
       );
       return;
     }
@@ -1480,23 +1525,31 @@ class _EnginePainter extends CustomPainter {
     final mapPositions = world.storeOf<Position>();
     final segments = <Offset>[];
 
-    for (var m = 0; m < tileMaps.length && segments.length < _gpuMaxSegments * 2; m++) {
+    for (
+      var m = 0;
+      m < tileMaps.length && segments.length < _gpuMaxSegments * 2;
+      m++
+    ) {
       final mapEntity = tileMaps.entityAt(m);
       final map = tileMaps.denseAt(m);
       final origin = mapPositions.get(mapEntity) ?? Position(0, 0);
 
-      final minCol = ((info.worldPos.x - info.light.radius - origin.x) / map.tileWidth)
-          .floor()
-          .clamp(0, map.cols - 1);
-      final maxCol = ((info.worldPos.x + info.light.radius - origin.x) / map.tileWidth)
-          .ceil()
-          .clamp(0, map.cols - 1);
-      final minRow = ((info.worldPos.y - info.light.radius - origin.y) / map.tileHeight)
-          .floor()
-          .clamp(0, map.rows - 1);
-      final maxRow = ((info.worldPos.y + info.light.radius - origin.y) / map.tileHeight)
-          .ceil()
-          .clamp(0, map.rows - 1);
+      final minCol =
+          ((info.worldPos.x - info.light.radius - origin.x) / map.tileWidth)
+              .floor()
+              .clamp(0, map.cols - 1);
+      final maxCol =
+          ((info.worldPos.x + info.light.radius - origin.x) / map.tileWidth)
+              .ceil()
+              .clamp(0, map.cols - 1);
+      final minRow =
+          ((info.worldPos.y - info.light.radius - origin.y) / map.tileHeight)
+              .floor()
+              .clamp(0, map.rows - 1);
+      final maxRow =
+          ((info.worldPos.y + info.light.radius - origin.y) / map.tileHeight)
+              .ceil()
+              .clamp(0, map.rows - 1);
 
       final candidates = <_GpuSolidCell>[];
       for (var row = minRow; row <= maxRow; row++) {
@@ -1525,12 +1578,26 @@ class _EnginePainter extends CustomPainter {
             ..add(camera.worldToScreen(b.dx, b.dy, size));
         }
 
-        addIfBoundary(map.isSolid(cell.col, cell.row - 1), Offset(left, top), Offset(right, top));
         addIfBoundary(
-            map.isSolid(cell.col, cell.row + 1), Offset(left, bottom), Offset(right, bottom));
-        addIfBoundary(map.isSolid(cell.col - 1, cell.row), Offset(left, top), Offset(left, bottom));
+          map.isSolid(cell.col, cell.row - 1),
+          Offset(left, top),
+          Offset(right, top),
+        );
         addIfBoundary(
-            map.isSolid(cell.col + 1, cell.row), Offset(right, top), Offset(right, bottom));
+          map.isSolid(cell.col, cell.row + 1),
+          Offset(left, bottom),
+          Offset(right, bottom),
+        );
+        addIfBoundary(
+          map.isSolid(cell.col - 1, cell.row),
+          Offset(left, top),
+          Offset(left, bottom),
+        );
+        addIfBoundary(
+          map.isSolid(cell.col + 1, cell.row),
+          Offset(right, top),
+          Offset(right, bottom),
+        );
       }
     }
 
@@ -1544,7 +1611,11 @@ class _EnginePainter extends CustomPainter {
   /// save/clipPath/drawCircle/restore-or-not shape the reveal, tint,
   /// and overbright passes all need, factored out so a third
   /// (overbright) pass didn't triplicate it.
-  void _drawLightGradientCircle(Canvas canvas, _LightRenderInfo info, Paint paint) {
+  void _drawLightGradientCircle(
+    Canvas canvas,
+    _LightRenderInfo info,
+    Paint paint,
+  ) {
     if (info.clipPath == null) {
       canvas.drawCircle(info.screenPos, info.screenRadius, paint);
     } else {
@@ -1574,7 +1645,7 @@ class _EnginePainter extends CustomPainter {
   }
 
   /// Draws colorblind simulation overlay if enabled in PlayerOptions.
-void _drawColorblind(Canvas canvas, Size size) {
+  void _drawColorblind(Canvas canvas, Size size) {
     // TODO: Implement colorblind simulation shader
     // Requires render-to-texture support for full-screen post-processing
     // For now, this is a placeholder
@@ -1612,8 +1683,9 @@ void _drawColorblind(Canvas canvas, Size size) {
   /// tint pass (`peak` = the light's own `colorArgb`), so a recolor of
   /// either never has to touch the falloff math itself.
   List<Color> _falloffColors(Color peak) => [
-        for (final fraction in _falloffFractions) peak.withValues(alpha: peak.a * fraction),
-      ];
+    for (final fraction in _falloffFractions)
+      peak.withValues(alpha: peak.a * fraction),
+  ];
 
   /// A blur on shadow-casting/cone lights' reveal and tint paints
   /// softens the visibility polygon's straight, faceted edges (a
@@ -1652,7 +1724,12 @@ void _drawColorblind(Canvas canvas, Size size) {
   /// frame as it moves can have a ray's hit tile change in a small
   /// discrete jump right as the light crosses a tile boundary, which
   /// otherwise reads as the polygon's edge visibly popping.
-  Path? _lightClipPath(Light2D light, Position worldPos, Size size, EntityId lightEntity) {
+  Path? _lightClipPath(
+    Light2D light,
+    Position worldPos,
+    Size size,
+    EntityId lightEntity,
+  ) {
     final hasCone = light.coneAngle != null;
     if (!hasCone && !light.castsShadows) return null;
 
@@ -1663,14 +1740,19 @@ void _drawColorblind(Canvas canvas, Size size) {
     final smoothingSeconds = light.shadowSmoothingSeconds;
     final smoothing = smoothingSeconds > 0 && frameDtSeconds > 0;
     if (smoothing && light.smoothedShadowDistances.length != rayCount + 1) {
-      light.smoothedShadowDistances = List<double>.filled(rayCount + 1, light.radius);
+      light.smoothedShadowDistances = List<double>.filled(
+        rayCount + 1,
+        light.radius,
+      );
     }
     // 1 - e^(-dt/tau): the fraction of the gap to the raw value closed
     // this frame, framerate-independent (a slow frame catches up
     // proportionally more than a fast one, instead of a fixed
     // per-frame blend factor that would smooth more at high framerates
     // and less at low ones for the same tau).
-    final smoothingAlpha = smoothing ? 1 - exp(-frameDtSeconds / smoothingSeconds) : 1.0;
+    final smoothingAlpha = smoothing
+        ? 1 - exp(-frameDtSeconds / smoothingSeconds)
+        : 1.0;
 
     // See Light2D.cacheShadowGeometry's doc comment: this only ever
     // skips the raycastTileMap sweep itself (world-space, camera-
@@ -1678,7 +1760,8 @@ void _drawColorblind(Canvas canvas, Size size) {
     // fresh every frame from whichever distances (cached or freshly
     // raycast) end up in `rawDistances`, so panning/zooming the camera
     // while a cache hit is in effect still looks correct.
-    final cacheHit = light.cacheShadowGeometry &&
+    final cacheHit =
+        light.cacheShadowGeometry &&
         light.cachedShadowDistances != null &&
         light.cachedShadowDistances!.length == rayCount + 1 &&
         light.cachedShadowWorldX == worldPos.x &&
@@ -1721,15 +1804,21 @@ void _drawColorblind(Canvas canvas, Size size) {
           continue;
         }
         final hitDist = _raycastLightDistance(
-            worldPos, angle, light.radius, light.blockOneWayPlatforms, blockers);
+          worldPos,
+          angle,
+          light.radius,
+          light.blockOneWayPlatforms,
+          blockers,
+        );
         // A ray that reached the light's full radius without hitting
         // anything is genuinely open air along that direction -- pull
         // it in to openAirFalloffScale * radius instead. A ray that
         // *did* hit a surface short of the radius is left exactly as
         // raycast, so the light still fully reaches whatever it's
         // actually illuminating.
-        rawDistances[i] =
-            hitDist >= light.radius ? light.radius * light.openAirFalloffScale : hitDist;
+        rawDistances[i] = hitDist >= light.radius
+            ? light.radius * light.openAirFalloffScale
+            : hitDist;
       }
       if (light.cacheShadowGeometry) {
         light.cachedShadowDistances = rawDistances;
@@ -1817,8 +1906,15 @@ void _drawColorblind(Canvas canvas, Size size) {
       final mapEntity = tileMaps.entityAt(m);
       final map = tileMaps.denseAt(m);
       final origin = mapPositions.get(mapEntity) ?? Position(0, 0);
-      final hit = raycastTileMap(map, origin, worldPos.x, worldPos.y, toX, toY,
-          blockOneWay: blockOneWay);
+      final hit = raycastTileMap(
+        map,
+        origin,
+        worldPos.x,
+        worldPos.y,
+        toX,
+        toY,
+        blockOneWay: blockOneWay,
+      );
       if (hit != null && hit.distance < nearest) {
         nearest = hit.distance;
       }
@@ -1829,7 +1925,14 @@ void _drawColorblind(Canvas canvas, Size size) {
       final dirY = sin(angle);
       for (final blocker in blockers) {
         final hitDist = _rayCircleDistance(
-            worldPos.x, worldPos.y, dirX, dirY, blocker.x, blocker.y, blocker.radius);
+          worldPos.x,
+          worldPos.y,
+          dirX,
+          dirY,
+          blocker.x,
+          blocker.y,
+          blocker.radius,
+        );
         if (hitDist != null && hitDist < nearest) {
           nearest = hitDist;
         }
@@ -1889,7 +1992,11 @@ void _drawColorblind(Canvas canvas, Size size) {
   /// add for a level with many colliders left on during iteration (the
   /// same batching principle `_collectSpriteItems`'s `Canvas.drawAtlas`
   /// path already applies to regular sprites).
-  void _drawColliderDebug(Canvas canvas, Size size, ComponentStore<Position> positions) {
+  void _drawColliderDebug(
+    Canvas canvas,
+    Size size,
+    ComponentStore<Position> positions,
+  ) {
     final colliders = world.storeOf<Collider>();
     if (colliders.length == 0) return;
     final paint = Paint()
@@ -1916,7 +2023,11 @@ void _drawColorblind(Canvas canvas, Size size) {
   /// (`addRect` per tile), stroked in one `drawPath` call per kind (at
   /// most 3 draw calls total, not one per solid/one-way/slope tile) —
   /// same batching reasoning as `_drawColliderDebug`.
-  void _drawTileMapDebug(Canvas canvas, Size size, ComponentStore<Position> positions) {
+  void _drawTileMapDebug(
+    Canvas canvas,
+    Size size,
+    ComponentStore<Position> positions,
+  ) {
     final tileMaps = world.storeOf<TileMap>();
     final solidPath = Path();
     final oneWayPath = Path();
@@ -1937,7 +2048,9 @@ void _drawColorblind(Canvas canvas, Size size) {
 
           final isSolid = map.solidTileIds.contains(tileId);
           final isOneWay = map.oneWayTileIds.contains(tileId);
-          final isSlope = map.slopeUpRightTileIds.contains(tileId) || map.slopeUpLeftTileIds.contains(tileId);
+          final isSlope =
+              map.slopeUpRightTileIds.contains(tileId) ||
+              map.slopeUpLeftTileIds.contains(tileId);
           if (!isSolid && !isOneWay && !isSlope) continue;
 
           final left = origin.x + col * map.tileWidth;
@@ -2101,32 +2214,50 @@ void _drawColorblind(Canvas canvas, Size size) {
             : camera.worldToScreen(anchorPos.dx, anchorPos.dy, size);
         final zoom = sprite.screenSpace ? 1.0 : camera.zoom;
 
-        final batch = batchesByImage.putIfAbsent(atlas.image, () => _SpriteBatch());
-        batch.transforms.add(RSTransform.fromComponents(
-          rotation: sprite.rotation,
-          scale: sprite.scaleX * zoom,
-          anchorX: srcRect.width / 2,
-          anchorY: srcRect.height / 2,
-          translateX: screenPos.dx,
-          translateY: screenPos.dy,
-        ));
+        final batch = batchesByImage.putIfAbsent(
+          atlas.image,
+          () => _SpriteBatch(),
+        );
+        batch.transforms.add(
+          RSTransform.fromComponents(
+            rotation: sprite.rotation,
+            scale: sprite.scaleX * zoom,
+            anchorX: srcRect.width / 2,
+            anchorY: srcRect.height / 2,
+            translateX: screenPos.dx,
+            translateY: screenPos.dy,
+          ),
+        );
         batch.rects.add(srcRect);
       }
 
       if (batchesByImage.isNotEmpty) {
-        items.add(_DrawItem(z, order++, (canvas) {
-          final paint = Paint();
-          for (final entry in batchesByImage.entries) {
-            canvas.drawAtlas(entry.key, entry.value.transforms, entry.value.rects, null, null, null, paint);
-          }
-        }));
+        items.add(
+          _DrawItem(z, order++, (canvas) {
+            final paint = Paint();
+            for (final entry in batchesByImage.entries) {
+              canvas.drawAtlas(
+                entry.key,
+                entry.value.transforms,
+                entry.value.rects,
+                null,
+                null,
+                null,
+                paint,
+              );
+            }
+          }),
+        );
       }
       for (final i in fallbackIndices) {
-        items.add(_DrawItem(
-          z,
-          order++,
-          (canvas) => _paintSpriteIndividually(canvas, size, positions, sprites, i),
-        ));
+        items.add(
+          _DrawItem(
+            z,
+            order++,
+            (canvas) =>
+                _paintSpriteIndividually(canvas, size, positions, sprites, i),
+          ),
+        );
       }
     }
     return order;
@@ -2157,10 +2288,7 @@ void _drawColorblind(Canvas canvas, Size size) {
     canvas.save();
     canvas.translate(screenPos.dx, screenPos.dy);
     if (sprite.rotation != 0) canvas.rotate(sprite.rotation);
-    canvas.scale(
-      sprite.scaleX * zoom,
-      sprite.scaleY * zoom,
-    );
+    canvas.scale(sprite.scaleX * zoom, sprite.scaleY * zoom);
     final destRect = ui.Rect.fromCenter(
       center: Offset.zero,
       width: srcRect.width,
@@ -2190,7 +2318,9 @@ void _drawColorblind(Canvas canvas, Size size) {
     for (var i = 0; i < sprites.length; i++) {
       final entity = sprites.entityAt(i);
       final sprite = sprites.denseAt(i);
-      if (sprite.normalAtlasId == null || !atlasRegistry.has(sprite.normalAtlasId!)) continue;
+      if (sprite.normalAtlasId == null ||
+          !atlasRegistry.has(sprite.normalAtlasId!))
+        continue;
       final pos = positions.get(entity);
       if (pos == null || !atlasRegistry.has(sprite.atlasId)) continue;
       normalMappedIndices.add(i);
@@ -2222,8 +2352,10 @@ void _drawColorblind(Canvas canvas, Size size) {
         final zoom = sprite.screenSpace ? 1.0 : camera.zoom;
 
         // Find lights that affect this sprite (within radius of sprite bounds)
-        final spriteHalfWidth = srcRect.width * sprite.scaleX.abs() * zoom * 0.5;
-        final spriteHalfHeight = srcRect.height * sprite.scaleY.abs() * zoom * 0.5;
+        final spriteHalfWidth =
+            srcRect.width * sprite.scaleX.abs() * zoom * 0.5;
+        final spriteHalfHeight =
+            srcRect.height * sprite.scaleY.abs() * zoom * 0.5;
         final affectingLights = <_LightRenderInfo>[];
         for (final light in lights) {
           final dx = (light.screenPos.dx - screenPos.dx).abs();
@@ -2236,11 +2368,14 @@ void _drawColorblind(Canvas canvas, Size size) {
 
         if (affectingLights.isEmpty) {
           // No lights affecting this sprite, render normally
-          items.add(_DrawItem(
-            z,
-            order++,
-            (canvas) => _paintSpriteIndividually(canvas, size, positions, sprites, i),
-          ));
+          items.add(
+            _DrawItem(
+              z,
+              order++,
+              (canvas) =>
+                  _paintSpriteIndividually(canvas, size, positions, sprites, i),
+            ),
+          );
           continue;
         }
 
@@ -2253,22 +2388,24 @@ void _drawColorblind(Canvas canvas, Size size) {
         );
 
         // Render with normal mapping shader
-        items.add(_DrawItem(
-          z,
-          order++,
-          (canvas) => _paintNormalMappedSprite(
-            canvas,
-            size,
-            sprite,
-            combinedImage,
-            srcRect,
-            normalSrcRect,
-            screenPos,
-            zoom,
-            worldPos,
-            affectingLights,
+        items.add(
+          _DrawItem(
+            z,
+            order++,
+            (canvas) => _paintNormalMappedSprite(
+              canvas,
+              size,
+              sprite,
+              combinedImage,
+              srcRect,
+              normalSrcRect,
+              screenPos,
+              zoom,
+              worldPos,
+              affectingLights,
+            ),
           ),
-        ));
+        );
       }
     }
     return order;
@@ -2289,7 +2426,15 @@ void _drawColorblind(Canvas canvas, Size size) {
     final shader = NormalMappingCombinedShader.shader();
     if (shader == null) {
       // Shader not loaded yet, fall back to normal rendering
-      _paintSpriteIndividuallyWithImages(canvas, size, sprite, combinedImage, srcRect, screenPos, zoom);
+      _paintSpriteIndividuallyWithImages(
+        canvas,
+        size,
+        sprite,
+        combinedImage,
+        srcRect,
+        screenPos,
+        zoom,
+      );
       return;
     }
 
@@ -2395,10 +2540,7 @@ void _drawColorblind(Canvas canvas, Size size) {
     canvas.save();
     canvas.translate(screenPos.dx, screenPos.dy);
     if (sprite.rotation != 0) canvas.rotate(sprite.rotation);
-    canvas.scale(
-      sprite.scaleX * zoom,
-      sprite.scaleY * zoom,
-    );
+    canvas.scale(sprite.scaleX * zoom, sprite.scaleY * zoom);
     canvas.drawRect(
       ui.Rect.fromCenter(
         center: Offset.zero,
@@ -2424,10 +2566,14 @@ void _drawColorblind(Canvas canvas, Size size) {
     // (same id, new image) misses the cache instead of drawing the stale
     // combined texture; the superseded entry for this id pair is evicted.
     final prefix = '$diffuseAtlasId:$normalAtlasId:';
-    final key = '$prefix${identityHashCode(diffuseImage)}:${identityHashCode(normalImage)}';
+    final key =
+        '$prefix${identityHashCode(diffuseImage)}:${identityHashCode(normalImage)}';
     final cached = combinedTextureCache[key];
     if (cached != null) return cached;
-    for (final stale in combinedTextureCache.keys.where((k) => k.startsWith(prefix)).toList()) {
+    for (final stale
+        in combinedTextureCache.keys
+            .where((k) => k.startsWith(prefix))
+            .toList()) {
       combinedTextureCache.remove(stale)?.dispose();
     }
 
@@ -2442,7 +2588,12 @@ void _drawColorblind(Canvas canvas, Size size) {
     // Draw diffuse in left half
     canvas.drawImageRect(
       diffuseImage,
-      ui.Rect.fromLTWH(0, 0, diffuseImage.width.toDouble(), diffuseImage.height.toDouble()),
+      ui.Rect.fromLTWH(
+        0,
+        0,
+        diffuseImage.width.toDouble(),
+        diffuseImage.height.toDouble(),
+      ),
       ui.Rect.fromLTWH(0, 0, halfWidth, heightD),
       Paint(),
     );
@@ -2450,7 +2601,12 @@ void _drawColorblind(Canvas canvas, Size size) {
     // Draw normal map in right half
     canvas.drawImageRect(
       normalImage,
-      ui.Rect.fromLTWH(0, 0, normalImage.width.toDouble(), normalImage.height.toDouble()),
+      ui.Rect.fromLTWH(
+        0,
+        0,
+        normalImage.width.toDouble(),
+        normalImage.height.toDouble(),
+      ),
       ui.Rect.fromLTWH(halfWidth, 0, halfWidth, heightD),
       Paint(),
     );
@@ -2473,10 +2629,7 @@ void _drawColorblind(Canvas canvas, Size size) {
     canvas.save();
     canvas.translate(screenPos.dx, screenPos.dy);
     if (sprite.rotation != 0) canvas.rotate(sprite.rotation);
-    canvas.scale(
-      sprite.scaleX * zoom,
-      sprite.scaleY * zoom,
-    );
+    canvas.scale(sprite.scaleX * zoom, sprite.scaleY * zoom);
     final destRect = ui.Rect.fromCenter(
       center: Offset.zero,
       width: srcRect.width,
@@ -2508,31 +2661,33 @@ void _drawColorblind(Canvas canvas, Size size) {
       final pos = positions.get(entity);
       if (pos == null || !atlasRegistry.has(transition.atlasId)) continue;
 
-      items.add(_DrawItem(transition.zIndex, order++, (canvas) {
-        final atlas = atlasRegistry.resolve(transition.atlasId);
-        final srcRect = atlas.regionFor(transition.region);
-        final screenPos = camera.worldToScreen(pos.x, pos.y, size);
+      items.add(
+        _DrawItem(transition.zIndex, order++, (canvas) {
+          final atlas = atlasRegistry.resolve(transition.atlasId);
+          final srcRect = atlas.regionFor(transition.region);
+          final screenPos = camera.worldToScreen(pos.x, pos.y, size);
 
-        canvas.save();
-        canvas.translate(screenPos.dx, screenPos.dy);
-        if (transition.rotation != 0) canvas.rotate(transition.rotation);
-        canvas.scale(
-          transition.scaleX * camera.zoom,
-          transition.scaleY * camera.zoom,
-        );
-        final destRect = ui.Rect.fromCenter(
-          center: Offset.zero,
-          width: srcRect.width,
-          height: srcRect.height,
-        );
-        canvas.drawImageRect(
-          atlas.image,
-          srcRect,
-          destRect,
-          Paint()..color = Color.fromRGBO(255, 255, 255, transition.alpha),
-        );
-        canvas.restore();
-      }));
+          canvas.save();
+          canvas.translate(screenPos.dx, screenPos.dy);
+          if (transition.rotation != 0) canvas.rotate(transition.rotation);
+          canvas.scale(
+            transition.scaleX * camera.zoom,
+            transition.scaleY * camera.zoom,
+          );
+          final destRect = ui.Rect.fromCenter(
+            center: Offset.zero,
+            width: srcRect.width,
+            height: srcRect.height,
+          );
+          canvas.drawImageRect(
+            atlas.image,
+            srcRect,
+            destRect,
+            Paint()..color = Color.fromRGBO(255, 255, 255, transition.alpha),
+          );
+          canvas.restore();
+        }),
+      );
     }
     return order;
   }
@@ -2597,7 +2752,8 @@ void _drawColorblind(Canvas canvas, Size size) {
       for (final i in zEntry.value) {
         final entity = particles.entityAt(i);
         final sprite = anySpriteParticles ? sprites.get(entity) : null;
-        if (dot == null || (sprite != null && atlasRegistry.has(sprite.atlasId))) {
+        if (dot == null ||
+            (sprite != null && atlasRegistry.has(sprite.atlasId))) {
           individual.add(i);
           continue;
         }
@@ -2610,26 +2766,57 @@ void _drawColorblind(Canvas canvas, Size size) {
         final base = Color(particle.colorArgb);
         final radius = 4 * particle.scale * camera.zoom;
 
-        transforms.add(RSTransform.fromComponents(
-          rotation: 0,
-          scale: radius / (ParticleDotTexture.size / 2),
-          anchorX: ParticleDotTexture.size / 2,
-          anchorY: ParticleDotTexture.size / 2,
-          translateX: screenPos.dx,
-          translateY: screenPos.dy,
-        ));
-        rects.add(Rect.fromLTWH(0, 0, ParticleDotTexture.size.toDouble(), ParticleDotTexture.size.toDouble()));
+        transforms.add(
+          RSTransform.fromComponents(
+            rotation: 0,
+            scale: radius / (ParticleDotTexture.size / 2),
+            anchorX: ParticleDotTexture.size / 2,
+            anchorY: ParticleDotTexture.size / 2,
+            translateX: screenPos.dx,
+            translateY: screenPos.dy,
+          ),
+        );
+        rects.add(
+          Rect.fromLTWH(
+            0,
+            0,
+            ParticleDotTexture.size.toDouble(),
+            ParticleDotTexture.size.toDouble(),
+          ),
+        );
         colors.add(base.withValues(alpha: alpha * base.a));
       }
 
       if (transforms.isNotEmpty) {
-        items.add(_DrawItem(z, order++, (canvas) {
-          canvas.drawAtlas(dot!, transforms, rects, colors, BlendMode.modulate, null, Paint());
-        }));
+        items.add(
+          _DrawItem(z, order++, (canvas) {
+            canvas.drawAtlas(
+              dot!,
+              transforms,
+              rects,
+              colors,
+              BlendMode.modulate,
+              null,
+              Paint(),
+            );
+          }),
+        );
       }
       for (final i in individual) {
-        items.add(_DrawItem(z, order++,
-            (canvas) => _paintParticleIndividually(canvas, size, positions, particles, sprites, i)));
+        items.add(
+          _DrawItem(
+            z,
+            order++,
+            (canvas) => _paintParticleIndividually(
+              canvas,
+              size,
+              positions,
+              particles,
+              sprites,
+              i,
+            ),
+          ),
+        );
       }
     }
     return order;
@@ -2697,46 +2884,54 @@ void _drawColorblind(Canvas canvas, Size size) {
       final layer = layers.denseAt(i);
       if (!atlasRegistry.has(layer.atlasId)) continue;
 
-      items.add(_DrawItem(layer.zIndex, order++, (canvas) {
-        final atlas = atlasRegistry.resolve(layer.atlasId);
-        final srcRect = atlas.regionFor(layer.region);
-        final tileWidth = srcRect.width * camera.zoom;
-        // fitHeight stretches to exactly the viewport height instead of
-        // native size * zoom -- see ParallaxLayer.fitHeight's doc
-        // comment for why (a one-off vista image can't be tiled without
-        // stacking duplicate copies of its own sky-to-ground
-        // composition, so it needs guaranteed single-draw coverage
-        // instead).
-        final tileHeight = layer.fitHeight ? size.height : srcRect.height * camera.zoom;
-        if (tileWidth <= 0 || tileHeight <= 0) return;
+      items.add(
+        _DrawItem(layer.zIndex, order++, (canvas) {
+          final atlas = atlasRegistry.resolve(layer.atlasId);
+          final srcRect = atlas.regionFor(layer.region);
+          final tileWidth = srcRect.width * camera.zoom;
+          // fitHeight stretches to exactly the viewport height instead of
+          // native size * zoom -- see ParallaxLayer.fitHeight's doc
+          // comment for why (a one-off vista image can't be tiled without
+          // stacking duplicate copies of its own sky-to-ground
+          // composition, so it needs guaranteed single-draw coverage
+          // instead).
+          final tileHeight = layer.fitHeight
+              ? size.height
+              : srcRect.height * camera.zoom;
+          if (tileWidth <= 0 || tileHeight <= 0) return;
 
-        final pos = positions.get(entity) ?? Position(0, 0);
-        final anchorX =
-            (pos.x - camera.x * layer.scrollFactorX) * camera.zoom + size.width / 2;
-        // fitHeight also forces the top edge to the screen's top (0),
-        // ignoring Position.y/scrollFactorY -- a stretched-to-cover
-        // background has nothing meaningful left to scroll vertically.
-        final anchorY = layer.fitHeight
-            ? 0.0
-            : (pos.y - camera.y * layer.scrollFactorY) * camera.zoom + size.height / 2;
+          final pos = positions.get(entity) ?? Position(0, 0);
+          final anchorX =
+              (pos.x - camera.x * layer.scrollFactorX) * camera.zoom +
+              size.width / 2;
+          // fitHeight also forces the top edge to the screen's top (0),
+          // ignoring Position.y/scrollFactorY -- a stretched-to-cover
+          // background has nothing meaningful left to scroll vertically.
+          final anchorY = layer.fitHeight
+              ? 0.0
+              : (pos.y - camera.y * layer.scrollFactorY) * camera.zoom +
+                    size.height / 2;
 
-        final xs = layer.tileX ? _tileStarts(anchorX, tileWidth, size.width) : [anchorX];
-        final ys = layer.tileY && !layer.fitHeight
-            ? _tileStarts(anchorY, tileHeight, size.height)
-            : [anchorY];
+          final xs = layer.tileX
+              ? _tileStarts(anchorX, tileWidth, size.width)
+              : [anchorX];
+          final ys = layer.tileY && !layer.fitHeight
+              ? _tileStarts(anchorY, tileHeight, size.height)
+              : [anchorY];
 
-        final paint = Paint();
-        for (final y in ys) {
-          for (final x in xs) {
-            canvas.drawImageRect(
-              atlas.image,
-              srcRect,
-              Rect.fromLTWH(x, y, tileWidth, tileHeight),
-              paint,
-            );
+          final paint = Paint();
+          for (final y in ys) {
+            for (final x in xs) {
+              canvas.drawImageRect(
+                atlas.image,
+                srcRect,
+                Rect.fromLTWH(x, y, tileWidth, tileHeight),
+                paint,
+              );
+            }
           }
-        }
-      }));
+        }),
+      );
     }
     return order;
   }
@@ -2747,7 +2942,11 @@ void _drawColorblind(Canvas canvas, Size size) {
   /// regardless of how far [anchor] has scrolled. Dart's `%` is floored
   /// (always non-negative for a positive divisor), so this works the
   /// same for a negative [anchor] as a positive one.
-  List<double> _tileStarts(double anchor, double tileSize, double viewportSize) {
+  List<double> _tileStarts(
+    double anchor,
+    double tileSize,
+    double viewportSize,
+  ) {
     var start = anchor % tileSize;
     if (start > 0) start -= tileSize;
     return [for (var x = start; x < viewportSize; x += tileSize) x];
@@ -2789,161 +2988,199 @@ void _drawColorblind(Canvas canvas, Size size) {
       final mapEntity = tileMaps.entityAt(m);
       final map = tileMaps.denseAt(m);
 
-      items.add(_DrawItem(map.zIndex, order++, (canvas) {
-        if (map.cols == 0 || map.rows == 0) return; // degenerate empty map
+      items.add(
+        _DrawItem(map.zIndex, order++, (canvas) {
+          if (map.cols == 0 || map.rows == 0) return; // degenerate empty map
 
-        final origin = positions.get(mapEntity) ?? Position(0, 0);
+          final origin = positions.get(mapEntity) ?? Position(0, 0);
 
-        // Cull to the tiles actually on screen -- a map far bigger than
-        // the viewport (the common case once a level has any real
-        // size) would otherwise walk every single tile every frame
-        // regardless of how few are visible. `screenToWorld` gives the
-        // world-space rect the viewport currently shows.
-        final topLeftWorld = camera.screenToWorld(Offset.zero, size);
-        final bottomRightWorld = camera.screenToWorld(Offset(size.width, size.height), size);
-        final realRect = Rect.fromPoints(topLeftWorld, bottomRightWorld);
-
-        // Reuse the last computed range outright when it's still valid
-        // -- same zoom, same map origin (a moving-platform TileMap
-        // would otherwise reuse a stale range), and the real visible
-        // rect still fits entirely inside the buffered rect that range
-        // was computed for. This is what turns "recompute the visible
-        // tile range every single frame" into "recompute it only when
-        // the camera's pan/zoom has actually outrun its buffer" --
-        // see EngineView.cullBufferPx's doc comment.
-        final cached = tileCullCache[mapEntity];
-        final int minCol, maxCol, minRow, maxRow;
-        if (cached != null &&
-            cached.zoom == camera.zoom &&
-            cached.originX == origin.x &&
-            cached.originY == origin.y &&
-            cached.bufferedWorldRect.left <= realRect.left &&
-            cached.bufferedWorldRect.top <= realRect.top &&
-            cached.bufferedWorldRect.right >= realRect.right &&
-            cached.bufferedWorldRect.bottom >= realRect.bottom) {
-          minCol = cached.minCol;
-          maxCol = cached.maxCol;
-          minRow = cached.minRow;
-          maxRow = cached.maxRow;
-        } else {
-          // World-space buffer -- cullBufferPx is a *screen*-pixel
-          // margin, so it's divided by zoom to stay a consistent
-          // on-screen size regardless of how zoomed in/out the camera
-          // is. Extended further in whichever direction the camera is
-          // currently moving (its real per-tick velocity) as a small
-          // predictive look-ahead, so a fast, sustained pan is less
-          // likely to immediately outrun the buffer it was just given.
-          final bufferWorld = cullBufferPx / camera.zoom;
-          const predictSeconds = 0.25;
-          final aheadX = (cameraVelocityX * predictSeconds).abs();
-          final aheadY = (cameraVelocityY * predictSeconds).abs();
-          final buffered = Rect.fromLTRB(
-            realRect.left - bufferWorld - (cameraVelocityX < 0 ? aheadX : 0),
-            realRect.top - bufferWorld - (cameraVelocityY < 0 ? aheadY : 0),
-            realRect.right + bufferWorld + (cameraVelocityX > 0 ? aheadX : 0),
-            realRect.bottom + bufferWorld + (cameraVelocityY > 0 ? aheadY : 0),
+          // Cull to the tiles actually on screen -- a map far bigger than
+          // the viewport (the common case once a level has any real
+          // size) would otherwise walk every single tile every frame
+          // regardless of how few are visible. `screenToWorld` gives the
+          // world-space rect the viewport currently shows.
+          final topLeftWorld = camera.screenToWorld(Offset.zero, size);
+          final bottomRightWorld = camera.screenToWorld(
+            Offset(size.width, size.height),
+            size,
           );
-          // Plus the original 1-tile safety margin, same reasoning as
-          // before this cache existed: a tile straddling the buffered
-          // rect's own edge should still get drawn.
-          minCol = (((buffered.left - origin.x) / map.tileWidth).floor() - 1)
-              .clamp(0, map.cols - 1);
-          maxCol = (((buffered.right - origin.x) / map.tileWidth).ceil() + 1)
-              .clamp(0, map.cols - 1);
-          minRow = (((buffered.top - origin.y) / map.tileHeight).floor() - 1)
-              .clamp(0, map.rows - 1);
-          maxRow = (((buffered.bottom - origin.y) / map.tileHeight).ceil() + 1)
-              .clamp(0, map.rows - 1);
-          tileCullCache[mapEntity] = _TileCullCache(
-              buffered, camera.zoom, origin.x, origin.y, minCol, maxCol, minRow, maxRow);
-        }
+          final realRect = Rect.fromPoints(topLeftWorld, bottomRightWorld);
 
-        // Resolved once per TileMap (not per tile) -- a missing/
-        // not-yet-loaded atlas just means every tile in this map falls
-        // back to its flat debug color, same as a level authored with
-        // no atlasId at all.
-        final atlas = map.atlasId != null && atlasRegistry.has(map.atlasId!)
-            ? atlasRegistry.resolve(map.atlasId!)
-            : null;
+          // Reuse the last computed range outright when it's still valid
+          // -- same zoom, same map origin (a moving-platform TileMap
+          // would otherwise reuse a stale range), and the real visible
+          // rect still fits entirely inside the buffered rect that range
+          // was computed for. This is what turns "recompute the visible
+          // tile range every single frame" into "recompute it only when
+          // the camera's pan/zoom has actually outrun its buffer" --
+          // see EngineView.cullBufferPx's doc comment.
+          final cached = tileCullCache[mapEntity];
+          final int minCol, maxCol, minRow, maxRow;
+          if (cached != null &&
+              cached.zoom == camera.zoom &&
+              cached.originX == origin.x &&
+              cached.originY == origin.y &&
+              cached.bufferedWorldRect.left <= realRect.left &&
+              cached.bufferedWorldRect.top <= realRect.top &&
+              cached.bufferedWorldRect.right >= realRect.right &&
+              cached.bufferedWorldRect.bottom >= realRect.bottom) {
+            minCol = cached.minCol;
+            maxCol = cached.maxCol;
+            minRow = cached.minRow;
+            maxRow = cached.maxRow;
+          } else {
+            // World-space buffer -- cullBufferPx is a *screen*-pixel
+            // margin, so it's divided by zoom to stay a consistent
+            // on-screen size regardless of how zoomed in/out the camera
+            // is. Extended further in whichever direction the camera is
+            // currently moving (its real per-tick velocity) as a small
+            // predictive look-ahead, so a fast, sustained pan is less
+            // likely to immediately outrun the buffer it was just given.
+            final bufferWorld = cullBufferPx / camera.zoom;
+            const predictSeconds = 0.25;
+            final aheadX = (cameraVelocityX * predictSeconds).abs();
+            final aheadY = (cameraVelocityY * predictSeconds).abs();
+            final buffered = Rect.fromLTRB(
+              realRect.left - bufferWorld - (cameraVelocityX < 0 ? aheadX : 0),
+              realRect.top - bufferWorld - (cameraVelocityY < 0 ? aheadY : 0),
+              realRect.right + bufferWorld + (cameraVelocityX > 0 ? aheadX : 0),
+              realRect.bottom +
+                  bufferWorld +
+                  (cameraVelocityY > 0 ? aheadY : 0),
+            );
+            // Plus the original 1-tile safety margin, same reasoning as
+            // before this cache existed: a tile straddling the buffered
+            // rect's own edge should still get drawn.
+            minCol = (((buffered.left - origin.x) / map.tileWidth).floor() - 1)
+                .clamp(0, map.cols - 1);
+            maxCol = (((buffered.right - origin.x) / map.tileWidth).ceil() + 1)
+                .clamp(0, map.cols - 1);
+            minRow = (((buffered.top - origin.y) / map.tileHeight).floor() - 1)
+                .clamp(0, map.rows - 1);
+            maxRow =
+                (((buffered.bottom - origin.y) / map.tileHeight).ceil() + 1)
+                    .clamp(0, map.rows - 1);
+            tileCullCache[mapEntity] = _TileCullCache(
+              buffered,
+              camera.zoom,
+              origin.x,
+              origin.y,
+              minCol,
+              maxCol,
+              minRow,
+              maxRow,
+            );
+          }
 
-        // Draws one tile face at [col]/[row] for raw (pre-animation) id
-        // [rawTileId] -- shared by the background/main/foreground
-        // passes below so texture/color resolution and destRect math
-        // isn't triplicated. [colorFallback] is a background/
-        // foreground layer's own flat color when it has no atlas
-        // region (those layers are purely visual, so collision-kind
-        // colors like "one-way blue" don't apply to them the way they
-        // do for the main layer).
-        void drawTile(int rawTileId, int col, int row, Color Function() colorFallback) {
-          if (rawTileId == 0) return;
-          final tileId = map.currentTileId(rawTileId);
-
-          final left = origin.x + col * map.tileWidth;
-          final top = origin.y + row * map.tileHeight;
-          final screenPos = camera.worldToScreen(left, top, size);
-          final destRect = Rect.fromLTWH(
-            screenPos.dx,
-            screenPos.dy,
-            map.tileWidth * camera.zoom,
-            map.tileHeight * camera.zoom,
-          );
-
-          // A tile id with a real, loaded atlas region draws the
-          // actual texture; anything else (no atlasId set on this
-          // TileMap at all, the atlas hasn't loaded yet, or this
-          // particular tile id just has no region entry) falls back
-          // to a flat color, so a level using textures for most tiles
-          // can still leave some ids (an invisible trigger marker,
-          // say) as plain color.
-          final regionName = map.regionByTileId[tileId];
-          final region = atlas != null && regionName != null
-              ? atlas.regions[regionName]
+          // Resolved once per TileMap (not per tile) -- a missing/
+          // not-yet-loaded atlas just means every tile in this map falls
+          // back to its flat debug color, same as a level authored with
+          // no atlasId at all.
+          final atlas = map.atlasId != null && atlasRegistry.has(map.atlasId!)
+              ? atlasRegistry.resolve(map.atlasId!)
               : null;
-          if (region != null) {
-            canvas.drawImageRect(atlas!.image, region, destRect, Paint());
-            return;
+
+          // Draws one tile face at [col]/[row] for raw (pre-animation) id
+          // [rawTileId] -- shared by the background/main/foreground
+          // passes below so texture/color resolution and destRect math
+          // isn't triplicated. [colorFallback] is a background/
+          // foreground layer's own flat color when it has no atlas
+          // region (those layers are purely visual, so collision-kind
+          // colors like "one-way blue" don't apply to them the way they
+          // do for the main layer).
+          void drawTile(
+            int rawTileId,
+            int col,
+            int row,
+            Color Function() colorFallback,
+          ) {
+            if (rawTileId == 0) return;
+            final tileId = map.currentTileId(rawTileId);
+
+            final left = origin.x + col * map.tileWidth;
+            final top = origin.y + row * map.tileHeight;
+            final screenPos = camera.worldToScreen(left, top, size);
+            final destRect = Rect.fromLTWH(
+              screenPos.dx,
+              screenPos.dy,
+              map.tileWidth * camera.zoom,
+              map.tileHeight * camera.zoom,
+            );
+
+            // A tile id with a real, loaded atlas region draws the
+            // actual texture; anything else (no atlasId set on this
+            // TileMap at all, the atlas hasn't loaded yet, or this
+            // particular tile id just has no region entry) falls back
+            // to a flat color, so a level using textures for most tiles
+            // can still leave some ids (an invisible trigger marker,
+            // say) as plain color.
+            final regionName = map.regionByTileId[tileId];
+            final region = atlas != null && regionName != null
+                ? atlas.regions[regionName]
+                : null;
+            if (region != null) {
+              canvas.drawImageRect(atlas!.image, region, destRect, Paint());
+              return;
+            }
+
+            canvas.drawRect(destRect, Paint()..color = colorFallback());
           }
 
-          canvas.drawRect(destRect, Paint()..color = colorFallback());
-        }
+          const backgroundForegroundFallback = Color(0xFF4A4A4A);
 
-        const backgroundForegroundFallback = Color(0xFF4A4A4A);
-
-        for (var row = minRow; row <= maxRow; row++) {
-          for (var col = minCol; col <= maxCol; col++) {
-            drawTile(map.backgroundTileAt(col, row), col, row,
-                () => backgroundForegroundFallback);
+          for (var row = minRow; row <= maxRow; row++) {
+            for (var col = minCol; col <= maxCol; col++) {
+              drawTile(
+                map.backgroundTileAt(col, row),
+                col,
+                row,
+                () => backgroundForegroundFallback,
+              );
+            }
           }
-        }
 
-for (var row = minRow; row <= maxRow; row++) {
+          for (var row = minRow; row <= maxRow; row++) {
             for (var col = minCol; col <= maxCol; col++) {
               final tileId = map.tileAt(col, row);
               drawTile(tileId, col, row, () {
                 return map.oneWayTileIds.contains(tileId)
                     ? const Color(0x8899CCFF)
                     : (map.slopeUpRightTileIds.contains(tileId) ||
-                            map.slopeUpLeftTileIds.contains(tileId))
-                        ? const Color(0xFFC08040)
-                        : map.ladderTileIds.contains(tileId)
-                            ? const Color(0x88C09050)
-                            : const Color(0xFF4A4A4A);
+                          map.slopeUpLeftTileIds.contains(tileId))
+                    ? const Color(0xFFC08040)
+                    : map.ladderTileIds.contains(tileId)
+                    ? const Color(0x88C09050)
+                    : const Color(0xFF4A4A4A);
               });
             }
           }
 
           // Draw auto-tile bitmask debug overlay on top of main tiles
           if (showAutoTileBitmask) {
-            _drawAutoTileBitmaskOverlay(canvas, size, map, origin, minCol, maxCol, minRow, maxRow);
+            _drawAutoTileBitmaskOverlay(
+              canvas,
+              size,
+              map,
+              origin,
+              minCol,
+              maxCol,
+              minRow,
+              maxRow,
+            );
           }
 
           for (var row = minRow; row <= maxRow; row++) {
             for (var col = minCol; col <= maxCol; col++) {
-              drawTile(map.foregroundTileAt(col, row), col, row,
-                () => backgroundForegroundFallback);
+              drawTile(
+                map.foregroundTileAt(col, row),
+                col,
+                row,
+                () => backgroundForegroundFallback,
+              );
+            }
           }
-        }
-      }));
+        }),
+      );
     }
     return order;
   }
@@ -2967,43 +3204,54 @@ for (var row = minRow; row <= maxRow; row++) {
       final pos = positions.get(entity);
       if (pos == null) continue;
 
-      items.add(_DrawItem(text.zIndex, order++, (canvas) {
-        final screenPos =
-            text.screenSpace ? Offset(pos.x, pos.y) : camera.worldToScreen(pos.x, pos.y, size);
-        final scale = text.screenSpace ? 1.0 : camera.zoom;
-        final effectiveFontSize = text.fontSize * scale * text.textScale;
-        final painter = TextPainter(
-          text: TextSpan(
-            text: text.text,
-            style: TextStyle(
-              color: Color(text.colorArgb),
-              fontSize: effectiveFontSize,
-              // No fontFamily means "whatever the platform's default
-              // is" — fine on mobile/desktop (the OS always has one)
-              // but on Flutter Web's CanvasKit renderer that can mean
-              // *no usable typeface at all*: layout still succeeds
-              // (painter.width/height are sane) but nothing actually
-              // paints, invisibly. Pin to the font this package bundles
-              // (pubspec.yaml's `fonts:`) so `Text` never depends on
-              // that resolution succeeding.
-              // A font declared in a dependency package's pubspec.yaml
-              // is only resolvable under this prefixed family name —
-              // even from code inside that same package — per Flutter's
-              // asset-bundling convention for package-provided fonts.
-              fontFamily: 'packages/engine_flutter/EngineDefault',
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout(maxWidth: text.maxWidth == null ? double.infinity : text.maxWidth! * scale);
+      items.add(
+        _DrawItem(text.zIndex, order++, (canvas) {
+          final screenPos = text.screenSpace
+              ? Offset(pos.x, pos.y)
+              : camera.worldToScreen(pos.x, pos.y, size);
+          final scale = text.screenSpace ? 1.0 : camera.zoom;
+          final effectiveFontSize = text.fontSize * scale * text.textScale;
+          final painter =
+              TextPainter(
+                text: TextSpan(
+                  text: text.text,
+                  style: TextStyle(
+                    color: Color(text.colorArgb),
+                    fontSize: effectiveFontSize,
+                    // No fontFamily means "whatever the platform's default
+                    // is" — fine on mobile/desktop (the OS always has one)
+                    // but on Flutter Web's CanvasKit renderer that can mean
+                    // *no usable typeface at all*: layout still succeeds
+                    // (painter.width/height are sane) but nothing actually
+                    // paints, invisibly. Pin to the font this package bundles
+                    // (pubspec.yaml's `fonts:`) so `Text` never depends on
+                    // that resolution succeeding.
+                    // A font declared in a dependency package's pubspec.yaml
+                    // is only resolvable under this prefixed family name —
+                    // even from code inside that same package — per Flutter's
+                    // asset-bundling convention for package-provided fonts.
+                    fontFamily: 'packages/engine_flutter/EngineDefault',
+                  ),
+                ),
+                textDirection: TextDirection.ltr,
+              )..layout(
+                maxWidth: text.maxWidth == null
+                    ? double.infinity
+                    : text.maxWidth! * scale,
+              );
 
-        final dx = switch (text.align) {
-          txt.TextAlignment.left => 0.0,
-          txt.TextAlignment.center => -painter.width / 2,
-          txt.TextAlignment.right => -painter.width,
-        };
-        final paintOffset = Offset(screenPos.dx + dx, screenPos.dy - painter.height / 2);
-        painter.paint(canvas, paintOffset);
-      }));
+          final dx = switch (text.align) {
+            txt.TextAlignment.left => 0.0,
+            txt.TextAlignment.center => -painter.width / 2,
+            txt.TextAlignment.right => -painter.width,
+          };
+          final paintOffset = Offset(
+            screenPos.dx + dx,
+            screenPos.dy - painter.height / 2,
+          );
+          painter.paint(canvas, paintOffset);
+        }),
+      );
     }
     return order;
   }
@@ -3028,17 +3276,32 @@ for (var row = minRow; row <= maxRow; row++) {
       final pos = positions.get(entity);
       if (pos == null) continue;
       final worldPos = _interpolated(entity, pos);
-      final screenPos =
-          bar.screenSpace ? worldPos : camera.worldToScreen(worldPos.dx, worldPos.dy, size);
+      final screenPos = bar.screenSpace
+          ? worldPos
+          : camera.worldToScreen(worldPos.dx, worldPos.dy, size);
       final zoom = bar.screenSpace ? 1.0 : camera.zoom;
 
-      items.add(_DrawItem(bar.zIndex, order++, (canvas) {
-        final rect = Rect.fromLTWH(screenPos.dx, screenPos.dy, bar.width * zoom, bar.height * zoom);
-        canvas.drawRect(rect, Paint()..color = Color(bar.backgroundColorArgb));
-        final fillRect =
-            Rect.fromLTWH(screenPos.dx, screenPos.dy, bar.width * bar.fraction * zoom, bar.height * zoom);
-        canvas.drawRect(fillRect, Paint()..color = Color(bar.fillColorArgb));
-      }));
+      items.add(
+        _DrawItem(bar.zIndex, order++, (canvas) {
+          final rect = Rect.fromLTWH(
+            screenPos.dx,
+            screenPos.dy,
+            bar.width * zoom,
+            bar.height * zoom,
+          );
+          canvas.drawRect(
+            rect,
+            Paint()..color = Color(bar.backgroundColorArgb),
+          );
+          final fillRect = Rect.fromLTWH(
+            screenPos.dx,
+            screenPos.dy,
+            bar.width * bar.fraction * zoom,
+            bar.height * zoom,
+          );
+          canvas.drawRect(fillRect, Paint()..color = Color(bar.fillColorArgb));
+        }),
+      );
     }
     return order;
   }
@@ -3064,35 +3327,57 @@ for (var row = minRow; row <= maxRow; row++) {
       final pos = positions.get(entity);
       if (pos == null || !atlasRegistry.has(nine.atlasId)) continue;
 
-      items.add(_DrawItem(nine.zIndex, order++, (canvas) {
-        final atlas = atlasRegistry.resolve(nine.atlasId);
-        final src = atlas.regionFor(nine.region);
+      items.add(
+        _DrawItem(nine.zIndex, order++, (canvas) {
+          final atlas = atlasRegistry.resolve(nine.atlasId);
+          final src = atlas.regionFor(nine.region);
 
-        final srcXs = [src.left, src.left + nine.insetLeft, src.right - nine.insetRight, src.right];
-        final srcYs = [src.top, src.top + nine.insetTop, src.bottom - nine.insetBottom, src.bottom];
-        final dstXs = [
-          pos.x,
-          pos.x + nine.insetLeft,
-          pos.x + nine.width - nine.insetRight,
-          pos.x + nine.width,
-        ];
-        final dstYs = [
-          pos.y,
-          pos.y + nine.insetTop,
-          pos.y + nine.height - nine.insetBottom,
-          pos.y + nine.height,
-        ];
+          final srcXs = [
+            src.left,
+            src.left + nine.insetLeft,
+            src.right - nine.insetRight,
+            src.right,
+          ];
+          final srcYs = [
+            src.top,
+            src.top + nine.insetTop,
+            src.bottom - nine.insetBottom,
+            src.bottom,
+          ];
+          final dstXs = [
+            pos.x,
+            pos.x + nine.insetLeft,
+            pos.x + nine.width - nine.insetRight,
+            pos.x + nine.width,
+          ];
+          final dstYs = [
+            pos.y,
+            pos.y + nine.insetTop,
+            pos.y + nine.height - nine.insetBottom,
+            pos.y + nine.height,
+          ];
 
-        final paint = Paint();
-        for (var col = 0; col < 3; col++) {
-          for (var row = 0; row < 3; row++) {
-            final srcRect = Rect.fromLTRB(srcXs[col], srcYs[row], srcXs[col + 1], srcYs[row + 1]);
-            final dstRect = Rect.fromLTRB(dstXs[col], dstYs[row], dstXs[col + 1], dstYs[row + 1]);
-            if (dstRect.width <= 0 || dstRect.height <= 0) continue;
-            canvas.drawImageRect(atlas.image, srcRect, dstRect, paint);
+          final paint = Paint();
+          for (var col = 0; col < 3; col++) {
+            for (var row = 0; row < 3; row++) {
+              final srcRect = Rect.fromLTRB(
+                srcXs[col],
+                srcYs[row],
+                srcXs[col + 1],
+                srcYs[row + 1],
+              );
+              final dstRect = Rect.fromLTRB(
+                dstXs[col],
+                dstYs[row],
+                dstXs[col + 1],
+                dstYs[row + 1],
+              );
+              if (dstRect.width <= 0 || dstRect.height <= 0) continue;
+              canvas.drawImageRect(atlas.image, srcRect, dstRect, paint);
+            }
           }
-        }
-      }));
+        }),
+      );
     }
     return order;
   }
@@ -3151,7 +3436,12 @@ class _LightRenderInfo {
   final Path? clipPath;
   final Position worldPos;
   _LightRenderInfo(
-      this.light, this.screenPos, this.screenRadius, this.clipPath, this.worldPos);
+    this.light,
+    this.screenPos,
+    this.screenRadius,
+    this.clipPath,
+    this.worldPos,
+  );
 }
 
 /// One `Collider(blocksLight: true)` entity's world-space position/

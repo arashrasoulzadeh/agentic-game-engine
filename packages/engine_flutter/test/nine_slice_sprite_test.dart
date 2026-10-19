@@ -63,130 +63,168 @@ void main() {
       registerFlutterComponents(world);
 
       final registry = AtlasRegistry();
-      registry.register('panel', SpriteAtlas(await _tinyImage(), {
-        'bg': const Rect.fromLTWH(0, 0, 16, 16),
-      }));
+      registry.register(
+        'panel',
+        SpriteAtlas(await _tinyImage(), {
+          'bg': const Rect.fromLTWH(0, 0, 16, 16),
+        }),
+      );
 
       final id = world.spawn();
       world.storeOf<Position>().set(id, Position(10, 10));
       world.storeOf<NineSliceSprite>().set(
-            id,
-            NineSliceSprite(
-              'panel',
-              'bg',
-              width: 200,
-              height: 120,
-              insetLeft: 4,
-              insetTop: 4,
-              insetRight: 4,
-              insetBottom: 4,
-            ),
-          );
+        id,
+        NineSliceSprite(
+          'panel',
+          'bg',
+          width: 200,
+          height: 120,
+          insetLeft: 4,
+          insetTop: 4,
+          insetRight: 4,
+          insetBottom: 4,
+        ),
+      );
 
-      await tester.pumpWidget(MaterialApp(
-        home: EngineView(world: world, atlasRegistry: registry, camera: Camera()),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: EngineView(
+            world: world,
+            atlasRegistry: registry,
+            camera: Camera(),
+          ),
+        ),
+      );
       await tester.pump(const Duration(milliseconds: 16));
 
       expect(find.byType(EngineView), findsOneWidget);
     });
 
-    testWidgets('skips a destination cell that would be zero/negative size instead of crashing',
-        (tester) async {
+    testWidgets(
+      'skips a destination cell that would be zero/negative size instead of crashing',
+      (tester) async {
+        final world = World(width: 400, height: 300);
+        registerCoreComponents(world);
+        registerFlutterComponents(world);
+
+        final registry = AtlasRegistry();
+        registry.register(
+          'panel',
+          SpriteAtlas(await _tinyImage(), {
+            'bg': const Rect.fromLTWH(0, 0, 16, 16),
+          }),
+        );
+
+        final id = world.spawn();
+        world.storeOf<Position>().set(id, Position(10, 10));
+        // width/height smaller than insetLeft+insetRight/insetTop+insetBottom
+        // -- the center/opposite-edge cells would come out negative size.
+        world.storeOf<NineSliceSprite>().set(
+          id,
+          NineSliceSprite(
+            'panel',
+            'bg',
+            width: 4,
+            height: 4,
+            insetLeft: 8,
+            insetTop: 8,
+            insetRight: 8,
+            insetBottom: 8,
+          ),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: EngineView(
+              world: world,
+              atlasRegistry: registry,
+              camera: Camera(),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 16));
+
+        expect(find.byType(EngineView), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'renders gracefully (skipped) when the atlas is not registered',
+      (tester) async {
+        final world = World(width: 400, height: 300);
+        registerCoreComponents(world);
+        registerFlutterComponents(world);
+
+        final id = world.spawn();
+        world.storeOf<Position>().set(id, Position(10, 10));
+        world.storeOf<NineSliceSprite>().set(
+          id,
+          NineSliceSprite(
+            'missing',
+            'bg',
+            width: 100,
+            height: 50,
+            insetLeft: 4,
+            insetTop: 4,
+            insetRight: 4,
+            insetBottom: 4,
+          ),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: EngineView(
+              world: world,
+              atlasRegistry: AtlasRegistry(),
+              camera: Camera(),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 16));
+
+        expect(find.byType(EngineView), findsOneWidget);
+      },
+    );
+
+    testWidgets('renders gracefully (skipped) when there is no Position', (
+      tester,
+    ) async {
       final world = World(width: 400, height: 300);
       registerCoreComponents(world);
       registerFlutterComponents(world);
 
       final registry = AtlasRegistry();
-      registry.register('panel', SpriteAtlas(await _tinyImage(), {
-        'bg': const Rect.fromLTWH(0, 0, 16, 16),
-      }));
-
-      final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(10, 10));
-      // width/height smaller than insetLeft+insetRight/insetTop+insetBottom
-      // -- the center/opposite-edge cells would come out negative size.
-      world.storeOf<NineSliceSprite>().set(
-            id,
-            NineSliceSprite(
-              'panel',
-              'bg',
-              width: 4,
-              height: 4,
-              insetLeft: 8,
-              insetTop: 8,
-              insetRight: 8,
-              insetBottom: 8,
-            ),
-          );
-
-      await tester.pumpWidget(MaterialApp(
-        home: EngineView(world: world, atlasRegistry: registry, camera: Camera()),
-      ));
-      await tester.pump(const Duration(milliseconds: 16));
-
-      expect(find.byType(EngineView), findsOneWidget);
-    });
-
-    testWidgets('renders gracefully (skipped) when the atlas is not registered',
-        (tester) async {
-      final world = World(width: 400, height: 300);
-      registerCoreComponents(world);
-      registerFlutterComponents(world);
-
-      final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(10, 10));
-      world.storeOf<NineSliceSprite>().set(
-            id,
-            NineSliceSprite(
-              'missing',
-              'bg',
-              width: 100,
-              height: 50,
-              insetLeft: 4,
-              insetTop: 4,
-              insetRight: 4,
-              insetBottom: 4,
-            ),
-          );
-
-      await tester.pumpWidget(MaterialApp(
-        home: EngineView(world: world, atlasRegistry: AtlasRegistry(), camera: Camera()),
-      ));
-      await tester.pump(const Duration(milliseconds: 16));
-
-      expect(find.byType(EngineView), findsOneWidget);
-    });
-
-    testWidgets('renders gracefully (skipped) when there is no Position',
-        (tester) async {
-      final world = World(width: 400, height: 300);
-      registerCoreComponents(world);
-      registerFlutterComponents(world);
-
-      final registry = AtlasRegistry();
-      registry.register('panel', SpriteAtlas(await _tinyImage(), {
-        'bg': const Rect.fromLTWH(0, 0, 16, 16),
-      }));
+      registry.register(
+        'panel',
+        SpriteAtlas(await _tinyImage(), {
+          'bg': const Rect.fromLTWH(0, 0, 16, 16),
+        }),
+      );
 
       final id = world.spawn();
       world.storeOf<NineSliceSprite>().set(
-            id,
-            NineSliceSprite(
-              'panel',
-              'bg',
-              width: 100,
-              height: 50,
-              insetLeft: 4,
-              insetTop: 4,
-              insetRight: 4,
-              insetBottom: 4,
-            ),
-          ); // no Position
+        id,
+        NineSliceSprite(
+          'panel',
+          'bg',
+          width: 100,
+          height: 50,
+          insetLeft: 4,
+          insetTop: 4,
+          insetRight: 4,
+          insetBottom: 4,
+        ),
+      ); // no Position
 
-      await tester.pumpWidget(MaterialApp(
-        home: EngineView(world: world, atlasRegistry: registry, camera: Camera()),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: EngineView(
+            world: world,
+            atlasRegistry: registry,
+            camera: Camera(),
+          ),
+        ),
+      );
       await tester.pump(const Duration(milliseconds: 16));
 
       expect(find.byType(EngineView), findsOneWidget);

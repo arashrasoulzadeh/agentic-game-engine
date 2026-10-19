@@ -36,9 +36,9 @@ extension SceneTransitionTypeX on SceneTransitionType {
   /// (`fade`, `iris`). Snapshot effects play once, *after* the new scene loads,
   /// instead of in a cover phase and a reveal phase.
   bool get usesSnapshot => switch (this) {
-        SceneTransitionType.fade || SceneTransitionType.iris => false,
-        _ => true,
-      };
+    SceneTransitionType.fade || SceneTransitionType.iris => false,
+    _ => true,
+  };
 }
 
 /// Configuration for a scene transition's look — not its direction.
@@ -70,11 +70,11 @@ class SceneTransitionConfig {
   });
 
   Map<String, dynamic> toJson() => {
-        'type': type.name,
-        'duration': duration,
-        'easing': easing.name,
-        'fadeColorArgb': fadeColorArgb,
-      };
+    'type': type.name,
+    'duration': duration,
+    'easing': easing.name,
+    'fadeColorArgb': fadeColorArgb,
+  };
 
   factory SceneTransitionConfig.fromJson(Map<String, dynamic> json) =>
       SceneTransitionConfig(
@@ -125,10 +125,7 @@ class SceneTransition {
   EntityId? _screenTintEntity;
   EntityId? _clipShapeEntity;
 
-  SceneTransition({
-    required this.config,
-    required this.covering,
-  });
+  SceneTransition({required this.config, required this.covering});
 
   /// Starts the transition by creating the necessary effect components.
   /// [cameraX] and [cameraY] are the camera's world position, used to center
@@ -154,17 +151,26 @@ class SceneTransition {
         _screenTintEntity = world.spawn();
         final startColor =
             (config.fadeColorArgb & 0x00FFFFFF) | ((covering ? 0 : 255) << 24);
-        world.storeOf<ScreenTint>().set(_screenTintEntity!, ScreenTint(startColor));
+        world.storeOf<ScreenTint>().set(
+          _screenTintEntity!,
+          ScreenTint(startColor),
+        );
         break;
       case SceneTransitionType.iris:
         _clipShapeEntity = world.spawn();
-        world.storeOf<Position>().set(_clipShapeEntity!, Position(cameraX, cameraY));
-        world.storeOf<ClipShape>().set(_clipShapeEntity!, ClipShape(
-          isCircle: true,
-          radius: covering ? _maxRadius(world) : 0,
-          mode: ClipShapeMode.reveal,
-          softness: 0,
-        ));
+        world.storeOf<Position>().set(
+          _clipShapeEntity!,
+          Position(cameraX, cameraY),
+        );
+        world.storeOf<ClipShape>().set(
+          _clipShapeEntity!,
+          ClipShape(
+            isCircle: true,
+            radius: covering ? _maxRadius(world) : 0,
+            mode: ClipShapeMode.reveal,
+            softness: 0,
+          ),
+        );
         break;
       default:
         // Snapshot transitions draw no world components (see usesSnapshot).
@@ -175,7 +181,8 @@ class SceneTransition {
   double _maxRadius(World world) {
     final viewportWidth = world.width.toDouble();
     final viewportHeight = world.height.toDouble();
-    return (viewportWidth > viewportHeight ? viewportWidth : viewportHeight) * 1.5;
+    return (viewportWidth > viewportHeight ? viewportWidth : viewportHeight) *
+        1.5;
   }
 
   /// Advances the transition by [dt] seconds. Returns true if complete.
@@ -195,7 +202,8 @@ class SceneTransition {
         if (_screenTintEntity != null) {
           final alpha = (coverAmount * 255).round().clamp(0, 255);
           final color = (config.fadeColorArgb & 0x00FFFFFF) | (alpha << 24);
-          world.storeOf<ScreenTint>().get(_screenTintEntity!)?.colorArgb = color;
+          world.storeOf<ScreenTint>().get(_screenTintEntity!)?.colorArgb =
+              color;
         }
         break;
       case SceneTransitionType.iris:
@@ -227,15 +235,17 @@ class SceneTransition {
   double get easedProgress => progress;
 
   Map<String, dynamic> toJson() => {
-        'config': config.toJson(),
-        'covering': covering,
-        'progress': progress,
-        'isRunning': isRunning,
-        'isComplete': isComplete,
-      };
+    'config': config.toJson(),
+    'covering': covering,
+    'progress': progress,
+    'isRunning': isRunning,
+    'isComplete': isComplete,
+  };
 
   factory SceneTransition.fromJson(Map<String, dynamic> json) {
-    final config = SceneTransitionConfig.fromJson(json['config'] as Map<String, dynamic>);
+    final config = SceneTransitionConfig.fromJson(
+      json['config'] as Map<String, dynamic>,
+    );
     final transition = SceneTransition(
       config: config,
       covering: json['covering'] as bool? ?? true,

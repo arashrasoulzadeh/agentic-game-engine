@@ -18,12 +18,16 @@ class _MemorySource implements AssetSource {
     times[path] = clock++;
   }
 
-  void putJson(String path, Object json) => put(path, utf8.encode(jsonEncode(json)));
+  void putJson(String path, Object json) =>
+      put(path, utf8.encode(jsonEncode(json)));
 
   @override
   Future<Map<String, AssetStamp>> scan() async {
     if (failScan) throw StateError('disk gone');
-    return {for (final e in files.entries) e.key: AssetStamp(times[e.key]!, e.value.length)};
+    return {
+      for (final e in files.entries)
+        e.key: AssetStamp(times[e.key]!, e.value.length),
+    };
   }
 
   @override
@@ -31,19 +35,21 @@ class _MemorySource implements AssetSource {
 }
 
 Map<String, dynamic> _level(double x) => {
-      'entities': [
-        {
-          'name': 'player',
-          'components': {
-            'position': {'x': x, 'y': 0.0},
-          },
-        },
-      ],
-    };
+  'entities': [
+    {
+      'name': 'player',
+      'components': {
+        'position': {'x': x, 'y': 0.0},
+      },
+    },
+  ],
+};
 
 Future<Uint8List> _png(int w, int h) async {
   final recorder = ui.PictureRecorder();
-  ui.Canvas(recorder).drawRect(ui.Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()), ui.Paint());
+  ui.Canvas(
+    recorder,
+  ).drawRect(ui.Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()), ui.Paint());
   final image = await recorder.endRecording().toImage(w, h);
   final data = await image.toByteData(format: ui.ImageByteFormat.png);
   image.dispose();
@@ -52,20 +58,38 @@ Future<Uint8List> _png(int w, int h) async {
 
 void main() {
   group('AssetChangeTracker', () {
-    test('first diff is all added; later diffs report added, changed and removed', () {
-      final t = AssetChangeTracker();
-      expect(t.diff({'a': const AssetStamp(1, 1)}).single.kind, AssetChangeKind.added);
-      expect(t.diff({'a': const AssetStamp(1, 1)}), isEmpty);
-      final changes = t.diff({'a': const AssetStamp(2, 1), 'b': const AssetStamp(1, 5)});
-      expect(changes.map((c) => c.toString()), ['changed a', 'added b']);
-      expect(t.diff({'b': const AssetStamp(1, 5)}).single.kind, AssetChangeKind.removed);
-    });
+    test(
+      'first diff is all added; later diffs report added, changed and removed',
+      () {
+        final t = AssetChangeTracker();
+        expect(
+          t.diff({'a': const AssetStamp(1, 1)}).single.kind,
+          AssetChangeKind.added,
+        );
+        expect(t.diff({'a': const AssetStamp(1, 1)}), isEmpty);
+        final changes = t.diff({
+          'a': const AssetStamp(2, 1),
+          'b': const AssetStamp(1, 5),
+        });
+        expect(changes.map((c) => c.toString()), ['changed a', 'added b']);
+        expect(
+          t.diff({'b': const AssetStamp(1, 5)}).single.kind,
+          AssetChangeKind.removed,
+        );
+      },
+    );
 
-    test('a same-time edit that changes size is still seen; prime reports nothing', () {
-      final t = AssetChangeTracker()..prime({'a': const AssetStamp(1, 1)});
-      expect(t.diff({'a': const AssetStamp(1, 1)}), isEmpty);
-      expect(t.diff({'a': const AssetStamp(1, 2)}).single.kind, AssetChangeKind.changed);
-    });
+    test(
+      'a same-time edit that changes size is still seen; prime reports nothing',
+      () {
+        final t = AssetChangeTracker()..prime({'a': const AssetStamp(1, 1)});
+        expect(t.diff({'a': const AssetStamp(1, 1)}), isEmpty);
+        expect(
+          t.diff({'a': const AssetStamp(1, 2)}).single.kind,
+          AssetChangeKind.changed,
+        );
+      },
+    );
   });
 
   group('AssetHotReloader + LevelAssetHandler', () {
@@ -91,7 +115,8 @@ void main() {
       );
     });
 
-    double playerX() => world.storeOf<Position>().get(handle.named['player']!)!.x;
+    double playerX() =>
+        world.storeOf<Position>().get(handle.named['player']!)!.x;
 
     test('editing the level file reloads it into the running world', () async {
       await reloader.start();
@@ -106,48 +131,60 @@ void main() {
       expect(world.entities.count, 1);
     });
 
-    test('a broken edit leaves the running level untouched and reports the error', () async {
-      await reloader.start();
-      reloader.stop();
-      source.putJson('levels/main.json', {'entities': 'nope'});
-      await reloader.poll();
-      expect(playerX(), 1);
-      expect(errors, hasLength(1));
-      expect(reloaded, isEmpty);
+    test(
+      'a broken edit leaves the running level untouched and reports the error',
+      () async {
+        await reloader.start();
+        reloader.stop();
+        source.putJson('levels/main.json', {'entities': 'nope'});
+        await reloader.poll();
+        expect(playerX(), 1);
+        expect(errors, hasLength(1));
+        expect(reloaded, isEmpty);
 
-      source.put('levels/main.json', utf8.encode('{not json'));
-      await reloader.poll();
-      expect(errors, hasLength(2));
-      expect(playerX(), 1);
+        source.put('levels/main.json', utf8.encode('{not json'));
+        await reloader.poll();
+        expect(errors, hasLength(2));
+        expect(playerX(), 1);
 
-      source.putJson('levels/main.json', _level(5));
-      await reloader.poll();
-      expect(playerX(), 5);
-    });
+        source.putJson('levels/main.json', _level(5));
+        await reloader.poll();
+        expect(playerX(), 5);
+      },
+    );
 
-    test('files nobody handles, and removals, do not call any handler', () async {
-      await reloader.start();
-      reloader.stop();
-      source.put('notes.txt', [1, 2, 3]);
-      source.files.remove('levels/main.json');
-      source.times.remove('levels/main.json');
-      final changes = await reloader.poll();
-      expect(changes.map((c) => c.kind), containsAll([AssetChangeKind.added, AssetChangeKind.removed]));
-      expect(reloaded, isEmpty);
-      expect(errors, isEmpty);
-    });
+    test(
+      'files nobody handles, and removals, do not call any handler',
+      () async {
+        await reloader.start();
+        reloader.stop();
+        source.put('notes.txt', [1, 2, 3]);
+        source.files.remove('levels/main.json');
+        source.times.remove('levels/main.json');
+        final changes = await reloader.poll();
+        expect(
+          changes.map((c) => c.kind),
+          containsAll([AssetChangeKind.added, AssetChangeKind.removed]),
+        );
+        expect(reloaded, isEmpty);
+        expect(errors, isEmpty);
+      },
+    );
 
-    test('a failing scan is reported, not thrown, and polling recovers', () async {
-      await reloader.start();
-      reloader.stop();
-      source.failScan = true;
-      expect(await reloader.poll(), isEmpty);
-      expect(errors.single, isA<StateError>());
-      source.failScan = false;
-      source.putJson('levels/main.json', _level(9));
-      await reloader.poll();
-      expect(playerX(), 9);
-    });
+    test(
+      'a failing scan is reported, not thrown, and polling recovers',
+      () async {
+        await reloader.start();
+        reloader.stop();
+        source.failScan = true;
+        expect(await reloader.poll(), isEmpty);
+        expect(errors.single, isA<StateError>());
+        source.failScan = false;
+        source.putJson('levels/main.json', _level(9));
+        await reloader.poll();
+        expect(playerX(), 9);
+      },
+    );
 
     test('start is idempotent, runs on a timer and stop cancels it', () async {
       final timed = AssetHotReloader(
@@ -167,46 +204,52 @@ void main() {
   });
 
   group('AtlasAssetHandler', () {
-    testWidgets('replaces the registered atlas when the image or manifest changes', (tester) async {
-      await tester.runAsync(() async {
-        final registry = AtlasRegistry();
-        final source = _MemorySource()
-          ..put('a.png', await _png(4, 4))
-          ..putJson('a.json', {
+    testWidgets(
+      'replaces the registered atlas when the image or manifest changes',
+      (tester) async {
+        await tester.runAsync(() async {
+          final registry = AtlasRegistry();
+          final source = _MemorySource()
+            ..put('a.png', await _png(4, 4))
+            ..putJson('a.json', {
+              'regions': {
+                'hero': {'x': 0, 'y': 0, 'w': 2, 'h': 2},
+              },
+            });
+          final handler = AtlasAssetHandler(
+            registry: registry,
+            atlasId: 'main',
+            imagePath: 'a.png',
+            manifestPath: 'a.json',
+          );
+          final reloader = AssetHotReloader(
+            source: source,
+            handlers: [handler],
+          );
+
+          await reloader.poll();
+          final first = registry.resolve('main');
+          expect(first.regionFor('hero').width, 2);
+          expect(first.image.width, 4);
+
+          source.putJson('a.json', {
             'regions': {
-              'hero': {'x': 0, 'y': 0, 'w': 2, 'h': 2},
+              'hero': {'x': 0, 'y': 0, 'w': 3, 'h': 3},
+              'coin': {'x': 3, 'y': 0, 'w': 1, 'h': 1},
             },
           });
-        final handler = AtlasAssetHandler(
-          registry: registry,
-          atlasId: 'main',
-          imagePath: 'a.png',
-          manifestPath: 'a.json',
-        );
-        final reloader = AssetHotReloader(source: source, handlers: [handler]);
+          await reloader.poll();
+          final second = registry.resolve('main');
+          expect(identical(first, second), isFalse);
+          expect(second.regionFor('hero').width, 3);
+          expect(second.regions.containsKey('coin'), isTrue);
 
-        await reloader.poll();
-        final first = registry.resolve('main');
-        expect(first.regionFor('hero').width, 2);
-        expect(first.image.width, 4);
-
-        source.putJson('a.json', {
-          'regions': {
-            'hero': {'x': 0, 'y': 0, 'w': 3, 'h': 3},
-            'coin': {'x': 3, 'y': 0, 'w': 1, 'h': 1},
-          },
+          source.put('a.png', await _png(8, 8));
+          await reloader.poll();
+          expect(registry.resolve('main').image.width, 8);
         });
-        await reloader.poll();
-        final second = registry.resolve('main');
-        expect(identical(first, second), isFalse);
-        expect(second.regionFor('hero').width, 3);
-        expect(second.regions.containsKey('coin'), isTrue);
-
-        source.put('a.png', await _png(8, 8));
-        await reloader.poll();
-        expect(registry.resolve('main').image.width, 8);
-      });
-    });
+      },
+    );
 
     test('handles only its own two files', () {
       final h = AtlasAssetHandler(
@@ -226,38 +269,48 @@ void main() {
   });
 
   group('directoryAssetSource', () {
-    test('scans nested files with forward-slash relative paths and reads them', () async {
-      final dir = Directory.systemTemp.createTempSync('assets_');
-      addTearDown(() => dir.deleteSync(recursive: true));
-      Directory('${dir.path}/levels').createSync();
-      File('${dir.path}/levels/one.json').writeAsStringSync('{}');
-      File('${dir.path}/top.txt').writeAsStringSync('hi');
+    test(
+      'scans nested files with forward-slash relative paths and reads them',
+      () async {
+        final dir = Directory.systemTemp.createTempSync('assets_');
+        addTearDown(() => dir.deleteSync(recursive: true));
+        Directory('${dir.path}/levels').createSync();
+        File('${dir.path}/levels/one.json').writeAsStringSync('{}');
+        File('${dir.path}/top.txt').writeAsStringSync('hi');
 
-      final source = directoryAssetSource(dir.path)!;
-      final scan = await source.scan();
-      expect(scan.keys.toSet(), {'levels/one.json', 'top.txt'});
-      expect(scan['top.txt']!.size, 2);
-      expect(utf8.decode(await source.read('levels/one.json')), '{}');
-    });
+        final source = directoryAssetSource(dir.path)!;
+        final scan = await source.scan();
+        expect(scan.keys.toSet(), {'levels/one.json', 'top.txt'});
+        expect(scan['top.txt']!.size, 2);
+        expect(utf8.decode(await source.read('levels/one.json')), '{}');
+      },
+    );
 
-    test('a directory that does not exist yet scans as empty, then appears', () async {
-      final dir = Directory.systemTemp.createTempSync('assets_');
-      final path = '${dir.path}/later';
-      addTearDown(() => dir.deleteSync(recursive: true));
-      final source = directoryAssetSource(path)!;
-      expect(await source.scan(), isEmpty);
-      Directory(path).createSync();
-      File('$path/x').writeAsStringSync('1');
-      expect((await source.scan()).keys, ['x']);
-    });
+    test(
+      'a directory that does not exist yet scans as empty, then appears',
+      () async {
+        final dir = Directory.systemTemp.createTempSync('assets_');
+        final path = '${dir.path}/later';
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final source = directoryAssetSource(path)!;
+        expect(await source.scan(), isEmpty);
+        Directory(path).createSync();
+        File('$path/x').writeAsStringSync('1');
+        expect((await source.scan()).keys, ['x']);
+      },
+    );
   });
 
   test('CallbackAssetHandler fires for its paths only, on change', () async {
-    final source = _MemorySource()..put('levels/a.json', [1])..put('levels/b.json', [1]);
+    final source = _MemorySource()
+      ..put('levels/a.json', [1])
+      ..put('levels/b.json', [1]);
     final seen = <String>[];
     final reloader = AssetHotReloader(
       source: source,
-      handlers: [CallbackAssetHandler({'levels/a.json'}, seen.add)],
+      handlers: [
+        CallbackAssetHandler({'levels/a.json'}, seen.add),
+      ],
     );
     await reloader.start();
     source.put('levels/a.json', [1, 2]);

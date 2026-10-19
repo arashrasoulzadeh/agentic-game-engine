@@ -45,8 +45,18 @@ class CameraPanStep extends CinematicStep {
 
   @override
   void start(World world) {
-    _tweenX = Tween(from: camera.x, to: toX, duration: duration, easing: easing);
-    _tweenY = Tween(from: camera.y, to: toY, duration: duration, easing: easing);
+    _tweenX = Tween(
+      from: camera.x,
+      to: toX,
+      duration: duration,
+      easing: easing,
+    );
+    _tweenY = Tween(
+      from: camera.y,
+      to: toY,
+      duration: duration,
+      easing: easing,
+    );
   }
 
   @override
@@ -85,7 +95,12 @@ class CameraZoomStep extends CinematicStep {
 
   @override
   void start(World world) {
-    _tween = Tween(from: camera.zoom, to: toZoom, duration: duration, easing: easing);
+    _tween = Tween(
+      from: camera.zoom,
+      to: toZoom,
+      duration: duration,
+      easing: easing,
+    );
   }
 
   @override
@@ -110,7 +125,11 @@ class CameraShakeStep extends CinematicStep {
   final double duration;
   double _elapsed = 0;
 
-  CameraShakeStep(this.camera, {required this.magnitude, required this.duration});
+  CameraShakeStep(
+    this.camera, {
+    required this.magnitude,
+    required this.duration,
+  });
 
   @override
   void start(World world) {
@@ -236,21 +255,35 @@ class ScreenTintStep extends CinematicStep {
   @override
   void start(World world) {
     entity ??= world.spawn();
-    _tween = Tween(from: fromAlpha, to: toAlpha, duration: duration, easing: easing);
-    world.storeOf<ScreenTint>().set(entity!, ScreenTint(_withAlpha(colorArgb, fromAlpha)));
+    _tween = Tween(
+      from: fromAlpha,
+      to: toAlpha,
+      duration: duration,
+      easing: easing,
+    );
+    world.storeOf<ScreenTint>().set(
+      entity!,
+      ScreenTint(_withAlpha(colorArgb, fromAlpha)),
+    );
   }
 
   @override
   bool update(World world, double dt) {
     _tween.elapsed += dt;
-    world.storeOf<ScreenTint>().get(entity!)?.colorArgb = _withAlpha(colorArgb, _tween.value);
+    world.storeOf<ScreenTint>().get(entity!)?.colorArgb = _withAlpha(
+      colorArgb,
+      _tween.value,
+    );
     return _tween.isComplete;
   }
 
   @override
   void skip(World world) {
     if (entity == null) start(world);
-    world.storeOf<ScreenTint>().get(entity!)?.colorArgb = _withAlpha(colorArgb, toAlpha);
+    world.storeOf<ScreenTint>().get(entity!)?.colorArgb = _withAlpha(
+      colorArgb,
+      toAlpha,
+    );
   }
 
   static int _withAlpha(int colorArgb, double alpha) {

@@ -11,7 +11,8 @@ class GamepadVibrationHaptics implements GamepadHaptics {
 
   GamepadVibrationHaptics(this._controllerIndex);
 
-  factory GamepadVibrationHaptics.internal(int index) = GamepadVibrationHaptics._internal;
+  factory GamepadVibrationHaptics.internal(int index) =
+      GamepadVibrationHaptics._internal;
 
   GamepadVibrationHaptics._internal(int index) : _controllerIndex = index;
 
@@ -24,7 +25,7 @@ class GamepadVibrationHaptics implements GamepadHaptics {
     if (_isVibrating) {
       await stop();
     }
-    
+
     _isVibrating = true;
     try {
       // Try to use the gamepad_vibration plugin if available
@@ -34,7 +35,7 @@ class GamepadVibrationHaptics implements GamepadHaptics {
         strongMagnitude.clamp(0.0, 1.0),
         weakMagnitude.clamp(0.0, 1.0),
       );
-      
+
       await Future.delayed(duration);
       await stop();
     } catch (e) {
@@ -49,12 +50,12 @@ class GamepadVibrationHaptics implements GamepadHaptics {
     if (_isVibrating) {
       await stop();
     }
-    
+
     _isVibrating = true;
     try {
       for (final (duration, intensity) in pattern.steps) {
         if (!_isVibrating) break;
-        
+
         if (intensity > 0) {
           await _setVibration(
             0, // Use first controller
@@ -92,11 +93,11 @@ class GamepadVibrationHaptics implements GamepadHaptics {
       // This uses reflection-like pattern to avoid hard dependency
       // In practice, you would add `gamepad_vibration` to pubspec.yaml
       // and use it directly: `await GamepadVibration.setVibration(index, strong, weak);`
-      // 
+      //
       // For now, this is a placeholder that shows the intended API
       // When the package is available, uncomment the line below:
       // await GamepadVibration.setVibration(index, strong, weak);
-      
+
       // For now, just simulate the vibration for development
       await Future.delayed(Duration(milliseconds: 10));
     } catch (e) {

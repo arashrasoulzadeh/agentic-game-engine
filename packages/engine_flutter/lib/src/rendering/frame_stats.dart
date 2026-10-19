@@ -103,7 +103,8 @@ class FrameStats {
   double spikeThresholdMs = 20;
 
   @override
-  String toString() => 'frame: ${frameMs.toStringAsFixed(2)}ms  '
+  String toString() =>
+      'frame: ${frameMs.toStringAsFixed(2)}ms  '
       'step: ${stepMs.toStringAsFixed(2)}ms  '
       'paint: ${paintMs.toStringAsFixed(2)}ms  '
       'light: ${lightingMs.toStringAsFixed(2)}ms  '

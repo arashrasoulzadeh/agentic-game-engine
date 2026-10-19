@@ -23,7 +23,11 @@ Future<ui.Image> _tinyImage() async {
 
 class _EmptyScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {}
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {}
 }
 
 class _NoPackedConfigGame extends Game {
@@ -62,12 +66,12 @@ class _PackedConfigGame extends Game {
 
   @override
   GameConfig get config => const GameConfig(
-        worldWidth: 200,
-        worldHeight: 100,
-        packedAtlasId: 'packed',
-        packedAtlasImage: 'assets/packed/atlas.png',
-        packedAtlasManifest: 'assets/packed/atlas.json',
-      );
+    worldWidth: 200,
+    worldHeight: 100,
+    packedAtlasId: 'packed',
+    packedAtlasImage: 'assets/packed/atlas.png',
+    packedAtlasManifest: 'assets/packed/atlas.json',
+  );
 
   @override
   Scene createInitialScene() => _scene;
@@ -80,12 +84,19 @@ class _PackedConfigGame extends Game {
 /// happens at all) when a scene already claimed this id itself.
 class _OverridingAtlasScene extends Scene {
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {}
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {}
 
   @override
   Future<AtlasRegistry> loadAssets() async {
     final registry = AtlasRegistry();
-    registry.register('packed', SpriteAtlas(await _tinyImage(), {'own': Rect.zero}));
+    registry.register(
+      'packed',
+      SpriteAtlas(await _tinyImage(), {'own': Rect.zero}),
+    );
     return registry;
   }
 }
@@ -93,77 +104,87 @@ class _OverridingAtlasScene extends Scene {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('no packed-atlas config (default) never touches the asset bundle at all',
-      (tester) async {
-    final game = _NoPackedConfigGame(_EmptyScene());
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
+  testWidgets(
+    'no packed-atlas config (default) never touches the asset bundle at all',
+    (tester) async {
+      final game = _NoPackedConfigGame(_EmptyScene());
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
 
-    final view = tester.widget<EngineView>(find.byType(EngineView));
-    expect(view.atlasRegistry.has('packed'), isFalse);
-  });
+      final view = tester.widget<EngineView>(find.byType(EngineView));
+      expect(view.atlasRegistry.has('packed'), isFalse);
+    },
+  );
 
   testWidgets(
-      'GameConfig.packedAtlasId set but no mocked asset bundle never resolves to a '
-      'rendered EngineView -- proves _registerPackedAtlas actually attempts the load '
-      'when config is present (the mirror image of the test above), since '
-      "rootBundle.load's failure becomes the loading Future's error and "
-      "GameRunner's FutureBuilder just keeps showing the loading screen for an "
-      'errored future rather than throwing into the widget tree', (tester) async {
-    // Truly leaving the "flutter/assets" channel with no handler at
-    // all makes `defaultBinaryMessenger.send` return null
-    // *synchronously*, which newer `TestWidgetsFlutterBinding`
-    // versions report straight to the test's own zone as an uncaught
-    // exception (failing the test itself) in addition to rejecting the
-    // loading Future -- a test-harness-level behavior change from
-    // when this test was written, not a GameRunner bug. Installing an
-    // explicit mock handler that returns null asset data exercises the
-    // exact same "asset not found" `FlutterError` from
-    // `PlatformAssetBundle.load` (see its source), but through the
-    // supported mock-messenger path, so the error only ever surfaces
-    // as the loading Future's rejection -- which is what this test is
-    // actually about.
-    tester.binding.defaultBinaryMessenger.setMockMessageHandler(
-      'flutter/assets',
-      (ByteData? message) async => null,
-    );
-    addTearDown(() => tester.binding.defaultBinaryMessenger
-        .setMockMessageHandler('flutter/assets', null));
+    'GameConfig.packedAtlasId set but no mocked asset bundle never resolves to a '
+    'rendered EngineView -- proves _registerPackedAtlas actually attempts the load '
+    'when config is present (the mirror image of the test above), since '
+    "rootBundle.load's failure becomes the loading Future's error and "
+    "GameRunner's FutureBuilder just keeps showing the loading screen for an "
+    'errored future rather than throwing into the widget tree',
+    (tester) async {
+      // Truly leaving the "flutter/assets" channel with no handler at
+      // all makes `defaultBinaryMessenger.send` return null
+      // *synchronously*, which newer `TestWidgetsFlutterBinding`
+      // versions report straight to the test's own zone as an uncaught
+      // exception (failing the test itself) in addition to rejecting the
+      // loading Future -- a test-harness-level behavior change from
+      // when this test was written, not a GameRunner bug. Installing an
+      // explicit mock handler that returns null asset data exercises the
+      // exact same "asset not found" `FlutterError` from
+      // `PlatformAssetBundle.load` (see its source), but through the
+      // supported mock-messenger path, so the error only ever surfaces
+      // as the loading Future's rejection -- which is what this test is
+      // actually about.
+      tester.binding.defaultBinaryMessenger.setMockMessageHandler(
+        'flutter/assets',
+        (ByteData? message) async => null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMessageHandler(
+          'flutter/assets',
+          null,
+        ),
+      );
 
-    // GameRunner deliberately reports a failed load via
-    // FlutterError.reportError (see game_test.dart's own
-    // "would otherwise just hang on the loading screen forever with no
-    // diagnostic at all" test) rather than swallowing it silently --
-    // expected here too, so it needs the same interception or the test
-    // framework flags the reported error as a test failure.
-    final reported = <FlutterErrorDetails>[];
-    final previousOnError = FlutterError.onError;
-    FlutterError.onError = reported.add;
-    addTearDown(() => FlutterError.onError = previousOnError);
+      // GameRunner deliberately reports a failed load via
+      // FlutterError.reportError (see game_test.dart's own
+      // "would otherwise just hang on the loading screen forever with no
+      // diagnostic at all" test) rather than swallowing it silently --
+      // expected here too, so it needs the same interception or the test
+      // framework flags the reported error as a test failure.
+      final reported = <FlutterErrorDetails>[];
+      final previousOnError = FlutterError.onError;
+      FlutterError.onError = reported.add;
+      addTearDown(() => FlutterError.onError = previousOnError);
 
-    final game = _PackedConfigGame(_EmptyScene());
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
+      final game = _PackedConfigGame(_EmptyScene());
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
 
-    expect(reported, hasLength(1));
-    expect(find.byType(EngineView), findsNothing);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-  });
+      expect(reported, hasLength(1));
+      expect(find.byType(EngineView), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    },
+  );
 
   testWidgets(
-      "a scene's own loadAssets registration under the same id wins over "
-      'auto-registration -- and, since no flutter/assets mock is installed, this '
-      'also proves the auto-registration is skipped entirely rather than attempted '
-      'and clobbering the result', (tester) async {
-    final game = _PackedConfigGame(_OverridingAtlasScene());
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-    await tester.pump();
-    await tester.pump();
+    "a scene's own loadAssets registration under the same id wins over "
+    'auto-registration -- and, since no flutter/assets mock is installed, this '
+    'also proves the auto-registration is skipped entirely rather than attempted '
+    'and clobbering the result',
+    (tester) async {
+      final game = _PackedConfigGame(_OverridingAtlasScene());
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
 
-    expect(tester.takeException(), isNull);
-    final view = tester.widget<EngineView>(find.byType(EngineView));
-    expect(view.atlasRegistry.resolve('packed').regionFor('own'), Rect.zero);
-  });
+      expect(tester.takeException(), isNull);
+      final view = tester.widget<EngineView>(find.byType(EngineView));
+      expect(view.atlasRegistry.resolve('packed').regionFor('own'), Rect.zero);
+    },
+  );
 }

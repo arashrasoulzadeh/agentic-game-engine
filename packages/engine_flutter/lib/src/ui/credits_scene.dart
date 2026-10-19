@@ -59,7 +59,11 @@ abstract class CreditsScene extends Scene {
   double get ambientBrightness => 1.0;
 
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {
     _scenes = scenes;
     _lines.clear();
     _elapsedTime = 0;
@@ -70,13 +74,16 @@ abstract class CreditsScene extends Scene {
       final style = entry.style ?? defaultStyle;
       final textEntity = world.spawn();
       world.storeOf<Position>().set(textEntity, Position(world.width / 2, y));
-      world.storeOf<Text>().set(textEntity, Text(
-        entry.text,
-        fontSize: style.fontSize,
-        colorArgb: style.colorArgb,
-        align: style.alignment,
-        screenSpace: false,
-      ));
+      world.storeOf<Text>().set(
+        textEntity,
+        Text(
+          entry.text,
+          fontSize: style.fontSize,
+          colorArgb: style.colorArgb,
+          align: style.alignment,
+          screenSpace: false,
+        ),
+      );
       _lines.add(_CreditsLine(textEntity, y, style.fontSize * 1.5));
       y += style.fontSize * 1.5;
     }
@@ -84,18 +91,23 @@ abstract class CreditsScene extends Scene {
     // Add skip hint if enabled
     if (showSkipHint) {
       final hintEntity = world.spawn();
-      world.storeOf<Position>().set(hintEntity, Position(world.width / 2, y + 40));
-      world.storeOf<Text>().set(hintEntity, Text(
-        skipHintText,
-        fontSize: 16,
-        colorArgb: 0x88FFFFFF,
-        align: TextAlignment.center,
-        screenSpace: false,
-      ));
+      world.storeOf<Position>().set(
+        hintEntity,
+        Position(world.width / 2, y + 40),
+      );
+      world.storeOf<Text>().set(
+        hintEntity,
+        Text(
+          skipHintText,
+          fontSize: 16,
+          colorArgb: 0x88FFFFFF,
+          align: TextAlignment.center,
+          screenSpace: false,
+        ),
+      );
       _lines.add(_CreditsLine(hintEntity, y + 40, 16 * 1.5));
     }
-
-    }
+  }
 
   @override
   void update(double dt, World world) {
@@ -116,7 +128,9 @@ abstract class CreditsScene extends Scene {
 
     // Check if all content has scrolled past top of screen
     final bottomMostLine = _lines.isNotEmpty
-        ? _lines.map((l) => l.initialY + l.height).reduce((a, b) => a > b ? a : b)
+        ? _lines
+              .map((l) => l.initialY + l.height)
+              .reduce((a, b) => a > b ? a : b)
         : 0;
     if (bottomMostLine - scrollDistance < -world.height) {
       _finished = true;

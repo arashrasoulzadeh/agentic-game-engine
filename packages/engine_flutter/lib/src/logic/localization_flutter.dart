@@ -1,4 +1,6 @@
-import 'dart:ui' as ui show TextAlign, TextDirection, TextStyle, Color, FontWeight, FontStyle;
+import 'dart:ui'
+    as ui
+    show TextAlign, TextDirection, TextStyle, Color, FontWeight, FontStyle;
 
 import 'package:engine_core/engine_core.dart';
 
@@ -9,7 +11,15 @@ class LocalizationFlutter {
 
   /// Initialize with available locales from assets.
   static Future<void> initialize({
-    List<String> supportedLocales = const ['en', 'es', 'fr', 'de', 'ja', 'ar', 'zh'],
+    List<String> supportedLocales = const [
+      'en',
+      'es',
+      'fr',
+      'de',
+      'ja',
+      'ar',
+      'zh',
+    ],
     String? initialLocale,
   }) async {
     // Register common locales
@@ -161,7 +171,9 @@ mixin RTLWidget {
 
   ui.TextDirection get textDirection => LocalizationFlutter.textDirection;
 
-  ui.TextAlign rtlAwareAlign(ui.TextAlign align) => LocalizationFlutter.rtlAwareAlign(align);
+  ui.TextAlign rtlAwareAlign(ui.TextAlign align) =>
+      LocalizationFlutter.rtlAwareAlign(align);
 
-  ui.TextDirection get textDirectionForCurrentLocale => LocalizationFlutter.textDirection;
+  ui.TextDirection get textDirectionForCurrentLocale =>
+      LocalizationFlutter.textDirection;
 }

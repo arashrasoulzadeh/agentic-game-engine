@@ -146,56 +146,57 @@ class GameConfig {
   });
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'orientation': orientation.name,
-        'worldWidth': worldWidth,
-        'worldHeight': worldHeight,
-        'backgroundColor': backgroundColor.toARGB32(),
-        'showFpsOverlay': showFpsOverlay,
-        'showColliderDebug': showColliderDebug,
-        'showPerformanceOverlay': showPerformanceOverlay,
-        'showAutoTileBitmask': showAutoTileBitmask,
-        'fullscreen': fullscreen,
-        'pauseOnBackground': pauseOnBackground,
-        'onScreenControls': onScreenControls.name,
-        'ambientBrightness': ambientBrightness,
-        'singlePassLighting': singlePassLighting,
-        if (maxFps != null) 'maxFps': maxFps,
-        if (fixedTimestepSeconds != null) 'fixedTimestepSeconds': fixedTimestepSeconds,
-        if (packedAtlasId != null) 'packedAtlasId': packedAtlasId,
-        if (packedAtlasImage != null) 'packedAtlasImage': packedAtlasImage,
-        if (packedAtlasManifest != null) 'packedAtlasManifest': packedAtlasManifest,
-      };
+    'title': title,
+    'orientation': orientation.name,
+    'worldWidth': worldWidth,
+    'worldHeight': worldHeight,
+    'backgroundColor': backgroundColor.toARGB32(),
+    'showFpsOverlay': showFpsOverlay,
+    'showColliderDebug': showColliderDebug,
+    'showPerformanceOverlay': showPerformanceOverlay,
+    'showAutoTileBitmask': showAutoTileBitmask,
+    'fullscreen': fullscreen,
+    'pauseOnBackground': pauseOnBackground,
+    'onScreenControls': onScreenControls.name,
+    'ambientBrightness': ambientBrightness,
+    'singlePassLighting': singlePassLighting,
+    if (maxFps != null) 'maxFps': maxFps,
+    if (fixedTimestepSeconds != null)
+      'fixedTimestepSeconds': fixedTimestepSeconds,
+    if (packedAtlasId != null) 'packedAtlasId': packedAtlasId,
+    if (packedAtlasImage != null) 'packedAtlasImage': packedAtlasImage,
+    if (packedAtlasManifest != null) 'packedAtlasManifest': packedAtlasManifest,
+  };
 
   factory GameConfig.fromJson(Map<String, dynamic> json) => GameConfig(
-        title: json['title'] as String? ?? 'Game',
-        orientation: GameOrientation.values.firstWhere(
-          (o) => o.name == json['orientation'],
-          orElse: () => GameOrientation.auto,
-        ),
-        worldWidth: (json['worldWidth'] as num).toDouble(),
-        worldHeight: (json['worldHeight'] as num).toDouble(),
-        backgroundColor: json['backgroundColor'] != null
-            ? Color(json['backgroundColor'] as int)
-            : const Color(0xFF000000),
-        showFpsOverlay: json['showFpsOverlay'] as bool? ?? false,
-        showColliderDebug: json['showColliderDebug'] as bool? ?? false,
-        showPerformanceOverlay: json['showPerformanceOverlay'] as bool? ?? false,
-        showAutoTileBitmask: json['showAutoTileBitmask'] as bool? ?? false,
-        fullscreen: json['fullscreen'] as bool? ?? false,
-        pauseOnBackground: json['pauseOnBackground'] as bool? ?? true,
-        onScreenControls: OnScreenControlsMode.values.firstWhere(
-          (m) => m.name == json['onScreenControls'],
-          orElse: () => OnScreenControlsMode.auto,
-        ),
-        ambientBrightness: (json['ambientBrightness'] as num?)?.toDouble() ?? 1.0,
-        maxFps: (json['maxFps'] as num?)?.toInt(),
-        fixedTimestepSeconds: (json['fixedTimestepSeconds'] as num?)?.toDouble(),
-        singlePassLighting: json['singlePassLighting'] as bool? ?? false,
-        packedAtlasId: json['packedAtlasId'] as String?,
-        packedAtlasImage: json['packedAtlasImage'] as String?,
-        packedAtlasManifest: json['packedAtlasManifest'] as String?,
-      );
+    title: json['title'] as String? ?? 'Game',
+    orientation: GameOrientation.values.firstWhere(
+      (o) => o.name == json['orientation'],
+      orElse: () => GameOrientation.auto,
+    ),
+    worldWidth: (json['worldWidth'] as num).toDouble(),
+    worldHeight: (json['worldHeight'] as num).toDouble(),
+    backgroundColor: json['backgroundColor'] != null
+        ? Color(json['backgroundColor'] as int)
+        : const Color(0xFF000000),
+    showFpsOverlay: json['showFpsOverlay'] as bool? ?? false,
+    showColliderDebug: json['showColliderDebug'] as bool? ?? false,
+    showPerformanceOverlay: json['showPerformanceOverlay'] as bool? ?? false,
+    showAutoTileBitmask: json['showAutoTileBitmask'] as bool? ?? false,
+    fullscreen: json['fullscreen'] as bool? ?? false,
+    pauseOnBackground: json['pauseOnBackground'] as bool? ?? true,
+    onScreenControls: OnScreenControlsMode.values.firstWhere(
+      (m) => m.name == json['onScreenControls'],
+      orElse: () => OnScreenControlsMode.auto,
+    ),
+    ambientBrightness: (json['ambientBrightness'] as num?)?.toDouble() ?? 1.0,
+    maxFps: (json['maxFps'] as num?)?.toInt(),
+    fixedTimestepSeconds: (json['fixedTimestepSeconds'] as num?)?.toDouble(),
+    singlePassLighting: json['singlePassLighting'] as bool? ?? false,
+    packedAtlasId: json['packedAtlasId'] as String?,
+    packedAtlasImage: json['packedAtlasImage'] as String?,
+    packedAtlasManifest: json['packedAtlasManifest'] as String?,
+  );
 
   /// Loads a `GameConfig` from a bundled JSON asset, e.g.
   /// `assets/game_config.json` declared in the game's `pubspec.yaml`.

@@ -59,18 +59,18 @@ class SelectionMarkerSystem extends System {
         world.storeOf<SelectionMarker>().set(marker, SelectionMarker(owner));
         world.storeOf<Position>().set(marker, Position(0, 0));
         world.storeOf<HudBar>().set(
-              marker,
-              HudBar(
-                value: 1,
-                maxValue: 1,
-                width: cellSize,
-                height: barHeight,
-                fillColorArgb: colorArgb,
-                backgroundColorArgb: 0x00000000,
-                screenSpace: false,
-                zIndex: 1000,
-              ),
-            );
+          marker,
+          HudBar(
+            value: 1,
+            maxValue: 1,
+            width: cellSize,
+            height: barHeight,
+            fillColorArgb: colorArgb,
+            backgroundColorArgb: 0x00000000,
+            screenSpace: false,
+            zIndex: 1000,
+          ),
+        );
       }
       final p = positions.get(marker)!;
       p.x = pos.x - cellSize / 2;
@@ -114,20 +114,45 @@ class GridTapController {
 
   /// Tap on a own unit selects it; otherwise, with a selection, issues
   /// move/attack orders to that cell; otherwise nothing.
-  GridTapResult handleTap(World world, Offset worldPosition, {bool additive = false}) {
+  GridTapResult handleTap(
+    World world,
+    Offset worldPosition, {
+    bool additive = false,
+  }) {
     final col = colOf(worldPosition.dx);
     final row = rowOf(worldPosition.dy);
-    if (selectAtCell(world, col, row, additive: additive, team: localTeam) != null) {
+    if (selectAtCell(world, col, row, additive: additive, team: localTeam) !=
+        null) {
       return GridTapResult.selected;
     }
-    if (selectedEntities(world).isNotEmpty && commandSelected(world, col, row, replace: !additive, team: localTeam, formation: formation) > 0) {
+    if (selectedEntities(world).isNotEmpty &&
+        commandSelected(
+              world,
+              col,
+              row,
+              replace: !additive,
+              team: localTeam,
+              formation: formation,
+            ) >
+            0) {
       return GridTapResult.commanded;
     }
     return GridTapResult.ignored;
   }
 
   /// Box-selects between two world points (a drag rectangle).
-  int handleDrag(World world, Offset start, Offset end, {bool additive = false}) =>
-      selectInBox(world, colOf(start.dx), rowOf(start.dy), colOf(end.dx), rowOf(end.dy),
-          additive: additive, team: localTeam);
+  int handleDrag(
+    World world,
+    Offset start,
+    Offset end, {
+    bool additive = false,
+  }) => selectInBox(
+    world,
+    colOf(start.dx),
+    rowOf(start.dy),
+    colOf(end.dx),
+    rowOf(end.dy),
+    additive: additive,
+    team: localTeam,
+  );
 }

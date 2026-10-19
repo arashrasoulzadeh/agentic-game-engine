@@ -7,9 +7,14 @@ class TapScene extends Scene {
   late SceneController scenes;
   final taps = <Offset>[];
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {
     this.scenes = scenes;
   }
+
   @override
   void handleTap(World world, SceneController scenes, Offset worldPosition) {
     taps.add(worldPosition);
@@ -21,15 +26,22 @@ class TapGame extends Game {
   TapGame(this.scene);
   @override
   GameConfig get config => const GameConfig(
-    worldWidth: 800, worldHeight: 600, onScreenControls: OnScreenControlsMode.off);
+    worldWidth: 800,
+    worldHeight: 600,
+    onScreenControls: OnScreenControlsMode.off,
+  );
   @override
   Scene createInitialScene() => scene;
 }
 
 void main() {
-  testWidgets('taps route only to the overlay until it is dismissed', (tester) async {
+  testWidgets('taps route only to the overlay until it is dismissed', (
+    tester,
+  ) async {
     final scene = TapScene();
-    await tester.pumpWidget(MaterialApp(home: GameRunner(game: TapGame(scene))));
+    await tester.pumpWidget(
+      MaterialApp(home: GameRunner(game: TapGame(scene))),
+    );
     await tester.pump();
     await tester.pump();
     await tester.tapAt(const Offset(100, 100));
@@ -49,14 +61,22 @@ void main() {
     expect(overlay.taps, hasLength(1));
   });
 
-  testWidgets('replacing FrameStats redirects subsequent frame measurements', (tester) async {
+  testWidgets('replacing FrameStats redirects subsequent frame measurements', (
+    tester,
+  ) async {
     final world = World(width: 800, height: 600);
     registerCoreComponents(world);
     registerFlutterComponents(world);
     final first = FrameStats(), second = FrameStats();
     final camera = Camera(), atlas = AtlasRegistry();
-    Widget view(FrameStats? stats) => MaterialApp(home: EngineView(
-      world: world, atlasRegistry: atlas, camera: camera, frameStats: stats));
+    Widget view(FrameStats? stats) => MaterialApp(
+      home: EngineView(
+        world: world,
+        atlasRegistry: atlas,
+        camera: camera,
+        frameStats: stats,
+      ),
+    );
     await tester.pumpWidget(view(first));
     await tester.pump(const Duration(milliseconds: 16));
     await tester.pump(const Duration(milliseconds: 16));

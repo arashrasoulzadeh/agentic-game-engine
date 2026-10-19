@@ -73,8 +73,13 @@ class Camera {
   /// Recomputed each [update] call; zero when no shake is active.
   Offset get shakeOffset => Offset(_shakeOffsetX, _shakeOffsetY);
 
-  Camera({this.x = 0, this.y = 0, this.zoom = 1, Random? random, this.viewportManager})
-      : _random = random ?? Random();
+  Camera({
+    this.x = 0,
+    this.y = 0,
+    this.zoom = 1,
+    Random? random,
+    this.viewportManager,
+  }) : _random = random ?? Random();
 
   /// Starts a screen shake effect.
   ///
@@ -97,14 +102,16 @@ class Camera {
     if (!stack) {
       _shakes.clear();
     }
-    _shakes.add(_ShakeEffect(
-      magnitude: magnitude,
-      duration: duration,
-      frequency: frequency,
-      decay: decay,
-      impulse: impulse,
-      axis: axis,
-    ));
+    _shakes.add(
+      _ShakeEffect(
+        magnitude: magnitude,
+        duration: duration,
+        frequency: frequency,
+        decay: decay,
+        impulse: impulse,
+        axis: axis,
+      ),
+    );
   }
 
   /// Advances all active shake effects by [dt] and recomputes this
@@ -184,11 +191,8 @@ class Camera {
         viewportSize,
         null, // Safe area is handled by EngineView's MediaQuery
       );
-      return layout.worldToScreen(
-        Offset(worldX, worldY),
-        Offset(x, y),
-        zoom,
-      ) + Offset(_shakeOffsetX * zoom, _shakeOffsetY * zoom);
+      return layout.worldToScreen(Offset(worldX, worldY), Offset(x, y), zoom) +
+          Offset(_shakeOffsetX * zoom, _shakeOffsetY * zoom);
     }
 
     return Offset(
@@ -206,10 +210,7 @@ class Camera {
   /// skewed by the jitter.
   Offset screenToWorld(Offset screen, Size viewportSize) {
     if (viewportManager != null) {
-      final layout = viewportManager!.computeLayout(
-        viewportSize,
-        null,
-      );
+      final layout = viewportManager!.computeLayout(viewportSize, null);
       return layout.screenToWorld(
         screen - Offset(_shakeOffsetX * zoom, _shakeOffsetY * zoom),
         Offset(x, y),

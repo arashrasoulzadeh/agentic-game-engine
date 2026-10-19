@@ -62,7 +62,10 @@ class GamepadBindingsStorage {
       (json['axes'] as Map<String, dynamic>).forEach((key, value) {
         if (value != null) {
           final List<dynamic> valueList = value as List<dynamic>;
-          axisBindings[int.parse(key)] = (valueList[0] as String, valueList[1] as String);
+          axisBindings[int.parse(key)] = (
+            valueList[0] as String,
+            valueList[1] as String,
+          );
         }
       });
       controller.axisBindings.addAll(axisBindings);

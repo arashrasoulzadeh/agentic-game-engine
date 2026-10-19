@@ -5,23 +5,32 @@ import 'package:flutter_test/flutter_test.dart';
 class _TestSettingsMenu extends SettingsMenuScene {
   @override
   List<SettingsWidgetSpec> get widgets => [
-        const SettingsToggleSpec(id: 'sfx', label: 'Sound Effects', optionKey: 'sfxOn'),
-        const SettingsSliderSpec(
-          id: 'vol', label: 'Volume', optionKey: 'volume', min: 0, max: 1),
-        const SettingsDropdownSpec(
-          id: 'quality',
-          label: 'Quality',
-          optionKey: 'quality',
-          options: {'low': 'Low', 'high': 'High'},
-        ),
-        const SettingsListSpec(
-          id: 'region',
-          label: 'Region',
-          optionKey: 'region',
-          items: {'us': 'United States', 'eu': 'Europe'},
-        ),
-        SettingsKeyBindingSpec(id: 'jump', label: 'Jump', actionId: 'jump'),
-      ];
+    const SettingsToggleSpec(
+      id: 'sfx',
+      label: 'Sound Effects',
+      optionKey: 'sfxOn',
+    ),
+    const SettingsSliderSpec(
+      id: 'vol',
+      label: 'Volume',
+      optionKey: 'volume',
+      min: 0,
+      max: 1,
+    ),
+    const SettingsDropdownSpec(
+      id: 'quality',
+      label: 'Quality',
+      optionKey: 'quality',
+      options: {'low': 'Low', 'high': 'High'},
+    ),
+    const SettingsListSpec(
+      id: 'region',
+      label: 'Region',
+      optionKey: 'region',
+      items: {'us': 'United States', 'eu': 'Europe'},
+    ),
+    SettingsKeyBindingSpec(id: 'jump', label: 'Jump', actionId: 'jump'),
+  ];
 }
 
 void main() {
@@ -52,28 +61,46 @@ void main() {
     });
 
     test('SettingsToggleSpec shows label and on/off state', () {
-      final label = scene.buttons().firstWhere((b) => b.actionId == 'sfx').label;
+      final label = scene
+          .buttons()
+          .firstWhere((b) => b.actionId == 'sfx')
+          .label;
       expect(label, 'Sound Effects: OFF');
     });
 
     test('SettingsSliderSpec shows label and formatted value', () {
-      final label = scene.buttons().firstWhere((b) => b.actionId == 'vol').label;
+      final label = scene
+          .buttons()
+          .firstWhere((b) => b.actionId == 'vol')
+          .label;
       expect(label, startsWith('Volume: '));
     });
 
     test('SettingsDropdownSpec shows label and placeholder when unset', () {
-      final label = scene.buttons().firstWhere((b) => b.actionId == 'quality').label;
+      final label = scene
+          .buttons()
+          .firstWhere((b) => b.actionId == 'quality')
+          .label;
       expect(label, 'Quality: Select...');
     });
 
-    test('SettingsListSpec shows label and selected item, not just the bare label', () async {
-      await scene.optionsManager.setOption('region', 'eu');
-      final label = scene.buttons().firstWhere((b) => b.actionId == 'region').label;
-      expect(label, 'Region: Europe');
-    });
+    test(
+      'SettingsListSpec shows label and selected item, not just the bare label',
+      () async {
+        await scene.optionsManager.setOption('region', 'eu');
+        final label = scene
+            .buttons()
+            .firstWhere((b) => b.actionId == 'region')
+            .label;
+        expect(label, 'Region: Europe');
+      },
+    );
 
     test('SettingsKeyBindingSpec shows label and binding prompt', () {
-      final label = scene.buttons().firstWhere((b) => b.actionId == 'jump').label;
+      final label = scene
+          .buttons()
+          .firstWhere((b) => b.actionId == 'jump')
+          .label;
       expect(label, 'Jump: Press to bind...');
     });
   });

@@ -89,28 +89,28 @@ class Sprite {
   });
 
   Map<String, dynamic> toJson() => {
-        'atlasId': atlasId,
-        'region': region,
-        'rotation': rotation,
-        'scaleX': scaleX,
-        'scaleY': scaleY,
-        'screenSpace': screenSpace,
-        'offsetX': offsetX,
-        'offsetY': offsetY,
-        'zIndex': zIndex,
-        if (normalAtlasId != null) 'normalAtlasId': normalAtlasId,
-      };
+    'atlasId': atlasId,
+    'region': region,
+    'rotation': rotation,
+    'scaleX': scaleX,
+    'scaleY': scaleY,
+    'screenSpace': screenSpace,
+    'offsetX': offsetX,
+    'offsetY': offsetY,
+    'zIndex': zIndex,
+    if (normalAtlasId != null) 'normalAtlasId': normalAtlasId,
+  };
 
   factory Sprite.fromJson(Map<String, dynamic> json) => Sprite(
-        json['atlasId'] as String,
-        json['region'] as String,
-        rotation: (json['rotation'] as num?)?.toDouble() ?? 0,
-        scaleX: (json['scaleX'] as num?)?.toDouble() ?? 1,
-        scaleY: (json['scaleY'] as num?)?.toDouble() ?? 1,
-        screenSpace: json['screenSpace'] as bool? ?? false,
-        offsetX: (json['offsetX'] as num?)?.toDouble() ?? 0,
-        offsetY: (json['offsetY'] as num?)?.toDouble() ?? 0,
-        zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
-        normalAtlasId: json['normalAtlasId'] as String?,
-      );
+    json['atlasId'] as String,
+    json['region'] as String,
+    rotation: (json['rotation'] as num?)?.toDouble() ?? 0,
+    scaleX: (json['scaleX'] as num?)?.toDouble() ?? 1,
+    scaleY: (json['scaleY'] as num?)?.toDouble() ?? 1,
+    screenSpace: json['screenSpace'] as bool? ?? false,
+    offsetX: (json['offsetX'] as num?)?.toDouble() ?? 0,
+    offsetY: (json['offsetY'] as num?)?.toDouble() ?? 0,
+    zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
+    normalAtlasId: json['normalAtlasId'] as String?,
+  );
 }

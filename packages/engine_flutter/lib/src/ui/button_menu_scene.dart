@@ -54,9 +54,9 @@ class MenuButtonSpec {
     this.labelColorArgb = 0xFFFFFFFF,
     this.labelFontSize = 20,
   }) : assert(
-          (atlasId == null) == (region == null),
-          'atlasId and region must be set together, or not at all',
-        );
+         (atlasId == null) == (region == null),
+         'atlasId and region must be set together, or not at all',
+       );
 
   /// Whether this spec supplies its own art instead of using the
   /// engine's generated flat-rect button.
@@ -146,7 +146,12 @@ abstract class ButtonMenuScene extends Scene {
       );
       _spawnedButtonEntities.add(spawned.button);
       if (spawned.label != null) _spawnedButtonEntities.add(spawned.label!);
-      onButtonSpawned(world, spec, i, Offset(world.width / 2, startY + i * buttonSpacing));
+      onButtonSpawned(
+        world,
+        spec,
+        i,
+        Offset(world.width / 2, startY + i * buttonSpacing),
+      );
     }
   }
 
@@ -159,7 +164,12 @@ abstract class ButtonMenuScene extends Scene {
   /// here must be registered via [trackExtraEntity], or it leaks past a
   /// later [refreshButtons] call (which only knows to destroy the
   /// button/label entities [_spawnButtons] itself tracks).
-  void onButtonSpawned(World world, MenuButtonSpec spec, int index, Offset position) {}
+  void onButtonSpawned(
+    World world,
+    MenuButtonSpec spec,
+    int index,
+    Offset position,
+  ) {}
 
   /// Registers an entity an [onButtonSpawned] override created, so
   /// [refreshButtons] tears it down along with this menu's own button
@@ -186,7 +196,11 @@ abstract class ButtonMenuScene extends Scene {
   }
 
   @override
-  Future<void> populate(World world, SceneController scenes, GameState state) async {
+  Future<void> populate(
+    World world,
+    SceneController scenes,
+    GameState state,
+  ) async {
     this.state = state;
     _spawnButtons(world);
   }
@@ -199,10 +213,15 @@ abstract class ButtonMenuScene extends Scene {
     // atlasId/region draws from whatever the game itself registers
     // (this method is meant to be overridden, calling super.loadAssets()
     // first, to add that -- see MainMenuScene in the sample game).
-    final generatedLabels =
-        buttons().where((b) => !b.hasCustomArt).map((b) => b.label).toList();
+    final generatedLabels = buttons()
+        .where((b) => !b.hasCustomArt)
+        .map((b) => b.label)
+        .toList();
     if (generatedLabels.isNotEmpty) {
-      atlasRegistry.register(kMenuButtonAtlasId, await buildMenuButtonAtlas(generatedLabels));
+      atlasRegistry.register(
+        kMenuButtonAtlasId,
+        await buildMenuButtonAtlas(generatedLabels),
+      );
     }
     return atlasRegistry;
   }
