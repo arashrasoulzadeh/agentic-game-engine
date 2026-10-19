@@ -92,6 +92,7 @@ nav:
       - AI trees and state machines: concepts/ai.md
       - Tweens and particles: concepts/effects.md
       - Performance: concepts/performance.md
+      - Analytics and error reporting: concepts/analytics-and-errors.md
       - The agent API: concepts/agent-api.md
       - Rendering: concepts/rendering.md
       - Platformer gameplay: concepts/platformer.md

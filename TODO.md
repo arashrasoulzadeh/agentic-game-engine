@@ -201,7 +201,6 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 - [ ] Settings menus, `PlayerOptions` persistence and accessibility options
       (colorblind modes, text scaling, remapping).
 - [ ] Viewport / aspect-ratio / safe-area handling.
-- [ ] Error reporting and analytics hooks.
 - [ ] `JobSystem` (worker isolates): no tests and no guidance; the performance guide
       (`docs/concepts/performance.md`) covers the profiler, benchmarks and fixed timestep.
 - [ ] Lighting deep-dive (`Light2D`, shadows, single-pass shader, day/night)

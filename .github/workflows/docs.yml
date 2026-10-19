@@ -48,16 +48,24 @@ jobs:
 
       # The Flutter SDK bundles Dart, so one setup documents every package; the
       # Flutter-dependent ones need `flutter pub get` rather than `dart pub get`.
+      # Pinned: dartdoc 9.0.6 (bundled with Flutter 3.47.x) crashes with a RangeError in
+      # DocumentationComment._stripDocImports on engine_flutter. 3.38.9 documents it cleanly.
+      # Bump deliberately, after running `dart doc` on engine_flutter with the new SDK.
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.38.9
 
       - name: Generate API docs
         run: |
           for pkg in engine_schema engine_core engine_flutter engine_platformer engine_strategy; do
-            (cd packages/$pkg && flutter pub get && dart doc . )
-            mkdir -p site/api/$pkg
-            cp -r packages/$pkg/doc/api/. site/api/$pkg/
+            if (cd packages/$pkg && flutter pub get && dart doc . ); then
+              mkdir -p site/api/$pkg
+              cp -r packages/$pkg/doc/api/. site/api/$pkg/
+            else
+              # One package's API docs failing must not stop the guides from deploying.
+              echo "::warning::API docs for $pkg failed to build; skipping them"
+            fi
           done
 
       - uses: actions/upload-pages-artifact@v5
