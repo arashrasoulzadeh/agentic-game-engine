@@ -1,5 +1,27 @@
 import 'package:engine_core/engine_core.dart';
 
+/// A bonus a generator earns for being owned in numbers: at [owned] copies its output is multiplied by
+/// [multiplier] (the genre's "25 cursors: x2" ladder). Reached milestones stack.
+class Milestone {
+  /// Copies needed.
+  final int owned;
+
+  /// Factor applied to that generator's output once [owned] is reached.
+  final BigNumber multiplier;
+
+  const Milestone(this.owned, this.multiplier);
+
+  Map<String, dynamic> toJson() => {
+    'owned': owned,
+    'multiplier': multiplier.toJson(),
+  };
+
+  factory Milestone.fromJson(Map<String, dynamic> json) => Milestone(
+    (json['owned'] as num).toInt(),
+    BigNumber.fromJson((json['multiplier'] ?? '2') as Object),
+  );
+}
+
 /// Something the player buys copies of that produces resources every second: a cursor, a farm, a
 /// factory. One entity per kind of generator; [owned] is how many the player has.
 class Generator {
@@ -27,6 +49,9 @@ class Generator {
   /// Technologies the player needs before it can be bought (see `availableTech`).
   final List<String> requires;
 
+  /// Output bonuses unlocked by owning many copies.
+  final List<Milestone> milestones;
+
   Generator({
     required this.id,
     required this.cost,
@@ -36,8 +61,19 @@ class Generator {
     this.costResource = 'coins',
     Map<String, BigNumber>? output,
     List<String>? requires,
+    List<Milestone>? milestones,
   }) : output = output ?? {},
+       milestones = milestones ?? [],
        requires = requires ?? const [];
+
+  /// The product of every milestone reached at the current [owned].
+  BigNumber get milestoneMultiplier {
+    var m = BigNumber.one;
+    for (final ms in milestones) {
+      if (owned >= ms.owned) m = m * ms.multiplier;
+    }
+    return m;
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -48,6 +84,8 @@ class Generator {
     'cost': cost.toJson(),
     'output': {for (final e in output.entries) e.key: e.value.toJson()},
     if (requires.isNotEmpty) 'requires': requires,
+    if (milestones.isNotEmpty)
+      'milestones': [for (final m in milestones) m.toJson()],
   };
 
   factory Generator.fromJson(Map<String, dynamic> json) => Generator(
@@ -63,6 +101,10 @@ class Generator {
     },
     requires: [
       for (final r in (json['requires'] as List? ?? const [])) r as String,
+    ],
+    milestones: [
+      for (final m in (json['milestones'] as List? ?? const []))
+        Milestone.fromJson((m as Map).cast<String, dynamic>()),
     ],
   );
 }

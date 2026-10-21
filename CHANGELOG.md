@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `engine_idle` generator milestones: `milestones: [{"owned": 25, "multiplier": "2"}]` multiplies a generator's output once enough copies are owned; reached milestones stack, and the definition validator reports bad ones with their path.
 - `game_agent create --template idle_game`: a playable idle game driven by `assets/idle_game.json` (tap, generators, upgrades, save, offline catch-up) with a widget test. `game_agent upgrade` now repins `engine_idle` too; the CLI CI template matrix builds it.
 
 ### Fixed

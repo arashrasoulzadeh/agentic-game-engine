@@ -90,6 +90,32 @@ void main() {
       return validateIdleDefinition(j);
     }
 
+    test('bad milestones', () {
+      List<String> ms(Object v) =>
+          problems((j) => (j['generators'] as List)[0]['milestones'] = v);
+      expect(ms('x'), contains('generators[0].milestones must be a list'));
+      expect(
+        ms([
+          {'owned': 0, 'multiplier': '2'},
+        ]),
+        contains(
+          'generators[0].milestones[0].owned must be a whole number >= 1',
+        ),
+      );
+      expect(
+        ms([
+          {'owned': 5, 'multiplier': 'x'},
+        ]),
+        contains('generators[0].milestones[0].multiplier is not a number'),
+      );
+      expect(
+        ms([
+          {'owned': 5, 'multiplier': '2'},
+        ]),
+        isEmpty,
+      );
+    });
+
     test('missing and duplicate ids', () {
       expect(
         problems((j) => (j['generators'] as List)[0].remove('id')),

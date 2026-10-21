@@ -812,6 +812,7 @@ Idle-game data. Registered by `registerIdleComponents`.
 | `cost` | `object` | required |
 | `output` | `object` |  |
 | `requires` | `list` |  |
+| `milestones` | `list` |  |
 
 ### `upgrade`
 

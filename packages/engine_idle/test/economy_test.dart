@@ -60,6 +60,31 @@ Upgrade _upgrade(
 }
 
 void main() {
+  group('milestones', () {
+    test('reached milestones multiply that generator and stack', () {
+      final g = _game();
+      final cursor = g.world.storeOf<Generator>().get(g.cursor)!;
+      cursor.milestones.addAll([Milestone(10, n('2')), Milestone(20, n('3'))]);
+      cursor.owned = 9;
+      expect(computeIncome(g.world)['coins']!.approxEquals(n('0.9')), isTrue);
+      cursor.owned = 10;
+      expect(computeIncome(g.world)['coins']!.approxEquals(n('2')), isTrue);
+      cursor.owned = 20;
+      expect(computeIncome(g.world)['coins']!.approxEquals(n('12')), isTrue);
+    });
+
+    test('survive a JSON round trip', () {
+      final g = Generator(
+        id: 'x',
+        cost: GeometricCost(base: n('1'), growth: 1.1),
+        milestones: [Milestone(25, n('2'))],
+      );
+      final back = Generator.fromJson(g.toJson());
+      expect(back.milestones.single.owned, 25);
+      expect(back.milestones.single.multiplier, n('2'));
+    });
+  });
+
   group('income', () {
     test('owned x output, summed over generators', () {
       final g = _game();

@@ -20,7 +20,7 @@ Map<String, BigNumber> computeIncome(World world) {
   for (final id in _sortedIds(generators.length, generators.entityAt)) {
     final g = generators.get(id)!;
     if (g.owned <= 0) continue;
-    var factor = global * BigNumber.from(g.owned);
+    var factor = global * BigNumber.from(g.owned) * g.milestoneMultiplier;
     for (final u in bought) {
       if (u.target == 'all' || u.target == g.id) factor = factor * u.multiplier;
     }

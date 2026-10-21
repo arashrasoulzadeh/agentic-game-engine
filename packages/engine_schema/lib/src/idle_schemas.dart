@@ -12,6 +12,7 @@ const generatorSchema = ComponentSchema('generator', [
   FieldSchema('cost', FieldType.object, required: true),
   FieldSchema('output', FieldType.object),
   FieldSchema('requires', FieldType.list),
+  FieldSchema('milestones', FieldType.list),
 ]);
 
 const upgradeSchema = ComponentSchema('upgrade', [

@@ -12,7 +12,7 @@ import 'register_components.dart';
 ///   "resources": { "coins": { "start": "10" } },
 ///   "generators": [
 ///     { "id": "cursor", "name": "Cursor", "cost": { "type": "geometric", "base": "15", "growth": 1.15 },
-///       "output": { "coins": "0.1" } }
+///       "output": { "coins": "0.1" }, "milestones": [ { "owned": 25, "multiplier": "2" } ] }
 ///   ],
 ///   "upgrades": [ { "id": "x2", "target": "cursor", "multiplier": "2", "cost": { "coins": "100" } } ],
 ///   "achievements": [ { "id": "rich", "stat": "lifetime:coins", "atLeast": "1000", "reward": "1.1" } ],
@@ -120,6 +120,23 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
       }
     } else if (out != null) {
       errors.add('$p.output must be an object');
+    }
+    final ms = g['milestones'];
+    if (ms != null && ms is! List) {
+      errors.add('$p.milestones must be a list');
+    } else if (ms is List) {
+      for (var j = 0; j < ms.length; j++) {
+        final m = ms[j];
+        if (m is! Map) {
+          errors.add('$p.milestones[$j] must be an object');
+          continue;
+        }
+        final at = m['owned'];
+        if (at is! int || at < 1) {
+          errors.add('$p.milestones[$j].owned must be a whole number >= 1');
+        }
+        number(m['multiplier'], '$p.milestones[$j].multiplier', positive: true);
+      }
     }
     final max = g['maxOwned'];
     if (max != null && (max is! int || max < 1)) {
