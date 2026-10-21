@@ -42,6 +42,7 @@ export 'src/ecs/event_bus.dart';
 export 'src/ecs/event_helpers.dart';
 export 'src/content/game_state.dart';
 export 'src/content/big_number.dart';
+export 'src/content/big_treasury.dart';
 export 'src/content/number_format.dart';
 export 'src/content/level_document.dart';
 export 'src/content/level_diff.dart';
@@ -139,6 +140,7 @@ import 'src/turn/combat.dart';
 import 'src/turn/status.dart';
 import 'src/turn/objectives.dart';
 import 'src/turn/carry.dart';
+import 'src/content/big_treasury.dart';
 import 'src/turn/economy.dart';
 import 'src/turn/construction.dart';
 import 'src/turn/gathering.dart';
@@ -407,6 +409,12 @@ void registerCoreComponents(World world) {
     (p) => p.toJson(),
     Producer.fromJson,
     schema: producerSchema,
+  );
+  world.components.register<BigTreasury>(
+    'bigTreasury',
+    (t) => t.toJson(),
+    BigTreasury.fromJson,
+    schema: bigTreasurySchema,
   );
   world.components.register<ResourceNode>(
     'resourceNode',

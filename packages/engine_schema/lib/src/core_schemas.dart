@@ -323,3 +323,8 @@ const techStateSchema = ComponentSchema('techState', [
 const providesSchema = ComponentSchema('provides', [
   FieldSchema('tech', FieldType.list),
 ]);
+
+const bigTreasurySchema = ComponentSchema('bigTreasury', [
+  FieldSchema('amounts', FieldType.object),
+  FieldSchema('incomePerSecond', FieldType.object),
+]);

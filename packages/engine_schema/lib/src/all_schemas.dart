@@ -42,6 +42,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'flagRules': flagRulesSchema,
   'treasury': treasurySchema,
   'producer': producerSchema,
+  'bigTreasury': bigTreasurySchema,
   'resourceNode': resourceNodeSchema,
   'depot': depotSchema,
   'gatherer': gathererSchema,

@@ -46,9 +46,10 @@ and the package maps in `CLAUDE.md`, the root README and the architecture page. 
 `Treasury.amounts` is `Map<String, int>`: 64-bit, so it overflows in a long incremental game, and the
 fractional carry is a `double` that loses precision at large magnitudes.
 
-- [ ] **Treasury on `BigNumber`** — either a `BigTreasury` beside the existing one, or a migration of
-      `Treasury` with old saves (plain ints) still loading. Done when: income of 1e-3/s over 1e9 s is
-      correct to the stated tolerance, `spend` stays all-or-nothing, and an old save loads unchanged.
+- [ ] **Use `BigTreasury` in the strategy economy?** `BigTreasury` (`engine_core`) is the idle counterpart of
+      `Treasury` and the old int `Treasury` is deliberately untouched, so existing saves keep loading. Decide
+      whether `Producer` / gathering / construction should also accept it (they take `Treasury` today); idle
+      games do not need them to.
 - [ ] **Number formatting, remaining** — `formatBigNumber` (suffix / scientific / engineering, decimals, decimal
       separator, rounding carry) is done in `engine_core`. Left: wire the locale's separators through
       `LocalizationManager` automatically, and group (thousands) separators for plain numbers.
@@ -175,7 +176,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 ## Suggested order
 
 0. ~~Scaffold `engine_idle`~~ (done).
-1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); next: the treasury on `BigNumber`.
+1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury` done; next: offline progress.
 2. `OfflineProgress` and deterministic bulk advance.
 3. Generator / upgrade data, cost curves, multiplier stack, buy modes.
 4. Save versioning, autosave, export/import.
