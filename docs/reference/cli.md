@@ -79,25 +79,33 @@ manifest for `GameConfig.packedAtlasId`. Options: `--input/-i`,
 ## build-release
 
 ```bash
-game_agent build-release --android --keystore-path release.jks --key-alias upload
+game_agent build-release --android --keystore-path release.jks --keystore-password "$KS_PASS" \
+    --key-alias upload --key-password "$KEY_PASS"
 game_agent build-release --no-android --ios --team-id ABCDE12345 --dry-run
 ```
 
 | Option | Meaning |
 |---|---|
-| `-a/--[no-]android` | Build an AAB (default on). |
-| `-i/--[no-]ios` | Build an IPA (default off, macOS only). |
+| `-a/--[no-]android` | Build an AAB with `flutter build appbundle` (default on). |
+| `-i/--[no-]ios` | Build an IPA with `flutter build ipa` (default off, macOS only). |
 | `--build-name`, `--build-number` | Override the `pubspec.yaml` version. |
-| `--keystore-path/-password`, `--key-alias/-password` | Android signing. |
-| `--team-id`, `--provisioning-profile`, `--codesign-identity`, `--export-options-plist` | iOS signing. |
-| `--[no-]no-codesign` | Unsigned iOS build for testing. |
+| `--keystore-path/-password`, `--key-alias/-password` | Android signing - all four, or none. |
+| `--team-id` | iOS: generate an automatic-signing `ExportOptions.plist` for this team. |
+| `--export-options-plist` | iOS: your own export options (needed for manual signing). |
+| `--provisioning-profile`, `--codesign-identity` | Accepted, but an **error** without `--export-options-plist`: `flutter build ipa` has no such flags, so put them in the plist. |
+| `--no-codesign` | Unsigned iOS build for testing. |
 | `--[no-]split-per-abi` | Smaller per-ABI downloads. |
 | `-f/--flavor`, `-t/--target`, `-d/--project-dir` | Flutter build selection. |
 | `--[no-]dry-run`, `-v/--[no-]verbose` | Print instead of run / more output. |
 
+Flutter has no `--keystore` flag, so Android signing works through `android/key.properties`: the command
+writes it for the build (and deletes it afterwards, since it holds passwords) and **refuses to build
+if the project's `android/app/build.gradle(.kts)` does not read it**, printing the snippet to add. Without that
+refusal Flutter would sign with the debug key, which Google Play rejects. See [Releasing](../releasing.md).
+
 !!! warning
     Passwords on the command line end up in shell history. Prefer environment
-    variables or your CI's secret store.
+    variables (as above) or your CI's secret store.
 
 ## studio
 

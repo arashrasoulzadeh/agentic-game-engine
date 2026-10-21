@@ -73,6 +73,7 @@ nav:
   - Home: README.md
   - Start:
       - Getting started: getting-started.md
+      - Releasing to the stores: releasing.md
       - FAQ & troubleshooting: faq.md
   - Tutorials:
       - Overview: tutorials/README.md

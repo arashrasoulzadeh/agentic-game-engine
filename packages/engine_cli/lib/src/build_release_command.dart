@@ -5,6 +5,8 @@ import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import 'release_plan.dart';
+
 /// Builds a signed release Android App Bundle (AAB) and/or iOS IPA.
 /// Supports both local signing (keystore/provisioning profile) and
 /// CI-friendly environment variable-based signing.
@@ -199,52 +201,29 @@ class BuildReleaseCommand extends Command<int> {
     required bool verbose,
     required bool dryRun,
   }) async {
-    final args = <String>[
-      'flutter',
-      'build',
-      'appbundle',
-      '--target=$target',
-      '--build-name=$buildName',
-      '--build-number=$buildNumber',
-      '--release',
-    ];
-
-    if (flavor != null) {
-      args.add('--flavor=$flavor');
-    }
-
-    // Android signing
-    final useSigning =
-        keystorePath != null &&
-        keystorePassword != null &&
-        keyAlias != null &&
-        keyPassword != null;
-
-    if (useSigning) {
-      final keystoreFile = File(keystorePath);
-      if (!keystoreFile.existsSync()) {
-        stderr.writeln('Error: Keystore file not found at $keystorePath');
-        return 1;
+    String? gradle;
+    for (final name in ['build.gradle.kts', 'build.gradle']) {
+      final f = File(p.join(projectDir.path, 'android', 'app', name));
+      if (f.existsSync()) {
+        gradle = f.readAsStringSync();
+        break;
       }
-      args.add('--keystore=$keystorePath');
-      args.add('--keystore-password=$keystorePassword');
-      args.add('--key-alias=$keyAlias');
-      args.add('--key-password=$keyPassword');
-    } else if (!dryRun) {
-      stdout.writeln(
-        'Warning: Android keystore not provided, building unsigned AAB.',
-      );
     }
-
-    if (splitPerAbi) {
-      args.add('--split-per-abi');
-    }
-
-    if (verbose) {
-      args.add('-v');
-    }
-
-    return _runCommand(projectDir.path, args, dryRun);
+    final plan = planAndroid(
+      target: target,
+      buildName: buildName,
+      buildNumber: buildNumber,
+      flavor: flavor,
+      keystorePath: keystorePath,
+      keystorePassword: keystorePassword,
+      keyAlias: keyAlias,
+      keyPassword: keyPassword,
+      splitPerAbi: splitPerAbi,
+      verbose: verbose,
+      keystoreExists: keystorePath == null || File(keystorePath).existsSync(),
+      gradleText: gradle,
+    );
+    return _execute(projectDir, plan, dryRun);
   }
 
   Future<int> _buildIOS({
@@ -261,53 +240,63 @@ class BuildReleaseCommand extends Command<int> {
     required bool verbose,
     required bool dryRun,
   }) async {
-    final args = <String>[
-      'flutter',
-      'build',
-      'ipa',
-      '--target=$target',
-      '--build-name=$buildName',
-      '--build-number=$buildNumber',
-      '--release',
-    ];
-
-    if (flavor != null) {
-      args.add('--flavor=$flavor');
+    if (exportOptionsPlist != null && !File(exportOptionsPlist).existsSync()) {
+      stderr.writeln(
+        'Error: ExportOptions.plist not found at $exportOptionsPlist',
+      );
+      return 1;
     }
+    final plan = planIos(
+      target: target,
+      buildName: buildName,
+      buildNumber: buildNumber,
+      flavor: flavor,
+      teamId: teamId,
+      provisioningProfile: provisioningProfile,
+      codesignIdentity: codesignIdentity,
+      exportOptionsPlist: exportOptionsPlist,
+      noCodesign: noCodesign,
+      verbose: verbose,
+    );
+    return _execute(projectDir, plan, dryRun);
+  }
 
-    if (noCodesign) {
-      args.add('--no-codesign');
-    } else {
-      if (teamId != null) args.add('--team-id=$teamId');
-      if (provisioningProfile != null) {
-        final profileFile = File(provisioningProfile);
-        if (!profileFile.existsSync()) {
-          stderr.writeln(
-            'Error: Provisioning profile not found at $provisioningProfile',
-          );
-          return 1;
-        }
-        args.add('--provisioning-profile=$provisioningProfile');
+  /// Prints the plan's warnings and errors, writes its temporary files (removed again afterwards,
+  /// since they can hold passwords), and runs its command.
+  Future<int> _execute(
+    Directory projectDir,
+    ReleasePlan plan,
+    bool dryRun,
+  ) async {
+    for (final w in plan.warnings) {
+      stdout.writeln('Warning: $w');
+    }
+    if (!plan.ok) {
+      for (final e in plan.errors) {
+        stderr.writeln('Error: $e');
       }
-      if (codesignIdentity != null)
-        args.add('--codesign-identity=$codesignIdentity');
-      if (exportOptionsPlist != null) {
-        final plistFile = File(exportOptionsPlist);
-        if (!plistFile.existsSync()) {
-          stderr.writeln(
-            'Error: ExportOptions.plist not found at $exportOptionsPlist',
-          );
-          return 1;
+      return 1;
+    }
+    final written = <File>[];
+    try {
+      if (!dryRun) {
+        for (final entry in plan.writes.entries) {
+          final f = File(p.join(projectDir.path, entry.key));
+          f.parent.createSync(recursive: true);
+          f.writeAsStringSync(entry.value);
+          written.add(f);
         }
-        args.add('--export-options-plist=$exportOptionsPlist');
+      } else {
+        for (final path in plan.writes.keys) {
+          stdout.writeln('[dry-run] Would write $path');
+        }
+      }
+      return await _runCommand(projectDir.path, plan.command, dryRun);
+    } finally {
+      for (final f in written) {
+        if (f.existsSync()) f.deleteSync();
       }
     }
-
-    if (verbose) {
-      args.add('-v');
-    }
-
-    return _runCommand(projectDir.path, args, dryRun);
   }
 
   Future<int> _runCommand(

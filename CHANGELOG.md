@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Fixed
+- `build-release` produced commands Flutter rejects (`flutter build appbundle --keystore ...`, `flutter build ipa --team-id ...` do not exist), so signed builds could never work. Android signing now goes through a temporary `android/key.properties` and refuses to build if Gradle does not read it (otherwise Flutter signs with the debug key); iOS uses an `ExportOptions.plist` (generated for `--team-id`, or yours). Now tested (`release_plan_test.dart`) and documented in the new Releasing guide.
 - `JobSystem`: every `dispatch` hung forever (the reply was type-matched as `JobResult<Output>` but arrives as `JobResult<dynamic>`), `dispatchBatch` before the workers were up indexed an empty worker list, a `shutdown` during start leaked workers, and jobs in flight at shutdown never completed. Now tested (`job_system_test.dart`) and documented.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 

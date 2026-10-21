@@ -205,8 +205,6 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       `ViewportFit.cover` runs the same arithmetic as `contain` (it does not crop/fill); and the
       config has no reference resolution to define what `scale` is relative to. Needs a design
       (what is one world unit at zoom 1?), then tests, then a guide. Do not document it until then.
-- [ ] Release pipeline (`build-release`) walkthrough: signing for Android and
-      iOS.
 - [ ] A "build your first level" studio tutorial (the user guide, `docs/studio/user-guide.md`,
       is done).
 
