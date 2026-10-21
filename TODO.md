@@ -225,8 +225,8 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       dependency constraint documented in CLAUDE.md and `game_agent upgrade`'s
       `ref` matching limitation.
 - [ ] Replace placeholder README badges with real ones after publishing.
-- [ ] Add `engine_strategy` to any release/versioning checklist alongside the
-      other packages (it is `0.1.0`, `publish_to: none`).
+- [ ] Add `engine_strategy` (and, once it exists, `engine_idle`) to any release/versioning checklist
+      alongside the other packages (they are `0.1.0`, `publish_to: none`).
 
 ## Parked decisions
 

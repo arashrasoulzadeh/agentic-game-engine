@@ -3,11 +3,56 @@
 The engine can already host a simple idle game: `Treasury` accrues fractional per-second income,
 `Producer` / `Gatherer` / `Depot` model generators, tech trees gate unlocks, `WorldSnapshot` / `SaveGame`
 persist everything, and the fixed timestep keeps results reproducible. This file lists what is missing
-for a *real* idle game, in the order I would build it. Same conventions as [TODO.md](TODO.md): check items
+for a *real* idle game, in the order I would build it. The genre code lives in a new `engine_idle` package
+(section 0); genre-general pieces go in `engine_core`. Same conventions as [TODO.md](TODO.md): check items
 off when they land, delete them once shipped (what shipped goes in [CHANGELOG.md](CHANGELOG.md)), and add
 new work here the moment it is discovered.
 
 Nothing here is built yet. Each item says what "done" means, so it can be tested.
+
+## 0. The `engine_idle` package
+
+Idle-genre code gets its own package, the way strategy has `engine_strategy`. Create it first so every
+later item has a home.
+
+**Where things go** (the dependency rule in CLAUDE.md: genre-general *data* belongs in `engine_core`,
+genre-specific *logic and UI* in the genre package; the one-way DAG is
+`engine_core` → `engine_flutter` → `engine_idle`, and nothing depends backwards):
+
+| Package | Gets |
+|---|---|
+| `engine_core` | `BigNumber`, number formatting, the big-number treasury, `OfflineProgress` and the bulk time advance, save versioning/migration, export/import, the multiplier stack and cost-curve maths (all genre-general, pure Dart, web-safe) |
+| `engine_idle` | generator / upgrade / prestige / achievement components and systems, `installIdleSystems`, `spawnGenerator`-style helpers, the upgrade-list, resource-header, offline-summary, prestige and achievements widgets, notification scheduling interface |
+| `engine_cli` | `game_agent idle simulate`, the `idle_game` template |
+| `engine_schema` | schemas for the new components so `studio validate` and the inspector understand them |
+
+**Package requirements** (copy what `engine_strategy` does, and check each against its current state):
+
+- [ ] `packages/engine_idle/` with `pubspec.yaml`: name, description, `version: 0.1.0`, `publish_to: none`
+      until the rest are published, `environment` matching the others, `homepage` / `repository`.
+- [ ] Dependencies on `engine_core` and `engine_flutter` using the **self-referencing git dependency**
+      pattern (same URL, `ref: main`) with the explanatory comment, plus a `pubspec_overrides.yaml` for
+      local path resolution. Read the KNOWN LIMITATION in CLAUDE.md first.
+- [ ] `lib/engine_idle.dart` as the only public library; implementation under `lib/src/`.
+- [ ] `analysis_options.yaml` with the same lints; `flutter analyze --fatal-infos` clean.
+- [ ] Register its components in a `registerIdleComponents(world)` with `toJson` / `fromJson` **and a
+      schema** (an unregistered component silently cannot be serialized — the common mistake CLAUDE.md
+      warns about), and the schema test that every registered component has one.
+- [ ] `README.md` listing the public surface with examples; `CHANGELOG.md` entry; a `LICENSE` if the other
+      packages carry one.
+- [ ] Tests mirroring `lib/`; the repo's rules apply: every change gets a test, every public symbol a doc
+      comment explaining *why*, no unnecessary comments, benchmarks for hot paths
+      (`packages/engine_idle/benchmark/`).
+- [ ] CI workflow `.github/workflows/engine_idle.yml` (copy `engine_strategy.yml`: path filters including
+      the packages it depends on, `flutter pub get`, `flutter analyze --fatal-infos`, `flutter test`).
+- [ ] Add it to the **docs workflow's API-docs loop** (`.github/workflows/docs.yml`) and its path triggers,
+      to the mkdocs nav, and to the package map in `CLAUDE.md`, the root `README.md`, and
+      `docs/concepts/architecture.md`.
+- [ ] Add it to the release / versioning checklist beside the other packages (see the Release section of
+      [TODO.md](TODO.md); `engine_strategy` is still missing from it too).
+- [ ] `game_agent create --template idle_game` depends on it; `game_agent upgrade` must rewrite its `ref:`
+      like the other engine dependencies (extend its list), and the template CI job must pass.
+- [ ] `engine_studio` palette / inspector pick up its schemas without code changes (verify, and add a test).
 
 ## 1. Numbers that do not overflow
 
@@ -148,7 +193,8 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 
 ## Suggested order
 
-1. `BigNumber` and number formatting (everything depends on them).
+0. Scaffold `engine_idle` (section 0) so later work has a home and CI.
+1. `BigNumber` and number formatting (everything depends on them) — in `engine_core`.
 2. `OfflineProgress` and deterministic bulk advance.
 3. Generator / upgrade data, cost curves, multiplier stack, buy modes.
 4. Save versioning, autosave, export/import.
