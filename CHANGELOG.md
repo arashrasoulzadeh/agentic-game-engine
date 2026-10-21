@@ -16,6 +16,7 @@ pubspec.yaml.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
+- `BigNumber` (mantissa/exponent, ~15 digits, range ~1e±9e15, immutable, JSON as `1.5e300`) and `formatBigNumber` (`1.23K` / `1.23e45` / engineering styles with rounding carry) for idle-game scale numbers. New package scaffold `engine_idle`.
 - `Camera.shakeIntensity`: multiplies every camera shake (accessibility; bind it to `PlayerOptions.screenShakeIntensity`).
 - Real-time strategy builder units: `BuildWorker`, `assignBuild`, `BuildSystem`, `placeBuilding(needsBuilder: true)`; construction only progresses while assigned team builders stand next to the site (more builders, faster). `installRealtimeStrategySystems(building: true)`. Shared `queueMoveNextTo` helper.
 - Real-time strategy tech trees: `Producer.requires`, `Provides` (finished buildings unlock tech) and `TechState` / `grantTech` (unlock by name); `availableTech`, `missingTech`; `ProductionLockedEvent`.

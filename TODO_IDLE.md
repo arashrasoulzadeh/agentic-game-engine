@@ -46,18 +46,12 @@ and the package maps in `CLAUDE.md`, the root README and the architecture page. 
 `Treasury.amounts` is `Map<String, int>`: 64-bit, so it overflows in a long incremental game, and the
 fractional carry is a `double` that loses precision at large magnitudes.
 
-- [ ] **`BigNumber` type** (`engine_core`, pure Dart, web-safe) — a mantissa/exponent value (for example
-      `double` mantissa + `int` exponent, or `BigInt`-backed) with `+`, `-`, `*`, `/`, `pow`, comparison,
-      `floor`, `isZero`, `toDouble` (saturating), and exact JSON round-trip. Done when: property tests show
-      `a + b - b == a` within a stated tolerance across 1e0 to 1e300, comparisons are total-ordered, and
-      JSON round-trips bit-identically.
 - [ ] **Treasury on `BigNumber`** — either a `BigTreasury` beside the existing one, or a migration of
       `Treasury` with old saves (plain ints) still loading. Done when: income of 1e-3/s over 1e9 s is
       correct to the stated tolerance, `spend` stays all-or-nothing, and an old save loads unchanged.
-- [ ] **Number formatting** — `1.23K`, `4.5e12`, `1.2 Qa`, switchable styles (short suffix, scientific,
-      engineering), locale-aware separators through `LocalizationManager`. Done when: golden table tests
-      cover each style across magnitudes, including 0, negatives, and 1e3 / 1e6 boundaries (999,999 → 1.00M
-      rounding).
+- [ ] **Number formatting, remaining** — `formatBigNumber` (suffix / scientific / engineering, decimals, decimal
+      separator, rounding carry) is done in `engine_core`. Left: wire the locale's separators through
+      `LocalizationManager` automatically, and group (thousands) separators for plain numbers.
 
 ## 2. Time: offline progress and catch-up
 
@@ -181,7 +175,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 ## Suggested order
 
 0. ~~Scaffold `engine_idle`~~ (done).
-1. `BigNumber` and number formatting (everything depends on them) — in `engine_core`.
+1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); next: the treasury on `BigNumber`.
 2. `OfflineProgress` and deterministic bulk advance.
 3. Generator / upgrade data, cost curves, multiplier stack, buy modes.
 4. Save versioning, autosave, export/import.
