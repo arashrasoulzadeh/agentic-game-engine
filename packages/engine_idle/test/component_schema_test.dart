@@ -51,6 +51,7 @@ final _samples = <String, Map<String, dynamic>>{
     'reward': '2.0e0',
     'unlocked': false,
   },
+  'boost': {'id': 'x2', 'multiplier': '2.0e0', 'remaining': 120.0},
   'idleModifiers': {
     'additive': {'flat': '1.0e1'},
     'multiplicative': {'prestige': '2.0e0'},

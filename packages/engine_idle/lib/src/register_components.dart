@@ -1,6 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_schema/engine_schema.dart';
 
+import 'active_play.dart';
 import 'components.dart';
 import 'progression.dart';
 
@@ -47,5 +48,11 @@ void registerIdleComponents(World world) {
     (a) => a.toJson(),
     Achievement.fromJson,
     schema: achievementSchema,
+  );
+  world.components.register<Boost>(
+    'boost',
+    (b) => b.toJson(),
+    Boost.fromJson,
+    schema: boostSchema,
   );
 }

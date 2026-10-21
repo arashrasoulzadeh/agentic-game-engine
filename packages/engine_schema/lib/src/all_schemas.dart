@@ -50,6 +50,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'idleStats': idleStatsSchema,
   'prestigeRule': prestigeRuleSchema,
   'achievement': achievementSchema,
+  'boost': boostSchema,
   'resourceNode': resourceNodeSchema,
   'depot': depotSchema,
   'gatherer': gathererSchema,

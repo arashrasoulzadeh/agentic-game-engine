@@ -55,3 +55,9 @@ const achievementSchema = ComponentSchema('achievement', [
   FieldSchema('reward', FieldType.string),
   FieldSchema('unlocked', FieldType.bool),
 ]);
+
+const boostSchema = ComponentSchema('boost', [
+  FieldSchema('id', FieldType.string, required: true),
+  FieldSchema('multiplier', FieldType.string, required: true),
+  FieldSchema('remaining', FieldType.double, min: 0, required: true),
+]);

@@ -5,6 +5,7 @@
 /// systems and widgets. Plan and status: `TODO_IDLE.md` at the repository root.
 library;
 
+export 'src/active_play.dart';
 export 'src/components.dart';
 export 'src/economy.dart';
 export 'src/progression.dart';

@@ -94,8 +94,8 @@ The building blocks are there; the genre's *structure* is not.
 - [ ] **Achievements, remaining** — `Achievement` data (`lifetime:` / `run:` / `owned:` / `prestiges` / `taps` / `seconds`
       stats, optional multiplier reward), `checkAchievements`, `AchievementUnlockedEvent` are done. Left: the
       achievements screen, and conditions on arbitrary events.
-- [ ] **Active-play hooks** — click/tap income with its own multiplier, timed boosts (×2 for 30 min), and
-      "golden cookie" style random events driven by the deterministic RNG.
+- [ ] **Active-play hooks, remaining** — `tapEarn` (multiplied, counted) and timed `Boost` / `BoostSystem` (restart refreshes,
+      distinct boosts multiply) are done. Left: random "golden cookie" events driven by the deterministic RNG.
 
 ## 4. Saving
 
