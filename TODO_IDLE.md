@@ -37,7 +37,7 @@ and the package maps in `CLAUDE.md`, the root README and the architecture page. 
       (`packages/engine_idle/benchmark/`).
 - [ ] Add `engine_idle` to the mkdocs nav once it has a guide, and to the release / versioning checklist beside
       the other packages (see [TODO.md](TODO.md)).
-- [ ] `game_agent create --template idle_game` depends on it; `game_agent upgrade` must rewrite its `ref:` like the
+- [x] `game_agent create --template idle_game` depends on it; `game_agent upgrade` must rewrite its `ref:` like the
       other engine dependencies (extend its list), and the template CI job must pass.
 - [ ] `engine_studio` palette / inspector pick up its schemas without code changes (verify, and add a test).
 
@@ -143,7 +143,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 - [ ] **Schema + studio support** — component schemas for the new data (generators, upgrades, prestige,
       achievements) so `studio validate` and the inspector understand them; `docs/reference/components.md`
       regenerates.
-- [ ] **Template** — `game_agent create --template idle_game`: a minimal working idle game (one resource,
+- [x] **Template** — `game_agent create --template idle_game`: a minimal working idle game (one resource,
       three generators, upgrades, prestige, offline progress) that passes the generated-project CI.
 - [ ] **Docs** — a concept guide (`docs/concepts/idle-games.md`) and a tutorial ("a cookie clicker in an
       afternoon"), every sample executed by a test, per the repo's docs rule.

@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        template: [default_game, strategy_game]
+        template: [default_game, strategy_game, idle_game]
     steps:
       - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2

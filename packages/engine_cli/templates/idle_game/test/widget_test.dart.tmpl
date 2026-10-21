@@ -1,0 +1,30 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:{{PROJECT_NAME}}/main.dart';
+
+void main() {
+  testWidgets('the idle game boots, taps earn coins and a generator can be bought', (tester) async {
+    final definition = jsonDecode(File('assets/idle_game.json').readAsStringSync()) as Map<String, dynamic>;
+    await tester.pumpWidget(IdleApp(definition: definition));
+    await tester.pump();
+
+    expect(find.byKey(const Key('amount-coins')), findsOneWidget);
+    expect(find.text('Cursor'), findsOneWidget);
+
+    // The starting 15 coins buy one cursor.
+    await tester.tap(find.byKey(const Key('buy-cursor-×1')));
+    await tester.pump();
+    expect(tester.widget<Text>(find.byKey(const Key('owned-cursor'))).data, '1');
+
+    await tester.tap(find.byKey(const Key('tap')));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+
+    // Leave the tree so the controller's timer is disposed.
+    await tester.pumpWidget(const SizedBox());
+  });
+}

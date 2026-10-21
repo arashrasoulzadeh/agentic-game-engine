@@ -8,6 +8,9 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added
+- `game_agent create --template idle_game`: a playable idle game driven by `assets/idle_game.json` (tap, generators, upgrades, save, offline catch-up) with a widget test. `game_agent upgrade` now repins `engine_idle` too; the CLI CI template matrix builds it.
+
 ### Fixed
 - `BigNumber` quantises its mantissa to 14 decimals after every operation. Binary noise used to accumulate (`1000 - 10 - 10 ...` drifted to `989.9999999999999`, and a wallet drained by purchases ended a hair off zero, refusing an exactly affordable price).
 - Viewport / aspect-ratio handling (`ViewportConfig`) did not work and was not even exported: its scale was `1/ratio` for every screen (so a matching screen was shrunk and letterboxed), `cover` equalled `contain`, and the camera re-applied the layout offset the widget had already applied. Rewritten as a pure rectangle layout (`contain`/`cover`/`width`/`height`, safe area), exported, with taps and camera-follow using the drawn area. **Breaking, but the feature never worked:** `minScale`/`maxScale`, `ViewportLayout.scale`/`worldToScreen`/`screenToWorld` and `Camera.viewportManager` are removed. Tested in `viewport_test.dart`.

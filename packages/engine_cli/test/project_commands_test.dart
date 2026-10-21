@@ -260,4 +260,61 @@ dependencies:
     expect(await runner().run(['upgrade', '--ref', 'v2']), 0);
     expect(File('pubspec.yaml').readAsStringSync(), contains('ref: v2'));
   });
+
+  test('upgrade also repins engine_idle', () async {
+    Directory.current = tmp;
+    File('pubspec.yaml').writeAsStringSync('''
+dependencies:
+  engine_idle:
+    git:
+      url: https://example.com/e.git
+      path: packages/engine_idle
+      ref: main
+''');
+    expect(await runner().run(['upgrade', '--ref', 'v2']), 0);
+    expect(File('pubspec.yaml').readAsStringSync(), contains('ref: v2'));
+  });
+
+  test('create --template idle_game writes the idle template', () async {
+    final asked = <String>[];
+    final idleRunner = CommandRunner<int>('game_agent', 'test')
+      ..addCommand(
+        CreateCommand(
+          runProcess: runProcess,
+          findTemplate: (name) {
+            asked.add(name);
+            return Directory('templates/$name').absolute;
+          },
+        ),
+      );
+    expect(
+      await idleRunner.run([
+        'create',
+        'cookie_game',
+        '--output-dir',
+        tmp.path,
+        '--template',
+        'idle_game',
+      ]),
+      0,
+    );
+    expect(asked, ['idle_game']);
+    final pubspec = File(
+      '${tmp.path}/cookie_game/pubspec.yaml',
+    ).readAsStringSync();
+    expect(pubspec, contains('packages/engine_idle'));
+    expect(pubspec, isNot(contains('engine_platformer')));
+    expect(
+      File('${tmp.path}/cookie_game/lib/main.dart').readAsStringSync(),
+      contains('loadIdleDefinition'),
+    );
+    expect(
+      File('${tmp.path}/cookie_game/assets/idle_game.json').existsSync(),
+      isTrue,
+    );
+    expect(
+      File('${tmp.path}/cookie_game/test/widget_test.dart').readAsStringSync(),
+      contains('cookie_game'),
+    );
+  });
 }
