@@ -5,11 +5,7 @@
 /// systems and widgets. Plan and status: `TODO_IDLE.md` at the repository root.
 library;
 
-export 'src/active_play.dart';
-export 'src/components.dart';
-export 'src/economy.dart';
-export 'src/progression.dart';
-export 'src/register_components.dart';
+export 'engine_idle_logic.dart';
 export 'src/ui/idle_controller.dart';
 export 'src/ui/idle_widgets.dart';
 export 'src/session.dart';

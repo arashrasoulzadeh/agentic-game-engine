@@ -82,8 +82,8 @@ The building blocks are there; the genre's *structure* is not.
 
 - [ ] **Generator / upgrade data, remaining** — `Generator`, `Upgrade`, `IdleModifiers` components (JSON, schemas,
       registered by `registerIdleComponents`), `computeIncome`, `buyGenerator` (×1 / ×N / max, caps, tech locks),
-      `buyUpgrade` and `IdleSystem` are done in `engine_idle`. Left: loading a whole game definition from one
-      JSON file with validation errors that name the field, and per-generator milestone bonuses.
+      `buyUpgrade` and `IdleSystem` are done in `engine_idle`. `validateIdleDefinition` / `loadIdleDefinition` load a whole game from one JSON file with path-named errors
+      (also done). Left: per-generator milestone bonuses.
 - [ ] **Cost curves, remaining** — `GeometricCost`, `LinearCost` with closed-form `totalCost` / `maxAffordable`
       (verified against brute force) are done in `engine_core`. Left: a table curve and a max-level cap.
 - [ ] **Multiplier stack, remaining** — `ModifierStack` (additive + multiplicative, named sources, breakdown,
