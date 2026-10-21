@@ -42,21 +42,38 @@ class JobSystem {
   final Map<int, Completer<JobResult>> _pendingJobs = {};
   int _nextJobId = 0;
   int _currentWorker = 0;
-  bool _started = false;
 
   JobSystem({this.workerCount = 3});
 
-  /// Starts the worker isolates.
-  Future<void> start() async {
-    if (_started) return;
-    _started = true;
+  Future<void>? _starting;
 
+  /// Starts the worker isolates. Safe to call repeatedly or concurrently: every caller gets the
+  /// same in-progress start, so a [dispatchBatch] issued before the workers are up waits for
+  /// them instead of finding none.
+  Future<void> start() => _starting ??= _spawnWorkers();
+
+  /// Bumped by [shutdown]. A start that finds it changed has been shut down mid-way and must
+  /// not leave workers behind.
+  int _generation = 0;
+
+  Future<void> _spawnWorkers() async {
+    final generation = _generation;
     for (int i = 0; i < workerCount; i++) {
       final receivePort = ReceivePort();
       final isolate = await Isolate.spawn(_workerEntry, receivePort.sendPort);
+      if (generation != _generation) {
+        isolate.kill(priority: Isolate.immediate);
+        receivePort.close();
+        return;
+      }
       _workers.add(isolate);
 
       final sendPort = await receivePort.first as SendPort;
+      if (generation != _generation) {
+        isolate.kill(priority: Isolate.immediate);
+        _workers.remove(isolate);
+        return;
+      }
       _workerPorts.add(sendPort);
     }
   }
@@ -83,15 +100,22 @@ class JobSystem {
     Job<Input, Output> job,
     Input input,
   ) async {
-    if (!_started) await start();
+    await start();
+    if (_workerPorts.isEmpty) {
+      // shutdown() ran while this dispatch was waiting for the workers.
+      throw StateError('JobSystem was shut down');
+    }
 
     final jobId = _nextJobId++;
-    final completer = Completer<JobResult<Output>>();
+    final completer = Completer<JobResult>();
     _pendingJobs[jobId] = completer;
 
+    // Matched as a plain JobResult, not JobResult<Output>: the worker builds it with a dynamic
+    // type argument, and a JobResult<dynamic> is not a JobResult<int> at runtime, so a typed
+    // match never fired and every dispatch hung forever.
     final replyPort = ReceivePort();
     replyPort.listen((message) {
-      if (message is JobResult<Output>) {
+      if (message is JobResult && !completer.isCompleted) {
         completer.complete(message);
         replyPort.close();
       }
@@ -109,7 +133,7 @@ class JobSystem {
     if (!result.isSuccess) {
       throw result.error!;
     }
-    return result.output!;
+    return result.output as Output;
   }
 
   /// Dispatches multiple jobs of the same type and waits for all results.
@@ -124,14 +148,25 @@ class JobSystem {
     return Future.wait(futures);
   }
 
-  /// Shuts down all worker isolates.
+  /// Shuts down all worker isolates. Jobs still in flight fail with a [StateError] rather than
+  /// waiting forever for a worker that no longer exists. Can be followed by [start] (or just
+  /// another [dispatch]) to bring up fresh workers.
   void shutdown() {
+    _generation++;
+    for (final pending in _pendingJobs.values.toList()) {
+      if (!pending.isCompleted) {
+        pending.complete(
+          JobResult.failure(-1, StateError('JobSystem was shut down'), null),
+        );
+      }
+    }
+    _pendingJobs.clear();
     for (final worker in _workers) {
       worker.kill(priority: Isolate.immediate);
     }
     _workers.clear();
     _workerPorts.clear();
-    _started = false;
+    _starting = null;
   }
 }
 
@@ -214,6 +249,9 @@ class CollisionBroadphaseOutput {
 }
 
 /// A job for pathfinding.
+///
+/// **Stub:** it returns an empty path; the search itself is not implemented. Use the platformer
+/// pathfinding or `GridNavigator` on the main isolate until it is.
 class PathfindingJob implements Job<PathfindingInput, PathfindingOutput> {
   @override
   PathfindingOutput run(PathfindingInput input) {

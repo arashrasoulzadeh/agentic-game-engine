@@ -64,7 +64,34 @@ relevant benchmark for any change to a hot path.
 - **Avoid per-step allocation** in systems you write (build lists once, reuse them); `Archetype`
   gives dense iteration over entities that share a component set when a hot loop needs it.
 
-## Not documented yet
+## Background work: `JobSystem`
 
-`JobSystem` (running jobs on worker isolates) exists but has no tests or measured guidance, so it
-is not recommended here until it does; isolates are also unavailable on the web.
+For CPU-heavy work that does not need the live world, `JobSystem` runs a `Job` on a pool of worker
+isolates (default 3):
+
+```dart
+class SumJob implements Job<List<int>, int> {
+  @override
+  int run(List<int> input) => input.fold(0, (a, b) => a + b);
+}
+
+final jobs = JobSystem(workerCount: 2);
+final total = await jobs.dispatch(SumJob(), [1, 2, 3]);                 // 6
+final squares = await jobs.dispatchBatch(SquareJob(), [1, 2, 3]);       // results in input order
+jobs.shutdown();
+```
+
+- A job is a **class** (a closure cannot cross isolates) and its input and output must be sendable:
+  numbers, strings, lists, maps and plain objects, not entities of a live `World` or anything holding
+  native resources. Copy the data you need into the input.
+- An error thrown in a job is rethrown to the caller of `dispatch`; the system keeps working.
+- Workers start on the first dispatch (or `start()`); concurrent callers share that start.
+- `shutdown()` fails any jobs still in flight with a `StateError`, and the system can be started
+  again afterwards.
+- It costs a copy of the input and output per job, so it pays off for work that takes noticeably
+  longer than that (broadphase over thousands of entities, large searches), not for small tasks.
+- Isolates are unavailable on the web: do not use it in a game that ships there.
+- `CollisionBroadphaseJob` is a ready-made job; `PathfindingJob` is a **stub** that returns an
+  empty path.
+
+These behaviours are tested in `packages/engine_core/test/job_system_test.dart`.

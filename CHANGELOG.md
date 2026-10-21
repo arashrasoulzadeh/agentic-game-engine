@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Fixed
+- `JobSystem`: every `dispatch` hung forever (the reply was type-matched as `JobResult<Output>` but arrives as `JobResult<dynamic>`), `dispatchBatch` before the workers were up indexed an empty worker list, a `shutdown` during start leaked workers, and jobs in flight at shutdown never completed. Now tested (`job_system_test.dart`) and documented.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
