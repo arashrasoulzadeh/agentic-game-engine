@@ -65,7 +65,7 @@ turns a long absence into progress.
 - [ ] **Deterministic bulk advance** — a `World.advance(Duration)` (or an economy-only fast-forward) that
       skips rendering and per-tick events but keeps the same results as stepping, so catch-up is
       reproducible. Done when: stepping N ticks and bulk-advancing the same time give equal treasuries.
-- [ ] **Clock-tampering policy** — decide and document: trust the device clock (simple), or also keep a
+- [x] **Clock-tampering policy** (documented in the guide's "Trust" section; `IdleSession(clock:)` is the server-time hook) — decide and document: trust the device clock (simple), or also keep a
       monotonic counter / server time. At minimum: never grant negative or absurd (> cap) time, and expose a
       hook for a server time source.
 - [ ] **"While you were away" model** — a plain data object (time away, per-resource gains, anything that
@@ -150,7 +150,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 
 - [ ] **Determinism** — all of the above uses the seeded RNG and fixed timestep; no `DateTime.now()` inside
       simulation code (time enters only through `OfflineProgress` and is injectable for tests).
-- [ ] **Anti-cheat position** — decide what is client-trusted. A single-player idle game can trust the
+- [x] **Anti-cheat position** (documented: trust the device for single-player; server authority for competitive/IAP) — decide what is client-trusted. A single-player idle game can trust the
       clock and save; one with a leaderboard or purchases cannot. Write the decision down.
 - [x] **Analytics** — `IdleAnalytics` sends `idle_purchase`, `idle_prestige`, `idle_offline_return` through
       `AnalyticsManager` (so `setConsent` applies) or a test sink; `IdleController(analytics:)` wires it.

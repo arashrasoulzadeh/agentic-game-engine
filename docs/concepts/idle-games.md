@@ -139,8 +139,25 @@ game is refused with a readable message and left untouched.
 
 `IdleController` runs the clock (about ten UI updates a second) and is the one place the UI calls to buy, tap or
 prestige. The ready-made widgets read from it: `ResourceHeader`, `GeneratorList` (×1 / ×10 / ×100 / Max, disabled
-when unaffordable, lazily built so hundreds of rows stay smooth), `UpgradeList` and `OfflineSummaryDialog`.
-`controller.style = NumberStyle.scientific` switches every number at once.
+when unaffordable, lazily built so hundreds of rows stay smooth), `UpgradeList`, `OfflineSummaryDialog`
+(with an optional "Double it" button for a rewarded ad: pass `onDouble`, then call `IdleSession.doubleOffline`),
+`PrestigePanel` (previews the gain and asks before resetting), `AchievementList` and `IdleSettingsPanel`.
+`controller.setStyle(NumberStyle.scientific)` switches every number at once.
+
+## Trust: the clock and the save
+
+The engine makes a deliberate, simple choice: **a single-player idle game trusts the device**.
+
+- *The clock.* Offline earnings come from the difference between two device times. `OfflineProgress` never
+  grants negative time (the clock moved backwards) or more than the configured cap, so setting the clock
+  forward can gain at most one cap's worth per return, which is the same as waiting. Time enters only through
+  the `clock` you give `IdleSession`, so a game that needs more can pass a server-synchronised clock without
+  touching the engine.
+- *The save.* `SaveCodec` checksums detect damage, not editing: anyone can change a number and re-sign it. That
+  is fine for a game with no shared state.
+- *When it is not fine.* Leaderboards, competitive events or real-money purchases need the server to be the
+  authority (server time, server-side validation of purchases and scores). That is outside the engine; keep
+  the economy deterministic (it is) so a server can replay a claimed history and check it.
 
 ## Tuning without playing
 
