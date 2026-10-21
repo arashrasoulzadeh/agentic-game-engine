@@ -17,6 +17,7 @@ pubspec.yaml.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
+- `engine_idle` UI: `IdleController` (real-time stepping at 10 Hz, number-style switch, buy/tap/prestige entry points), `ResourceHeader`, `GeneratorList` / `GeneratorRow` (×1/×10/×100/Max), `UpgradeList`, `OfflineSummaryDialog`.
 - `engine_idle` active play: `tapEarn` and timed `Boost` / `activateBoost` / `BoostSystem`.
 - `engine_idle` progression: `IdleStats` (run/lifetime earnings, taps, play time), `PrestigeRule` + `performPrestige` (square-root-style gain, permanent currency as a multiplier, reset scope), `Achievement` + `checkAchievements` (stat goals with multiplier rewards). `IdleSystem` records earnings.
 - Saving for long-lived games: `SaveMigrator` (versioned migration, refuses newer saves), `SaveCodec` (copyable `GSAVE1.<payload>.<checksum>` export/import with clear errors) in `engine_core`, and `AtomicSave` (crash-safe write with backup fallback) in `engine_core_io`.

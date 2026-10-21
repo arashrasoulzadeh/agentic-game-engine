@@ -112,14 +112,13 @@ The building blocks are there; the genre's *structure* is not.
 The engine's UI is menu buttons and HUD bars; an idle game's screens are long scrolling lists. These can be
 ordinary Flutter widgets reading the game state, shipped as a small package or a section of `engine_flutter`.
 
-- [ ] **Upgrade list widget** — a scrolling list of generators/upgrades: name, level, cost (formatted), output,
-      progress to next milestone, buy buttons (1/10/100/max), affordable/locked states, and
-      `Semantics` labels. Done when: widget tests cover scrolling 200 rows (virtualised), affordability
-      updating as income ticks, and each buy mode.
-- [ ] **Resource header** — current amounts and per-second rates with smooth updating (not rebuilding the
-      whole tree each tick; throttle to ~10 Hz).
-- [ ] **"While you were away" dialog** — renders the item-2 summary, with a "collect" button and an
-      optional watch-ad-for-2× hook (an interface, not an ad SDK).
+- [ ] **Upgrade list, remaining** — `GeneratorList` / `GeneratorRow` (×1/×10/×100/Max, affordable/locked states, lazy list
+      tested with 300 rows, semantic labels) and `UpgradeList` are done in `engine_idle`. Left: milestone progress
+      display and a golden test.
+- [ ] **Resource header, remaining** — `ResourceHeader` and `IdleController` (10 Hz notifications, real-time clock, style
+      switch) are done. Left: per-widget rebuild throttling beyond the controller's tick.
+- [ ] **"While you were away" dialog, remaining** — `OfflineSummaryDialog` is done; left: the watch-an-ad-for-2x hook (an
+      interface) and wiring `OfflineProgress` to the app lifecycle (section 2).
 - [ ] **Prestige screen** and **achievements screen**.
 - [ ] **Settings** — number-format style, offline-progress notice, and the existing accessibility options.
 - [ ] **Large-number performance** — formatting is cached; rebuilds are limited to values that changed.
@@ -165,7 +164,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 ## Suggested order
 
 0. ~~Scaffold `engine_idle`~~ (done).
-1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury`, `OfflineProgress`, cost curves, multipliers, generator/upgrade components and buying done, saving, prestige, achievements and lifetime stats; next: the widgets, then taps/boosts, lifecycle hooks, simulator, template.
+1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury`, `OfflineProgress`, cost curves, multipliers, generator/upgrade components and buying done, saving, prestige, achievements and lifetime stats; taps and boosts, and the core widgets; next: lifecycle hooks, prestige/achievements screens, simulator, template, guide.
 2. `OfflineProgress` and deterministic bulk advance.
 3. Generator / upgrade data, cost curves, multiplier stack, buy modes.
 4. Save versioning, autosave, export/import.
