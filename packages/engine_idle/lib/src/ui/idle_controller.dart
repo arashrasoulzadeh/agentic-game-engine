@@ -56,6 +56,13 @@ class IdleController extends ChangeNotifier {
   final Stopwatch _clock = Stopwatch();
   Duration _last = Duration.zero;
 
+  /// Changes how big numbers are written and tells every listening widget at once.
+  void setStyle(NumberStyle value) {
+    if (value == style) return;
+    style = value;
+    notifyListeners();
+  }
+
   /// Writes [value] in the controller's current [style].
   String format(BigNumber value, {int decimals = 2}) =>
       formatBigNumber(value, style: style, decimals: decimals);

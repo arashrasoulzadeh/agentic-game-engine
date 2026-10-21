@@ -118,7 +118,7 @@ ordinary Flutter widgets reading the game state, shipped as a small package or a
       switch) are done. Left: per-widget rebuild throttling beyond the controller's tick.
 - [ ] **"While you were away" dialog, remaining** — `OfflineSummaryDialog` is done; the 2x hook (`onDouble` callback + `IdleSession.doubleOffline`) and lifecycle wiring are done too.
 - [x] **Prestige screen** and **achievements screen** (`PrestigePanel` with confirmation, `AchievementList` with progress).
-- [ ] **Settings** — number-format style, offline-progress notice, and the existing accessibility options.
+- [x] **Settings** — `IdleSettingsPanel` (number-format switch via `IdleController.setStyle`, offline-rules notice); the game adds its own accessibility toggles.
 - [ ] **Large-number performance** — formatting is cached; rebuilds are limited to values that changed.
 
 ## 6. Background behaviour

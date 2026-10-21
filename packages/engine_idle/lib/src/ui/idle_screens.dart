@@ -117,3 +117,57 @@ class AchievementList extends StatelessWidget {
     );
   }
 }
+
+/// Player-facing settings for an idle game: how big numbers are written, and a plain statement of the
+/// offline-progress rules so the cap is never a surprise.
+class IdleSettingsPanel extends StatelessWidget {
+  const IdleSettingsPanel({
+    super.key,
+    required this.controller,
+    this.offline = const OfflineConfig(),
+  });
+
+  final IdleController controller;
+
+  /// The offline rules to describe (usually the session's).
+  final OfflineConfig offline;
+
+  static const _labels = {
+    NumberStyle.suffix: '1.5M',
+    NumberStyle.scientific: '1.5e6',
+    NumberStyle.engineering: '1.5e6 (eng)',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Number format'),
+          SegmentedButton<NumberStyle>(
+            key: const Key('settings-number-style'),
+            segments: [
+              for (final e in _labels.entries)
+                ButtonSegment(
+                  value: e.key,
+                  label: Text(e.value),
+                  tooltip: e.key.name,
+                ),
+            ],
+            selected: {controller.style},
+            onSelectionChanged: (s) => controller.setStyle(s.first),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'While you are away you earn ${(offline.efficiency * 100).round()}% '
+            'of your income, for up to ${offline.cap.inHours} hours.',
+            key: const Key('settings-offline-notice'),
+          ),
+        ],
+      ),
+    );
+  }
+}

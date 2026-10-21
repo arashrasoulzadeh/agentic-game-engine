@@ -31,6 +31,38 @@ IdleController _controller({String coins = '1000', int generators = 2}) {
 Widget _app(Widget child) => MaterialApp(home: Scaffold(body: child));
 
 void main() {
+  testWidgets(
+    'the settings panel switches the number style everywhere and states the offline rules',
+    (tester) async {
+      final c = _controller(coins: '1234567');
+      await tester.pumpWidget(
+        _app(
+          Column(
+            children: [
+              ResourceHeader(controller: c),
+              IdleSettingsPanel(
+                controller: c,
+                offline: const OfflineConfig(
+                  cap: Duration(hours: 6),
+                  efficiency: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      expect(find.text('1.23M'), findsOneWidget);
+      expect(
+        find.textContaining('50% of your income, for up to 6 hours'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('1.5e6'));
+      await tester.pump();
+      expect(c.style, NumberStyle.scientific);
+      expect(find.text('1.23e6'), findsOneWidget);
+    },
+  );
+
   group('prestige panel and achievements', () {
     IdleController game() {
       final c = _controller(coins: '0');

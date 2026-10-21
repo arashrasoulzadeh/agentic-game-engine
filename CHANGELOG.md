@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `engine_idle` `IdleSettingsPanel` and `IdleController.setStyle`: switch the number format everywhere at once and state the offline cap/efficiency to the player.
 - `engine_idle` `IdleAnalytics`: `idle_purchase`, `idle_prestige` and `idle_offline_return` events, sent through `AnalyticsManager` (consent respected) by `IdleController(analytics:)` and `IdleSession`.
 - `engine_idle` `PrestigePanel` (gain preview, held bonus, confirm-before-reset) and `AchievementList` (progress bars, done state).
 - `OfflineSummaryDialog(onDouble:)` and `IdleSession.doubleOffline`: an optional "Double it" button for a rewarded-ad flow (the game supplies the ad; the dialog pops `true` when earned). The dialog now pops `false` on Collect.
