@@ -87,6 +87,7 @@ nav:
       - The ECS: concepts/ecs.md
       - Content as data: concepts/content-as-data.md
       - Localization: concepts/localization.md
+      - Settings and accessibility: concepts/settings.md
       - Dialogue: concepts/dialogue.md
       - Procedural generation: concepts/procedural-generation.md
       - AI trees and state machines: concepts/ai.md

@@ -196,8 +196,9 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       machines are done: `docs/concepts/ai.md`).
 - [ ] Cinematics, scene transitions, video playback (tweens and particles are done:
       `docs/concepts/effects.md`).
-- [ ] Settings menus, `PlayerOptions` persistence and accessibility options
-      (colorblind modes, text scaling, remapping).
+- [ ] **Colorblind simulation is an unimplemented placeholder** (`EngineView._drawColorblind`,
+      `shaders/colorblind.frag` exists); and nothing in the engine applies `PlayerOptions` such as
+      `reduceMotion` or `screenShakeIntensity` - decide which should be engine behaviour.
 - [ ] Viewport / aspect-ratio / safe-area handling.
 - [ ] Lighting deep-dive (`Light2D`, shadows, single-pass shader, day/night)
       beyond the overview in `concepts/rendering.md`.
