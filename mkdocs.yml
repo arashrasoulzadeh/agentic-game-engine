@@ -96,6 +96,7 @@ nav:
       - Analytics and error reporting: concepts/analytics-and-errors.md
       - The agent API: concepts/agent-api.md
       - Rendering: concepts/rendering.md
+      - Lighting: concepts/lighting.md
       - Platformer gameplay: concepts/platformer.md
       - Turn-based strategy: concepts/turn-based-strategy.md
       - Real-time strategy: concepts/realtime-strategy.md

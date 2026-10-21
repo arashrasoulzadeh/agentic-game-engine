@@ -200,8 +200,6 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       `shaders/colorblind.frag` exists); and nothing in the engine applies `PlayerOptions` such as
       `reduceMotion` or `screenShakeIntensity` - decide which should be engine behaviour.
 - [ ] Viewport / aspect-ratio / safe-area handling.
-- [ ] Lighting deep-dive (`Light2D`, shadows, single-pass shader, day/night)
-      beyond the overview in `concepts/rendering.md`.
 - [ ] Release pipeline (`build-release`) walkthrough: signing for Android and
       iOS.
 - [ ] A "build your first level" studio tutorial (the user guide, `docs/studio/user-guide.md`,
