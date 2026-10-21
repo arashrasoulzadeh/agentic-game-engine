@@ -62,3 +62,12 @@ const boostSchema = ComponentSchema('boost', [
   FieldSchema('multiplier', FieldType.string, required: true),
   FieldSchema('remaining', FieldType.double, min: 0, required: true),
 ]);
+
+const goldenEventsSchema = ComponentSchema('goldenEvents', [
+  FieldSchema('meanInterval', FieldType.double, min: 1, required: true),
+  FieldSchema('lifetime', FieldType.double, min: 0, required: true),
+  FieldSchema('rewards', FieldType.list, required: true),
+  FieldSchema('countdown', FieldType.double),
+  FieldSchema('offered', FieldType.int, min: 0, optional: true),
+  FieldSchema('offerRemaining', FieldType.double, min: 0),
+]);

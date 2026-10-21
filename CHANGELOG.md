@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `engine_idle` golden events ("golden cookie"): `GoldenEvents` component, `GoldenEventSystem(DeterministicRandom)` and `claimGolden`: timed random offers whose reward is a boost or an instant payout; reproducible from the seed, saved mid-wait, announced by `GoldenOfferedEvent`.
 - Event-aware offline catch-up for changing rates (auto-buyers): `OfflineProgress.applyInSlices` and `IdleSession(whileAway:, awaySlices:)` pay the absence in slices and let game code buy/recompute between them.
 - `engine_idle` `IdleSettingsPanel` and `IdleController.setStyle`: switch the number format everywhere at once and state the offline cap/efficiency to the player.
 - `engine_idle` `IdleAnalytics`: `idle_purchase`, `idle_prestige` and `idle_offline_return` events, sent through `AnalyticsManager` (consent respected) by `IdleController(analytics:)` and `IdleSession`.

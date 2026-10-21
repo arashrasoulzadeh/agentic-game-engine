@@ -51,6 +51,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'prestigeRule': prestigeRuleSchema,
   'achievement': achievementSchema,
   'boost': boostSchema,
+  'goldenEvents': goldenEventsSchema,
   'resourceNode': resourceNodeSchema,
   'depot': depotSchema,
   'gatherer': gathererSchema,

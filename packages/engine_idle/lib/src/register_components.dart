@@ -3,6 +3,7 @@ import 'package:engine_schema/engine_schema.dart';
 
 import 'active_play.dart';
 import 'components.dart';
+import 'golden_events.dart';
 import 'progression.dart';
 
 /// Registers the idle-genre components on [world] so they take part in `World.toJson()`,
@@ -54,5 +55,11 @@ void registerIdleComponents(World world) {
     (b) => b.toJson(),
     Boost.fromJson,
     schema: boostSchema,
+  );
+  world.components.register<GoldenEvents>(
+    'goldenEvents',
+    (g) => g.toJson(),
+    GoldenEvents.fromJson,
+    schema: goldenEventsSchema,
   );
 }

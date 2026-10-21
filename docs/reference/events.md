@@ -76,6 +76,7 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | Event | Fields | Emitted by |
 |---|---|---|
 | `AchievementUnlockedEvent` | `id` | `checkAchievements` |
+| `GoldenOfferedEvent` | `lifetime` | `GoldenEventSystem` |
 
 ## Patterns
 

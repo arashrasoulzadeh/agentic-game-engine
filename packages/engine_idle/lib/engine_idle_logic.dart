@@ -7,6 +7,7 @@ export 'src/analytics.dart';
 export 'src/components.dart';
 export 'src/definition.dart';
 export 'src/economy.dart';
+export 'src/golden_events.dart';
 export 'src/progression.dart';
 export 'src/register_components.dart';
 export 'src/simulator.dart';

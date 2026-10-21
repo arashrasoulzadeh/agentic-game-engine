@@ -4,7 +4,7 @@
 
 Every built-in component and the exact JSON shape it serializes to — what you see in `World.toJson()` and what `applyPatch` / `Level.loadInto` accept. This page is generated from `engine_schema`, the same schemas the studio and `game_agent lint` validate against, so it is always current.
 
-**83 components** across 4 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer) · [engine_idle](#engine_idle)
+**84 components** across 4 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer) · [engine_idle](#engine_idle)
 
 ## engine_core
 
@@ -873,4 +873,15 @@ Idle-game data. Registered by `registerIdleComponents`.
 | `id` | `string` | required |
 | `multiplier` | `string` | required |
 | `remaining` | `double` | required; 0 to ∞ |
+
+### `goldenEvents`
+
+| Field | Type | Notes |
+|---|---|---|
+| `meanInterval` | `double` | required; 1 to ∞ |
+| `lifetime` | `double` | required; 0 to ∞ |
+| `rewards` | `list` | required |
+| `countdown` | `double` |  |
+| `offered` | `int` | may be null; 0 to ∞ |
+| `offerRemaining` | `double` | 0 to ∞ |
 

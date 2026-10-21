@@ -94,7 +94,7 @@ The building blocks are there; the genre's *structure* is not.
       stats, optional multiplier reward), `checkAchievements`, `AchievementUnlockedEvent` are done. Left: the
       achievements screen, and conditions on arbitrary events.
 - [ ] **Active-play hooks, remaining** — `tapEarn` (multiplied, counted) and timed `Boost` / `BoostSystem` (restart refreshes,
-      distinct boosts multiply) are done. Left: random "golden cookie" events driven by the deterministic RNG.
+      distinct boosts multiply) are done. Random "golden cookie" events (`GoldenEvents` + `GoldenEventSystem`, seeded RNG, `claimGolden`) are done too.
 
 ## 4. Saving
 
