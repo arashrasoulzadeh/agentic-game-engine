@@ -3,11 +3,7 @@ import 'dart:async';
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/foundation.dart';
 
-import '../active_play.dart';
-import '../analytics.dart';
-import '../components.dart';
-import '../economy.dart';
-import '../progression.dart';
+import 'package:engine_core/engine_core_idle.dart';
 
 /// Runs an idle game's [world] and tells widgets when to redraw.
 ///

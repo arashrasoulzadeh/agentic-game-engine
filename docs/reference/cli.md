@@ -107,6 +107,22 @@ refusal Flutter would sign with the debug key, which Google Play rejects. See [R
     Passwords on the command line end up in shell history. Prefer environment
     variables (as above) or your CI's secret store.
 
+## idle simulate
+
+```bash
+game_agent idle simulate assets/idle_game.json --days 2 --prestige-at 2
+```
+
+Plays an idle game definition with a deterministic greedy strategy (always buy the best payback, prestige when it
+pays `--prestige-at` times what you hold) and prints when income passes each power of ten, each prestige, each
+achievement and the final income. Exits 1 on an invalid definition, printing every problem with its path. The
+same input always prints the same report.
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--days` | `3` | Game time to simulate. |
+| `--prestige-at` | never | Prestige once the gain is at least this multiple of what is held. |
+
 ## studio
 
 Scriptable level editing — the same operations the graphical studio performs,

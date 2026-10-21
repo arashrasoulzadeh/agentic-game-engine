@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_core/engine_core_io.dart' show AtomicSave;
 
-import 'progression.dart';
+import 'package:engine_core/engine_core_idle.dart';
 import 'ui/idle_controller.dart';
 
 /// Where a game keeps its save. An interface so tests (and web, where there is no file system) can

@@ -1,4 +1,4 @@
-import 'package:engine_core/engine_core.dart';
+import '../../engine_core.dart';
 
 import 'components.dart';
 import 'economy.dart';

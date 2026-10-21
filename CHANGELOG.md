@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `game_agent idle simulate <game.json> [--days N] [--prestige-at X]`. To make it possible the Flutter-free idle rules (components, economy, progression, golden events, definition loader, simulator) moved from `engine_idle` into `engine_core`, behind a separate `package:engine_core/engine_core_idle.dart` entry point; `engine_idle` re-exports it, so existing imports keep working.
 - `NumberStyle.grouped` and `groupSeparator`: exact digits with thousands separators (`1,234,567`, `1.234.567` in comma locales), scientific past 1e15; offered in `IdleSettingsPanel`.
 - `IdleController.decimalSeparator`: every idle widget writes numbers with the locale's decimal mark (`1,23M`).
 - `engine_idle` golden events ("golden cookie"): `GoldenEvents` component, `GoldenEventSystem(DeterministicRandom)` and `claimGolden`: timed random offers whose reward is a boost or an instant payout; reproducible from the seed, saved mid-wait, announced by `GoldenOfferedEvent`.

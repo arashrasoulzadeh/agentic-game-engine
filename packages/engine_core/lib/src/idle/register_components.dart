@@ -1,4 +1,4 @@
-import 'package:engine_core/engine_core.dart';
+import '../../engine_core.dart';
 import 'package:engine_schema/engine_schema.dart';
 
 import 'active_play.dart';

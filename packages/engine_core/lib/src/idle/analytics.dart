@@ -1,4 +1,4 @@
-import 'package:engine_core/engine_core.dart';
+import '../../engine_core.dart';
 
 /// The standard analytics events of an idle game, sent through [AnalyticsManager] (so the player's
 /// consent setting applies) or any other sink a test or game supplies.

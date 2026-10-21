@@ -1,7 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 
-import '../components.dart';
+import 'package:engine_core/engine_core_idle.dart';
 import 'idle_controller.dart';
 
 /// The resources the player holds and what they earn per second.

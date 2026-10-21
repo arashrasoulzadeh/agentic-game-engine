@@ -27,7 +27,7 @@ made explicitly (see the "Remove root sample app" commit).
 | `packages/engine_flutter` | Rendering, input, camera, audio, save/load. | `engine_core` |
 | `packages/engine_platformer` | Platformer-genre gameplay: gravity, jump, tile/platform collision, spawn helpers, patrol/follow behaviors, movement animation. | `engine_core`, `engine_flutter` |
 | `packages/engine_strategy` | Turn-based strategy assembly: `installStrategySystems`, `spawnStrategyUnit`. Rules/data live in `engine_core/lib/src/turn/`. | `engine_core`, `engine_flutter` |
-| `packages/engine_idle` | Idle / incremental-game layer: generators, upgrades, prestige, achievements and their widgets (scaffold; see `TODO_IDLE.md`). Genre-general maths/persistence stay in `engine_core`. | `engine_core`, `engine_flutter` |
+| `packages/engine_idle` | Idle / incremental-game layer: widgets, `IdleController`, `IdleSession` (lifecycle/saving). The Flutter-free idle rules live in `engine_core` (`engine_core_idle.dart`) so the CLI can use them; see `TODO_IDLE.md`. | `engine_core`, `engine_flutter` |
 | `packages/engine_cli` | `game_agent` CLI: `create`/`upgrade`/`lint`. | `engine_core` (for `lint`) |
 
 **Dependency direction is a one-way DAG: `engine_core` → `engine_flutter`

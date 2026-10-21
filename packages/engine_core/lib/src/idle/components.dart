@@ -1,4 +1,4 @@
-import 'package:engine_core/engine_core.dart';
+import '../../engine_core.dart';
 
 /// A bonus a generator earns for being owned in numbers: at [owned] copies its output is multiplied by
 /// [multiplier] (the genre's "25 cursors: x2" ladder). Reached milestones stack.

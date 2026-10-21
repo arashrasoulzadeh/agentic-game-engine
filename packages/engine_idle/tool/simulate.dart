@@ -1,5 +1,5 @@
 // Balance simulator: plays an idle game definition with a greedy strategy and prints when it reaches
-// milestones.
+// milestones. The same thing as `game_agent idle simulate`, without installing the CLI.
 //
 //   dart run tool/simulate.dart path/to/game.json [--days 3] [--prestige-at 2.0]
 //
@@ -9,19 +9,6 @@ import 'dart:io';
 
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_idle/engine_idle_logic.dart';
-
-String _fmt(Duration d) {
-  final days = d.inDays,
-      h = d.inHours % 24,
-      m = d.inMinutes % 60,
-      s = d.inSeconds % 60;
-  return [
-    if (days > 0) '${days}d',
-    if (days > 0 || h > 0) '${h}h',
-    if (d.inHours < 24) '${m}m',
-    if (d.inMinutes < 10) '${s}s',
-  ].join(' ');
-}
 
 int main(List<String> args) {
   final path = args.where((a) => !a.startsWith('--')).firstOrNull;
@@ -60,17 +47,6 @@ int main(List<String> args) {
     limit: Duration(hours: ((option('--days') ?? 3) * 24).round()),
     prestigeAt: option('--prestige-at'),
   );
-
-  stdout.writeln(
-    'Simulated ${_fmt(report.elapsed)}, ${report.purchases} purchases'
-    '${report.stalled ? ' (stalled: ${report.stallReason})' : ''}.',
-  );
-  for (final m in report.milestones) {
-    stdout.writeln('  ${_fmt(m.at).padRight(10)} ${m.label}');
-  }
-  stdout.writeln('Final income:');
-  for (final e in report.finalIncome.entries) {
-    stdout.writeln('  ${formatBigNumber(e.value)} ${e.key}/s');
-  }
+  stdout.write(describeSimulation(report));
   return 0;
 }

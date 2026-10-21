@@ -1,4 +1,4 @@
-import 'package:engine_core/engine_core.dart';
+import '../../engine_core.dart';
 
 import 'components.dart';
 import 'economy.dart';
@@ -223,4 +223,32 @@ _Option? _better(_Option? current, _Option candidate) {
   if (candidate.gain <= BigNumber.zero) return current;
   if (current == null || candidate.payback < current.payback) return candidate;
   return current;
+}
+
+String _duration(Duration d) {
+  final days = d.inDays, h = d.inHours % 24, m = d.inMinutes % 60;
+  final s = d.inSeconds % 60;
+  return [
+    if (days > 0) '${days}d',
+    if (days > 0 || h > 0) '${h}h',
+    if (d.inHours < 24) '${m}m',
+    if (d.inMinutes < 10) '${s}s',
+  ].join(' ');
+}
+
+/// [report] as the plain text the command-line tools print: a summary line, one line per milestone and the
+/// final income. One place for it so `game_agent idle simulate` and the package's own tool agree.
+String describeSimulation(SimulationReport report) {
+  final b = StringBuffer(
+    'Simulated ${_duration(report.elapsed)}, ${report.purchases} purchases'
+    '${report.stalled ? ' (stalled: ${report.stallReason})' : ''}.\n',
+  );
+  for (final m in report.milestones) {
+    b.writeln('  ${_duration(m.at).padRight(10)} ${m.label}');
+  }
+  b.writeln('Final income:');
+  for (final e in report.finalIncome.entries) {
+    b.writeln('  ${formatBigNumber(e.value)} ${e.key}/s');
+  }
+  return b.toString();
 }

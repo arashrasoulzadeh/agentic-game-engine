@@ -1,7 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 
-import '../progression.dart';
+import 'package:engine_core/engine_core_idle.dart';
 import 'idle_controller.dart';
 
 /// What prestiging would give right now, the bonus already held, and a button to do it.
