@@ -46,6 +46,14 @@ abstract class CostCurve {
           base: BigNumber.fromJson(json['base'] as Object),
           step: BigNumber.fromJson(json['step'] as Object),
         );
+      case 'table':
+        return TableCost(
+          prices: [
+            for (final p in json['prices'] as List)
+              BigNumber.fromJson(p as Object),
+          ],
+          tailGrowth: (json['tailGrowth'] as num?)?.toDouble() ?? 1,
+        );
       default:
         throw FormatException('Unknown cost curve type: ${json['type']}');
     }
@@ -128,5 +136,80 @@ class LinearCost extends CostCurve {
     'type': 'linear',
     'base': base.toJson(),
     'step': step.toJson(),
+  };
+}
+
+/// Hand-authored prices: `prices[i]` is the cost of the unit bought when `i` are owned. For designers who
+/// want exact, readable numbers for the first stretch instead of a formula.
+///
+/// Past the end of the table each unit costs [tailGrowth] times the one before (1 keeps the last price
+/// forever), so a table never runs out of prices.
+class TableCost extends CostCurve {
+  TableCost({required List<BigNumber> prices, this.tailGrowth = 1})
+    : assert(prices.isNotEmpty, 'a table needs at least one price'),
+      assert(tailGrowth >= 1, 'tailGrowth below 1 would make units cheaper'),
+      prices = List.unmodifiable(prices),
+      _prefix = _prefixSums(prices);
+
+  final List<BigNumber> prices;
+  final double tailGrowth;
+
+  /// `_prefix[n]` is the cost of the first `n` units from zero.
+  final List<BigNumber> _prefix;
+
+  static List<BigNumber> _prefixSums(List<BigNumber> prices) {
+    final out = <BigNumber>[BigNumber.zero];
+    for (final p in prices) {
+      out.add(out.last + p);
+    }
+    return out;
+  }
+
+  @override
+  BigNumber costOfNext(int owned) => owned < prices.length
+      ? prices[owned]
+      : prices.last * BigNumber.from(tailGrowth).pow(owned - prices.length + 1);
+
+  BigNumber _cumulative(int n) {
+    if (n <= prices.length) return _prefix[n];
+    final m = n - prices.length;
+    final g = BigNumber.from(tailGrowth);
+    final first = prices.last * g;
+    final tail = tailGrowth == 1
+        ? first * BigNumber.from(m)
+        : first * (g.pow(m) - BigNumber.one) / (g - BigNumber.one);
+    return _prefix.last + tail;
+  }
+
+  @override
+  BigNumber totalCost(int owned, int count) {
+    if (count <= 0) return BigNumber.zero;
+    return _cumulative(owned + count) - _cumulative(owned);
+  }
+
+  @override
+  int _estimate(int owned, BigNumber budget) {
+    // Total cost only grows, so double until the budget is exceeded, then bisect.
+    var hi = 1;
+    while (hi < (1 << 30) && totalCost(owned, hi) <= budget) {
+      hi *= 2;
+    }
+    var lo = hi ~/ 2;
+    while (lo < hi - 1) {
+      final mid = (lo + hi) ~/ 2;
+      if (totalCost(owned, mid) <= budget) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    return lo;
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'type': 'table',
+    'prices': [for (final p in prices) p.toJson()],
+    if (tailGrowth != 1) 'tailGrowth': tailGrowth,
   };
 }

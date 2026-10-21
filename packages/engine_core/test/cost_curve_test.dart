@@ -28,6 +28,53 @@ int slowMax(CostCurve c, int owned, BigNumber budget, {int cap = 5000}) {
 }
 
 void main() {
+  group('TableCost', () {
+    BigNumber n(String s) => BigNumber.parse(s);
+    final table = TableCost(prices: [n('10'), n('20'), n('50')], tailGrowth: 2);
+
+    test('prices come from the table, then grow by tailGrowth', () {
+      expect(table.costOfNext(0), n('10'));
+      expect(table.costOfNext(2), n('50'));
+      expect(table.costOfNext(3), n('100'));
+      expect(table.costOfNext(4), n('200'));
+    });
+
+    test('totalCost and maxAffordable match the one-by-one answer', () {
+      for (final owned in [0, 1, 3, 5]) {
+        for (final count in [0, 1, 2, 4, 7]) {
+          expect(
+            table
+                .totalCost(owned, count)
+                .approxEquals(slowTotal(table, owned, count)),
+            isTrue,
+            reason: 'owned $owned count $count',
+          );
+        }
+        for (final b in ['5', '10', '29', '80', '1000', '123456']) {
+          expect(
+            table.maxAffordable(owned, n(b)),
+            slowMax(table, owned, n(b)),
+            reason: 'owned $owned budget $b',
+          );
+        }
+      }
+    });
+
+    test('tailGrowth 1 repeats the last price', () {
+      final flat = TableCost(prices: [n('5'), n('7')]);
+      expect(flat.costOfNext(9), n('7'));
+      expect(flat.totalCost(1, 3), n('21'));
+    });
+
+    test('round-trips through JSON', () {
+      final back = CostCurve.fromJson(
+        (jsonDecode(jsonEncode(table.toJson())) as Map).cast<String, dynamic>(),
+      );
+      expect(back, isA<TableCost>());
+      expect(back.costOfNext(4), n('200'));
+    });
+  });
+
   group('GeometricCost', () {
     final curve = GeometricCost(base: n('10'), growth: 1.15);
 

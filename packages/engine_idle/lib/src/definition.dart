@@ -98,8 +98,23 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
       errors.add('$p.cost is required');
     } else {
       final type = cost['type'];
-      number(cost['base'], '$p.cost.base', positive: true);
-      if (type == 'geometric') {
+      if (type != 'table') {
+        number(cost['base'], '$p.cost.base', positive: true);
+      }
+      if (type == 'table') {
+        final prices = cost['prices'];
+        if (prices is! List || prices.isEmpty) {
+          errors.add('$p.cost.prices must be a non-empty list');
+        } else {
+          for (var j = 0; j < prices.length; j++) {
+            number(prices[j], '$p.cost.prices[$j]', positive: true);
+          }
+        }
+        final tail = cost['tailGrowth'];
+        if (tail != null && (tail is! num || tail < 1)) {
+          errors.add('$p.cost.tailGrowth must be a number >= 1');
+        }
+      } else if (type == 'geometric') {
         final growth = cost['growth'];
         if (growth is! num || growth < 1) {
           errors.add('$p.cost.growth must be a number >= 1');
@@ -107,7 +122,9 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
       } else if (type == 'linear') {
         number(cost['step'], '$p.cost.step', nonNegative: true);
       } else {
-        errors.add('$p.cost.type "$type" is unknown (use geometric or linear)');
+        errors.add(
+          '$p.cost.type "$type" is unknown (use geometric, linear or table)',
+        );
       }
     }
     final out = g['output'];

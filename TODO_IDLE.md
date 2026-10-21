@@ -85,7 +85,7 @@ The building blocks are there; the genre's *structure* is not.
       `buyUpgrade` and `IdleSystem` are done in `engine_idle`. `validateIdleDefinition` / `loadIdleDefinition` load a whole game from one JSON file with path-named errors
       (also done). Per-generator milestone bonuses (`milestones: [{owned, multiplier}]`) are done too.
 - [ ] **Cost curves, remaining** — `GeometricCost`, `LinearCost` with closed-form `totalCost` / `maxAffordable`
-      (verified against brute force) are done in `engine_core`. Left: a table curve and a max-level cap.
+      (verified against brute force) are done in `engine_core`. `TableCost` (hand-authored prices, optional tail growth) is done; the max-level cap is `Generator.maxOwned`.
 - [ ] **Multiplier stack, remaining** — `ModifierStack` (additive + multiplicative, named sources, breakdown,
       order-independent) is done in `engine_core`; wire it to generators/upgrades/prestige in `engine_idle`.
 - [ ] **Prestige, remaining** — `PrestigeRule`, `prestigeGainNow`, `performPrestige` (reset scope, permanent currency,

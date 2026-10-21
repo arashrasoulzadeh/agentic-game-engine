@@ -90,6 +90,37 @@ void main() {
       return validateIdleDefinition(j);
     }
 
+    test('table cost curves are validated', () {
+      List<String> cost(Map<String, dynamic> c) =>
+          problems((j) => (j['generators'] as List)[0]['cost'] = c);
+      expect(
+        cost({
+          'type': 'table',
+          'prices': ['5', '9'],
+        }),
+        isEmpty,
+      );
+      expect(
+        cost({'type': 'table', 'prices': []}),
+        contains('generators[0].cost.prices must be a non-empty list'),
+      );
+      expect(
+        cost({
+          'type': 'table',
+          'prices': ['5', 'x'],
+        }),
+        contains('generators[0].cost.prices[1] is not a number'),
+      );
+      expect(
+        cost({
+          'type': 'table',
+          'prices': ['5'],
+          'tailGrowth': 0.5,
+        }),
+        contains('generators[0].cost.tailGrowth must be a number >= 1'),
+      );
+    });
+
     test('bad milestones', () {
       List<String> ms(Object v) =>
           problems((j) => (j['generators'] as List)[0]['milestones'] = v);
@@ -160,7 +191,7 @@ void main() {
           },
         ),
         contains(
-          'generators[0].cost.type "zigzag" is unknown (use geometric or linear)',
+          'generators[0].cost.type "zigzag" is unknown (use geometric, linear or table)',
         ),
       );
       expect(
