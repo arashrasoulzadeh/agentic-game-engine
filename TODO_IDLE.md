@@ -157,8 +157,8 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
       respecting `setConsent`.
 - [ ] **Accessibility** — `reduceMotion` honoured by number-tick animations; high-contrast affordable /
       locked states; no information carried by colour alone.
-- [ ] **Performance budget** — 1,000 generators and a 6-month offline catch-up each stay under a stated time
-      on a mid-range phone; a benchmark in `packages/engine_core/benchmark/` guards it.
+- [x] **Performance budget** — 1,000 generators and a 6-month offline catch-up are guarded by a loose-budget test
+      (`engine_idle/test/performance_budget_test.dart`); a real-device benchmark is still open.
 
 ## Suggested order
 

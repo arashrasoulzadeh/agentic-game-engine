@@ -102,16 +102,18 @@ class OfflineProgress {
     if (credit.isNone || config.efficiency == 0) {
       return OfflineSummary(credit: credit, gained: const {});
     }
-    final before = {...treasury.amounts};
-    treasury.accrue(
-      credit.credited.inMicroseconds /
-          Duration.microsecondsPerSecond *
-          config.efficiency,
-    );
+    final seconds =
+        credit.credited.inMicroseconds /
+        Duration.microsecondsPerSecond *
+        config.efficiency;
+    treasury.accrue(seconds);
+    // Computed from the rates, not by comparing wallets: next to a 1e300 balance the earnings are below
+    // the number's precision, and a wallet diff would report "nothing earned" for a real payout.
     final gained = <String, BigNumber>{};
-    for (final e in treasury.amounts.entries) {
-      final delta = e.value - (before[e.key] ?? BigNumber.zero);
-      if (delta > BigNumber.zero) gained[e.key] = delta;
+    final factor = BigNumber.from(seconds);
+    for (final e in treasury.incomePerSecond.entries) {
+      final gain = e.value * factor;
+      if (gain > BigNumber.zero) gained[e.key] = gain;
     }
     return OfflineSummary(credit: credit, gained: gained);
   }

@@ -185,4 +185,19 @@ void main() {
       );
     });
   });
+
+  test(
+    'the summary reports earnings even when the wallet is too large to show them',
+    () {
+      final t = BigTreasury(amounts: {'coins': BigNumber.parse('1e300')})
+        ..incomePerSecond['coins'] = BigNumber.parse('10');
+      final t0 = DateTime.utc(2026);
+      final s = OfflineProgress.catchUp(
+        t,
+        lastActiveAt: t0,
+        now: t0.add(const Duration(hours: 1)),
+      );
+      expect(s.gained['coins'], BigNumber.parse('36000'));
+    },
+  );
 }
