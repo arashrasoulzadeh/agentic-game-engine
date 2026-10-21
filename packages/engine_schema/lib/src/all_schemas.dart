@@ -46,6 +46,8 @@ const allComponentSchemas = <String, ComponentSchema>{
   'depot': depotSchema,
   'gatherer': gathererSchema,
   'construction': constructionSchema,
+  'techState': techStateSchema,
+  'provides': providesSchema,
   'objective': objectiveSchema,
   'objectiveRules': objectiveRulesSchema,
   'statusEffects': statusEffectsSchema,

@@ -123,8 +123,8 @@ orders, grid navigation, combat, fog of war, selection, AI turns,
 `engine_strategy`, `strategy_game` template). Left:
 
 - [ ] **Real-time strategy, remaining** — gathering and building are done (see the concept
-      guide). Missing: builder units that must be present to construct, per-unit collision
-      radii larger than one cell, and tech trees.
+      guide). Tech trees (prerequisites by building or by name) are also done. Missing:
+      builder units that must be present to construct, and per-unit collision radii larger than one cell.
 
 ## Studio
 

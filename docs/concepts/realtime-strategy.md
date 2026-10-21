@@ -218,7 +218,29 @@ or depot on it does nothing until done, and `BuildingCompletedEvent` fires once.
 Buildings here appear instantly and build themselves: there is no builder unit who must stand
 there (a `Gatherer`-style "builder" would be the next step).
 
+## Tech trees
+
+A producer can require technologies before it makes anything:
+
+```dart
+Producer(cost: {'gold': 30}, seconds: 4, template: knight, requires: ['barracks']);
+```
+
+A team **has** a technology when either
+
+- a **finished** building of its team carries `Provides({'barracks'})` (so the prerequisite *is* a
+  building, and losing it locks the tech again); or
+- game code unlocked it by name: `grantTech(world, 'red', 'feudalism')` (a research that finished, a
+  campaign reward). That is stored in a per-team `TechState`.
+
+While anything in `requires` is missing the producer does not start a unit, charges nothing, and emits one
+`ProductionLockedEvent(producer, missing)` so a UI can say what to build first. A building still under
+construction does not count. `availableTech(world, team)` and `missingTech(world, team, requires)` answer
+the same question for your own UI.
+
+There is no built-in *research* mechanic (spend resources over time to get a tech); model it with a
+`Producer`-like building of your own that calls `grantTech` when it completes.
+
 ## Not built yet
 
-Builder units that must be present to construct, unit collision radii beyond one unit per
-cell, and tech trees.
+Builder units that must be present to construct, and unit collision radii beyond one unit per cell.

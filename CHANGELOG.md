@@ -13,6 +13,7 @@ pubspec.yaml.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
+- Real-time strategy tech trees: `Producer.requires`, `Provides` (finished buildings unlock tech) and `TechState` / `grantTech` (unlock by name); `availableTech`, `missingTech`; `ProductionLockedEvent`.
 - `PathfindingJob` (a `JobSystem` job) now does four-way A* over a tile grid instead of returning an empty path.
 - Real Wave Function Collapse: `WFCRules` (learned with `WFCRules.fromSample` or stated by hand) and a propagating, restarting `WFCGenerator`; unsatisfiable rules throw instead of returning a broken level. (`WFCConfig.allowBacktracking`, which did nothing, is removed.)
 - `AnalyticsManager.setConsent` / `hasConsent`: while off nothing is queued or sent, and turning it off discards what was queued.

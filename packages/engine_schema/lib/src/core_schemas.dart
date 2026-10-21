@@ -280,6 +280,7 @@ const producerSchema = ComponentSchema('producer', [
   FieldSchema('queued', FieldType.int, min: 0),
   FieldSchema('progress', FieldType.double, min: 0),
   FieldSchema('paid', FieldType.bool),
+  FieldSchema('requires', FieldType.list),
 ]);
 
 const resourceNodeSchema = ComponentSchema('resourceNode', [
@@ -307,4 +308,13 @@ const gathererSchema = ComponentSchema('gatherer', [
 
 const constructionSchema = ComponentSchema('construction', [
   FieldSchema('remaining', FieldType.double, min: 0, required: true),
+]);
+
+const techStateSchema = ComponentSchema('techState', [
+  FieldSchema('team', FieldType.string, required: true),
+  FieldSchema('researched', FieldType.list),
+]);
+
+const providesSchema = ComponentSchema('provides', [
+  FieldSchema('tech', FieldType.list),
 ]);

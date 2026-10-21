@@ -6,6 +6,7 @@ import '../ecs/world.dart';
 import 'formation.dart';
 import 'grid_navigation.dart';
 import 'order.dart';
+import 'tech.dart';
 import 'turn_components.dart';
 
 /// One team's stockpile of resources, plus what it earns per second.
@@ -110,6 +111,10 @@ class Producer {
   /// Whether the unit in progress has been paid for.
   bool paid;
 
+  /// Technologies the team must have (see `availableTech`) before this producer starts a unit.
+  /// Empty means no prerequisite.
+  final List<String> requires;
+
   Producer({
     required this.cost,
     required this.seconds,
@@ -117,7 +122,8 @@ class Producer {
     this.queued = 0,
     this.progress = 0,
     this.paid = false,
-  });
+    List<String>? requires,
+  }) : requires = requires ?? const [];
 
   Map<String, dynamic> toJson() => {
     'cost': cost,
@@ -126,6 +132,7 @@ class Producer {
     'queued': queued,
     'progress': progress,
     'paid': paid,
+    if (requires.isNotEmpty) 'requires': requires,
   };
   factory Producer.fromJson(Map<String, dynamic> json) => Producer(
     cost: {
@@ -137,6 +144,9 @@ class Producer {
     queued: (json['queued'] as num?)?.toInt() ?? 0,
     progress: (json['progress'] as num?)?.toDouble() ?? 0,
     paid: json['paid'] as bool? ?? false,
+    requires: [
+      for (final r in (json['requires'] as List? ?? const [])) r as String,
+    ],
   );
 }
 
@@ -190,6 +200,7 @@ class ProductionSystem extends System {
   final GridNavigator navigator;
 
   final Set<EntityId> _stalled = {};
+  final Set<EntityId> _locked = {};
 
   @override
   String get name => 'production';
@@ -215,6 +226,13 @@ class ProductionSystem extends System {
     final team = world.storeOf<Team>().get(id)?.id;
     if (team == null) return;
     if (!p.paid) {
+      final missing = missingTech(world, team, p.requires);
+      if (missing.isNotEmpty) {
+        if (_locked.add(id))
+          world.events.emit(ProductionLockedEvent(id, missing));
+        return;
+      }
+      _locked.remove(id);
       final treasury = treasuryOf(world, team);
       if (treasury == null || !treasury.spend(p.cost)) {
         if (_stalled.add(id)) {

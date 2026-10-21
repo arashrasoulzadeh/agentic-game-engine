@@ -101,6 +101,7 @@ export 'src/turn/flow_field.dart';
 export 'src/turn/formation.dart';
 export 'src/turn/economy.dart';
 export 'src/turn/gathering.dart';
+export 'src/turn/tech.dart';
 export 'src/turn/construction.dart';
 export 'src/turn/realtime.dart';
 export 'src/turn/occupancy.dart';
@@ -138,6 +139,7 @@ import 'src/turn/objectives.dart';
 import 'src/turn/carry.dart';
 import 'src/turn/economy.dart';
 import 'src/turn/gathering.dart';
+import 'src/turn/tech.dart';
 import 'src/turn/realtime.dart';
 import 'src/turn/fog_of_war.dart';
 
@@ -420,6 +422,18 @@ void registerCoreComponents(World world) {
     (g) => g.toJson(),
     Gatherer.fromJson,
     schema: gathererSchema,
+  );
+  world.components.register<TechState>(
+    'techState',
+    (t) => t.toJson(),
+    TechState.fromJson,
+    schema: techStateSchema,
+  );
+  world.components.register<Provides>(
+    'provides',
+    (p) => p.toJson(),
+    Provides.fromJson,
+    schema: providesSchema,
   );
   world.components.register<Construction>(
     'construction',
