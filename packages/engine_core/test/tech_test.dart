@@ -107,7 +107,10 @@ void main() {
   test('another team\'s building does not unlock it', () {
     final r = _rig();
     queueProduction(r.world, r.stable);
-    r.world.storeOf<Treasury>().set(r.world.spawn(), Treasury('blue')); // placeBuilding needs one
+    r.world.storeOf<Treasury>().set(
+      r.world.spawn(),
+      Treasury('blue'),
+    ); // placeBuilding needs one
     _barracks(r.world, 'blue');
     _run(r.world, 2);
     expect(r.treasury.of('gold'), 100);

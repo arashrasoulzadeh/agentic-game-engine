@@ -103,9 +103,18 @@ class Construction {
   /// Seconds still to go.
   double remaining;
 
-  Construction(this.remaining);
+  /// Whether the clock only runs while a team `Builder` assigned to this building stands next to
+  /// it (see `assignBuild`). False: the building builds itself.
+  final bool needsBuilder;
 
-  Map<String, dynamic> toJson() => {'remaining': remaining};
-  factory Construction.fromJson(Map<String, dynamic> json) =>
-      Construction((json['remaining'] as num).toDouble());
+  Construction(this.remaining, {this.needsBuilder = false});
+
+  Map<String, dynamic> toJson() => {
+    'remaining': remaining,
+    if (needsBuilder) 'needsBuilder': true,
+  };
+  factory Construction.fromJson(Map<String, dynamic> json) => Construction(
+    (json['remaining'] as num).toDouble(),
+    needsBuilder: json['needsBuilder'] as bool? ?? false,
+  );
 }

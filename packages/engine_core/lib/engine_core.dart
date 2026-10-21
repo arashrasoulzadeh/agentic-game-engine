@@ -138,6 +138,7 @@ import 'src/turn/status.dart';
 import 'src/turn/objectives.dart';
 import 'src/turn/carry.dart';
 import 'src/turn/economy.dart';
+import 'src/turn/construction.dart';
 import 'src/turn/gathering.dart';
 import 'src/turn/tech.dart';
 import 'src/turn/realtime.dart';
@@ -422,6 +423,12 @@ void registerCoreComponents(World world) {
     (g) => g.toJson(),
     Gatherer.fromJson,
     schema: gathererSchema,
+  );
+  world.components.register<Builder>(
+    'builder',
+    (b) => b.toJson(),
+    Builder.fromJson,
+    schema: builderSchema,
   );
   world.components.register<TechState>(
     'techState',

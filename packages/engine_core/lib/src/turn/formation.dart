@@ -107,3 +107,30 @@ bool Function(int col, int row) cellsHeldExcept(
     return false;
   };
 }
+
+/// Queues a move for [id] to the nearest free cell touching [target], unless it already has an
+/// order. False when it has no `OrderQueue`/`GridPosition`, or no free cell touches the target
+/// (try again later). The shared "walk up to it" step of gathering and building.
+bool queueMoveNextTo(
+  World world,
+  GridNavigator navigator,
+  EntityId id,
+  GridPosition target,
+) {
+  final queue = world.storeOf<OrderQueue>().get(id);
+  final here = world.storeOf<GridPosition>().get(id);
+  if (queue == null || here == null) return false;
+  if (queue.orders.isNotEmpty) return true;
+  final cells = formationCells(
+    navigator,
+    target,
+    8,
+    taken: cellsHeldExcept(world, [id]),
+  ).where((c) => c.chebyshev(target) <= 1);
+  if (cells.isEmpty) return false;
+  final cell = cells.reduce(
+    (a, b) => a.chebyshev(here) <= b.chebyshev(here) ? a : b,
+  );
+  queue.orders.add(MoveOrder(cell.col, cell.row));
+  return true;
+}

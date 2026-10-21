@@ -215,8 +215,22 @@ It is all-or-nothing: a refusal spends nothing and creates nothing. With `buildS
 building carries a `Construction` component; it counts down in `ConstructionSystem`, a producer
 or depot on it does nothing until done, and `BuildingCompletedEvent` fires once.
 
-Buildings here appear instantly and build themselves: there is no builder unit who must stand
-there (a `Gatherer`-style "builder" would be the next step).
+### Builders
+
+By default a building builds itself. Pass `needsBuilder: true` to `placeBuilding` (and `building: true`
+to `installRealtimeStrategySystems`) and its clock only runs while **assigned builders of its team stand
+next to it**:
+
+```dart
+final site = placeBuilding(world, navigator, team: 'red', template: tower, col: 8, row: 3,
+    cost: {'gold': 80}, buildSeconds: 20, needsBuilder: true).id!;
+
+world.components.applyToEntity(worker, {'builder': {}});     // a unit with realtimeStats + orderQueue
+assignBuild(world, worker, site);                             // false: not a builder / not a site / other team
+```
+
+The builder walks up to the site, works, and is freed when the building completes. Each adjacent
+assigned builder adds one second of work per second, so two builders finish in half the time.
 
 ## Tech trees
 
@@ -243,4 +257,4 @@ There is no built-in *research* mechanic (spend resources over time to get a tec
 
 ## Not built yet
 
-Builder units that must be present to construct, and unit collision radii beyond one unit per cell.
+Unit collision radii beyond one unit per cell.

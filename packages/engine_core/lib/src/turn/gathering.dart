@@ -189,7 +189,7 @@ class GatherSystem extends System {
       world.storeOf<OrderQueue>().get(id)?.orders.clear();
       return;
     }
-    _walkNextTo(world, id, there);
+    queueMoveNextTo(world, navigator, id, there);
   }
 
   void _harvest(World world, EntityId id, Gatherer g, double dt) {
@@ -229,7 +229,7 @@ class GatherSystem extends System {
     if (depot == null) return; // nowhere to deliver yet: wait, keeping the haul
     final there = world.storeOf<GridPosition>().get(depot)!;
     if (here.chebyshev(there) > 1) {
-      _walkNextTo(world, id, there);
+      queueMoveNextTo(world, navigator, id, there);
       return;
     }
     treasuryOf(world, team)?.add(resource, g.carried);
@@ -269,23 +269,5 @@ class GatherSystem extends System {
       }
     }
     return best;
-  }
-
-  /// Queues a move to the nearest free cell touching [target], unless it is already moving.
-  void _walkNextTo(World world, EntityId id, GridPosition target) {
-    final queue = world.storeOf<OrderQueue>().get(id);
-    if (queue == null || queue.orders.isNotEmpty) return;
-    final cells = formationCells(
-      navigator,
-      target,
-      8,
-      taken: cellsHeldExcept(world, [id]),
-    ).where((c) => c.chebyshev(target) <= 1);
-    if (cells.isEmpty) return;
-    final here = world.storeOf<GridPosition>().get(id)!;
-    final cell = cells.reduce(
-      (a, b) => a.chebyshev(here) <= b.chebyshev(here) ? a : b,
-    );
-    queue.orders.add(MoveOrder(cell.col, cell.row));
   }
 }

@@ -256,11 +256,19 @@ void economyTests() {
     expect(treasury.of('wood'), 3);
   });
 
+  test('building: true adds the build system before orders, after construction', () {
+    final w = _world();
+    installRealtimeStrategySystems(w, navigator: _nav(), cellSize: 32, building: true);
+    expect(w.systemOrder.indexOf('construction'), lessThan(w.systemOrder.indexOf('build')));
+    expect(w.systemOrder.indexOf('build'), lessThan(w.systemOrder.indexOf('realtimeOrders')));
+  });
+
   test('without production: true there is no economy system', () {
     final w = _world();
     installRealtimeStrategySystems(w, navigator: _nav(), cellSize: 32);
     expect(w.systemOrder.contains('production'), isFalse);
     expect(w.systemOrder.contains('gather'), isFalse);
+    expect(w.systemOrder.contains('build'), isFalse);
   });
 
   test('aiTeams adds the real-time AI before the orders so its commands run the same tick', () {

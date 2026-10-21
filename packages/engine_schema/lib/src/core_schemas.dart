@@ -308,6 +308,11 @@ const gathererSchema = ComponentSchema('gatherer', [
 
 const constructionSchema = ComponentSchema('construction', [
   FieldSchema('remaining', FieldType.double, min: 0, required: true),
+  FieldSchema('needsBuilder', FieldType.bool),
+]);
+
+const builderSchema = ComponentSchema('builder', [
+  FieldSchema('site', FieldType.int, optional: true),
 ]);
 
 const techStateSchema = ComponentSchema('techState', [
