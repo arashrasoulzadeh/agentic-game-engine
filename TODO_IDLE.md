@@ -117,8 +117,7 @@ ordinary Flutter widgets reading the game state, shipped as a small package or a
       display and a golden test.
 - [ ] **Resource header, remaining** — `ResourceHeader` and `IdleController` (10 Hz notifications, real-time clock, style
       switch) are done. Left: per-widget rebuild throttling beyond the controller's tick.
-- [ ] **"While you were away" dialog, remaining** — `OfflineSummaryDialog` is done; left: the watch-an-ad-for-2x hook (an
-      interface) and wiring `OfflineProgress` to the app lifecycle (section 2).
+- [ ] **"While you were away" dialog, remaining** — `OfflineSummaryDialog` is done; the 2x hook (`onDouble` callback + `IdleSession.doubleOffline`) and lifecycle wiring are done too.
 - [ ] **Prestige screen** and **achievements screen**.
 - [ ] **Settings** — number-format style, offline-progress notice, and the existing accessibility options.
 - [ ] **Large-number performance** — formatting is cached; rebuilds are limited to values that changed.

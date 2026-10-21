@@ -154,6 +154,23 @@ void main() {
     },
   );
 
+  test(
+    'doubleOffline pays the away earnings a second time and counts them in the stats',
+    () {
+      final c = _newGame();
+      c.buy(c.generatorIds.first);
+      final s = session(c)..onPause();
+      clock.now = clock.now.add(const Duration(hours: 1));
+      final summary = s.onResume()!;
+      final before = c.wallet.of('coins');
+      s.doubleOffline(summary);
+      expect(c.wallet.of('coins'), before + summary.gained['coins']!);
+      final stats = c.world.storeOf<IdleStats>().denseAt(0);
+      expect(stats.lifetimeEarned['coins'], summary.gained['coins']! * n('2'));
+      c.stop();
+    },
+  );
+
   test('a very short absence earns and reports nothing', () {
     final c = _newGame();
     c.buy(c.generatorIds.first);

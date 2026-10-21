@@ -151,6 +151,18 @@ class IdleSession {
     return summary;
   }
 
+  /// Pays [summary]'s earnings a second time (the "watch an ad for 2x" reward), counted in the stats like
+  /// the first payment. Call it only after the player earned the bonus.
+  void doubleOffline(OfflineSummary summary) {
+    for (final e in summary.gained.entries) {
+      controller.wallet.add(e.key, e.value);
+    }
+    final stats = controller.world.storeOf<IdleStats>();
+    if (stats.length > 0) stats.denseAt(0).credit(summary.gained);
+    checkAchievements(controller.world, controller.wallet);
+    controller.refresh();
+  }
+
   /// The app went to the background: save and stop the clock (there is nothing to show while away).
   void onPause() {
     save();

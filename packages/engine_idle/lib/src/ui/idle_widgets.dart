@@ -241,15 +241,22 @@ class UpgradeList extends StatelessWidget {
   }
 }
 
-/// The "while you were away" dialog content for an [OfflineSummary].
+/// The "while you were away" dialog content for an [OfflineSummary]. Pops `true` if the player doubled
+/// the reward through [onDouble], `false` if they just collected.
 class OfflineSummaryDialog extends StatelessWidget {
   const OfflineSummaryDialog({
     super.key,
     required this.summary,
     required this.format,
+    this.onDouble,
   });
 
   final OfflineSummary summary;
+
+  /// Offers "double it": shown only when set. It should present the reward (an ad, say) and complete with
+  /// true if the player earned it; the dialog then closes and the game pays the bonus (see
+  /// `IdleSession.doubleOffline`). The engine does not know about ad networks.
+  final Future<bool> Function()? onDouble;
 
   /// How to write each earned amount (usually `controller.format`).
   final String Function(BigNumber) format;
@@ -283,9 +290,18 @@ class OfflineSummaryDialog extends StatelessWidget {
         ],
       ),
       actions: [
+        if (onDouble != null)
+          TextButton(
+            key: const Key('offline-double'),
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              if (await onDouble!()) navigator.pop(true);
+            },
+            child: const Text('Double it'),
+          ),
         TextButton(
           key: const Key('offline-collect'),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).pop(false),
           child: const Text('Collect'),
         ),
       ],

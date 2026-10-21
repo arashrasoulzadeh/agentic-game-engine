@@ -249,6 +249,60 @@ void main() {
     expect(find.textContaining('288.00K'), findsOneWidget);
   });
 
+  testWidgets(
+    'the double button appears only when offered and pops true once the reward is earned',
+    (tester) async {
+      final c = _controller();
+      c.wallet.incomePerSecond['coins'] = n('10');
+      final t0 = DateTime.utc(2026);
+      final summary = OfflineProgress.catchUp(
+        c.wallet,
+        lastActiveAt: t0,
+        now: t0.add(const Duration(hours: 1)),
+      );
+      await tester.pumpWidget(
+        _app(OfflineSummaryDialog(summary: summary, format: c.format)),
+      );
+      expect(find.byKey(const Key('offline-double')), findsNothing);
+
+      Object? result = 'unset';
+      var granted = false;
+      await tester.pumpWidget(
+        _app(
+          Builder(
+            builder: (context) => TextButton(
+              key: const Key('open'),
+              onPressed: () async {
+                result = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => OfflineSummaryDialog(
+                    summary: summary,
+                    format: c.format,
+                    onDouble: () async => granted,
+                  ),
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byKey(const Key('open')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('offline-double')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('offline-summary')),
+        findsOneWidget,
+        reason: 'ad not completed: stays open',
+      );
+      granted = true;
+      await tester.tap(find.byKey(const Key('offline-double')));
+      await tester.pumpAndSettle();
+      expect(result, true);
+    },
+  );
+
   test(
     'the controller steps the world on a real timer, and stops when asked',
     () async {
