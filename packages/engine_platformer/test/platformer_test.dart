@@ -33,9 +33,9 @@ void main() {
     world.storeOf<Velocity>().set(id, Velocity(0, 0));
     world.storeOf<Gravity>().set(id, Gravity());
     world.storeOf<PlatformerController>().set(
-          id,
-          PlatformerController(grounded: true),
-        );
+      id,
+      PlatformerController(grounded: true),
+    );
 
     world.step(1.0);
 
@@ -52,7 +52,10 @@ void main() {
 
     final platform = world.spawn();
     world.storeOf<Position>().set(platform, Position(100, 110));
-    world.storeOf<PlatformBody>().set(platform, PlatformBody(200, 20, oneWay: true));
+    world.storeOf<PlatformBody>().set(
+      platform,
+      PlatformBody(200, 20, oneWay: true),
+    );
 
     world.step(0.1); // moves player to y=95, foot at 105, top at 100 -> lands
 
@@ -73,7 +76,10 @@ void main() {
 
     final platform = world.spawn();
     world.storeOf<Position>().set(platform, Position(100, 110));
-    world.storeOf<PlatformBody>().set(platform, PlatformBody(200, 20, oneWay: true));
+    world.storeOf<PlatformBody>().set(
+      platform,
+      PlatformBody(200, 20, oneWay: true),
+    );
 
     world.step(0.1);
 
@@ -98,9 +104,9 @@ void main() {
     world.storeOf<Velocity>().set(player, Velocity(0, 0));
     world.storeOf<Collider>().set(player, Collider(10));
     world.storeOf<PlatformerController>().set(
-          player,
-          PlatformerController(jumpSpeed: 400, jumpRequested: true),
-        );
+      player,
+      PlatformerController(jumpSpeed: 400, jumpRequested: true),
+    );
     final ground = world.spawn();
     world.storeOf<Position>().set(ground, Position(100, 110));
     world.storeOf<PlatformBody>().set(ground, PlatformBody(200, 20));
@@ -121,12 +127,18 @@ void main() {
     landWorld.storeOf<Position>().set(lander, Position(100, 95));
     landWorld.storeOf<Velocity>().set(lander, Velocity(0, 50));
     landWorld.storeOf<Collider>().set(lander, Collider(10));
-    landWorld.storeOf<PlatformerController>().set(lander, PlatformerController());
+    landWorld.storeOf<PlatformerController>().set(
+      lander,
+      PlatformerController(),
+    );
     final solidGround = landWorld.spawn();
     landWorld.storeOf<Position>().set(solidGround, Position(100, 110));
     landWorld.storeOf<PlatformBody>().set(solidGround, PlatformBody(200, 20));
     landWorld.step(0.1);
-    expect(landWorld.storeOf<PlatformerController>().get(lander)!.grounded, isTrue);
+    expect(
+      landWorld.storeOf<PlatformerController>().get(lander)!.grounded,
+      isTrue,
+    );
 
     // Hitting the underside while jumping up.
     final bonkWorld = _buildWorld();
@@ -134,7 +146,10 @@ void main() {
     bonkWorld.storeOf<Position>().set(jumper, Position(100, 125));
     bonkWorld.storeOf<Velocity>().set(jumper, Velocity(0, -200));
     bonkWorld.storeOf<Collider>().set(jumper, Collider(10));
-    bonkWorld.storeOf<PlatformerController>().set(jumper, PlatformerController());
+    bonkWorld.storeOf<PlatformerController>().set(
+      jumper,
+      PlatformerController(),
+    );
     final ceiling = bonkWorld.spawn();
     bonkWorld.storeOf<Position>().set(ceiling, Position(100, 110));
     bonkWorld.storeOf<PlatformBody>().set(ceiling, PlatformBody(200, 20));

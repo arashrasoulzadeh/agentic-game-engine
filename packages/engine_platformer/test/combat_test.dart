@@ -16,14 +16,17 @@ void main() {
     test('damageEntity blocks damage when guarding with full reduction', () {
       final world = _buildWorld();
       final id = world.spawn();
-      world.storeOf<Health>().set(id, Health(
-        current: 10,
-        max: 10,
-        isGuarding: true,
-        guardDamageReduction: 1.0,
-        stability: 100,
-        maxStability: 100,
-      ));
+      world.storeOf<Health>().set(
+        id,
+        Health(
+          current: 10,
+          max: 10,
+          isGuarding: true,
+          guardDamageReduction: 1.0,
+          stability: 100,
+          maxStability: 100,
+        ),
+      );
 
       final applied = damageEntity(world, id, 4, invincibilitySeconds: 0);
       world.step(0);
@@ -34,38 +37,47 @@ void main() {
       expect(health.stability, 96); // Stability depleted by 4
     });
 
-    test('damageEntity blocks partial damage when guardDamageReduction < 1.0', () {
-      final world = _buildWorld();
-      final id = world.spawn();
-      world.storeOf<Health>().set(id, Health(
-        current: 10,
-        max: 10,
-        isGuarding: true,
-        guardDamageReduction: 0.5, // 50% reduction
-        stability: 100,
-        maxStability: 100,
-      ));
+    test(
+      'damageEntity blocks partial damage when guardDamageReduction < 1.0',
+      () {
+        final world = _buildWorld();
+        final id = world.spawn();
+        world.storeOf<Health>().set(
+          id,
+          Health(
+            current: 10,
+            max: 10,
+            isGuarding: true,
+            guardDamageReduction: 0.5, // 50% reduction
+            stability: 100,
+            maxStability: 100,
+          ),
+        );
 
-      damageEntity(world, id, 4, invincibilitySeconds: 0);
-      world.step(0);
+        damageEntity(world, id, 4, invincibilitySeconds: 0);
+        world.step(0);
 
-      final health = world.storeOf<Health>().get(id)!;
-      expect(health.current, 8); // 2 damage got through (4 * 0.5)
-      expect(health.stability, 98); // 2 stability lost (4 * 0.5)
-    });
+        final health = world.storeOf<Health>().get(id)!;
+        expect(health.current, 8); // 2 damage got through (4 * 0.5)
+        expect(health.stability, 98); // 2 stability lost (4 * 0.5)
+      },
+    );
 
     test('damageEntity emits BlockedEvent when guarding', () {
       final world = _buildWorld();
       final source = world.spawn();
       final id = world.spawn();
-      world.storeOf<Health>().set(id, Health(
-        current: 10,
-        max: 10,
-        isGuarding: true,
-        guardDamageReduction: 1.0,
-        stability: 100,
-        maxStability: 100,
-      ));
+      world.storeOf<Health>().set(
+        id,
+        Health(
+          current: 10,
+          max: 10,
+          isGuarding: true,
+          guardDamageReduction: 1.0,
+          stability: 100,
+          maxStability: 100,
+        ),
+      );
 
       BlockedEvent? seen;
       world.events.on<BlockedEvent>((e) => seen = e);
@@ -84,15 +96,18 @@ void main() {
       final world = _buildWorld();
       final source = world.spawn();
       final id = world.spawn();
-      world.storeOf<Health>().set(id, Health(
-        current: 10,
-        max: 10,
-        isGuarding: true,
-        guardDamageReduction: 1.0,
-        stability: 3, // Low stability
-        maxStability: 100,
-        guardBreakStunSeconds: 1.0,
-      ));
+      world.storeOf<Health>().set(
+        id,
+        Health(
+          current: 10,
+          max: 10,
+          isGuarding: true,
+          guardDamageReduction: 1.0,
+          stability: 3, // Low stability
+          maxStability: 100,
+          guardBreakStunSeconds: 1.0,
+        ),
+      );
 
       GuardBreakEvent? breakSeen;
       world.events.on<GuardBreakEvent>((e) => breakSeen = e);
@@ -115,16 +130,19 @@ void main() {
       final world = _buildWorld();
       world.addSystem(HealthSystem());
       final id = world.spawn();
-      world.storeOf<Health>().set(id, Health(
-        current: 10,
-        max: 10,
-        isGuarding: false,
-        guardDamageReduction: 1.0,
-        stability: 0,
-        maxStability: 100,
-        guardBreakStunSeconds: 0.5,
-        guardBreakTimer: 0.5, // Mid stun
-      ));
+      world.storeOf<Health>().set(
+        id,
+        Health(
+          current: 10,
+          max: 10,
+          isGuarding: false,
+          guardDamageReduction: 1.0,
+          stability: 0,
+          maxStability: 100,
+          guardBreakStunSeconds: 0.5,
+          guardBreakTimer: 0.5, // Mid stun
+        ),
+      );
 
       final health = world.storeOf<Health>().get(id)!;
       expect(health.canGuard, isFalse);
@@ -135,73 +153,92 @@ void main() {
 
       world.step(0.3); // Total 0.6 > 0.5
       final health3 = world.storeOf<Health>().get(id)!;
-      expect(health3.canGuard, isTrue); // Stun over, can guard again (if stability > 0)
+      expect(
+        health3.canGuard,
+        isTrue,
+      ); // Stun over, can guard again (if stability > 0)
     });
 
-    test('HealthSystem regenerates stability when not guarding and not broken', () {
-      final world = _buildWorld();
-      world.addSystem(HealthSystem());
-      final id = world.spawn();
-      world.storeOf<Health>().set(id, Health(
-        current: 10,
-        max: 10,
-        isGuarding: false,
-        stability: 50,
-        maxStability: 100,
-        stabilityRegenPerSecond: 20,
-      ));
+    test(
+      'HealthSystem regenerates stability when not guarding and not broken',
+      () {
+        final world = _buildWorld();
+        world.addSystem(HealthSystem());
+        final id = world.spawn();
+        world.storeOf<Health>().set(
+          id,
+          Health(
+            current: 10,
+            max: 10,
+            isGuarding: false,
+            stability: 50,
+            maxStability: 100,
+            stabilityRegenPerSecond: 20,
+          ),
+        );
 
-      world.step(1.0); // 1 second = 20 regen
-      expect(world.storeOf<Health>().get(id)!.stability, closeTo(70, 0.001));
+        world.step(1.0); // 1 second = 20 regen
+        expect(world.storeOf<Health>().get(id)!.stability, closeTo(70, 0.001));
 
-      world.step(2.0); // 2 more seconds = 40 regen, capped at 100
-      expect(world.storeOf<Health>().get(id)!.stability, 100);
-    });
+        world.step(2.0); // 2 more seconds = 40 regen, capped at 100
+        expect(world.storeOf<Health>().get(id)!.stability, 100);
+      },
+    );
 
     test('HealthSystem does not regen stability while guarding', () {
       final world = _buildWorld();
       world.addSystem(HealthSystem());
       final id = world.spawn();
-      world.storeOf<Health>().set(id, Health(
-        current: 10,
-        max: 10,
-        isGuarding: true,
-        stability: 50,
-        maxStability: 100,
-        stabilityRegenPerSecond: 20,
-      ));
+      world.storeOf<Health>().set(
+        id,
+        Health(
+          current: 10,
+          max: 10,
+          isGuarding: true,
+          stability: 50,
+          maxStability: 100,
+          stabilityRegenPerSecond: 20,
+        ),
+      );
 
       world.step(1.0);
-      expect(world.storeOf<Health>().get(id)!.stability, 50); // No regen while guarding
+      expect(
+        world.storeOf<Health>().get(id)!.stability,
+        50,
+      ); // No regen while guarding
     });
 
     test('HealthSystem does not regen stability while guard broken', () {
       final world = _buildWorld();
       world.addSystem(HealthSystem());
       final id = world.spawn();
-      world.storeOf<Health>().set(id, Health(
-        current: 10,
-        max: 10,
-        isGuarding: false,
-        stability: 50,
-        maxStability: 100,
-        stabilityRegenPerSecond: 20,
-        guardBreakTimer: 1.0,
-      ));
+      world.storeOf<Health>().set(
+        id,
+        Health(
+          current: 10,
+          max: 10,
+          isGuarding: false,
+          stability: 50,
+          maxStability: 100,
+          stabilityRegenPerSecond: 20,
+          guardBreakTimer: 1.0,
+        ),
+      );
 
       world.step(1.0);
-      expect(world.storeOf<Health>().get(id)!.stability, 50); // No regen while guard broken
+      expect(
+        world.storeOf<Health>().get(id)!.stability,
+        50,
+      ); // No regen while guard broken
     });
 
     test('restoreStability restores stability clamped to max', () {
       final world = _buildWorld();
       final id = world.spawn();
-      world.storeOf<Health>().set(id, Health(
-        current: 10,
-        max: 10,
-        stability: 50,
-        maxStability: 100,
-      ));
+      world.storeOf<Health>().set(
+        id,
+        Health(current: 10, max: 10, stability: 50, maxStability: 100),
+      );
 
       restoreStability(world, id, 30);
       expect(world.storeOf<Health>().get(id)!.stability, 80);
@@ -267,7 +304,10 @@ void main() {
   test('damageEntity is a no-op while invincible', () {
     final world = _buildWorld();
     final id = world.spawn();
-    world.storeOf<Health>().set(id, Health(current: 10, max: 10, invincibleSeconds: 0.5));
+    world.storeOf<Health>().set(
+      id,
+      Health(current: 10, max: 10, invincibleSeconds: 0.5),
+    );
 
     final applied = damageEntity(world, id, 4);
 
@@ -301,19 +341,25 @@ void main() {
     expect(seen!.source, source);
   });
 
-  test('damageEntity does not emit DamageEvent when the hit is a no-op (invincible)', () {
-    final world = _buildWorld();
-    final id = world.spawn();
-    world.storeOf<Health>().set(id, Health(current: 10, max: 10, invincibleSeconds: 0.5));
+  test(
+    'damageEntity does not emit DamageEvent when the hit is a no-op (invincible)',
+    () {
+      final world = _buildWorld();
+      final id = world.spawn();
+      world.storeOf<Health>().set(
+        id,
+        Health(current: 10, max: 10, invincibleSeconds: 0.5),
+      );
 
-    var damageEvents = 0;
-    world.events.on<DamageEvent>((e) => damageEvents++);
+      var damageEvents = 0;
+      world.events.on<DamageEvent>((e) => damageEvents++);
 
-    damageEntity(world, id, 4);
-    world.step(0);
+      damageEntity(world, id, 4);
+      world.step(0);
 
-    expect(damageEvents, 0);
-  });
+      expect(damageEvents, 0);
+    },
+  );
 
   test('a killing blow emits both DamageEvent and DeathEvent', () {
     final world = _buildWorld();
@@ -355,10 +401,16 @@ void main() {
     final world = _buildWorld();
     world.addSystem(HealthSystem());
     final id = world.spawn();
-    world.storeOf<Health>().set(id, Health(current: 10, max: 10, invincibleSeconds: 0.3));
+    world.storeOf<Health>().set(
+      id,
+      Health(current: 10, max: 10, invincibleSeconds: 0.3),
+    );
 
     world.step(0.2);
-    expect(world.storeOf<Health>().get(id)!.invincibleSeconds, closeTo(0.1, 0.001));
+    expect(
+      world.storeOf<Health>().get(id)!.invincibleSeconds,
+      closeTo(0.1, 0.001),
+    );
 
     world.step(0.2);
     expect(world.storeOf<Health>().get(id)!.invincibleSeconds, 0);
@@ -395,22 +447,28 @@ void main() {
   });
 
   group('knockback', () {
-    test('damageEntity pushes the entity away from source at knockbackSpeed', () {
-      final world = _buildWorld();
-      final source = world.spawn();
-      world.storeOf<Position>().set(source, Position(0, 0));
+    test(
+      'damageEntity pushes the entity away from source at knockbackSpeed',
+      () {
+        final world = _buildWorld();
+        final source = world.spawn();
+        world.storeOf<Position>().set(source, Position(0, 0));
 
-      final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(10, 0)); // directly to the right of source
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<Health>().set(id, Health(current: 10, max: 10));
+        final id = world.spawn();
+        world.storeOf<Position>().set(
+          id,
+          Position(10, 0),
+        ); // directly to the right of source
+        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.storeOf<Health>().set(id, Health(current: 10, max: 10));
 
-      damageEntity(world, id, 1, source: source, knockbackSpeed: 200);
+        damageEntity(world, id, 1, source: source, knockbackSpeed: 200);
 
-      final vel = world.storeOf<Velocity>().get(id)!;
-      expect(vel.x, closeTo(200, 0.001));
-      expect(vel.y, closeTo(0, 0.001));
-    });
+        final vel = world.storeOf<Velocity>().get(id)!;
+        expect(vel.x, closeTo(200, 0.001));
+        expect(vel.y, closeTo(0, 0.001));
+      },
+    );
 
     test('does nothing when knockbackSpeed is 0 (default)', () {
       final world = _buildWorld();
@@ -435,45 +493,60 @@ void main() {
       world.storeOf<Position>().set(source, Position(0, 0));
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0)); // same spot -- no direction to push
+      world.storeOf<Position>().set(
+        id,
+        Position(0, 0),
+      ); // same spot -- no direction to push
       world.storeOf<Velocity>().set(id, Velocity(0, 0));
       world.storeOf<Health>().set(id, Health(current: 10, max: 10));
 
-      expect(() => damageEntity(world, id, 1, source: source, knockbackSpeed: 200), returnsNormally);
+      expect(
+        () => damageEntity(world, id, 1, source: source, knockbackSpeed: 200),
+        returnsNormally,
+      );
       expect(world.storeOf<Velocity>().get(id)!.x, 0);
     });
 
-    test('dealDamageOnTouch uses the touched hazard as the knockback source', () {
-      final world = _buildWorld();
-      world.addSystem(CollisionSystem());
-      final hazard = world.spawn();
-      world.storeOf<Position>().set(hazard, Position(0, 0));
-      world.storeOf<Collider>().set(hazard, Collider(10));
+    test(
+      'dealDamageOnTouch uses the touched hazard as the knockback source',
+      () {
+        final world = _buildWorld();
+        world.addSystem(CollisionSystem());
+        final hazard = world.spawn();
+        world.storeOf<Position>().set(hazard, Position(0, 0));
+        world.storeOf<Collider>().set(hazard, Collider(10));
 
-      final player = world.spawn();
-      world.storeOf<Position>().set(player, Position(5, 0));
-      world.storeOf<Collider>().set(player, Collider(10));
-      world.storeOf<Velocity>().set(player, Velocity(0, 0));
-      world.storeOf<Health>().set(player, Health(current: 10, max: 10));
+        final player = world.spawn();
+        world.storeOf<Position>().set(player, Position(5, 0));
+        world.storeOf<Collider>().set(player, Collider(10));
+        world.storeOf<Velocity>().set(player, Velocity(0, 0));
+        world.storeOf<Health>().set(player, Health(current: 10, max: 10));
 
-      dealDamageOnTouch(world, {hazard}, 3, knockbackSpeed: 150);
-      world.step(0);
+        dealDamageOnTouch(world, {hazard}, 3, knockbackSpeed: 150);
+        world.step(0);
 
-      expect(world.storeOf<Velocity>().get(player)!.x, closeTo(150, 0.001));
-    });
+        expect(world.storeOf<Velocity>().get(player)!.x, closeTo(150, 0.001));
+      },
+    );
   });
 
   group('hitstun', () {
-    test('damageEntity sets PlatformerController.hitstunSeconds when hitstunSeconds is given', () {
-      final world = _buildWorld();
-      final id = world.spawn();
-      world.storeOf<Health>().set(id, Health(current: 10, max: 10));
-      world.storeOf<PlatformerController>().set(id, PlatformerController());
+    test(
+      'damageEntity sets PlatformerController.hitstunSeconds when hitstunSeconds is given',
+      () {
+        final world = _buildWorld();
+        final id = world.spawn();
+        world.storeOf<Health>().set(id, Health(current: 10, max: 10));
+        world.storeOf<PlatformerController>().set(id, PlatformerController());
 
-      damageEntity(world, id, 1, hitstunSeconds: 0.3);
+        damageEntity(world, id, 1, hitstunSeconds: 0.3);
 
-      expect(world.storeOf<PlatformerController>().get(id)!.hitstunSeconds, 0.3);
-    });
+        expect(
+          world.storeOf<PlatformerController>().get(id)!.hitstunSeconds,
+          0.3,
+        );
+      },
+    );
 
     test('does nothing when hitstunSeconds is 0 (default)', () {
       final world = _buildWorld();
@@ -491,74 +564,116 @@ void main() {
       final id = world.spawn();
       world.storeOf<Health>().set(id, Health(current: 10, max: 10));
 
-      expect(() => damageEntity(world, id, 1, hitstunSeconds: 0.3), returnsNormally);
+      expect(
+        () => damageEntity(world, id, 1, hitstunSeconds: 0.3),
+        returnsNormally,
+      );
     });
 
     test('HitstunSystem counts hitstunSeconds down and clamps at 0', () {
       final world = _buildWorld();
       world.addSystem(HitstunSystem());
       final id = world.spawn();
-      world.storeOf<PlatformerController>().set(id, PlatformerController(hitstunSeconds: 0.3));
+      world.storeOf<PlatformerController>().set(
+        id,
+        PlatformerController(hitstunSeconds: 0.3),
+      );
 
       world.step(0.2);
-      expect(world.storeOf<PlatformerController>().get(id)!.hitstunSeconds, closeTo(0.1, 0.001));
+      expect(
+        world.storeOf<PlatformerController>().get(id)!.hitstunSeconds,
+        closeTo(0.1, 0.001),
+      );
 
       world.step(0.2);
       expect(world.storeOf<PlatformerController>().get(id)!.hitstunSeconds, 0);
     });
 
-    test('PlatformerInputSystem ignores all input while hitstunSeconds > 0', () {
-      final world = _buildWorld();
-      final input = InputState();
-      final id = world.spawn();
-      world.storeOf<InputState>().set(id, input);
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<PlatformerController>().set(id, PlatformerController(hitstunSeconds: 0.5));
-      world.addSystem(PlatformerInputSystem(id));
+    test(
+      'PlatformerInputSystem ignores all input while hitstunSeconds > 0',
+      () {
+        final world = _buildWorld();
+        final input = InputState();
+        final id = world.spawn();
+        world.storeOf<InputState>().set(id, input);
+        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.storeOf<PlatformerController>().set(
+          id,
+          PlatformerController(hitstunSeconds: 0.5),
+        );
+        world.addSystem(PlatformerInputSystem(id));
 
-      input.pressedActions.add('right');
-      input.pressedActions.add('jump');
-      world.step(0.016);
+        input.pressedActions.add('right');
+        input.pressedActions.add('jump');
+        world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.x, 0, reason: 'movement input ignored while stunned');
-      expect(world.storeOf<PlatformerController>().get(id)!.jumpRequested, isFalse,
-          reason: 'jump input ignored while stunned');
-    });
+        expect(
+          world.storeOf<Velocity>().get(id)!.x,
+          0,
+          reason: 'movement input ignored while stunned',
+        );
+        expect(
+          world.storeOf<PlatformerController>().get(id)!.jumpRequested,
+          isFalse,
+          reason: 'jump input ignored while stunned',
+        );
+      },
+    );
 
-    test('PlatformerInputSystem resumes handling input once hitstun expires', () {
-      final world = _buildWorld();
-      final input = InputState();
-      final id = world.spawn();
-      world.storeOf<InputState>().set(id, input);
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<PlatformerController>().set(id, PlatformerController(hitstunSeconds: 0));
-      world.addSystem(PlatformerInputSystem(id));
+    test(
+      'PlatformerInputSystem resumes handling input once hitstun expires',
+      () {
+        final world = _buildWorld();
+        final input = InputState();
+        final id = world.spawn();
+        world.storeOf<InputState>().set(id, input);
+        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.storeOf<PlatformerController>().set(
+          id,
+          PlatformerController(hitstunSeconds: 0),
+        );
+        world.addSystem(PlatformerInputSystem(id));
 
-      input.pressedActions.add('right');
-      world.step(0.016);
+        input.pressedActions.add('right');
+        world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.x, greaterThan(0));
-    });
+        expect(world.storeOf<Velocity>().get(id)!.x, greaterThan(0));
+      },
+    );
   });
 
   group('parry', () {
     test('damageEntity parries hit when target has active parry window', () {
       final world = _buildWorld();
       final attacker = world.spawn();
-      world.storeOf<PlatformerController>().set(attacker, PlatformerController());
+      world.storeOf<PlatformerController>().set(
+        attacker,
+        PlatformerController(),
+      );
       final defender = world.spawn();
       world.storeOf<Health>().set(defender, Health(current: 10, max: 10));
-      world.storeOf<Parry>().set(defender, Parry(parryTimer: 0.2, parryStunSeconds: 0.5));
+      world.storeOf<Parry>().set(
+        defender,
+        Parry(parryTimer: 0.2, parryStunSeconds: 0.5),
+      );
 
       final applied = damageEntity(world, defender, 5, source: attacker);
       world.step(0);
 
-      expect(applied, isTrue); // Parry counts as "applied" in terms of event handling
+      expect(
+        applied,
+        isTrue,
+      ); // Parry counts as "applied" in terms of event handling
       final health = world.storeOf<Health>().get(defender)!;
       expect(health.current, 10); // No damage taken
-      expect(world.storeOf<Parry>().get(defender)!.parryTimer, 0); // Parry consumed
+      expect(
+        world.storeOf<Parry>().get(defender)!.parryTimer,
+        0,
+      ); // Parry consumed
 
-      final attackerController = world.storeOf<PlatformerController>().get(attacker)!;
+      final attackerController = world.storeOf<PlatformerController>().get(
+        attacker,
+      )!;
       expect(attackerController.hitstunSeconds, 0.5); // Attacker stunned
     });
 
@@ -583,12 +698,24 @@ void main() {
     test('damageEntity does not parry when parry window expired', () {
       final world = _buildWorld();
       final attacker = world.spawn();
-      world.storeOf<PlatformerController>().set(attacker, PlatformerController());
+      world.storeOf<PlatformerController>().set(
+        attacker,
+        PlatformerController(),
+      );
       final defender = world.spawn();
       world.storeOf<Health>().set(defender, Health(current: 10, max: 10));
-      world.storeOf<Parry>().set(defender, Parry(parryTimer: 0)); // No active parry
+      world.storeOf<Parry>().set(
+        defender,
+        Parry(parryTimer: 0),
+      ); // No active parry
 
-      damageEntity(world, defender, 5, source: attacker, invincibilitySeconds: 0);
+      damageEntity(
+        world,
+        defender,
+        5,
+        source: attacker,
+        invincibilitySeconds: 0,
+      );
       world.step(0);
 
       final health = world.storeOf<Health>().get(defender)!;
@@ -598,12 +725,21 @@ void main() {
     test('damageEntity does not parry when no Parry component', () {
       final world = _buildWorld();
       final attacker = world.spawn();
-      world.storeOf<PlatformerController>().set(attacker, PlatformerController());
+      world.storeOf<PlatformerController>().set(
+        attacker,
+        PlatformerController(),
+      );
       final defender = world.spawn();
       world.storeOf<Health>().set(defender, Health(current: 10, max: 10));
       // No Parry component
 
-      damageEntity(world, defender, 5, source: attacker, invincibilitySeconds: 0);
+      damageEntity(
+        world,
+        defender,
+        5,
+        source: attacker,
+        invincibilitySeconds: 0,
+      );
       world.step(0);
 
       final health = world.storeOf<Health>().get(defender)!;
@@ -648,7 +784,10 @@ void main() {
       final world = _buildWorld();
       world.addSystem(ParrySystem());
       final id = world.spawn();
-      world.storeOf<Parry>().set(id, Parry(parryTimer: 0.3, parryCooldownTimer: 0.4));
+      world.storeOf<Parry>().set(
+        id,
+        Parry(parryTimer: 0.3, parryCooldownTimer: 0.4),
+      );
 
       world.step(0.2);
       var parry = world.storeOf<Parry>().get(id)!;

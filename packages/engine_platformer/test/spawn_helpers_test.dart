@@ -12,18 +12,21 @@ World _buildWorld() {
 }
 
 void main() {
-  test('spawnPlayer wires up Position/Velocity/Collider/Gravity/PlatformerController/InputState', () {
-    final world = _buildWorld();
-    final input = InputState();
-    final id = spawnPlayer(world, x: 10, y: 20, input: input, jumpSpeed: 400);
+  test(
+    'spawnPlayer wires up Position/Velocity/Collider/Gravity/PlatformerController/InputState',
+    () {
+      final world = _buildWorld();
+      final input = InputState();
+      final id = spawnPlayer(world, x: 10, y: 20, input: input, jumpSpeed: 400);
 
-    expect(world.storeOf<Position>().get(id), isNotNull);
-    expect(world.storeOf<Velocity>().get(id), isNotNull);
-    expect(world.storeOf<Collider>().get(id), isNotNull);
-    expect(world.storeOf<Gravity>().get(id), isNotNull);
-    expect(world.storeOf<PlatformerController>().get(id)!.jumpSpeed, 400);
-    expect(identical(world.storeOf<InputState>().get(id), input), isTrue);
-  });
+      expect(world.storeOf<Position>().get(id), isNotNull);
+      expect(world.storeOf<Velocity>().get(id), isNotNull);
+      expect(world.storeOf<Collider>().get(id), isNotNull);
+      expect(world.storeOf<Gravity>().get(id), isNotNull);
+      expect(world.storeOf<PlatformerController>().get(id)!.jumpSpeed, 400);
+      expect(identical(world.storeOf<InputState>().get(id), input), isTrue);
+    },
+  );
 
   test('spawnPlayer attaches a Sprite when atlasId/spriteRegion given', () {
     final world = _buildWorld();
@@ -47,19 +50,22 @@ void main() {
     expect(world.storeOf<PlatformerController>().get(id), isNull);
   });
 
-  test('spawnEnemy adds Gravity/PlatformerController when affectedByGravity is true', () {
-    final world = _buildWorld();
-    final id = spawnEnemy(
-      world,
-      x: 5,
-      y: 5,
-      behaviorId: 'chase',
-      affectedByGravity: true,
-    );
+  test(
+    'spawnEnemy adds Gravity/PlatformerController when affectedByGravity is true',
+    () {
+      final world = _buildWorld();
+      final id = spawnEnemy(
+        world,
+        x: 5,
+        y: 5,
+        behaviorId: 'chase',
+        affectedByGravity: true,
+      );
 
-    expect(world.storeOf<Gravity>().get(id), isNotNull);
-    expect(world.storeOf<PlatformerController>().get(id), isNotNull);
-  });
+      expect(world.storeOf<Gravity>().get(id), isNotNull);
+      expect(world.storeOf<PlatformerController>().get(id), isNotNull);
+    },
+  );
 
   test('spawnEnemy attaches a Sprite when atlasId/spriteRegion given', () {
     final world = _buildWorld();
@@ -76,31 +82,43 @@ void main() {
 
   test('spawnEnemy attaches Health when maxHealth is given', () {
     final world = _buildWorld();
-    final id = spawnEnemy(world, x: 0, y: 0, behaviorId: 'patrol', maxHealth: 30);
+    final id = spawnEnemy(
+      world,
+      x: 0,
+      y: 0,
+      behaviorId: 'patrol',
+      maxHealth: 30,
+    );
 
     final health = world.storeOf<Health>().get(id);
     expect(health?.current, 30);
     expect(health?.max, 30);
   });
 
-  test('PlatformerInputSystem turns pressed actions into velocity and jump requests', () {
-    final world = _buildWorld();
-    final input = InputState();
-    final id = spawnPlayer(world, x: 0, y: 0, input: input, jumpSpeed: 300);
-    world.addSystem(PlatformerInputSystem(id, moveSpeed: 100));
+  test(
+    'PlatformerInputSystem turns pressed actions into velocity and jump requests',
+    () {
+      final world = _buildWorld();
+      final input = InputState();
+      final id = spawnPlayer(world, x: 0, y: 0, input: input, jumpSpeed: 300);
+      world.addSystem(PlatformerInputSystem(id, moveSpeed: 100));
 
-    input.pressedActions.add('right');
-    world.step(0.016);
-    expect(world.storeOf<Velocity>().get(id)!.x, 100);
+      input.pressedActions.add('right');
+      world.step(0.016);
+      expect(world.storeOf<Velocity>().get(id)!.x, 100);
 
-    input.pressedActions
-      ..remove('right')
-      ..add('left');
-    world.step(0.016);
-    expect(world.storeOf<Velocity>().get(id)!.x, -100);
+      input.pressedActions
+        ..remove('right')
+        ..add('left');
+      world.step(0.016);
+      expect(world.storeOf<Velocity>().get(id)!.x, -100);
 
-    input.pressedActions.add('jump');
-    world.step(0.016);
-    expect(world.storeOf<PlatformerController>().get(id)!.jumpRequested, isTrue);
-  });
+      input.pressedActions.add('jump');
+      world.step(0.016);
+      expect(
+        world.storeOf<PlatformerController>().get(id)!.jumpRequested,
+        isTrue,
+      );
+    },
+  );
 }

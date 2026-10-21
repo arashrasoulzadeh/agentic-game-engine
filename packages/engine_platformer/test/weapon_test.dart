@@ -45,21 +45,27 @@ void main() {
     expect(restored.spriteRegion, 'bullet');
   });
 
-  test('fromJson defaults missing fields to a fresh melee Weapon\'s values', () {
-    final restored = Weapon.fromJson({});
-    final fresh = Weapon();
+  test(
+    'fromJson defaults missing fields to a fresh melee Weapon\'s values',
+    () {
+      final restored = Weapon.fromJson({});
+      final fresh = Weapon();
 
-    expect(restored.kind, fresh.kind);
-    expect(restored.damage, fresh.damage);
-    expect(restored.cooldownSeconds, fresh.cooldownSeconds);
-    expect(restored.atlasId, isNull);
-    expect(restored.spriteRegion, isNull);
-  });
+      expect(restored.kind, fresh.kind);
+      expect(restored.damage, fresh.damage);
+      expect(restored.cooldownSeconds, fresh.cooldownSeconds);
+      expect(restored.atlasId, isNull);
+      expect(restored.spriteRegion, isNull);
+    },
+  );
 
-  test('an unrecognized kind string falls back to melee rather than throwing', () {
-    final restored = Weapon.fromJson({'kind': 'flamethrower'});
-    expect(restored.kind, WeaponKind.melee);
-  });
+  test(
+    'an unrecognized kind string falls back to melee rather than throwing',
+    () {
+      final restored = Weapon.fromJson({'kind': 'flamethrower'});
+      expect(restored.kind, WeaponKind.melee);
+    },
+  );
 
   group('combo chain', () {
     test('defaults to single hit (no combo)', () {
@@ -113,7 +119,11 @@ void main() {
     });
 
     test('resetCombo clears step and timer', () {
-      final weapon = Weapon(comboCount: 3, comboTimer: 0.3, currentComboStep: 2);
+      final weapon = Weapon(
+        comboCount: 3,
+        comboTimer: 0.3,
+        currentComboStep: 2,
+      );
       weapon.resetCombo();
       expect(weapon.currentComboStep, 0);
       expect(weapon.comboTimer, 0);

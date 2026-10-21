@@ -9,7 +9,8 @@ World _buildWorld() {
   return world;
 }
 
-TileMap _createMap(World world, {
+TileMap _createMap(
+  World world, {
   required List<List<int>> grid,
   double tileSize = 40,
   Set<int> solidTiles = const {1},
@@ -24,15 +25,18 @@ TileMap _createMap(World world, {
     tiles.addAll(row);
   }
   world.storeOf<Position>().set(mapEntity, Position(0, 0));
-  world.storeOf<TileMap>().set(mapEntity, TileMap(
-    cols: cols,
-    rows: rows,
-    tileWidth: tileSize,
-    tileHeight: tileSize,
-    tiles: tiles,
-    solidTileIds: solidTiles,
-    oneWayTileIds: oneWayTiles,
-  ));
+  world.storeOf<TileMap>().set(
+    mapEntity,
+    TileMap(
+      cols: cols,
+      rows: rows,
+      tileWidth: tileSize,
+      tileHeight: tileSize,
+      tiles: tiles,
+      solidTileIds: solidTiles,
+      oneWayTileIds: oneWayTiles,
+    ),
+  );
   return world.storeOf<TileMap>().get(mapEntity)!;
 }
 
@@ -48,11 +52,15 @@ void main() {
       final path = world.findPlatformerPath(
         map: map,
         origin: Position(0, 0),
-        fromX: 40, fromY: 340, // tile (1, 8) - standing on floor at row 9
-        toX: 600, toY: 340,    // tile (15, 8) - standing on floor at row 9
+        fromX: 40,
+        fromY: 340, // tile (1, 8) - standing on floor at row 9
+        toX: 600,
+        toY: 340, // tile (15, 8) - standing on floor at row 9
         ladderTileIds: const {},
         oneWayTileIds: const {},
-        config: PlatformerPathfinderConfig(maxJumpHorizontalTiles: 0), // Disable jumping
+        config: PlatformerPathfinderConfig(
+          maxJumpHorizontalTiles: 0,
+        ), // Disable jumping
       );
 
       expect(path, isNotEmpty);
@@ -75,8 +83,10 @@ void main() {
       final path = world.findPlatformerPath(
         map: map,
         origin: Position(0, 0),
-        fromX: 40, fromY: 340, // left of gap (standing on floor row 9)
-        toX: 600, toY: 340,    // right of gap (standing on floor row 9)
+        fromX: 40,
+        fromY: 340, // left of gap (standing on floor row 9)
+        toX: 600,
+        toY: 340, // right of gap (standing on floor row 9)
         ladderTileIds: const {},
         oneWayTileIds: const {},
         config: PlatformerPathfinderConfig(maxJumpHorizontalTiles: 6),
@@ -101,17 +111,26 @@ void main() {
       final path = world.findPlatformerPath(
         map: map,
         origin: Position(0, 0),
-        fromX: 40, fromY: 340, // on solid floor (row 8, above floor at row 9)
-        toX: 200, toY: 280,  // on one-way platform (row 7)
+        fromX: 40,
+        fromY: 340, // on solid floor (row 8, above floor at row 9)
+        toX: 200,
+        toY: 280, // on one-way platform (row 7)
         ladderTileIds: const {},
         oneWayTileIds: {2},
-        config: PlatformerPathfinderConfig(maxJumpHorizontalTiles: 6, maxJumpHeightTiles: 4),
+        config: PlatformerPathfinderConfig(
+          maxJumpHorizontalTiles: 6,
+          maxJumpHeightTiles: 4,
+        ),
       );
 
       expect(path, isNotEmpty);
       // Should reach the one-way platform
       final lastPoint = path.last;
-      expect(lastPoint.y, lessThan(320), reason: 'should reach elevated platform');
+      expect(
+        lastPoint.y,
+        lessThan(320),
+        reason: 'should reach elevated platform',
+      );
     });
 
     test('finds path using ladder', () {
@@ -125,8 +144,10 @@ void main() {
       final path = world.findPlatformerPath(
         map: map,
         origin: Position(0, 0),
-        fromX: 420, fromY: 340, // bottom of ladder (standing on floor at row 9)
-        toX: 420, toY: 40,      // top of ladder (row 0)
+        fromX: 420,
+        fromY: 340, // bottom of ladder (standing on floor at row 9)
+        toX: 420,
+        toY: 40, // top of ladder (row 0)
         ladderTileIds: {3},
         oneWayTileIds: const {},
       );
@@ -137,21 +158,25 @@ void main() {
       expect(hasClimb, isTrue, reason: 'path should use ladder climbing');
     });
 
-test('finds path dropping down from ledge', () {
+    test('finds path dropping down from ledge', () {
       final world = _buildWorld();
       // Two levels: upper at row 5 (with gap at col 10), lower at row 9
       final grid = List.generate(10, (r) => List.filled(20, 0));
       for (int c = 0; c < 20; c++) {
-        grid[9][c] = 1;  // lower floor (full width)
-        if (c != 10) grid[5][c] = 1;  // upper floor with gap at col 10
+        grid[9][c] = 1; // lower floor (full width)
+        if (c != 10) grid[5][c] = 1; // upper floor with gap at col 10
       }
       final map = _createMap(world, grid: grid);
 
       final path = world.findPlatformerPath(
         map: map,
         origin: Position(0, 0),
-        fromX: 380, fromY: 180, // upper level left of gap (col 9, row 4 - standing on floor at row 5)
-        toX: 420, toY: 340,     // lower level right of gap (col 10, row 8 - standing on floor at row 9)
+        fromX: 380,
+        fromY:
+            180, // upper level left of gap (col 9, row 4 - standing on floor at row 5)
+        toX: 420,
+        toY:
+            340, // lower level right of gap (col 10, row 8 - standing on floor at row 9)
         ladderTileIds: const {},
         oneWayTileIds: const {},
       );
@@ -171,8 +196,10 @@ test('finds path dropping down from ledge', () {
       final path = world.findPlatformerPath(
         map: map,
         origin: Position(0, 0),
-        fromX: 40, fromY: 340,
-        toX: 40, toY: 380, // inside solid floor (row 9 spans 360-400)
+        fromX: 40,
+        fromY: 340,
+        toX: 40,
+        toY: 380, // inside solid floor (row 9 spans 360-400)
         ladderTileIds: const {},
         oneWayTileIds: const {},
       );
@@ -190,8 +217,10 @@ test('finds path dropping down from ledge', () {
       final path = world.findPlatformerPath(
         map: map,
         origin: Position(0, 0),
-        fromX: 40, fromY: 340,  // left of wall (standing on floor)
-        toX: 600, toY: 340,     // right of wall (standing on floor)
+        fromX: 40,
+        fromY: 340, // left of wall (standing on floor)
+        toX: 600,
+        toY: 340, // right of wall (standing on floor)
         ladderTileIds: const {},
         oneWayTileIds: const {},
       );
@@ -199,21 +228,23 @@ test('finds path dropping down from ledge', () {
       expect(path, isEmpty);
     });
 
-test('can drop through one-way platform', () {
+    test('can drop through one-way platform', () {
       final world = _buildWorld();
       // One-way platform at row 7, solid floor at row 9
       final grid = List.generate(10, (r) => List.filled(20, 0));
       for (int c = 0; c < 20; c++) {
-        grid[9][c] = 1;  // solid floor
-        grid[7][c] = 2;  // one-way platform
+        grid[9][c] = 1; // solid floor
+        grid[7][c] = 2; // one-way platform
       }
       final map = _createMap(world, grid: grid, oneWayTiles: {2});
 
       final path = world.findPlatformerPath(
         map: map,
         origin: Position(0, 0),
-        fromX: 400, fromY: 300, // on one-way platform (row 7)
-        toX: 400, toY: 340,     // on solid floor below (row 8)
+        fromX: 400,
+        fromY: 300, // on one-way platform (row 7)
+        toX: 400,
+        toY: 340, // on solid floor below (row 8)
         ladderTileIds: const {},
         oneWayTileIds: {2},
       );
@@ -222,7 +253,9 @@ test('can drop through one-way platform', () {
       // Debug: print path points and their flags
       for (int i = 0; i < path.length; i++) {
         final p = path[i];
-        print('Path[$i]: x=${p.x}, y=${p.y}, jump=${p.jumpRequired}, climb=${p.climbRequired}, fall=${p.fallRequired}, drop=${p.dropThroughOneWay}');
+        print(
+          'Path[$i]: x=${p.x}, y=${p.y}, jump=${p.jumpRequired}, climb=${p.climbRequired}, fall=${p.fallRequired}, drop=${p.dropThroughOneWay}',
+        );
       }
       final hasDrop = path.any((p) => p.dropThroughOneWay);
       expect(hasDrop, isTrue, reason: 'should drop through one-way platform');

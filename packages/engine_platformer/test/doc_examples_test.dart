@@ -57,12 +57,19 @@ void main() {
       world.step(1 / 60);
     }
     final y = world.storeOf<Position>().get(player)!.y;
-    expect(y, lessThan(13 * 32), reason: 'resting on top of row 13, not inside it');
+    expect(
+      y,
+      lessThan(13 * 32),
+      reason: 'resting on top of row 13, not inside it',
+    );
     expect(y, greaterThan(300));
   });
 
   test('step 4: a patrolling enemy spawns', () {
-    behaviors.register('patrol', PatrolBehavior(minX: 300, maxX: 500, speed: 60));
+    behaviors.register(
+      'patrol',
+      PatrolBehavior(minX: 300, maxX: 500, speed: 60),
+    );
     final enemy = spawnEnemy(
       world,
       x: 400,
@@ -98,6 +105,9 @@ void main() {
 
     world.storeOf<Position>().set(player, Position(450, 380));
     world.step(1 / 60);
-    expect(world.storeOf<Inventory>().get(player)!.items['coin'], greaterThan(0));
+    expect(
+      world.storeOf<Inventory>().get(player)!.items['coin'],
+      greaterThan(0),
+    );
   });
 }

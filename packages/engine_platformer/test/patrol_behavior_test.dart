@@ -23,7 +23,8 @@ World _buildWorld({bool avoidLedges = false}) {
   return world;
 }
 
-EntityId _spawnPatroller(World world, {
+EntityId _spawnPatroller(
+  World world, {
   required double x,
   required double y,
   double minX = 100,
@@ -40,11 +41,13 @@ EntityId _spawnPatroller(World world, {
     world.storeOf<Gravity>().set(id, Gravity(scale: 1));
     world.storeOf<PlatformerController>().set(id, PlatformerController());
   }
-  world.storeOf<AIState>().set(id, AIState('patrol', memory: memory ?? {
-    'minX': minX,
-    'maxX': maxX,
-    'speed': speed,
-  }));
+  world.storeOf<AIState>().set(
+    id,
+    AIState(
+      'patrol',
+      memory: memory ?? {'minX': minX, 'maxX': maxX, 'speed': speed},
+    ),
+  );
   return id;
 }
 
@@ -59,14 +62,17 @@ TileMap _createFloorMap(World world, {double y = 1000, double tileSize = 40}) {
       tiles.add((row == rows - 1) ? 1 : 0);
     }
   }
-  world.storeOf<TileMap>().set(mapEntity, TileMap(
-    cols: cols,
-    rows: rows,
-    tileWidth: tileSize,
-    tileHeight: tileSize,
-    tiles: tiles,
-    solidTileIds: {1},
-  ));
+  world.storeOf<TileMap>().set(
+    mapEntity,
+    TileMap(
+      cols: cols,
+      rows: rows,
+      tileWidth: tileSize,
+      tileHeight: tileSize,
+      tiles: tiles,
+      solidTileIds: {1},
+    ),
+  );
   return world.storeOf<TileMap>().get(mapEntity)!;
 }
 
@@ -77,9 +83,12 @@ void main() {
         final world = _buildWorld();
         _createFloorMap(world, y: 1000);
 
-        final patroller = _spawnPatroller(world,
-          x: 200, y: 800, // starts above floor
-          minX: 150, maxX: 350,
+        final patroller = _spawnPatroller(
+          world,
+          x: 200,
+          y: 800, // starts above floor
+          minX: 150,
+          maxX: 350,
           speed: 60,
           affectedByGravity: true,
         );
@@ -100,9 +109,12 @@ void main() {
         final world = _buildWorld();
         _createFloorMap(world, y: 1000);
 
-        final patroller = _spawnPatroller(world,
-          x: 340, y: 800, // near maxX
-          minX: 150, maxX: 350,
+        final patroller = _spawnPatroller(
+          world,
+          x: 340,
+          y: 800, // near maxX
+          minX: 150,
+          maxX: 350,
           speed: 60,
           affectedByGravity: true,
         );
@@ -118,9 +130,12 @@ void main() {
         final world = _buildWorld();
         _createFloorMap(world, y: 1000);
 
-        final patroller = _spawnPatroller(world,
-          x: 160, y: 800, // near minX
-          minX: 150, maxX: 350,
+        final patroller = _spawnPatroller(
+          world,
+          x: 160,
+          y: 800, // near minX
+          minX: 150,
+          maxX: 350,
           speed: 60,
           affectedByGravity: true,
         );
@@ -148,19 +163,25 @@ void main() {
             }
           }
         }
-        world.storeOf<TileMap>().set(mapEntity, TileMap(
-          cols: 50,
-          rows: 25,
-          tileWidth: 40,
-          tileHeight: 40,
-          tiles: tiles,
-          solidTileIds: {1},
-        ));
+        world.storeOf<TileMap>().set(
+          mapEntity,
+          TileMap(
+            cols: 50,
+            rows: 25,
+            tileWidth: 40,
+            tileHeight: 40,
+            tiles: tiles,
+            solidTileIds: {1},
+          ),
+        );
 
         // Patroller moving right toward gap
-        final patroller = _spawnPatroller(world,
-          x: 200, y: 800,
-          minX: 150, maxX: 500, // range extends past gap
+        final patroller = _spawnPatroller(
+          world,
+          x: 200,
+          y: 800,
+          minX: 150,
+          maxX: 500, // range extends past gap
           speed: 60,
           affectedByGravity: true,
         );
@@ -180,9 +201,12 @@ void main() {
         final world = _buildWorld(avoidLedges: true);
         _createFloorMap(world, y: 1000);
 
-        final patroller = _spawnPatroller(world,
-          x: 200, y: 800,
-          minX: 150, maxX: 350,
+        final patroller = _spawnPatroller(
+          world,
+          x: 200,
+          y: 800,
+          minX: 150,
+          maxX: 350,
           speed: 60,
           affectedByGravity: true,
         );
@@ -201,9 +225,12 @@ void main() {
         final world = _buildWorld(avoidLedges: true);
         // NO floor - empty air
 
-        final patroller = _spawnPatroller(world,
-          x: 200, y: 500,
-          minX: 150, maxX: 350,
+        final patroller = _spawnPatroller(
+          world,
+          x: 200,
+          y: 500,
+          minX: 150,
+          maxX: 350,
           speed: 60,
           affectedByGravity: false, // KEY: no gravity
         );
@@ -228,11 +255,15 @@ void main() {
         final world = _buildWorld();
         // NO floor
 
-        final patroller = _spawnPatroller(world,
-          x: 200, y: 500,
-          minX: 150, maxX: 350,
+        final patroller = _spawnPatroller(
+          world,
+          x: 200,
+          y: 500,
+          minX: 150,
+          maxX: 350,
           speed: 60,
-          affectedByGravity: false, // avoidLedges: false is _buildWorld's default
+          affectedByGravity:
+              false, // avoidLedges: false is _buildWorld's default
         );
 
         // Should just patrol between bounds. At `speed: 60` and dt
@@ -256,9 +287,12 @@ void main() {
         final world = _buildWorld();
         _createFloorMap(world, y: 1000);
 
-        final patroller = _spawnPatroller(world,
-          x: 200, y: 800,
-          minX: 100, maxX: 200, // constructor defaults
+        final patroller = _spawnPatroller(
+          world,
+          x: 200,
+          y: 800,
+          minX: 100,
+          maxX: 200, // constructor defaults
           speed: 100,
           affectedByGravity: true,
         );

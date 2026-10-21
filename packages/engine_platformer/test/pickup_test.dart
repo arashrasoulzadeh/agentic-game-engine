@@ -23,7 +23,9 @@ void main() {
   });
 
   test('Inventory round-trips through toJson/fromJson', () {
-    final restored = Inventory.fromJson(Inventory({'coin': 2, 'key': 1}).toJson());
+    final restored = Inventory.fromJson(
+      Inventory({'coin': 2, 'key': 1}).toJson(),
+    );
     expect(restored.count('coin'), 2);
     expect(restored.count('key'), 1);
   });
@@ -32,18 +34,21 @@ void main() {
     expect(Inventory.fromJson({}).items, isEmpty);
   });
 
-  test('spawnPlayer with startingInventory attaches a pre-populated Inventory', () {
-    final world = _buildWorld();
-    final id = spawnPlayer(
-      world,
-      x: 0,
-      y: 0,
-      input: InputState(),
-      startingInventory: {'coin': 5},
-    );
+  test(
+    'spawnPlayer with startingInventory attaches a pre-populated Inventory',
+    () {
+      final world = _buildWorld();
+      final id = spawnPlayer(
+        world,
+        x: 0,
+        y: 0,
+        input: InputState(),
+        startingInventory: {'coin': 5},
+      );
 
-    expect(world.storeOf<Inventory>().get(id)?.count('coin'), 5);
-  });
+      expect(world.storeOf<Inventory>().get(id)?.count('coin'), 5);
+    },
+  );
 
   test('spawnPlayer without startingInventory attaches no Inventory', () {
     final world = _buildWorld();
@@ -51,22 +56,25 @@ void main() {
     expect(world.storeOf<Inventory>().get(id), isNull);
   });
 
-  test('collectItem adds to the holder\'s inventory and emits ItemCollectedEvent', () {
-    final world = _buildWorld();
-    final player = world.spawn();
-    world.storeOf<Inventory>().set(player, Inventory());
+  test(
+    'collectItem adds to the holder\'s inventory and emits ItemCollectedEvent',
+    () {
+      final world = _buildWorld();
+      final player = world.spawn();
+      world.storeOf<Inventory>().set(player, Inventory());
 
-    ItemCollectedEvent? fired;
-    world.events.on<ItemCollectedEvent>((e) => fired = e);
+      ItemCollectedEvent? fired;
+      world.events.on<ItemCollectedEvent>((e) => fired = e);
 
-    collectItem(world, player, 'coin', amount: 3);
-    world.step(0);
+      collectItem(world, player, 'coin', amount: 3);
+      world.step(0);
 
-    expect(world.storeOf<Inventory>().get(player)!.count('coin'), 3);
-    expect(fired?.holder, player);
-    expect(fired?.itemId, 'coin');
-    expect(fired?.amount, 3);
-  });
+      expect(world.storeOf<Inventory>().get(player)!.count('coin'), 3);
+      expect(fired?.holder, player);
+      expect(fired?.itemId, 'coin');
+      expect(fired?.amount, 3);
+    },
+  );
 
   test('collectItem accumulates across multiple calls', () {
     final world = _buildWorld();
@@ -95,39 +103,45 @@ void main() {
     expect(fired, isFalse);
   });
 
-  test('dealPickupOnTouch collects the item and destroys the pickup by default', () {
-    final world = _buildWorld();
-    final player = world.spawn();
-    world.storeOf<Position>().set(player, Position(0, 0));
-    world.storeOf<Collider>().set(player, Collider(10));
-    world.storeOf<Inventory>().set(player, Inventory());
+  test(
+    'dealPickupOnTouch collects the item and destroys the pickup by default',
+    () {
+      final world = _buildWorld();
+      final player = world.spawn();
+      world.storeOf<Position>().set(player, Position(0, 0));
+      world.storeOf<Collider>().set(player, Collider(10));
+      world.storeOf<Inventory>().set(player, Inventory());
 
-    final coin = world.spawn();
-    world.storeOf<Position>().set(coin, Position(5, 0));
-    world.storeOf<Collider>().set(coin, Collider(10));
+      final coin = world.spawn();
+      world.storeOf<Position>().set(coin, Position(5, 0));
+      world.storeOf<Collider>().set(coin, Collider(10));
 
-    dealPickupOnTouch(world, {coin}, 'coin');
-    world.step(0.016);
+      dealPickupOnTouch(world, {coin}, 'coin');
+      world.step(0.016);
 
-    expect(world.storeOf<Inventory>().get(player)!.count('coin'), 1);
-    expect(world.entities.isAlive(coin), isFalse);
-  });
+      expect(world.storeOf<Inventory>().get(player)!.count('coin'), 1);
+      expect(world.entities.isAlive(coin), isFalse);
+    },
+  );
 
-  test('dealPickupOnTouch with destroyOnCollect: false leaves the pickup alive', () {
-    final world = _buildWorld();
-    final player = world.spawn();
-    world.storeOf<Position>().set(player, Position(0, 0));
-    world.storeOf<Collider>().set(player, Collider(10));
-    world.storeOf<Inventory>().set(player, Inventory());
+  test(
+    'dealPickupOnTouch with destroyOnCollect: false leaves the pickup alive',
+    () {
+      final world = _buildWorld();
+      final player = world.spawn();
+      world.storeOf<Position>().set(player, Position(0, 0));
+      world.storeOf<Collider>().set(player, Collider(10));
+      world.storeOf<Inventory>().set(player, Inventory());
 
-    final lever = world.spawn();
-    world.storeOf<Position>().set(lever, Position(5, 0));
-    world.storeOf<Collider>().set(lever, Collider(10));
+      final lever = world.spawn();
+      world.storeOf<Position>().set(lever, Position(5, 0));
+      world.storeOf<Collider>().set(lever, Collider(10));
 
-    dealPickupOnTouch(world, {lever}, 'lever-pulls', destroyOnCollect: false);
-    world.step(0.016);
+      dealPickupOnTouch(world, {lever}, 'lever-pulls', destroyOnCollect: false);
+      world.step(0.016);
 
-    expect(world.storeOf<Inventory>().get(player)!.count('lever-pulls'), 1);
-    expect(world.entities.isAlive(lever), isTrue);
-  });
+      expect(world.storeOf<Inventory>().get(player)!.count('lever-pulls'), 1);
+      expect(world.entities.isAlive(lever), isTrue);
+    },
+  );
 }

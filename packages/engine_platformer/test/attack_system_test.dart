@@ -34,36 +34,46 @@ World _buildWorldNoAttackSystem() {
 EntityId _spawnAttacker(World world, Weapon weapon, {double facingSign = 1}) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(100, 100));
-  world.storeOf<PlatformerController>().set(id, PlatformerController(facingSign: facingSign));
+  world.storeOf<PlatformerController>().set(
+    id,
+    PlatformerController(facingSign: facingSign),
+  );
   world.storeOf<Weapon>().set(id, weapon);
   return id;
 }
 
 void main() {
   group('melee', () {
-    test('attackRequested spawns a stationary hitbox meleeRange ahead in the facing direction',
-        () {
-      final world = _buildWorld();
-      final weapon = Weapon(kind: WeaponKind.melee, damage: 15, meleeRange: 30, meleeRadius: 10);
-      final attacker = _spawnAttacker(world, weapon, facingSign: 1);
+    test(
+      'attackRequested spawns a stationary hitbox meleeRange ahead in the facing direction',
+      () {
+        final world = _buildWorld();
+        final weapon = Weapon(
+          kind: WeaponKind.melee,
+          damage: 15,
+          meleeRange: 30,
+          meleeRadius: 10,
+        );
+        final attacker = _spawnAttacker(world, weapon, facingSign: 1);
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
-      world.step(0.016);
+        world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+        world.step(0.016);
 
-      final projectiles = world.storeOf<Projectile>();
-      expect(projectiles.length, 1);
-      final hitboxId = projectiles.entityAt(0);
-      expect(projectiles.get(hitboxId)!.damage, 15);
-      expect(projectiles.get(hitboxId)!.owner, attacker);
+        final projectiles = world.storeOf<Projectile>();
+        expect(projectiles.length, 1);
+        final hitboxId = projectiles.entityAt(0);
+        expect(projectiles.get(hitboxId)!.damage, 15);
+        expect(projectiles.get(hitboxId)!.owner, attacker);
 
-      final pos = world.storeOf<Position>().get(hitboxId)!;
-      expect(pos.x, 130); // 100 + meleeRange(30) * facingSign(1)
-      expect(pos.y, 100);
+        final pos = world.storeOf<Position>().get(hitboxId)!;
+        expect(pos.x, 130); // 100 + meleeRange(30) * facingSign(1)
+        expect(pos.y, 100);
 
-      final vel = world.storeOf<Velocity>().get(hitboxId)!;
-      expect(vel.x, 0);
-      expect(vel.y, 0);
-    });
+        final vel = world.storeOf<Velocity>().get(hitboxId)!;
+        expect(vel.x, 0);
+        expect(vel.y, 0);
+      },
+    );
 
     test('a facingSign of -1 positions the hitbox behind (to the left)', () {
       final world = _buildWorld();
@@ -93,21 +103,27 @@ void main() {
   });
 
   group('ranged', () {
-    test('attackRequested spawns a projectile moving at projectileSpeed in the facing direction',
-        () {
-      final world = _buildWorld();
-      final weapon = Weapon(kind: WeaponKind.ranged, damage: 8, projectileSpeed: 500);
-      final attacker = _spawnAttacker(world, weapon, facingSign: 1);
+    test(
+      'attackRequested spawns a projectile moving at projectileSpeed in the facing direction',
+      () {
+        final world = _buildWorld();
+        final weapon = Weapon(
+          kind: WeaponKind.ranged,
+          damage: 8,
+          projectileSpeed: 500,
+        );
+        final attacker = _spawnAttacker(world, weapon, facingSign: 1);
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
-      world.step(0.016);
+        world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+        world.step(0.016);
 
-      final projectiles = world.storeOf<Projectile>();
-      expect(projectiles.length, 1);
-      final id = projectiles.entityAt(0);
-      expect(projectiles.get(id)!.damage, 8);
-      expect(world.storeOf<Velocity>().get(id)!.x, 500);
-    });
+        final projectiles = world.storeOf<Projectile>();
+        expect(projectiles.length, 1);
+        final id = projectiles.entityAt(0);
+        expect(projectiles.get(id)!.damage, 8);
+        expect(world.storeOf<Velocity>().get(id)!.x, 500);
+      },
+    );
 
     test('a facingSign of -1 fires the projectile leftward', () {
       final world = _buildWorld();
@@ -138,8 +154,14 @@ void main() {
       expect(world.storeOf<Projectile>().length, 1);
 
       weaponStore.get(attacker)!.attackRequested = true;
-      world.step(0.1); // only 0.2s since the first shot, well under 1.0s cooldown
-      expect(world.storeOf<Projectile>().length, 1, reason: 'still on cooldown');
+      world.step(
+        0.1,
+      ); // only 0.2s since the first shot, well under 1.0s cooldown
+      expect(
+        world.storeOf<Projectile>().length,
+        1,
+        reason: 'still on cooldown',
+      );
 
       // Advance the rest of the way past the cooldown, then request again.
       world.step(1.0);
@@ -148,51 +170,71 @@ void main() {
       expect(world.storeOf<Projectile>().length, 2);
     });
 
-    test('the attack action from InputState triggers a fire the same as attackRequested', () {
+    test(
+      'the attack action from InputState triggers a fire the same as attackRequested',
+      () {
+        final world = _buildWorld();
+        final attacker = world.spawn();
+        world.storeOf<Position>().set(attacker, Position(0, 0));
+        world.storeOf<PlatformerController>().set(
+          attacker,
+          PlatformerController(),
+        );
+        world.storeOf<Weapon>().set(attacker, Weapon());
+        final input = InputState();
+        world.storeOf<InputState>().set(attacker, input);
+
+        input.pressedActions.add('attack');
+        world.step(0.016);
+
+        expect(world.storeOf<Projectile>().length, 1);
+      },
+    );
+  });
+
+  test(
+    'an entity with no Position is left alone -- no crash, nothing spawned',
+    () {
       final world = _buildWorld();
       final attacker = world.spawn();
-      world.storeOf<Position>().set(attacker, Position(0, 0));
-      world.storeOf<PlatformerController>().set(attacker, PlatformerController());
       world.storeOf<Weapon>().set(attacker, Weapon());
-      final input = InputState();
-      world.storeOf<InputState>().set(attacker, input);
 
-      input.pressedActions.add('attack');
+      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
-      expect(world.storeOf<Projectile>().length, 1);
-    });
-  });
+      expect(world.storeOf<Projectile>().length, 0);
+    },
+  );
 
-  test('an entity with no Position is left alone -- no crash, nothing spawned', () {
-    final world = _buildWorld();
-    final attacker = world.spawn();
-    world.storeOf<Weapon>().set(attacker, Weapon());
+  test(
+    'end to end: a melee hit against an enemy with Health actually deals damage',
+    () {
+      final world = _buildWorld();
+      world.addSystem(CollisionSystem());
+      installProjectileDamage(world);
 
-    world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
-    world.step(0.016);
+      final weapon = Weapon(
+        kind: WeaponKind.melee,
+        damage: 20,
+        meleeRange: 20,
+        meleeRadius: 15,
+      );
+      final attacker = _spawnAttacker(world, weapon, facingSign: 1);
 
-    expect(world.storeOf<Projectile>().length, 0);
-  });
+      final enemy = world.spawn();
+      world.storeOf<Position>().set(
+        enemy,
+        Position(115, 100),
+      ); // within the hitbox's radius
+      world.storeOf<Collider>().set(enemy, Collider(5));
+      world.storeOf<Health>().set(enemy, Health(current: 30, max: 30));
 
-  test('end to end: a melee hit against an enemy with Health actually deals damage', () {
-    final world = _buildWorld();
-    world.addSystem(CollisionSystem());
-    installProjectileDamage(world);
+      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.step(0.016);
 
-    final weapon = Weapon(kind: WeaponKind.melee, damage: 20, meleeRange: 20, meleeRadius: 15);
-    final attacker = _spawnAttacker(world, weapon, facingSign: 1);
-
-    final enemy = world.spawn();
-    world.storeOf<Position>().set(enemy, Position(115, 100)); // within the hitbox's radius
-    world.storeOf<Collider>().set(enemy, Collider(5));
-    world.storeOf<Health>().set(enemy, Health(current: 30, max: 30));
-
-    world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
-    world.step(0.016);
-
-    expect(world.storeOf<Health>().get(enemy)!.current, 10);
-  });
+      expect(world.storeOf<Health>().get(enemy)!.current, 10);
+    },
+  );
 
   group('requireLineOfSight', () {
     World _buildWorldWithWall() {
@@ -221,7 +263,12 @@ void main() {
       final world = _buildWorldWithWall();
       // Attacker at x=100, wall at x=120-160 (col 3), meleeRange=30
       // Target would be at x=130, behind the wall
-      final weapon = Weapon(kind: WeaponKind.melee, damage: 15, meleeRange: 30, meleeRadius: 10);
+      final weapon = Weapon(
+        kind: WeaponKind.melee,
+        damage: 15,
+        meleeRange: 30,
+        meleeRadius: 10,
+      );
       final attacker = _spawnAttacker(world, weapon, facingSign: 1);
 
       // Add AttackSystem with line of sight required
@@ -238,7 +285,12 @@ void main() {
       final world = _buildWorldWithWall();
       // Attacker at x=100, wall at x=120-160, but attacker facing LEFT (-1)
       // So attack goes toward x=70, no wall in that direction
-      final weapon = Weapon(kind: WeaponKind.melee, damage: 15, meleeRange: 30, meleeRadius: 10);
+      final weapon = Weapon(
+        kind: WeaponKind.melee,
+        damage: 15,
+        meleeRange: 30,
+        meleeRadius: 10,
+      );
       final attacker = _spawnAttacker(world, weapon, facingSign: -1);
 
       world.addSystem(AttackSystem(requireLineOfSight: true));
@@ -257,7 +309,12 @@ void main() {
       final world = _buildWorldWithWall();
       // Attacker at x=100, wall at x=120-160, projectileSpeed=500, lifetime=2s = max range 1000
       // Target would be far beyond the wall
-      final weapon = Weapon(kind: WeaponKind.ranged, damage: 8, projectileSpeed: 500, projectileLifetimeSeconds: 2);
+      final weapon = Weapon(
+        kind: WeaponKind.ranged,
+        damage: 8,
+        projectileSpeed: 500,
+        projectileLifetimeSeconds: 2,
+      );
       final attacker = _spawnAttacker(world, weapon, facingSign: 1);
 
       world.addSystem(AttackSystem(requireLineOfSight: true));
@@ -272,7 +329,12 @@ void main() {
     test('ranged: allows attack when no wall in direction', () {
       final world = _buildWorldWithWall();
       // Attacker at x=100, wall at x=120-160, but attacker facing LEFT
-      final weapon = Weapon(kind: WeaponKind.ranged, damage: 8, projectileSpeed: 500, projectileLifetimeSeconds: 2);
+      final weapon = Weapon(
+        kind: WeaponKind.ranged,
+        damage: 8,
+        projectileSpeed: 500,
+        projectileLifetimeSeconds: 2,
+      );
       final attacker = _spawnAttacker(world, weapon, facingSign: -1);
 
       world.addSystem(AttackSystem(requireLineOfSight: true));
@@ -289,7 +351,12 @@ void main() {
 
     test('default (requireLineOfSight: false) ignores walls', () {
       final world = _buildWorldWithWall();
-      final weapon = Weapon(kind: WeaponKind.melee, damage: 15, meleeRange: 30, meleeRadius: 10);
+      final weapon = Weapon(
+        kind: WeaponKind.melee,
+        damage: 15,
+        meleeRange: 30,
+        meleeRadius: 10,
+      );
       final attacker = _spawnAttacker(world, weapon, facingSign: 1);
 
       // Default: requireLineOfSight = false
@@ -322,7 +389,12 @@ void main() {
         ),
       );
 
-      final weapon = Weapon(kind: WeaponKind.melee, damage: 15, meleeRange: 50, meleeRadius: 10);
+      final weapon = Weapon(
+        kind: WeaponKind.melee,
+        damage: 15,
+        meleeRange: 50,
+        meleeRadius: 10,
+      );
       final attacker = _spawnAttacker(world, weapon, facingSign: 1);
 
       world.addSystem(AttackSystem(requireLineOfSight: true));
@@ -336,46 +408,79 @@ void main() {
   });
 
   group('InputState cooldown integration', () {
-    test('attack action from InputState respects cooldown - does not double fire', () {
-      final world = _buildWorld();
-      final attacker = world.spawn();
-      world.storeOf<Position>().set(attacker, Position(0, 0));
-      world.storeOf<PlatformerController>().set(attacker, PlatformerController());
-      // Use long meleeDuration so projectiles survive the test duration
-      final weapon = Weapon(kind: WeaponKind.melee, cooldownSeconds: 0.5, meleeDurationSeconds: 10.0);
-      world.storeOf<Weapon>().set(attacker, weapon);
-      final input = InputState();
-      world.storeOf<InputState>().set(attacker, input);
+    test(
+      'attack action from InputState respects cooldown - does not double fire',
+      () {
+        final world = _buildWorld();
+        final attacker = world.spawn();
+        world.storeOf<Position>().set(attacker, Position(0, 0));
+        world.storeOf<PlatformerController>().set(
+          attacker,
+          PlatformerController(),
+        );
+        // Use long meleeDuration so projectiles survive the test duration
+        final weapon = Weapon(
+          kind: WeaponKind.melee,
+          cooldownSeconds: 0.5,
+          meleeDurationSeconds: 10.0,
+        );
+        world.storeOf<Weapon>().set(attacker, weapon);
+        final input = InputState();
+        world.storeOf<InputState>().set(attacker, input);
 
-      // Press attack
-      input.pressedActions.add('attack');
-      world.step(0.016);
-      expect(world.storeOf<Projectile>().length, 1, reason: 'first attack fires');
+        // Press attack
+        input.pressedActions.add('attack');
+        world.step(0.016);
+        expect(
+          world.storeOf<Projectile>().length,
+          1,
+          reason: 'first attack fires',
+        );
 
-      // Keep attack pressed - should NOT fire again due to cooldown
-      world.step(0.016);
-      expect(world.storeOf<Projectile>().length, 1, reason: 'still on cooldown');
+        // Keep attack pressed - should NOT fire again due to cooldown
+        world.step(0.016);
+        expect(
+          world.storeOf<Projectile>().length,
+          1,
+          reason: 'still on cooldown',
+        );
 
-      // Release and press again within cooldown - should NOT fire
-      input.pressedActions.remove('attack');
-      input.pressedActions.add('attack');
-      world.step(0.016);
-      expect(world.storeOf<Projectile>().length, 1, reason: 're-press within cooldown blocked');
+        // Release and press again within cooldown - should NOT fire
+        input.pressedActions.remove('attack');
+        input.pressedActions.add('attack');
+        world.step(0.016);
+        expect(
+          world.storeOf<Projectile>().length,
+          1,
+          reason: 're-press within cooldown blocked',
+        );
 
-      // Wait for cooldown to expire
-      world.step(0.5);
-      input.pressedActions.add('attack');
-      world.step(0.016);
-      expect(world.storeOf<Projectile>().length, 2, reason: 'fires after cooldown expires');
-    });
+        // Wait for cooldown to expire
+        world.step(0.5);
+        input.pressedActions.add('attack');
+        world.step(0.016);
+        expect(
+          world.storeOf<Projectile>().length,
+          2,
+          reason: 'fires after cooldown expires',
+        );
+      },
+    );
 
     test('rapid press/release of attack does not bypass cooldown', () {
       final world = _buildWorld();
       final attacker = world.spawn();
       world.storeOf<Position>().set(attacker, Position(0, 0));
-      world.storeOf<PlatformerController>().set(attacker, PlatformerController());
+      world.storeOf<PlatformerController>().set(
+        attacker,
+        PlatformerController(),
+      );
       // Use long meleeDuration so projectile survives the test duration
-      final weapon = Weapon(kind: WeaponKind.melee, cooldownSeconds: 0.3, meleeDurationSeconds: 10.0);
+      final weapon = Weapon(
+        kind: WeaponKind.melee,
+        cooldownSeconds: 0.3,
+        meleeDurationSeconds: 10.0,
+      );
       world.storeOf<Weapon>().set(attacker, weapon);
       final input = InputState();
       world.storeOf<InputState>().set(attacker, input);

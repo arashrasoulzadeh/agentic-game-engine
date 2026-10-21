@@ -212,10 +212,6 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 
 ### Quality of the docs themselves
 
-- [ ] **Execute the remaining platformer samples** — tutorial 1 is now test-executed
-      (`engine_platformer/test/doc_examples_test.dart`, which found and fixed an
-      `InputState`/`InputController` mix-up); `docs/concepts/platformer.md` and the
-      platformer recipes under `docs/examples/` still are not.
 - [ ] **Versioned docs** — publish per-release versions (e.g. with `mike`)
       once tags exist; the site is single-version today.
 - [ ] **Publish or retire the unpublished pages** — `docs/proposals/` and

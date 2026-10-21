@@ -95,7 +95,7 @@ itself.
 
 ```dart
 trackCheckpoints(world, player);           // updates LastCheckpoint as the player touches Checkpoint entities
-respawnOnDeath(world, player, onRespawn: ...); // wires Health.isDead -> respawnPlayer at LastCheckpoint
+respawnOnDeath(world, player, fallbackX: 100, fallbackY: 100); // on DeathEvent -> respawnPlayer at LastCheckpoint (fallback if none)
 ```
 
 See `checkpoint_helpers.dart` for the full set, including manual

@@ -50,7 +50,11 @@ void main() {
       world.storeOf<Health>().set(player, Health(current: 40, max: 100));
 
       final bar = spawnHealthHudBar(world, source: player, x: 10, y: 10);
-      expect(world.storeOf<HudBar>().get(bar)!.value, 0, reason: 'not synced until the first step');
+      expect(
+        world.storeOf<HudBar>().get(bar)!.value,
+        0,
+        reason: 'not synced until the first step',
+      );
 
       world.step(0.016);
 
@@ -76,15 +80,18 @@ void main() {
       expect(world.storeOf<HudBar>().get(bar)!.value, 25);
     });
 
-    test('is a no-op (does not throw) when the linked source has no Health', () {
-      final world = _buildWorld();
-      world.addSystem(HealthHudSystem());
+    test(
+      'is a no-op (does not throw) when the linked source has no Health',
+      () {
+        final world = _buildWorld();
+        world.addSystem(HealthHudSystem());
 
-      final source = world.spawn(); // no Health
-      final bar = spawnHealthHudBar(world, source: source, x: 10, y: 10);
+        final source = world.spawn(); // no Health
+        final bar = spawnHealthHudBar(world, source: source, x: 10, y: 10);
 
-      expect(() => world.step(0.016), returnsNormally);
-      expect(world.storeOf<HudBar>().get(bar)!.value, 0);
-    });
+        expect(() => world.step(0.016), returnsNormally);
+        expect(world.storeOf<HudBar>().get(bar)!.value, 0);
+      },
+    );
   });
 }

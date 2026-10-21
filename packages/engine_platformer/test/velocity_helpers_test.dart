@@ -21,7 +21,11 @@ void main() {
 
       final vel = world.storeOf<Velocity>().get(id)!;
       expect(vel.x, 40);
-      expect(vel.y, -250, reason: 'vertical velocity (e.g. mid-jump/fall) must not be clobbered');
+      expect(
+        vel.y,
+        -250,
+        reason: 'vertical velocity (e.g. mid-jump/fall) must not be clobbered',
+      );
     });
 
     test('defaults y to 0 for an entity with no existing Velocity', () {

@@ -42,43 +42,49 @@ void main() {
   });
 
   group('spawnPlayer/spawnEnemy with animations', () {
-    test('spawnPlayer attaches MovementAnimationSet and initial AnimationState', () {
-      final world = _buildWorld();
-      final animations = MovementAnimationSet.fromSequences(
-        idleRegion: 'idle',
-        walkPrefix: 'walk',
-        walkFrameCount: 2,
-      );
-      final id = spawnPlayer(
-        world,
-        x: 0,
-        y: 0,
-        input: InputState(),
-        animations: animations,
-      );
+    test(
+      'spawnPlayer attaches MovementAnimationSet and initial AnimationState',
+      () {
+        final world = _buildWorld();
+        final animations = MovementAnimationSet.fromSequences(
+          idleRegion: 'idle',
+          walkPrefix: 'walk',
+          walkFrameCount: 2,
+        );
+        final id = spawnPlayer(
+          world,
+          x: 0,
+          y: 0,
+          input: InputState(),
+          animations: animations,
+        );
 
-      expect(world.storeOf<MovementAnimationSet>().get(id), same(animations));
-      expect(world.storeOf<AnimationState>().get(id)!.clip.name, 'idle');
-    });
+        expect(world.storeOf<MovementAnimationSet>().get(id), same(animations));
+        expect(world.storeOf<AnimationState>().get(id)!.clip.name, 'idle');
+      },
+    );
 
-    test('spawnEnemy attaches MovementAnimationSet and initial AnimationState', () {
-      final world = _buildWorld();
-      final animations = MovementAnimationSet.fromSequences(
-        idleRegion: 'enemy_idle',
-        walkPrefix: 'enemy_walk',
-        walkFrameCount: 2,
-      );
-      final id = spawnEnemy(
-        world,
-        x: 0,
-        y: 0,
-        behaviorId: 'patrol',
-        animations: animations,
-      );
+    test(
+      'spawnEnemy attaches MovementAnimationSet and initial AnimationState',
+      () {
+        final world = _buildWorld();
+        final animations = MovementAnimationSet.fromSequences(
+          idleRegion: 'enemy_idle',
+          walkPrefix: 'enemy_walk',
+          walkFrameCount: 2,
+        );
+        final id = spawnEnemy(
+          world,
+          x: 0,
+          y: 0,
+          behaviorId: 'patrol',
+          animations: animations,
+        );
 
-      expect(world.storeOf<MovementAnimationSet>().get(id), same(animations));
-      expect(world.storeOf<AnimationState>().get(id)!.clip.name, 'idle');
-    });
+        expect(world.storeOf<MovementAnimationSet>().get(id), same(animations));
+        expect(world.storeOf<AnimationState>().get(id)!.clip.name, 'idle');
+      },
+    );
 
     test('animations is optional -- no components attached when omitted', () {
       final world = _buildWorld();

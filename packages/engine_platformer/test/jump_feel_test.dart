@@ -16,8 +16,12 @@ World _buildWorld() {
   return world;
 }
 
-EntityId _spawnController(World world, PlatformerController controller,
-    {required double x, required double y}) {
+EntityId _spawnController(
+  World world,
+  PlatformerController controller, {
+  required double x,
+  required double y,
+}) {
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(x, y));
   world.storeOf<Velocity>().set(id, Velocity(0, 0));
@@ -65,24 +69,30 @@ void main() {
       expect(world.storeOf<Velocity>().get(id)!.y, -300);
     });
 
-    test('a jump does not fire the tick after leaving the ground (no coyote time)', () {
-      final world = _buildWorld();
-      final controller = PlatformerController(jumpSpeed: 300);
-      final id = _spawnOnFloor(world, controller);
-      world.step(0.016); // settles, grounded
-      _liftOffFloor(world, id);
+    test(
+      'a jump does not fire the tick after leaving the ground (no coyote time)',
+      () {
+        final world = _buildWorld();
+        final controller = PlatformerController(jumpSpeed: 300);
+        final id = _spawnOnFloor(world, controller);
+        world.step(0.016); // settles, grounded
+        _liftOffFloor(world, id);
 
-      controller.jumpRequested = true;
-      world.step(0.016);
+        controller.jumpRequested = true;
+        world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, 0);
-    });
+        expect(world.storeOf<Velocity>().get(id)!.y, 0);
+      },
+    );
   });
 
   group('coyote time', () {
     test('a jump still fires shortly after leaving the ground', () {
       final world = _buildWorld();
-      final controller = PlatformerController(jumpSpeed: 300, coyoteTimeSeconds: 0.1);
+      final controller = PlatformerController(
+        jumpSpeed: 300,
+        coyoteTimeSeconds: 0.1,
+      );
       final id = _spawnOnFloor(world, controller);
       world.step(0.016); // grounded, timeSinceGrounded resets to 0
       _liftOffFloor(world, id);
@@ -96,7 +106,10 @@ void main() {
 
     test('a jump does not fire once the coyote window has passed', () {
       final world = _buildWorld();
-      final controller = PlatformerController(jumpSpeed: 300, coyoteTimeSeconds: 0.1);
+      final controller = PlatformerController(
+        jumpSpeed: 300,
+        coyoteTimeSeconds: 0.1,
+      );
       final id = _spawnOnFloor(world, controller);
       world.step(0.016);
       _liftOffFloor(world, id);
@@ -112,7 +125,10 @@ void main() {
   group('jump buffering', () {
     test('a jump pressed slightly before landing fires on landing', () {
       final world = _buildWorld();
-      final controller = PlatformerController(jumpSpeed: 300, jumpBufferSeconds: 0.1);
+      final controller = PlatformerController(
+        jumpSpeed: 300,
+        jumpBufferSeconds: 0.1,
+      );
       // Starts well above the floor -- not grounded.
       final id = _spawnController(world, controller, x: 500, y: 100);
       final floor = world.spawn();
@@ -124,7 +140,8 @@ void main() {
       expect(world.storeOf<Velocity>().get(id)!.y, 0);
 
       controller.jumpRequested = false;
-      world.storeOf<Position>().get(id)!.y = 499; // "lands" on the floor this tick
+      world.storeOf<Position>().get(id)!.y =
+          499; // "lands" on the floor this tick
       world.step(0.016);
 
       expect(world.storeOf<Velocity>().get(id)!.y, -300);
@@ -155,7 +172,12 @@ void main() {
 
       controller.jumpRequested = true;
       world.step(dt); // air jump #2 (not allowed -- maxAirJumps: 1)
-      expect(vel.y, -300, reason: 'no second air jump; velocity unchanged (no gravity in this test world)');
+      expect(
+        vel.y,
+        -300,
+        reason:
+            'no second air jump; velocity unchanged (no gravity in this test world)',
+      );
     });
 
     test('air jumps reset once grounded again', () {
@@ -182,7 +204,11 @@ void main() {
       world.step(dt); // ground jump again (fresh contact)
       controller.jumpRequested = true;
       world.step(dt); // air jump available again
-      expect(vel.y, -300, reason: 'air jump available again after a fresh ground contact');
+      expect(
+        vel.y,
+        -300,
+        reason: 'air jump available again after a fresh ground contact',
+      );
     });
   });
 
@@ -199,7 +225,10 @@ void main() {
 
     test('a jump while touching a wall and airborne pushes away from it', () {
       final world = _buildWorld();
-      final controller = PlatformerController(jumpSpeed: 300, wallJumpPushSpeed: 200);
+      final controller = PlatformerController(
+        jumpSpeed: 300,
+        wallJumpPushSpeed: 200,
+      );
       final id = spawnWallTouching(world, controller);
 
       controller.jumpRequested = true;
@@ -207,7 +236,11 @@ void main() {
 
       final vel = world.storeOf<Velocity>().get(id)!;
       expect(vel.y, -300);
-      expect(vel.x, 200, reason: 'pushed right, away from the wall on the left');
+      expect(
+        vel.x,
+        200,
+        reason: 'pushed right, away from the wall on the left',
+      );
       expect(controller.touchingWallLeft, isTrue);
     });
 
@@ -238,19 +271,22 @@ void main() {
       expect(world.storeOf<Velocity>().get(id)!.y, 50);
     });
 
-    test('falling speed is unaffected when wallSlideMaxFallSpeed is unset (default)', () {
-      final world = _buildWorld();
-      final controller = PlatformerController();
-      final wall = world.spawn();
-      world.storeOf<Position>().set(wall, Position(480, 500));
-      world.storeOf<PlatformBody>().set(wall, PlatformBody(40, 200));
-      final id = _spawnController(world, controller, x: 505, y: 500);
-      world.storeOf<Velocity>().get(id)!.y = 400;
+    test(
+      'falling speed is unaffected when wallSlideMaxFallSpeed is unset (default)',
+      () {
+        final world = _buildWorld();
+        final controller = PlatformerController();
+        final wall = world.spawn();
+        world.storeOf<Position>().set(wall, Position(480, 500));
+        world.storeOf<PlatformBody>().set(wall, PlatformBody(40, 200));
+        final id = _spawnController(world, controller, x: 505, y: 500);
+        world.storeOf<Velocity>().get(id)!.y = 400;
 
-      world.step(0.016);
+        world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, 400);
-    });
+        expect(world.storeOf<Velocity>().get(id)!.y, 400);
+      },
+    );
   });
 
   group('jump cut (variable jump height)', () {
@@ -268,24 +304,35 @@ void main() {
       expect(world.storeOf<Velocity>().get(id)!.y, -300);
     });
 
-    test('clamps Velocity.y once on the tick the button is released while still ascending', () {
-      final world = _buildWorld();
-      final controller = PlatformerController(jumpSpeed: 300, jumpCutMultiplier: 0.5);
-      final id = _spawnController(world, controller, x: 500, y: 500);
-      world.storeOf<Velocity>().get(id)!.y = -300;
+    test(
+      'clamps Velocity.y once on the tick the button is released while still ascending',
+      () {
+        final world = _buildWorld();
+        final controller = PlatformerController(
+          jumpSpeed: 300,
+          jumpCutMultiplier: 0.5,
+        );
+        final id = _spawnController(world, controller, x: 500, y: 500);
+        world.storeOf<Velocity>().get(id)!.y = -300;
 
-      controller.jumpRequested = true;
-      world.step(0.016); // held this tick -> no cut yet, just records jumpHeldLastTick
-      expect(world.storeOf<Velocity>().get(id)!.y, -300);
+        controller.jumpRequested = true;
+        world.step(
+          0.016,
+        ); // held this tick -> no cut yet, just records jumpHeldLastTick
+        expect(world.storeOf<Velocity>().get(id)!.y, -300);
 
-      controller.jumpRequested = false;
-      world.step(0.016); // released -> cut fires once
-      expect(world.storeOf<Velocity>().get(id)!.y, -150);
-    });
+        controller.jumpRequested = false;
+        world.step(0.016); // released -> cut fires once
+        expect(world.storeOf<Velocity>().get(id)!.y, -150);
+      },
+    );
 
     test('does not re-cut on a later tick after the release already fired', () {
       final world = _buildWorld();
-      final controller = PlatformerController(jumpSpeed: 300, jumpCutMultiplier: 0.5);
+      final controller = PlatformerController(
+        jumpSpeed: 300,
+        jumpCutMultiplier: 0.5,
+      );
       final id = _spawnController(world, controller, x: 500, y: 500);
       world.storeOf<Velocity>().get(id)!.y = -300;
 
@@ -300,7 +347,10 @@ void main() {
 
     test('does not cut while the jump button is still held', () {
       final world = _buildWorld();
-      final controller = PlatformerController(jumpSpeed: 300, jumpCutMultiplier: 0.5);
+      final controller = PlatformerController(
+        jumpSpeed: 300,
+        jumpCutMultiplier: 0.5,
+      );
       final id = _spawnController(world, controller, x: 500, y: 500);
       world.storeOf<Velocity>().get(id)!.y = -300;
 
@@ -314,7 +364,10 @@ void main() {
 
     test('does not cut while not ascending (Velocity.y >= 0)', () {
       final world = _buildWorld();
-      final controller = PlatformerController(jumpSpeed: 300, jumpCutMultiplier: 0.5);
+      final controller = PlatformerController(
+        jumpSpeed: 300,
+        jumpCutMultiplier: 0.5,
+      );
       final id = _spawnController(world, controller, x: 500, y: 500);
       world.storeOf<Velocity>().get(id)!.y = 100; // falling, not jumping
 

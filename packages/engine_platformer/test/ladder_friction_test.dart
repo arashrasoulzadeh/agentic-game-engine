@@ -13,41 +13,54 @@ World _buildWorld() {
 
 void main() {
   group('PlatformerInputSystem groundFriction blending', () {
-    test('groundFriction 1.0 (default/untagged tile) snaps velocity instantly', () {
-      final world = _buildWorld();
-      final id = world.spawn();
-      final input = InputState();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<InputState>().set(id, input);
-      final controller = PlatformerController(grounded: true);
-      world.storeOf<PlatformerController>().set(id, controller);
-      world.addSystem(PlatformerInputSystem(id, moveSpeed: 100));
+    test(
+      'groundFriction 1.0 (default/untagged tile) snaps velocity instantly',
+      () {
+        final world = _buildWorld();
+        final id = world.spawn();
+        final input = InputState();
+        world.storeOf<Position>().set(id, Position(0, 0));
+        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.storeOf<InputState>().set(id, input);
+        final controller = PlatformerController(grounded: true);
+        world.storeOf<PlatformerController>().set(id, controller);
+        world.addSystem(PlatformerInputSystem(id, moveSpeed: 100));
 
-      input.pressedActions.add('right');
-      world.step(0.016);
+        input.pressedActions.add('right');
+        world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.x, 100);
-    });
+        expect(world.storeOf<Velocity>().get(id)!.x, 100);
+      },
+    );
 
-    test('groundFriction below 1.0 blends toward the target instead of snapping', () {
-      final world = _buildWorld();
-      final id = world.spawn();
-      final input = InputState();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<InputState>().set(id, input);
-      final controller = PlatformerController(grounded: true, groundFriction: 0.1);
-      world.storeOf<PlatformerController>().set(id, controller);
-      world.addSystem(PlatformerInputSystem(id, moveSpeed: 100));
+    test(
+      'groundFriction below 1.0 blends toward the target instead of snapping',
+      () {
+        final world = _buildWorld();
+        final id = world.spawn();
+        final input = InputState();
+        world.storeOf<Position>().set(id, Position(0, 0));
+        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.storeOf<InputState>().set(id, input);
+        final controller = PlatformerController(
+          grounded: true,
+          groundFriction: 0.1,
+        );
+        world.storeOf<PlatformerController>().set(id, controller);
+        world.addSystem(PlatformerInputSystem(id, moveSpeed: 100));
 
-      input.pressedActions.add('right');
-      world.step(0.016);
+        input.pressedActions.add('right');
+        world.step(0.016);
 
-      final vx = world.storeOf<Velocity>().get(id)!.x;
-      expect(vx, greaterThan(0));
-      expect(vx, lessThan(100), reason: 'icy friction should slide toward the target, not snap');
-    });
+        final vx = world.storeOf<Velocity>().get(id)!.x;
+        expect(vx, greaterThan(0));
+        expect(
+          vx,
+          lessThan(100),
+          reason: 'icy friction should slide toward the target, not snap',
+        );
+      },
+    );
 
     test('a low groundFriction only slides while grounded, not airborne', () {
       final world = _buildWorld();
@@ -56,7 +69,10 @@ void main() {
       world.storeOf<Position>().set(id, Position(0, 0));
       world.storeOf<Velocity>().set(id, Velocity(0, 0));
       world.storeOf<InputState>().set(id, input);
-      final controller = PlatformerController(grounded: false, groundFriction: 0.1);
+      final controller = PlatformerController(
+        grounded: false,
+        groundFriction: 0.1,
+      );
       world.storeOf<PlatformerController>().set(id, controller);
       world.addSystem(PlatformerInputSystem(id, moveSpeed: 100));
 
@@ -91,67 +107,77 @@ void main() {
       expect(world.storeOf<Velocity>().get(id)!.y, isNot(lessThan(0)));
     });
 
-    test('holding up climbs (negative vel.y) while onLadder and climbSpeed > 0', () {
-      final world = buildWithLadder();
-      final id = world.spawn();
-      final input = InputState();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 999));
-      world.storeOf<InputState>().set(id, input);
-      final controller = PlatformerController(onLadder: true, climbSpeed: 80);
-      world.storeOf<PlatformerController>().set(id, controller);
-      world.addSystem(LadderSystem(id));
+    test(
+      'holding up climbs (negative vel.y) while onLadder and climbSpeed > 0',
+      () {
+        final world = buildWithLadder();
+        final id = world.spawn();
+        final input = InputState();
+        world.storeOf<Position>().set(id, Position(0, 0));
+        world.storeOf<Velocity>().set(id, Velocity(0, 999));
+        world.storeOf<InputState>().set(id, input);
+        final controller = PlatformerController(onLadder: true, climbSpeed: 80);
+        world.storeOf<PlatformerController>().set(id, controller);
+        world.addSystem(LadderSystem(id));
 
-      input.pressedActions.add('up');
-      world.step(0.016);
+        input.pressedActions.add('up');
+        world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, -80);
-    });
+        expect(world.storeOf<Velocity>().get(id)!.y, -80);
+      },
+    );
 
     test(
-        'holding neither up nor down leaves vel.y untouched — merely overlapping a '
-        'ladder tile must never by itself override velocity (regression: a jump arc '
-        'grazing a ladder tile used to have its vel.y silently zeroed here, reported '
-        'live as a "falling" bug when a coin placed inside a ladder column was jumped '
-        'at without pressing up/down)',
-        tags: ['regression'], () {
-      final world = buildWithLadder();
-      final id = world.spawn();
-      final input = InputState();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, -300));
-      world.storeOf<InputState>().set(id, input);
-      final controller = PlatformerController(onLadder: true, climbSpeed: 80);
-      world.storeOf<PlatformerController>().set(id, controller);
-      world.addSystem(LadderSystem(id));
+      'holding neither up nor down leaves vel.y untouched — merely overlapping a '
+      'ladder tile must never by itself override velocity (regression: a jump arc '
+      'grazing a ladder tile used to have its vel.y silently zeroed here, reported '
+      'live as a "falling" bug when a coin placed inside a ladder column was jumped '
+      'at without pressing up/down)',
+      tags: ['regression'],
+      () {
+        final world = buildWithLadder();
+        final id = world.spawn();
+        final input = InputState();
+        world.storeOf<Position>().set(id, Position(0, 0));
+        world.storeOf<Velocity>().set(id, Velocity(0, -300));
+        world.storeOf<InputState>().set(id, input);
+        final controller = PlatformerController(onLadder: true, climbSpeed: 80);
+        world.storeOf<PlatformerController>().set(id, controller);
+        world.addSystem(LadderSystem(id));
 
-      world.step(0.016);
+        world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, -300);
-      expect(world.storeOf<PlatformerController>().get(id)!.grounded, isFalse);
-    });
+        expect(world.storeOf<Velocity>().get(id)!.y, -300);
+        expect(
+          world.storeOf<PlatformerController>().get(id)!.grounded,
+          isFalse,
+        );
+      },
+    );
 
-    test('releasing up/down mid-climb stops overriding vel.y (no longer holds in place)',
-        () {
-      final world = buildWithLadder();
-      final id = world.spawn();
-      final input = InputState();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, -80));
-      world.storeOf<InputState>().set(id, input);
-      final controller = PlatformerController(onLadder: true, climbSpeed: 80);
-      world.storeOf<PlatformerController>().set(id, controller);
-      world.addSystem(LadderSystem(id));
+    test(
+      'releasing up/down mid-climb stops overriding vel.y (no longer holds in place)',
+      () {
+        final world = buildWithLadder();
+        final id = world.spawn();
+        final input = InputState();
+        world.storeOf<Position>().set(id, Position(0, 0));
+        world.storeOf<Velocity>().set(id, Velocity(0, -80));
+        world.storeOf<InputState>().set(id, input);
+        final controller = PlatformerController(onLadder: true, climbSpeed: 80);
+        world.storeOf<PlatformerController>().set(id, controller);
+        world.addSystem(LadderSystem(id));
 
-      input.pressedActions.add('up');
-      world.step(0.016);
-      expect(world.storeOf<Velocity>().get(id)!.y, -80);
+        input.pressedActions.add('up');
+        world.step(0.016);
+        expect(world.storeOf<Velocity>().get(id)!.y, -80);
 
-      input.pressedActions.remove('up');
-      world.storeOf<Velocity>().get(id)!.y = 42;
-      world.step(0.016);
-      expect(world.storeOf<Velocity>().get(id)!.y, 42);
-    });
+        input.pressedActions.remove('up');
+        world.storeOf<Velocity>().get(id)!.y = 42;
+        world.step(0.016);
+        expect(world.storeOf<Velocity>().get(id)!.y, 42);
+      },
+    );
 
     test('not onLadder leaves velocity untouched (gravity still applies)', () {
       final world = buildWithLadder();

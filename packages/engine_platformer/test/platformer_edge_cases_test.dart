@@ -14,8 +14,16 @@ World buildWorld() {
 void main() {
   test('projectiles, HUD links and water survive the component registry', () {
     final world = buildWorld();
-    final id = spawnProjectile(world, x: 1, y: 2, vx: 3, vy: 4,
-        damage: 5, atlasId: 'weapons', spriteRegion: 'arrow');
+    final id = spawnProjectile(
+      world,
+      x: 1,
+      y: 2,
+      vx: 3,
+      vy: 4,
+      damage: 5,
+      atlasId: 'weapons',
+      spriteRegion: 'arrow',
+    );
     world.storeOf<HealthHudLink>().set(id, HealthHudLink(42));
     world.storeOf<WaterZone>().set(id, WaterZone(20, 30));
     world.storeOf<Weapon>().set(id, Weapon());
@@ -32,7 +40,9 @@ void main() {
     final world = buildWorld();
     final id = world.spawn();
     world.storeOf<Velocity>().set(id, Velocity(50, 17));
-    final behavior = PathFollowBehavior([PlatformerPathPoint(x: 100, y: 100, moveType: PlatformerMoveType.walk)]);
+    final behavior = PathFollowBehavior([
+      PlatformerPathPoint(x: 100, y: 100, moveType: PlatformerMoveType.walk),
+    ]);
     behavior.decide(WorldView(world), id).apply(world);
     expect(world.storeOf<Velocity>().get(id)!.x, 0);
     expect(world.storeOf<Velocity>().get(id)!.y, 17);
@@ -42,30 +52,39 @@ void main() {
   test('a wall on the left records contact and clamps falling speed', () {
     final controller = PlatformerController(wallSlideMaxFallSpeed: 25);
     final velocity = Velocity(-10, 90);
-    applyCollisionSideToController(side: CollisionSide.right,
-        controller: controller, vel: velocity);
+    applyCollisionSideToController(
+      side: CollisionSide.right,
+      controller: controller,
+      vel: velocity,
+    );
     expect(controller.touchingWallLeft, isTrue);
     expect(controller.touchingWallRight, isFalse);
     expect(velocity.y, 25);
     expect(velocity.x, -10);
-    applyCollisionSideToController(side: CollisionSide.left,
-        controller: controller, vel: velocity);
+    applyCollisionSideToController(
+      side: CollisionSide.left,
+      controller: controller,
+      vel: velocity,
+    );
     expect(controller.touchingWallRight, isTrue);
   });
 
-  test('downward ladder input overrides vertical movement and clears grounding', () {
-    final world = buildWorld();
-    final id = world.spawn();
-    final controller = PlatformerController(climbSpeed: 60, grounded: true)
-      ..onLadder = true;
-    world.storeOf<PlatformerController>().set(id, controller);
-    world.storeOf<Velocity>().set(id, Velocity(4, -100));
-    world.storeOf<InputState>().set(id, InputState({'down'}));
-    LadderSystem(id).update(world, 0.1);
-    expect(world.storeOf<Velocity>().get(id)!.y, 60);
-    expect(world.storeOf<Velocity>().get(id)!.x, 4);
-    expect(controller.grounded, isFalse);
-  });
+  test(
+    'downward ladder input overrides vertical movement and clears grounding',
+    () {
+      final world = buildWorld();
+      final id = world.spawn();
+      final controller = PlatformerController(climbSpeed: 60, grounded: true)
+        ..onLadder = true;
+      world.storeOf<PlatformerController>().set(id, controller);
+      world.storeOf<Velocity>().set(id, Velocity(4, -100));
+      world.storeOf<InputState>().set(id, InputState({'down'}));
+      LadderSystem(id).update(world, 0.1);
+      expect(world.storeOf<Velocity>().get(id)!.y, 60);
+      expect(world.storeOf<Velocity>().get(id)!.x, 4);
+      expect(controller.grounded, isFalse);
+    },
+  );
 
   test('dash input requests a dash on the player controller', () {
     final world = buildWorld();
@@ -83,12 +102,22 @@ void main() {
   test('moving interrupts the completed jump recovery phase', () {
     final world = buildWorld();
     final id = world.spawn();
-    world.storeOf<PlatformerController>().set(id, PlatformerController(grounded: true));
+    world.storeOf<PlatformerController>().set(
+      id,
+      PlatformerController(grounded: true),
+    );
     world.storeOf<Velocity>().set(id, Velocity(100, 0));
-    world.storeOf<JumpAnimationSet>().set(id, JumpAnimationSet.fromRegions(
-      start: ['start'], rising: ['rising'], peak: ['peak'],
-      falling: ['falling'], landing: ['landing'], completed: ['completed'],
-    ));
+    world.storeOf<JumpAnimationSet>().set(
+      id,
+      JumpAnimationSet.fromRegions(
+        start: ['start'],
+        rising: ['rising'],
+        peak: ['peak'],
+        falling: ['falling'],
+        landing: ['landing'],
+        completed: ['completed'],
+      ),
+    );
     final phase = JumpAnimationPhaseState(phase: 'completed');
     world.storeOf<JumpAnimationPhaseState>().set(id, phase);
     JumpAnimationSystem().update(world, 0.01);

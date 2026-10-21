@@ -42,13 +42,19 @@ void main() {
     expect(restored.jumpHeldLastTick, isFalse);
   });
 
-  test('PlatformerController round-trips jumpCutMultiplier/jumpHeldLastTick', () {
-    final restored = PlatformerController.fromJson(
-      PlatformerController(jumpCutMultiplier: 0.5, jumpHeldLastTick: true).toJson(),
-    );
-    expect(restored.jumpCutMultiplier, 0.5);
-    expect(restored.jumpHeldLastTick, isTrue);
-  });
+  test(
+    'PlatformerController round-trips jumpCutMultiplier/jumpHeldLastTick',
+    () {
+      final restored = PlatformerController.fromJson(
+        PlatformerController(
+          jumpCutMultiplier: 0.5,
+          jumpHeldLastTick: true,
+        ).toJson(),
+      );
+      expect(restored.jumpCutMultiplier, 0.5);
+      expect(restored.jumpHeldLastTick, isTrue);
+    },
+  );
 
   test('PlatformerController round-trips hitstunSeconds', () {
     final restored = PlatformerController.fromJson(
@@ -59,7 +65,9 @@ void main() {
   });
 
   test('PlatformBody round-trips through toJson/fromJson', () {
-    final restored = PlatformBody.fromJson(PlatformBody(50, 10, oneWay: true).toJson());
+    final restored = PlatformBody.fromJson(
+      PlatformBody(50, 10, oneWay: true).toJson(),
+    );
     expect(restored.width, 50);
     expect(restored.height, 10);
     expect(restored.oneWay, isTrue);
@@ -83,7 +91,9 @@ void main() {
   });
 
   test('Checkpoint round-trips through toJson/fromJson', () {
-    final restored = Checkpoint.fromJson(Checkpoint('cp1', activated: true).toJson());
+    final restored = Checkpoint.fromJson(
+      Checkpoint('cp1', activated: true).toJson(),
+    );
     expect(restored.id, 'cp1');
     expect(restored.activated, isTrue);
   });
@@ -98,27 +108,32 @@ void main() {
     expect(restored.y, 34);
   });
 
-  test('MovementAnimationSet round-trips through toJson/fromJson, with and without jump', () {
-    final withJump = MovementAnimationSet(
-      idle: AnimationClip('idle', ['idle_0']),
-      walk: AnimationClip('walk', ['walk_0', 'walk_1']),
-      jump: AnimationClip('jump', ['jump_0']),
-      moveThreshold: 8,
-    );
-    final restoredWithJump = MovementAnimationSet.fromJson(withJump.toJson());
-    expect(restoredWithJump.idle.name, 'idle');
-    expect(restoredWithJump.walk.frameRegions, ['walk_0', 'walk_1']);
-    expect(restoredWithJump.jump?.name, 'jump');
-    expect(restoredWithJump.moveThreshold, 8);
+  test(
+    'MovementAnimationSet round-trips through toJson/fromJson, with and without jump',
+    () {
+      final withJump = MovementAnimationSet(
+        idle: AnimationClip('idle', ['idle_0']),
+        walk: AnimationClip('walk', ['walk_0', 'walk_1']),
+        jump: AnimationClip('jump', ['jump_0']),
+        moveThreshold: 8,
+      );
+      final restoredWithJump = MovementAnimationSet.fromJson(withJump.toJson());
+      expect(restoredWithJump.idle.name, 'idle');
+      expect(restoredWithJump.walk.frameRegions, ['walk_0', 'walk_1']);
+      expect(restoredWithJump.jump?.name, 'jump');
+      expect(restoredWithJump.moveThreshold, 8);
 
-    final withoutJump = MovementAnimationSet(
-      idle: AnimationClip('idle', ['idle_0']),
-      walk: AnimationClip('walk', ['walk_0']),
-    );
-    final restoredWithoutJump = MovementAnimationSet.fromJson(withoutJump.toJson());
-    expect(restoredWithoutJump.jump, isNull);
-    expect(restoredWithoutJump.moveThreshold, 5);
-  });
+      final withoutJump = MovementAnimationSet(
+        idle: AnimationClip('idle', ['idle_0']),
+        walk: AnimationClip('walk', ['walk_0']),
+      );
+      final restoredWithoutJump = MovementAnimationSet.fromJson(
+        withoutJump.toJson(),
+      );
+      expect(restoredWithoutJump.jump, isNull);
+      expect(restoredWithoutJump.moveThreshold, 5);
+    },
+  );
 
   test('JumpAnimationSet round-trips through toJson/fromJson', () {
     final set = JumpAnimationSet.fromRegions(
@@ -146,72 +161,87 @@ void main() {
     expect(restored.elapsed, 0.5);
   });
 
-  test('every registered platformer component serializes through World.toJson', () {
-    final world = _buildWorld();
+  test(
+    'every registered platformer component serializes through World.toJson',
+    () {
+      final world = _buildWorld();
 
-    final gravityEntity = world.spawn();
-    world.storeOf<Gravity>().set(gravityEntity, Gravity(scale: 2));
+      final gravityEntity = world.spawn();
+      world.storeOf<Gravity>().set(gravityEntity, Gravity(scale: 2));
 
-    final platformEntity = world.spawn();
-    world.storeOf<PlatformBody>().set(platformEntity, PlatformBody(10, 20));
+      final platformEntity = world.spawn();
+      world.storeOf<PlatformBody>().set(platformEntity, PlatformBody(10, 20));
 
-    final controllerEntity = world.spawn();
-    world.storeOf<PlatformerController>().set(controllerEntity, PlatformerController());
+      final controllerEntity = world.spawn();
+      world.storeOf<PlatformerController>().set(
+        controllerEntity,
+        PlatformerController(),
+      );
 
-    final animSetEntity = world.spawn();
-    world.storeOf<MovementAnimationSet>().set(
-          animSetEntity,
-          MovementAnimationSet(
-            idle: AnimationClip('idle', ['idle_0']),
-            walk: AnimationClip('walk', ['walk_0']),
-          ),
-        );
+      final animSetEntity = world.spawn();
+      world.storeOf<MovementAnimationSet>().set(
+        animSetEntity,
+        MovementAnimationSet(
+          idle: AnimationClip('idle', ['idle_0']),
+          walk: AnimationClip('walk', ['walk_0']),
+        ),
+      );
 
-    final healthEntity = world.spawn();
-    world.storeOf<Health>().set(healthEntity, Health(current: 5, max: 5));
+      final healthEntity = world.spawn();
+      world.storeOf<Health>().set(healthEntity, Health(current: 5, max: 5));
 
-    final checkpointEntity = world.spawn();
-    world.storeOf<Checkpoint>().set(checkpointEntity, Checkpoint('cp1'));
+      final checkpointEntity = world.spawn();
+      world.storeOf<Checkpoint>().set(checkpointEntity, Checkpoint('cp1'));
 
-    final lastCheckpointEntity = world.spawn();
-    world.storeOf<LastCheckpoint>().set(lastCheckpointEntity, LastCheckpoint(1, 2));
+      final lastCheckpointEntity = world.spawn();
+      world.storeOf<LastCheckpoint>().set(
+        lastCheckpointEntity,
+        LastCheckpoint(1, 2),
+      );
 
-    final inventoryEntity = world.spawn();
-    world.storeOf<Inventory>().set(inventoryEntity, Inventory({'coin': 3}));
+      final inventoryEntity = world.spawn();
+      world.storeOf<Inventory>().set(inventoryEntity, Inventory({'coin': 3}));
 
-    final jumpSetEntity = world.spawn();
-    world.storeOf<JumpAnimationSet>().set(
-          jumpSetEntity,
-          JumpAnimationSet.fromRegions(
-            start: ['jump_0'],
-            rising: ['jump_1'],
-            peak: ['jump_2'],
-            falling: ['jump_3'],
-            landing: ['jump_4'],
-            completed: ['jump_5'],
-          ),
-        );
+      final jumpSetEntity = world.spawn();
+      world.storeOf<JumpAnimationSet>().set(
+        jumpSetEntity,
+        JumpAnimationSet.fromRegions(
+          start: ['jump_0'],
+          rising: ['jump_1'],
+          peak: ['jump_2'],
+          falling: ['jump_3'],
+          landing: ['jump_4'],
+          completed: ['jump_5'],
+        ),
+      );
 
-    final jumpPhaseEntity = world.spawn();
-    world.storeOf<JumpAnimationPhaseState>().set(
-          jumpPhaseEntity,
-          JumpAnimationPhaseState(phase: 'peak', elapsed: 0.1),
-        );
+      final jumpPhaseEntity = world.spawn();
+      world.storeOf<JumpAnimationPhaseState>().set(
+        jumpPhaseEntity,
+        JumpAnimationPhaseState(phase: 'peak', elapsed: 0.1),
+      );
 
-    final snapshot = world.toJson();
-    final byId = {
-      for (final e in snapshot['entities'] as List) (e as Map)['id']: e['components']
-    };
+      final snapshot = world.toJson();
+      final byId = {
+        for (final e in snapshot['entities'] as List)
+          (e as Map)['id']: e['components'],
+      };
 
-    expect(byId[gravityEntity]['gravity']['scale'], 2);
-    expect(byId[platformEntity]['platformBody']['width'], 10);
-    expect(byId[controllerEntity]['platformerController']['jumpSpeed'], 300);
-    expect(byId[animSetEntity]['movementAnimationSet']['idle']['name'], 'idle');
-    expect(byId[healthEntity]['health']['current'], 5);
-    expect(byId[checkpointEntity]['checkpoint']['id'], 'cp1');
-    expect(byId[lastCheckpointEntity]['lastCheckpoint']['x'], 1);
-    expect(byId[inventoryEntity]['inventory']['items']['coin'], 3);
-    expect(byId[jumpSetEntity]['jumpAnimationSet']['start']['frameRegions'], ['jump_0']);
-    expect(byId[jumpPhaseEntity]['jumpAnimationPhaseState']['phase'], 'peak');
-  });
+      expect(byId[gravityEntity]['gravity']['scale'], 2);
+      expect(byId[platformEntity]['platformBody']['width'], 10);
+      expect(byId[controllerEntity]['platformerController']['jumpSpeed'], 300);
+      expect(
+        byId[animSetEntity]['movementAnimationSet']['idle']['name'],
+        'idle',
+      );
+      expect(byId[healthEntity]['health']['current'], 5);
+      expect(byId[checkpointEntity]['checkpoint']['id'], 'cp1');
+      expect(byId[lastCheckpointEntity]['lastCheckpoint']['x'], 1);
+      expect(byId[inventoryEntity]['inventory']['items']['coin'], 3);
+      expect(byId[jumpSetEntity]['jumpAnimationSet']['start']['frameRegions'], [
+        'jump_0',
+      ]);
+      expect(byId[jumpPhaseEntity]['jumpAnimationPhaseState']['phase'], 'peak');
+    },
+  );
 }
