@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 /// `10^e` as a double. `math.pow(10, e)` with two ints is *integer* arithmetic in Dart and wraps to 0
 /// past 1e18, which silently broke every value above that; the base must be a double.
+const double _quantum = 1e14;
+
 double _pow10(int e) => math.pow(10.0, e).toDouble();
 
 /// A real number with a huge range and ~15 significant digits, for
@@ -62,7 +64,9 @@ class BigNumber implements Comparable<BigNumber> {
   static BigNumber _normalize(double mantissa, int exponent) {
     if (mantissa == 0) return zero;
     final shift = (math.log(mantissa.abs()) / math.ln10).floor();
-    var m = mantissa / _pow10(shift);
+    // Scale by a *positive* power of ten whenever possible: 10^n is exact as a double up to n = 22,
+    // while 10^-n is not, and dividing by 0.1 turned 0.99 into 9.899999999999999.
+    var m = shift >= 0 ? mantissa / _pow10(shift) : mantissa * _pow10(-shift);
     var e = exponent + shift;
     // log10 rounding can leave m just outside [1, 10); correct it.
     if (m.abs() >= 10) {
@@ -71,6 +75,15 @@ class BigNumber implements Comparable<BigNumber> {
     } else if (m.abs() < 1) {
       m *= 10;
       e--;
+    }
+    // Quantise to 14 decimal places. Without it, binary noise accumulates: 9.8 - 0.1 is
+    // 9.700000000000001, and a wallet drained by repeated purchases ends up a hair off zero, so an
+    // exactly affordable price is refused. Rounding to the digits the type promises removes the noise
+    // while leaving every genuine digit alone.
+    m = (m * _quantum).roundToDouble() / _quantum;
+    if (m.abs() >= 10) {
+      m /= 10;
+      e++;
     }
     return BigNumber._(m, e);
   }
@@ -93,7 +106,9 @@ class BigNumber implements Comparable<BigNumber> {
     if (_exponent > 308)
       return _mantissa.isNegative ? double.negativeInfinity : double.infinity;
     if (_exponent < -323) return 0;
-    return _mantissa * _pow10(_exponent);
+    return _exponent >= 0
+        ? _mantissa * _pow10(_exponent)
+        : _mantissa / _pow10(-_exponent);
   }
 
   /// The absolute value.

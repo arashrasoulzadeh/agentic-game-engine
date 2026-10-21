@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Fixed
+- `BigNumber` quantises its mantissa to 14 decimals after every operation. Binary noise used to accumulate (`1000 - 10 - 10 ...` drifted to `989.9999999999999`, and a wallet drained by purchases ended a hair off zero, refusing an exactly affordable price).
 - Viewport / aspect-ratio handling (`ViewportConfig`) did not work and was not even exported: its scale was `1/ratio` for every screen (so a matching screen was shrunk and letterboxed), `cover` equalled `contain`, and the camera re-applied the layout offset the widget had already applied. Rewritten as a pure rectangle layout (`contain`/`cover`/`width`/`height`, safe area), exported, with taps and camera-follow using the drawn area. **Breaking, but the feature never worked:** `minScale`/`maxScale`, `ViewportLayout.scale`/`worldToScreen`/`screenToWorld` and `Camera.viewportManager` are removed. Tested in `viewport_test.dart`.
 - The real-time strategy builder component is `BuildWorker`, not `Builder` (which clashed with Flutter's `Builder` widget for anyone importing both).
 - `build-release` produced commands Flutter rejects (`flutter build appbundle --keystore ...`, `flutter build ipa --team-id ...` do not exist), so signed builds could never work. Android signing now goes through a temporary `android/key.properties` and refuses to build if Gradle does not read it (otherwise Flutter signs with the debug key); iOS uses an `ExportOptions.plist` (generated for `--team-id`, or yours). Now tested (`release_plan_test.dart`) and documented in the new Releasing guide.
@@ -16,6 +17,7 @@ pubspec.yaml.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
+- `engine_idle` (scaffold + first features): `Generator`, `Upgrade`, `IdleModifiers` components with schemas, `computeIncome` / `recomputeIncome`, `buyGenerator` (×1/×N/max, ownership cap, tech locks), `buyUpgrade`, `IdleSystem`.
 - `CostCurve` (`GeometricCost`, `LinearCost`) with closed-form bulk `totalCost` and loop-free `maxAffordable`, and `ModifierStack` (named additive/multiplicative bonuses with a breakdown) in `engine_core`, for idle-game pacing.
 - `OfflineProgress` / `OfflineConfig` (`engine_core`): cap, efficiency and minimum-away rules, clock-went-backwards safety, `catchUp` onto a `BigTreasury` with a gains summary, `untilCap` for reminders. Guide: `docs/concepts/idle-games.md`.
 - `BigTreasury` (`engine_core`): named resources and per-second income as `BigNumber`s, all-or-nothing `spend`, `accrue` correct for any step size; registered as the `bigTreasury` component. The int `Treasury` is unchanged.

@@ -12,6 +12,7 @@ const _groups = <(String, String, String)>[
   ('core_schemas.dart', 'engine_core', 'Genre-general data. Registered by `registerCoreComponents`.'),
   ('flutter_schemas.dart', 'engine_flutter', 'Rendering and input data. Registered by `registerFlutterComponents` (called for you by `GameRunner`).'),
   ('platformer_schemas.dart', 'engine_platformer', 'Platformer gameplay data. Registered by `registerPlatformerComponents`.'),
+  ('idle_schemas.dart', 'engine_idle', 'Idle-game data. Registered by `registerIdleComponents`.'),
 ];
 
 String _describe(FieldSchema f) {

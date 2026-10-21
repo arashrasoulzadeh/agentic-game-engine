@@ -4,7 +4,7 @@
 
 Every built-in component and the exact JSON shape it serializes to — what you see in `World.toJson()` and what `applyPatch` / `Level.loadInto` accept. This page is generated from `engine_schema`, the same schemas the studio and `game_agent lint` validate against, so it is always current.
 
-**76 components** across 3 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer)
+**79 components** across 4 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer) · [engine_idle](#engine_idle)
 
 ## engine_core
 
@@ -795,4 +795,40 @@ Platformer gameplay data. Registered by `registerPlatformerComponents`.
 | `parryWindowSeconds` | `double` | 0 to ∞ |
 | `parryStunSeconds` | `double` | 0 to ∞ |
 | `parryCooldownSeconds` | `double` | 0 to ∞ |
+
+## engine_idle
+
+Idle-game data. Registered by `registerIdleComponents`.
+
+### `generator`
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | `string` | required |
+| `name` | `string` | may be null |
+| `owned` | `int` | 0 to ∞ |
+| `maxOwned` | `int` | may be null; 1 to ∞ |
+| `costResource` | `string` |  |
+| `cost` | `object` | required |
+| `output` | `object` |  |
+| `requires` | `list` |  |
+
+### `upgrade`
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | `string` | required |
+| `name` | `string` | may be null |
+| `cost` | `object` |  |
+| `target` | `string` |  |
+| `multiplier` | `string` |  |
+| `purchased` | `bool` |  |
+| `requires` | `list` |  |
+
+### `idleModifiers`
+
+| Field | Type | Notes |
+|---|---|---|
+| `additive` | `object` |  |
+| `multiplicative` | `object` |  |
 

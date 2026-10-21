@@ -9,4 +9,5 @@ export 'src/field_schema.dart';
 export 'src/core_schemas.dart';
 export 'src/flutter_schemas.dart';
 export 'src/platformer_schemas.dart';
+export 'src/idle_schemas.dart';
 export 'src/all_schemas.dart';

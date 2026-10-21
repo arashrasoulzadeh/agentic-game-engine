@@ -80,15 +80,14 @@ turns a long absence into progress.
 
 The building blocks are there; the genre's *structure* is not.
 
-- [ ] **`Generator` / `Upgrade` definitions as data** — JSON-defined: id, base cost, base output, cost
-      growth, max level, unlock requirement (reusing `requires` / `Provides` tech), and what it multiplies.
-      Done when: a level/game JSON file defines a dozen generators and the engine loads, validates (with
-      schema errors that name the field) and runs them.
+- [ ] **Generator / upgrade data, remaining** — `Generator`, `Upgrade`, `IdleModifiers` components (JSON, schemas,
+      registered by `registerIdleComponents`), `computeIncome`, `buyGenerator` (×1 / ×N / max, caps, tech locks),
+      `buyUpgrade` and `IdleSystem` are done in `engine_idle`. Left: loading a whole game definition from one
+      JSON file with validation errors that name the field, and per-generator milestone bonuses.
 - [ ] **Cost curves, remaining** — `GeometricCost`, `LinearCost` with closed-form `totalCost` / `maxAffordable`
       (verified against brute force) are done in `engine_core`. Left: a table curve and a max-level cap.
 - [ ] **Multiplier stack, remaining** — `ModifierStack` (additive + multiplicative, named sources, breakdown,
       order-independent) is done in `engine_core`; wire it to generators/upgrades/prestige in `engine_idle`.
-- [ ] **Buy modes** — buy 1 / 10 / 100 / max, with correct partial affordability.
 - [ ] **Prestige / reset loops** — a `PrestigeSystem`: on reset, wipe a configurable set of resources and
       generators, convert progress into a persistent currency by a formula (for example
       `floor(sqrt(lifetimeEarnings / k))`), apply its bonus as a multiplier source, and keep a lifetime
@@ -171,7 +170,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 ## Suggested order
 
 0. ~~Scaffold `engine_idle`~~ (done).
-1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury` and `OfflineProgress` done; next: generators/upgrades data, cost curves, multipliers.
+1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury`, `OfflineProgress`, cost curves, multipliers, generator/upgrade components and buying done; next: save versioning, then the widgets, then prestige/achievements.
 2. `OfflineProgress` and deterministic bulk advance.
 3. Generator / upgrade data, cost curves, multiplier stack, buy modes.
 4. Save versioning, autosave, export/import.

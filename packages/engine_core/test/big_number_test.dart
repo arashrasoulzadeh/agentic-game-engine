@@ -64,6 +64,30 @@ void main() {
     );
   });
 
+  group('decimal exactness', () {
+    test('whole-number arithmetic stays whole: 1000 - 10 is exactly 990', () {
+      expect(n('1000') - n('10'), n('990'));
+      expect(
+        n('1000') - n('10') >= n('990'),
+        isTrue,
+        reason: 'an exactly affordable price must be affordable',
+      );
+      expect(n('100') - n('1') - n('99'), BigNumber.zero);
+      expect(n('0.5') + n('0.25'), n('0.75'));
+    });
+
+    test(
+      'repeated purchases from a round balance never go off by a rounding error',
+      () {
+        var wallet = n('1000');
+        for (var i = 0; i < 100; i++) {
+          wallet = wallet - n('10');
+        }
+        expect(wallet, BigNumber.zero);
+      },
+    );
+  });
+
   group('ordering', () {
     test('is a total order across signs, zero and magnitudes', () {
       final values = [

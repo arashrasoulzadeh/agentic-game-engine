@@ -2,6 +2,7 @@ import 'field_schema.dart';
 import 'core_schemas.dart';
 import 'flutter_schemas.dart';
 import 'platformer_schemas.dart';
+import 'idle_schemas.dart';
 
 /// Every component schema the three engine packages register, keyed by the
 /// component's registered name. The CLI and the studio validate against this
@@ -43,6 +44,9 @@ const allComponentSchemas = <String, ComponentSchema>{
   'treasury': treasurySchema,
   'producer': producerSchema,
   'bigTreasury': bigTreasurySchema,
+  'generator': generatorSchema,
+  'upgrade': upgradeSchema,
+  'idleModifiers': idleModifiersSchema,
   'resourceNode': resourceNodeSchema,
   'depot': depotSchema,
   'gatherer': gathererSchema,
