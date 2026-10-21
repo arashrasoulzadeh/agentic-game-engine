@@ -9,36 +9,50 @@ World _world({bool approach = false}) {
   return w;
 }
 
-EntityId _unit(World w, String team, int c, int r,
-    {int ap = 4, int hp = 20, int atk = 4, int def = 0}) {
+EntityId _unit(
+  World w,
+  String team,
+  int c,
+  int r, {
+  int ap = 4,
+  int hp = 20,
+  int atk = 4,
+  int def = 0,
+}) {
   final e = w.spawn();
   w.storeOf<Team>().set(e, Team(team));
   w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
   w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: hp, attack: atk, defense: def));
+  w.storeOf<UnitStats>().set(
+    e,
+    UnitStats(maxHp: hp, attack: atk, defense: def),
+  );
   return e;
 }
 
 void main() {
   group('AttackProfile', () {
-    test('a ranged unit hits from a distance without moving; melee still cannot', () {
-      final w = _world();
-      final archer = _unit(w, 'red', 0, 0);
-      final knight = _unit(w, 'red', 0, 1);
-      final target = _unit(w, 'blue', 3, 0);
-      w.storeOf<AttackProfile>().set(archer, AttackProfile(range: 3));
-      startTurnBasedGame(w, ['red', 'blue']);
-      final failed = <OrderFailedEvent>[];
-      w.events.on<OrderFailedEvent>(failed.add);
+    test(
+      'a ranged unit hits from a distance without moving; melee still cannot',
+      () {
+        final w = _world();
+        final archer = _unit(w, 'red', 0, 0);
+        final knight = _unit(w, 'red', 0, 1);
+        final target = _unit(w, 'blue', 3, 0);
+        w.storeOf<AttackProfile>().set(archer, AttackProfile(range: 3));
+        startTurnBasedGame(w, ['red', 'blue']);
+        final failed = <OrderFailedEvent>[];
+        w.events.on<OrderFailedEvent>(failed.add);
 
-      submitOrder(w, archer, AttackOrder(target));
-      submitOrder(w, knight, AttackOrder(target));
-      w.step(0.1);
-      expect(w.storeOf<UnitStats>().get(target)!.hp, 16);
-      expect(w.storeOf<GridPosition>().get(archer)!.col, 0);
-      expect(failed.single.entity, knight);
-      expect(failed.single.reason, OrderFailure.outOfRange);
-    });
+        submitOrder(w, archer, AttackOrder(target));
+        submitOrder(w, knight, AttackOrder(target));
+        w.step(0.1);
+        expect(w.storeOf<UnitStats>().get(target)!.hp, 16);
+        expect(w.storeOf<GridPosition>().get(archer)!.col, 0);
+        expect(failed.single.entity, knight);
+        expect(failed.single.reason, OrderFailure.outOfRange);
+      },
+    );
 
     test('a per-unit cost overrides the global one', () {
       final w = _world();
@@ -65,7 +79,9 @@ void main() {
     });
 
     test('JSON round trip and defaults', () {
-      final back = AttackProfile.fromJson(AttackProfile(range: 4, cost: 2).toJson());
+      final back = AttackProfile.fromJson(
+        AttackProfile(range: 4, cost: 2).toJson(),
+      );
       expect((back.range, back.cost), (4, 2));
       final d = AttackProfile.fromJson({});
       expect((d.range, d.cost), (1, 1));
@@ -88,10 +104,20 @@ void main() {
     });
 
     test('bonuses change combat damage', () {
-      expect(damageFor(UnitStats(maxHp: 1, attack: 4), UnitStats(maxHp: 1, defense: 1)), 3);
       expect(
-        damageFor(UnitStats(maxHp: 1, attack: 4), UnitStats(maxHp: 1, defense: 1),
-            attackBonus: 2, defenseBonus: 3),
+        damageFor(
+          UnitStats(maxHp: 1, attack: 4),
+          UnitStats(maxHp: 1, defense: 1),
+        ),
+        3,
+      );
+      expect(
+        damageFor(
+          UnitStats(maxHp: 1, attack: 4),
+          UnitStats(maxHp: 1, defense: 1),
+          attackBonus: 2,
+          defenseBonus: 3,
+        ),
         2,
       );
     });
@@ -107,63 +133,85 @@ void main() {
       expect(w.storeOf<UnitStats>().get(b)!.hp, 20 - (4 + 3 - 1));
     });
 
-    test('applying the same id refreshes instead of stacking, and announces it', () {
-      final w = _world();
-      final a = _unit(w, 'red', 0, 0);
-      final seen = <String>[];
-      w.events.on<StatusAppliedEvent>((e) => seen.add(e.id));
-      applyStatus(w, a, StatusEffect('x', defense: 1));
-      applyStatus(w, a, StatusEffect('x', defense: 5));
-      w.events.flush();
-      expect(w.storeOf<StatusEffects>().get(a)!.effects, hasLength(1));
-      expect(w.storeOf<StatusEffects>().get(a)!.defenseBonus, 5);
-      expect(seen, ['x', 'x']);
-    });
+    test(
+      'applying the same id refreshes instead of stacking, and announces it',
+      () {
+        final w = _world();
+        final a = _unit(w, 'red', 0, 0);
+        final seen = <String>[];
+        w.events.on<StatusAppliedEvent>((e) => seen.add(e.id));
+        applyStatus(w, a, StatusEffect('x', defense: 1));
+        applyStatus(w, a, StatusEffect('x', defense: 5));
+        w.events.flush();
+        expect(w.storeOf<StatusEffects>().get(a)!.effects, hasLength(1));
+        expect(w.storeOf<StatusEffects>().get(a)!.defenseBonus, 5);
+        expect(seen, ['x', 'x']);
+      },
+    );
 
-    test('effects tick on their owner\'s turn start and expire with an event', () {
-      final w = _world();
-      final red = _unit(w, 'red', 0, 0);
-      final blue = _unit(w, 'blue', 5, 5);
-      applyStatus(w, red, StatusEffect('short', turns: 1, defense: 1));
-      applyStatus(w, red, StatusEffect('long', turns: 2, defense: 1));
-      applyStatus(w, blue, StatusEffect('theirs', turns: 1));
-      final expired = <String>[];
-      w.events.on<StatusExpiredEvent>((e) => expired.add('${e.entity}:${e.id}'));
+    test(
+      'effects tick on their owner\'s turn start and expire with an event',
+      () {
+        final w = _world();
+        final red = _unit(w, 'red', 0, 0);
+        final blue = _unit(w, 'blue', 5, 5);
+        applyStatus(w, red, StatusEffect('short', turns: 1, defense: 1));
+        applyStatus(w, red, StatusEffect('long', turns: 2, defense: 1));
+        applyStatus(w, blue, StatusEffect('theirs', turns: 1));
+        final expired = <String>[];
+        w.events.on<StatusExpiredEvent>(
+          (e) => expired.add('${e.entity}:${e.id}'),
+        );
 
-      startTurnBasedGame(w, ['red', 'blue']); // red's turn 1 starts: short 1->0, long 2->1
-      w.events.flush();
-      expect(expired, ['$red:short']);
-      expect(w.storeOf<StatusEffects>().get(red)!.has('long'), isTrue);
-      expect(w.storeOf<StatusEffects>().get(blue)!.has('theirs'), isTrue, reason: 'not blue\'s turn yet');
+        startTurnBasedGame(w, [
+          'red',
+          'blue',
+        ]); // red's turn 1 starts: short 1->0, long 2->1
+        w.events.flush();
+        expect(expired, ['$red:short']);
+        expect(w.storeOf<StatusEffects>().get(red)!.has('long'), isTrue);
+        expect(
+          w.storeOf<StatusEffects>().get(blue)!.has('theirs'),
+          isTrue,
+          reason: 'not blue\'s turn yet',
+        );
 
-      endTurn(w); // blue's turn
-      endTurn(w); // red again: long 1->0
-      w.events.flush();
-      expect(expired, contains('$red:long'));
-      expect(expired, contains('$blue:theirs'));
-      expect(w.storeOf<StatusEffects>().get(red)!.effects, isEmpty);
-    });
+        endTurn(w); // blue's turn
+        endTurn(w); // red again: long 1->0
+        w.events.flush();
+        expect(expired, contains('$red:long'));
+        expect(expired, contains('$blue:theirs'));
+        expect(w.storeOf<StatusEffects>().get(red)!.effects, isEmpty);
+      },
+    );
   });
 
   group('DefendOrder', () {
-    test('spends all remaining points and hardens the unit through the enemy\'s turn', () {
-      final w = _world();
-      final red = _unit(w, 'red', 0, 0, ap: 3, def: 0);
-      final blue = _unit(w, 'blue', 1, 0, atk: 5);
-      startTurnBasedGame(w, ['red', 'blue']);
-      submitOrder(w, red, const DefendOrder());
-      w.step(0.1);
-      expect(w.storeOf<ActionPoints>().get(red)!.current, 0);
-      expect(w.storeOf<StatusEffects>().get(red)!.has('defending'), isTrue);
+    test(
+      'spends all remaining points and hardens the unit through the enemy\'s turn',
+      () {
+        final w = _world();
+        final red = _unit(w, 'red', 0, 0, ap: 3, def: 0);
+        final blue = _unit(w, 'blue', 1, 0, atk: 5);
+        startTurnBasedGame(w, ['red', 'blue']);
+        submitOrder(w, red, const DefendOrder());
+        w.step(0.1);
+        expect(w.storeOf<ActionPoints>().get(red)!.current, 0);
+        expect(w.storeOf<StatusEffects>().get(red)!.has('defending'), isTrue);
 
-      endTurn(w);
-      submitOrder(w, blue, AttackOrder(red));
-      w.step(0.1);
-      expect(w.storeOf<UnitStats>().get(red)!.hp, 20 - (5 - 2), reason: 'defense 0 + 2 from defending');
+        endTurn(w);
+        submitOrder(w, blue, AttackOrder(red));
+        w.step(0.1);
+        expect(
+          w.storeOf<UnitStats>().get(red)!.hp,
+          20 - (5 - 2),
+          reason: 'defense 0 + 2 from defending',
+        );
 
-      endTurn(w); // red's turn again: defending (turns 1) expires
-      expect(w.storeOf<StatusEffects>().get(red)!.has('defending'), isFalse);
-    });
+        endTurn(w); // red's turn again: defending (turns 1) expires
+        expect(w.storeOf<StatusEffects>().get(red)!.has('defending'), isFalse);
+      },
+    );
 
     test('the bonus is configurable and JSON round-trips', () {
       expect(Order.fromJson(const DefendOrder().toJson()), isA<DefendOrder>());

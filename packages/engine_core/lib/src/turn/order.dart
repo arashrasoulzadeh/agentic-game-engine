@@ -8,8 +8,9 @@ class GridPosition {
   GridPosition(this.col, this.row);
 
   /// Chebyshev distance: cells apart when diagonal steps count as one.
-  int chebyshev(GridPosition o) =>
-      (col - o.col).abs() > (row - o.row).abs() ? (col - o.col).abs() : (row - o.row).abs();
+  int chebyshev(GridPosition o) => (col - o.col).abs() > (row - o.row).abs()
+      ? (col - o.col).abs()
+      : (row - o.row).abs();
 
   Map<String, dynamic> toJson() => {'col': col, 'row': row};
   factory GridPosition.fromJson(Map<String, dynamic> json) =>
@@ -30,7 +31,10 @@ abstract class Order {
   factory Order.fromJson(Map<String, dynamic> json) {
     switch (json['type']) {
       case 'move':
-        return MoveOrder((json['col'] as num).toInt(), (json['row'] as num).toInt());
+        return MoveOrder(
+          (json['col'] as num).toInt(),
+          (json['row'] as num).toInt(),
+        );
       case 'attack':
         return AttackOrder((json['target'] as num).toInt());
       case 'defend':
@@ -108,11 +112,13 @@ class OrderQueue {
   final List<Order> orders;
   OrderQueue([List<Order>? orders]) : orders = orders ?? [];
 
-  Map<String, dynamic> toJson() => {'orders': [for (final o in orders) o.toJson()]};
+  Map<String, dynamic> toJson() => {
+    'orders': [for (final o in orders) o.toJson()],
+  };
   factory OrderQueue.fromJson(Map<String, dynamic> json) => OrderQueue([
-        for (final o in (json['orders'] as List? ?? const []))
-          Order.fromJson((o as Map).cast<String, dynamic>()),
-      ]);
+    for (final o in (json['orders'] as List? ?? const []))
+      Order.fromJson((o as Map).cast<String, dynamic>()),
+  ]);
 }
 
 /// Why an order was dropped.

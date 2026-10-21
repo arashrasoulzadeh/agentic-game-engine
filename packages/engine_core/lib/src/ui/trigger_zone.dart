@@ -20,15 +20,13 @@ class TriggerZone {
   String triggerId;
   Map<String, dynamic> data;
 
-  TriggerZone(this.triggerId, {Map<String, dynamic>? data}) : data = data ?? <String, dynamic>{};
+  TriggerZone(this.triggerId, {Map<String, dynamic>? data})
+    : data = data ?? <String, dynamic>{};
 
-  Map<String, dynamic> toJson() => {
-        'triggerId': triggerId,
-        'data': data,
-      };
+  Map<String, dynamic> toJson() => {'triggerId': triggerId, 'data': data};
 
   factory TriggerZone.fromJson(Map<String, dynamic> json) => TriggerZone(
-        json['triggerId'] as String,
-        data: (json['data'] as Map?)?.cast<String, dynamic>(),
-      );
+    json['triggerId'] as String,
+    data: (json['data'] as Map?)?.cast<String, dynamic>(),
+  );
 }

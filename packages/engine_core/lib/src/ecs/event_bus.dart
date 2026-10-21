@@ -35,7 +35,11 @@ class EventBus {
   /// off another event rather than off a `System` directly. Call once
   /// per tick, after systems have had a chance to emit.
   void flush() {
-    for (var round = 0; round < _maxCascadeRounds && _queue.isNotEmpty; round++) {
+    for (
+      var round = 0;
+      round < _maxCascadeRounds && _queue.isNotEmpty;
+      round++
+    ) {
       final pending = List<Object>.from(_queue);
       _queue.clear();
       for (final event in pending) {

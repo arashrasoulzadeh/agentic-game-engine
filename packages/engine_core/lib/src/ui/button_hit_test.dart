@@ -38,7 +38,8 @@ EntityId? hitTestButton(World world, double worldX, double worldY) {
 
     final hitBox = hitBoxes.get(entity);
     if (hitBox != null) {
-      if (dx.abs() <= hitBox.width / 2 && dy.abs() <= hitBox.height / 2) hit = entity;
+      if (dx.abs() <= hitBox.width / 2 && dy.abs() <= hitBox.height / 2)
+        hit = entity;
       continue;
     }
 

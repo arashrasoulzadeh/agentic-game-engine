@@ -44,8 +44,10 @@ class GridRect {
       px >= left && px <= right && py >= top && py <= bottom;
 
   bool overlaps(GridRect other) =>
-      left <= other.right && right >= other.left &&
-      top <= other.bottom && bottom >= other.top;
+      left <= other.right &&
+      right >= other.left &&
+      top <= other.bottom &&
+      bottom >= other.top;
 }
 
 /// A node in the BSP tree.
@@ -66,8 +68,8 @@ class BSPGenerator {
   final BSPConfig _config;
 
   BSPGenerator({required int seed, BSPConfig? config})
-      : _rng = Random(seed),
-        _config = config ?? const BSPConfig();
+    : _rng = Random(seed),
+      _config = config ?? const BSPConfig();
 
   /// Generates a dungeon layout within the given bounds.
   /// Returns a map of tile positions to tile types (0 = empty, 1 = floor, 2 = wall).
@@ -113,7 +115,9 @@ class BSPGenerator {
       if (maxH <= minH) return;
       final splitY = _rng.nextInt(maxH - minH + 1) + minH;
       node.left = BSPNode(GridRect(rect.x, rect.y, rect.w, splitY));
-      node.right = BSPNode(GridRect(rect.x, rect.y + splitY, rect.w, rect.h - splitY));
+      node.right = BSPNode(
+        GridRect(rect.x, rect.y + splitY, rect.w, rect.h - splitY),
+      );
     } else {
       // Split vertically (left/right)
       final minW = _config.minRoomWidth;
@@ -121,7 +125,9 @@ class BSPGenerator {
       if (maxW <= minW) return;
       final splitX = _rng.nextInt(maxW - minW + 1) + minW;
       node.left = BSPNode(GridRect(rect.x, rect.y, splitX, rect.h));
-      node.right = BSPNode(GridRect(rect.x + splitX, rect.y, rect.w - splitX, rect.h));
+      node.right = BSPNode(
+        GridRect(rect.x + splitX, rect.y, rect.w - splitX, rect.h),
+      );
     }
 
     _splitNode(node.left!, depth + 1);
@@ -131,8 +137,14 @@ class BSPGenerator {
   void _carveRooms(BSPNode node, Map<int, int> tiles, int width, int height) {
     if (node.isLeaf) {
       final rect = node.rect;
-      final paddingW = (rect.w * _config.roomPadding).round().clamp(1, rect.w ~/ 2);
-      final paddingH = (rect.h * _config.roomPadding).round().clamp(1, rect.h ~/ 2);
+      final paddingW = (rect.w * _config.roomPadding).round().clamp(
+        1,
+        rect.w ~/ 2,
+      );
+      final paddingH = (rect.h * _config.roomPadding).round().clamp(
+        1,
+        rect.h ~/ 2,
+      );
 
       final roomW = rect.w - paddingW * 2;
       final roomH = rect.h - paddingH * 2;
@@ -141,8 +153,10 @@ class BSPGenerator {
         // Fallback: use whole rect
         node.room = rect;
       } else {
-        final roomX = rect.x + paddingW + _rng.nextInt(rect.w - paddingW * 2 - roomW + 1);
-        final roomY = rect.y + paddingH + _rng.nextInt(rect.h - paddingH * 2 - roomH + 1);
+        final roomX =
+            rect.x + paddingW + _rng.nextInt(rect.w - paddingW * 2 - roomW + 1);
+        final roomY =
+            rect.y + paddingH + _rng.nextInt(rect.h - paddingH * 2 - roomH + 1);
         node.room = GridRect(roomX, roomY, roomW, roomH);
       }
 
@@ -198,7 +212,14 @@ class BSPGenerator {
     }
   }
 
-  void _carveLine(int x1, int y1, int x2, int y2, Map<int, int> tiles, int width) {
+  void _carveLine(
+    int x1,
+    int y1,
+    int x2,
+    int y2,
+    Map<int, int> tiles,
+    int width,
+  ) {
     final dx = (x2 - x1).sign;
     final dy = (y2 - y1).sign;
     int x = x1;
@@ -235,8 +256,8 @@ class CellularAutomataGenerator {
   final CellularAutomataConfig _config;
 
   CellularAutomataGenerator({required int seed, CellularAutomataConfig? config})
-      : _rng = Random(seed),
-        _config = config ?? const CellularAutomataConfig();
+    : _rng = Random(seed),
+      _config = config ?? const CellularAutomataConfig();
 
   /// Generates a cave layout.
   /// Returns tiles where 0 = empty, 1 = floor, 2 = wall.
@@ -313,13 +334,10 @@ class CellularAutomataGenerator {
 
 /// Configuration for Wave Function Collapse generation.
 class WFCConfig {
+  /// How many whole attempts to make before giving up (each restarts from scratch).
   final int maxIterations;
-  final bool allowBacktracking;
 
-  const WFCConfig({
-    this.maxIterations = 1000,
-    this.allowBacktracking = true,
-  });
+  const WFCConfig({this.maxIterations = 1000});
 }
 
 /// A tile pattern for Wave Function Collapse.
@@ -348,110 +366,131 @@ class TilePattern {
   }
 }
 
-/// Generates levels using Wave Function Collapse.
+/// Which tiles may sit next to which: [right] holds `(a, b)` when `b` may be immediately to the
+/// right of `a`, [down] when `b` may be immediately below `a`. Left and up are the reverses, so a
+/// rule is stated once.
+class WFCRules {
+  WFCRules({Set<(int, int)>? right, Set<(int, int)>? down})
+    : right = right ?? {},
+      down = down ?? {};
+
+  final Set<(int, int)> right;
+  final Set<(int, int)> down;
+
+  /// Learns the rules from an example: every horizontal and vertical neighbour pair that occurs
+  /// in [sample] (row-major, [width] cells wide) is allowed, and nothing else. Generated levels
+  /// then only ever contain adjacencies the example showed.
+  factory WFCRules.fromSample(List<int> sample, int width) {
+    final rules = WFCRules();
+    final height = sample.length ~/ width;
+    for (var y = 0; y < height; y++) {
+      for (var x = 0; x < width; x++) {
+        final t = sample[y * width + x];
+        if (x + 1 < width) rules.right.add((t, sample[y * width + x + 1]));
+        if (y + 1 < height) rules.down.add((t, sample[(y + 1) * width + x]));
+      }
+    }
+    return rules;
+  }
+
+  /// Whether [b] may be at offset ([dx], [dy]) (one of the four unit steps) from [a].
+  bool allows(int a, int b, int dx, int dy) {
+    if (dx == 1) return right.contains((a, b));
+    if (dx == -1) return right.contains((b, a));
+    if (dy == 1) return down.contains((a, b));
+    return down.contains((b, a));
+  }
+}
+
+/// Generates levels with Wave Function Collapse: every cell starts able to be any tile; the
+/// cell with the fewest options is fixed at random, and the consequences are propagated to its
+/// neighbours under [rules], repeating until every cell is decided. If the rules paint it into a
+/// corner (a cell left with no option) the attempt is thrown away and retried, up to
+/// [WFCConfig.maxIterations] times; if none succeeds, [generate] throws a [StateError] rather
+/// than returning a level that breaks the rules.
 ///
-/// **Placeholder:** `_areCompatible` allows every pairing, so this currently picks
-/// seeded random tiles from `tileIds` with no adjacency rules. Use it for noise or
-/// as the hook for real rules, not for coherent output.
+/// Without [rules] every pairing is allowed, which makes the output seeded random noise.
+/// Deterministic for a given seed, rules and size.
 class WFCGenerator {
   final Random _rng;
   final WFCConfig _config;
   final List<int> _tileIds;
+  final WFCRules? _rules;
 
   WFCGenerator({
     required int seed,
     required List<int> tileIds,
+    WFCRules? rules,
     WFCConfig? config,
   }) : _rng = Random(seed),
        _config = config ?? const WFCConfig(),
-       _tileIds = tileIds;
+       _tileIds = tileIds,
+       _rules = rules;
 
-  /// Generates a level from patterns.
-  /// Returns list of tile IDs.
+  /// Generates a [width] x [height] level as row-major tile ids.
   List<int> generate(int width, int height) {
-    // Initialize all cells with all possible tiles
-    final possibilities = List<List<int>>.generate(
-      width * height,
-      (_) => List<int>.from(_tileIds),
+    for (var attempt = 0; attempt < _config.maxIterations; attempt++) {
+      final result = _attempt(width, height);
+      if (result != null) return result;
+    }
+    throw StateError(
+      'WFC could not satisfy the rules for a ${width}x$height level in ${_config.maxIterations} attempts',
     );
-
-    // Constraint propagation
-    for (int iter = 0; iter < _config.maxIterations; iter++) {
-      // Find cell with minimum entropy (fewest possibilities)
-      int minEntropy = _tileIds.length + 1;
-      int minIdx = -1;
-
-      for (int i = 0; i < possibilities.length; i++) {
-        if (possibilities[i].length > 1 && possibilities[i].length < minEntropy) {
-          minEntropy = possibilities[i].length;
-          minIdx = i;
-        }
-      }
-
-      if (minIdx == -1) break; // All collapsed
-
-      // Collapse this cell
-      final chosen = possibilities[minIdx][_rng.nextInt(possibilities[minIdx].length)];
-      possibilities[minIdx] = [chosen];
-
-      // Propagate constraints
-      _propagate(possibilities, width, height, minIdx);
-    }
-
-    // Convert to final grid
-    final grid = List<int>.filled(width * height, _tileIds.first);
-    for (int i = 0; i < possibilities.length; i++) {
-      if (possibilities[i].isNotEmpty) {
-        grid[i] = possibilities[i].first;
-      }
-    }
-
-    return grid;
   }
 
-  void _propagate(List<List<int>> possibilities, int width, int height, int startIdx) {
-    final queue = <int>[startIdx];
-    final inQueue = List<bool>.filled(possibilities.length, false);
-    inQueue[startIdx] = true;
+  List<int>? _attempt(int width, int height) {
+    final cells = List<Set<int>>.generate(width * height, (_) => {..._tileIds});
+    // Settle the rules once up front: with a single tile id every cell is already decided, so
+    // the loop below would never propagate and a rule set that forbids it would go unnoticed.
+    if (!_propagate(cells, width, height, [
+      for (var i = 0; i < cells.length; i++) i,
+    ]))
+      return null;
+    while (true) {
+      // The undecided cell with the fewest options (ties: lowest index, for determinism).
+      var pick = -1;
+      for (var i = 0; i < cells.length; i++) {
+        if (cells[i].length > 1 &&
+            (pick == -1 || cells[i].length < cells[pick].length))
+          pick = i;
+      }
+      if (pick == -1) break;
+      final options = cells[pick].toList()..sort();
+      cells[pick] = {options[_rng.nextInt(options.length)]};
+      if (!_propagate(cells, width, height, [pick])) return null;
+    }
+    return [for (final c in cells) c.single];
+  }
 
+  /// Removes options that no longer have a supporting neighbour, outward from [starts]. False
+  /// when a cell is left with none.
+  bool _propagate(
+    List<Set<int>> cells,
+    int width,
+    int height,
+    List<int> starts,
+  ) {
+    final rules = _rules;
+    if (rules == null) return true;
+    final queue = [...starts];
     while (queue.isNotEmpty) {
-      final idx = queue.removeAt(0);
-      inQueue[idx] = false;
-
-      final x = idx % width;
-      final y = idx ~/ width;
-      final tile = possibilities[idx].first;
-
-      // Check all 4 neighbors
-      for (final (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)]) {
-        final nx = x + dx;
-        final ny = y + dy;
+      final idx = queue.removeLast();
+      final x = idx % width, y = idx ~/ width;
+      for (final (dx, dy) in const [(-1, 0), (1, 0), (0, -1), (0, 1)]) {
+        final nx = x + dx, ny = y + dy;
         if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
-
-        final nIdx = ny * width + nx;
-        final nPossibilities = possibilities[nIdx];
-
-        // Filter neighbor possibilities based on compatibility
-        final compatible = nPossibilities.where((t) => _areCompatible(tile, t, dx, dy)).toList();
-
-        if (compatible.length < nPossibilities.length) {
-          possibilities[nIdx] = compatible;
-          if (compatible.isEmpty) {
-            // Contradiction - could backtrack here
-            possibilities[nIdx] = [_tileIds.first];
-          }
-          if (!inQueue[nIdx]) {
-            queue.add(nIdx);
-            inQueue[nIdx] = true;
-          }
+        final n = ny * width + nx;
+        final keep = {
+          for (final t in cells[n])
+            if (cells[idx].any((s) => rules.allows(s, t, dx, dy))) t,
+        };
+        if (keep.isEmpty) return false;
+        if (keep.length < cells[n].length) {
+          cells[n] = keep;
+          queue.add(n);
         }
       }
     }
-  }
-
-  bool _areCompatible(int tileA, int tileB, int dx, int dy) {
-    // Simple compatibility: allow any combination for now
-    // In a real implementation, this would check pattern adjacency rules
     return true;
   }
 }
@@ -468,10 +507,19 @@ class ProceduralLevelGenerator {
     CellularAutomataConfig? cellularConfig,
     WFCConfig? wfcConfig,
     List<int>? wfcTileIds,
+    WFCRules? wfcRules,
   }) : _bsp = BSPGenerator(seed: seed, config: bspConfig),
-       _cellular = CellularAutomataGenerator(seed: seed + 1, config: cellularConfig),
+       _cellular = CellularAutomataGenerator(
+         seed: seed + 1,
+         config: cellularConfig,
+       ),
        _wfc = wfcTileIds != null
-           ? WFCGenerator(seed: seed + 2, tileIds: wfcTileIds, config: wfcConfig)
+           ? WFCGenerator(
+               seed: seed + 2,
+               tileIds: wfcTileIds,
+               rules: wfcRules,
+               config: wfcConfig,
+             )
            : null;
 
   /// Generates a dungeon using BSP.

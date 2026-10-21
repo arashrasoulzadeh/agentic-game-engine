@@ -48,26 +48,26 @@ class DialogueChoice {
   });
 
   Map<String, dynamic> toJson() => {
-        'textKey': textKey,
-        if (conditionEventFlag != null) 'conditionEventFlag': conditionEventFlag,
-        if (conditionInventory != null) 'conditionInventory': conditionInventory,
-        if (conditionExpression != null) 'conditionExpression': conditionExpression,
-        'onSelectEvent': onSelectEvent,
-        if (nextNodeId != null) 'nextNodeId': nextNodeId,
-        if (onSelectAudioKey != null) 'onSelectAudioKey': onSelectAudioKey,
-        if (portrait != null) 'portrait': portrait,
-      };
+    'textKey': textKey,
+    if (conditionEventFlag != null) 'conditionEventFlag': conditionEventFlag,
+    if (conditionInventory != null) 'conditionInventory': conditionInventory,
+    if (conditionExpression != null) 'conditionExpression': conditionExpression,
+    'onSelectEvent': onSelectEvent,
+    if (nextNodeId != null) 'nextNodeId': nextNodeId,
+    if (onSelectAudioKey != null) 'onSelectAudioKey': onSelectAudioKey,
+    if (portrait != null) 'portrait': portrait,
+  };
 
   factory DialogueChoice.fromJson(Map<String, dynamic> json) => DialogueChoice(
-        textKey: json['textKey'] as String,
-        conditionEventFlag: json['conditionEventFlag'] as String?,
-        conditionInventory: json['conditionInventory'] as String?,
-        conditionExpression: json['conditionExpression'] as String?,
-        onSelectEvent: json['onSelectEvent'],
-        nextNodeId: json['nextNodeId'] as String?,
-        onSelectAudioKey: json['onSelectAudioKey'] as String?,
-        portrait: json['portrait'] as String?,
-      );
+    textKey: json['textKey'] as String,
+    conditionEventFlag: json['conditionEventFlag'] as String?,
+    conditionInventory: json['conditionInventory'] as String?,
+    conditionExpression: json['conditionExpression'] as String?,
+    onSelectEvent: json['onSelectEvent'],
+    nextNodeId: json['nextNodeId'] as String?,
+    onSelectAudioKey: json['onSelectAudioKey'] as String?,
+    portrait: json['portrait'] as String?,
+  );
 }
 
 /// A single node in a dialogue graph.
@@ -141,44 +141,47 @@ class DialogueNode {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'textKey': textKey,
-        if (speaker != null) 'speaker': speaker,
-        if (portrait != null) 'portrait': portrait,
-        if (portraitAtlasId != null) 'portraitAtlasId': portraitAtlasId,
-        if (portraitRegion != null) 'portraitRegion': portraitRegion,
-        if (audioKey != null) 'audioKey': audioKey,
-        if (localizedAudioKeys != null && localizedAudioKeys!.isNotEmpty) 'localizedAudioKeys': localizedAudioKeys,
-        if (typewriterDuration > 0) 'typewriterDuration': typewriterDuration,
-        if (typewriterSpeed != 1.0) 'typewriterSpeed': typewriterSpeed,
-        if (!skippable) 'skippable': skippable,
-        if (autoAdvance) 'autoAdvance': autoAdvance,
-        if (autoAdvanceDelay != 1.0) 'autoAdvanceDelay': autoAdvanceDelay,
-        if (onShowEvent != null) 'onShowEvent': onShowEvent,
-        'choices': choices.map((c) => c.toJson()).toList(),
-      };
+    'id': id,
+    'textKey': textKey,
+    if (speaker != null) 'speaker': speaker,
+    if (portrait != null) 'portrait': portrait,
+    if (portraitAtlasId != null) 'portraitAtlasId': portraitAtlasId,
+    if (portraitRegion != null) 'portraitRegion': portraitRegion,
+    if (audioKey != null) 'audioKey': audioKey,
+    if (localizedAudioKeys != null && localizedAudioKeys!.isNotEmpty)
+      'localizedAudioKeys': localizedAudioKeys,
+    if (typewriterDuration > 0) 'typewriterDuration': typewriterDuration,
+    if (typewriterSpeed != 1.0) 'typewriterSpeed': typewriterSpeed,
+    if (!skippable) 'skippable': skippable,
+    if (autoAdvance) 'autoAdvance': autoAdvance,
+    if (autoAdvanceDelay != 1.0) 'autoAdvanceDelay': autoAdvanceDelay,
+    if (onShowEvent != null) 'onShowEvent': onShowEvent,
+    'choices': choices.map((c) => c.toJson()).toList(),
+  };
 
   factory DialogueNode.fromJson(Map<String, dynamic> json) => DialogueNode(
-        id: json['id'] as String,
-        textKey: json['textKey'] as String,
-        speaker: json['speaker'] as String?,
-        portrait: json['portrait'] as String?,
-        portraitAtlasId: json['portraitAtlasId'] as String?,
-        portraitRegion: json['portraitRegion'] as String?,
-        audioKey: json['audioKey'] as String?,
-        localizedAudioKeys: json['localizedAudioKeys'] != null
-            ? (json['localizedAudioKeys'] as Map).map((k, v) => MapEntry(k as String, v as String))
-            : null,
-        typewriterDuration: (json['typewriterDuration'] as num?)?.toDouble() ?? 0,
-        typewriterSpeed: (json['typewriterSpeed'] as num?)?.toDouble() ?? 1.0,
-        skippable: json['skippable'] as bool? ?? true,
-        autoAdvance: json['autoAdvance'] as bool? ?? false,
-        autoAdvanceDelay: (json['autoAdvanceDelay'] as num?)?.toDouble() ?? 1.0,
-        onShowEvent: json['onShowEvent'],
-        choices: (json['choices'] as List)
-            .map((c) => DialogueChoice.fromJson(c as Map<String, dynamic>))
-            .toList(),
-      );
+    id: json['id'] as String,
+    textKey: json['textKey'] as String,
+    speaker: json['speaker'] as String?,
+    portrait: json['portrait'] as String?,
+    portraitAtlasId: json['portraitAtlasId'] as String?,
+    portraitRegion: json['portraitRegion'] as String?,
+    audioKey: json['audioKey'] as String?,
+    localizedAudioKeys: json['localizedAudioKeys'] != null
+        ? (json['localizedAudioKeys'] as Map).map(
+            (k, v) => MapEntry(k as String, v as String),
+          )
+        : null,
+    typewriterDuration: (json['typewriterDuration'] as num?)?.toDouble() ?? 0,
+    typewriterSpeed: (json['typewriterSpeed'] as num?)?.toDouble() ?? 1.0,
+    skippable: json['skippable'] as bool? ?? true,
+    autoAdvance: json['autoAdvance'] as bool? ?? false,
+    autoAdvanceDelay: (json['autoAdvanceDelay'] as num?)?.toDouble() ?? 1.0,
+    onShowEvent: json['onShowEvent'],
+    choices: (json['choices'] as List)
+        .map((c) => DialogueChoice.fromJson(c as Map<String, dynamic>))
+        .toList(),
+  );
 }
 
 /// A complete dialogue graph: a collection of nodes with a designated start.
@@ -199,18 +202,18 @@ class DialogueGraph {
   });
 
   Map<String, dynamic> toJson() => {
-        'nodes': nodes.map((k, v) => MapEntry(k, v.toJson())),
-        'startNodeId': startNodeId,
-        if (metadata != null) 'metadata': metadata,
-      };
+    'nodes': nodes.map((k, v) => MapEntry(k, v.toJson())),
+    'startNodeId': startNodeId,
+    if (metadata != null) 'metadata': metadata,
+  };
 
   factory DialogueGraph.fromJson(Map<String, dynamic> json) => DialogueGraph(
-        nodes: (json['nodes'] as Map<String, dynamic>).map(
-          (k, v) => MapEntry(k, DialogueNode.fromJson(v as Map<String, dynamic>)),
-        ),
-        startNodeId: json['startNodeId'] as String,
-        metadata: json['metadata'] as Map<String, dynamic>?,
-      );
+    nodes: (json['nodes'] as Map<String, dynamic>).map(
+      (k, v) => MapEntry(k, DialogueNode.fromJson(v as Map<String, dynamic>)),
+    ),
+    startNodeId: json['startNodeId'] as String,
+    metadata: json['metadata'] as Map<String, dynamic>?,
+  );
 
   /// Gets the starting node of this graph.
   DialogueNode get startNode => nodes[startNodeId]!;
@@ -252,7 +255,8 @@ class DialogueRunner {
   }
 
   /// The currently active node, or null if the dialogue has ended.
-  DialogueNode? get currentNode => _currentNodeId != null ? graph.getNode(_currentNodeId!) : null;
+  DialogueNode? get currentNode =>
+      _currentNodeId != null ? graph.getNode(_currentNodeId!) : null;
 
   /// The resolved display text for the current node, with variable substitution.
   /// Returns null if dialogue has ended.
@@ -267,12 +271,28 @@ class DialogueRunner {
   String? getCurrentAudioKey() {
     final node = currentNode;
     if (node == null) return null;
-    
+
     // Try localized audio key first
-    if (node.localizedAudioKeys != null && node.localizedAudioKeys!.isNotEmpty) {
+    if (node.localizedAudioKeys != null &&
+        node.localizedAudioKeys!.isNotEmpty) {
       // TODO: Get current locale from somewhere (GameState, StringTable, etc.)
       // For now, try common locales
-      for (final locale in ['en', 'en_US', 'en_GB', 'ja', 'ja_JP', 'es', 'es_ES', 'fr', 'fr_FR', 'de', 'de_DE', 'zh', 'zh_CN', 'zh_TW']) {
+      for (final locale in [
+        'en',
+        'en_US',
+        'en_GB',
+        'ja',
+        'ja_JP',
+        'es',
+        'es_ES',
+        'fr',
+        'fr_FR',
+        'de',
+        'de_DE',
+        'zh',
+        'zh_CN',
+        'zh_TW',
+      ]) {
         if (node.localizedAudioKeys!.containsKey(locale)) {
           return node.localizedAudioKeys![locale];
         }
@@ -343,48 +363,49 @@ class DialogueRunner {
     final flags = state?.data ?? {};
     final inventory = view.component<Inventory>(0);
 
-    text = text.replaceAllMapped(
-      RegExp(r'\{if\s+([^}]+)\}(.*?)\{/if\}'),
-      (match) {
-        final condition = match.group(1)!.trim();
-        final content = match.group(2)!;
-        bool show = false;
-        if (condition.startsWith('!')) {
-          final negated = condition.substring(1);
-          show = !_checkCondition(negated, flags, inventory);
-        } else {
-          show = _checkCondition(condition, flags, inventory);
-        }
-        return show ? content : '';
-      },
-    );
+    text = text.replaceAllMapped(RegExp(r'\{if\s+([^}]+)\}(.*?)\{/if\}'), (
+      match,
+    ) {
+      final condition = match.group(1)!.trim();
+      final content = match.group(2)!;
+      bool show = false;
+      if (condition.startsWith('!')) {
+        final negated = condition.substring(1);
+        show = !_checkCondition(negated, flags, inventory);
+      } else {
+        show = _checkCondition(condition, flags, inventory);
+      }
+      return show ? content : '';
+    });
 
-    text = text.replaceAllMapped(
-      RegExp(r'\{(\w+)\}'),
-      (match) {
-        final key = match.group(1)!;
-        if (stringTable.hasKey(key)) {
-          return stringTable.resolve(key);
-        }
-        if (flags.containsKey(key)) {
-          final val = flags[key];
-          return val is bool ? (val ? 'true' : 'false') : val.toString();
-        }
-        if (key.startsWith('inventory:')) {
-          final itemId = key.substring('inventory:'.length);
-          return inventory?.items[itemId]?.toString() ?? '0';
-        }
-        return match.group(0)!;
-      },
-    );
+    text = text.replaceAllMapped(RegExp(r'\{(\w+)\}'), (match) {
+      final key = match.group(1)!;
+      if (stringTable.hasKey(key)) {
+        return stringTable.resolve(key);
+      }
+      if (flags.containsKey(key)) {
+        final val = flags[key];
+        return val is bool ? (val ? 'true' : 'false') : val.toString();
+      }
+      if (key.startsWith('inventory:')) {
+        final itemId = key.substring('inventory:'.length);
+        return inventory?.items[itemId]?.toString() ?? '0';
+      }
+      return match.group(0)!;
+    });
 
     return text;
   }
 
-  bool _checkCondition(String condition, Map<String, dynamic> flags, Inventory? inventory) {
+  bool _checkCondition(
+    String condition,
+    Map<String, dynamic> flags,
+    Inventory? inventory,
+  ) {
     if (condition.startsWith('inventory:')) {
       final itemId = condition.substring('inventory:'.length);
-      return inventory?.items[itemId] != null && (inventory!.items[itemId] ?? 0) > 0;
+      return inventory?.items[itemId] != null &&
+          (inventory!.items[itemId] ?? 0) > 0;
     }
     return flags[condition] == true;
   }
@@ -400,7 +421,8 @@ class DialogueRunner {
     _typewriterTimer += dt * node.typewriterSpeed;
     final fullText = currentText(view) ?? '';
     final totalChars = fullText.length;
-    final progress = (_typewriterTimer / node.typewriterDuration * totalChars).floor();
+    final progress = (_typewriterTimer / node.typewriterDuration * totalChars)
+        .floor();
     _typewriterProgress = progress.clamp(0, totalChars);
 
     if (_typewriterProgress >= totalChars) {
@@ -486,16 +508,19 @@ class DialogueRunner {
   }
 
   Map<String, dynamic> toJson() => {
-        'currentNodeId': _currentNodeId,
-        'typewriterProgress': _typewriterProgress,
-        'typewriterComplete': _typewriterComplete,
-      };
+    'currentNodeId': _currentNodeId,
+    'typewriterProgress': _typewriterProgress,
+    'typewriterComplete': _typewriterComplete,
+  };
 
   factory DialogueRunner.fromJson(
-      Map<String, dynamic> json, DialogueGraph graph, StringTable stringTable,
-      {void Function(DialogueNode)? onNodeShown,
-       void Function(DialogueChoice)? onChoiceSelected,
-       void Function()? onEnded}) {
+    Map<String, dynamic> json,
+    DialogueGraph graph,
+    StringTable stringTable, {
+    void Function(DialogueNode)? onNodeShown,
+    void Function(DialogueChoice)? onChoiceSelected,
+    void Function()? onEnded,
+  }) {
     final runner = DialogueRunner(
       graph: graph,
       stringTable: stringTable,
@@ -504,7 +529,8 @@ class DialogueRunner {
       onEnded: onEnded,
     );
     runner._currentNodeId = json['currentNodeId'] as String?;
-    runner._typewriterProgress = (json['typewriterProgress'] as num?)?.toInt() ?? 0;
+    runner._typewriterProgress =
+        (json['typewriterProgress'] as num?)?.toInt() ?? 0;
     runner._typewriterComplete = (json['typewriterComplete'] as bool?) ?? false;
     return runner;
   }

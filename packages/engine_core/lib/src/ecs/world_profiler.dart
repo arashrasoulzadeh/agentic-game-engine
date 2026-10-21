@@ -26,12 +26,12 @@ class SystemTiming {
   }
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'lastMs': lastMs,
-        'averageMs': averageMs,
-        'maxMs': maxMs,
-        'samples': samples,
-      };
+    'name': name,
+    'lastMs': lastMs,
+    'averageMs': averageMs,
+    'maxMs': maxMs,
+    'samples': samples,
+  };
 }
 
 /// Opt-in per-system timing for a `World`: set `world.profiler =
@@ -65,15 +65,19 @@ class WorldProfiler {
   int steps = 0;
 
   WorldProfiler({this.smoothing = 0.1, int historyLength = 120})
-      : assert(smoothing > 0 && smoothing <= 1, 'smoothing must be in (0, 1]'),
-        stepHistory = RingBuffer<double>(historyLength);
+    : assert(smoothing > 0 && smoothing <= 1, 'smoothing must be in (0, 1]'),
+      stepHistory = RingBuffer<double>(historyLength);
 
   /// Called by `World.step`.
   void recordSystem(String name, double ms) =>
       (_systems[name] ??= SystemTiming(name))._record(ms, smoothing);
 
   /// Called by `World.step` once per step.
-  void recordStep({required double stepMs, required double eventsMs, required int entities}) {
+  void recordStep({
+    required double stepMs,
+    required double eventsMs,
+    required int entities,
+  }) {
     this.stepMs = stepMs;
     this.eventsMs = eventsMs;
     entityCount = entities;
@@ -84,7 +88,8 @@ class WorldProfiler {
   /// Every system seen so far, slowest average first -- the "what should I
   /// optimise" order.
   List<SystemTiming> report() =>
-      _systems.values.toList()..sort((a, b) => b.averageMs.compareTo(a.averageMs));
+      _systems.values.toList()
+        ..sort((a, b) => b.averageMs.compareTo(a.averageMs));
 
   /// Share of the last step's time each system took (0..1), by name. Systems
   /// don't sum to exactly 1: the remainder is event flushing and loop overhead.
@@ -103,23 +108,29 @@ class WorldProfiler {
   }
 
   Map<String, dynamic> toJson() => {
-        'steps': steps,
-        'stepMs': stepMs,
-        'eventsMs': eventsMs,
-        'entities': entityCount,
-        'systems': [for (final t in report()) t.toJson()],
-      };
+    'steps': steps,
+    'stepMs': stepMs,
+    'eventsMs': eventsMs,
+    'entities': entityCount,
+    'systems': [for (final t in report()) t.toJson()],
+  };
 
   /// A fixed-width table for a log line or test failure message.
   String format() {
     final rows = report();
-    final width = rows.fold<int>(6, (w, t) => t.name.length > w ? t.name.length : w);
+    final width = rows.fold<int>(
+      6,
+      (w, t) => t.name.length > w ? t.name.length : w,
+    );
     final b = StringBuffer(
-        'step ${stepMs.toStringAsFixed(3)}ms  events ${eventsMs.toStringAsFixed(3)}ms  '
-        'entities $entityCount\n');
+      'step ${stepMs.toStringAsFixed(3)}ms  events ${eventsMs.toStringAsFixed(3)}ms  '
+      'entities $entityCount\n',
+    );
     for (final t in rows) {
-      b.writeln('${t.name.padRight(width)}  avg ${t.averageMs.toStringAsFixed(3)}ms  '
-          'max ${t.maxMs.toStringAsFixed(3)}ms');
+      b.writeln(
+        '${t.name.padRight(width)}  avg ${t.averageMs.toStringAsFixed(3)}ms  '
+        'max ${t.maxMs.toStringAsFixed(3)}ms',
+      );
     }
     return b.toString().trimRight();
   }

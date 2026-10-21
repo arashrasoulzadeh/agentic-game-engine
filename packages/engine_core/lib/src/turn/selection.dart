@@ -41,7 +41,8 @@ String? _controlling(World world, String? team) {
 }
 
 bool _selectable(World world, EntityId e, String team) =>
-    world.storeOf<Team>().get(e)?.id == team && world.storeOf<GridPosition>().has(e);
+    world.storeOf<Team>().get(e)?.id == team &&
+    world.storeOf<GridPosition>().has(e);
 
 /// Selects the controlled team's unit standing on ([col], [row]). The controlled
 /// team is [team] if given -- required in a real-time game, which has no turns --
@@ -49,7 +50,13 @@ bool _selectable(World world, EntityId e, String team) =>
 /// opponent's unit. With no unit there, the selection is left untouched and null
 /// returned (so a stray tap on empty ground can be interpreted as a move command
 /// by the caller). [additive] keeps the existing selection (shift/ctrl-click).
-EntityId? selectAtCell(World world, int col, int row, {bool additive = false, String? team}) {
+EntityId? selectAtCell(
+  World world,
+  int col,
+  int row, {
+  bool additive = false,
+  String? team,
+}) {
   final controlled = _controlling(world, team);
   if (controlled == null) return null;
   final grid = world.storeOf<GridPosition>();
@@ -69,8 +76,15 @@ EntityId? selectAtCell(World world, int col, int row, {bool additive = false, St
 /// with a cell in the inclusive rectangle spanned by the two corners (given in
 /// any order). Returns how many were selected; an empty box leaves the selection
 /// alone.
-int selectInBox(World world, int col0, int row0, int col1, int row1,
-    {bool additive = false, String? team}) {
+int selectInBox(
+  World world,
+  int col0,
+  int row0,
+  int col1,
+  int row1, {
+  bool additive = false,
+  String? team,
+}) {
   final controlled = _controlling(world, team);
   if (controlled == null) return 0;
   final c0 = col0 < col1 ? col0 : col1, c1 = col0 < col1 ? col1 : col0;
@@ -127,13 +141,20 @@ int commandSelected(
       break;
     }
   }
-  final commanded = [for (final e in selectedEntities(world)) if (_selectable(world, e, controlled)) e];
+  final commanded = [
+    for (final e in selectedEntities(world))
+      if (_selectable(world, e, controlled)) e,
+  ];
   final spread = enemy == null && formation != null && commanded.length >= 2
       ? assignFormation(
           world,
           commanded,
-          formationCells(formation, GridPosition(col, row), commanded.length,
-              taken: cellsHeldExcept(world, commanded)),
+          formationCells(
+            formation,
+            GridPosition(col, row),
+            commanded.length,
+            taken: cellsHeldExcept(world, commanded),
+          ),
         )
       : const <EntityId, GridPosition>{};
   var accepted = 0;
@@ -143,8 +164,8 @@ int commandSelected(
     final order = enemy != null
         ? AttackOrder(enemy)
         : slot != null
-            ? MoveOrder(slot.col, slot.row)
-            : MoveOrder(col, row);
+        ? MoveOrder(slot.col, slot.row)
+        : MoveOrder(col, row);
     if (submitOrder(world, e, order)) accepted++;
   }
   return accepted;

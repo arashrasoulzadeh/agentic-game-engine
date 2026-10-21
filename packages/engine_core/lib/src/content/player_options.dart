@@ -71,10 +71,10 @@ class PlayerOptions {
     this.locale = 'en',
     this.showFpsOverlay = false,
     Map<String, dynamic>? custom,
-  })  : keyboardBindings = keyboardBindings ?? const {},
-        gamepadBindings = gamepadBindings ?? const {},
-        touchBindings = touchBindings ?? const {},
-        custom = custom ?? {};
+  }) : keyboardBindings = keyboardBindings ?? const {},
+       gamepadBindings = gamepadBindings ?? const {},
+       touchBindings = touchBindings ?? const {},
+       custom = custom ?? {};
 
   /// Creates a copy with modified fields.
   PlayerOptions copyWith({
@@ -116,48 +116,55 @@ class PlayerOptions {
   }
 
   Map<String, dynamic> toJson() => {
-        'masterVolume': masterVolume,
-        'musicVolume': musicVolume,
-        'sfxVolume': sfxVolume,
-        'controlScheme': controlScheme,
-        'keyboardBindings': keyboardBindings,
-        'gamepadBindings': gamepadBindings,
-        'touchBindings': touchBindings,
-        'textScale': textScale,
-        'highContrast': highContrast,
-        'colorblindMode': colorblindMode,
-        'reduceMotion': reduceMotion,
-        'screenShakeIntensity': screenShakeIntensity,
-        'dialogueSpeed': dialogueSpeed,
-        'locale': locale,
-        'showFpsOverlay': showFpsOverlay,
-        'custom': custom,
-      };
+    'masterVolume': masterVolume,
+    'musicVolume': musicVolume,
+    'sfxVolume': sfxVolume,
+    'controlScheme': controlScheme,
+    'keyboardBindings': keyboardBindings,
+    'gamepadBindings': gamepadBindings,
+    'touchBindings': touchBindings,
+    'textScale': textScale,
+    'highContrast': highContrast,
+    'colorblindMode': colorblindMode,
+    'reduceMotion': reduceMotion,
+    'screenShakeIntensity': screenShakeIntensity,
+    'dialogueSpeed': dialogueSpeed,
+    'locale': locale,
+    'showFpsOverlay': showFpsOverlay,
+    'custom': custom,
+  };
 
   factory PlayerOptions.fromJson(Map<String, dynamic> json) => PlayerOptions(
-        masterVolume: (json['masterVolume'] as num?)?.toDouble() ?? 1.0,
-        musicVolume: (json['musicVolume'] as num?)?.toDouble() ?? 1.0,
-        sfxVolume: (json['sfxVolume'] as num?)?.toDouble() ?? 1.0,
-        controlScheme: json['controlScheme'] as String? ?? 'keyboard',
-        keyboardBindings: (json['keyboardBindings'] as Map<String, dynamic>?)
-            ?.map((k, v) => MapEntry(k, v as int))
-            ?? {},
-        gamepadBindings: (json['gamepadBindings'] as Map<String, dynamic>?)
-            ?.map((k, v) => MapEntry(k, v as int))
-            ?? {},
-        touchBindings: (json['touchBindings'] as Map<String, dynamic>?)
-            ?.map((k, v) => MapEntry(k, v as String))
-            ?? {},
-        textScale: (json['textScale'] as num?)?.toDouble() ?? 1.0,
-        highContrast: json['highContrast'] as bool? ?? false,
-        colorblindMode: json['colorblindMode'] as String? ?? 'none',
-        reduceMotion: json['reduceMotion'] as bool? ?? false,
-        screenShakeIntensity: (json['screenShakeIntensity'] as num?)?.toDouble() ?? 1.0,
-        dialogueSpeed: (json['dialogueSpeed'] as num?)?.toDouble() ?? 1.0,
-        locale: json['locale'] as String? ?? 'en',
-        showFpsOverlay: json['showFpsOverlay'] as bool? ?? false,
-        custom: json['custom'] as Map<String, dynamic>? ?? {},
-      );
+    masterVolume: (json['masterVolume'] as num?)?.toDouble() ?? 1.0,
+    musicVolume: (json['musicVolume'] as num?)?.toDouble() ?? 1.0,
+    sfxVolume: (json['sfxVolume'] as num?)?.toDouble() ?? 1.0,
+    controlScheme: json['controlScheme'] as String? ?? 'keyboard',
+    keyboardBindings:
+        (json['keyboardBindings'] as Map<String, dynamic>?)?.map(
+          (k, v) => MapEntry(k, v as int),
+        ) ??
+        {},
+    gamepadBindings:
+        (json['gamepadBindings'] as Map<String, dynamic>?)?.map(
+          (k, v) => MapEntry(k, v as int),
+        ) ??
+        {},
+    touchBindings:
+        (json['touchBindings'] as Map<String, dynamic>?)?.map(
+          (k, v) => MapEntry(k, v as String),
+        ) ??
+        {},
+    textScale: (json['textScale'] as num?)?.toDouble() ?? 1.0,
+    highContrast: json['highContrast'] as bool? ?? false,
+    colorblindMode: json['colorblindMode'] as String? ?? 'none',
+    reduceMotion: json['reduceMotion'] as bool? ?? false,
+    screenShakeIntensity:
+        (json['screenShakeIntensity'] as num?)?.toDouble() ?? 1.0,
+    dialogueSpeed: (json['dialogueSpeed'] as num?)?.toDouble() ?? 1.0,
+    locale: json['locale'] as String? ?? 'en',
+    showFpsOverlay: json['showFpsOverlay'] as bool? ?? false,
+    custom: json['custom'] as Map<String, dynamic>? ?? {},
+  );
 
   /// Clamps volume values to valid range.
   void clampVolumes() {
@@ -207,7 +214,7 @@ class PlayerOptionsManager {
   final List<void Function(PlayerOptions)> _listeners = [];
 
   PlayerOptionsManager(this._storage, [PlayerOptions? initialOptions])
-      : _options = initialOptions ?? PlayerOptions();
+    : _options = initialOptions ?? PlayerOptions();
 
   PlayerOptions get options => _options;
 

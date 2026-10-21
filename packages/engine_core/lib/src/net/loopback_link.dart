@@ -54,9 +54,9 @@ class LoopbackLink {
     this.jitterTicks = 0,
     this.dropRate = 0,
     int seed = 1,
-  })  : assert(latencyTicks >= 0 && jitterTicks >= 0),
-        assert(dropRate >= 0 && dropRate <= 1),
-        _random = DeterministicRandom(seed) {
+  }) : assert(latencyTicks >= 0 && jitterTicks >= 0),
+       assert(dropRate >= 0 && dropRate <= 1),
+       _random = DeterministicRandom(seed) {
     a = LinkEndpoint._(this, 0);
     b = LinkEndpoint._(this, 1);
   }
@@ -83,11 +83,14 @@ class LoopbackLink {
       return;
     }
     final jitter = jitterTicks == 0 ? 0 : _random.nextInt(jitterTicks + 1);
-    _queue.add(_InFlight(
-      to: 1 - from,
-      at: _clock + latencyTicks + jitter,
-      message: (jsonDecode(jsonEncode(message)) as Map).cast<String, dynamic>(),
-    ));
+    _queue.add(
+      _InFlight(
+        to: 1 - from,
+        at: _clock + latencyTicks + jitter,
+        message: (jsonDecode(jsonEncode(message)) as Map)
+            .cast<String, dynamic>(),
+      ),
+    );
   }
 
   /// Advances the link one tick and delivers everything due, oldest first. With

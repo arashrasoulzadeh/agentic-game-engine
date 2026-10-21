@@ -23,12 +23,12 @@ class GameState {
   final int migrationVersion;
 
   GameState([Map<String, dynamic>? data, this.migrationVersion = 1])
-      : data = data ?? <String, dynamic>{};
+    : data = data ?? <String, dynamic>{};
 
   Map<String, dynamic> toJson() => {
-        'data': data,
-        'migrationVersion': migrationVersion,
-      };
+    'data': data,
+    'migrationVersion': migrationVersion,
+  };
 
   factory GameState.fromJson(Map<String, dynamic> json) {
     return GameState(

@@ -79,7 +79,10 @@ class JobSystem {
   }
 
   /// Dispatches a job to a worker and returns a future that completes with the result.
-  Future<Output> dispatch<Input, Output>(Job<Input, Output> job, Input input) async {
+  Future<Output> dispatch<Input, Output>(
+    Job<Input, Output> job,
+    Input input,
+  ) async {
     if (!_started) await start();
 
     final jobId = _nextJobId++;
@@ -133,11 +136,15 @@ class JobSystem {
 }
 
 /// A job that processes a chunk of collision pairs for the broadphase.
-class CollisionBroadphaseJob implements Job<CollisionBroadphaseInput, CollisionBroadphaseOutput> {
+class CollisionBroadphaseJob
+    implements Job<CollisionBroadphaseInput, CollisionBroadphaseOutput> {
   @override
   CollisionBroadphaseOutput run(CollisionBroadphaseInput input) {
     final pairs = <CollisionPair>[];
-    final hash = SpatialHash(cellSize: input.cellSize, worldWidth: input.worldWidth);
+    final hash = SpatialHash(
+      cellSize: input.cellSize,
+      worldWidth: input.worldWidth,
+    );
 
     // Insert entities into spatial hash
     for (final entity in input.entities) {

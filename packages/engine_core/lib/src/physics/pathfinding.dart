@@ -13,9 +13,19 @@ class PathPoint {
   /// True if reaching this point requires climbing (ladder).
   final bool climbRequired;
 
-  PathPoint(this.x, this.y, {this.jumpRequired = false, this.climbRequired = false});
+  PathPoint(
+    this.x,
+    this.y, {
+    this.jumpRequired = false,
+    this.climbRequired = false,
+  });
 
-  PathPoint copyWith({double? x, double? y, bool? jumpRequired, bool? climbRequired}) {
+  PathPoint copyWith({
+    double? x,
+    double? y,
+    bool? jumpRequired,
+    bool? climbRequired,
+  }) {
     return PathPoint(
       x ?? this.x,
       y ?? this.y,
@@ -66,7 +76,8 @@ List<PathPoint> findPath(
   final startRow = rowOf(fromY);
   final goalCol = colOf(toX);
   final goalRow = rowOf(toY);
-  if ((startCol == goalCol && startRow == goalRow) || blocked(goalCol, goalRow)) {
+  if ((startCol == goalCol && startRow == goalRow) ||
+      blocked(goalCol, goalRow)) {
     return [];
   }
 
@@ -76,7 +87,14 @@ List<PathPoint> findPath(
 
   final gScore = <int, double>{startKey: 0};
   final cameFrom = <int, int>{};
-  final open = _MinHeap()..add(_Node(startCol, startRow, _heuristic(startCol, startRow, goalCol, goalRow)));
+  final open = _MinHeap()
+    ..add(
+      _Node(
+        startCol,
+        startRow,
+        _heuristic(startCol, startRow, goalCol, goalRow),
+      ),
+    );
   final closed = <int>{};
   const dirs = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
@@ -99,7 +117,13 @@ List<PathPoint> findPath(
       if (tentativeG < (gScore[nKey] ?? double.infinity)) {
         gScore[nKey] = tentativeG;
         cameFrom[nKey] = currentKey;
-        open.add(_Node(nCol, nRow, tentativeG + _heuristic(nCol, nRow, goalCol, goalRow)));
+        open.add(
+          _Node(
+            nCol,
+            nRow,
+            tentativeG + _heuristic(nCol, nRow, goalCol, goalRow),
+          ),
+        );
       }
     }
   }
@@ -118,17 +142,20 @@ List<PathPoint> _reconstructPath(
   while (k != startKey) {
     final col = k % map.cols;
     final row = k ~/ map.cols;
-    path.add(PathPoint(
-      origin.x + col * map.tileWidth + map.tileWidth / 2,
-      origin.y + row * map.tileHeight + map.tileHeight / 2,
-    ));
+    path.add(
+      PathPoint(
+        origin.x + col * map.tileWidth + map.tileWidth / 2,
+        origin.y + row * map.tileHeight + map.tileHeight / 2,
+      ),
+    );
     k = cameFrom[k]!;
   }
   return path.reversed.toList();
 }
 
 double _heuristic(int c1, int r1, int c2, int r2) =>
-    (c1 - c2).abs().toDouble() + (r1 - r2).abs().toDouble(); // Manhattan -- matches 4-directional movement
+    (c1 - c2).abs().toDouble() +
+    (r1 - r2).abs().toDouble(); // Manhattan -- matches 4-directional movement
 
 class _Node {
   final int col;

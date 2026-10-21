@@ -16,9 +16,9 @@ void main() {
     world.addSystem(TweenSystem());
     final fade = world.spawn();
     world.storeOf<Tween>().set(
-          fade,
-          Tween(from: 1, to: 0, duration: 2, easing: EasingType.easeOutQuad),
-        );
+      fade,
+      Tween(from: 1, to: 0, duration: 2, easing: EasingType.easeOutQuad),
+    );
     final done = <EntityId>[];
     world.events.on<TweenCompleteEvent>((e) => done.add(e.entity));
 
@@ -26,7 +26,11 @@ void main() {
       world.step(1 / 60);
     }
     final halfway = world.storeOf<Tween>().get(fade)!.value;
-    expect(halfway, inInclusiveRange(0.2, 0.3), reason: 'easeOut: already past half way down');
+    expect(
+      halfway,
+      inInclusiveRange(0.2, 0.3),
+      reason: 'easeOut: already past half way down',
+    );
     expect(done, isEmpty);
 
     for (var i = 0; i < 61; i++) {
@@ -39,7 +43,10 @@ void main() {
   test('pingPong tweens bounce forever and never complete', () {
     world.addSystem(TweenSystem());
     final e = world.spawn();
-    world.storeOf<Tween>().set(e, Tween(from: 0, to: 10, duration: 1, pingPong: true));
+    world.storeOf<Tween>().set(
+      e,
+      Tween(from: 0, to: 10, duration: 1, pingPong: true),
+    );
     for (var i = 0; i < 90; i++) {
       world.step(1 / 60);
     }
@@ -53,13 +60,17 @@ void main() {
     final fire = world.spawn();
     world.storeOf<Position>().set(fire, Position(100, 100));
     world.storeOf<ParticleEmitter>().set(
-          fire,
-          ParticleEmitter(burstCount: 20, lifetimeMin: 0.5, lifetimeMax: 0.5),
-        );
+      fire,
+      ParticleEmitter(burstCount: 20, lifetimeMin: 0.5, lifetimeMax: 0.5),
+    );
 
     world.step(1 / 60);
     expect(world.storeOf<Particle>().length, 20);
-    expect(world.storeOf<ParticleEmitter>().get(fire)!.burstCount, 0, reason: 'a burst fires once');
+    expect(
+      world.storeOf<ParticleEmitter>().get(fire)!.burstCount,
+      0,
+      reason: 'a burst fires once',
+    );
 
     for (var i = 0; i < 40; i++) {
       world.step(1 / 60);
@@ -72,9 +83,9 @@ void main() {
     final smoke = world.spawn();
     world.storeOf<Position>().set(smoke, Position(0, 0));
     world.storeOf<ParticleEmitter>().set(
-          smoke,
-          ParticleEmitter(rate: 30, lifetimeMin: 10, lifetimeMax: 10),
-        );
+      smoke,
+      ParticleEmitter(rate: 30, lifetimeMin: 10, lifetimeMax: 10),
+    );
     for (var i = 0; i < 60; i++) {
       world.step(1 / 60);
     }

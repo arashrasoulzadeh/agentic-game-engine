@@ -5,7 +5,6 @@ import 'package:test/test.dart';
 
 void main() {
   group('Steering primitives', () {
-
     group('seek', () {
       test('returns velocity directly toward target at maxSpeed', () {
         final from = Position(0, 0);

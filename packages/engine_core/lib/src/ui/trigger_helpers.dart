@@ -31,11 +31,15 @@ void installTriggerZones(World world) {
     final zones = world.storeOf<TriggerZone>();
     final zoneA = zones.get(event.a);
     if (zoneA != null) {
-      world.events.emit(TriggerEvent(zoneA.triggerId, event.a, event.b, zoneA.data));
+      world.events.emit(
+        TriggerEvent(zoneA.triggerId, event.a, event.b, zoneA.data),
+      );
     }
     final zoneB = zones.get(event.b);
     if (zoneB != null) {
-      world.events.emit(TriggerEvent(zoneB.triggerId, event.b, event.a, zoneB.data));
+      world.events.emit(
+        TriggerEvent(zoneB.triggerId, event.b, event.a, zoneB.data),
+      );
     }
   });
 }

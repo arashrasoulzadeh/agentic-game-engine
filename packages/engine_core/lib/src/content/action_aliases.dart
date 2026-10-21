@@ -36,7 +36,10 @@ class ActionAliases {
   /// `move_left`, `moveLeft` and `move-left` all become `Move Left`.
   static String prettify(String id) {
     final spaced = id
-        .replaceAllMapped(RegExp(r'([a-z0-9])([A-Z])'), (m) => '${m[1]} ${m[2]}')
+        .replaceAllMapped(
+          RegExp(r'([a-z0-9])([A-Z])'),
+          (m) => '${m[1]} ${m[2]}',
+        )
         .replaceAll(RegExp(r'[_\-]+'), ' ')
         .trim();
     if (spaced.isEmpty) return id;

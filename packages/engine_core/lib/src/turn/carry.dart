@@ -41,28 +41,35 @@ class Flag {
   int col;
   int row;
 
-  Flag(this.id, this.homeTeam, this.homeCol, this.homeRow, {this.carrier, int? col, int? row})
-      : col = col ?? homeCol,
-        row = row ?? homeRow;
+  Flag(
+    this.id,
+    this.homeTeam,
+    this.homeCol,
+    this.homeRow, {
+    this.carrier,
+    int? col,
+    int? row,
+  }) : col = col ?? homeCol,
+       row = row ?? homeRow;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'homeTeam': homeTeam,
-        'homeCol': homeCol,
-        'homeRow': homeRow,
-        'col': col,
-        'row': row,
-        'carrier': carrier,
-      };
+    'id': id,
+    'homeTeam': homeTeam,
+    'homeCol': homeCol,
+    'homeRow': homeRow,
+    'col': col,
+    'row': row,
+    'carrier': carrier,
+  };
   factory Flag.fromJson(Map<String, dynamic> json) => Flag(
-        json['id'] as String,
-        json['homeTeam'] as String,
-        (json['homeCol'] as num).toInt(),
-        (json['homeRow'] as num).toInt(),
-        carrier: (json['carrier'] as num?)?.toInt(),
-        col: (json['col'] as num?)?.toInt(),
-        row: (json['row'] as num?)?.toInt(),
-      );
+    json['id'] as String,
+    json['homeTeam'] as String,
+    (json['homeCol'] as num).toInt(),
+    (json['homeRow'] as num).toInt(),
+    carrier: (json['carrier'] as num?)?.toInt(),
+    col: (json['col'] as num?)?.toInt(),
+    row: (json['row'] as num?)?.toInt(),
+  );
 }
 
 /// A cell where [team] scores by delivering a captured flag. Usually the team's own
@@ -75,10 +82,10 @@ class DeliveryZone {
 
   Map<String, dynamic> toJson() => {'team': team, 'col': col, 'row': row};
   factory DeliveryZone.fromJson(Map<String, dynamic> json) => DeliveryZone(
-        json['team'] as String,
-        (json['col'] as num).toInt(),
-        (json['row'] as num).toInt(),
-      );
+    json['team'] as String,
+    (json['col'] as num).toInt(),
+    (json['row'] as num).toInt(),
+  );
 }
 
 /// Win-by-captures rule and running score, kept as world state so it saves.
@@ -89,15 +96,20 @@ class FlagRules {
   /// Captures per team.
   final Map<String, int> captures;
 
-  FlagRules({required this.capturesToWin, Map<String, int>? captures}) : captures = captures ?? {};
+  FlagRules({required this.capturesToWin, Map<String, int>? captures})
+    : captures = captures ?? {};
 
-  Map<String, dynamic> toJson() => {'capturesToWin': capturesToWin, 'captures': captures};
+  Map<String, dynamic> toJson() => {
+    'capturesToWin': capturesToWin,
+    'captures': captures,
+  };
   factory FlagRules.fromJson(Map<String, dynamic> json) => FlagRules(
-        capturesToWin: (json['capturesToWin'] as num).toInt(),
-        captures: {
-          for (final e in ((json['captures'] as Map?) ?? const {}).entries) e.key as String: (e.value as num).toInt(),
-        },
-      );
+    capturesToWin: (json['capturesToWin'] as num).toInt(),
+    captures: {
+      for (final e in ((json['captures'] as Map?) ?? const {}).entries)
+        e.key as String: (e.value as num).toInt(),
+    },
+  );
 }
 
 class FlagPickedUpEvent {
@@ -154,7 +166,13 @@ bool _carrying(ComponentStore<Flag> flags, EntityId unit) {
   return false;
 }
 
-void _deliver(World world, EntityId flagEntity, Flag flag, String team, GridPosition at) {
+void _deliver(
+  World world,
+  EntityId flagEntity,
+  Flag flag,
+  String team,
+  GridPosition at,
+) {
   final zones = world.storeOf<DeliveryZone>();
   for (var z = 0; z < zones.length; z++) {
     final zone = zones.denseAt(z);

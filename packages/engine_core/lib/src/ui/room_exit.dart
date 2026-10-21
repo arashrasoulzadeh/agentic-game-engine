@@ -20,12 +20,10 @@ class RoomExit {
   RoomExit(this.targetSceneId, this.spawnPoint);
 
   Map<String, dynamic> toJson() => {
-        'targetSceneId': targetSceneId,
-        'spawnPoint': spawnPoint,
-      };
+    'targetSceneId': targetSceneId,
+    'spawnPoint': spawnPoint,
+  };
 
-  factory RoomExit.fromJson(Map<String, dynamic> json) => RoomExit(
-        json['targetSceneId'] as String,
-        json['spawnPoint'] as String,
-      );
+  factory RoomExit.fromJson(Map<String, dynamic> json) =>
+      RoomExit(json['targetSceneId'] as String, json['spawnPoint'] as String);
 }

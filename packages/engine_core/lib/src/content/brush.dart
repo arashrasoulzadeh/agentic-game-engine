@@ -38,7 +38,7 @@ class TileBrush implements Brush {
   final List<List<int>> pattern;
 
   TileBrush({required this.name, required List<List<int>> pattern})
-      : pattern = [for (final r in pattern) List.of(r)] {
+    : pattern = [for (final r in pattern) List.of(r)] {
     if (pattern.isEmpty || pattern.any((r) => r.isEmpty)) {
       throw ArgumentError('a tile brush needs at least one cell');
     }
@@ -56,25 +56,40 @@ class TileBrush implements Brush {
   EditCommand? stampAt(LevelEntity mapEntity, int col, int row) {
     final map = mapEntity.components['tileMap'];
     if (map == null) return null;
-    final cols = (map['cols'] as num).toInt(), rows = (map['rows'] as num).toInt();
+    final cols = (map['cols'] as num).toInt(),
+        rows = (map['rows'] as num).toInt();
     final commands = <EditCommand>[
       for (var r = 0; r < height; r++)
         for (var c = 0; c < width; c++)
-          if (pattern[r][c] != skip && col + c >= 0 && col + c < cols && row + r >= 0 && row + r < rows)
-            SetTileCommand(entity: mapEntity, col: col + c, row: row + r, tileId: pattern[r][c]),
+          if (pattern[r][c] != skip &&
+              col + c >= 0 &&
+              col + c < cols &&
+              row + r >= 0 &&
+              row + r < rows)
+            SetTileCommand(
+              entity: mapEntity,
+              col: col + c,
+              row: row + r,
+              tileId: pattern[r][c],
+            ),
     ];
     return commands.isEmpty ? null : CompositeCommand('Stamp $name', commands);
   }
 
   @override
-  Map<String, dynamic> toJson() => {'type': 'tiles', 'name': name, 'pattern': pattern};
+  Map<String, dynamic> toJson() => {
+    'type': 'tiles',
+    'name': name,
+    'pattern': pattern,
+  };
 
   factory TileBrush.fromJson(Map<String, dynamic> json) => TileBrush(
-        name: json['name'] as String,
-        pattern: [
-          for (final row in (json['pattern'] as List)) [for (final id in (row as List)) (id as num).toInt()],
-        ],
-      );
+    name: json['name'] as String,
+    pattern: [
+      for (final row in (json['pattern'] as List))
+        [for (final id in (row as List)) (id as num).toInt()],
+    ],
+  );
 }
 
 /// A brush that places a prefab, referenced by its project path (`prefabs/torch.json`)
@@ -88,13 +103,20 @@ class PrefabBrush implements Brush {
 
   /// The command that places [prefab] (loaded from [prefabPath] by the caller) at
   /// ([x], [y]).
-  EditCommand placeAt(Prefab prefab, double x, double y) => InstantiatePrefabCommand(prefab, x: x, y: y);
+  EditCommand placeAt(Prefab prefab, double x, double y) =>
+      InstantiatePrefabCommand(prefab, x: x, y: y);
 
   @override
-  Map<String, dynamic> toJson() => {'type': 'prefab', 'name': name, 'prefab': prefabPath};
+  Map<String, dynamic> toJson() => {
+    'type': 'prefab',
+    'name': name,
+    'prefab': prefabPath,
+  };
 
-  factory PrefabBrush.fromJson(Map<String, dynamic> json) =>
-      PrefabBrush(name: json['name'] as String, prefabPath: json['prefab'] as String);
+  factory PrefabBrush.fromJson(Map<String, dynamic> json) => PrefabBrush(
+    name: json['name'] as String,
+    prefabPath: json['prefab'] as String,
+  );
 }
 
 /// The project's brushes, kept in order. Names are unique: adding a brush with an
@@ -126,7 +148,9 @@ class BrushLibrary {
     return brushes.length != before;
   }
 
-  Map<String, dynamic> toJson() => {'brushes': [for (final b in brushes) b.toJson()]};
+  Map<String, dynamic> toJson() => {
+    'brushes': [for (final b in brushes) b.toJson()],
+  };
 
   /// Reads a library, skipping entries that don't parse so one bad brush doesn't hide
   /// the rest.

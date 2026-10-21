@@ -30,13 +30,14 @@ class Treasury {
     Map<String, int>? amounts,
     Map<String, double>? incomePerSecond,
     Map<String, double>? carry,
-  })  : amounts = amounts ?? {},
-        incomePerSecond = incomePerSecond ?? {},
-        carry = carry ?? {};
+  }) : amounts = amounts ?? {},
+       incomePerSecond = incomePerSecond ?? {},
+       carry = carry ?? {};
 
   int of(String resource) => amounts[resource] ?? 0;
 
-  bool canAfford(Map<String, int> cost) => cost.entries.every((e) => of(e.key) >= e.value);
+  bool canAfford(Map<String, int> cost) =>
+      cost.entries.every((e) => of(e.key) >= e.value);
 
   /// Deducts [cost] if affordable, all or nothing. Returns whether it did.
   bool spend(Map<String, int> cost) {
@@ -47,7 +48,8 @@ class Treasury {
     return true;
   }
 
-  void add(String resource, int amount) => amounts[resource] = of(resource) + amount;
+  void add(String resource, int amount) =>
+      amounts[resource] = of(resource) + amount;
 
   /// Accrues [dt] seconds of income.
   void accrue(double dt) {
@@ -61,22 +63,26 @@ class Treasury {
   }
 
   Map<String, dynamic> toJson() => {
-        'team': team,
-        'amounts': amounts,
-        'incomePerSecond': incomePerSecond,
-        'carry': carry,
-      };
+    'team': team,
+    'amounts': amounts,
+    'incomePerSecond': incomePerSecond,
+    'carry': carry,
+  };
   factory Treasury.fromJson(Map<String, dynamic> json) => Treasury(
-        json['team'] as String,
-        amounts: {for (final e in ((json['amounts'] as Map?) ?? const {}).entries) e.key as String: (e.value as num).toInt()},
-        incomePerSecond: {
-          for (final e in ((json['incomePerSecond'] as Map?) ?? const {}).entries)
-            e.key as String: (e.value as num).toDouble(),
-        },
-        carry: {
-          for (final e in ((json['carry'] as Map?) ?? const {}).entries) e.key as String: (e.value as num).toDouble(),
-        },
-      );
+    json['team'] as String,
+    amounts: {
+      for (final e in ((json['amounts'] as Map?) ?? const {}).entries)
+        e.key as String: (e.value as num).toInt(),
+    },
+    incomePerSecond: {
+      for (final e in ((json['incomePerSecond'] as Map?) ?? const {}).entries)
+        e.key as String: (e.value as num).toDouble(),
+    },
+    carry: {
+      for (final e in ((json['carry'] as Map?) ?? const {}).entries)
+        e.key as String: (e.value as num).toDouble(),
+    },
+  );
 }
 
 /// A building (or any entity) that turns resources into units over time.
@@ -114,21 +120,24 @@ class Producer {
   });
 
   Map<String, dynamic> toJson() => {
-        'cost': cost,
-        'seconds': seconds,
-        'template': template,
-        'queued': queued,
-        'progress': progress,
-        'paid': paid,
-      };
+    'cost': cost,
+    'seconds': seconds,
+    'template': template,
+    'queued': queued,
+    'progress': progress,
+    'paid': paid,
+  };
   factory Producer.fromJson(Map<String, dynamic> json) => Producer(
-        cost: {for (final e in ((json['cost'] as Map?) ?? const {}).entries) e.key as String: (e.value as num).toInt()},
-        seconds: (json['seconds'] as num).toDouble(),
-        template: ((json['template'] as Map?) ?? const {}).cast<String, dynamic>(),
-        queued: (json['queued'] as num?)?.toInt() ?? 0,
-        progress: (json['progress'] as num?)?.toDouble() ?? 0,
-        paid: json['paid'] as bool? ?? false,
-      );
+    cost: {
+      for (final e in ((json['cost'] as Map?) ?? const {}).entries)
+        e.key as String: (e.value as num).toInt(),
+    },
+    seconds: (json['seconds'] as num).toDouble(),
+    template: ((json['template'] as Map?) ?? const {}).cast<String, dynamic>(),
+    queued: (json['queued'] as num?)?.toInt() ?? 0,
+    progress: (json['progress'] as num?)?.toDouble() ?? 0,
+    paid: json['paid'] as bool? ?? false,
+  );
 }
 
 /// A producer finished a unit.
@@ -192,10 +201,13 @@ class ProductionSystem extends System {
       treasuries.denseAt(i).accrue(dt);
     }
     final producers = world.storeOf<Producer>();
-    final ids = [for (var i = 0; i < producers.length; i++) producers.entityAt(i)]..sort();
+    final ids = [
+      for (var i = 0; i < producers.length; i++) producers.entityAt(i),
+    ]..sort();
     for (final id in ids) {
       final p = producers.get(id);
-      if (p != null && p.queued > 0 && !world.storeOf<Construction>().has(id)) _work(world, id, p, dt);
+      if (p != null && p.queued > 0 && !world.storeOf<Construction>().has(id))
+        _work(world, id, p, dt);
     }
   }
 
@@ -206,10 +218,13 @@ class ProductionSystem extends System {
       final treasury = treasuryOf(world, team);
       if (treasury == null || !treasury.spend(p.cost)) {
         if (_stalled.add(id)) {
-          world.events.emit(ProductionStalledEvent(id, {
-            for (final e in p.cost.entries)
-              if ((treasury?.of(e.key) ?? 0) < e.value) e.key: e.value - (treasury?.of(e.key) ?? 0),
-          }));
+          world.events.emit(
+            ProductionStalledEvent(id, {
+              for (final e in p.cost.entries)
+                if ((treasury?.of(e.key) ?? 0) < e.value)
+                  e.key: e.value - (treasury?.of(e.key) ?? 0),
+            }),
+          );
         }
         return;
       }

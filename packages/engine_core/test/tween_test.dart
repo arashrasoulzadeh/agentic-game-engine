@@ -20,30 +20,58 @@ void main() {
     expect(tween.rawProgress, 0.5);
   });
 
-  test('easeInQuad/easeOutQuad/easeInOutQuad differ from linear mid-progress', () {
-    final linear = Tween(from: 0, to: 10, duration: 1, elapsed: 0.5);
-    final easeIn = Tween(from: 0, to: 10, duration: 1, elapsed: 0.5, easing: EasingType.easeInQuad);
-    final easeOut =
-        Tween(from: 0, to: 10, duration: 1, elapsed: 0.5, easing: EasingType.easeOutQuad);
-    final easeInOut =
-        Tween(from: 0, to: 10, duration: 1, elapsed: 0.5, easing: EasingType.easeInOutQuad);
+  test(
+    'easeInQuad/easeOutQuad/easeInOutQuad differ from linear mid-progress',
+    () {
+      final linear = Tween(from: 0, to: 10, duration: 1, elapsed: 0.5);
+      final easeIn = Tween(
+        from: 0,
+        to: 10,
+        duration: 1,
+        elapsed: 0.5,
+        easing: EasingType.easeInQuad,
+      );
+      final easeOut = Tween(
+        from: 0,
+        to: 10,
+        duration: 1,
+        elapsed: 0.5,
+        easing: EasingType.easeOutQuad,
+      );
+      final easeInOut = Tween(
+        from: 0,
+        to: 10,
+        duration: 1,
+        elapsed: 0.5,
+        easing: EasingType.easeInOutQuad,
+      );
 
-    expect(linear.value, 5);
-    expect(easeIn.value, lessThan(5));
-    expect(easeOut.value, greaterThan(5));
-    expect(easeInOut.value, closeTo(5, 0.001)); // symmetric curve at t=0.5
-  });
+      expect(linear.value, 5);
+      expect(easeIn.value, lessThan(5));
+      expect(easeOut.value, greaterThan(5));
+      expect(easeInOut.value, closeTo(5, 0.001)); // symmetric curve at t=0.5
+    },
+  );
 
-  test('isComplete is false while running, true once elapsed reaches duration', () {
-    final tween = Tween(from: 0, to: 1, duration: 1, elapsed: 0.9);
-    expect(tween.isComplete, isFalse);
-    tween.elapsed = 1;
-    expect(tween.isComplete, isTrue);
-  });
+  test(
+    'isComplete is false while running, true once elapsed reaches duration',
+    () {
+      final tween = Tween(from: 0, to: 1, duration: 1, elapsed: 0.9);
+      expect(tween.isComplete, isFalse);
+      tween.elapsed = 1;
+      expect(tween.isComplete, isTrue);
+    },
+  );
 
   test('a loop/pingPong tween is never "complete"', () {
-    expect(Tween(from: 0, to: 1, duration: 1, elapsed: 1, loop: true).isComplete, isFalse);
-    expect(Tween(from: 0, to: 1, duration: 1, elapsed: 1, pingPong: true).isComplete, isFalse);
+    expect(
+      Tween(from: 0, to: 1, duration: 1, elapsed: 1, loop: true).isComplete,
+      isFalse,
+    );
+    expect(
+      Tween(from: 0, to: 1, duration: 1, elapsed: 1, pingPong: true).isComplete,
+      isFalse,
+    );
   });
 
   test('TweenSystem advances elapsed and clamps a plain tween at duration', () {
@@ -108,13 +136,19 @@ void main() {
     expect(tween.isComplete, isTrue);
   });
 
-  test('TweenSystem advancing a zero-duration tween does not throw or loop forever', () {
-    final world = _buildWorld();
-    final id = world.spawn();
-    world.storeOf<Tween>().set(id, Tween(from: 0, to: 5, duration: 0, loop: true));
+  test(
+    'TweenSystem advancing a zero-duration tween does not throw or loop forever',
+    () {
+      final world = _buildWorld();
+      final id = world.spawn();
+      world.storeOf<Tween>().set(
+        id,
+        Tween(from: 0, to: 5, duration: 0, loop: true),
+      );
 
-    expect(() => world.step(0.1), returnsNormally);
-  });
+      expect(() => world.step(0.1), returnsNormally);
+    },
+  );
 
   test('Tween round-trips through toJson/fromJson', () {
     final tween = Tween(

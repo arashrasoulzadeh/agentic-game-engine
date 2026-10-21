@@ -62,7 +62,10 @@ void main() {
       expect(restored.nodes['start']!.choices[0].onSelectEvent, 'give_reward');
       expect(restored.nodes['start']!.choices[0].nextNodeId, 'rewarded');
       expect(restored.nodes['start']!.choices[1].textKey, 'choice_no');
-      expect(restored.nodes['start']!.choices[1].onSelectEvent, 'decline_reward');
+      expect(
+        restored.nodes['start']!.choices[1].onSelectEvent,
+        'decline_reward',
+      );
       expect(restored.nodes['start']!.choices[1].nextNodeId, 'declined');
     });
 
@@ -102,7 +105,11 @@ void main() {
         id: 'test',
         textKey: 'greeting',
         choices: [
-          DialogueChoice(textKey: 'choice_yes', onSelectEvent: 'event', nextNodeId: 'next'),
+          DialogueChoice(
+            textKey: 'choice_yes',
+            onSelectEvent: 'event',
+            nextNodeId: 'next',
+          ),
         ],
       );
 
@@ -126,21 +133,24 @@ void main() {
       expect(runner.currentText(WorldView(world)), 'Hello, Test!');
     });
 
-    test('DialogueRunner.availableChoices returns all choices when no conditions', () {
-      final runner = DialogueRunner(graph: graph, stringTable: stringTable);
-      final world = World(width: 100, height: 100);
-      registerCoreComponents(world);
+    test(
+      'DialogueRunner.availableChoices returns all choices when no conditions',
+      () {
+        final runner = DialogueRunner(graph: graph, stringTable: stringTable);
+        final world = World(width: 100, height: 100);
+        registerCoreComponents(world);
 
-      // GameState with no flags set
-      final gs = world.spawn();
-      world.storeOf<GameState>().set(gs, GameState({}));
+        // GameState with no flags set
+        final gs = world.spawn();
+        world.storeOf<GameState>().set(gs, GameState({}));
 
-      final view = WorldView(world);
-      final choices = runner.availableChoices(view);
+        final view = WorldView(world);
+        final choices = runner.availableChoices(view);
 
-      // Both choices should be available (no conditionEventFlag set)
-      expect(choices.length, 2);
-    });
+        // Both choices should be available (no conditionEventFlag set)
+        expect(choices.length, 2);
+      },
+    );
 
     test('DialogueRunner.availableChoices respects conditionEventFlag', () {
       // Add a choice with a condition
@@ -163,13 +173,24 @@ void main() {
               ),
             ],
           ),
-          'rewarded': DialogueNode(id: 'rewarded', textKey: 'node2_text', choices: []),
-          'declined': DialogueNode(id: 'declined', textKey: 'node3_text', choices: []),
+          'rewarded': DialogueNode(
+            id: 'rewarded',
+            textKey: 'node2_text',
+            choices: [],
+          ),
+          'declined': DialogueNode(
+            id: 'declined',
+            textKey: 'node3_text',
+            choices: [],
+          ),
         },
         startNodeId: 'start',
       );
 
-      final runner = DialogueRunner(graph: graphWithFlag, stringTable: stringTable);
+      final runner = DialogueRunner(
+        graph: graphWithFlag,
+        stringTable: stringTable,
+      );
       final world = World(width: 100, height: 100);
       registerCoreComponents(world);
 
@@ -203,11 +224,17 @@ void main() {
 
       expect(continued, isTrue);
       expect(runner.currentNode!.id, 'rewarded');
-      expect(runner.currentText(WorldView(world)), 'Great! Here is your reward.');
+      expect(
+        runner.currentText(WorldView(world)),
+        'Great! Here is your reward.',
+      );
 
       // Verify event was emitted by subscribing BEFORE next advance
       world.events.on<String>((e) {});
-      runner.advance(world, 0); // advance again (index 0 of rewarded node has no choices, so this won't work)
+      runner.advance(
+        world,
+        0,
+      ); // advance again (index 0 of rewarded node has no choices, so this won't work)
       // Actually the rewarded node has no choices, so advance returns false
       // Let's test event emission differently - just verify the first advance worked
       expect(runner.currentNode!.id, 'rewarded');
@@ -274,58 +301,70 @@ void main() {
       final newWorld = World(width: 100, height: 100);
       registerCoreComponents(newWorld);
       final newE = newWorld.spawn();
-      
+
       final patched = {
         'entities': [
           {
             'id': newE,
             'components': (json['entities'] as List).first['components'],
-          }
-        ]
+          },
+        ],
       };
       newWorld.applyPatch(patched);
 
       final newView = WorldView(newWorld);
       final newGraphEntities = newView.entitiesWith<DialogueGraph>().toList();
       expect(newGraphEntities, isNotEmpty);
-      final newGraph = newWorld.storeOf<DialogueGraph>().get(newGraphEntities.first);
+      final newGraph = newWorld.storeOf<DialogueGraph>().get(
+        newGraphEntities.first,
+      );
 
       expect(newGraph, isNotNull);
       expect(newGraph!.nodes.length, 3);
       expect(newGraph.startNodeId, 'start');
     });
 
-    test('DialogueChoice with conditionEventFlag false is excluded from availableChoices', () {
-      final graphWithFlag = DialogueGraph(
-        nodes: {
-          'start': DialogueNode(
-            id: 'start',
-            textKey: 'greeting',
-            choices: [
-              DialogueChoice(
-                textKey: 'choice_yes',
-                onSelectEvent: 'give_reward',
-                nextNodeId: 'rewarded',
-                conditionEventFlag: 'met_npc',
-              ),
-            ],
-          ),
-          'rewarded': DialogueNode(id: 'rewarded', textKey: 'node2_text', choices: []),
-        },
-        startNodeId: 'start',
-      );
+    test(
+      'DialogueChoice with conditionEventFlag false is excluded from availableChoices',
+      () {
+        final graphWithFlag = DialogueGraph(
+          nodes: {
+            'start': DialogueNode(
+              id: 'start',
+              textKey: 'greeting',
+              choices: [
+                DialogueChoice(
+                  textKey: 'choice_yes',
+                  onSelectEvent: 'give_reward',
+                  nextNodeId: 'rewarded',
+                  conditionEventFlag: 'met_npc',
+                ),
+              ],
+            ),
+            'rewarded': DialogueNode(
+              id: 'rewarded',
+              textKey: 'node2_text',
+              choices: [],
+            ),
+          },
+          startNodeId: 'start',
+        );
 
-      final runner = DialogueRunner(graph: graphWithFlag, stringTable: stringTable);
-      final world = World(width: 100, height: 100);
-      registerCoreComponents(world);
+        final runner = DialogueRunner(
+          graph: graphWithFlag,
+          stringTable: stringTable,
+        );
+        final world = World(width: 100, height: 100);
+        registerCoreComponents(world);
 
-      // GameState WITHOUT the flag (explicitly false)
-      final gs = world.spawn();
-      world.storeOf<GameState>().set(gs, GameState({'met_npc': false}));
+        // GameState WITHOUT the flag (explicitly false)
+        final gs = world.spawn();
+        world.storeOf<GameState>().set(gs, GameState({'met_npc': false}));
 
-      final view = WorldView(world);
-      final choices = runner.availableChoices(view);
-      expect(choices.length, 0); // choice filtered out because flag is false
-    });
+        final view = WorldView(world);
+        final choices = runner.availableChoices(view);
+        expect(choices.length, 0); // choice filtered out because flag is false
+      },
+    );
   });
 }

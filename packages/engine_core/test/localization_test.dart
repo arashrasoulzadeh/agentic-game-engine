@@ -7,10 +7,12 @@ void main() {
 
     setUp(() async {
       manager = LocalizationManager.instance;
-      await manager.addResource(LocalizedString(
-        key: 'greeting',
-        translations: {'en': 'Hello', 'fr': 'Bonjour'},
-      ));
+      await manager.addResource(
+        LocalizedString(
+          key: 'greeting',
+          translations: {'en': 'Hello', 'fr': 'Bonjour'},
+        ),
+      );
       manager.setLocale('en');
       manager.setFallbackLocale('en');
     });
@@ -39,15 +41,20 @@ void main() {
       expect(manager.tr('greeting'), 'Hello');
     });
 
-    test('falls back to the key as a last resort when nothing matches', () async {
-      await manager.addResource(LocalizedString(
-        key: 'untranslated',
-        translations: {'fr': 'Bonjour'},
-        defaultLocale: 'ja',
-      ));
-      manager.setFallbackLocale('es');
-      manager.setLocale('de');
-      expect(manager.tr('untranslated'), 'untranslated');
-    });
+    test(
+      'falls back to the key as a last resort when nothing matches',
+      () async {
+        await manager.addResource(
+          LocalizedString(
+            key: 'untranslated',
+            translations: {'fr': 'Bonjour'},
+            defaultLocale: 'ja',
+          ),
+        );
+        manager.setFallbackLocale('es');
+        manager.setLocale('de');
+        expect(manager.tr('untranslated'), 'untranslated');
+      },
+    );
   });
 }

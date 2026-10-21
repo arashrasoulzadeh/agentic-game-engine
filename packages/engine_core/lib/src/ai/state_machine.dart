@@ -27,11 +27,11 @@ class FSMState {
   }
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'behaviorTree': behaviorTree?.toJson(),
-        'behaviorId': behavior != null ? 'custom' : null,
-        'transitions': transitions.map((k, v) => MapEntry(k, v.toJson())),
-      };
+    'name': name,
+    'behaviorTree': behaviorTree?.toJson(),
+    'behaviorId': behavior != null ? 'custom' : null,
+    'transitions': transitions.map((k, v) => MapEntry(k, v.toJson())),
+  };
 
   factory FSMState.fromJson(
     Map<String, dynamic> json,
@@ -79,9 +79,9 @@ class FSMTransition {
   /// Conditions are code, so only their *name* is serialized; the game supplies the
   /// function for each name when it loads the machine.
   Map<String, dynamic> toJson() => {
-        'toState': toState,
-        if (conditionName != null) 'condition': conditionName,
-      };
+    'toState': toState,
+    if (conditionName != null) 'condition': conditionName,
+  };
 
   /// Loads a transition, binding its named `condition` to the function in [conditions].
   /// A name with no function bound -- or no name -- gives a transition that never fires,
@@ -154,10 +154,10 @@ class StateMachine {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'currentState': currentStateName,
-        'states': states.map((k, v) => MapEntry(k, v.toJson())),
-      };
+    'id': id,
+    'currentState': currentStateName,
+    'states': states.map((k, v) => MapEntry(k, v.toJson())),
+  };
 
   factory StateMachine.fromJson(
     Map<String, dynamic> json,
@@ -189,7 +189,8 @@ class StateMachineBehavior implements Behavior {
   StateMachineBehavior({required this.stateMachine, required this.registry});
 
   @override
-  Action decide(WorldView view, EntityId self) => _RunStateMachineAction(stateMachine, registry, self);
+  Action decide(WorldView view, EntityId self) =>
+      _RunStateMachineAction(stateMachine, registry, self);
 }
 
 /// Action that runs the state machine for one tick.
@@ -207,7 +208,8 @@ class _RunStateMachineAction implements Action {
 
     // Get or create the state machine's blackboard
     final rawBlackboard = aiState.memory['_fsm_blackboard'];
-    final blackboard = (rawBlackboard as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+    final blackboard =
+        (rawBlackboard as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
     aiState.memory['_fsm_blackboard'] = blackboard;
 
     final view = WorldView(world);
@@ -248,7 +250,8 @@ class StateMachineSystem implements System {
       final entity = states.entityAt(i);
       final state = states.denseAt(i);
 
-      final rootJson = (state.memory['_fsm_root'] as Map?)?.cast<String, dynamic>();
+      final rootJson = (state.memory['_fsm_root'] as Map?)
+          ?.cast<String, dynamic>();
       if (rootJson == null) continue;
 
       final stateMachine = StateMachine.fromJson(
@@ -258,7 +261,9 @@ class StateMachineSystem implements System {
       );
 
       final rawBlackboard = state.memory['_fsm_blackboard'];
-      final blackboard = (rawBlackboard as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+      final blackboard =
+          (rawBlackboard as Map?)?.cast<String, dynamic>() ??
+          <String, dynamic>{};
       state.memory['_fsm_blackboard'] = blackboard;
 
       final view = WorldView(world);

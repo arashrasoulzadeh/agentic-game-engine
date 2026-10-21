@@ -6,7 +6,8 @@ class Team {
   Team(this.id);
 
   Map<String, dynamic> toJson() => {'id': id};
-  factory Team.fromJson(Map<String, dynamic> json) => Team(json['id'] as String);
+  factory Team.fromJson(Map<String, dynamic> json) =>
+      Team(json['id'] as String);
 }
 
 /// Per-turn action budget. Kept separate from `Team` so non-acting
@@ -27,7 +28,10 @@ class ActionPoints {
   Map<String, dynamic> toJson() => {'current': current, 'max': max};
   factory ActionPoints.fromJson(Map<String, dynamic> json) {
     final max = (json['max'] as num).toInt();
-    return ActionPoints(max, current: (json['current'] as num?)?.toInt() ?? max);
+    return ActionPoints(
+      max,
+      current: (json['current'] as num?)?.toInt() ?? max,
+    );
   }
 }
 
@@ -64,19 +68,19 @@ class TurnState {
   String get activeTeam => order[activeIndex];
 
   Map<String, dynamic> toJson() => {
-        'order': order,
-        'activeIndex': activeIndex,
-        'round': round,
-        'eliminated': eliminated,
-        'winner': winner,
-      };
+    'order': order,
+    'activeIndex': activeIndex,
+    'round': round,
+    'eliminated': eliminated,
+    'winner': winner,
+  };
   factory TurnState.fromJson(Map<String, dynamic> json) => TurnState(
-        List<String>.from(json['order'] as List),
-        activeIndex: (json['activeIndex'] as num?)?.toInt() ?? 0,
-        round: (json['round'] as num?)?.toInt() ?? 1,
-        eliminated: List<String>.from(json['eliminated'] as List? ?? const []),
-        winner: json['winner'] as String?,
-      );
+    List<String>.from(json['order'] as List),
+    activeIndex: (json['activeIndex'] as num?)?.toInt() ?? 0,
+    round: (json['round'] as num?)?.toInt() ?? 1,
+    eliminated: List<String>.from(json['eliminated'] as List? ?? const []),
+    winner: json['winner'] as String?,
+  );
 }
 
 /// Emitted when [team] becomes active, after its action points refill.

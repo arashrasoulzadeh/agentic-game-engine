@@ -63,11 +63,7 @@ abstract class BTNode {
 }
 
 /// Status returned by a behavior tree node after ticking.
-enum BTStatus {
-  success,
-  failure,
-  running,
-}
+enum BTStatus { success, failure, running }
 
 /// Context passed to behavior tree nodes during execution.
 /// Holds the WorldView, entity ID, and a blackboard for storing state.
@@ -77,7 +73,7 @@ class BTContext {
   final Map<String, dynamic> blackboard;
 
   BTContext(this.view, this.entity, {Map<String, dynamic>? blackboard})
-      : blackboard = blackboard ?? <String, dynamic>{};
+    : blackboard = blackboard ?? <String, dynamic>{};
 
   T? get<T>(String key) => blackboard[key] as T?;
   void set<T>(String key, T value) => blackboard[key] = value;
@@ -109,17 +105,17 @@ class BTSequence extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'sequence',
-        'id': id,
-        'children': children.map((c) => c.toJson()).toList(),
-      };
+    'type': 'sequence',
+    'id': id,
+    'children': children.map((c) => c.toJson()).toList(),
+  };
 
   factory BTSequence.fromJson(Map<String, dynamic> json) => BTSequence(
-        id: json['id'] as String?,
-        children: (json['children'] as List)
-            .map((c) => BTNode.fromJson(c as Map<String, dynamic>))
-            .toList(),
-      );
+    id: json['id'] as String?,
+    children: (json['children'] as List)
+        .map((c) => BTNode.fromJson(c as Map<String, dynamic>))
+        .toList(),
+  );
 }
 
 /// Composite node that ticks children in order until one succeeds or all fail.
@@ -148,17 +144,17 @@ class BTSelector extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'selector',
-        'id': id,
-        'children': children.map((c) => c.toJson()).toList(),
-      };
+    'type': 'selector',
+    'id': id,
+    'children': children.map((c) => c.toJson()).toList(),
+  };
 
   factory BTSelector.fromJson(Map<String, dynamic> json) => BTSelector(
-        id: json['id'] as String?,
-        children: (json['children'] as List)
-            .map((c) => BTNode.fromJson(c as Map<String, dynamic>))
-            .toList(),
-      );
+    id: json['id'] as String?,
+    children: (json['children'] as List)
+        .map((c) => BTNode.fromJson(c as Map<String, dynamic>))
+        .toList(),
+  );
 }
 
 /// Composite node that ticks all children each tick.
@@ -168,7 +164,7 @@ class BTParallel extends BTNode {
   final int requiredSuccess;
 
   BTParallel({required this.children, this.requiredSuccess = 1, String? id})
-      : super(id: id);
+    : super(id: id);
 
   @override
   BTStatus tick(BTContext context) {
@@ -192,26 +188,27 @@ class BTParallel extends BTNode {
     }
 
     if (successCount >= requiredSuccess) return BTStatus.success;
-    if (failureCount > children.length - requiredSuccess) return BTStatus.failure;
+    if (failureCount > children.length - requiredSuccess)
+      return BTStatus.failure;
     if (anyRunning) return BTStatus.running;
     return BTStatus.failure;
   }
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'parallel',
-        'id': id,
-        'requiredSuccess': requiredSuccess,
-        'children': children.map((c) => c.toJson()).toList(),
-      };
+    'type': 'parallel',
+    'id': id,
+    'requiredSuccess': requiredSuccess,
+    'children': children.map((c) => c.toJson()).toList(),
+  };
 
   factory BTParallel.fromJson(Map<String, dynamic> json) => BTParallel(
-        id: json['id'] as String?,
-        requiredSuccess: (json['requiredSuccess'] as num?)?.toInt() ?? 1,
-        children: (json['children'] as List)
-            .map((c) => BTNode.fromJson(c as Map<String, dynamic>))
-            .toList(),
-      );
+    id: json['id'] as String?,
+    requiredSuccess: (json['requiredSuccess'] as num?)?.toInt() ?? 1,
+    children: (json['children'] as List)
+        .map((c) => BTNode.fromJson(c as Map<String, dynamic>))
+        .toList(),
+  );
 }
 
 /// Decorator that inverts the child's result (success <-> failure).
@@ -235,15 +232,15 @@ class BTInverter extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'inverter',
-        'id': id,
-        'child': child.toJson(),
-      };
+    'type': 'inverter',
+    'id': id,
+    'child': child.toJson(),
+  };
 
   factory BTInverter.fromJson(Map<String, dynamic> json) => BTInverter(
-        id: json['id'] as String?,
-        child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
-      );
+    id: json['id'] as String?,
+    child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
+  );
 }
 
 /// Decorator that repeats the child [count] times (or forever if null).
@@ -307,17 +304,17 @@ class BTRepeater extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'repeater',
-        'id': id,
-        'count': count,
-        'child': child.toJson(),
-      };
+    'type': 'repeater',
+    'id': id,
+    'count': count,
+    'child': child.toJson(),
+  };
 
   factory BTRepeater.fromJson(Map<String, dynamic> json) => BTRepeater(
-        id: json['id'] as String?,
-        count: (json['count'] as num?)?.toInt(),
-        child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
-      );
+    id: json['id'] as String?,
+    count: (json['count'] as num?)?.toInt(),
+    child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
+  );
 }
 
 /// Decorator that always returns success regardless of child's result.
@@ -334,15 +331,15 @@ class BTSucceeder extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'succeeder',
-        'id': id,
-        'child': child.toJson(),
-      };
+    'type': 'succeeder',
+    'id': id,
+    'child': child.toJson(),
+  };
 
   factory BTSucceeder.fromJson(Map<String, dynamic> json) => BTSucceeder(
-        id: json['id'] as String?,
-        child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
-      );
+    id: json['id'] as String?,
+    child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
+  );
 }
 
 /// Decorator that always returns failure regardless of child's result.
@@ -359,15 +356,15 @@ class BTFailer extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'failer',
-        'id': id,
-        'child': child.toJson(),
-      };
+    'type': 'failer',
+    'id': id,
+    'child': child.toJson(),
+  };
 
   factory BTFailer.fromJson(Map<String, dynamic> json) => BTFailer(
-        id: json['id'] as String?,
-        child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
-      );
+    id: json['id'] as String?,
+    child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
+  );
 }
 
 /// Leaf node that executes a registered [Behavior] by name.
@@ -382,14 +379,16 @@ class BTLeaf extends BTNode {
     // Get the behavior from the registry stored in context
     final registry = context.get<BehaviorRegistry>('_bt_registry');
     if (registry == null) {
-      throw StateError('BehaviorRegistry not found in BTContext. '
-          'Did you forget to wrap the tree in a BehaviorTreeBehavior?');
+      throw StateError(
+        'BehaviorRegistry not found in BTContext. '
+        'Did you forget to wrap the tree in a BehaviorTreeBehavior?',
+      );
     }
 
     final behavior = registry.resolve(behaviorId);
     final action = behavior.decide(context.view, context.entity);
     action.apply(context.view.world); // Apply directly to world
-    
+
     // Check if the action signals failure
     if (action is FailureAction) {
       return BTStatus.failure;
@@ -399,15 +398,15 @@ class BTLeaf extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'leaf',
-        'id': id,
-        'behaviorId': behaviorId,
-      };
+    'type': 'leaf',
+    'id': id,
+    'behaviorId': behaviorId,
+  };
 
   factory BTLeaf.fromJson(Map<String, dynamic> json) => BTLeaf(
-        id: json['id'] as String?,
-        behaviorId: json['behaviorId'] as String,
-      );
+    id: json['id'] as String?,
+    behaviorId: json['behaviorId'] as String,
+  );
 }
 
 /// Leaf node that waits for [duration] seconds, then returns success.
@@ -434,15 +433,15 @@ class BTWait extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'wait',
-        'id': id,
-        'duration': duration,
-      };
+    'type': 'wait',
+    'id': id,
+    'duration': duration,
+  };
 
   factory BTWait.fromJson(Map<String, dynamic> json) => BTWait(
-        id: json['id'] as String?,
-        duration: (json['duration'] as num).toDouble(),
-      );
+    id: json['id'] as String?,
+    duration: (json['duration'] as num).toDouble(),
+  );
 }
 
 /// Leaf node that executes a registered [Behavior] by name with a cooldown.
@@ -451,7 +450,11 @@ class BTCooldown extends BTNode {
   final String behaviorId;
   final double cooldownDuration;
 
-  BTCooldown({required this.behaviorId, required this.cooldownDuration, String? id}) : super(id: id);
+  BTCooldown({
+    required this.behaviorId,
+    required this.cooldownDuration,
+    String? id,
+  }) : super(id: id);
 
   @override
   BTStatus tick(BTContext context) {
@@ -477,17 +480,17 @@ class BTCooldown extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'cooldown',
-        'id': id,
-        'behaviorId': behaviorId,
-        'cooldownDuration': cooldownDuration,
-      };
+    'type': 'cooldown',
+    'id': id,
+    'behaviorId': behaviorId,
+    'cooldownDuration': cooldownDuration,
+  };
 
   factory BTCooldown.fromJson(Map<String, dynamic> json) => BTCooldown(
-        id: json['id'] as String?,
-        behaviorId: json['behaviorId'] as String,
-        cooldownDuration: (json['cooldownDuration'] as num).toDouble(),
-      );
+    id: json['id'] as String?,
+    behaviorId: json['behaviorId'] as String,
+    cooldownDuration: (json['cooldownDuration'] as num).toDouble(),
+  );
 }
 
 /// Decorator that runs its child in a random order each tick (for Selector-like behavior).
@@ -513,12 +516,13 @@ class BTRandomSelector extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'randomSelector',
-        'id': id,
-        'children': children.map((c) => c.toJson()).toList(),
-      };
+    'type': 'randomSelector',
+    'id': id,
+    'children': children.map((c) => c.toJson()).toList(),
+  };
 
-  factory BTRandomSelector.fromJson(Map<String, dynamic> json) => BTRandomSelector(
+  factory BTRandomSelector.fromJson(Map<String, dynamic> json) =>
+      BTRandomSelector(
         id: json['id'] as String?,
         children: (json['children'] as List)
             .map((c) => BTNode.fromJson(c as Map<String, dynamic>))
@@ -549,12 +553,13 @@ class BTRandomSequence extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'randomSequence',
-        'id': id,
-        'children': children.map((c) => c.toJson()).toList(),
-      };
+    'type': 'randomSequence',
+    'id': id,
+    'children': children.map((c) => c.toJson()).toList(),
+  };
 
-  factory BTRandomSequence.fromJson(Map<String, dynamic> json) => BTRandomSequence(
+  factory BTRandomSequence.fromJson(Map<String, dynamic> json) =>
+      BTRandomSequence(
         id: json['id'] as String?,
         children: (json['children'] as List)
             .map((c) => BTNode.fromJson(c as Map<String, dynamic>))
@@ -580,15 +585,15 @@ class BTUntilSuccess extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'untilSuccess',
-        'id': id,
-        'child': child.toJson(),
-      };
+    'type': 'untilSuccess',
+    'id': id,
+    'child': child.toJson(),
+  };
 
   factory BTUntilSuccess.fromJson(Map<String, dynamic> json) => BTUntilSuccess(
-        id: json['id'] as String?,
-        child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
-      );
+    id: json['id'] as String?,
+    child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
+  );
 }
 
 /// Decorator that runs its child until it returns failure, then returns failure.
@@ -609,15 +614,15 @@ class BTUntilFailure extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'untilFailure',
-        'id': id,
-        'child': child.toJson(),
-      };
+    'type': 'untilFailure',
+    'id': id,
+    'child': child.toJson(),
+  };
 
   factory BTUntilFailure.fromJson(Map<String, dynamic> json) => BTUntilFailure(
-        id: json['id'] as String?,
-        child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
-      );
+    id: json['id'] as String?,
+    child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
+  );
 }
 
 /// Decorator that runs its child for a maximum duration, then returns failure (timeout).
@@ -625,7 +630,8 @@ class BTTimeout extends BTNode {
   final BTNode child;
   final double timeoutDuration;
 
-  BTTimeout({required this.child, required this.timeoutDuration, String? id}) : super(id: id);
+  BTTimeout({required this.child, required this.timeoutDuration, String? id})
+    : super(id: id);
 
   @override
   BTStatus tick(BTContext context) {
@@ -644,17 +650,17 @@ class BTTimeout extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'timeout',
-        'id': id,
-        'timeoutDuration': timeoutDuration,
-        'child': child.toJson(),
-      };
+    'type': 'timeout',
+    'id': id,
+    'timeoutDuration': timeoutDuration,
+    'child': child.toJson(),
+  };
 
   factory BTTimeout.fromJson(Map<String, dynamic> json) => BTTimeout(
-        id: json['id'] as String?,
-        timeoutDuration: (json['timeoutDuration'] as num).toDouble(),
-        child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
-      );
+    id: json['id'] as String?,
+    timeoutDuration: (json['timeoutDuration'] as num).toDouble(),
+    child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
+  );
 }
 
 /// Decorator that limits the number of times its child can run per tick.
@@ -662,7 +668,8 @@ class BTThrottle extends BTNode {
   final BTNode child;
   final int maxRunsPerTick;
 
-  BTThrottle({required this.child, this.maxRunsPerTick = 1, String? id}) : super(id: id);
+  BTThrottle({required this.child, this.maxRunsPerTick = 1, String? id})
+    : super(id: id);
 
   @override
   BTStatus tick(BTContext context) {
@@ -677,17 +684,17 @@ class BTThrottle extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'throttle',
-        'id': id,
-        'maxRunsPerTick': maxRunsPerTick,
-        'child': child.toJson(),
-      };
+    'type': 'throttle',
+    'id': id,
+    'maxRunsPerTick': maxRunsPerTick,
+    'child': child.toJson(),
+  };
 
   factory BTThrottle.fromJson(Map<String, dynamic> json) => BTThrottle(
-        id: json['id'] as String?,
-        maxRunsPerTick: (json['maxRunsPerTick'] as num?)?.toInt() ?? 1,
-        child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
-      );
+    id: json['id'] as String?,
+    maxRunsPerTick: (json['maxRunsPerTick'] as num?)?.toInt() ?? 1,
+    child: BTNode.fromJson(json['child'] as Map<String, dynamic>),
+  );
 }
 
 /// Timer node that succeeds after [duration] seconds, then resets.
@@ -696,7 +703,8 @@ class BTTimer extends BTNode {
   final double duration;
   final bool repeat;
 
-  BTTimer({required this.duration, this.repeat = false, String? id}) : super(id: id);
+  BTTimer({required this.duration, this.repeat = false, String? id})
+    : super(id: id);
 
   @override
   BTStatus tick(BTContext context) {
@@ -718,17 +726,17 @@ class BTTimer extends BTNode {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'timer',
-        'id': id,
-        'duration': duration,
-        'repeat': repeat,
-      };
+    'type': 'timer',
+    'id': id,
+    'duration': duration,
+    'repeat': repeat,
+  };
 
   factory BTTimer.fromJson(Map<String, dynamic> json) => BTTimer(
-        id: json['id'] as String?,
-        duration: (json['duration'] as num).toDouble(),
-        repeat: json['repeat'] as bool? ?? false,
-      );
+    id: json['id'] as String?,
+    duration: (json['duration'] as num).toDouble(),
+    repeat: json['repeat'] as bool? ?? false,
+  );
 }
 
 /// Behavior that executes a behavior tree.
@@ -764,13 +772,16 @@ class BehaviorTreeSystem implements System {
       final entity = states.entityAt(i);
       final state = states.denseAt(i);
 
-      final rootJson = (state.memory['_bt_root'] as Map?)?.cast<String, dynamic>();
+      final rootJson = (state.memory['_bt_root'] as Map?)
+          ?.cast<String, dynamic>();
       if (rootJson == null) continue;
 
       final root = BTNode.fromJson(rootJson);
 
       final rawBlackboard = state.memory['_bt_blackboard'];
-      final blackboard = (rawBlackboard as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+      final blackboard =
+          (rawBlackboard as Map?)?.cast<String, dynamic>() ??
+          <String, dynamic>{};
       state.memory['_bt_blackboard'] = blackboard;
 
       final view = WorldView(world);
@@ -799,7 +810,8 @@ class _RunTreeAction implements Action {
     if (aiState == null) return;
 
     final rawBlackboard = aiState.memory['_bt_blackboard'];
-    final blackboard = (rawBlackboard as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+    final blackboard =
+        (rawBlackboard as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
     aiState.memory['_bt_blackboard'] = blackboard;
 
     final context = BTContext(view, entity, blackboard: blackboard)

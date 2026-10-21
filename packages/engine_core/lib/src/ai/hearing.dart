@@ -33,20 +33,20 @@ class SoundEvent {
   });
 
   Map<String, dynamic> toJson() => {
-        'x': x,
-        'y': y,
-        'loudness': loudness,
-        if (tag != null) 'tag': tag,
-        if (data != null) 'data': data,
-      };
+    'x': x,
+    'y': y,
+    'loudness': loudness,
+    if (tag != null) 'tag': tag,
+    if (data != null) 'data': data,
+  };
 
   factory SoundEvent.fromJson(Map<String, dynamic> json) => SoundEvent(
-        x: (json['x'] as num).toDouble(),
-        y: (json['y'] as num).toDouble(),
-        loudness: (json['loudness'] as num).toDouble(),
-        tag: json['tag'] as String?,
-        data: (json['data'] as Map?)?.cast<String, dynamic>(),
-      );
+    x: (json['x'] as num).toDouble(),
+    y: (json['y'] as num).toDouble(),
+    loudness: (json['loudness'] as num).toDouble(),
+    tag: json['tag'] as String?,
+    data: (json['data'] as Map?)?.cast<String, dynamic>(),
+  );
 }
 
 /// Component that gives an entity the ability to "hear" sounds.
@@ -117,7 +117,9 @@ class HearingSystem implements System {
       final dx = pos.x - sound.x;
       final dy = pos.y - sound.y;
       final distanceSq = dx * dx + dy * dy;
-      final maxDistance = hearing.range < sound.loudness ? hearing.range : sound.loudness;
+      final maxDistance = hearing.range < sound.loudness
+          ? hearing.range
+          : sound.loudness;
       if (distanceSq > maxDistance * maxDistance) continue;
 
       // Check line of sight (tile occlusion only, not entity occlusion)

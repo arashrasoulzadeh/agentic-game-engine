@@ -36,7 +36,8 @@ class FleeBehavior implements Behavior {
 
     final dx = pos.x - targetPos.x;
     final distance = dx.abs();
-    final blocked = requireLineOfSight &&
+    final blocked =
+        requireLineOfSight &&
         !view.hasLineOfSight(pos.x, pos.y, targetPos.x, targetPos.y);
 
     if (blocked) {

@@ -30,15 +30,42 @@ class LocaleInfo {
     'de': LocaleInfo(code: 'de', name: 'Deutsch', englishName: 'German'),
     'it': LocaleInfo(code: 'it', name: 'Italiano', englishName: 'Italian'),
     'pt': LocaleInfo(code: 'pt', name: 'Português', englishName: 'Portuguese'),
-    'pt_BR': LocaleInfo(code: 'pt_BR', name: 'Português (Brasil)', englishName: 'Portuguese (Brazil)'),
+    'pt_BR': LocaleInfo(
+      code: 'pt_BR',
+      name: 'Português (Brasil)',
+      englishName: 'Portuguese (Brazil)',
+    ),
     'ru': LocaleInfo(code: 'ru', name: 'Русский', englishName: 'Russian'),
     'ja': LocaleInfo(code: 'ja', name: '日本語', englishName: 'Japanese'),
     'ko': LocaleInfo(code: 'ko', name: '한국어', englishName: 'Korean'),
-    'zh': LocaleInfo(code: 'zh', name: '中文', englishName: 'Chinese (Simplified)'),
-    'zh_TW': LocaleInfo(code: 'zh_TW', name: '繁體中文', englishName: 'Chinese (Traditional)'),
-    'ar': LocaleInfo(code: 'ar', name: 'العربية', englishName: 'Arabic', isRTL: true),
-    'he': LocaleInfo(code: 'he', name: 'עברית', englishName: 'Hebrew', isRTL: true),
-    'fa': LocaleInfo(code: 'fa', name: 'فارسی', englishName: 'Persian', isRTL: true),
+    'zh': LocaleInfo(
+      code: 'zh',
+      name: '中文',
+      englishName: 'Chinese (Simplified)',
+    ),
+    'zh_TW': LocaleInfo(
+      code: 'zh_TW',
+      name: '繁體中文',
+      englishName: 'Chinese (Traditional)',
+    ),
+    'ar': LocaleInfo(
+      code: 'ar',
+      name: 'العربية',
+      englishName: 'Arabic',
+      isRTL: true,
+    ),
+    'he': LocaleInfo(
+      code: 'he',
+      name: 'עברית',
+      englishName: 'Hebrew',
+      isRTL: true,
+    ),
+    'fa': LocaleInfo(
+      code: 'fa',
+      name: 'فارسی',
+      englishName: 'Persian',
+      isRTL: true,
+    ),
     'hi': LocaleInfo(code: 'hi', name: 'हिन्दी', englishName: 'Hindi'),
     'th': LocaleInfo(code: 'th', name: 'ไทย', englishName: 'Thai'),
     'vi': LocaleInfo(code: 'vi', name: 'Tiếng Việt', englishName: 'Vietnamese'),
@@ -53,26 +80,30 @@ class LocaleInfo {
     'hu': LocaleInfo(code: 'hu', name: 'Magyar', englishName: 'Hungarian'),
     'ro': LocaleInfo(code: 'ro', name: 'Română', englishName: 'Romanian'),
     'el': LocaleInfo(code: 'el', name: 'Ελληνικά', englishName: 'Greek'),
-    'id': LocaleInfo(code: 'id', name: 'Bahasa Indonesia', englishName: 'Indonesian'),
+    'id': LocaleInfo(
+      code: 'id',
+      name: 'Bahasa Indonesia',
+      englishName: 'Indonesian',
+    ),
     'ms': LocaleInfo(code: 'ms', name: 'Bahasa Melayu', englishName: 'Malay'),
     'fil': LocaleInfo(code: 'fil', name: 'Filipino', englishName: 'Filipino'),
   };
 
   Map<String, dynamic> toJson() => {
-        'code': code,
-        'name': name,
-        'englishName': englishName,
-        'isRTL': isRTL,
-        'fontFamily': fontFamily,
-      };
+    'code': code,
+    'name': name,
+    'englishName': englishName,
+    'isRTL': isRTL,
+    'fontFamily': fontFamily,
+  };
 
   factory LocaleInfo.fromJson(Map<String, dynamic> json) => LocaleInfo(
-        code: json['code'] as String,
-        name: json['name'] as String,
-        englishName: json['englishName'] as String,
-        isRTL: json['isRTL'] as bool? ?? false,
-        fontFamily: json['fontFamily'] as String?,
-      );
+    code: json['code'] as String,
+    name: json['name'] as String,
+    englishName: json['englishName'] as String,
+    isRTL: json['isRTL'] as bool? ?? false,
+    fontFamily: json['fontFamily'] as String?,
+  );
 }
 
 /// A localized string resource with pluralization support.
@@ -80,7 +111,8 @@ class LocalizedString {
   final String key;
   final Map<String, String> translations; // locale code -> translation
   final String? defaultLocale;
-  final Map<String, Map<int, String>>? pluralForms; // locale -> (count -> translation)
+  final Map<String, Map<int, String>>?
+  pluralForms; // locale -> (count -> translation)
 
   LocalizedString({
     required this.key,
@@ -99,22 +131,21 @@ class LocalizedString {
     final forms = pluralForms?[locale] ?? pluralForms?[defaultLocale];
     if (forms != null) {
       // Find matching plural form (exact match or fallback)
-      return forms[count] ?? forms.values.firstWhere(
-        (v) => true,
-        orElse: () => translate(locale),
-      );
+      return forms[count] ??
+          forms.values.firstWhere((v) => true, orElse: () => translate(locale));
     }
     return translate(locale);
   }
 
   Map<String, dynamic> toJson() => {
-        'key': key,
-        'translations': translations,
-        'defaultLocale': defaultLocale,
-        'pluralForms': pluralForms?.map((k, v) => MapEntry(k, v)),
-      };
+    'key': key,
+    'translations': translations,
+    'defaultLocale': defaultLocale,
+    'pluralForms': pluralForms?.map((k, v) => MapEntry(k, v)),
+  };
 
-  factory LocalizedString.fromJson(Map<String, dynamic> json) => LocalizedString(
+  factory LocalizedString.fromJson(Map<String, dynamic> json) =>
+      LocalizedString(
         key: json['key'] as String,
         translations: (json['translations'] as Map).map(
           (k, v) => MapEntry(k as String, v as String),
@@ -123,7 +154,9 @@ class LocalizedString {
         pluralForms: (json['pluralForms'] as Map?)?.map(
           (k, v) => MapEntry(
             k as String,
-            (v as Map).map((k2, v2) => MapEntry(int.parse(k2 as String), v2 as String)),
+            (v as Map).map(
+              (k2, v2) => MapEntry(int.parse(k2 as String), v2 as String),
+            ),
           ),
         ),
       );
@@ -168,10 +201,7 @@ class LocalizationManager {
       final key = entry.key;
       final value = entry.value;
       if (value is Map) {
-        final resource = LocalizedString.fromJson({
-          'key': key,
-          ...value,
-        });
+        final resource = LocalizedString.fromJson({'key': key, ...value});
         await addResource(resource);
       }
     }
@@ -209,7 +239,8 @@ class LocalizationManager {
   String tr(String key, {Map<String, dynamic>? args}) {
     final resource = _resources[key];
     if (resource == null) return key;
-    String result = resource.translations[_currentLocale] ??
+    String result =
+        resource.translations[_currentLocale] ??
         resource.translations[_fallbackLocale] ??
         resource.translate(_currentLocale);
     if (args != null) {
@@ -244,7 +275,8 @@ class LocalizationManager {
   }
 
   /// Get all available locale codes.
-  List<String> get availableLocaleCodes => _availableLocales.map((l) => l.code).toList();
+  List<String> get availableLocaleCodes =>
+      _availableLocales.map((l) => l.code).toList();
 }
 
 /// Extension for easy translation.

@@ -23,7 +23,10 @@ void main() {
     world.storeOf<Pushable>().set(crate, Pushable(pushSpeed: 80));
 
     final pusher = world.spawn();
-    world.storeOf<Position>().set(pusher, Position(85, 0)); // to the crate's left, overlapping
+    world.storeOf<Position>().set(
+      pusher,
+      Position(85, 0),
+    ); // to the crate's left, overlapping
     world.storeOf<Collider>().set(pusher, Collider(10));
 
     world.step(0.016);
@@ -98,17 +101,20 @@ void main() {
     expect(world.storeOf<Velocity>().get(crate)!.x, 0);
   });
 
-  test('velocity stops the instant nothing is pushing anymore (no momentum)', () {
-    final world = _buildWorld();
-    final crate = world.spawn();
-    world.storeOf<Position>().set(crate, Position(100, 0));
-    world.storeOf<Velocity>().set(crate, Velocity(80, 0)); // was moving
-    world.storeOf<Collider>().set(crate, Collider(10));
-    world.storeOf<Pushable>().set(crate, Pushable(pushSpeed: 80));
-    // No pusher this tick.
+  test(
+    'velocity stops the instant nothing is pushing anymore (no momentum)',
+    () {
+      final world = _buildWorld();
+      final crate = world.spawn();
+      world.storeOf<Position>().set(crate, Position(100, 0));
+      world.storeOf<Velocity>().set(crate, Velocity(80, 0)); // was moving
+      world.storeOf<Collider>().set(crate, Collider(10));
+      world.storeOf<Pushable>().set(crate, Pushable(pushSpeed: 80));
+      // No pusher this tick.
 
-    world.step(0.016);
+      world.step(0.016);
 
-    expect(world.storeOf<Velocity>().get(crate)!.x, 0);
-  });
+      expect(world.storeOf<Velocity>().get(crate)!.x, 0);
+    },
+  );
 }

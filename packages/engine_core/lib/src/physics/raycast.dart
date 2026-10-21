@@ -16,7 +16,12 @@ class RaycastHit {
   final double distance;
   final EntityId? entity;
 
-  RaycastHit({required this.x, required this.y, required this.distance, this.entity});
+  RaycastHit({
+    required this.x,
+    required this.y,
+    required this.distance,
+    this.entity,
+  });
 }
 
 /// Walks the grid cells a ray from ([fromX], [fromY]) to ([toX], [toY])
@@ -81,9 +86,15 @@ RaycastHit? raycastTileMap(
   var t = 0.0;
   while (true) {
     final tileId = map.tileAt(col, row);
-    final blocks = map.solidTileIds.contains(tileId) || (blockOneWay && map.oneWayTileIds.contains(tileId));
+    final blocks =
+        map.solidTileIds.contains(tileId) ||
+        (blockOneWay && map.oneWayTileIds.contains(tileId));
     if (blocks) {
-      return RaycastHit(x: fromX + dx * t, y: fromY + dy * t, distance: totalDistance * t);
+      return RaycastHit(
+        x: fromX + dx * t,
+        y: fromY + dy * t,
+        distance: totalDistance * t,
+      );
     }
     if (col == endCol && row == endRow) return null;
     // A ray passing exactly (or nearly) through a grid corner has
@@ -187,7 +198,10 @@ double? _raySphereT(
 
   final sqrtDisc = sqrt(discriminant);
   var t = (-b - sqrtDisc) / (2 * lenSq);
-  if (t < 0) t = (-b + sqrtDisc) / (2 * lenSq); // `from` may already be inside the circle
+  if (t < 0)
+    t =
+        (-b + sqrtDisc) /
+        (2 * lenSq); // `from` may already be inside the circle
   if (t < 0 || t > 1) return null;
   return t;
 }

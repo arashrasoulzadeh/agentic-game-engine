@@ -12,48 +12,54 @@ World _buildWorld() {
 int _countParticles(World world) => world.storeOf<Particle>().length;
 
 void main() {
-  test('Particle scale/alpha ramp linearly with progress, clamped past lifetime', () {
-    final particle = Particle(
-      lifetime: 2,
-      startScale: 1,
-      endScale: 0,
-      startAlpha: 1,
-      endAlpha: 0,
-    );
+  test(
+    'Particle scale/alpha ramp linearly with progress, clamped past lifetime',
+    () {
+      final particle = Particle(
+        lifetime: 2,
+        startScale: 1,
+        endScale: 0,
+        startAlpha: 1,
+        endAlpha: 0,
+      );
 
-    particle.age = 0;
-    expect(particle.scale, 1);
-    expect(particle.alpha, 1);
+      particle.age = 0;
+      expect(particle.scale, 1);
+      expect(particle.alpha, 1);
 
-    particle.age = 1;
-    expect(particle.scale, closeTo(0.5, 0.001));
-    expect(particle.alpha, closeTo(0.5, 0.001));
+      particle.age = 1;
+      expect(particle.scale, closeTo(0.5, 0.001));
+      expect(particle.alpha, closeTo(0.5, 0.001));
 
-    particle.age = 5; // past lifetime
-    expect(particle.progress, 1);
-    expect(particle.scale, 0);
-    expect(particle.isExpired, isTrue);
-  });
+      particle.age = 5; // past lifetime
+      expect(particle.progress, 1);
+      expect(particle.scale, 0);
+      expect(particle.isExpired, isTrue);
+    },
+  );
 
-  test('Particle with followEmitter and emitterEntityId serializes correctly', () {
-    final particle = Particle(
-      lifetime: 2,
-      startScale: 1,
-      endScale: 0,
-      startAlpha: 1,
-      endAlpha: 0,
-    );
-    particle.followEmitter = true;
-    particle.emitterEntityId = 42;
+  test(
+    'Particle with followEmitter and emitterEntityId serializes correctly',
+    () {
+      final particle = Particle(
+        lifetime: 2,
+        startScale: 1,
+        endScale: 0,
+        startAlpha: 1,
+        endAlpha: 0,
+      );
+      particle.followEmitter = true;
+      particle.emitterEntityId = 42;
 
-    final json = particle.toJson();
-    expect(json['followEmitter'], true);
-    expect(json['emitterEntityId'], 42);
+      final json = particle.toJson();
+      expect(json['followEmitter'], true);
+      expect(json['emitterEntityId'], 42);
 
-    final decoded = Particle.fromJson(json);
-    expect(decoded.followEmitter, true);
-    expect(decoded.emitterEntityId, 42);
-  });
+      final decoded = Particle.fromJson(json);
+      expect(decoded.followEmitter, true);
+      expect(decoded.emitterEntityId, 42);
+    },
+  );
 
   test('burstCount spawns that many particles in one tick and resets to 0', () {
     final world = _buildWorld();
@@ -61,7 +67,11 @@ void main() {
 
     final emitterEntity = world.spawn();
     world.storeOf<Position>().set(emitterEntity, Position(10, 10));
-    final emitter = ParticleEmitter(burstCount: 5, lifetimeMin: 1, lifetimeMax: 1);
+    final emitter = ParticleEmitter(
+      burstCount: 5,
+      lifetimeMin: 1,
+      lifetimeMax: 1,
+    );
     world.storeOf<ParticleEmitter>().set(emitterEntity, emitter);
 
     world.step(0.016);
@@ -81,9 +91,9 @@ void main() {
     final emitterEntity = world.spawn();
     world.storeOf<Position>().set(emitterEntity, Position(0, 0));
     world.storeOf<ParticleEmitter>().set(
-          emitterEntity,
-          ParticleEmitter(rate: 10, lifetimeMin: 10, lifetimeMax: 10),
-        );
+      emitterEntity,
+      ParticleEmitter(rate: 10, lifetimeMin: 10, lifetimeMax: 10),
+    );
 
     // 10/sec * 0.05s = 0.5 particles/tick -- needs two ticks for the first one.
     world.step(0.05);
@@ -92,36 +102,39 @@ void main() {
     expect(_countParticles(world), 1);
   });
 
-  test('spawned particles get Position/Velocity and move via MovementSystem', () {
-    final world = _buildWorld();
-    world.addSystem(ParticleSystem(random: Random(1)));
-    world.addSystem(MovementSystem());
+  test(
+    'spawned particles get Position/Velocity and move via MovementSystem',
+    () {
+      final world = _buildWorld();
+      world.addSystem(ParticleSystem(random: Random(1)));
+      world.addSystem(MovementSystem());
 
-    final emitterEntity = world.spawn();
-    world.storeOf<Position>().set(emitterEntity, Position(50, 50));
-    world.storeOf<ParticleEmitter>().set(
-          emitterEntity,
-          ParticleEmitter(
-            burstCount: 1,
-            speedMin: 100,
-            speedMax: 100,
-            lifetimeMin: 5,
-            lifetimeMax: 5,
-          ),
-        );
+      final emitterEntity = world.spawn();
+      world.storeOf<Position>().set(emitterEntity, Position(50, 50));
+      world.storeOf<ParticleEmitter>().set(
+        emitterEntity,
+        ParticleEmitter(
+          burstCount: 1,
+          speedMin: 100,
+          speedMax: 100,
+          lifetimeMin: 5,
+          lifetimeMax: 5,
+        ),
+      );
 
-    world.step(0.1);
+      world.step(0.1);
 
-    final particles = world.storeOf<Particle>();
-    expect(particles.length, 1);
-    final particleEntity = particles.entityAt(0);
-    final pos = world.storeOf<Position>().get(particleEntity)!;
-    final vel = world.storeOf<Velocity>().get(particleEntity)!;
+      final particles = world.storeOf<Particle>();
+      expect(particles.length, 1);
+      final particleEntity = particles.entityAt(0);
+      final pos = world.storeOf<Position>().get(particleEntity)!;
+      final vel = world.storeOf<Velocity>().get(particleEntity)!;
 
-    expect(vel.x * vel.x + vel.y * vel.y, closeTo(100 * 100, 0.01));
-    // Moved from the emitter's spawn point by roughly velocity * dt.
-    expect((pos.x - 50).abs() > 0 || (pos.y - 50).abs() > 0, isTrue);
-  });
+      expect(vel.x * vel.x + vel.y * vel.y, closeTo(100 * 100, 0.01));
+      // Moved from the emitter's spawn point by roughly velocity * dt.
+      expect((pos.x - 50).abs() > 0 || (pos.y - 50).abs() > 0, isTrue);
+    },
+  );
 
   test('particles are destroyed once their lifetime elapses', () {
     final world = _buildWorld();
@@ -130,9 +143,9 @@ void main() {
     final emitterEntity = world.spawn();
     world.storeOf<Position>().set(emitterEntity, Position(0, 0));
     world.storeOf<ParticleEmitter>().set(
-          emitterEntity,
-          ParticleEmitter(burstCount: 3, lifetimeMin: 0.2, lifetimeMax: 0.2),
-        );
+      emitterEntity,
+      ParticleEmitter(burstCount: 3, lifetimeMin: 0.2, lifetimeMax: 0.2),
+    );
 
     world.step(0.01); // spawn
     expect(_countParticles(world), 3);
@@ -146,7 +159,10 @@ void main() {
     world.addSystem(ParticleSystem(random: Random(1)));
 
     final emitterEntity = world.spawn();
-    world.storeOf<ParticleEmitter>().set(emitterEntity, ParticleEmitter(burstCount: 3));
+    world.storeOf<ParticleEmitter>().set(
+      emitterEntity,
+      ParticleEmitter(burstCount: 3),
+    );
 
     expect(() => world.step(0.016), returnsNormally);
     expect(_countParticles(world), 0);
@@ -182,15 +198,15 @@ void main() {
       final emitterEntity = world.spawn();
       world.storeOf<Position>().set(emitterEntity, Position(100, 100));
       world.storeOf<ParticleEmitter>().set(
-            emitterEntity,
-            ParticleEmitter(
-              burstCount: 100,
-              emissionShape: EmissionShape.circle,
-              emissionRadius: 20,
-              lifetimeMin: 5,
-              lifetimeMax: 5,
-            ),
-          );
+        emitterEntity,
+        ParticleEmitter(
+          burstCount: 100,
+          emissionShape: EmissionShape.circle,
+          emissionRadius: 20,
+          lifetimeMin: 5,
+          lifetimeMax: 5,
+        ),
+      );
 
       world.step(0.01);
 
@@ -203,7 +219,11 @@ void main() {
         final dx = pos.x - 100;
         final dy = pos.y - 100;
         final dist = sqrt(dx * dx + dy * dy);
-        expect(dist, lessThanOrEqualTo(20 + 0.01), reason: 'particle should be within circle radius');
+        expect(
+          dist,
+          lessThanOrEqualTo(20 + 0.01),
+          reason: 'particle should be within circle radius',
+        );
       }
     });
 
@@ -214,16 +234,16 @@ void main() {
       final emitterEntity = world.spawn();
       world.storeOf<Position>().set(emitterEntity, Position(100, 100));
       world.storeOf<ParticleEmitter>().set(
-            emitterEntity,
-            ParticleEmitter(
-              burstCount: 100,
-              emissionShape: EmissionShape.rect,
-              emissionHalfWidth: 10,
-              emissionHalfHeight: 5,
-              lifetimeMin: 5,
-              lifetimeMax: 5,
-            ),
-          );
+        emitterEntity,
+        ParticleEmitter(
+          burstCount: 100,
+          emissionShape: EmissionShape.rect,
+          emissionHalfWidth: 10,
+          emissionHalfHeight: 5,
+          lifetimeMin: 5,
+          lifetimeMax: 5,
+        ),
+      );
 
       world.step(0.01);
 
@@ -247,18 +267,18 @@ void main() {
       final emitterEntity = world.spawn();
       world.storeOf<Position>().set(emitterEntity, Position(0, 0));
       world.storeOf<ParticleEmitter>().set(
-            emitterEntity,
-            ParticleEmitter(
-              burstCount: 50,
-              emissionShape: EmissionShape.edge,
-              edgeStartX: -20,
-              edgeStartY: 0,
-              edgeEndX: 20,
-              edgeEndY: 0,
-              lifetimeMin: 5,
-              lifetimeMax: 5,
-            ),
-          );
+        emitterEntity,
+        ParticleEmitter(
+          burstCount: 50,
+          emissionShape: EmissionShape.edge,
+          edgeStartX: -20,
+          edgeStartY: 0,
+          edgeEndX: 20,
+          edgeEndY: 0,
+          lifetimeMin: 5,
+          lifetimeMax: 5,
+        ),
+      );
 
       world.step(0.01);
 
@@ -290,9 +310,9 @@ void main() {
       final attractorEntity = world.spawn();
       world.storeOf<Position>().set(attractorEntity, Position(0, 0));
       world.storeOf<ParticleForces>().set(
-            attractorEntity,
-            ParticleForces(radius: 200, strength: 1000),
-          );
+        attractorEntity,
+        ParticleForces(radius: 200, strength: 1000),
+      );
 
       world.addSystem(ParticleSystem(random: Random(1)));
 
@@ -319,9 +339,9 @@ void main() {
       final repellerEntity = world.spawn();
       world.storeOf<Position>().set(repellerEntity, Position(0, 0));
       world.storeOf<ParticleForces>().set(
-            repellerEntity,
-            ParticleForces(radius: 100, strength: -1000),
-          );
+        repellerEntity,
+        ParticleForces(radius: 100, strength: -1000),
+      );
 
       world.addSystem(ParticleSystem(random: Random(1)));
 
@@ -345,15 +365,18 @@ void main() {
       world.storeOf<Particle>().set(particleEntity, Particle(lifetime: 5));
 
       final windEntity = world.spawn();
-      world.storeOf<Position>().set(windEntity, Position(0, 0)); // Wind entity needs position
+      world.storeOf<Position>().set(
+        windEntity,
+        Position(0, 0),
+      ); // Wind entity needs position
       world.storeOf<ParticleForces>().set(
-            windEntity,
-            ParticleForces(
-              isWind: true,
-              strength: 500,
-              windDirection: 0, // Rightward
-            ),
-          );
+        windEntity,
+        ParticleForces(
+          isWind: true,
+          strength: 500,
+          windDirection: 0, // Rightward
+        ),
+      );
 
       world.addSystem(ParticleSystem(random: Random(1)));
 
@@ -374,18 +397,21 @@ void main() {
 
       final emitterEntity = world.spawn();
       world.storeOf<Position>().set(emitterEntity, Position(0, 0));
-      world.storeOf<Velocity>().set(emitterEntity, Velocity(100, 0)); // Moving right
+      world.storeOf<Velocity>().set(
+        emitterEntity,
+        Velocity(100, 0),
+      ); // Moving right
       world.storeOf<ParticleEmitter>().set(
-            emitterEntity,
-            ParticleEmitter(
-              burstCount: 1,
-              followEmitter: true,
-              lifetimeMin: 10,
-              lifetimeMax: 10,
-              speedMin: 0,
-              speedMax: 0,
-            ),
-          );
+        emitterEntity,
+        ParticleEmitter(
+          burstCount: 1,
+          followEmitter: true,
+          lifetimeMin: 10,
+          lifetimeMax: 10,
+          speedMin: 0,
+          speedMax: 0,
+        ),
+      );
 
       world.addSystem(ParticleSystem(random: Random(1)));
 

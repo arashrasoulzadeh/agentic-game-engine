@@ -6,7 +6,7 @@ fair thing to put in a save file or a multiplayer handshake). The generators are
 `physics/procedural_generation.dart`; the samples here are checked by
 `packages/engine_core/test/procedural_generation_test.dart`.
 
-Tile ids used by the generators: **`1` is floor, `2` is wall**. `ProceduralLevelGenerator.toTileMap`
+Tile ids used by BSP and cellular automata: **`1` is floor, `2` is wall**. `ProceduralLevelGenerator.toTileMap`
 marks `2` solid.
 
 ## Dungeons: `BSPGenerator`
@@ -51,11 +51,34 @@ final map = gen.toTileMap(60, 40, 16, 16, tiles);        // a TileMap, walls sol
 `floor` and `wall`). To make a level file rather than a runtime map, write the `TileMap`
 into a level entity like any other — see [Content as data](content-as-data.md).
 
-!!! warning "Wave Function Collapse is a placeholder"
-    `WFCGenerator` currently has **no adjacency rules**: every tile may neighbour every other,
-    so it produces seeded random tiles from the ids you give it. It is a hook for real
-    rules, not a coherent-output generator yet. Use BSP or cellular automata for levels
-    that must make sense.
+## Wave Function Collapse: `WFCGenerator`
+
+Fills a grid so that **neighbouring tiles obey rules**. Give it an example and it learns what may
+sit next to what:
+
+```dart
+const sample = [
+  0, 0, 1, 2, 2,      // 0 water, 1 sand, 2 grass
+  0, 1, 2, 2, 2,
+  1, 2, 2, 1, 0,
+];
+final rules = WFCRules.fromSample(sample, 5);               // 5 = the sample's width
+final map = WFCGenerator(seed: 9, tileIds: [0, 1, 2], rules: rules).generate(40, 25);
+```
+
+Water only ever touches sand or water, grass only sand or grass, because the sample never showed
+otherwise. You can also state rules by hand: `WFCRules(right: {(0, 1), ...}, down: {...})`, where
+`(a, b)` means *b may be immediately right of / below a*; left and up are the reverses.
+
+How it works: every cell starts able to be any tile; the cell with the fewest options is fixed at
+random and its consequences are propagated to the neighbours; repeat. If the rules leave a cell
+with no option, that attempt is discarded and retried (up to `WFCConfig.maxIterations` attempts);
+if none works, `generate` throws a `StateError` rather than return a level that breaks the rules.
+Rules that are too strict for the grid size (or contradict themselves) fail this way, so test a
+rule set at the sizes you use.
+
+Without `rules`, every pairing is allowed and the result is seeded random noise.
+`ProceduralLevelGenerator(wfcTileIds: ..., wfcRules: ...)` passes them through.
 
 ## Determinism notes
 

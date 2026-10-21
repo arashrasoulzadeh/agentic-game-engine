@@ -80,7 +80,8 @@ class ArchetypeManager {
 
   /// Computes a stable hash for a set of component types.
   int _hashTypes(Iterable<Type> types) {
-    final sorted = types.toList()..sort((a, b) => a.hashCode.compareTo(b.hashCode));
+    final sorted = types.toList()
+      ..sort((a, b) => a.hashCode.compareTo(b.hashCode));
     var hash = 0;
     for (final t in sorted) {
       hash = (hash * 31) + t.hashCode;
@@ -140,7 +141,9 @@ class ArchetypeManager {
   /// Returns all archetypes that contain ALL of the given component types.
   Iterable<Archetype> archetypesWithAll(Iterable<Type> types) {
     final required = types.toSet();
-    return _archetypes.values.where((a) => required.every((t) => a.componentTypes.contains(t)));
+    return _archetypes.values.where(
+      (a) => required.every((t) => a.componentTypes.contains(t)),
+    );
   }
 
   /// Called when an entity is destroyed — cleans up tracking.

@@ -14,7 +14,8 @@ import 'world_snapshot.dart';
 /// Decides whether a client may see an entity: gets its id and its serialized components
 /// (the same JSON that goes over the wire). Return false to keep it out of that client's
 /// updates. See [nearbyInterest] for the common "only what is close to me" rule.
-typedef InterestFilter = bool Function(EntityId id, Map<String, dynamic> components);
+typedef InterestFilter =
+    bool Function(EntityId id, Map<String, dynamic> components);
 
 /// An [InterestFilter] that shows a client entities within [radius] world units of the point
 /// [center] returns (typically its camera or its units' centroid), plus every entity with no
@@ -99,13 +100,18 @@ class StateSyncServer {
       final view = rule == null ? now : _filtered(now, rule());
       final sent = _sent[entry.key];
       sent?[view.tick] = view;
-      final base = sent == null ? _history[_acked[entry.key]] : sent[_acked[entry.key]];
+      final base = sent == null
+          ? _history[_acked[entry.key]]
+          : sent[_acked[entry.key]];
       if (base == null) {
         fullSnapshotsSent++;
         entry.value({'type': 'snapshot', 'state': view.toJson()});
       } else {
         deltasSent++;
-        entry.value({'type': 'delta', 'delta': WorldDelta.between(base, view).toJson()});
+        entry.value({
+          'type': 'delta',
+          'delta': WorldDelta.between(base, view).toJson(),
+        });
       }
     }
     _prune();
@@ -116,13 +122,15 @@ class StateSyncServer {
     switch (message['type']) {
       case 'ack':
         final tick = (message['tick'] as num).toInt();
-        if (_history.containsKey(tick) && tick > (_acked[id] ?? -1)) _acked[id] = tick;
+        if (_history.containsKey(tick) && tick > (_acked[id] ?? -1))
+          _acked[id] = tick;
       case 'input':
         onInput?.call(id, message);
     }
   }
 
-  WorldSnapshot _filtered(WorldSnapshot full, InterestFilter keep) => WorldSnapshot(full.tick, {
+  WorldSnapshot _filtered(WorldSnapshot full, InterestFilter keep) =>
+      WorldSnapshot(full.tick, {
         for (final e in full.entities.entries)
           if (keep(e.key, e.value)) e.key: e.value,
       });
@@ -169,9 +177,13 @@ class StateSyncClient {
     final WorldSnapshot snapshot;
     switch (message['type']) {
       case 'snapshot':
-        snapshot = WorldSnapshot.fromJson((message['state'] as Map).cast<String, dynamic>());
+        snapshot = WorldSnapshot.fromJson(
+          (message['state'] as Map).cast<String, dynamic>(),
+        );
       case 'delta':
-        final delta = WorldDelta.fromJson((message['delta'] as Map).cast<String, dynamic>());
+        final delta = WorldDelta.fromJson(
+          (message['delta'] as Map).cast<String, dynamic>(),
+        );
         final base = _baselines[delta.baseTick];
         if (base == null) {
           unusableDeltas++;

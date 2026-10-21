@@ -33,28 +33,34 @@ const _basicTmx = '''
 ''';
 
 void main() {
-  test('imports tile size, grid dimensions, and tile ids from an embedded-tileset TMX', () {
-    final map = tileMapFromTmx(_basicTmx);
+  test(
+    'imports tile size, grid dimensions, and tile ids from an embedded-tileset TMX',
+    () {
+      final map = tileMapFromTmx(_basicTmx);
 
-    expect(map.cols, 3);
-    expect(map.rows, 2);
-    expect(map.tileWidth, 16);
-    expect(map.tileHeight, 16);
-    expect(map.tileAt(0, 0), 1);
-    expect(map.tileAt(1, 0), 1);
-    expect(map.tileAt(2, 0), 3);
-    expect(map.tileAt(0, 1), 0);
-  });
+      expect(map.cols, 3);
+      expect(map.rows, 2);
+      expect(map.tileWidth, 16);
+      expect(map.tileHeight, 16);
+      expect(map.tileAt(0, 0), 1);
+      expect(map.tileAt(1, 0), 1);
+      expect(map.tileAt(2, 0), 3);
+      expect(map.tileAt(0, 1), 0);
+    },
+  );
 
-  test('maps recognized bool tile properties onto the matching TileMap collision set', () {
-    final map = tileMapFromTmx(_basicTmx);
+  test(
+    'maps recognized bool tile properties onto the matching TileMap collision set',
+    () {
+      final map = tileMapFromTmx(_basicTmx);
 
-    // firstgid=1, so tileset-local id 0/1/2 -> global gid 1/2/3.
-    expect(map.solidTileIds, {1});
-    expect(map.oneWayTileIds, {2});
-    expect(map.slopeUpRightTileIds, {3});
-    expect(map.slopeUpLeftTileIds, isEmpty);
-  });
+      // firstgid=1, so tileset-local id 0/1/2 -> global gid 1/2/3.
+      expect(map.solidTileIds, {1});
+      expect(map.oneWayTileIds, {2});
+      expect(map.slopeUpRightTileIds, {3});
+      expect(map.slopeUpLeftTileIds, isEmpty);
+    },
+  );
 
   test('strips Tiled flip-flag bits from a gid, keeping the base tile id', () {
     // 0x80000000 (horizontal flip) | gid 1.
@@ -65,10 +71,7 @@ void main() {
   });
 
   test('rejects a non-<map> root element', () {
-    expect(
-      () => tileMapFromTmx('<notamap></notamap>'),
-      throwsUnsupportedError,
-    );
+    expect(() => tileMapFromTmx('<notamap></notamap>'), throwsUnsupportedError);
   });
 
   test('rejects an external tileset ("source" attribute)', () {

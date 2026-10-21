@@ -9,6 +9,7 @@
 /// Can optionally follow its parent emitter (see [ParticleEmitter.followEmitter])
 /// and be affected by force fields (see [ParticleForces]).
 import '../ecs/entity.dart';
+
 class Particle {
   double age;
   final double lifetime;
@@ -62,27 +63,31 @@ class Particle {
   }
 
   Map<String, dynamic> toJson() => {
-        'age': age,
-        'lifetime': lifetime,
-        'startScale': startScale,
-        'endScale': endScale,
-        'startAlpha': startAlpha,
-        'endAlpha': endAlpha,
-        'colorArgb': colorArgb,
-        'zIndex': zIndex,
-        'followEmitter': followEmitter,
-        'emitterEntityId': emitterEntityId,
-      };
+    'age': age,
+    'lifetime': lifetime,
+    'startScale': startScale,
+    'endScale': endScale,
+    'startAlpha': startAlpha,
+    'endAlpha': endAlpha,
+    'colorArgb': colorArgb,
+    'zIndex': zIndex,
+    'followEmitter': followEmitter,
+    'emitterEntityId': emitterEntityId,
+  };
 
-  factory Particle.fromJson(Map<String, dynamic> json) => Particle(
-        age: (json['age'] as num?)?.toDouble() ?? 0,
-        lifetime: (json['lifetime'] as num).toDouble(),
-        startScale: (json['startScale'] as num?)?.toDouble() ?? 1,
-        endScale: (json['endScale'] as num?)?.toDouble() ?? 1,
-        startAlpha: (json['startAlpha'] as num?)?.toDouble() ?? 1,
-        endAlpha: (json['endAlpha'] as num?)?.toDouble() ?? 0,
-        colorArgb: (json['colorArgb'] as num?)?.toInt() ?? 0xFFFFFFFF,
-        zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
-      )..followEmitter = json['followEmitter'] as bool? ?? false
-        ..emitterEntityId = json['emitterEntityId'] != null ? (json['emitterEntityId'] as int) : null;
+  factory Particle.fromJson(Map<String, dynamic> json) =>
+      Particle(
+          age: (json['age'] as num?)?.toDouble() ?? 0,
+          lifetime: (json['lifetime'] as num).toDouble(),
+          startScale: (json['startScale'] as num?)?.toDouble() ?? 1,
+          endScale: (json['endScale'] as num?)?.toDouble() ?? 1,
+          startAlpha: (json['startAlpha'] as num?)?.toDouble() ?? 1,
+          endAlpha: (json['endAlpha'] as num?)?.toDouble() ?? 0,
+          colorArgb: (json['colorArgb'] as num?)?.toInt() ?? 0xFFFFFFFF,
+          zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
+        )
+        ..followEmitter = json['followEmitter'] as bool? ?? false
+        ..emitterEntityId = json['emitterEntityId'] != null
+            ? (json['emitterEntityId'] as int)
+            : null;
 }

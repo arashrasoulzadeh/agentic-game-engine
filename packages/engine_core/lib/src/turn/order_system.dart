@@ -22,7 +22,8 @@ bool submitOrder(World world, EntityId entity, Order order) {
   final state = turnStateOf(world);
   final team = world.storeOf<Team>().get(entity);
   if (team == null) return false;
-  if (state != null && (state.winner != null || team.id != state.activeTeam)) return false;
+  if (state != null && (state.winner != null || team.id != state.activeTeam))
+    return false;
   final store = world.storeOf<OrderQueue>();
   var queue = store.get(entity);
   if (queue == null) {
@@ -61,7 +62,8 @@ class OrderSystem extends System {
     GridPosition from,
     GridPosition to,
     bool Function(int col, int row) occupied,
-  ) nextStep;
+  )
+  nextStep;
 
   /// Action points to enter `to`. Defaults to the flat `moveCost`; a
   /// navigator-backed system charges the cell's terrain cost instead.
@@ -74,9 +76,15 @@ class OrderSystem extends System {
     this.attackRange = 1,
     this.approachTargets = false,
     this.defendBonus = 2,
-    GridPosition? Function(World, GridPosition, GridPosition, bool Function(int, int))? nextStep,
-  })  : nextStep = nextStep ?? _greedyStep,
-        stepCost = stepCost ?? ((_, __) => moveCost);
+    GridPosition? Function(
+      World,
+      GridPosition,
+      GridPosition,
+      bool Function(int, int),
+    )?
+    nextStep,
+  }) : nextStep = nextStep ?? _greedyStep,
+       stepCost = stepCost ?? ((_, __) => moveCost);
 
   /// An [OrderSystem] that routes with [nav] (weighted, 8-way, around
   /// other units) and charges each step the terrain cost of the cell
@@ -112,7 +120,8 @@ class OrderSystem extends System {
     // In id order, not store order: the store's order depends on add/remove
     // history, so a world restored from a snapshot would resolve contested cells
     // differently from the original (see RealtimeOrderSystem.update).
-    final ids = [for (var i = 0; i < queues.length; i++) queues.entityAt(i)]..sort();
+    final ids = [for (var i = 0; i < queues.length; i++) queues.entityAt(i)]
+      ..sort();
     for (final entity in ids) {
       final queue = queues.get(entity);
       if (queue == null || teams.get(entity)?.id != state.activeTeam) continue;
@@ -135,13 +144,15 @@ class OrderSystem extends System {
   _Result _move(World world, EntityId entity, MoveOrder order) {
     final grid = world.storeOf<GridPosition>();
     final pos = grid.get(entity);
-    if (pos == null) return _fail(world, entity, order, OrderFailure.invalidTarget);
+    if (pos == null)
+      return _fail(world, entity, order, OrderFailure.invalidTarget);
     final goal = GridPosition(order.col, order.row);
     final occupied = occupiedBy(grid, entity);
 
     while (pos.col != goal.col || pos.row != goal.row) {
       final step = nextStep(world, pos, goal, occupied);
-      if (step == null) return _fail(world, entity, order, OrderFailure.blocked);
+      if (step == null)
+        return _fail(world, entity, order, OrderFailure.blocked);
       if (!trySpendActionPoints(world, entity, stepCost(world, step))) {
         return _Result.waiting;
       }
@@ -158,9 +169,13 @@ class OrderSystem extends System {
     final grid = world.storeOf<GridPosition>();
     final me = grid.get(entity);
     final target = grid.get(order.target);
-    final friendly = world.storeOf<Team>().get(order.target)?.id ==
+    final friendly =
+        world.storeOf<Team>().get(order.target)?.id ==
         world.storeOf<Team>().get(entity)?.id;
-    if (me == null || target == null || friendly || !world.entities.isAlive(order.target)) {
+    if (me == null ||
+        target == null ||
+        friendly ||
+        !world.entities.isAlive(order.target)) {
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     }
     final myTeam = world.storeOf<Team>().get(entity)?.id;
@@ -171,14 +186,16 @@ class OrderSystem extends System {
     final reach = profile?.range ?? attackRange;
     final price = profile?.cost ?? attackCost;
     if (me.chebyshev(target) > reach) {
-      if (!approachTargets) return _fail(world, entity, order, OrderFailure.outOfRange);
+      if (!approachTargets)
+        return _fail(world, entity, order, OrderFailure.outOfRange);
       // The target's own cell must be walkable for the router, so it is
       // excluded from the occupied set; we stop once in range, before
       // ever entering it.
       final occupied = occupiedBy(grid, entity, ignore: order.target);
       while (me.chebyshev(target) > reach) {
         final step = nextStep(world, me, target, occupied);
-        if (step == null) return _fail(world, entity, order, OrderFailure.blocked);
+        if (step == null)
+          return _fail(world, entity, order, OrderFailure.blocked);
         if (!trySpendActionPoints(world, entity, stepCost(world, step))) {
           return _Result.waiting;
         }
@@ -196,18 +213,26 @@ class OrderSystem extends System {
 
   _Result _defend(World world, EntityId entity, DefendOrder order) {
     final ap = world.storeOf<ActionPoints>().get(entity);
-    if (ap == null) return _fail(world, entity, order, OrderFailure.invalidTarget);
+    if (ap == null)
+      return _fail(world, entity, order, OrderFailure.invalidTarget);
     if (ap.current <= 0) return _Result.waiting;
-    if (!trySpendActionPoints(world, entity, ap.current)) return _Result.waiting;
-    applyStatus(world, entity, StatusEffect('defending', turns: 1, defense: defendBonus));
+    if (!trySpendActionPoints(world, entity, ap.current))
+      return _Result.waiting;
+    applyStatus(
+      world,
+      entity,
+      StatusEffect('defending', turns: 1, defense: defendBonus),
+    );
     return _Result.done;
   }
 
   _Result _overwatch(World world, EntityId entity, OverwatchOrder order) {
     final ap = world.storeOf<ActionPoints>().get(entity);
-    if (ap == null) return _fail(world, entity, order, OrderFailure.invalidTarget);
+    if (ap == null)
+      return _fail(world, entity, order, OrderFailure.invalidTarget);
     if (ap.current <= 0) return _Result.waiting;
-    if (!trySpendActionPoints(world, entity, ap.current)) return _Result.waiting;
+    if (!trySpendActionPoints(world, entity, ap.current))
+      return _Result.waiting;
     applyStatus(world, entity, StatusEffect(overwatchStatus, turns: 1));
     return _Result.done;
   }
@@ -225,10 +250,12 @@ class OrderSystem extends System {
     for (var i = 0; i < statuses.length; i++) {
       final watcher = statuses.entityAt(i);
       final stance = statuses.denseAt(i);
-      if (!stance.has(overwatchStatus) || teams.get(watcher)?.id == moverTeam) continue;
+      if (!stance.has(overwatchStatus) || teams.get(watcher)?.id == moverTeam)
+        continue;
       final from = grid.get(watcher);
       if (from == null) continue;
-      final reach = world.storeOf<AttackProfile>().get(watcher)?.range ?? attackRange;
+      final reach =
+          world.storeOf<AttackProfile>().get(watcher)?.range ?? attackRange;
       if (from.chebyshev(at) > reach) continue;
       final watcherTeam = teams.get(watcher)?.id;
       if (watcherTeam != null && !canSee(world, watcherTeam, mover)) continue;

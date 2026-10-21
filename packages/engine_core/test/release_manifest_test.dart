@@ -128,7 +128,9 @@ void main() {
         name: 'thing',
         url: 'https://example.com/thing',
         size: 10,
-        sha256: crypto.sha256.convert(utf8.encode("the original contents")).toString(),
+        sha256: crypto.sha256
+            .convert(utf8.encode("the original contents"))
+            .toString(),
       );
       final corrupted = utf8.encode('different bytes entirely');
       final result = ReleaseManifestVerifier.verifyChecksum(item, corrupted);
@@ -139,17 +141,25 @@ void main() {
 }
 
 void keyBytesTests() {
-  test('a verifier built from raw public-key bytes accepts the matching signature only', () async {
-    final pair = await ReleaseManifestSigner.generateKeyPair();
-    final bytes = (await pair.extractPublicKey()).bytes;
-    final manifest = _manifest();
-    final sig = await ReleaseManifestSigner.sign(manifest, pair);
+  test(
+    'a verifier built from raw public-key bytes accepts the matching signature only',
+    () async {
+      final pair = await ReleaseManifestSigner.generateKeyPair();
+      final bytes = (await pair.extractPublicKey()).bytes;
+      final manifest = _manifest();
+      final sig = await ReleaseManifestSigner.sign(manifest, pair);
 
-    final verifier = ReleaseManifestVerifier.fromPublicKeyBytes(bytes);
-    expect((await verifier.verify(manifest, sig)).ok, isTrue);
+      final verifier = ReleaseManifestVerifier.fromPublicKeyBytes(bytes);
+      expect((await verifier.verify(manifest, sig)).ok, isTrue);
 
-    final other = await ReleaseManifestSigner.generateKeyPair();
-    final wrong = ReleaseManifestVerifier.fromPublicKeyBytes((await other.extractPublicKey()).bytes);
-    expect((await wrong.verify(manifest, sig)).rejection, ManifestRejection.invalidSignature);
-  });
+      final other = await ReleaseManifestSigner.generateKeyPair();
+      final wrong = ReleaseManifestVerifier.fromPublicKeyBytes(
+        (await other.extractPublicKey()).bytes,
+      );
+      expect(
+        (await wrong.verify(manifest, sig)).rejection,
+        ManifestRejection.invalidSignature,
+      );
+    },
+  );
 }

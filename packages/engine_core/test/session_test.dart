@@ -3,7 +3,8 @@ import 'package:test/test.dart';
 
 const _dt = 1 / 20;
 
-GridNavigator _nav() => GridNavigator(cols: 12, rows: 12, terrainCost: (c, r) => 1);
+GridNavigator _nav() =>
+    GridNavigator(cols: 12, rows: 12, terrainCost: (c, r) => 1);
 
 World _hostWorld() {
   final w = World(width: 12, height: 12);
@@ -29,8 +30,11 @@ EntityId _unit(World w, String team, int c, int r) {
 }
 
 class _Rig {
-  _Rig({int latency = 1, double drop = 0, List<String> teams = const ['red', 'blue']})
-      : world = _hostWorld() {
+  _Rig({
+    int latency = 1,
+    double drop = 0,
+    List<String> teams = const ['red', 'blue'],
+  }) : world = _hostWorld() {
     host = HostSession(world: world, teams: teams);
     this.latency = latency;
     this.drop = drop;
@@ -45,11 +49,19 @@ class _Rig {
   int _seed = 1;
 
   ClientSession connect() {
-    final link = LoopbackLink(latencyTicks: latency, dropRate: drop, seed: _seed++);
+    final link = LoopbackLink(
+      latencyTicks: latency,
+      dropRate: drop,
+      seed: _seed++,
+    );
     links.add(link);
     // The client attaches before the host accepts, as on a real socket where the
     // connection exists on both sides before the first message is sent.
-    final client = ClientSession(world: _clientWorld(), endpoint: link.b, clock: () => world.tick * 50);
+    final client = ClientSession(
+      world: _clientWorld(),
+      endpoint: link.b,
+      clock: () => world.tick * 50,
+    );
     clients.add(client);
     host.accept(link.a);
     return client;
@@ -95,101 +107,145 @@ void main() {
       expect(rig.host.players, hasLength(2));
     });
 
-    test('leaving frees the team for the next joiner and notifies the host', () {
-      final rig = _Rig();
-      final left = <PlayerSlot>[];
-      rig.host.onLeft = left.add;
-      final a = rig.connect();
-      rig.connect();
-      rig.run(2);
-      a.endpoint.close();
-      expect(left.single.team, 'red');
-      final c = rig.connect();
-      rig.run(3);
-      expect(c.team, 'red');
-      expect(rig.host.sync.fullSnapshotsSent, greaterThan(0));
-    });
+    test(
+      'leaving frees the team for the next joiner and notifies the host',
+      () {
+        final rig = _Rig();
+        final left = <PlayerSlot>[];
+        rig.host.onLeft = left.add;
+        final a = rig.connect();
+        rig.connect();
+        rig.run(2);
+        a.endpoint.close();
+        expect(left.single.team, 'red');
+        final c = rig.connect();
+        rig.run(3);
+        expect(c.team, 'red');
+        expect(rig.host.sync.fullSnapshotsSent, greaterThan(0));
+      },
+    );
 
-    test('onJoined fires, hello records the name, and start reaches everyone', () {
-      final rig = _Rig();
-      final joined = <int>[];
-      rig.host.onJoined = (p) => joined.add(p.id);
-      final started = <bool>[];
-      final a = rig.connect();
-      a.onStart = () => started.add(true);
-      a.endpoint.send({'type': 'hello', 'name': 'Ada'});
-      rig.run(3);
-      expect(joined, [1]);
-      expect(rig.host.players[1]!.name, 'Ada');
-      expect(a.started, isFalse);
-      rig.host.start();
-      rig.run(3);
-      expect(a.started, isTrue);
-      expect(started, [true]);
-      expect(rig.connect().started, isFalse, reason: 'welcome reports the state at join time...');
-      rig.run(3);
-      expect(rig.clients.last.started, isTrue, reason: '...which is started by then');
-    });
+    test(
+      'onJoined fires, hello records the name, and start reaches everyone',
+      () {
+        final rig = _Rig();
+        final joined = <int>[];
+        rig.host.onJoined = (p) => joined.add(p.id);
+        final started = <bool>[];
+        final a = rig.connect();
+        a.onStart = () => started.add(true);
+        a.endpoint.send({'type': 'hello', 'name': 'Ada'});
+        rig.run(3);
+        expect(joined, [1]);
+        expect(rig.host.players[1]!.name, 'Ada');
+        expect(a.started, isFalse);
+        rig.host.start();
+        rig.run(3);
+        expect(a.started, isTrue);
+        expect(started, [true]);
+        expect(
+          rig.connect().started,
+          isFalse,
+          reason: 'welcome reports the state at join time...',
+        );
+        rig.run(3);
+        expect(
+          rig.clients.last.started,
+          isTrue,
+          reason: '...which is started by then',
+        );
+      },
+    );
   });
 
   group('orders', () {
-    test('a player orders their own unit; the host simulates it and the client sees the result', () {
-      final rig = _Rig();
-      final mine = _unit(rig.world, 'red', 1, 1);
-      _unit(rig.world, 'blue', 10, 10);
-      startTurnBasedGame(rig.world, ['red', 'blue']);
-      final a = rig.connect();
-      rig.run(4);
+    test(
+      'a player orders their own unit; the host simulates it and the client sees the result',
+      () {
+        final rig = _Rig();
+        final mine = _unit(rig.world, 'red', 1, 1);
+        _unit(rig.world, 'blue', 10, 10);
+        startTurnBasedGame(rig.world, ['red', 'blue']);
+        final a = rig.connect();
+        rig.run(4);
 
-      a.sendOrder(mine, const MoveOrder(4, 1));
-      rig.run(8);
-      expect(rig.world.storeOf<GridPosition>().get(mine)!.col, 4);
-      expect(a.world.storeOf<GridPosition>().get(mine)!.col, 4, reason: 'replicated to the client');
-      expect(rig.host.rejections, isEmpty);
-    });
+        a.sendOrder(mine, const MoveOrder(4, 1));
+        rig.run(8);
+        expect(rig.world.storeOf<GridPosition>().get(mine)!.col, 4);
+        expect(
+          a.world.storeOf<GridPosition>().get(mine)!.col,
+          4,
+          reason: 'replicated to the client',
+        );
+        expect(rig.host.rejections, isEmpty);
+      },
+    );
 
-    test('ordering someone else\'s unit, a ghost, garbage or out of turn is refused', () {
-      final rig = _Rig();
-      final red = _unit(rig.world, 'red', 1, 1);
-      final blue = _unit(rig.world, 'blue', 10, 10);
-      startTurnBasedGame(rig.world, ['red', 'blue']);
-      final a = rig.connect(); // red
-      rig.connect(); // blue
-      final reasons = <String>[];
-      a.onRejected = (unit, reason) => reasons.add(reason);
-      rig.run(4);
+    test(
+      'ordering someone else\'s unit, a ghost, garbage or out of turn is refused',
+      () {
+        final rig = _Rig();
+        final red = _unit(rig.world, 'red', 1, 1);
+        final blue = _unit(rig.world, 'blue', 10, 10);
+        startTurnBasedGame(rig.world, ['red', 'blue']);
+        final a = rig.connect(); // red
+        rig.connect(); // blue
+        final reasons = <String>[];
+        a.onRejected = (unit, reason) => reasons.add(reason);
+        rig.run(4);
 
-      a.sendOrder(blue, const MoveOrder(9, 9));
-      a.sendOrder(9999, const MoveOrder(1, 1));
-      a.endpoint.send({'type': 'order', 'unit': red, 'order': {'type': 'teleport'}});
-      a.endpoint.send({'type': 'order', 'unit': red, 'order': 'nonsense'});
-      endTurn(rig.world); // now blue's turn: red may not act
-      a.sendOrder(red, const MoveOrder(2, 2));
-      rig.run(6);
+        a.sendOrder(blue, const MoveOrder(9, 9));
+        a.sendOrder(9999, const MoveOrder(1, 1));
+        a.endpoint.send({
+          'type': 'order',
+          'unit': red,
+          'order': {'type': 'teleport'},
+        });
+        a.endpoint.send({'type': 'order', 'unit': red, 'order': 'nonsense'});
+        endTurn(rig.world); // now blue's turn: red may not act
+        a.sendOrder(red, const MoveOrder(2, 2));
+        rig.run(6);
 
-      expect(reasons, ['not your unit', 'no such unit', 'malformed order', 'malformed order', 'order not allowed now']);
-      expect(rig.world.storeOf<GridPosition>().get(blue)!.col, 10);
-      expect(rig.world.storeOf<GridPosition>().get(red)!.col, 1);
-      expect(rig.host.rejections, hasLength(5));
-    });
+        expect(reasons, [
+          'not your unit',
+          'no such unit',
+          'malformed order',
+          'malformed order',
+          'order not allowed now',
+        ]);
+        expect(rig.world.storeOf<GridPosition>().get(blue)!.col, 10);
+        expect(rig.world.storeOf<GridPosition>().get(red)!.col, 1);
+        expect(rig.host.rejections, hasLength(5));
+      },
+    );
   });
 
   group('state replication', () {
     test('both players converge on the host over a lossy, laggy link', () {
       final rig = _Rig(latency: 2, drop: 0.25);
-      final reds = [for (var i = 0; i < 3; i++) _unit(rig.world, 'red', 1, 2 + i)];
-      final blues = [for (var i = 0; i < 3; i++) _unit(rig.world, 'blue', 10, 2 + i)];
+      final reds = [
+        for (var i = 0; i < 3; i++) _unit(rig.world, 'red', 1, 2 + i),
+      ];
+      final blues = [
+        for (var i = 0; i < 3; i++) _unit(rig.world, 'blue', 10, 2 + i),
+      ];
       startTurnBasedGame(rig.world, ['red', 'blue']);
       final a = rig.connect(), b = rig.connect();
       rig.run(6);
 
       for (final r in reds) {
-        a.sendOrder(r, MoveOrder(5, rig.world.storeOf<GridPosition>().get(r)!.row));
+        a.sendOrder(
+          r,
+          MoveOrder(5, rig.world.storeOf<GridPosition>().get(r)!.row),
+        );
       }
       rig.run(10);
       endTurn(rig.world);
       for (final bl in blues) {
-        b.sendOrder(bl, MoveOrder(6, rig.world.storeOf<GridPosition>().get(bl)!.row));
+        b.sendOrder(
+          bl,
+          MoveOrder(6, rig.world.storeOf<GridPosition>().get(bl)!.row),
+        );
       }
       rig.run(60);
 
@@ -224,7 +280,11 @@ void main() {
       rig.run(8);
       expect(a.rttMs, 300, reason: '3 ticks each way = 6 ticks = 300 ms');
       final est = a.estimatedServerTick(_dt)!;
-      expect(est, closeTo(rig.world.tick, 1.5), reason: 'within a tick or two of the truth');
+      expect(
+        est,
+        closeTo(rig.world.tick, 1.5),
+        reason: 'within a tick or two of the truth',
+      );
     });
 
     test('the estimate keeps advancing between pongs', () {
@@ -256,18 +316,21 @@ void main() {
       expect(client.estimatedServerTick(_dt), isNull);
     });
 
-    test('a pong that arrives with no clock is ignored rather than inventing a zero round trip', () {
-      final w = _hostWorld();
-      final host = HostSession(world: w, teams: ['red']);
-      final link = LoopbackLink();
-      final client = ClientSession(world: _clientWorld(), endpoint: link.b);
-      host.accept(link.a);
-      link.a.send({'type': 'pong', 't': 5, 'tick': 99});
-      link.advance();
-      expect(client.rttMs, isNull);
-      client.endpoint.send({'type': 'who knows'});
-      link.advance();
-    });
+    test(
+      'a pong that arrives with no clock is ignored rather than inventing a zero round trip',
+      () {
+        final w = _hostWorld();
+        final host = HostSession(world: w, teams: ['red']);
+        final link = LoopbackLink();
+        final client = ClientSession(world: _clientWorld(), endpoint: link.b);
+        host.accept(link.a);
+        link.a.send({'type': 'pong', 't': 5, 'tick': 99});
+        link.advance();
+        expect(client.rttMs, isNull);
+        client.endpoint.send({'type': 'who knows'});
+        link.advance();
+      },
+    );
   });
 
   test('disconnect notifies the client', () {

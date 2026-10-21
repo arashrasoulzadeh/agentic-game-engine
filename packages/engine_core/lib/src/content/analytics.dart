@@ -27,12 +27,12 @@ class AnalyticsEvent {
   }) : timestamp = timestamp ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'payload': payload,
-        'timestamp': timestamp.toIso8601String(),
-        'userId': userId,
-        'sessionId': sessionId,
-      };
+    'name': name,
+    'payload': payload,
+    'timestamp': timestamp.toIso8601String(),
+    'userId': userId,
+    'sessionId': sessionId,
+  };
 
   @override
   String toString() => 'AnalyticsEvent($name, $payload)';
@@ -116,13 +116,17 @@ class ConsoleAnalyticsProvider implements AnalyticsProvider {
     Map<String, dynamic>? userProperties,
   }) async {
     if (!_verbose) return;
-    print('[Analytics] Initialized (userId: $userId, properties: $userProperties)');
+    print(
+      '[Analytics] Initialized (userId: $userId, properties: $userProperties)',
+    );
   }
 
   @override
   Future<void> logEvent(AnalyticsEvent event) async {
     if (!_verbose) return;
-    final payloadStr = event.payload.isEmpty ? '' : ' ${json.encode(event.payload)}';
+    final payloadStr = event.payload.isEmpty
+        ? ''
+        : ' ${json.encode(event.payload)}';
     print('[Analytics] ${event.name}$payloadStr');
   }
 
@@ -202,11 +206,13 @@ class AnalyticsManager {
     _flushTimer = Timer.periodic(flushInterval, (_) => flush());
 
     // Track session start
-    await logEvent(AnalyticsEvent(
-      name: 'session_start',
-      sessionId: _sessionId,
-      userId: _userId,
-    ));
+    await logEvent(
+      AnalyticsEvent(
+        name: 'session_start',
+        sessionId: _sessionId,
+        userId: _userId,
+      ),
+    );
 
     _initialized = true;
   }
@@ -262,8 +268,10 @@ class AnalyticsManager {
   }
 
   /// Logs an achievement unlock.
-  Future<void> logAchievement(String achievementId,
-      {Map<String, dynamic>? extra}) async {
+  Future<void> logAchievement(
+    String achievementId, {
+    Map<String, dynamic>? extra,
+  }) async {
     await log('achievement_unlocked', {
       'achievement_id': achievementId,
       ...?extra,
@@ -271,8 +279,12 @@ class AnalyticsManager {
   }
 
   /// Logs a purchase/IAP event.
-  Future<void> logPurchase(String productId, double price, String currency,
-      {Map<String, dynamic>? extra}) async {
+  Future<void> logPurchase(
+    String productId,
+    double price,
+    String currency, {
+    Map<String, dynamic>? extra,
+  }) async {
     await log('purchase', {
       'product_id': productId,
       'price': price,
@@ -282,17 +294,21 @@ class AnalyticsManager {
   }
 
   /// Logs a level/mission start.
-  Future<void> logLevelStart(String levelId,
-      {Map<String, dynamic>? extra}) async {
-    await log('level_start', {
-      'level_id': levelId,
-      ...?extra,
-    });
+  Future<void> logLevelStart(
+    String levelId, {
+    Map<String, dynamic>? extra,
+  }) async {
+    await log('level_start', {'level_id': levelId, ...?extra});
   }
 
   /// Logs a level/mission complete.
-  Future<void> logLevelComplete(String levelId,
-      {int? score, int? stars, Duration? time, Map<String, dynamic>? extra}) async {
+  Future<void> logLevelComplete(
+    String levelId, {
+    int? score,
+    int? stars,
+    Duration? time,
+    Map<String, dynamic>? extra,
+  }) async {
     await log('level_complete', {
       'level_id': levelId,
       if (score != null) 'score': score,
@@ -303,25 +319,26 @@ class AnalyticsManager {
   }
 
   /// Logs a level/mission fail.
-  Future<void> logLevelFail(String levelId,
-      {Map<String, dynamic>? extra}) async {
-    await log('level_fail', {
-      'level_id': levelId,
-      ...?extra,
-    });
+  Future<void> logLevelFail(
+    String levelId, {
+    Map<String, dynamic>? extra,
+  }) async {
+    await log('level_fail', {'level_id': levelId, ...?extra});
   }
 
   /// Logs a screen view.
   Future<void> logScreenView(String screenName, {String? screenClass}) async {
-    await logEvent(AnalyticsEvent(
-      name: 'screen_view',
-      payload: {
-        'screen_name': screenName,
-        if (screenClass != null) 'screen_class': screenClass,
-      },
-      userId: _userId,
-      sessionId: _sessionId,
-    ));
+    await logEvent(
+      AnalyticsEvent(
+        name: 'screen_view',
+        payload: {
+          'screen_name': screenName,
+          if (screenClass != null) 'screen_class': screenClass,
+        },
+        userId: _userId,
+        sessionId: _sessionId,
+      ),
+    );
 
     for (final provider in _providers) {
       await provider.logScreenView(screenName, screenClass: screenClass);
@@ -354,11 +371,13 @@ class AnalyticsManager {
 
   /// Called when app goes to background.
   Future<void> onPause() async {
-    await logEvent(AnalyticsEvent(
-      name: 'session_pause',
-      sessionId: _sessionId,
-      userId: _userId,
-    ));
+    await logEvent(
+      AnalyticsEvent(
+        name: 'session_pause',
+        sessionId: _sessionId,
+        userId: _userId,
+      ),
+    );
     _isPaused = true;
     for (final provider in _providers) {
       await provider.onPause();
@@ -368,11 +387,13 @@ class AnalyticsManager {
   /// Called when app returns to foreground.
   Future<void> onResume() async {
     _isPaused = false;
-    await logEvent(AnalyticsEvent(
-      name: 'session_resume',
-      sessionId: _sessionId,
-      userId: _userId,
-    ));
+    await logEvent(
+      AnalyticsEvent(
+        name: 'session_resume',
+        sessionId: _sessionId,
+        userId: _userId,
+      ),
+    );
     for (final provider in _providers) {
       await provider.onResume();
     }
@@ -387,11 +408,13 @@ class AnalyticsManager {
   /// Shuts down analytics.
   Future<void> shutdown() async {
     _flushTimer?.cancel();
-    await logEvent(AnalyticsEvent(
-      name: 'session_end',
-      sessionId: _sessionId,
-      userId: _userId,
-    ));
+    await logEvent(
+      AnalyticsEvent(
+        name: 'session_end',
+        sessionId: _sessionId,
+        userId: _userId,
+      ),
+    );
     await flush();
     for (final provider in _providers) {
       await provider.close();
@@ -425,11 +448,16 @@ class AnalyticsEvents {
 /// Extension for easy event logging from anywhere.
 extension Analytics on Object {
   /// Logs this object as an event with the given name.
-  Future<void> logAsEvent(String name,
-      {Map<String, dynamic>? payload}) async {
-    await AnalyticsManager.instance.logEvent(AnalyticsEvent(
-      name: name,
-      payload: payload ?? (this is Map ? Map<String, dynamic>.from(this as Map) : {'value': toString()}),
-    ));
+  Future<void> logAsEvent(String name, {Map<String, dynamic>? payload}) async {
+    await AnalyticsManager.instance.logEvent(
+      AnalyticsEvent(
+        name: name,
+        payload:
+            payload ??
+            (this is Map
+                ? Map<String, dynamic>.from(this as Map)
+                : {'value': toString()}),
+      ),
+    );
   }
 }

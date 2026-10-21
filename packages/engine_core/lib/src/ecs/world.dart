@@ -117,20 +117,20 @@ class World {
   /// going": a runaway `particle` or `soundEvent` count shows up here long
   /// before it shows up as a frame spike. Zero-count components are omitted.
   Map<String, int> componentCounts() => {
-        for (final r in components.all)
-          if (r.store.length > 0) r.name: r.store.length,
-      };
+    for (final r in components.all)
+      if (r.store.length > 0) r.name: r.store.length,
+  };
 
   /// Full world snapshot as plain JSON — the agent-facing read path.
   Map<String, dynamic> toJson() => {
-        'tick': _tick,
-        'width': width,
-        'height': height,
-        'entities': [
-          for (final id in entities.all)
-            {'id': id, 'components': components.serializeEntity(id)},
-        ],
-      };
+    'tick': _tick,
+    'width': width,
+    'height': height,
+    'entities': [
+      for (final id in entities.all)
+        {'id': id, 'components': components.serializeEntity(id)},
+    ],
+  };
 
   /// Applies a snapshot produced by [toJson] (or a partial patch with a
   /// subset of entities/components) — the agent-facing write path.
@@ -142,27 +142,31 @@ class World {
     if (rawEntities == null) return;
     if (rawEntities is! List) {
       throw WorldPatchException(
-          '"entities" must be a list, got ${rawEntities.runtimeType}');
+        '"entities" must be a list, got ${rawEntities.runtimeType}',
+      );
     }
     for (var i = 0; i < rawEntities.length; i++) {
       final raw = rawEntities[i];
       if (raw is! Map) {
         throw WorldPatchException(
-            'entities[$i] must be an object, got ${raw.runtimeType}');
+          'entities[$i] must be an object, got ${raw.runtimeType}',
+        );
       }
       final e = raw.cast<String, dynamic>();
       final rawId = e['id'];
       if (rawId is! int) {
         throw WorldPatchException(
-            'entities[$i].id must be an int, got ${rawId.runtimeType}');
+          'entities[$i].id must be an int, got ${rawId.runtimeType}',
+        );
       }
       if (!entities.isAlive(rawId)) continue;
       final rawComponents = e['components'];
       if (rawComponents == null) continue;
       if (rawComponents is! Map) {
         throw WorldPatchException(
-            'entities[$i].components must be an object, got '
-            '${rawComponents.runtimeType}');
+          'entities[$i].components must be an object, got '
+          '${rawComponents.runtimeType}',
+        );
       }
       components.applyToEntity(rawId, rawComponents.cast<String, dynamic>());
     }

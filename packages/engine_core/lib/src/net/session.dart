@@ -37,9 +37,9 @@ class HostSession {
     required this.teams,
     this.syncEveryTicks = 1,
     StateSyncServer? sync,
-  })  : assert(teams.isNotEmpty, 'a game needs at least one playable team'),
-        assert(syncEveryTicks >= 1),
-        sync = sync ?? StateSyncServer(world: world);
+  }) : assert(teams.isNotEmpty, 'a game needs at least one playable team'),
+       assert(syncEveryTicks >= 1),
+       sync = sync ?? StateSyncServer(world: world);
 
   final World world;
 
@@ -114,7 +114,11 @@ class HostSession {
       case 'hello':
         slot.name = message['name'] as String?;
       case 'ping':
-        slot.endpoint.send({'type': 'pong', 't': message['t'], 'tick': world.tick});
+        slot.endpoint.send({
+          'type': 'pong',
+          't': message['t'],
+          'tick': world.tick,
+        });
       case 'order':
         _order(slot, message);
       default:
@@ -125,7 +129,11 @@ class HostSession {
   void _order(PlayerSlot slot, Map<String, dynamic> message) {
     String reject(String reason) {
       rejections.add((slot.id, reason));
-      slot.endpoint.send({'type': 'rejected', 'unit': message['unit'], 'reason': reason});
+      slot.endpoint.send({
+        'type': 'rejected',
+        'unit': message['unit'],
+        'reason': reason,
+      });
       return reason;
     }
 
@@ -228,7 +236,10 @@ class ClientSession {
   /// pong, advanced by the time since it arrived plus half the round trip (the
   /// one-way trip the pong's value has already aged by).
   double? estimatedServerTick(double fixedDt) {
-    final tick = _serverTickAtPong, at = _pongReceivedAtMs, rtt = rttMs, now = clock?.call();
+    final tick = _serverTickAtPong,
+        at = _pongReceivedAtMs,
+        rtt = rttMs,
+        now = clock?.call();
     if (tick == null || at == null || rtt == null || now == null) return null;
     return tick + (now - at + rtt / 2) / (fixedDt * 1000);
   }
@@ -255,7 +266,10 @@ class ClientSession {
         rttMs = (now - (m['t'] as num).toInt()).toDouble();
         _serverTickAtPong = (m['tick'] as num).toInt();
       case 'rejected':
-        onRejected?.call((m['unit'] as num?)?.toInt() ?? -1, m['reason'] as String? ?? 'rejected');
+        onRejected?.call(
+          (m['unit'] as num?)?.toInt() ?? -1,
+          m['reason'] as String? ?? 'rejected',
+        );
       case 'snapshot' || 'delta':
         sync.receive(m);
     }

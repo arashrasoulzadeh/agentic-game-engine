@@ -70,8 +70,9 @@ class WorldView {
     final positions = _world.storeOf<Position>();
     EntityId? best;
     var bestDistSq = double.infinity;
-    final maxDistSq =
-        maxDistance == null ? double.infinity : maxDistance * maxDistance;
+    final maxDistSq = maxDistance == null
+        ? double.infinity
+        : maxDistance * maxDistance;
 
     for (var i = 0; i < positions.length; i++) {
       final id = positions.entityAt(i);
@@ -134,7 +135,16 @@ class WorldView {
     for (final mapEntity in entitiesWith<TileMap>()) {
       final map = component<TileMap>(mapEntity)!;
       final origin = component<Position>(mapEntity) ?? Position(0, 0);
-      if (raycastTileMap(map, origin, fromX, fromY, toX, toY, blockOneWay: blockOneWay) != null) {
+      if (raycastTileMap(
+            map,
+            origin,
+            fromX,
+            fromY,
+            toX,
+            toY,
+            blockOneWay: blockOneWay,
+          ) !=
+          null) {
         return false;
       }
     }

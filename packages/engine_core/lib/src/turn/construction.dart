@@ -32,12 +32,16 @@ enum BuildFailure { outOfBounds, blocked, occupied, noTreasury, cantAfford }
   Map<String, int> cost = const {},
   double buildSeconds = 0,
 }) {
-  if (!navigator.inBounds(col, row)) return (id: null, failure: BuildFailure.outOfBounds);
-  if (navigator.terrainCost(col, row) == null) return (id: null, failure: BuildFailure.blocked);
-  if (cellsHeldExcept(world, const [])(col, row)) return (id: null, failure: BuildFailure.occupied);
+  if (!navigator.inBounds(col, row))
+    return (id: null, failure: BuildFailure.outOfBounds);
+  if (navigator.terrainCost(col, row) == null)
+    return (id: null, failure: BuildFailure.blocked);
+  if (cellsHeldExcept(world, const [])(col, row))
+    return (id: null, failure: BuildFailure.occupied);
   final treasury = treasuryOf(world, team);
   if (treasury == null) return (id: null, failure: BuildFailure.noTreasury);
-  if (!treasury.spend(cost)) return (id: null, failure: BuildFailure.cantAfford);
+  if (!treasury.spend(cost))
+    return (id: null, failure: BuildFailure.cantAfford);
   final id = world.spawn();
   world.components.applyToEntity(id, {
     ...template,
@@ -57,7 +61,8 @@ class ConstructionSystem extends System {
   @override
   void update(World world, double dt) {
     final store = world.storeOf<Construction>();
-    final ids = [for (var i = 0; i < store.length; i++) store.entityAt(i)]..sort();
+    final ids = [for (var i = 0; i < store.length; i++) store.entityAt(i)]
+      ..sort();
     for (final id in ids) {
       final c = store.get(id);
       if (c == null) continue;

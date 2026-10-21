@@ -8,8 +8,8 @@ class RingBuffer<T> {
   int _length = 0;
 
   RingBuffer(this.capacity)
-      : assert(capacity > 0, 'capacity must be positive'),
-        _items = List<T?>.filled(capacity, null);
+    : assert(capacity > 0, 'capacity must be positive'),
+      _items = List<T?>.filled(capacity, null);
 
   int get length => _length;
   bool get isEmpty => _length == 0;
@@ -27,10 +27,11 @@ class RingBuffer<T> {
 
   /// The values oldest-first.
   List<T> toList() => [
-        for (var i = 0; i < _length; i++) _items[(_start + i) % capacity] as T,
-      ];
+    for (var i = 0; i < _length; i++) _items[(_start + i) % capacity] as T,
+  ];
 
-  T? get last => _length == 0 ? null : _items[(_start + _length - 1) % capacity];
+  T? get last =>
+      _length == 0 ? null : _items[(_start + _length - 1) % capacity];
 
   void clear() {
     _start = 0;

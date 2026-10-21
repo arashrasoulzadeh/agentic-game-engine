@@ -16,7 +16,7 @@ class WorldSnapshot {
   final Map<EntityId, Map<String, dynamic>> entities;
 
   WorldSnapshot(this.tick, Map<EntityId, Map<String, dynamic>> entities)
-      : entities = Map.unmodifiable(entities);
+    : entities = Map.unmodifiable(entities);
 
   factory WorldSnapshot.capture(World world) {
     return WorldSnapshot(world.tick, {
@@ -48,17 +48,17 @@ class WorldSnapshot {
   }
 
   Map<String, dynamic> toJson() => {
-        'tick': tick,
-        'entities': {for (final e in entities.entries) '${e.key}': e.value},
-      };
+    'tick': tick,
+    'entities': {for (final e in entities.entries) '${e.key}': e.value},
+  };
 
-  factory WorldSnapshot.fromJson(Map<String, dynamic> json) => WorldSnapshot(
-        (json['tick'] as num).toInt(),
-        {
-          for (final e in (json['entities'] as Map).entries)
-            int.parse(e.key as String): _copy((e.value as Map).cast<String, dynamic>()),
-        },
-      );
+  factory WorldSnapshot.fromJson(Map<String, dynamic> json) =>
+      WorldSnapshot((json['tick'] as num).toInt(), {
+        for (final e in (json['entities'] as Map).entries)
+          int.parse(e.key as String): _copy(
+            (e.value as Map).cast<String, dynamic>(),
+          ),
+      });
 
   static Map<String, dynamic> _copy(Map<String, dynamic> m) =>
       (jsonDecode(jsonEncode(m)) as Map).cast<String, dynamic>();
@@ -120,7 +120,9 @@ class WorldDelta {
   /// baseline the delta was made against.
   WorldSnapshot applyTo(WorldSnapshot base) {
     if (base.tick != baseTick) {
-      throw StateError('delta is relative to tick $baseTick, got a base at tick ${base.tick}');
+      throw StateError(
+        'delta is relative to tick $baseTick, got a base at tick ${base.tick}',
+      );
     }
     final next = {...base.entities, ...changed};
     for (final id in removed) {
@@ -130,19 +132,21 @@ class WorldDelta {
   }
 
   Map<String, dynamic> toJson() => {
-        'baseTick': baseTick,
-        'tick': tick,
-        'changed': {for (final e in changed.entries) '${e.key}': e.value},
-        'removed': removed,
-      };
+    'baseTick': baseTick,
+    'tick': tick,
+    'changed': {for (final e in changed.entries) '${e.key}': e.value},
+    'removed': removed,
+  };
 
   factory WorldDelta.fromJson(Map<String, dynamic> json) => WorldDelta(
-        baseTick: (json['baseTick'] as num).toInt(),
-        tick: (json['tick'] as num).toInt(),
-        changed: {
-          for (final e in (json['changed'] as Map).entries)
-            int.parse(e.key as String): WorldSnapshot._copy((e.value as Map).cast<String, dynamic>()),
-        },
-        removed: [for (final id in (json['removed'] as List)) (id as num).toInt()],
-      );
+    baseTick: (json['baseTick'] as num).toInt(),
+    tick: (json['tick'] as num).toInt(),
+    changed: {
+      for (final e in (json['changed'] as Map).entries)
+        int.parse(e.key as String): WorldSnapshot._copy(
+          (e.value as Map).cast<String, dynamic>(),
+        ),
+    },
+    removed: [for (final id in (json['removed'] as List)) (id as num).toInt()],
+  );
 }

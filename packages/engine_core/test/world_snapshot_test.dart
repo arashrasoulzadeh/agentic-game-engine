@@ -49,29 +49,33 @@ void main() {
       expect(snap.entities[e]!['position']['x'], 1);
     });
 
-    test('restoreInto brings back moved, destroyed and added entities with original ids', () {
-      final w = _world();
-      final a = w.spawn();
-      final b = w.spawn();
-      w.storeOf<Position>().set(a, Position(1, 1));
-      w.storeOf<Position>().set(b, Position(2, 2));
-      w.step(0.1);
-      final snap = WorldSnapshot.capture(w);
+    test(
+      'restoreInto brings back moved, destroyed and added entities with original ids',
+      () {
+        final w = _world();
+        final a = w.spawn();
+        final b = w.spawn();
+        w.storeOf<Position>().set(a, Position(1, 1));
+        w.storeOf<Position>().set(b, Position(2, 2));
+        w.step(0.1);
+        final snap = WorldSnapshot.capture(w);
 
-      w.storeOf<Position>().get(a)!.x = 50;
-      final c = w.spawn(); // spawned before the destroy, so it cannot reuse b's id
-      w.storeOf<Velocity>().set(c, Velocity(1, 1));
-      w.destroy(b);
-      w.step(0.1);
+        w.storeOf<Position>().get(a)!.x = 50;
+        final c = w
+            .spawn(); // spawned before the destroy, so it cannot reuse b's id
+        w.storeOf<Velocity>().set(c, Velocity(1, 1));
+        w.destroy(b);
+        w.step(0.1);
 
-      snap.restoreInto(w);
-      expect(w.tick, snap.tick);
-      expect(w.storeOf<Position>().get(a)!.x, 1);
-      expect(w.entities.isAlive(b), isTrue);
-      expect(w.storeOf<Position>().get(b)!.y, 2);
-      expect(w.entities.isAlive(c), isFalse);
-      expect(w.storeOf<Velocity>().has(c), isFalse);
-    });
+        snap.restoreInto(w);
+        expect(w.tick, snap.tick);
+        expect(w.storeOf<Position>().get(a)!.x, 1);
+        expect(w.entities.isAlive(b), isTrue);
+        expect(w.storeOf<Position>().get(b)!.y, 2);
+        expect(w.entities.isAlive(c), isFalse);
+        expect(w.storeOf<Velocity>().has(c), isFalse);
+      },
+    );
 
     test('restore removes a component that was added after the snapshot', () {
       final w = _world();
@@ -104,11 +108,17 @@ void main() {
 
   group('WorldDelta', () {
     WorldSnapshot snap(int tick, Map<int, double> xs) => WorldSnapshot(tick, {
-          for (final e in xs.entries) e.key: {'position': {'x': e.value, 'y': 0.0}},
-        });
+      for (final e in xs.entries)
+        e.key: {
+          'position': {'x': e.value, 'y': 0.0},
+        },
+    });
 
     test('lists only changed, new and removed entities', () {
-      final d = WorldDelta.between(snap(1, {0: 1, 1: 2, 2: 3}), snap(2, {0: 1, 1: 9, 3: 4}));
+      final d = WorldDelta.between(
+        snap(1, {0: 1, 1: 2, 2: 3}),
+        snap(2, {0: 1, 1: 9, 3: 4}),
+      );
       expect(d.changed.keys.toSet(), {1, 3});
       expect(d.removed, [2]);
       expect(d.baseTick, 1);
@@ -116,12 +126,15 @@ void main() {
       expect(d.isEmpty, isFalse);
     });
 
-    test('applyTo reconstructs the target exactly; identical snapshots give an empty delta', () {
-      final a = snap(1, {0: 1, 1: 2});
-      final b = snap(2, {0: 5, 2: 7});
-      expect(WorldDelta.between(a, b).applyTo(a).entities, b.entities);
-      expect(WorldDelta.between(a, a).isEmpty, isTrue);
-    });
+    test(
+      'applyTo reconstructs the target exactly; identical snapshots give an empty delta',
+      () {
+        final a = snap(1, {0: 1, 1: 2});
+        final b = snap(2, {0: 5, 2: 7});
+        expect(WorldDelta.between(a, b).applyTo(a).entities, b.entities);
+        expect(WorldDelta.between(a, a).isEmpty, isTrue);
+      },
+    );
 
     test('applyTo refuses the wrong baseline', () {
       final d = WorldDelta.between(snap(1, {0: 1}), snap(2, {0: 2}));

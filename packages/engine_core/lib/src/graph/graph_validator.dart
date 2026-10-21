@@ -57,7 +57,12 @@ List<GraphIssue> validateGraph(
   }
 
   for (final edge in graph.edges) {
-    final fromType = _outputPortType(graph, registry, edge.fromNode, edge.fromPort);
+    final fromType = _outputPortType(
+      graph,
+      registry,
+      edge.fromNode,
+      edge.fromPort,
+    );
     final toType = _inputPortType(graph, registry, edge.toNode, edge.toPort);
     if (fromType == null) {
       issues.add(

@@ -20,14 +20,16 @@ import 'node_kind.dart';
 
 const _flow = PortType.flow;
 
-NodeKind _composite(String name, [List<FieldSchema> params = const []]) => NodeKind(
+NodeKind _composite(String name, [List<FieldSchema> params = const []]) =>
+    NodeKind(
       name: name,
       inputs: const [GraphPort('in', _flow)],
       outputs: const [GraphPort('children', _flow)],
       paramsSchema: params,
     );
 
-NodeKind _decorator(String name, [List<FieldSchema> params = const []]) => NodeKind(
+NodeKind _decorator(String name, [List<FieldSchema> params = const []]) =>
+    NodeKind(
       name: name,
       inputs: const [GraphPort('in', _flow)],
       outputs: const [GraphPort('child', _flow)],
@@ -35,10 +37,10 @@ NodeKind _decorator(String name, [List<FieldSchema> params = const []]) => NodeK
     );
 
 NodeKind _leaf(String name, [List<FieldSchema> params = const []]) => NodeKind(
-      name: name,
-      inputs: const [GraphPort('in', _flow)],
-      paramsSchema: params,
-    );
+  name: name,
+  inputs: const [GraphPort('in', _flow)],
+  paramsSchema: params,
+);
 
 /// Every behavior-tree node type the engine can load, with the parameters the
 /// inspector offers. Names are the `type` strings of the engine's JSON.
@@ -72,7 +74,12 @@ final Map<String, NodeKind> behaviorTreeNodeKinds = {
   ]),
   'cooldown': _leaf('cooldown', const [
     FieldSchema('behaviorId', FieldType.string, required: true),
-    FieldSchema('cooldownDuration', FieldType.double, min: 0, defaultValue: 1.0),
+    FieldSchema(
+      'cooldownDuration',
+      FieldType.double,
+      min: 0,
+      defaultValue: 1.0,
+    ),
   ]),
   'timer': _leaf('timer', const [
     FieldSchema('duration', FieldType.double, min: 0, defaultValue: 1.0),
@@ -109,13 +116,15 @@ enum GraphType {
 
   /// The node-kind registry for this type.
   Map<String, NodeKind> get registry => switch (this) {
-        GraphType.dialogue => builtinNodeKinds,
-        GraphType.behaviorTree => behaviorTreeNodeKinds,
-        GraphType.stateMachine => stateMachineNodeKinds,
-      };
+    GraphType.dialogue => builtinNodeKinds,
+    GraphType.behaviorTree => behaviorTreeNodeKinds,
+    GraphType.stateMachine => stateMachineNodeKinds,
+  };
 
-  static GraphType parse(Object? name) =>
-      GraphType.values.firstWhere((t) => t.name == name, orElse: () => GraphType.dialogue);
+  static GraphType parse(Object? name) => GraphType.values.firstWhere(
+    (t) => t.name == name,
+    orElse: () => GraphType.dialogue,
+  );
 }
 
 /// Why a graph cannot be turned into engine JSON. [message] names the node.
@@ -136,32 +145,63 @@ List<GraphIssue> validateBehaviorTree(Graph graph) {
   GraphIssue issue(GraphIssueKind kind, String message, [String? node]) =>
       GraphIssue(kind, message, nodeId: node);
 
-  final root = graph.entryNodeId == null ? null : graph.nodeById(graph.entryNodeId!);
+  final root = graph.entryNodeId == null
+      ? null
+      : graph.nodeById(graph.entryNodeId!);
   if (root == null) {
     issues.add(issue(GraphIssueKind.missingEntry, 'the tree has no root node'));
   }
   for (final node in graph.nodes) {
     final kind = behaviorTreeNodeKinds[node.kind];
     if (kind == null) {
-      issues.add(issue(GraphIssueKind.unknownNodeKind, 'node "${node.id}" has unknown kind "${node.kind}"', node.id));
+      issues.add(
+        issue(
+          GraphIssueKind.unknownNodeKind,
+          'node "${node.id}" has unknown kind "${node.kind}"',
+          node.id,
+        ),
+      );
       continue;
     }
     final children = graph.outgoingFrom(node.id).length;
     final isDecorator = kind.outputNamed('child') != null;
     final isComposite = kind.outputNamed('children') != null;
     if (isDecorator && children != 1) {
-      issues.add(issue(GraphIssueKind.unknownPort,
-          '"${node.id}" (${node.kind}) needs exactly one child, has $children', node.id));
+      issues.add(
+        issue(
+          GraphIssueKind.unknownPort,
+          '"${node.id}" (${node.kind}) needs exactly one child, has $children',
+          node.id,
+        ),
+      );
     }
     if (isComposite && children == 0) {
-      issues.add(issue(GraphIssueKind.unknownPort, '"${node.id}" (${node.kind}) has no children', node.id));
+      issues.add(
+        issue(
+          GraphIssueKind.unknownPort,
+          '"${node.id}" (${node.kind}) has no children',
+          node.id,
+        ),
+      );
     }
     if (!isDecorator && !isComposite && children > 0) {
-      issues.add(issue(GraphIssueKind.unknownPort, '"${node.id}" (${node.kind}) is a leaf and cannot have children', node.id));
+      issues.add(
+        issue(
+          GraphIssueKind.unknownPort,
+          '"${node.id}" (${node.kind}) is a leaf and cannot have children',
+          node.id,
+        ),
+      );
     }
     final parents = graph.edges.where((e) => e.toNode == node.id).length;
     if (parents > 1) {
-      issues.add(issue(GraphIssueKind.unknownPort, '"${node.id}" has $parents parents; a tree node has one', node.id));
+      issues.add(
+        issue(
+          GraphIssueKind.unknownPort,
+          '"${node.id}" has $parents parents; a tree node has one',
+          node.id,
+        ),
+      );
     }
   }
   if (root != null) {
@@ -170,14 +210,26 @@ List<GraphIssue> validateBehaviorTree(Graph graph) {
     while (stack.isNotEmpty) {
       final id = stack.removeLast();
       if (!seen.add(id)) {
-        issues.add(issue(GraphIssueKind.cycleWithoutWait, 'the tree loops back to "$id"', id));
+        issues.add(
+          issue(
+            GraphIssueKind.cycleWithoutWait,
+            'the tree loops back to "$id"',
+            id,
+          ),
+        );
         continue;
       }
       stack.addAll(graph.outgoingFrom(id).map((e) => e.toNode));
     }
     for (final node in graph.nodes) {
       if (!seen.contains(node.id)) {
-        issues.add(issue(GraphIssueKind.unreachableNode, 'node "${node.id}" is not connected to the root', node.id));
+        issues.add(
+          issue(
+            GraphIssueKind.unreachableNode,
+            'node "${node.id}" is not connected to the root',
+            node.id,
+          ),
+        );
       }
     }
   }
@@ -191,7 +243,10 @@ List<GraphIssue> validateBehaviorTree(Graph graph) {
 /// the order their edges were drawn in. Throws [GraphCompileException] when the tree
 /// under the root has errors per [validateBehaviorTree]; nodes not connected to the
 /// root are left out, whatever state they are in.
-Map<String, dynamic> compileBehaviorTree(Graph graph, {Map<String, double> order = const {}}) {
+Map<String, dynamic> compileBehaviorTree(
+  Graph graph, {
+  Map<String, double> order = const {},
+}) {
   // Only the part of the graph hanging off the root can affect the result, so only
   // its mistakes block the compile. A half-built orphan (a decorator with no child
   // yet) is the editor's business, not a reason to refuse exporting the tree.
@@ -200,13 +255,20 @@ Map<String, dynamic> compileBehaviorTree(Graph graph, {Map<String, double> order
     final stack = [graph.entryNodeId!];
     while (stack.isNotEmpty) {
       final id = stack.removeLast();
-      if (reachable.add(id)) stack.addAll(graph.outgoingFrom(id).map((e) => e.toNode));
+      if (reachable.add(id))
+        stack.addAll(graph.outgoingFrom(id).map((e) => e.toNode));
     }
   }
-  final errors = validateBehaviorTree(graph).where((i) =>
-      i.kind != GraphIssueKind.unreachableNode && (i.nodeId == null || reachable.contains(i.nodeId)));
+  final errors = validateBehaviorTree(graph).where(
+    (i) =>
+        i.kind != GraphIssueKind.unreachableNode &&
+        (i.nodeId == null || reachable.contains(i.nodeId)),
+  );
   if (errors.isNotEmpty) {
-    throw GraphCompileException(errors.first.message, nodeId: errors.first.nodeId);
+    throw GraphCompileException(
+      errors.first.message,
+      nodeId: errors.first.nodeId,
+    );
   }
   Map<String, dynamic> build(String id) {
     final node = graph.nodeById(id)!;
@@ -269,8 +331,12 @@ ImportedGraph graphFromBehaviorTree(
 
   // Returns the node id and the x position of its subtree's center.
   (String, double) visit(Map<String, dynamic> j, int depth) {
-    final type = j['type'] as String? ?? (throw const FormatException('a node has no "type"'));
-    final kind = behaviorTreeNodeKinds[type] ?? (throw FormatException('unknown node type "$type"'));
+    final type =
+        j['type'] as String? ??
+        (throw const FormatException('a node has no "type"'));
+    final kind =
+        behaviorTreeNodeKinds[type] ??
+        (throw FormatException('unknown node type "$type"'));
     final id = uniqueId(j['id'] as String?, type);
     final params = <String, dynamic>{
       for (final field in kind.paramsSchema)
@@ -279,23 +345,33 @@ ImportedGraph graphFromBehaviorTree(
     nodes.add(GraphNode(id: id, kind: type, params: params));
 
     final childJson = <Map<String, dynamic>>[
-      if (j['children'] is List) for (final c in j['children'] as List) (c as Map).cast<String, dynamic>(),
+      if (j['children'] is List)
+        for (final c in j['children'] as List)
+          (c as Map).cast<String, dynamic>(),
       if (j['child'] is Map) (j['child'] as Map).cast<String, dynamic>(),
     ];
-    final port = kind.outputNamed('children')?.name ?? kind.outputNamed('child')?.name;
+    final port =
+        kind.outputNamed('children')?.name ?? kind.outputNamed('child')?.name;
     final xs = <double>[];
     for (final c in childJson) {
       final (childId, x) = visit(c, depth + 1);
       xs.add(x);
-      edges.add(GraphEdge(fromNode: id, fromPort: port!, toNode: childId, toPort: 'in'));
+      edges.add(
+        GraphEdge(fromNode: id, fromPort: port!, toNode: childId, toPort: 'in'),
+      );
     }
-    final x = xs.isEmpty ? (nextColumn++) * columnWidth : (xs.first + xs.last) / 2;
+    final x = xs.isEmpty
+        ? (nextColumn++) * columnWidth
+        : (xs.first + xs.last) / 2;
     layout[id] = (x, depth * rowHeight);
     return (id, x);
   }
 
   final (rootId, _) = visit(json, 0);
-  return ImportedGraph(Graph(nodes: nodes, edges: edges, entryNodeId: rootId), layout);
+  return ImportedGraph(
+    Graph(nodes: nodes, edges: edges, entryNodeId: rootId),
+    layout,
+  );
 }
 
 /// Problems with a state-machine [graph], for the editor. The generic graph checks
@@ -309,7 +385,9 @@ List<GraphIssue> validateStateMachine(Graph graph) {
   try {
     compileStateMachine(graph);
   } on GraphCompileException catch (e) {
-    issues.add(GraphIssue(GraphIssueKind.unknownPort, e.message, nodeId: e.nodeId));
+    issues.add(
+      GraphIssue(GraphIssueKind.unknownPort, e.message, nodeId: e.nodeId),
+    );
   }
   return issues;
 }
@@ -332,7 +410,10 @@ Map<String, dynamic> compileStateMachine(
   Map<String, dynamic>? Function(String graphPath)? resolveTree,
 }) {
   final states = graph.nodes.where((n) => n.kind == 'state').toList();
-  if (states.isEmpty) throw const GraphCompileException('a state machine needs at least one state');
+  if (states.isEmpty)
+    throw const GraphCompileException(
+      'a state machine needs at least one state',
+    );
   final names = <String, String>{}; // node id -> state name
   for (final s in states) {
     final name = (s.params['name'] as String?)?.trim();
@@ -352,23 +433,35 @@ Map<String, dynamic> compileStateMachine(
       final t = graph.nodeById(toTransition.toNode);
       if (t == null || t.kind != 'transition') {
         throw GraphCompileException(
-            '"${s.id}" connects straight to "${toTransition.toNode}"; go through a transition node',
-            nodeId: s.id);
+          '"${s.id}" connects straight to "${toTransition.toNode}"; go through a transition node',
+          nodeId: s.id,
+        );
       }
       final targets = graph.outgoingFrom(t.id);
       if (targets.length != 1 || names[targets.single.toNode] == null) {
-        throw GraphCompileException('transition "${t.id}" must lead to exactly one state', nodeId: t.id);
+        throw GraphCompileException(
+          'transition "${t.id}" must lead to exactly one state',
+          nodeId: t.id,
+        );
       }
       final to = names[targets.single.toNode]!;
       if (transitions.containsKey(to)) {
-        throw GraphCompileException('"${names[s.id]}" has two transitions to "$to"', nodeId: t.id);
+        throw GraphCompileException(
+          '"${names[s.id]}" has two transitions to "$to"',
+          nodeId: t.id,
+        );
       }
-      transitions[to] = {'toState': to, 'condition': t.params['condition'] ?? ''};
+      transitions[to] = {
+        'toState': to,
+        'condition': t.params['condition'] ?? '',
+      };
     }
     final treePath = s.params['behaviorTreeGraph'] as String?;
     out[names[s.id]!] = {
       'name': names[s.id],
-      'behaviorTree': treePath == null || treePath.isEmpty ? null : resolveTree?.call(treePath),
+      'behaviorTree': treePath == null || treePath.isEmpty
+          ? null
+          : resolveTree?.call(treePath),
       'transitions': transitions,
     };
   }

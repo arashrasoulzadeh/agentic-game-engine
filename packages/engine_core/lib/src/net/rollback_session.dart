@@ -5,7 +5,8 @@ import 'world_snapshot.dart';
 
 /// Applies one tick's inputs (player id -> input) to the world, before the
 /// systems run. Must be a pure function of its arguments and the world.
-typedef InputApplier = void Function(World world, Map<int, Map<String, dynamic>> inputs);
+typedef InputApplier =
+    void Function(World world, Map<int, Map<String, dynamic>> inputs);
 
 /// Rollback netcode: simulate ahead with *predicted* remote inputs, and when the
 /// real input arrives and differs, rewind to that tick and re-simulate with it.
@@ -77,7 +78,9 @@ class RollbackSession {
     if (tickNo < world.tick) {
       final used = _used[tickNo]?[player];
       if (used == null || _key(used) != _key(input)) {
-        _rollbackFrom = _rollbackFrom == null || tickNo < _rollbackFrom! ? tickNo : _rollbackFrom;
+        _rollbackFrom = _rollbackFrom == null || tickNo < _rollbackFrom!
+            ? tickNo
+            : _rollbackFrom;
       }
     }
     return true;

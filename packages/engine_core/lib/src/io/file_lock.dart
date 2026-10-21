@@ -8,12 +8,15 @@ class LockInfo {
   final String owner;
   final DateTime acquiredAt;
 
-  Map<String, dynamic> toJson() => {'owner': owner, 'acquiredAt': acquiredAt.toUtc().toIso8601String()};
+  Map<String, dynamic> toJson() => {
+    'owner': owner,
+    'acquiredAt': acquiredAt.toUtc().toIso8601String(),
+  };
 
   factory LockInfo.fromJson(Map<String, dynamic> json) => LockInfo(
-        owner: json['owner'] as String,
-        acquiredAt: DateTime.parse(json['acquiredAt'] as String),
-      );
+    owner: json['owner'] as String,
+    acquiredAt: DateTime.parse(json['acquiredAt'] as String),
+  );
 }
 
 /// The outcome of [FileLock.acquire]: whether the caller now holds the lock, and who does.
@@ -36,8 +39,11 @@ class LockResult {
 /// people editing the same level, not to be a security boundary. A lock older than [staleAfter]
 /// is treated as abandoned (a crashed editor leaves one behind) and may be taken over.
 class FileLock {
-  FileLock(this.path, {this.staleAfter = const Duration(hours: 2), DateTime Function()? now})
-      : _now = now ?? DateTime.now;
+  FileLock(
+    this.path, {
+    this.staleAfter = const Duration(hours: 2),
+    DateTime Function()? now,
+  }) : _now = now ?? DateTime.now;
 
   /// The file being protected; the lock file is `$path.lock`.
   final String path;
@@ -104,13 +110,15 @@ class FileLock {
 
   bool _justCreated() {
     try {
-      return DateTime.now().difference(_file.lastModifiedSync()) < const Duration(seconds: 3);
+      return DateTime.now().difference(_file.lastModifiedSync()) <
+          const Duration(seconds: 3);
     } on FileSystemException {
       return false;
     }
   }
 
-  bool _isStale(LockInfo info) => _now().difference(info.acquiredAt) > staleAfter;
+  bool _isStale(LockInfo info) =>
+      _now().difference(info.acquiredAt) > staleAfter;
 }
 
 /// A name for the person at this machine - `user@host` - to use as a lock owner.

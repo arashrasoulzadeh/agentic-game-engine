@@ -16,7 +16,7 @@ class ButtonHitBox {
   Map<String, dynamic> toJson() => {'width': width, 'height': height};
 
   factory ButtonHitBox.fromJson(Map<String, dynamic> json) => ButtonHitBox(
-        (json['width'] as num).toDouble(),
-        (json['height'] as num).toDouble(),
-      );
+    (json['width'] as num).toDouble(),
+    (json['height'] as num).toDouble(),
+  );
 }

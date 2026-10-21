@@ -37,64 +37,104 @@ String tileMapToTmx(
   final count = [highest, ...propertyIds].fold<int>(1, (m, t) => t > m ? t : m);
   final cols = columns ?? count;
   final width = imageWidth ?? (map.tileWidth * cols).round();
-  final height = imageHeight ?? (map.tileHeight * ((count + cols - 1) ~/ cols)).round();
+  final height =
+      imageHeight ?? (map.tileHeight * ((count + cols - 1) ~/ cols)).round();
 
   final builder = XmlBuilder();
   builder.processing('xml', 'version="1.0" encoding="UTF-8"');
-  builder.element('map', attributes: {
-    'version': '1.10',
-    'orientation': 'orthogonal',
-    'renderorder': 'right-down',
-    'width': '${map.cols}',
-    'height': '${map.rows}',
-    'tilewidth': _num(map.tileWidth),
-    'tileheight': _num(map.tileHeight),
-  }, nest: () {
-    builder.element('tileset', attributes: {
-      'firstgid': '1',
-      'name': tilesetName,
-      'tilewidth': _num(map.tileWidth),
-      'tileheight': _num(map.tileHeight),
-      'tilecount': '$count',
-      'columns': '$cols',
-    }, nest: () {
-      builder.element('image', attributes: {'source': imageSource, 'width': '$width', 'height': '$height'});
-      for (final id in propertyIds.toList()..sort()) {
-        // A property id below 1 would be a local id of -1; the importer cannot
-        // express "tile 0" (empty), so such an id carries nothing and is skipped.
-        if (id < 1) continue;
-        builder.element('tile', attributes: {'id': '${id - 1}'}, nest: () {
-          builder.element('properties', nest: () {
-            void flag(String name, Set<int> ids) {
-              if (ids.contains(id)) {
-                builder.element('property', attributes: {'name': name, 'type': 'bool', 'value': 'true'});
-              }
-            }
-
-            flag('solid', map.solidTileIds);
-            flag('oneWay', map.oneWayTileIds);
-            flag('slopeUpRight', map.slopeUpRightTileIds);
-            flag('slopeUpLeft', map.slopeUpLeftTileIds);
-          });
-        });
-      }
-    });
-    builder.element('layer', attributes: {
-      'id': '1',
-      'name': 'Tile Layer 1',
+  builder.element(
+    'map',
+    attributes: {
+      'version': '1.10',
+      'orientation': 'orthogonal',
+      'renderorder': 'right-down',
       'width': '${map.cols}',
       'height': '${map.rows}',
-    }, nest: () {
-      builder.element('data', attributes: {'encoding': 'csv'}, nest: () {
-        final rows = <String>[];
-        for (var r = 0; r < map.rows; r++) {
-          rows.add(map.tiles.sublist(r * map.cols, (r + 1) * map.cols).join(','));
-        }
-        // Tiled writes a trailing comma on every row but the last.
-        builder.text('\n${rows.join(',\n')}\n');
-      });
-    });
-  });
+      'tilewidth': _num(map.tileWidth),
+      'tileheight': _num(map.tileHeight),
+    },
+    nest: () {
+      builder.element(
+        'tileset',
+        attributes: {
+          'firstgid': '1',
+          'name': tilesetName,
+          'tilewidth': _num(map.tileWidth),
+          'tileheight': _num(map.tileHeight),
+          'tilecount': '$count',
+          'columns': '$cols',
+        },
+        nest: () {
+          builder.element(
+            'image',
+            attributes: {
+              'source': imageSource,
+              'width': '$width',
+              'height': '$height',
+            },
+          );
+          for (final id in propertyIds.toList()..sort()) {
+            // A property id below 1 would be a local id of -1; the importer cannot
+            // express "tile 0" (empty), so such an id carries nothing and is skipped.
+            if (id < 1) continue;
+            builder.element(
+              'tile',
+              attributes: {'id': '${id - 1}'},
+              nest: () {
+                builder.element(
+                  'properties',
+                  nest: () {
+                    void flag(String name, Set<int> ids) {
+                      if (ids.contains(id)) {
+                        builder.element(
+                          'property',
+                          attributes: {
+                            'name': name,
+                            'type': 'bool',
+                            'value': 'true',
+                          },
+                        );
+                      }
+                    }
+
+                    flag('solid', map.solidTileIds);
+                    flag('oneWay', map.oneWayTileIds);
+                    flag('slopeUpRight', map.slopeUpRightTileIds);
+                    flag('slopeUpLeft', map.slopeUpLeftTileIds);
+                  },
+                );
+              },
+            );
+          }
+        },
+      );
+      builder.element(
+        'layer',
+        attributes: {
+          'id': '1',
+          'name': 'Tile Layer 1',
+          'width': '${map.cols}',
+          'height': '${map.rows}',
+        },
+        nest: () {
+          builder.element(
+            'data',
+            attributes: {'encoding': 'csv'},
+            nest: () {
+              final rows = <String>[];
+              for (var r = 0; r < map.rows; r++) {
+                rows.add(
+                  map.tiles.sublist(r * map.cols, (r + 1) * map.cols).join(','),
+                );
+              }
+              // Tiled writes a trailing comma on every row but the last.
+              builder.text('\n${rows.join(',\n')}\n');
+            },
+          );
+        },
+      );
+    },
+  );
   return builder.buildDocument().toXmlString(pretty: true, indent: ' ');
 }
 

@@ -31,31 +31,31 @@ void main() {
     expect(positions, 2);
   });
 
-  test('loadInto returns spawned ids keyed by "name", skipping unnamed entities', () {
-    final world = _buildWorld();
-    final named = Level.loadInto(world, {
-      'entities': [
-        {
-          'name': 'player',
-          'components': {
-            'position': {'x': 10, 'y': 20},
+  test(
+    'loadInto returns spawned ids keyed by "name", skipping unnamed entities',
+    () {
+      final world = _buildWorld();
+      final named = Level.loadInto(world, {
+        'entities': [
+          {
+            'name': 'player',
+            'components': {
+              'position': {'x': 10, 'y': 20},
+            },
           },
-        },
-        {
-          'components': {
-            'position': {'x': 0, 'y': 0},
+          {
+            'components': {
+              'position': {'x': 0, 'y': 0},
+            },
           },
-        },
-        {
-          'name': 'door',
-          'components': <String, dynamic>{},
-        },
-      ],
-    });
+          {'name': 'door', 'components': <String, dynamic>{}},
+        ],
+      });
 
-    expect(named.keys, {'player', 'door'});
-    expect(world.storeOf<Position>().get(named['player']!)?.x, 10);
-  });
+      expect(named.keys, {'player', 'door'});
+      expect(world.storeOf<Position>().get(named['player']!)?.x, 10);
+    },
+  );
 
   test('throws LevelLoadException when "name" is not a string', () {
     final world = _buildWorld();
@@ -65,11 +65,13 @@ void main() {
           {'name': 42},
         ],
       }),
-      throwsA(isA<LevelLoadException>().having(
-        (e) => e.message,
-        'message',
-        contains('entities[0].name'),
-      )),
+      throwsA(
+        isA<LevelLoadException>().having(
+          (e) => e.message,
+          'message',
+          contains('entities[0].name'),
+        ),
+      ),
     );
   });
 
@@ -87,11 +89,13 @@ void main() {
     final world = _buildWorld();
     expect(
       () => Level.loadInto(world, {}),
-      throwsA(isA<LevelLoadException>().having(
-        (e) => e.message,
-        'message',
-        contains('entities'),
-      )),
+      throwsA(
+        isA<LevelLoadException>().having(
+          (e) => e.message,
+          'message',
+          contains('entities'),
+        ),
+      ),
     );
   });
 
@@ -109,11 +113,13 @@ void main() {
       () => Level.loadInto(world, {
         'entities': [42],
       }),
-      throwsA(isA<LevelLoadException>().having(
-        (e) => e.message,
-        'message',
-        contains('entities[0]'),
-      )),
+      throwsA(
+        isA<LevelLoadException>().having(
+          (e) => e.message,
+          'message',
+          contains('entities[0]'),
+        ),
+      ),
     );
   });
 
@@ -139,11 +145,13 @@ void main() {
           },
         ],
       }),
-      throwsA(isA<LevelLoadException>().having(
-        (e) => e.message,
-        'message',
-        contains('non-string key'),
-      )),
+      throwsA(
+        isA<LevelLoadException>().having(
+          (e) => e.message,
+          'message',
+          contains('non-string key'),
+        ),
+      ),
     );
   });
 
@@ -162,11 +170,13 @@ void main() {
           },
         ],
       }),
-      throwsA(isA<LevelLoadException>().having(
-        (e) => e.message,
-        'message',
-        contains('position'),
-      )),
+      throwsA(
+        isA<LevelLoadException>().having(
+          (e) => e.message,
+          'message',
+          contains('position'),
+        ),
+      ),
     );
   });
 }

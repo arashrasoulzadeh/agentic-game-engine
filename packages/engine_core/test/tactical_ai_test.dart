@@ -1,7 +1,8 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:test/test.dart';
 
-GridNavigator _nav() => GridNavigator(cols: 10, rows: 10, terrainCost: (c, r) => 1);
+GridNavigator _nav() =>
+    GridNavigator(cols: 10, rows: 10, terrainCost: (c, r) => 1);
 
 World _world({bool fog = false}) {
   final w = World(width: 10, height: 10);
@@ -14,7 +15,16 @@ World _world({bool fog = false}) {
   return w;
 }
 
-EntityId _unit(World w, String team, int c, int r, {int hp = 10, int maxHp = 10, int ap = 3, int? vision}) {
+EntityId _unit(
+  World w,
+  String team,
+  int c,
+  int r, {
+  int hp = 10,
+  int maxHp = 10,
+  int ap = 3,
+  int? vision,
+}) {
   final e = w.spawn();
   w.storeOf<Team>().set(e, Team(team));
   w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
@@ -24,7 +34,8 @@ EntityId _unit(World w, String team, int c, int r, {int hp = 10, int maxHp = 10,
   return e;
 }
 
-Order _first(World w, EntityId e) => w.storeOf<OrderQueue>().get(e)!.orders.first;
+Order _first(World w, EntityId e) =>
+    w.storeOf<OrderQueue>().get(e)!.orders.first;
 
 void _play(World w, TurnAI ai, {String team = 'blue'}) {
   startTurnBasedGame(w, ['red', 'blue']);
@@ -56,26 +67,36 @@ void main() {
       expect((_first(w, b) as AttackOrder).target, nearB);
     });
 
-    test('equal hit points break the tie toward the target nearest the team', () {
-      final w = _world();
-      final close = _unit(w, 'red', 3, 3);
-      _unit(w, 'red', 9, 9);
-      final a = _unit(w, 'blue', 2, 2);
-      _play(w, TacticalAI());
-      expect((_first(w, a) as AttackOrder).target, close);
-    });
+    test(
+      'equal hit points break the tie toward the target nearest the team',
+      () {
+        final w = _world();
+        final close = _unit(w, 'red', 3, 3);
+        _unit(w, 'red', 9, 9);
+        final a = _unit(w, 'blue', 2, 2);
+        _play(w, TacticalAI());
+        expect((_first(w, a) as AttackOrder).target, close);
+      },
+    );
   });
 
   group('retreat', () {
-    test('a badly hurt unit runs to the reachable cell farthest from the enemy', () {
-      final w = _world();
-      _unit(w, 'red', 4, 4);
-      final hurt = _unit(w, 'blue', 5, 4, hp: 1);
-      _play(w, TacticalAI(navigator: _nav()));
-      final order = _first(w, hurt) as MoveOrder;
-      expect(order.col, 8, reason: '3 points of movement straight away from the enemy at (4,4)');
-      expect(w.storeOf<OrderQueue>().get(hurt)!.orders, hasLength(1));
-    });
+    test(
+      'a badly hurt unit runs to the reachable cell farthest from the enemy',
+      () {
+        final w = _world();
+        _unit(w, 'red', 4, 4);
+        final hurt = _unit(w, 'blue', 5, 4, hp: 1);
+        _play(w, TacticalAI(navigator: _nav()));
+        final order = _first(w, hurt) as MoveOrder;
+        expect(
+          order.col,
+          8,
+          reason: '3 points of movement straight away from the enemy at (4,4)',
+        );
+        expect(w.storeOf<OrderQueue>().get(hurt)!.orders, hasLength(1));
+      },
+    );
 
     test('a healthy unit still attacks', () {
       final w = _world();
@@ -86,7 +107,10 @@ void main() {
     });
 
     test('without a navigator, or with retreat off, a hurt unit fights on', () {
-      for (final ai in [TacticalAI(), TacticalAI(navigator: _nav(), retreatBelow: 0)]) {
+      for (final ai in [
+        TacticalAI(),
+        TacticalAI(navigator: _nav(), retreatBelow: 0),
+      ]) {
         final w = _world();
         _unit(w, 'red', 4, 4);
         final hurt = _unit(w, 'blue', 5, 4, hp: 1);
@@ -134,9 +158,16 @@ void main() {
         return w.storeOf<OrderQueue>().get(u)?.orders ?? const [];
       }
 
-      expect(orders(TacticalAI(navigator: _nav())).whereType<MoveOrder>(), hasLength(1));
+      expect(
+        orders(TacticalAI(navigator: _nav())).whereType<MoveOrder>(),
+        hasLength(1),
+      );
       expect(orders(TacticalAI()), isEmpty, reason: 'no navigator');
-      expect(orders(TacticalAI(navigator: _nav(), explore: false)), isEmpty, reason: 'disabled');
+      expect(
+        orders(TacticalAI(navigator: _nav(), explore: false)),
+        isEmpty,
+        reason: 'disabled',
+      );
     });
 
     test('with no fog in the game there is nothing to explore', () {
@@ -144,7 +175,11 @@ void main() {
       _unit(w, 'red', 9, 9);
       final u = _unit(w, 'blue', 0, 0);
       _play(w, TacticalAI(navigator: _nav()));
-      expect(_first(w, u), isA<AttackOrder>(), reason: 'without fog the enemy is always visible');
+      expect(
+        _first(w, u),
+        isA<AttackOrder>(),
+        reason: 'without fog the enemy is always visible',
+      );
     });
   });
 
@@ -172,7 +207,10 @@ void main() {
     startTurnBasedGame(w, ['red', 'blue']);
     endTurn(w);
     w.storeOf<ActionPoints>().get(spent)!.current = 0;
-    w.storeOf<OrderQueue>().set(a, OrderQueue([const MoveOrder(9, 9), const MoveOrder(8, 8)]));
+    w.storeOf<OrderQueue>().set(
+      a,
+      OrderQueue([const MoveOrder(9, 9), const MoveOrder(8, 8)]),
+    );
     TacticalAI().playTurn(w, 'blue');
     expect(w.storeOf<OrderQueue>().get(a)!.orders.single, isA<AttackOrder>());
     expect(w.storeOf<OrderQueue>().get(spent)?.orders ?? const [], isEmpty);
@@ -202,7 +240,8 @@ void main() {
     for (var round = 0; round < 12 && turnStateOf(w)!.winner == null; round++) {
       final enemies = [
         for (var i = 0; i < w.storeOf<Team>().length; i++)
-          if (w.storeOf<Team>().denseAt(i).id == 'blue') w.storeOf<Team>().entityAt(i),
+          if (w.storeOf<Team>().denseAt(i).id == 'blue')
+            w.storeOf<Team>().entityAt(i),
       ];
       if (enemies.isNotEmpty) submitOrder(w, hero, AttackOrder(enemies.first));
       w.step(0.1);

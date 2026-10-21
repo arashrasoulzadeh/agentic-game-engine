@@ -18,13 +18,18 @@ class StatusEffect {
 
   StatusEffect(this.id, {this.turns = 1, this.attack = 0, this.defense = 0});
 
-  Map<String, dynamic> toJson() => {'id': id, 'turns': turns, 'attack': attack, 'defense': defense};
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'turns': turns,
+    'attack': attack,
+    'defense': defense,
+  };
   factory StatusEffect.fromJson(Map<String, dynamic> json) => StatusEffect(
-        json['id'] as String,
-        turns: (json['turns'] as num?)?.toInt() ?? 1,
-        attack: (json['attack'] as num?)?.toInt() ?? 0,
-        defense: (json['defense'] as num?)?.toInt() ?? 0,
-      );
+    json['id'] as String,
+    turns: (json['turns'] as num?)?.toInt() ?? 1,
+    attack: (json['attack'] as num?)?.toInt() ?? 0,
+    defense: (json['defense'] as num?)?.toInt() ?? 0,
+  );
 }
 
 /// The active [StatusEffect]s on a unit.
@@ -36,11 +41,13 @@ class StatusEffects {
   int get defenseBonus => effects.fold(0, (sum, e) => sum + e.defense);
   bool has(String id) => effects.any((e) => e.id == id);
 
-  Map<String, dynamic> toJson() => {'effects': [for (final e in effects) e.toJson()]};
+  Map<String, dynamic> toJson() => {
+    'effects': [for (final e in effects) e.toJson()],
+  };
   factory StatusEffects.fromJson(Map<String, dynamic> json) => StatusEffects([
-        for (final e in (json['effects'] as List? ?? const []))
-          StatusEffect.fromJson((e as Map).cast<String, dynamic>()),
-      ]);
+    for (final e in (json['effects'] as List? ?? const []))
+      StatusEffect.fromJson((e as Map).cast<String, dynamic>()),
+  ]);
 }
 
 /// The status id of a unit holding an overwatch stance (see `OverwatchOrder`).

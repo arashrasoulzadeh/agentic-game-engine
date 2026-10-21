@@ -18,20 +18,23 @@ void main() {
     expect(world.entities.isAlive(id), isFalse);
   });
 
-  test('movement system integrates position by velocity and bounces off walls', () {
-    final world = _buildWorld();
-    final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(195, 100));
-    world.storeOf<Velocity>().set(id, Velocity(50, 0));
-    world.storeOf<Collider>().set(id, Collider(5));
+  test(
+    'movement system integrates position by velocity and bounces off walls',
+    () {
+      final world = _buildWorld();
+      final id = world.spawn();
+      world.storeOf<Position>().set(id, Position(195, 100));
+      world.storeOf<Velocity>().set(id, Velocity(50, 0));
+      world.storeOf<Collider>().set(id, Collider(5));
 
-    world.step(1.0); // would move to x=245, past the 200-wide world -> bounce
+      world.step(1.0); // would move to x=245, past the 200-wide world -> bounce
 
-    final pos = world.storeOf<Position>().get(id)!;
-    final vel = world.storeOf<Velocity>().get(id)!;
-    expect(pos.x, lessThanOrEqualTo(195));
-    expect(vel.x, lessThan(0));
-  });
+      final pos = world.storeOf<Position>().get(id)!;
+      final vel = world.storeOf<Velocity>().get(id)!;
+      expect(pos.x, lessThanOrEqualTo(195));
+      expect(vel.x, lessThan(0));
+    },
+  );
 
   test('collision system detects overlap and emits CollisionEvent', () {
     final world = _buildWorld();
@@ -70,8 +73,8 @@ void main() {
         {
           'id': id2,
           'components': (snapshot['entities'] as List).first['components'],
-        }
-      ]
+        },
+      ],
     };
     world2.applyPatch(patched);
 
@@ -80,46 +83,58 @@ void main() {
     expect(restored.y, 20);
   });
 
-  test('systemOrder lists every registered system\'s name, and tick counts steps', () {
-    final world = _buildWorld();
-    world.addSystem(AISystem(BehaviorRegistry()));
-    world.addSystem(ParticleSystem());
+  test(
+    'systemOrder lists every registered system\'s name, and tick counts steps',
+    () {
+      final world = _buildWorld();
+      world.addSystem(AISystem(BehaviorRegistry()));
+      world.addSystem(ParticleSystem());
 
-    expect(world.systemOrder, ['movement', 'collision', 'ai', 'particle']);
-    expect(world.tick, 0);
+      expect(world.systemOrder, ['movement', 'collision', 'ai', 'particle']);
+      expect(world.tick, 0);
 
-    world.step(0.016);
-    world.step(0.016);
-    expect(world.tick, 2);
-  });
+      world.step(0.016);
+      world.step(0.016);
+      expect(world.tick, 2);
+    },
+  );
 
-  test('EventBus.clearHandlers removes every previously registered listener', () {
-    final world = _buildWorld();
-    var count = 0;
-    world.events.on<CollisionEvent>((e) => count++);
+  test(
+    'EventBus.clearHandlers removes every previously registered listener',
+    () {
+      final world = _buildWorld();
+      var count = 0;
+      world.events.on<CollisionEvent>((e) => count++);
 
-    world.events.clearHandlers();
-    world.events.emit(CollisionEvent(0, 1));
-    world.events.flush();
+      world.events.clearHandlers();
+      world.events.emit(CollisionEvent(0, 1));
+      world.events.flush();
 
-    expect(count, 0);
-  });
+      expect(count, 0);
+    },
+  );
 
-  test('spatial hash keeps collision system correct at higher entity counts', () {
-    final world = _buildWorld();
-    for (var i = 0; i < 500; i++) {
-      final id = world.spawn();
-      world.storeOf<Position>().set(id, Position((i % 20) * 10.0, (i ~/ 20) * 10.0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<Collider>().set(id, Collider(4));
-    }
+  test(
+    'spatial hash keeps collision system correct at higher entity counts',
+    () {
+      final world = _buildWorld();
+      for (var i = 0; i < 500; i++) {
+        final id = world.spawn();
+        world.storeOf<Position>().set(
+          id,
+          Position((i % 20) * 10.0, (i ~/ 20) * 10.0),
+        );
+        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.storeOf<Collider>().set(id, Collider(4));
+      }
 
-    var collisionCount = 0;
-    world.events.on<CollisionEvent>((e) => collisionCount++);
-    world.step(0.016);
+      var collisionCount = 0;
+      world.events.on<CollisionEvent>((e) => collisionCount++);
+      world.step(0.016);
 
-    expect(collisionCount, greaterThan(0));
-  });
+      expect(collisionCount, greaterThan(0));
+    },
+  );
 
   group('applyPatch malformed input', () {
     test('missing "entities" key is a no-op, not an error', () {
@@ -135,27 +150,33 @@ void main() {
       );
     });
 
-    test('throws WorldPatchException when an entity entry is not an object', () {
-      final world = _buildWorld();
-      expect(
-        () => world.applyPatch({
-          'entities': ['not an object'],
-        }),
-        throwsA(isA<WorldPatchException>()),
-      );
-    });
+    test(
+      'throws WorldPatchException when an entity entry is not an object',
+      () {
+        final world = _buildWorld();
+        expect(
+          () => world.applyPatch({
+            'entities': ['not an object'],
+          }),
+          throwsA(isA<WorldPatchException>()),
+        );
+      },
+    );
 
-    test('throws WorldPatchException when an entity id is missing/wrong type', () {
-      final world = _buildWorld();
-      expect(
-        () => world.applyPatch({
-          'entities': [
-            {'components': {}},
-          ],
-        }),
-        throwsA(isA<WorldPatchException>()),
-      );
-    });
+    test(
+      'throws WorldPatchException when an entity id is missing/wrong type',
+      () {
+        final world = _buildWorld();
+        expect(
+          () => world.applyPatch({
+            'entities': [
+              {'components': {}},
+            ],
+          }),
+          throwsA(isA<WorldPatchException>()),
+        );
+      },
+    );
 
     test('a patch entry for a dead/unknown entity id is silently skipped', () {
       final world = _buildWorld();
@@ -182,20 +203,23 @@ void main() {
       );
     });
 
-    test('propagates ComponentApplyException from a malformed component payload', () {
-      final world = _buildWorld();
-      final id = world.spawn();
-      expect(
-        () => world.applyPatch({
-          'entities': [
-            {
-              'id': id,
-              'components': {'position': 'not an object'},
-            },
-          ],
-        }),
-        throwsA(isA<ComponentApplyException>()),
-      );
-    });
+    test(
+      'propagates ComponentApplyException from a malformed component payload',
+      () {
+        final world = _buildWorld();
+        final id = world.spawn();
+        expect(
+          () => world.applyPatch({
+            'entities': [
+              {
+                'id': id,
+                'components': {'position': 'not an object'},
+              },
+            ],
+          }),
+          throwsA(isA<ComponentApplyException>()),
+        );
+      },
+    );
   });
 }

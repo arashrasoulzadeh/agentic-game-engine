@@ -114,7 +114,8 @@ class ComponentRegistry {
     final reg = _byType[T];
     if (reg == null) {
       throw StateError(
-          'Component type $T is not registered. Call registry.register<$T>() first.');
+        'Component type $T is not registered. Call registry.register<$T>() first.',
+      );
     }
     return reg.store as ComponentStore<T>;
   }

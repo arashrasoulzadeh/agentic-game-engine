@@ -1,18 +1,23 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:test/test.dart';
 
-GridNavigator _open({bool diagonals = true, Set<(int, int)> walls = const {}, Map<(int, int), int> costs = const {}}) =>
-    GridNavigator(
-      cols: 6,
-      rows: 6,
-      diagonals: diagonals,
-      terrainCost: (c, r) => walls.contains((c, r)) ? null : (costs[(c, r)] ?? 1),
-    );
+GridNavigator _open({
+  bool diagonals = true,
+  Set<(int, int)> walls = const {},
+  Map<(int, int), int> costs = const {},
+}) => GridNavigator(
+  cols: 6,
+  rows: 6,
+  diagonals: diagonals,
+  terrainCost: (c, r) => walls.contains((c, r)) ? null : (costs[(c, r)] ?? 1),
+);
 
 void main() {
   test('diagonal path is shorter than orthogonal-only', () {
     final d = _open().findPath(GridPosition(0, 0), GridPosition(3, 3))!;
-    final o = _open(diagonals: false).findPath(GridPosition(0, 0), GridPosition(3, 3))!;
+    final o = _open(
+      diagonals: false,
+    ).findPath(GridPosition(0, 0), GridPosition(3, 3))!;
     expect(d.length, 3);
     expect(o.length, 6);
     expect((d.last.col, d.last.row), (3, 3));
@@ -40,8 +45,11 @@ void main() {
 
   test('units block the path but not diagonal corners', () {
     final nav = _open();
-    final path = nav.findPath(GridPosition(0, 0), GridPosition(2, 0),
-        blocked: (c, r) => c == 1 && r == 0)!;
+    final path = nav.findPath(
+      GridPosition(0, 0),
+      GridPosition(2, 0),
+      blocked: (c, r) => c == 1 && r == 0,
+    )!;
     expect(path.map((p) => (p.col, p.row)), isNot(contains((1, 0))));
     expect(path.length, 2);
   });
@@ -70,25 +78,28 @@ void main() {
     expect(nav.terrainCost(0, 0), 1);
   });
 
-  test('OrderSystem.withNavigator charges terrain cost and routes around units', () {
-    final w = World(width: 10, height: 10);
-    registerCoreComponents(w);
-    w.addSystem(OrderSystem.withNavigator(_open(costs: {(1, 0): 3})));
-    EntityId unit(String t, int c, int r, int ap) {
-      final e = w.spawn();
-      w.storeOf<Team>().set(e, Team(t));
-      w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-      w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-      return e;
-    }
+  test(
+    'OrderSystem.withNavigator charges terrain cost and routes around units',
+    () {
+      final w = World(width: 10, height: 10);
+      registerCoreComponents(w);
+      w.addSystem(OrderSystem.withNavigator(_open(costs: {(1, 0): 3})));
+      EntityId unit(String t, int c, int r, int ap) {
+        final e = w.spawn();
+        w.storeOf<Team>().set(e, Team(t));
+        w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+        w.storeOf<GridPosition>().set(e, GridPosition(c, r));
+        return e;
+      }
 
-    final a = unit('red', 0, 0, 4);
-    unit('blue', 3, 3, 4);
-    startTurnBasedGame(w, ['red', 'blue']);
-    submitOrder(w, a, const MoveOrder(2, 0));
-    w.step(0.1);
-    final p = w.storeOf<GridPosition>().get(a)!;
-    expect((p.col, p.row), (2, 0));
-    expect(w.storeOf<ActionPoints>().get(a)!.current, lessThan(4));
-  });
+      final a = unit('red', 0, 0, 4);
+      unit('blue', 3, 3, 4);
+      startTurnBasedGame(w, ['red', 'blue']);
+      submitOrder(w, a, const MoveOrder(2, 0));
+      w.step(0.1);
+      final p = w.storeOf<GridPosition>().get(a)!;
+      expect((p.col, p.row), (2, 0));
+      expect(w.storeOf<ActionPoints>().get(a)!.current, lessThan(4));
+    },
+  );
 }

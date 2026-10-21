@@ -21,17 +21,25 @@ void main() {
     expect(received, isTrue);
   });
 
-  test('flush delivers an event emitted by another event\'s handler within the same call', () {
-    final bus = EventBus();
-    bus.on<_EventA>((_) => bus.emit(const _EventB()));
-    var receivedB = false;
-    bus.on<_EventB>((_) => receivedB = true);
+  test(
+    'flush delivers an event emitted by another event\'s handler within the same call',
+    () {
+      final bus = EventBus();
+      bus.on<_EventA>((_) => bus.emit(const _EventB()));
+      var receivedB = false;
+      bus.on<_EventB>((_) => receivedB = true);
 
-    bus.emit(const _EventA());
-    bus.flush();
+      bus.emit(const _EventA());
+      bus.flush();
 
-    expect(receivedB, isTrue, reason: 'cascading events resolve within the same flush, not one tick later');
-  });
+      expect(
+        receivedB,
+        isTrue,
+        reason:
+            'cascading events resolve within the same flush, not one tick later',
+      );
+    },
+  );
 
   test('flush handles a chain several events deep in one call', () {
     final bus = EventBus();

@@ -25,20 +25,25 @@ class RealtimeStats {
   /// Seconds until the unit may attack again.
   double cooldown;
 
-  RealtimeStats({this.speed = 2, this.attackInterval = 1, this.moveProgress = 0, this.cooldown = 0});
+  RealtimeStats({
+    this.speed = 2,
+    this.attackInterval = 1,
+    this.moveProgress = 0,
+    this.cooldown = 0,
+  });
 
   Map<String, dynamic> toJson() => {
-        'speed': speed,
-        'attackInterval': attackInterval,
-        'moveProgress': moveProgress,
-        'cooldown': cooldown,
-      };
+    'speed': speed,
+    'attackInterval': attackInterval,
+    'moveProgress': moveProgress,
+    'cooldown': cooldown,
+  };
   factory RealtimeStats.fromJson(Map<String, dynamic> json) => RealtimeStats(
-        speed: (json['speed'] as num?)?.toDouble() ?? 2,
-        attackInterval: (json['attackInterval'] as num?)?.toDouble() ?? 1,
-        moveProgress: (json['moveProgress'] as num?)?.toDouble() ?? 0,
-        cooldown: (json['cooldown'] as num?)?.toDouble() ?? 0,
-      );
+    speed: (json['speed'] as num?)?.toDouble() ?? 2,
+    attackInterval: (json['attackInterval'] as num?)?.toDouble() ?? 1,
+    moveProgress: (json['moveProgress'] as num?)?.toDouble() ?? 0,
+    cooldown: (json['cooldown'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 /// Executes `OrderQueue`s continuously, driven by `dt` instead of turns.
@@ -54,7 +59,11 @@ class RealtimeStats {
 /// frame times. Orders are submitted with the same `submitOrder`/selection calls
 /// as turn-based play -- a world without a `TurnState` is real-time.
 class RealtimeOrderSystem extends System {
-  RealtimeOrderSystem({required this.fields, this.attackRange = 1, this.autoEngage = true});
+  RealtimeOrderSystem({
+    required this.fields,
+    this.attackRange = 1,
+    this.autoEngage = true,
+  });
 
   final FlowFieldCache fields;
 
@@ -80,7 +89,8 @@ class RealtimeOrderSystem extends System {
     // add/remove history, so a world rebuilt from a snapshot iterates differently
     // from the original; ordering by id is what keeps rollback and replay
     // bit-identical (who moves first decides who gets a contested cell).
-    final ids = [for (var i = 0; i < queues.length; i++) queues.entityAt(i)]..sort();
+    final ids = [for (var i = 0; i < queues.length; i++) queues.entityAt(i)]
+      ..sort();
     for (final entity in ids) {
       if (!world.entities.isAlive(entity)) continue;
       final s = stats.get(entity);
@@ -98,40 +108,68 @@ class RealtimeOrderSystem extends System {
         AttackOrder() => _attack(world, entity, s, order, dt),
         _ => _fail(world, entity, order, OrderFailure.invalidTarget),
       };
-      if (result != _Result.running && queue.orders.isNotEmpty && identical(queue.orders.first, order)) {
+      if (result != _Result.running &&
+          queue.orders.isNotEmpty &&
+          identical(queue.orders.first, order)) {
         queue.orders.removeAt(0);
         s.moveProgress = 0;
       }
     }
   }
 
-  _Result _move(World world, EntityId entity, RealtimeStats s, MoveOrder order, double dt) {
+  _Result _move(
+    World world,
+    EntityId entity,
+    RealtimeStats s,
+    MoveOrder order,
+    double dt,
+  ) {
     final grid = world.storeOf<GridPosition>();
     final pos = grid.get(entity);
-    if (pos == null) return _fail(world, entity, order, OrderFailure.invalidTarget);
+    if (pos == null)
+      return _fail(world, entity, order, OrderFailure.invalidTarget);
     if (pos.col == order.col && pos.row == order.row) return _Result.done;
     final field = fields.fieldFor(order.col, order.row);
-    if (!field.reaches(pos.col, pos.row)) return _fail(world, entity, order, OrderFailure.blocked);
-    final boxedIn =
-        _advance(world, entity, s, field, dt, stopWhen: (p) => p.col == order.col && p.row == order.row);
+    if (!field.reaches(pos.col, pos.row))
+      return _fail(world, entity, order, OrderFailure.blocked);
+    final boxedIn = _advance(
+      world,
+      entity,
+      s,
+      field,
+      dt,
+      stopWhen: (p) => p.col == order.col && p.row == order.row,
+    );
     if (boxedIn && autoEngage) _engageNearest(world, entity, s);
-    return pos.col == order.col && pos.row == order.row ? _Result.done : _Result.running;
+    return pos.col == order.col && pos.row == order.row
+        ? _Result.done
+        : _Result.running;
   }
 
-  _Result _attack(World world, EntityId entity, RealtimeStats s, AttackOrder order, double dt) {
+  _Result _attack(
+    World world,
+    EntityId entity,
+    RealtimeStats s,
+    AttackOrder order,
+    double dt,
+  ) {
     if (!world.entities.isAlive(order.target)) return _Result.done;
     final grid = world.storeOf<GridPosition>();
     final teams = world.storeOf<Team>();
     final me = grid.get(entity);
     final target = grid.get(order.target);
     final myTeam = teams.get(entity)?.id;
-    if (me == null || target == null || myTeam == null || teams.get(order.target)?.id == myTeam) {
+    if (me == null ||
+        target == null ||
+        myTeam == null ||
+        teams.get(order.target)?.id == myTeam) {
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     }
     if (!canSee(world, myTeam, order.target)) {
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     }
-    final reach = world.storeOf<AttackProfile>().get(entity)?.range ?? attackRange;
+    final reach =
+        world.storeOf<AttackProfile>().get(entity)?.range ?? attackRange;
     if (me.chebyshev(target) <= reach) {
       if (s.cooldown <= 0) {
         resolveAttack(world, entity, order.target);
@@ -141,9 +179,17 @@ class RealtimeOrderSystem extends System {
       return _Result.running;
     }
     final field = fields.fieldFor(target.col, target.row);
-    if (!field.reaches(me.col, me.row)) return _fail(world, entity, order, OrderFailure.blocked);
-    final boxedIn = _advance(world, entity, s, field, dt,
-        ignore: order.target, stopWhen: (p) => p.chebyshev(target) <= reach);
+    if (!field.reaches(me.col, me.row))
+      return _fail(world, entity, order, OrderFailure.blocked);
+    final boxedIn = _advance(
+      world,
+      entity,
+      s,
+      field,
+      dt,
+      ignore: order.target,
+      stopWhen: (p) => p.chebyshev(target) <= reach,
+    );
     if (boxedIn && autoEngage) _engageNearest(world, entity, s);
     return _Result.running;
   }
@@ -156,18 +202,26 @@ class RealtimeOrderSystem extends System {
     final teams = world.storeOf<Team>();
     final me = grid.get(entity);
     final myTeam = teams.get(entity)?.id;
-    if (me == null || myTeam == null || !world.storeOf<UnitStats>().has(entity)) return;
-    final reach = world.storeOf<AttackProfile>().get(entity)?.range ?? attackRange;
+    if (me == null || myTeam == null || !world.storeOf<UnitStats>().has(entity))
+      return;
+    final reach =
+        world.storeOf<AttackProfile>().get(entity)?.range ?? attackRange;
     EntityId? best;
     var bestDist = 1 << 30;
     for (var i = 0; i < grid.length; i++) {
       final other = grid.entityAt(i);
       final otherTeam = teams.get(other)?.id;
-      if (otherTeam == null || otherTeam == myTeam || !world.storeOf<UnitStats>().has(other)) continue;
+      if (otherTeam == null ||
+          otherTeam == myTeam ||
+          !world.storeOf<UnitStats>().has(other))
+        continue;
       final d = me.chebyshev(grid.denseAt(i));
       // Nearest wins; equal distances go to the lower id, not whichever the store
       // happens to list first (see update()).
-      if (d > reach || d > bestDist || (d == bestDist && other > best!) || !canSee(world, myTeam, other)) {
+      if (d > reach ||
+          d > bestDist ||
+          (d == bestDist && other > best!) ||
+          !canSee(world, myTeam, other)) {
         continue;
       }
       best = other;
@@ -268,7 +322,13 @@ EntityId spawnRealtimeUnit(
   final id = world.spawn();
   world.storeOf<Team>().set(id, Team(team));
   world.storeOf<GridPosition>().set(id, GridPosition(col, row));
-  world.storeOf<RealtimeStats>().set(id, RealtimeStats(speed: speed, attackInterval: attackInterval));
-  world.storeOf<UnitStats>().set(id, UnitStats(maxHp: maxHp, attack: attack, defense: defense));
+  world.storeOf<RealtimeStats>().set(
+    id,
+    RealtimeStats(speed: speed, attackInterval: attackInterval),
+  );
+  world.storeOf<UnitStats>().set(
+    id,
+    UnitStats(maxHp: maxHp, attack: attack, defense: defense),
+  );
   return id;
 }

@@ -53,7 +53,8 @@ class LevelValidator {
 
   /// Validates against a live registry, which knows exactly what a running game
   /// registers. Use this inside the engine and its tests.
-  factory LevelValidator.forRegistry(ComponentRegistry components) => LevelValidator(
+  factory LevelValidator.forRegistry(ComponentRegistry components) =>
+      LevelValidator(
         schemaFor: components.schemaFor,
         isKnown: components.isRegistered,
       );
@@ -61,7 +62,8 @@ class LevelValidator {
   /// Validates against a plain schema map, such as `allComponentSchemas`, for
   /// tools that cannot register components (the CLI, the studio). Every name
   /// missing from [schemas] is reported as unknown.
-  factory LevelValidator.forSchemas(Map<String, ComponentSchema> schemas) => LevelValidator(
+  factory LevelValidator.forSchemas(Map<String, ComponentSchema> schemas) =>
+      LevelValidator(
         schemaFor: (name) => schemas[name],
         isKnown: schemas.containsKey,
       );
@@ -75,12 +77,14 @@ class LevelValidator {
         final name = entry.key;
         if (name == 'tileMap' && entry.value.containsKey('legend')) {
           for (final message in _legendTileMapProblems(entry.value)) {
-            issues.add(LevelIssue(
-              entityIndex: i,
-              entityName: entity.name,
-              component: name,
-              message: message,
-            ));
+            issues.add(
+              LevelIssue(
+                entityIndex: i,
+                entityName: entity.name,
+                component: name,
+                message: message,
+              ),
+            );
           }
           continue;
         }
@@ -142,13 +146,17 @@ class LevelValidator {
   /// level has no tile map, no player, or a tile map that fails to parse (that
   /// failure is reported by the schema check already).
   void _checkExitReachability(LevelDocument document, List<LevelIssue> issues) {
-    final mapIndex = document.entities.indexWhere((e) => e.components.containsKey('tileMap'));
+    final mapIndex = document.entities.indexWhere(
+      (e) => e.components.containsKey('tileMap'),
+    );
     final playerIndex = document.entities.indexWhere((e) => e.name == 'player');
     if (mapIndex < 0 || playerIndex < 0) return;
 
     final TileMap map;
     try {
-      map = TileMap.fromJson(document.entities[mapIndex].components['tileMap']!);
+      map = TileMap.fromJson(
+        document.entities[mapIndex].components['tileMap']!,
+      );
     } on Object {
       return;
     }
@@ -169,18 +177,23 @@ class LevelValidator {
         targetY: at.y - origin.y,
       );
       if (!reachable) {
-        issues.add(LevelIssue(
-          entityIndex: i,
-          entityName: exit.name,
-          component: 'roomExit',
-          message: 'exit is not reachable from the player by walking or jumping',
-          severity: IssueSeverity.warning,
-        ));
+        issues.add(
+          LevelIssue(
+            entityIndex: i,
+            entityName: exit.name,
+            component: 'roomExit',
+            message:
+                'exit is not reachable from the player by walking or jumping',
+            severity: IssueSeverity.warning,
+          ),
+        );
       }
     }
   }
 
-  static ({double x, double y})? _position(Map<String, Map<String, dynamic>> components) {
+  static ({double x, double y})? _position(
+    Map<String, Map<String, dynamic>> components,
+  ) {
     final position = components['position'];
     if (position == null) return null;
     final x = position['x'];
@@ -223,22 +236,26 @@ class LevelValidator {
           final value = component[field];
           if (value == null) continue;
           if (value is! int) {
-            issues.add(LevelIssue(
-              entityIndex: i,
-              entityName: entity.name,
-              component: componentName,
-              message: '$field must be an integer entity ID',
-            ));
+            issues.add(
+              LevelIssue(
+                entityIndex: i,
+                entityName: entity.name,
+                component: componentName,
+                message: '$field must be an integer entity ID',
+              ),
+            );
             continue;
           }
           if (value < 0 || value >= document.entities.length) {
-            issues.add(LevelIssue(
-              entityIndex: i,
-              entityName: entity.name,
-              component: componentName,
-              message:
-                  '$field references entity $value, but this level has only ${document.entities.length} entities (valid indices 0..${document.entities.length - 1})',
-            ));
+            issues.add(
+              LevelIssue(
+                entityIndex: i,
+                entityName: entity.name,
+                component: componentName,
+                message:
+                    '$field references entity $value, but this level has only ${document.entities.length} entities (valid indices 0..${document.entities.length - 1})',
+              ),
+            );
           }
         }
       }

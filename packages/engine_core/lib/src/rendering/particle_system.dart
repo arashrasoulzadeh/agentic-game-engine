@@ -68,7 +68,12 @@ class ParticleSystem implements System {
     }
   }
 
-  void _spawnParticle(World world, ParticleEmitter emitter, Position origin, EntityId emitterEntityId) {
+  void _spawnParticle(
+    World world,
+    ParticleEmitter emitter,
+    Position origin,
+    EntityId emitterEntityId,
+  ) {
     double spawnX = origin.x;
     double spawnY = origin.y;
 
@@ -83,14 +88,22 @@ class ParticleSystem implements System {
         break;
       case EmissionShape.rect:
         if (emitter.emissionHalfWidth > 0 || emitter.emissionHalfHeight > 0) {
-          spawnX += _randomBetween(-emitter.emissionHalfWidth, emitter.emissionHalfWidth);
-          spawnY += _randomBetween(-emitter.emissionHalfHeight, emitter.emissionHalfHeight);
+          spawnX += _randomBetween(
+            -emitter.emissionHalfWidth,
+            emitter.emissionHalfWidth,
+          );
+          spawnY += _randomBetween(
+            -emitter.emissionHalfHeight,
+            emitter.emissionHalfHeight,
+          );
         }
         break;
       case EmissionShape.edge:
         final t = _randomBetween(0, 1);
-        spawnX += emitter.edgeStartX + (emitter.edgeEndX - emitter.edgeStartX) * t;
-        spawnY += emitter.edgeStartY + (emitter.edgeEndY - emitter.edgeStartY) * t;
+        spawnX +=
+            emitter.edgeStartX + (emitter.edgeEndX - emitter.edgeStartX) * t;
+        spawnY +=
+            emitter.edgeStartY + (emitter.edgeEndY - emitter.edgeStartY) * t;
         break;
       case EmissionShape.point:
         break;
@@ -102,20 +115,24 @@ class ParticleSystem implements System {
 
     final id = world.spawn();
     world.storeOf<Position>().set(id, Position(spawnX, spawnY));
-    world.storeOf<Velocity>().set(id, Velocity(cos(angle) * speed, sin(angle) * speed));
+    world.storeOf<Velocity>().set(
+      id,
+      Velocity(cos(angle) * speed, sin(angle) * speed),
+    );
     world.storeOf<Particle>().set(
-          id,
-          Particle(
-            lifetime: lifetime,
-            startScale: emitter.startScale,
-            endScale: emitter.endScale,
-            startAlpha: emitter.startAlpha,
-            endAlpha: emitter.endAlpha,
-            colorArgb: emitter.colorArgb,
-            zIndex: emitter.zIndex,
-          )..followEmitter = emitter.followEmitter
-           ..emitterEntityId = emitter.followEmitter ? emitterEntityId : null,
-        );
+      id,
+      Particle(
+          lifetime: lifetime,
+          startScale: emitter.startScale,
+          endScale: emitter.endScale,
+          startAlpha: emitter.startAlpha,
+          endAlpha: emitter.endAlpha,
+          colorArgb: emitter.colorArgb,
+          zIndex: emitter.zIndex,
+        )
+        ..followEmitter = emitter.followEmitter
+        ..emitterEntityId = emitter.followEmitter ? emitterEntityId : null,
+    );
   }
 
   void _applyForces(World world, double dt) {

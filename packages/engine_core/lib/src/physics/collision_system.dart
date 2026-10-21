@@ -73,7 +73,9 @@ class CollisionSystem implements System {
     final colliders = world.storeOf<Collider>();
 
     final resolvedCellSize = _resolveCellSize(colliders);
-    if (_hash == null || _hashCellSize != resolvedCellSize || _hashWorldWidth != world.width) {
+    if (_hash == null ||
+        _hashCellSize != resolvedCellSize ||
+        _hashWorldWidth != world.width) {
       _hash = SpatialHash(cellSize: resolvedCellSize, worldWidth: world.width);
       _hashCellSize = resolvedCellSize;
       _hashWorldWidth = world.width;

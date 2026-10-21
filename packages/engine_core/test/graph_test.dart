@@ -13,7 +13,11 @@ void main() {
           GraphEdge(fromNode: 'a', fromPort: 'out', toNode: 'b', toPort: 'in'),
         ],
         variables: [
-          GraphVariable(name: 'met', type: PortType.boolean, initialValue: false),
+          GraphVariable(
+            name: 'met',
+            type: PortType.boolean,
+            initialValue: false,
+          ),
         ],
         entryNodeId: 'a',
       );
@@ -96,8 +100,9 @@ void main() {
     });
 
     test('say requires a textKey param', () {
-      final textKey = builtinNodeKinds['say']!.paramsSchema
-          .firstWhere((f) => f.name == 'textKey');
+      final textKey = builtinNodeKinds['say']!.paramsSchema.firstWhere(
+        (f) => f.name == 'textKey',
+      );
       expect(textKey.type, FieldType.string);
       expect(textKey.required, isTrue);
     });

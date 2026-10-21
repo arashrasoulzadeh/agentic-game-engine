@@ -8,16 +8,19 @@ import 'dart:convert';
 import 'package:engine_core/engine_core.dart';
 import 'package:test/test.dart';
 
-GridNavigator _nav() => GridNavigator(cols: 12, rows: 12, terrainCost: (c, r) => 1);
+GridNavigator _nav() =>
+    GridNavigator(cols: 12, rows: 12, terrainCost: (c, r) => 1);
 
 World _skirmish() {
   final w = World(width: 12, height: 12);
   registerCoreComponents(w);
   w.addSystem(OrderSystem.withNavigator(_nav()));
-  w.addSystem(AITurnSystem({
-    'red': TacticalAI(navigator: _nav()),
-    'blue': AggressiveAI(),
-  }));
+  w.addSystem(
+    AITurnSystem({
+      'red': TacticalAI(navigator: _nav()),
+      'blue': AggressiveAI(),
+    }),
+  );
   w.addSystem(WinConditionSystem());
   installCombat(w);
   for (var i = 0; i < 6; i++) {
@@ -42,18 +45,21 @@ void _play(World w, int steps) {
 }
 
 void main() {
-  test('a snapshot restored into a fresh world replays an AI-vs-AI game identically', () {
-    final original = _skirmish();
-    _play(original, 40);
-    final midpoint = WorldSnapshot.capture(original);
-    _play(original, 120);
+  test(
+    'a snapshot restored into a fresh world replays an AI-vs-AI game identically',
+    () {
+      final original = _skirmish();
+      _play(original, 40);
+      final midpoint = WorldSnapshot.capture(original);
+      _play(original, 120);
 
-    final rebuilt = _skirmish();
-    midpoint.restoreInto(rebuilt);
-    _play(rebuilt, 120);
+      final rebuilt = _skirmish();
+      midpoint.restoreInto(rebuilt);
+      _play(rebuilt, 120);
 
-    expect(_fingerprint(rebuilt), _fingerprint(original));
-  });
+      expect(_fingerprint(rebuilt), _fingerprint(original));
+    },
+  );
 
   test('churning the stores before a restore does not change the outcome', () {
     final a = _skirmish();

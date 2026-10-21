@@ -15,7 +15,8 @@ export 'src/content/cinematic.dart';
 export 'src/content/inventory.dart';
 export 'src/content/dialogue.dart';
 export 'src/ecs/component_registry.dart';
-export 'package:engine_schema/engine_schema.dart' show FieldSchema, FieldType, ComponentSchema;
+export 'package:engine_schema/engine_schema.dart'
+    show FieldSchema, FieldType, ComponentSchema;
 export 'src/ecs/component_store.dart';
 export 'src/ecs/deterministic_random.dart';
 export 'src/ecs/replay_recorder.dart';
@@ -366,8 +367,18 @@ void registerCoreComponents(World world) {
     RealtimeStats.fromJson,
     schema: realtimeStatsSchema,
   );
-  world.components.register<Vip>('vip', (v) => v.toJson(), Vip.fromJson, schema: vipSchema);
-  world.components.register<Flag>('flag', (f) => f.toJson(), Flag.fromJson, schema: flagSchema);
+  world.components.register<Vip>(
+    'vip',
+    (v) => v.toJson(),
+    Vip.fromJson,
+    schema: vipSchema,
+  );
+  world.components.register<Flag>(
+    'flag',
+    (f) => f.toJson(),
+    Flag.fromJson,
+    schema: flagSchema,
+  );
   world.components.register<DeliveryZone>(
     'deliveryZone',
     (z) => z.toJson(),

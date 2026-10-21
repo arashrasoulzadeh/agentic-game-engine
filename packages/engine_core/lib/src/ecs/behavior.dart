@@ -23,7 +23,8 @@ class BehaviorRegistry {
     final behavior = _behaviors[id];
     if (behavior == null) {
       throw ArgumentError(
-          'No Behavior registered for id "$id". Call registry.register() first.');
+        'No Behavior registered for id "$id". Call registry.register() first.',
+      );
     }
     return behavior;
   }

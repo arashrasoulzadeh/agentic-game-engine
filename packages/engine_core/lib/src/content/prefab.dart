@@ -11,7 +11,8 @@ class Prefab {
   /// The entities, with every `position` stored relative to the group's origin.
   final List<LevelEntity> entities;
 
-  Prefab({required this.name, required List<LevelEntity> entities}) : entities = List.of(entities);
+  Prefab({required this.name, required List<LevelEntity> entities})
+    : entities = List.of(entities);
 
   /// Captures [source] as a prefab. Positions are rewritten relative to the group's
   /// top-left corner (the smallest x and y of any positioned entity), so placing the
@@ -27,8 +28,7 @@ class Prefab {
       if (minY == null || y < minY) minY = y;
     }
     final copies = [
-      for (final e in source)
-        _copy(e, dx: -(minX ?? 0), dy: -(minY ?? 0)),
+      for (final e in source) _copy(e, dx: -(minX ?? 0), dy: -(minY ?? 0)),
     ];
     return Prefab(name: name, entities: copies);
   }
@@ -37,7 +37,11 @@ class Prefab {
   /// copies (placing twice gives independent entities), positions offset, and names
   /// made unique against [taken] and each other (`torch` -> `torch2`) because entity
   /// names are how a game finds an entity.
-  List<LevelEntity> instantiate(double x, double y, {Set<String> taken = const {}}) {
+  List<LevelEntity> instantiate(
+    double x,
+    double y, {
+    Set<String> taken = const {},
+  }) {
     final used = {...taken};
     final out = <LevelEntity>[];
     for (final template in entities) {
@@ -57,22 +61,23 @@ class Prefab {
   }
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'entities': [for (final e in entities) e.toJson()],
-      };
+    'name': name,
+    'entities': [for (final e in entities) e.toJson()],
+  };
 
   factory Prefab.fromJson(Map<String, dynamic> json) => Prefab(
-        name: json['name'] as String,
-        entities: [
-          for (final e in (json['entities'] as List? ?? const []))
-            LevelEntity.fromJson((e as Map).cast<String, dynamic>()),
-        ],
-      );
+    name: json['name'] as String,
+    entities: [
+      for (final e in (json['entities'] as List? ?? const []))
+        LevelEntity.fromJson((e as Map).cast<String, dynamic>()),
+    ],
+  );
 }
 
 LevelEntity _copy(LevelEntity e, {required double dx, required double dy}) {
   final components = {
-    for (final entry in e.components.entries) entry.key: _deepCopy(entry.value) as Map<String, dynamic>,
+    for (final entry in e.components.entries)
+      entry.key: _deepCopy(entry.value) as Map<String, dynamic>,
   };
   final position = components['position'];
   if (position != null) {
@@ -83,7 +88,8 @@ LevelEntity _copy(LevelEntity e, {required double dx, required double dy}) {
 }
 
 Object? _deepCopy(Object? v) {
-  if (v is Map) return {for (final e in v.entries) e.key as String: _deepCopy(e.value)};
+  if (v is Map)
+    return {for (final e in v.entries) e.key as String: _deepCopy(e.value)};
   if (v is List) return [for (final x in v) _deepCopy(x)];
   return v;
 }

@@ -59,8 +59,7 @@ class GridNavigator {
     int c,
     int r, {
     bool Function(int col, int row)? blocked,
-  }) =>
-      _neighbours(c, r, blocked ?? (_, _) => false);
+  }) => _neighbours(c, r, blocked ?? (_, _) => false);
 
   Iterable<(int, int, int)> _neighbours(
     int c,
@@ -105,7 +104,9 @@ class GridNavigator {
 
     final best = <int, int>{key(from.col, from.row): 0};
     final parent = <int, int>{};
-    final open = <(int, int, int, int)>[(h(from.col, from.row), 0, from.col, from.row)];
+    final open = <(int, int, int, int)>[
+      (h(from.col, from.row), 0, from.col, from.row),
+    ];
     while (open.isNotEmpty) {
       var bi = 0;
       for (var i = 1; i < open.length; i++) {

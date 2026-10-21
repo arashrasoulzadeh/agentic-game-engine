@@ -56,7 +56,8 @@ class Tween {
     this.reversed = false,
   });
 
-  double get rawProgress => duration <= 0 ? 1 : (elapsed / duration).clamp(0.0, 1.0);
+  double get rawProgress =>
+      duration <= 0 ? 1 : (elapsed / duration).clamp(0.0, 1.0);
 
   double get value {
     final t = _ease(easing, rawProgress);
@@ -66,27 +67,27 @@ class Tween {
   bool get isComplete => !loop && !pingPong && elapsed >= duration;
 
   Map<String, dynamic> toJson() => {
-        'from': from,
-        'to': to,
-        'duration': duration,
-        'elapsed': elapsed,
-        'loop': loop,
-        'pingPong': pingPong,
-        'easing': easing.name,
-        'reversed': reversed,
-      };
+    'from': from,
+    'to': to,
+    'duration': duration,
+    'elapsed': elapsed,
+    'loop': loop,
+    'pingPong': pingPong,
+    'easing': easing.name,
+    'reversed': reversed,
+  };
 
   factory Tween.fromJson(Map<String, dynamic> json) => Tween(
-        from: (json['from'] as num).toDouble(),
-        to: (json['to'] as num).toDouble(),
-        duration: (json['duration'] as num).toDouble(),
-        elapsed: (json['elapsed'] as num?)?.toDouble() ?? 0,
-        loop: json['loop'] as bool? ?? false,
-        pingPong: json['pingPong'] as bool? ?? false,
-        easing: EasingType.values.firstWhere(
-          (e) => e.name == json['easing'],
-          orElse: () => EasingType.linear,
-        ),
-        reversed: json['reversed'] as bool? ?? false,
-      );
+    from: (json['from'] as num).toDouble(),
+    to: (json['to'] as num).toDouble(),
+    duration: (json['duration'] as num).toDouble(),
+    elapsed: (json['elapsed'] as num?)?.toDouble() ?? 0,
+    loop: json['loop'] as bool? ?? false,
+    pingPong: json['pingPong'] as bool? ?? false,
+    easing: EasingType.values.firstWhere(
+      (e) => e.name == json['easing'],
+      orElse: () => EasingType.linear,
+    ),
+    reversed: json['reversed'] as bool? ?? false,
+  );
 }

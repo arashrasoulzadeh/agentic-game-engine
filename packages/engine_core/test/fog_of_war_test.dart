@@ -58,22 +58,25 @@ void main() {
     expect(fog.isExplored('red', 5, 5), isTrue);
   });
 
-  test('canSee: own units and visible enemies yes, hidden enemies no, no fog = yes', () {
-    final w = _world();
-    _unit(w, 'red', 0, 0, vision: 2);
-    final mine = _unit(w, 'red', 9, 9);
-    final near = _unit(w, 'blue', 1, 1);
-    final far = _unit(w, 'blue', 8, 8);
-    startTurnBasedGame(w, ['red', 'blue']);
-    w.step(0.1);
-    expect(canSee(w, 'red', mine), isTrue);
-    expect(canSee(w, 'red', near), isTrue);
-    expect(canSee(w, 'red', far), isFalse);
+  test(
+    'canSee: own units and visible enemies yes, hidden enemies no, no fog = yes',
+    () {
+      final w = _world();
+      _unit(w, 'red', 0, 0, vision: 2);
+      final mine = _unit(w, 'red', 9, 9);
+      final near = _unit(w, 'blue', 1, 1);
+      final far = _unit(w, 'blue', 8, 8);
+      startTurnBasedGame(w, ['red', 'blue']);
+      w.step(0.1);
+      expect(canSee(w, 'red', mine), isTrue);
+      expect(canSee(w, 'red', near), isTrue);
+      expect(canSee(w, 'red', far), isFalse);
 
-    final noFog = World(width: 5, height: 5);
-    registerCoreComponents(noFog);
-    expect(canSee(noFog, 'red', far), isTrue);
-  });
+      final noFog = World(width: 5, height: 5);
+      registerCoreComponents(noFog);
+      expect(canSee(noFog, 'red', far), isTrue);
+    },
+  );
 
   test('attacking an unseen enemy fails', () {
     final w = _world();
@@ -89,7 +92,16 @@ void main() {
   });
 
   test('FogOfWar round trips', () {
-    final f = FogOfWar(4, 4, visible: {'a': {1, 2}}, explored: {'a': {1, 2, 3}});
+    final f = FogOfWar(
+      4,
+      4,
+      visible: {
+        'a': {1, 2},
+      },
+      explored: {
+        'a': {1, 2, 3},
+      },
+    );
     final back = FogOfWar.fromJson(f.toJson());
     expect(back.isVisible('a', 2, 0), isTrue);
     expect(back.isExplored('a', 3, 0), isTrue);

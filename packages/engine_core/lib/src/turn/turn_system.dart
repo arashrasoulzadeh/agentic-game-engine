@@ -53,8 +53,10 @@ bool trySpendActionPoints(World world, EntityId entity, int cost) {
   final state = turnStateOf(world);
   final team = world.storeOf<Team>().get(entity);
   final ap = world.storeOf<ActionPoints>().get(entity);
-  if (state == null || state.winner != null || team == null || ap == null) return false;
-  if (team.id != state.activeTeam || cost < 0 || ap.current < cost) return false;
+  if (state == null || state.winner != null || team == null || ap == null)
+    return false;
+  if (team.id != state.activeTeam || cost < 0 || ap.current < cost)
+    return false;
   ap.current -= cost;
   return true;
 }

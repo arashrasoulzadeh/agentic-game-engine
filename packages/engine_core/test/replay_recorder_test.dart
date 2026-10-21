@@ -48,8 +48,14 @@ void main() {
 
     test('fromJson deserializes frames', () {
       final json = [
-        {'dt': 0.016, 'data': {'action': 'left'}},
-        {'dt': 0.016, 'data': {'action': 'right'}},
+        {
+          'dt': 0.016,
+          'data': {'action': 'left'},
+        },
+        {
+          'dt': 0.016,
+          'data': {'action': 'right'},
+        },
       ];
       final recorder = ReplayRecorder.fromJson(json);
 
@@ -113,7 +119,9 @@ void main() {
     });
 
     test('reset rewinds to start', () {
-      final frames = [ReplayFrame(0.016, {'frame': 1})];
+      final frames = [
+        ReplayFrame(0.016, {'frame': 1}),
+      ];
       final player = ReplayPlayer(frames);
 
       player.step(0.016, (_) {});

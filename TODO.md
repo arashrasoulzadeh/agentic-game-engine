@@ -191,8 +191,6 @@ Site: <https://meetarash.ir/agentic-game-engine/> (MkDocs Material, built from
 None of these appear anywhere under `docs/` today. Each needs a concept page
 (or a section) and, where it has runtime behaviour, a tested recipe:
 
-- [ ] Real Wave Function Collapse: `WFCGenerator` has no adjacency rules (placeholder, documented
-      in `docs/concepts/procedural-generation.md`).
 - [ ] AI building blocks, remaining: steering, hearing / sound propagation,
       `InvestigateBehavior`, `FleeBehavior`, pathfinding (behavior trees and state
       machines are done: `docs/concepts/ai.md`).

@@ -66,7 +66,8 @@ class ReleaseManifest {
   /// order, as [toJson] always emits it), UTF-8 encoded. Signing or
   /// verifying anything other than this exact encoding of this exact map
   /// will not match.
-  Uint8List get signedBytes => Uint8List.fromList(utf8.encode(jsonEncode(toJson())));
+  Uint8List get signedBytes =>
+      Uint8List.fromList(utf8.encode(jsonEncode(toJson())));
 }
 
 /// Why a manifest or one of its items was rejected, so the bootstrap window
@@ -100,7 +101,9 @@ class ReleaseManifestVerifier {
 
   /// A verifier for the publisher's raw 32-byte Ed25519 public key (what a config file holds).
   factory ReleaseManifestVerifier.fromPublicKeyBytes(List<int> bytes) =>
-      ReleaseManifestVerifier(SimplePublicKey(bytes, type: KeyPairType.ed25519));
+      ReleaseManifestVerifier(
+        SimplePublicKey(bytes, type: KeyPairType.ed25519),
+      );
 
   /// Checks [manifest]'s [signature] (raw bytes, not base64/hex) against
   /// [publicKey]. A null or empty signature is reported as `unsigned`,
@@ -139,7 +142,10 @@ class ReleaseManifestVerifier {
   /// Checks downloaded [bytes] against [item]'s declared SHA-256. The
   /// bootstrap window calls this after every download, before the file is
   /// kept or used for anything.
-  static ReleaseManifestCheck verifyChecksum(ManifestItem item, List<int> bytes) {
+  static ReleaseManifestCheck verifyChecksum(
+    ManifestItem item,
+    List<int> bytes,
+  ) {
     final digest = sha256.convert(bytes).toString();
     if (digest != item.sha256) {
       return ReleaseManifestCheck.rejected(ManifestRejection.checksumMismatch);
@@ -159,8 +165,7 @@ class ReleaseManifestSigner {
 
   /// A fresh Ed25519 keypair, for generating a release's signing key or for
   /// a test that needs a real key pair rather than a canned one.
-  static Future<SimpleKeyPair> generateKeyPair() =>
-      _algorithm.newKeyPair();
+  static Future<SimpleKeyPair> generateKeyPair() => _algorithm.newKeyPair();
 
   /// Signs [manifest] with [privateKey], returning the raw signature bytes
   /// to publish alongside the manifest (e.g. as `manifest.json.sig`).

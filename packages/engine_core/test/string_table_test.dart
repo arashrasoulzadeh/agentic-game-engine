@@ -10,17 +10,23 @@ void main() {
       expect(table.resolve('greeting'), 'Hola');
     });
 
-    test('defaults to defaultLocale when the active locale has no translation', () {
-      final table = StringTable({
-        'greeting': {'en': 'Hello'},
-      }, locale: 'fr');
-      expect(table.resolve('greeting'), 'Hello');
-    });
+    test(
+      'defaults to defaultLocale when the active locale has no translation',
+      () {
+        final table = StringTable({
+          'greeting': {'en': 'Hello'},
+        }, locale: 'fr');
+        expect(table.resolve('greeting'), 'Hello');
+      },
+    );
 
-    test('falls back to the raw key when neither locale nor defaultLocale has it', () {
-      final table = StringTable({}, locale: 'en');
-      expect(table.resolve('missingKey'), 'missingKey');
-    });
+    test(
+      'falls back to the raw key when neither locale nor defaultLocale has it',
+      () {
+        final table = StringTable({}, locale: 'en');
+        expect(table.resolve('missingKey'), 'missingKey');
+      },
+    );
 
     test('substitutes {param}-style placeholders', () {
       final table = StringTable({
@@ -41,34 +47,44 @@ void main() {
       expect(table.resolve('greeting'), 'Hola');
     });
 
-    test('hasTranslation reflects the active locale specifically, not the defaultLocale fallback', () {
-      final table = StringTable({
-        'greeting': {'en': 'Hello'},
-      }, locale: 'fr');
-      expect(table.hasTranslation('greeting'), isFalse);
-      table.locale = 'en';
-      expect(table.hasTranslation('greeting'), isTrue);
-    });
+    test(
+      'hasTranslation reflects the active locale specifically, not the defaultLocale fallback',
+      () {
+        final table = StringTable({
+          'greeting': {'en': 'Hello'},
+        }, locale: 'fr');
+        expect(table.hasTranslation('greeting'), isFalse);
+        table.locale = 'en';
+        expect(table.hasTranslation('greeting'), isTrue);
+      },
+    );
 
     test('round-trips through toJson/fromJson', () {
-      final table = StringTable({
-        'greeting': {'en': 'Hello', 'es': 'Hola'},
-      }, defaultLocale: 'en', locale: 'es');
+      final table = StringTable(
+        {
+          'greeting': {'en': 'Hello', 'es': 'Hola'},
+        },
+        defaultLocale: 'en',
+        locale: 'es',
+      );
 
       final restored = StringTable.fromJson(table.toJson(), locale: 'es');
       expect(restored.resolve('greeting'), 'Hola');
       expect(restored.defaultLocale, 'en');
     });
 
-    test('fromJson defaults defaultLocale to "en" and locale to defaultLocale when absent', () {
-      final restored = StringTable.fromJson({
-        'entries': {
-          'greeting': {'en': 'Hello'},
-        },
-      });
-      expect(restored.defaultLocale, 'en');
-      expect(restored.locale, 'en');
-      expect(restored.resolve('greeting'), 'Hello');
-    });
+    test(
+      'fromJson defaults defaultLocale to "en" and locale to defaultLocale when absent',
+      () {
+        final restored = StringTable.fromJson({
+          'entries': {
+            'greeting': {'en': 'Hello'},
+          },
+        });
+        expect(restored.defaultLocale, 'en');
+        expect(restored.locale, 'en');
+        expect(restored.resolve('greeting'), 'Hello');
+      },
+    );
   });
 }

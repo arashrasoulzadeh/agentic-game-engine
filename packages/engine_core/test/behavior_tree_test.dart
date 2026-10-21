@@ -18,18 +18,26 @@ void main() {
       final world = _buildWorld();
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(entity, AIState('test', memory: {'_bt_blackboard': {}}));
+      world.storeOf<AIState>().set(
+        entity,
+        AIState('test', memory: {'_bt_blackboard': {}}),
+      );
 
       final registry = BehaviorRegistry();
       registry.register('action1', _TestBehavior(setValue: 1));
       registry.register('action2', _TestBehavior(setValue: 2));
 
-      final tree = BTSequence(children: [
-        BTLeaf(behaviorId: 'action1'),
-        BTLeaf(behaviorId: 'action2'),
-      ]);
+      final tree = BTSequence(
+        children: [
+          BTLeaf(behaviorId: 'action1'),
+          BTLeaf(behaviorId: 'action2'),
+        ],
+      );
 
-      final action = BehaviorTreeBehavior(root: tree, registry: registry).decide(WorldView(world), entity);
+      final action = BehaviorTreeBehavior(
+        root: tree,
+        registry: registry,
+      ).decide(WorldView(world), entity);
       action.apply(world);
 
       expect(world.storeOf<_TestValue>().get(entity)?.value, 2);
@@ -39,18 +47,26 @@ void main() {
       final world = _buildWorld();
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(entity, AIState('test', memory: {'_bt_blackboard': {}}));
+      world.storeOf<AIState>().set(
+        entity,
+        AIState('test', memory: {'_bt_blackboard': {}}),
+      );
 
       final registry = BehaviorRegistry();
       registry.register('succeed', _TestBehavior(setValue: 1));
       registry.register('fail', _FailingBehavior());
 
-      final tree = BTSequence(children: [
-        BTLeaf(behaviorId: 'succeed'),
-        BTLeaf(behaviorId: 'fail'),
-      ]);
+      final tree = BTSequence(
+        children: [
+          BTLeaf(behaviorId: 'succeed'),
+          BTLeaf(behaviorId: 'fail'),
+        ],
+      );
 
-      final action = BehaviorTreeBehavior(root: tree, registry: registry).decide(WorldView(world), entity);
+      final action = BehaviorTreeBehavior(
+        root: tree,
+        registry: registry,
+      ).decide(WorldView(world), entity);
       action.apply(world);
 
       // First action should have run (value = 1), then sequence should stop on failure
@@ -61,18 +77,26 @@ void main() {
       final world = _buildWorld();
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(entity, AIState('test', memory: {'_bt_blackboard': {}}));
+      world.storeOf<AIState>().set(
+        entity,
+        AIState('test', memory: {'_bt_blackboard': {}}),
+      );
 
       final registry = BehaviorRegistry();
       registry.register('fail1', _FailingBehavior());
       registry.register('succeed', _TestBehavior(setValue: 42));
 
-      final tree = BTSelector(children: [
-        BTLeaf(behaviorId: 'fail1'),
-        BTLeaf(behaviorId: 'succeed'),
-      ]);
+      final tree = BTSelector(
+        children: [
+          BTLeaf(behaviorId: 'fail1'),
+          BTLeaf(behaviorId: 'succeed'),
+        ],
+      );
 
-      final action = BehaviorTreeBehavior(root: tree, registry: registry).decide(WorldView(world), entity);
+      final action = BehaviorTreeBehavior(
+        root: tree,
+        registry: registry,
+      ).decide(WorldView(world), entity);
       action.apply(world);
 
       expect(world.storeOf<_TestValue>().get(entity)?.value, 42);
@@ -82,7 +106,10 @@ void main() {
       final world = _buildWorld();
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(entity, AIState('test', memory: {'_bt_blackboard': {}}));
+      world.storeOf<AIState>().set(
+        entity,
+        AIState('test', memory: {'_bt_blackboard': {}}),
+      );
 
       final registry = BehaviorRegistry();
       registry.register('succeed', _TestBehavior(setValue: 1));
@@ -97,7 +124,10 @@ void main() {
       final world = _buildWorld();
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(entity, AIState('test', memory: {'_bt_blackboard': {}}));
+      world.storeOf<AIState>().set(
+        entity,
+        AIState('test', memory: {'_bt_blackboard': {}}),
+      );
 
       final registry = BehaviorRegistry();
       registry.register('increment', _IncrementBehavior());
@@ -127,15 +157,24 @@ void main() {
       final world = _buildWorld();
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(entity, AIState('test', memory: {'_bt_blackboard': {}}));
+      world.storeOf<AIState>().set(
+        entity,
+        AIState('test', memory: {'_bt_blackboard': {}}),
+      );
 
       final registry = BehaviorRegistry();
       // Fail on 3rd call
       registry.register('failAfter3', _FailAfterBehavior(failAfter: 3));
 
-      final tree = BTRepeater(count: null, child: BTLeaf(behaviorId: 'failAfter3'));
+      final tree = BTRepeater(
+        count: null,
+        child: BTLeaf(behaviorId: 'failAfter3'),
+      );
 
-      final action = BehaviorTreeBehavior(root: tree, registry: registry).decide(WorldView(world), entity);
+      final action = BehaviorTreeBehavior(
+        root: tree,
+        registry: registry,
+      ).decide(WorldView(world), entity);
       action.apply(world);
 
       // Should have run 3 times (fail on 3rd)
@@ -146,7 +185,10 @@ void main() {
       final world = _buildWorld();
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(entity, AIState('test', memory: {'_bt_blackboard': {}}));
+      world.storeOf<AIState>().set(
+        entity,
+        AIState('test', memory: {'_bt_blackboard': {}}),
+      );
 
       final registry = BehaviorRegistry();
       registry.register('action1', _TestBehavior(setValue: 10));
@@ -154,27 +196,49 @@ void main() {
       registry.register('action3', _TestBehavior(setValue: 30));
 
       // Need 2 successes out of 3
-      final tree = BTParallel(requiredSuccess: 2, children: [
-        BTLeaf(behaviorId: 'action1'),
-        BTLeaf(behaviorId: 'action2'),
-        BTLeaf(behaviorId: 'action3'),
-      ]);
+      final tree = BTParallel(
+        requiredSuccess: 2,
+        children: [
+          BTLeaf(behaviorId: 'action1'),
+          BTLeaf(behaviorId: 'action2'),
+          BTLeaf(behaviorId: 'action3'),
+        ],
+      );
 
-      final action = BehaviorTreeBehavior(root: tree, registry: registry).decide(WorldView(world), entity);
+      final action = BehaviorTreeBehavior(
+        root: tree,
+        registry: registry,
+      ).decide(WorldView(world), entity);
       action.apply(world);
 
       // All three should have run since they all succeed
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 30); // Last one wins
+      expect(
+        world.storeOf<_TestValue>().get(entity)?.value,
+        30,
+      ); // Last one wins
     });
 
     test('Behavior tree JSON serialization round-trip', () {
-      final tree = BTSequence(id: 'root', children: [
-        BTSelector(id: 'sel', children: [
-          BTLeaf(id: 'leaf1', behaviorId: 'attack'),
-          BTInverter(id: 'inv', child: BTLeaf(id: 'leaf2', behaviorId: 'move')),
-        ]),
-        BTRepeater(id: 'rep', count: 3, child: BTWait(id: 'wait', duration: 1.0)),
-      ]);
+      final tree = BTSequence(
+        id: 'root',
+        children: [
+          BTSelector(
+            id: 'sel',
+            children: [
+              BTLeaf(id: 'leaf1', behaviorId: 'attack'),
+              BTInverter(
+                id: 'inv',
+                child: BTLeaf(id: 'leaf2', behaviorId: 'move'),
+              ),
+            ],
+          ),
+          BTRepeater(
+            id: 'rep',
+            count: 3,
+            child: BTWait(id: 'wait', duration: 1.0),
+          ),
+        ],
+      );
 
       final json = tree.toJson();
       final restored = BTNode.fromJson(json);
@@ -204,7 +268,10 @@ void main() {
       final world = _buildWorld();
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(entity, AIState('test', memory: {'_bt_blackboard': {}}));
+      world.storeOf<AIState>().set(
+        entity,
+        AIState('test', memory: {'_bt_blackboard': {}}),
+      );
 
       final registry = BehaviorRegistry();
       registry.register('increment', _IncrementBehavior());

@@ -31,18 +31,18 @@ class ParticleForces {
   });
 
   Map<String, dynamic> toJson() => {
-        'radius': radius,
-        'strength': strength,
-        'isWind': isWind,
-        'windDirection': windDirection,
-        'falloffExponent': falloffExponent,
-      };
+    'radius': radius,
+    'strength': strength,
+    'isWind': isWind,
+    'windDirection': windDirection,
+    'falloffExponent': falloffExponent,
+  };
 
   factory ParticleForces.fromJson(Map<String, dynamic> json) => ParticleForces(
-        radius: (json['radius'] as num?)?.toDouble() ?? 100,
-        strength: (json['strength'] as num?)?.toDouble() ?? 500,
-        isWind: (json['isWind'] as bool?) ?? false,
-        windDirection: (json['windDirection'] as num?)?.toDouble() ?? 0,
-        falloffExponent: (json['falloffExponent'] as num?)?.toDouble() ?? 2,
-      );
+    radius: (json['radius'] as num?)?.toDouble() ?? 100,
+    strength: (json['strength'] as num?)?.toDouble() ?? 500,
+    isWind: (json['isWind'] as bool?) ?? false,
+    windDirection: (json['windDirection'] as num?)?.toDouble() ?? 0,
+    falloffExponent: (json['falloffExponent'] as num?)?.toDouble() ?? 2,
+  );
 }

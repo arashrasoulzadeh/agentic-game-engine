@@ -83,7 +83,8 @@ class WebSocketEndpoint implements NetEndpoint {
 }
 
 /// Connects to a WebSocket server at [url] (`ws://host:port/path`).
-Future<NetEndpoint> connectWebSocket(String url) async => WebSocketEndpoint(await WebSocket.connect(url));
+Future<NetEndpoint> connectWebSocket(String url) async =>
+    WebSocketEndpoint(await WebSocket.connect(url));
 
 /// A listening WebSocket server. Each accepted connection becomes a [NetEndpoint]
 /// handed to [onConnection] - typically `hostSession.accept`.
@@ -113,7 +114,9 @@ class WebSocketListener {
           ..close();
         return;
       }
-      onConnection(WebSocketEndpoint(await WebSocketTransformer.upgrade(request)));
+      onConnection(
+        WebSocketEndpoint(await WebSocketTransformer.upgrade(request)),
+      );
     });
     return WebSocketListener._(server);
   }

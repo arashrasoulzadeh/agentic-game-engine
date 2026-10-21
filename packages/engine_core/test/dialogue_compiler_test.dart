@@ -27,52 +27,67 @@ _Trace _runScript(DialogueGraph graph, List<int> choiceIndices) {
 }
 
 void main() {
-  test('docs/studio/design.md 4.7: a compiled dialogue graph behaves the same as '
-      'a hand-written one for a linear say -> say script', () {
-    const graph = Graph(
-      nodes: [
-        GraphNode(id: 'intro', kind: 'say', params: {'textKey': 'intro.text'}),
-        GraphNode(id: 'outro', kind: 'say', params: {'textKey': 'outro.text'}),
-      ],
-      edges: [
-        GraphEdge(
-          fromNode: 'intro',
-          fromPort: 'out',
-          toNode: 'outro',
-          toPort: 'in',
-        ),
-      ],
-      entryNodeId: 'intro',
-    );
-    final compiled = compileDialogueGraph(graph);
+  test(
+    'docs/studio/design.md 4.7: a compiled dialogue graph behaves the same as '
+    'a hand-written one for a linear say -> say script',
+    () {
+      const graph = Graph(
+        nodes: [
+          GraphNode(
+            id: 'intro',
+            kind: 'say',
+            params: {'textKey': 'intro.text'},
+          ),
+          GraphNode(
+            id: 'outro',
+            kind: 'say',
+            params: {'textKey': 'outro.text'},
+          ),
+        ],
+        edges: [
+          GraphEdge(
+            fromNode: 'intro',
+            fromPort: 'out',
+            toNode: 'outro',
+            toPort: 'in',
+          ),
+        ],
+        entryNodeId: 'intro',
+      );
+      final compiled = compileDialogueGraph(graph);
 
-    final handWritten = DialogueGraph(
-      startNodeId: 'intro',
-      nodes: {
-        'intro': DialogueNode(
-          id: 'intro',
-          textKey: 'intro.text',
-          autoAdvance: true,
-          autoAdvanceDelay: 0,
-          choices: [
-            DialogueChoice(
-              textKey: '',
-              onSelectEvent: const <String, dynamic>{},
-              nextNodeId: 'outro',
-            ),
-          ],
-        ),
-        'outro': DialogueNode(id: 'outro', textKey: 'outro.text', choices: const []),
-      },
-    );
+      final handWritten = DialogueGraph(
+        startNodeId: 'intro',
+        nodes: {
+          'intro': DialogueNode(
+            id: 'intro',
+            textKey: 'intro.text',
+            autoAdvance: true,
+            autoAdvanceDelay: 0,
+            choices: [
+              DialogueChoice(
+                textKey: '',
+                onSelectEvent: const <String, dynamic>{},
+                nextNodeId: 'outro',
+              ),
+            ],
+          ),
+          'outro': DialogueNode(
+            id: 'outro',
+            textKey: 'outro.text',
+            choices: const [],
+          ),
+        },
+      );
 
-    final compiledTrace = _runScript(compiled, [0]);
-    final handTrace = _runScript(handWritten, [0]);
+      final compiledTrace = _runScript(compiled, [0]);
+      final handTrace = _runScript(handWritten, [0]);
 
-    expect(compiledTrace.shownNodeIds, handTrace.shownNodeIds);
-    expect(compiledTrace.ended, handTrace.ended);
-    expect(compiledTrace.shownNodeIds, ['intro', 'outro']);
-  });
+      expect(compiledTrace.shownNodeIds, handTrace.shownNodeIds);
+      expect(compiledTrace.ended, handTrace.ended);
+      expect(compiledTrace.shownNodeIds, ['intro', 'outro']);
+    },
+  );
 
   test('a choice node compiles each entry to a DialogueChoice on its port', () {
     const graph = Graph(
@@ -92,7 +107,12 @@ void main() {
         GraphNode(id: 'sad', kind: 'say', params: {'textKey': 'sad.text'}),
       ],
       edges: [
-        GraphEdge(fromNode: 'ask', fromPort: 'yes', toNode: 'glad', toPort: 'in'),
+        GraphEdge(
+          fromNode: 'ask',
+          fromPort: 'yes',
+          toNode: 'glad',
+          toPort: 'in',
+        ),
         GraphEdge(fromNode: 'ask', fromPort: 'no', toNode: 'sad', toPort: 'in'),
       ],
       entryNodeId: 'ask',
@@ -114,7 +134,9 @@ void main() {
 
   test('a say node with no outgoing edge ends the dialogue there', () {
     const graph = Graph(
-      nodes: [GraphNode(id: 'only', kind: 'say', params: {'textKey': 'x'})],
+      nodes: [
+        GraphNode(id: 'only', kind: 'say', params: {'textKey': 'x'}),
+      ],
       entryNodeId: 'only',
     );
     final compiled = compileDialogueGraph(graph);
@@ -143,7 +165,9 @@ void main() {
 
   group('rejects what it does not support', () {
     test('a missing entry node is a compile error', () {
-      const graph = Graph(nodes: [GraphNode(id: 'a', kind: 'say')]);
+      const graph = Graph(
+        nodes: [GraphNode(id: 'a', kind: 'say')],
+      );
       expect(
         () => compileDialogueGraph(graph),
         throwsA(isA<DialogueCompileError>()),

@@ -8,15 +8,12 @@ class AIState {
   Map<String, dynamic> memory;
 
   AIState(this.behaviorId, {Map<String, dynamic>? memory})
-      : memory = memory ?? <String, dynamic>{};
+    : memory = memory ?? <String, dynamic>{};
 
-  Map<String, dynamic> toJson() => {
-        'behaviorId': behaviorId,
-        'memory': memory,
-      };
+  Map<String, dynamic> toJson() => {'behaviorId': behaviorId, 'memory': memory};
 
   factory AIState.fromJson(Map<String, dynamic> json) => AIState(
-        json['behaviorId'] as String,
-        memory: (json['memory'] as Map?)?.cast<String, dynamic>(),
-      );
+    json['behaviorId'] as String,
+    memory: (json['memory'] as Map?)?.cast<String, dynamic>(),
+  );
 }

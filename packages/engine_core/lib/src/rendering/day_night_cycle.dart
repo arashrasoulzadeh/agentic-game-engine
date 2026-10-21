@@ -99,7 +99,11 @@ class DayNightCycle {
   /// timed.
   int get ambientColorArgb {
     final hue = _lerpColorStops(hour, _colorStops);
-    final timeColor = _lerpColor(0xFF000000, hue, timeOfDayBrightness.clamp(0, 1));
+    final timeColor = _lerpColor(
+      0xFF000000,
+      hue,
+      timeOfDayBrightness.clamp(0, 1),
+    );
     final weatherTarget = switch (weather) {
       Weather.clear => null,
       Weather.overcast => 0xFF8A8A8A,
@@ -157,8 +161,14 @@ class DayNightCycle {
   }
 
   static int _lerpColor(int a, int b, double t) {
-    final aA = (a >> 24) & 0xFF, aR = (a >> 16) & 0xFF, aG = (a >> 8) & 0xFF, aB = a & 0xFF;
-    final bA = (b >> 24) & 0xFF, bR = (b >> 16) & 0xFF, bG = (b >> 8) & 0xFF, bB = b & 0xFF;
+    final aA = (a >> 24) & 0xFF,
+        aR = (a >> 16) & 0xFF,
+        aG = (a >> 8) & 0xFF,
+        aB = a & 0xFF;
+    final bA = (b >> 24) & 0xFF,
+        bR = (b >> 16) & 0xFF,
+        bG = (b >> 8) & 0xFF,
+        bB = b & 0xFF;
     final rA = _lerp(aA.toDouble(), bA.toDouble(), t).round().clamp(0, 255);
     final rR = _lerp(aR.toDouble(), bR.toDouble(), t).round().clamp(0, 255);
     final rG = _lerp(aG.toDouble(), bG.toDouble(), t).round().clamp(0, 255);

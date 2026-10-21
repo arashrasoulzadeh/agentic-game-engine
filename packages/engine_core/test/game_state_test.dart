@@ -19,7 +19,10 @@ void main() {
   });
 
   test('GameState round-trips through toJson/fromJson', () {
-    final state = GameState({'coinsCollected': 5, 'unlockedRooms': ['a', 'b']});
+    final state = GameState({
+      'coinsCollected': 5,
+      'unlockedRooms': ['a', 'b'],
+    });
     final decoded = GameState.fromJson(state.toJson());
     expect(decoded.data, state.data);
   });

@@ -19,8 +19,8 @@ class StringTable {
     Map<String, Map<String, String>> entries, {
     this.defaultLocale = 'en',
     String? locale,
-  })  : _entries = entries,
-        _locale = locale ?? defaultLocale;
+  }) : _entries = entries,
+       _locale = locale ?? defaultLocale;
 
   /// The active locale every [resolve] call uses unless a key has no
   /// entry for it. Not validated against [_entries] — switching to a
@@ -58,15 +58,17 @@ class StringTable {
   /// (not counting a [defaultLocale] fallback) — lets a game flag
   /// missing translations (e.g. in a debug overlay) instead of only
   /// ever seeing the silent fallback [resolve] gives.
-  bool hasTranslation(String key) => _entries[key]?.containsKey(_locale) ?? false;
+  bool hasTranslation(String key) =>
+      _entries[key]?.containsKey(_locale) ?? false;
 
   Map<String, dynamic> toJson() => {
-        'defaultLocale': defaultLocale,
-        'entries': _entries,
-      };
+    'defaultLocale': defaultLocale,
+    'entries': _entries,
+  };
 
   factory StringTable.fromJson(Map<String, dynamic> json, {String? locale}) {
-    final rawEntries = (json['entries'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final rawEntries =
+        (json['entries'] as Map?)?.cast<String, dynamic>() ?? const {};
     final entries = <String, Map<String, String>>{};
     rawEntries.forEach((key, value) {
       entries[key] = (value as Map).cast<String, String>();

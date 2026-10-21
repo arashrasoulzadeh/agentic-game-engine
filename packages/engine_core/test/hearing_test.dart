@@ -11,7 +11,13 @@ void main() {
     });
 
     test('SoundEvent toJson/fromJson round-trips correctly', () {
-      const sound = SoundEvent(x: 100, y: 200, loudness: 150, tag: 'gunshot', data: {'weapon': 'pistol'});
+      const sound = SoundEvent(
+        x: 100,
+        y: 200,
+        loudness: 150,
+        tag: 'gunshot',
+        data: {'weapon': 'pistol'},
+      );
       final restored = SoundEvent.fromJson(sound.toJson());
 
       expect(restored.x, 100);
@@ -32,11 +38,16 @@ void main() {
 
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(entity, HearingComponent(range: 200));
+      world.storeOf<HearingComponent>().set(
+        entity,
+        HearingComponent(range: 200),
+      );
       world.storeOf<AIState>().set(entity, AIState('idle'));
 
       // Emit a sound within range
-      world.events.emit(SoundEvent(x: 150, y: 100, loudness: 100, tag: 'footstep'));
+      world.events.emit(
+        SoundEvent(x: 150, y: 100, loudness: 100, tag: 'footstep'),
+      );
 
       world.step(0.016);
 
@@ -54,7 +65,10 @@ void main() {
 
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(entity, HearingComponent(range: 50));
+      world.storeOf<HearingComponent>().set(
+        entity,
+        HearingComponent(range: 50),
+      );
       world.storeOf<AIState>().set(entity, AIState('idle'));
 
       // Sound at distance 100, hearing range 50
@@ -71,7 +85,10 @@ void main() {
 
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(entity, HearingComponent(range: 200));
+      world.storeOf<HearingComponent>().set(
+        entity,
+        HearingComponent(range: 200),
+      );
       world.storeOf<AIState>().set(entity, AIState('idle'));
 
       // Sound loudness 50, distance 100
@@ -89,18 +106,27 @@ void main() {
       // TileMap with solid wall between entity and sound
       final mapEntity = world.spawn();
       world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(mapEntity, TileMap(
-        cols: 10, rows: 5, tileWidth: 40, tileHeight: 40,
-        tiles: [
-          for (var row = 0; row < 5; row++)
-            for (var col = 0; col < 10; col++) (col == 3) ? 1 : 0,
-        ],
-        solidTileIds: {1},
-      ));
+      world.storeOf<TileMap>().set(
+        mapEntity,
+        TileMap(
+          cols: 10,
+          rows: 5,
+          tileWidth: 40,
+          tileHeight: 40,
+          tiles: [
+            for (var row = 0; row < 5; row++)
+              for (var col = 0; col < 10; col++) (col == 3) ? 1 : 0,
+          ],
+          solidTileIds: {1},
+        ),
+      );
 
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(entity, HearingComponent(range: 200));
+      world.storeOf<HearingComponent>().set(
+        entity,
+        HearingComponent(range: 200),
+      );
       world.storeOf<AIState>().set(entity, AIState('idle'));
 
       // Sound behind wall at x=130
@@ -109,8 +135,11 @@ void main() {
       world.step(0.016);
 
       final aiState = world.storeOf<AIState>().get(entity)!;
-      expect(aiState.memory['lastHeardSound'], isNull,
-          reason: 'Wall should block the sound');
+      expect(
+        aiState.memory['lastHeardSound'],
+        isNull,
+        reason: 'Wall should block the sound',
+      );
     });
 
     test('Sound is NOT blocked by one-way platform (default)', () {
@@ -119,18 +148,27 @@ void main() {
       // TileMap with one-way platform (not solid)
       final mapEntity = world.spawn();
       world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(mapEntity, TileMap(
-        cols: 10, rows: 5, tileWidth: 40, tileHeight: 40,
-        tiles: [
-          for (var row = 0; row < 5; row++)
-            for (var col = 0; col < 10; col++) (col == 3) ? 1 : 0,
-        ],
-        oneWayTileIds: {1}, // Not solid
-      ));
+      world.storeOf<TileMap>().set(
+        mapEntity,
+        TileMap(
+          cols: 10,
+          rows: 5,
+          tileWidth: 40,
+          tileHeight: 40,
+          tiles: [
+            for (var row = 0; row < 5; row++)
+              for (var col = 0; col < 10; col++) (col == 3) ? 1 : 0,
+          ],
+          oneWayTileIds: {1}, // Not solid
+        ),
+      );
 
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(entity, HearingComponent(range: 200));
+      world.storeOf<HearingComponent>().set(
+        entity,
+        HearingComponent(range: 200),
+      );
       world.storeOf<AIState>().set(entity, AIState('idle'));
 
       // Sound behind one-way platform at x=130
@@ -139,8 +177,11 @@ void main() {
       world.step(0.016);
 
       final aiState = world.storeOf<AIState>().get(entity)!;
-      expect(aiState.memory['lastHeardSound'], isNotNull,
-          reason: 'One-way platform should not block sound by default');
+      expect(
+        aiState.memory['lastHeardSound'],
+        isNotNull,
+        reason: 'One-way platform should not block sound by default',
+      );
       expect(aiState.memory['lastHeardSound']['x'], 130);
     });
 
@@ -176,18 +217,25 @@ void main() {
 
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(entity, HearingComponent(range: 200));
+      world.storeOf<HearingComponent>().set(
+        entity,
+        HearingComponent(range: 200),
+      );
       world.storeOf<AIState>().set(entity, AIState('idle'));
 
       // First sound
-      world.events.emit(SoundEvent(x: 120, y: 100, loudness: 100, tag: 'first'));
+      world.events.emit(
+        SoundEvent(x: 120, y: 100, loudness: 100, tag: 'first'),
+      );
       world.step(0.016);
 
       var aiState = world.storeOf<AIState>().get(entity)!;
       expect(aiState.memory['lastHeardSound']['tag'], 'first');
 
       // Second sound
-      world.events.emit(SoundEvent(x: 130, y: 100, loudness: 100, tag: 'second'));
+      world.events.emit(
+        SoundEvent(x: 130, y: 100, loudness: 100, tag: 'second'),
+      );
       world.step(0.016);
 
       aiState = world.storeOf<AIState>().get(entity)!;
@@ -214,7 +262,10 @@ void main() {
 
       final entity = world.spawn();
       world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(entity, HearingComponent(range: 200));
+      world.storeOf<HearingComponent>().set(
+        entity,
+        HearingComponent(range: 200),
+      );
       // No AIState
 
       world.events.emit(SoundEvent(x: 150, y: 100, loudness: 100));
@@ -223,8 +274,7 @@ void main() {
       // Should not crash, just nothing happens
     });
 
-    test(
-        'a freshly created World always subscribes, even if an earlier '
+    test('a freshly created World always subscribes, even if an earlier '
         'World already marked its own flag (regression: the flag used to '
         'live in a Map<int, bool> keyed by identityHashCode(world), which '
         'is only unique while the original object is reachable -- once a '
@@ -245,16 +295,25 @@ void main() {
       other.addSystem(HearingSystem());
       final entity = other.spawn();
       other.storeOf<Position>().set(entity, Position(100, 100));
-      other.storeOf<HearingComponent>().set(entity, HearingComponent(range: 200));
+      other.storeOf<HearingComponent>().set(
+        entity,
+        HearingComponent(range: 200),
+      );
       other.storeOf<AIState>().set(entity, AIState('idle'));
 
-      other.events.emit(SoundEvent(x: 150, y: 100, loudness: 100, tag: 'footstep'));
+      other.events.emit(
+        SoundEvent(x: 150, y: 100, loudness: 100, tag: 'footstep'),
+      );
       other.step(0.016);
 
       final aiState = other.storeOf<AIState>().get(entity)!;
-      expect(aiState.memory['lastHeardSound'], isNotNull,
-          reason: 'a new World must subscribe on its own, independent of '
-              'any other World\'s flag');
+      expect(
+        aiState.memory['lastHeardSound'],
+        isNotNull,
+        reason:
+            'a new World must subscribe on its own, independent of '
+            'any other World\'s flag',
+      );
     });
   });
 }

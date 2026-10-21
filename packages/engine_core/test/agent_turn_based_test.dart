@@ -48,10 +48,16 @@ Map<String, dynamic> observe(World world, String me) {
       'ap': c['actionPoints']['current'],
     });
   }
-  final turn = (snapshot['entities'] as List)
-      .map((e) => (e['components'] as Map)['turnState'])
-      .firstWhere((t) => t != null) as Map;
-  return {'active': turn['order'][turn['activeIndex']], 'winner': turn['winner'], 'units': units};
+  final turn =
+      (snapshot['entities'] as List)
+              .map((e) => (e['components'] as Map)['turnState'])
+              .firstWhere((t) => t != null)
+          as Map;
+  return {
+    'active': turn['order'][turn['activeIndex']],
+    'winner': turn['winner'],
+    'units': units,
+  };
 }
 
 /// The agent's policy: every idle unit attacks the weakest enemy. Returns
@@ -63,7 +69,10 @@ List<Map<String, dynamic>> decide(Map<String, dynamic> view, String me) {
   if (enemies.isEmpty) return [];
   return [
     for (final u in units.where((u) => u['team'] == me && (u['ap'] as int) > 0))
-      {'unit': u['id'], 'order': {'type': 'attack', 'target': enemies.first['id']}},
+      {
+        'unit': u['id'],
+        'order': {'type': 'attack', 'target': enemies.first['id']},
+      },
   ];
 }
 
@@ -99,9 +108,11 @@ void main() {
 
   test('the agent cannot act out of turn: the engine refuses', () {
     final world = buildGame();
-    final blueUnit = (observe(world, 'red')['units'] as List)
-        .cast<Map<String, dynamic>>()
-        .firstWhere((u) => u['team'] == 'blue')['id'] as int;
+    final blueUnit =
+        (observe(world, 'red')['units'] as List)
+                .cast<Map<String, dynamic>>()
+                .firstWhere((u) => u['team'] == 'blue')['id']
+            as int;
     expect(submitOrder(world, blueUnit, const MoveOrder(5, 5)), isFalse);
   });
 

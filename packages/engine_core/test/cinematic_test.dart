@@ -34,7 +34,10 @@ void main() {
   group('TweenStep', () {
     test('reports eased progress via onUpdate and completes at duration', () {
       final values = <double>[];
-      final step = TweenStep(duration: 1, onUpdate: (world, t) => values.add(t));
+      final step = TweenStep(
+        duration: 1,
+        onUpdate: (world, t) => values.add(t),
+      );
       final world = _buildWorld();
 
       expect(step.update(world, 0.5), isFalse);
@@ -45,7 +48,10 @@ void main() {
 
     test('skip reports progress 1.0', () {
       final values = <double>[];
-      final step = TweenStep(duration: 1, onUpdate: (world, t) => values.add(t));
+      final step = TweenStep(
+        duration: 1,
+        onUpdate: (world, t) => values.add(t),
+      );
       step.skip(_buildWorld());
       expect(values, [1.0]);
     });
@@ -78,19 +84,22 @@ void main() {
       expect(system.isPlaying, isFalse);
     });
 
-    test('emits CinematicCompleteEvent exactly once when the last step finishes', () {
-      final system = CinematicSystem([WaitStep(1)]);
-      final world = _buildWorld();
-      var completions = 0;
-      world.events.on<CinematicCompleteEvent>((_) => completions++);
+    test(
+      'emits CinematicCompleteEvent exactly once when the last step finishes',
+      () {
+        final system = CinematicSystem([WaitStep(1)]);
+        final world = _buildWorld();
+        var completions = 0;
+        world.events.on<CinematicCompleteEvent>((_) => completions++);
 
-      system.update(world, 1);
-      world.events.flush();
-      system.update(world, 1); // already done -- must not fire again
-      world.events.flush();
+        system.update(world, 1);
+        world.events.flush();
+        system.update(world, 1); // already done -- must not fire again
+        world.events.flush();
 
-      expect(completions, 1);
-    });
+        expect(completions, 1);
+      },
+    );
 
     test('an empty step list completes immediately', () {
       final system = CinematicSystem([]);
@@ -105,26 +114,29 @@ void main() {
       expect(completed, isTrue);
     });
 
-    test('skip calls skip on the current and every remaining step, then completes', () {
-      final steps = [WaitStep(10), WaitStep(10), WaitStep(10)];
-      final system = CinematicSystem(steps);
-      final world = _buildWorld();
-      system.update(world, 0.016); // starts step 0, not yet complete
+    test(
+      'skip calls skip on the current and every remaining step, then completes',
+      () {
+        final steps = [WaitStep(10), WaitStep(10), WaitStep(10)];
+        final system = CinematicSystem(steps);
+        final world = _buildWorld();
+        system.update(world, 0.016); // starts step 0, not yet complete
 
-      var completed = false;
-      world.events.on<CinematicCompleteEvent>((_) => completed = true);
+        var completed = false;
+        world.events.on<CinematicCompleteEvent>((_) => completed = true);
 
-      system.skip(world);
-      world.events.flush();
+        system.skip(world);
+        world.events.flush();
 
-      expect(system.isPlaying, isFalse);
-      expect(completed, isTrue);
-      // Every step (including the ones never `start`ed) is now at its
-      // end state -- verified indirectly: a fresh update() call is a
-      // no-op, since the system is already done.
-      system.update(world, 100);
-      expect(system.isPlaying, isFalse);
-    });
+        expect(system.isPlaying, isFalse);
+        expect(completed, isTrue);
+        // Every step (including the ones never `start`ed) is now at its
+        // end state -- verified indirectly: a fresh update() call is a
+        // no-op, since the system is already done.
+        system.update(world, 100);
+        expect(system.isPlaying, isFalse);
+      },
+    );
 
     test('skip on an already-done system is a no-op (no duplicate event)', () {
       final system = CinematicSystem([WaitStep(1)]);
@@ -141,25 +153,29 @@ void main() {
       expect(completions, 0);
     });
 
-    test('CinematicSystem drives real gameplay data: a TweenStep moving a Position', () {
-      final world = _buildWorld();
-      registerCoreComponents(world);
-      final rig = world.spawn();
-      world.storeOf<Position>().set(rig, Position(0, 0));
+    test(
+      'CinematicSystem drives real gameplay data: a TweenStep moving a Position',
+      () {
+        final world = _buildWorld();
+        registerCoreComponents(world);
+        final rig = world.spawn();
+        world.storeOf<Position>().set(rig, Position(0, 0));
 
-      final system = CinematicSystem([
-        TweenStep(
-          duration: 2,
-          onUpdate: (w, t) => w.storeOf<Position>().set(rig, Position(100 * t, 0)),
-        ),
-      ]);
+        final system = CinematicSystem([
+          TweenStep(
+            duration: 2,
+            onUpdate: (w, t) =>
+                w.storeOf<Position>().set(rig, Position(100 * t, 0)),
+          ),
+        ]);
 
-      system.update(world, 1);
-      expect(world.storeOf<Position>().get(rig)!.x, 50);
+        system.update(world, 1);
+        expect(world.storeOf<Position>().get(rig)!.x, 50);
 
-      system.update(world, 1);
-      expect(world.storeOf<Position>().get(rig)!.x, 100);
-      expect(system.isPlaying, isFalse);
-    });
+        system.update(world, 1);
+        expect(world.storeOf<Position>().get(rig)!.x, 100);
+        expect(system.isPlaying, isFalse);
+      },
+    );
   });
 }

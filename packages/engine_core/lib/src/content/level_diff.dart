@@ -17,9 +17,9 @@ class ComponentChange {
 
   /// Field names whose value differs (all of them for an added or removed component).
   List<String> get fields => [
-        for (final f in {...?before?.keys, ...?after?.keys}.toList()..sort())
-          if (_canon(before?[f]) != _canon(after?[f])) f,
-      ];
+    for (final f in {...?before?.keys, ...?after?.keys}.toList()..sort())
+      if (_canon(before?[f]) != _canon(after?[f])) f,
+  ];
 }
 
 /// A named entity present in both levels whose components differ.
@@ -48,7 +48,8 @@ class LevelDiff {
   String format() {
     if (isEmpty) return 'No differences.';
     final out = StringBuffer();
-    String label(LevelEntity e) => e.name ?? '(unnamed ${e.components.keys.join(', ')})';
+    String label(LevelEntity e) =>
+        e.name ?? '(unnamed ${e.components.keys.join(', ')})';
     for (final e in removed) {
       out.writeln('- ${label(e)}');
     }
@@ -58,7 +59,9 @@ class LevelDiff {
     for (final c in changed) {
       for (final comp in c.components) {
         if (comp.isAdded) {
-          out.writeln('+ ${c.name}.${comp.component} ${jsonEncode(comp.after)}');
+          out.writeln(
+            '+ ${c.name}.${comp.component} ${jsonEncode(comp.after)}',
+          );
         } else if (comp.isRemoved) {
           out.writeln('- ${c.name}.${comp.component}');
         } else {
@@ -74,19 +77,23 @@ class LevelDiff {
   }
 
   Map<String, dynamic> toJson() => {
-        'added': [for (final e in added) e.toJson()],
-        'removed': [for (final e in removed) e.toJson()],
-        'changed': [
-          for (final c in changed)
-            {
-              'name': c.name,
-              'components': [
-                for (final comp in c.components)
-                  {'component': comp.component, 'before': comp.before, 'after': comp.after},
-              ],
-            },
-        ],
-      };
+    'added': [for (final e in added) e.toJson()],
+    'removed': [for (final e in removed) e.toJson()],
+    'changed': [
+      for (final c in changed)
+        {
+          'name': c.name,
+          'components': [
+            for (final comp in c.components)
+              {
+                'component': comp.component,
+                'before': comp.before,
+                'after': comp.after,
+              },
+          ],
+        },
+    ],
+  };
 }
 
 /// Compares two levels. See [LevelDiff] for how entities are matched.
@@ -95,8 +102,14 @@ LevelDiff diffLevels(LevelDocument before, LevelDocument after) {
   final removed = <LevelEntity>[];
   final changed = <EntityChange>[];
 
-  final afterNamed = {for (final e in after.entities) if (e.name != null) e.name!: e};
-  final beforeNamed = {for (final e in before.entities) if (e.name != null) e.name!: e};
+  final afterNamed = {
+    for (final e in after.entities)
+      if (e.name != null) e.name!: e,
+  };
+  final beforeNamed = {
+    for (final e in before.entities)
+      if (e.name != null) e.name!: e,
+  };
 
   for (final e in before.entities) {
     if (e.name == null) continue;
@@ -106,7 +119,10 @@ LevelDiff diffLevels(LevelDocument before, LevelDocument after) {
       continue;
     }
     final comps = <ComponentChange>[];
-    for (final c in {...e.components.keys, ...other.components.keys}.toList()..sort()) {
+    for (final c in {
+      ...e.components.keys,
+      ...other.components.keys,
+    }.toList()..sort()) {
       if (_canon(e.components[c]) != _canon(other.components[c])) {
         comps.add(ComponentChange(c, e.components[c], other.components[c]));
       }
@@ -169,13 +185,22 @@ class LevelMerge {
 /// [MergeConflict] and ours is kept. An entity one side deleted and the other edited is a
 /// conflict too. Unnamed entities merge as sets: removals and additions from either side are
 /// applied. Entity order follows [ours], with entities only [theirs] added appended.
-LevelMerge mergeLevels(LevelDocument base, LevelDocument ours, LevelDocument theirs) {
+LevelMerge mergeLevels(
+  LevelDocument base,
+  LevelDocument ours,
+  LevelDocument theirs,
+) {
   final conflicts = <MergeConflict>[];
   final entities = <LevelEntity>[];
 
-  LevelEntity copy(LevelEntity e) => LevelEntity.fromJson(jsonDecode(jsonEncode(e.toJson())) as Map<String, dynamic>);
+  LevelEntity copy(LevelEntity e) => LevelEntity.fromJson(
+    jsonDecode(jsonEncode(e.toJson())) as Map<String, dynamic>,
+  );
 
-  Map<String, LevelEntity> named(LevelDocument d) => {for (final e in d.entities) if (e.name != null) e.name!: e};
+  Map<String, LevelEntity> named(LevelDocument d) => {
+    for (final e in d.entities)
+      if (e.name != null) e.name!: e,
+  };
   final b = named(base), o = named(ours), t = named(theirs);
 
   // Named entities, in ours' order, then theirs-only.
@@ -184,12 +209,20 @@ LevelMerge mergeLevels(LevelDocument base, LevelDocument ours, LevelDocument the
     final be = b[name], oe = o[name], te = t[name];
     if (oe != null && te != null) {
       final comps = <String, Map<String, dynamic>>{};
-      for (final c in {...oe.components.keys, ...te.components.keys, ...?be?.components.keys}) {
-        final bc = be?.components[c], oc = oe.components[c], tc = te.components[c];
+      for (final c in {
+        ...oe.components.keys,
+        ...te.components.keys,
+        ...?be?.components.keys,
+      }) {
+        final bc = be?.components[c],
+            oc = oe.components[c],
+            tc = te.components[c];
         final pick = _merge3(bc, oc, tc);
         if (pick.conflict) conflicts.add(MergeConflict(name, c, bc, oc, tc));
         final value = pick.value;
-        if (value != null) comps[c] = (jsonDecode(jsonEncode(value)) as Map).cast<String, dynamic>();
+        if (value != null)
+          comps[c] = (jsonDecode(jsonEncode(value)) as Map)
+              .cast<String, dynamic>();
       }
       entities.add(LevelEntity(name: name, components: comps));
     } else if (oe != null) {
@@ -225,7 +258,9 @@ LevelMerge mergeLevels(LevelDocument base, LevelDocument ours, LevelDocument the
 
   final bb = bag(base), ob = bag(ours), tb = bag(theirs);
   for (final key in {...bb.keys, ...ob.keys, ...tb.keys}) {
-    final nb = bb[key]?.length ?? 0, no = ob[key]?.length ?? 0, nt = tb[key]?.length ?? 0;
+    final nb = bb[key]?.length ?? 0,
+        no = ob[key]?.length ?? 0,
+        nt = tb[key]?.length ?? 0;
     // Each side's net change from the base, applied to the base count.
     final count = (no + nt - nb).clamp(0, 1 << 20);
     final sample = (ob[key] ?? tb[key] ?? bb[key])!.first;

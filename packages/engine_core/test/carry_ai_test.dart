@@ -1,7 +1,8 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:test/test.dart';
 
-GridNavigator _nav() => GridNavigator(cols: 20, rows: 20, terrainCost: (c, r) => 1);
+GridNavigator _nav() =>
+    GridNavigator(cols: 20, rows: 20, terrainCost: (c, r) => 1);
 
 World _world() {
   final w = World(width: 20, height: 20);
@@ -26,9 +27,11 @@ EntityId _flag(World w, String home, int c, int r, {EntityId? carrier}) {
   return e;
 }
 
-void _zone(World w, String team, int c, int r) => w.storeOf<DeliveryZone>().set(w.spawn(), DeliveryZone(team, c, r));
+void _zone(World w, String team, int c, int r) =>
+    w.storeOf<DeliveryZone>().set(w.spawn(), DeliveryZone(team, c, r));
 
-Order _first(World w, EntityId e) => w.storeOf<OrderQueue>().get(e)!.orders.first;
+Order _first(World w, EntityId e) =>
+    w.storeOf<OrderQueue>().get(e)!.orders.first;
 
 void _play(World w) {
   startTurnBasedGame(w, ['red', 'blue']);
@@ -58,8 +61,11 @@ void main() {
     final grab = _first(w, near) as MoveOrder;
     expect((grab.col, grab.row), (15, 15));
     final other = w.storeOf<OrderQueue>().get(far)?.orders ?? const [];
-    expect(other.whereType<MoveOrder>().where((m) => m.col == 15 && m.row == 15), isEmpty,
-        reason: 'one unit per flag - the other does something else');
+    expect(
+      other.whereType<MoveOrder>().where((m) => m.col == 15 && m.row == 15),
+      isEmpty,
+      reason: 'one unit per flag - the other does something else',
+    );
   });
 
   test('two loose flags are fetched by two different units', () {
@@ -91,22 +97,38 @@ void main() {
     final foe = _unit(w, 'red', 12, 10);
     _play(w);
     final m = _first(w, king) as MoveOrder;
-    final from = GridPosition(10, 10), foePos = w.storeOf<GridPosition>().get(foe)!;
-    expect(GridPosition(m.col, m.row).chebyshev(foePos), greaterThan(from.chebyshev(foePos)));
+    final from = GridPosition(10, 10),
+        foePos = w.storeOf<GridPosition>().get(foe)!;
+    expect(
+      GridPosition(m.col, m.row).chebyshev(foePos),
+      greaterThan(from.chebyshev(foePos)),
+    );
   });
 
-  test('a Vip never goes to fetch a flag; a far-away enemy does not scare it', () {
-    final w = _world();
-    final king = _unit(w, 'blue', 2, 2);
-    w.storeOf<Vip>().set(king, const Vip());
-    _flag(w, 'red', 3, 3);
-    final soldier = _unit(w, 'blue', 18, 18);
-    _unit(w, 'red', 18, 0);
-    _play(w);
-    final kingOrders = w.storeOf<OrderQueue>().get(king)?.orders ?? const [];
-    expect(kingOrders.whereType<MoveOrder>().where((m) => m.col == 3 && m.row == 3), isEmpty);
-    expect(_first(w, soldier), isA<MoveOrder>(), reason: 'the soldier takes the flag job instead');
-  });
+  test(
+    'a Vip never goes to fetch a flag; a far-away enemy does not scare it',
+    () {
+      final w = _world();
+      final king = _unit(w, 'blue', 2, 2);
+      w.storeOf<Vip>().set(king, const Vip());
+      _flag(w, 'red', 3, 3);
+      final soldier = _unit(w, 'blue', 18, 18);
+      _unit(w, 'red', 18, 0);
+      _play(w);
+      final kingOrders = w.storeOf<OrderQueue>().get(king)?.orders ?? const [];
+      expect(
+        kingOrders.whereType<MoveOrder>().where(
+          (m) => m.col == 3 && m.row == 3,
+        ),
+        isEmpty,
+      );
+      expect(
+        _first(w, soldier),
+        isA<MoveOrder>(),
+        reason: 'the soldier takes the flag job instead',
+      );
+    },
+  );
 
   test('a full capture: the AI fetches the flag, brings it home and wins', () {
     final w = _world();

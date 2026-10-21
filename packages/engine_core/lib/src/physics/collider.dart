@@ -40,20 +40,26 @@ class Collider {
   /// Default `-1` (all bits set, collides with all groups).
   int collisionMask;
 
-  Collider(this.radius,
-      {this.blocksLight = false,
-      this.pushable = true,
-      this.collisionGroup = 1,
-      this.collisionMask = -1});
+  Collider(
+    this.radius, {
+    this.blocksLight = false,
+    this.pushable = true,
+    this.collisionGroup = 1,
+    this.collisionMask = -1,
+  });
 
-  Map<String, dynamic> toJson() =>
-      {'radius': radius, 'blocksLight': blocksLight, 'pushable': pushable,
-       'collisionGroup': collisionGroup, 'collisionMask': collisionMask};
+  Map<String, dynamic> toJson() => {
+    'radius': radius,
+    'blocksLight': blocksLight,
+    'pushable': pushable,
+    'collisionGroup': collisionGroup,
+    'collisionMask': collisionMask,
+  };
   factory Collider.fromJson(Map<String, dynamic> json) => Collider(
-        (json['radius'] as num).toDouble(),
-        blocksLight: json['blocksLight'] as bool? ?? false,
-        pushable: json['pushable'] as bool? ?? true,
-        collisionGroup: json['collisionGroup'] as int? ?? 1,
-        collisionMask: json['collisionMask'] as int? ?? -1,
-      );
+    (json['radius'] as num).toDouble(),
+    blocksLight: json['blocksLight'] as bool? ?? false,
+    pushable: json['pushable'] as bool? ?? true,
+    collisionGroup: json['collisionGroup'] as int? ?? 1,
+    collisionMask: json['collisionMask'] as int? ?? -1,
+  );
 }

@@ -10,7 +10,11 @@ class _ChaseNearestBehavior implements Behavior {
     final selfPos = view.component<Position>(self);
     if (selfPos == null) return const NoOpAction();
 
-    final target = view.nearestWithPosition(selfPos.x, selfPos.y, exclude: self);
+    final target = view.nearestWithPosition(
+      selfPos.x,
+      selfPos.y,
+      exclude: self,
+    );
     if (target == null) return const NoOpAction();
 
     final targetPos = view.component<Position>(target)!;

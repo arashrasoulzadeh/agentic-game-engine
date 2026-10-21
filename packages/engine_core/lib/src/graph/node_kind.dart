@@ -84,7 +84,12 @@ const builtinNodeKinds = <String, NodeKind>{
     outputs: [GraphPort('out', PortType.flow)],
     paramsSchema: [
       FieldSchema('variable', FieldType.string, required: true),
-      FieldSchema('value', FieldType.object, defaultValue: null, optional: true),
+      FieldSchema(
+        'value',
+        FieldType.object,
+        defaultValue: null,
+        optional: true,
+      ),
     ],
   ),
   'getVar': NodeKind(
@@ -131,8 +136,6 @@ const builtinNodeKinds = <String, NodeKind>{
     name: 'spawnEntity',
     inputs: [GraphPort('in', PortType.flow)],
     outputs: [GraphPort('out', PortType.flow)],
-    paramsSchema: [
-      FieldSchema('prefabId', FieldType.string, required: true),
-    ],
+    paramsSchema: [FieldSchema('prefabId', FieldType.string, required: true)],
   ),
 };

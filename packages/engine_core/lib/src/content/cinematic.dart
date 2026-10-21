@@ -227,11 +227,7 @@ class SpawnEntityStep extends CinematicStep {
   final double? overrideX;
   final double? overrideY;
 
-  SpawnEntityStep({
-    required this.templateId,
-    this.overrideX,
-    this.overrideY,
-  });
+  SpawnEntityStep({required this.templateId, this.overrideX, this.overrideY});
 
   @override
   bool update(World world, double dt) {

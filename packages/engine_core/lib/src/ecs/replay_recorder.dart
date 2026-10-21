@@ -10,9 +10,9 @@ class ReplayFrame {
   Map<String, dynamic> toJson() => {'dt': dt, 'data': data};
 
   factory ReplayFrame.fromJson(Map<String, dynamic> json) => ReplayFrame(
-        (json['dt'] as num).toDouble(),
-        Map<String, dynamic>.from(json['data'] as Map),
-      );
+    (json['dt'] as num).toDouble(),
+    Map<String, dynamic>.from(json['data'] as Map),
+  );
 }
 
 /// Captures a timestamped sequence of arbitrary JSON snapshots for
@@ -41,7 +41,8 @@ class ReplayRecorder {
 
   void clear() => _frames.clear();
 
-  List<Map<String, dynamic>> toJson() => _frames.map((f) => f.toJson()).toList();
+  List<Map<String, dynamic>> toJson() =>
+      _frames.map((f) => f.toJson()).toList();
 
   factory ReplayRecorder.fromJson(List<dynamic> json) {
     final recorder = ReplayRecorder();

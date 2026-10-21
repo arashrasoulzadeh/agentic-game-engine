@@ -9,7 +9,10 @@ void main() {
     final data = <String, dynamic>{
       'button': {'actionId': 'play'},
       'buttonHitBox': {'width': 220.0, 'height': 64.0},
-      'triggerZone': {'triggerId': 'checkpoint', 'data': {'room': 2}},
+      'triggerZone': {
+        'triggerId': 'checkpoint',
+        'data': {'room': 2},
+      },
       'pushable': {'pushSpeed': 45.0},
     };
     world.components.applyToEntity(id, data);
@@ -27,8 +30,10 @@ void main() {
       expect(error.toString(), contains('component "position" on entity $id'));
       expect(error.toString(), contains('expected an object, got bool'));
     }
-    expect(WorldPatchException('invalid entity').toString(),
-        'WorldPatchException: invalid entity');
+    expect(
+      WorldPatchException('invalid entity').toString(),
+      'WorldPatchException: invalid entity',
+    );
   });
 
   test('boolean random sequence is reproducible after reset', () {
@@ -70,8 +75,13 @@ void main() {
         'tileWidth': 16,
         'tileHeight': 16,
       }),
-      throwsA(isA<ArgumentError>().having(
-          (error) => error.message, 'message', contains('must not be empty'))),
+      throwsA(
+        isA<ArgumentError>().having(
+          (error) => error.message,
+          'message',
+          contains('must not be empty'),
+        ),
+      ),
     );
   });
 
@@ -86,8 +96,13 @@ void main() {
       test(message, () {
         expect(
           () => tileMapFromTmx('$start$body</map>'),
-          throwsA(isA<UnsupportedError>().having(
-              (error) => error.message, 'message', contains(message))),
+          throwsA(
+            isA<UnsupportedError>().having(
+              (error) => error.message,
+              'message',
+              contains(message),
+            ),
+          ),
         );
       });
     }

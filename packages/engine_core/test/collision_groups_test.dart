@@ -82,12 +82,18 @@ void main() {
       final a = world.spawn();
       world.storeOf<Position>().set(a, Position(0, 0));
       world.storeOf<Velocity>().set(a, Velocity(5, 0));
-      world.storeOf<Collider>().set(a, Collider(10, collisionGroup: 1, collisionMask: 1));
+      world.storeOf<Collider>().set(
+        a,
+        Collider(10, collisionGroup: 1, collisionMask: 1),
+      );
 
       final b = world.spawn();
       world.storeOf<Position>().set(b, Position(5, 0));
       world.storeOf<Velocity>().set(b, Velocity(-3, 2));
-      world.storeOf<Collider>().set(b, Collider(10, collisionGroup: 1, collisionMask: 1));
+      world.storeOf<Collider>().set(
+        b,
+        Collider(10, collisionGroup: 1, collisionMask: 1),
+      );
 
       world.addSystem(CollisionSystem());
 
@@ -108,12 +114,18 @@ void main() {
       final a = world.spawn();
       world.storeOf<Position>().set(a, Position(0, 0));
       world.storeOf<Velocity>().set(a, Velocity(5, 0));
-      world.storeOf<Collider>().set(a, Collider(10, collisionGroup: 1, collisionMask: 1));
+      world.storeOf<Collider>().set(
+        a,
+        Collider(10, collisionGroup: 1, collisionMask: 1),
+      );
 
       final b = world.spawn();
       world.storeOf<Position>().set(b, Position(5, 0));
       world.storeOf<Velocity>().set(b, Velocity(-3, 2));
-      world.storeOf<Collider>().set(b, Collider(10, collisionGroup: 2, collisionMask: 2));
+      world.storeOf<Collider>().set(
+        b,
+        Collider(10, collisionGroup: 2, collisionMask: 2),
+      );
 
       world.addSystem(CollisionSystem());
 
@@ -134,12 +146,18 @@ void main() {
       final a = world.spawn();
       world.storeOf<Position>().set(a, Position(0, 0));
       world.storeOf<Velocity>().set(a, Velocity(5, 0));
-      world.storeOf<Collider>().set(a, Collider(10, collisionGroup: 1, collisionMask: 0));
+      world.storeOf<Collider>().set(
+        a,
+        Collider(10, collisionGroup: 1, collisionMask: 0),
+      );
 
       final b = world.spawn();
       world.storeOf<Position>().set(b, Position(5, 0));
       world.storeOf<Velocity>().set(b, Velocity(-3, 2));
-      world.storeOf<Collider>().set(b, Collider(10, collisionGroup: 1, collisionMask: 1));
+      world.storeOf<Collider>().set(
+        b,
+        Collider(10, collisionGroup: 1, collisionMask: 1),
+      );
 
       world.addSystem(CollisionSystem());
 

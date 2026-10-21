@@ -41,26 +41,29 @@ void main() {
     expect(w.profiler, isNull);
   });
 
-  test('profiling times each system, ranks the slow one first, and keeps history', () {
-    final w = World(width: 1, height: 1);
-    w.profiler = WorldProfiler();
-    w.addSystem(_Busy('fast', 0));
-    w.addSystem(_Busy('slow', 4));
-    for (var i = 0; i < 3; i++) {
-      w.step(0.1);
-    }
-    final p = w.profiler!;
-    expect(p.steps, 3);
-    final report = p.report();
-    expect(report.first.name, 'slow');
-    expect(report.first.averageMs, greaterThanOrEqualTo(3.5));
-    expect(report.last.name, 'fast');
-    expect(report.first.samples, 3);
-    expect(p.stepMs, greaterThanOrEqualTo(report.first.lastMs));
-    expect(p.stepHistory.length, 3);
-    expect(p.shares()['slow']!, greaterThan(p.shares()['fast']!));
-    expect(w.tick, 3);
-  });
+  test(
+    'profiling times each system, ranks the slow one first, and keeps history',
+    () {
+      final w = World(width: 1, height: 1);
+      w.profiler = WorldProfiler();
+      w.addSystem(_Busy('fast', 0));
+      w.addSystem(_Busy('slow', 4));
+      for (var i = 0; i < 3; i++) {
+        w.step(0.1);
+      }
+      final p = w.profiler!;
+      expect(p.steps, 3);
+      final report = p.report();
+      expect(report.first.name, 'slow');
+      expect(report.first.averageMs, greaterThanOrEqualTo(3.5));
+      expect(report.last.name, 'fast');
+      expect(report.first.samples, 3);
+      expect(p.stepMs, greaterThanOrEqualTo(report.first.lastMs));
+      expect(p.stepHistory.length, 3);
+      expect(p.shares()['slow']!, greaterThan(p.shares()['fast']!));
+      expect(w.tick, 3);
+    },
+  );
 
   test('the average smooths and max remembers the worst step', () {
     final p = WorldProfiler(smoothing: 0.5);
@@ -87,15 +90,18 @@ void main() {
     expect(w.profiler!.shares(), isEmpty);
   });
 
-  test('events flushed during a step are timed and entity count is recorded', () {
-    final w = World(width: 1, height: 1);
-    w.profiler = WorldProfiler();
-    w.spawn();
-    w.spawn();
-    w.step(0.1);
-    expect(w.profiler!.entityCount, 2);
-    expect(w.profiler!.eventsMs, greaterThanOrEqualTo(0));
-  });
+  test(
+    'events flushed during a step are timed and entity count is recorded',
+    () {
+      final w = World(width: 1, height: 1);
+      w.profiler = WorldProfiler();
+      w.spawn();
+      w.spawn();
+      w.step(0.1);
+      expect(w.profiler!.entityCount, 2);
+      expect(w.profiler!.eventsMs, greaterThanOrEqualTo(0));
+    },
+  );
 
   test('componentCounts is a census that omits empty stores', () {
     final w = World(width: 1, height: 1);

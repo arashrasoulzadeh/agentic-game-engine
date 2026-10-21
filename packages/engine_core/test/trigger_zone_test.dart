@@ -16,49 +16,62 @@ void main() {
     expect(decoded.data, {'x': 1});
   });
 
-  test('installTriggerZones fires TriggerEvent when something touches a TriggerZone', () {
-    final world = _buildWorld();
-    final player = world.spawn();
-    world.storeOf<Position>().set(player, Position(0, 0));
-    world.storeOf<Collider>().set(player, Collider(10));
+  test(
+    'installTriggerZones fires TriggerEvent when something touches a TriggerZone',
+    () {
+      final world = _buildWorld();
+      final player = world.spawn();
+      world.storeOf<Position>().set(player, Position(0, 0));
+      world.storeOf<Collider>().set(player, Collider(10));
 
-    final zone = world.spawn();
-    world.storeOf<Position>().set(zone, Position(5, 0));
-    world.storeOf<Collider>().set(zone, Collider(10));
-    world.storeOf<TriggerZone>().set(zone, TriggerZone('bossIntro', data: {'lineId': 3}));
+      final zone = world.spawn();
+      world.storeOf<Position>().set(zone, Position(5, 0));
+      world.storeOf<Collider>().set(zone, Collider(10));
+      world.storeOf<TriggerZone>().set(
+        zone,
+        TriggerZone('bossIntro', data: {'lineId': 3}),
+      );
 
-    installTriggerZones(world);
+      installTriggerZones(world);
 
-    TriggerEvent? received;
-    world.events.on<TriggerEvent>((e) => received = e);
+      TriggerEvent? received;
+      world.events.on<TriggerEvent>((e) => received = e);
 
-    world.step(0.016);
+      world.step(0.016);
 
-    expect(received, isNotNull);
-    expect(received!.triggerId, 'bossIntro');
-    expect(received!.zone, zone);
-    expect(received!.other, player);
-    expect(received!.data, {'lineId': 3});
-  });
+      expect(received, isNotNull);
+      expect(received!.triggerId, 'bossIntro');
+      expect(received!.zone, zone);
+      expect(received!.other, player);
+      expect(received!.data, {'lineId': 3});
+    },
+  );
 
-  test('a trigger zone never elastically swaps velocity (no Velocity component)', () {
-    final world = _buildWorld();
-    final player = world.spawn();
-    world.storeOf<Position>().set(player, Position(0, 0));
-    world.storeOf<Velocity>().set(player, Velocity(50, 0));
-    world.storeOf<Collider>().set(player, Collider(10));
+  test(
+    'a trigger zone never elastically swaps velocity (no Velocity component)',
+    () {
+      final world = _buildWorld();
+      final player = world.spawn();
+      world.storeOf<Position>().set(player, Position(0, 0));
+      world.storeOf<Velocity>().set(player, Velocity(50, 0));
+      world.storeOf<Collider>().set(player, Collider(10));
 
-    final zone = world.spawn();
-    world.storeOf<Position>().set(zone, Position(5, 0));
-    world.storeOf<Collider>().set(zone, Collider(10));
-    world.storeOf<TriggerZone>().set(zone, TriggerZone('checkpointA'));
-    // Deliberately no Velocity on the zone.
+      final zone = world.spawn();
+      world.storeOf<Position>().set(zone, Position(5, 0));
+      world.storeOf<Collider>().set(zone, Collider(10));
+      world.storeOf<TriggerZone>().set(zone, TriggerZone('checkpointA'));
+      // Deliberately no Velocity on the zone.
 
-    installTriggerZones(world);
-    world.step(0.016);
+      installTriggerZones(world);
+      world.step(0.016);
 
-    expect(world.storeOf<Velocity>().get(player)!.x, 50, reason: 'unaffected by the trigger zone touch');
-  });
+      expect(
+        world.storeOf<Velocity>().get(player)!.x,
+        50,
+        reason: 'unaffected by the trigger zone touch',
+      );
+    },
+  );
 
   test('colliding with a non-TriggerZone entity fires no TriggerEvent', () {
     final world = _buildWorld();

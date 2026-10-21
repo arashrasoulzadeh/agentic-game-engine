@@ -30,7 +30,7 @@ class SpatialHash {
   final List<List<EntityId>> _bucketPool = [];
 
   SpatialHash({required this.cellSize, required double worldWidth})
-      : _cols = (worldWidth / cellSize).ceil() + 1;
+    : _cols = (worldWidth / cellSize).ceil() + 1;
 
   int _keyFor(double x, double y) {
     final cx = (x / cellSize).floor();

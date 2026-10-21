@@ -24,7 +24,8 @@ int autotileBitmask(TileMap map, int col, int row, Set<int> wallTileIds) {
 /// `autotileRegionName('wall', 13) == 'wall_13'` — a level's atlas
 /// manifest is expected to define one region per bitmask value (0-15)
 /// under this naming scheme for each autotiled base tile.
-String autotileRegionName(String baseName, int bitmask) => '${baseName}_$bitmask';
+String autotileRegionName(String baseName, int bitmask) =>
+    '${baseName}_$bitmask';
 
 /// The synthetic tile id `withAutotile` substitutes for [baseTileId] at
 /// a cell whose neighbor [bitmask] was computed by [autotileBitmask].
@@ -33,4 +34,5 @@ String autotileRegionName(String baseName, int bitmask) => '${baseName}_$bitmask
 /// actually uses — so every one of a base tile's 16 possible variants
 /// gets its own distinct, deterministic id without colliding with real
 /// content ids or with another base tile's own variants.
-int autotileSyntheticId(int baseTileId, int bitmask) => 1000000 + baseTileId * 16 + bitmask;
+int autotileSyntheticId(int baseTileId, int bitmask) =>
+    1000000 + baseTileId * 16 + bitmask;

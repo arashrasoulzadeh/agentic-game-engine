@@ -143,8 +143,10 @@ class Graph {
   }
 
   /// Every edge leaving [nodeId], regardless of which of its output ports.
-  List<GraphEdge> outgoingFrom(String nodeId) =>
-      [for (final e in edges) if (e.fromNode == nodeId) e];
+  List<GraphEdge> outgoingFrom(String nodeId) => [
+    for (final e in edges)
+      if (e.fromNode == nodeId) e,
+  ];
 
   /// The edge leaving [nodeId] by [portName], or null when that port has no
   /// outgoing connection.

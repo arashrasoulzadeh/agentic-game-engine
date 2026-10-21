@@ -41,7 +41,9 @@ TileMap tileMapFromTmx(String tmxXml) {
   final doc = XmlDocument.parse(tmxXml);
   final mapEl = doc.rootElement;
   if (mapEl.name.local != 'map') {
-    throw UnsupportedError('Not a Tiled .tmx file: root element is <${mapEl.name.local}>, expected <map>');
+    throw UnsupportedError(
+      'Not a Tiled .tmx file: root element is <${mapEl.name.local}>, expected <map>',
+    );
   }
 
   final cols = int.parse(mapEl.getAttribute('width')!);
@@ -55,12 +57,14 @@ TileMap tileMapFromTmx(String tmxXml) {
   }
   if (tilesetEls.length > 1) {
     throw UnsupportedError(
-        'Multiple <tileset> elements found (${tilesetEls.length}) -- tileMapFromTmx only supports a single embedded tileset');
+      'Multiple <tileset> elements found (${tilesetEls.length}) -- tileMapFromTmx only supports a single embedded tileset',
+    );
   }
   final tilesetEl = tilesetEls.single;
   if (tilesetEl.getAttribute('source') != null) {
     throw UnsupportedError(
-        'External tileset file ("source" attribute) is not supported -- re-export with Tiled\'s "Embed Tileset" option');
+      'External tileset file ("source" attribute) is not supported -- re-export with Tiled\'s "Embed Tileset" option',
+    );
   }
   final firstGid = int.parse(tilesetEl.getAttribute('firstgid')!);
 
@@ -96,7 +100,8 @@ TileMap tileMapFromTmx(String tmxXml) {
   }
   if (layerEls.length > 1) {
     throw UnsupportedError(
-        'Multiple <layer> elements found (${layerEls.length}) -- tileMapFromTmx only supports a single tile layer');
+      'Multiple <layer> elements found (${layerEls.length}) -- tileMapFromTmx only supports a single tile layer',
+    );
   }
   final dataEl = layerEls.single.getElement('data');
   if (dataEl == null) {
@@ -105,8 +110,9 @@ TileMap tileMapFromTmx(String tmxXml) {
   final encoding = dataEl.getAttribute('encoding');
   if (encoding != 'csv') {
     throw UnsupportedError(
-        'Layer data encoding "${encoding ?? '(tile elements, uncompressed XML)'}" is not supported -- '
-        're-export with Tiled\'s "CSV" tile layer format');
+      'Layer data encoding "${encoding ?? '(tile elements, uncompressed XML)'}" is not supported -- '
+      're-export with Tiled\'s "CSV" tile layer format',
+    );
   }
 
   // Tiled reserves the top 3 bits of each gid for flip flags
@@ -123,7 +129,8 @@ TileMap tileMapFromTmx(String tmxXml) {
 
   if (tiles.length != cols * rows) {
     throw UnsupportedError(
-        'Layer data has ${tiles.length} tiles, expected ${cols * rows} (map is ${cols}x$rows)');
+      'Layer data has ${tiles.length} tiles, expected ${cols * rows} (map is ${cols}x$rows)',
+    );
   }
 
   return TileMap(

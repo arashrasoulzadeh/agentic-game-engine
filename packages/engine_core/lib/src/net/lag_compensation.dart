@@ -59,10 +59,15 @@ class PositionHistory {
   /// Where [entity] was at [tick] (fractions interpolate; outside the recorded
   /// range it clamps to the nearest recorded tick). Null if never recorded.
   Position? positionAt(EntityId entity, double tick) {
-    final frames = _frames.toList().where((f) => f.positions.containsKey(entity)).toList();
+    final frames = _frames
+        .toList()
+        .where((f) => f.positions.containsKey(entity))
+        .toList();
     if (frames.isEmpty) return null;
-    if (tick <= frames.first.tick) return frames.first.positions[entity]!.toPosition();
-    if (tick >= frames.last.tick) return frames.last.positions[entity]!.toPosition();
+    if (tick <= frames.first.tick)
+      return frames.first.positions[entity]!.toPosition();
+    if (tick >= frames.last.tick)
+      return frames.last.positions[entity]!.toPosition();
     for (var i = 1; i < frames.length; i++) {
       if (tick <= frames[i].tick) {
         final a = frames[i - 1], b = frames[i];
@@ -76,7 +81,9 @@ class PositionHistory {
 
   /// Every entity's position at [tick].
   Map<EntityId, Position> rewind(double tick) {
-    final ids = <EntityId>{for (final f in _frames.toList()) ...f.positions.keys};
+    final ids = <EntityId>{
+      for (final f in _frames.toList()) ...f.positions.keys,
+    };
     return {
       for (final id in ids)
         if (positionAt(id, tick) case final p?) id: p,
@@ -90,11 +97,11 @@ class PositionHistory {
     required double currentTick,
     required double latencyTicks,
     double interpolationTicks = 0,
-  }) =>
-      currentTick - latencyTicks - interpolationTicks;
+  }) => currentTick - latencyTicks - interpolationTicks;
 
   /// Converts a duration to (fractional) ticks at [fixedDt] seconds per tick.
-  static double ticksFor(Duration d, double fixedDt) => d.inMicroseconds / 1e6 / fixedDt;
+  static double ticksFor(Duration d, double fixedDt) =>
+      d.inMicroseconds / 1e6 / fixedDt;
 
   void clear() => _frames.clear();
 }

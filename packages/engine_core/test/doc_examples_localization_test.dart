@@ -37,20 +37,25 @@ void main() {
     expect(i18n.isRTL, isFalse);
   });
 
-  test('plurals: exact counts per language, first form as the fallback', () async {
-    await i18n.addResource(LocalizedString(
-      key: 'items',
-      translations: {'en': 'items'},
-      pluralForms: {
-        'en': {0: 'No items', 1: 'One item', 5: '{count} items'},
-      },
-    ));
-    expect(i18n.trPlural('items', 1), 'One item');
-    expect(i18n.trPlural('items', 5, args: {'count': 5}), '5 items');
-    // A count with no form of its own gets the first one listed -- there are no
-    // CLDR plural rules, so list every count you need.
-    expect(i18n.trPlural('items', 3), 'No items');
-  });
+  test(
+    'plurals: exact counts per language, first form as the fallback',
+    () async {
+      await i18n.addResource(
+        LocalizedString(
+          key: 'items',
+          translations: {'en': 'items'},
+          pluralForms: {
+            'en': {0: 'No items', 1: 'One item', 5: '{count} items'},
+          },
+        ),
+      );
+      expect(i18n.trPlural('items', 1), 'One item');
+      expect(i18n.trPlural('items', 5, args: {'count': 5}), '5 items');
+      // A count with no form of its own gets the first one listed -- there are no
+      // CLDR plural rules, so list every count you need.
+      expect(i18n.trPlural('items', 3), 'No items');
+    },
+  );
 
   test('locale changes notify a listener', () {
     final seen = <String>[];

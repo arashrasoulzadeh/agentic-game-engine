@@ -6,15 +6,19 @@ GridNavigator _nav({
   bool diagonals = true,
   Set<(int, int)> walls = const {},
   Map<(int, int), int> costs = const {},
-}) =>
-    GridNavigator(
-      cols: size,
-      rows: size,
-      diagonals: diagonals,
-      terrainCost: (c, r) => walls.contains((c, r)) ? null : (costs[(c, r)] ?? 1),
-    );
+}) => GridNavigator(
+  cols: size,
+  rows: size,
+  diagonals: diagonals,
+  terrainCost: (c, r) => walls.contains((c, r)) ? null : (costs[(c, r)] ?? 1),
+);
 
-List<GridPosition> _walk(FlowField f, GridPosition from, {bool Function(int, int)? blocked, int limit = 200}) {
+List<GridPosition> _walk(
+  FlowField f,
+  GridPosition from, {
+  bool Function(int, int)? blocked,
+  int limit = 200,
+}) {
   final path = <GridPosition>[];
   var at = from;
   for (var i = 0; i < limit; i++) {
@@ -28,15 +32,18 @@ List<GridPosition> _walk(FlowField f, GridPosition from, {bool Function(int, int
 
 void main() {
   group('FlowField', () {
-    test('goal costs 0; cost grows with distance; uses the navigator\'s diagonals', () {
-      final f = FlowField.build(_nav(), 5, 5);
-      expect(f.costAt(5, 5), 0);
-      expect(f.costAt(6, 6), 1);
-      expect(f.costAt(8, 5), 3);
-      expect(f.costAt(8, 8), 3);
-      final orthogonal = FlowField.build(_nav(diagonals: false), 5, 5);
-      expect(orthogonal.costAt(8, 8), 6);
-    });
+    test(
+      'goal costs 0; cost grows with distance; uses the navigator\'s diagonals',
+      () {
+        final f = FlowField.build(_nav(), 5, 5);
+        expect(f.costAt(5, 5), 0);
+        expect(f.costAt(6, 6), 1);
+        expect(f.costAt(8, 5), 3);
+        expect(f.costAt(8, 8), 3);
+        final orthogonal = FlowField.build(_nav(diagonals: false), 5, 5);
+        expect(orthogonal.costAt(8, 8), 6);
+      },
+    );
 
     test('following the field reaches the goal along a shortest path', () {
       final nav = _nav(walls: {for (var r = 0; r < 8; r++) (4, r)});
@@ -59,34 +66,50 @@ void main() {
       expect((path.last.col, path.last.row), (4, 2));
     });
 
-    test('unreachable cells, impassable goals and out-of-bounds are reported, not thrown', () {
-      final enclosed = _nav(size: 5, walls: {(1, 0), (0, 1), (1, 1)});
-      final f = FlowField.build(enclosed, 4, 4);
-      expect(f.reaches(0, 0), isFalse);
-      expect(f.nextStep(GridPosition(0, 0)), isNull);
-      expect(f.costAt(-1, 0), FlowField.unreachable);
-      expect(f.costAt(99, 99), FlowField.unreachable);
+    test(
+      'unreachable cells, impassable goals and out-of-bounds are reported, not thrown',
+      () {
+        final enclosed = _nav(size: 5, walls: {(1, 0), (0, 1), (1, 1)});
+        final f = FlowField.build(enclosed, 4, 4);
+        expect(f.reaches(0, 0), isFalse);
+        expect(f.nextStep(GridPosition(0, 0)), isNull);
+        expect(f.costAt(-1, 0), FlowField.unreachable);
+        expect(f.costAt(99, 99), FlowField.unreachable);
 
-      final blockedGoal = FlowField.build(_nav(walls: {(5, 5)}), 5, 5);
-      expect(blockedGoal.reaches(0, 0), isFalse);
-      expect(FlowField.build(_nav(), 50, 50).reaches(0, 0), isFalse);
-    });
+        final blockedGoal = FlowField.build(_nav(walls: {(5, 5)}), 5, 5);
+        expect(blockedGoal.reaches(0, 0), isFalse);
+        expect(FlowField.build(_nav(), 50, 50).reaches(0, 0), isFalse);
+      },
+    );
 
     test('at the goal there is no next step', () {
-      expect(FlowField.build(_nav(), 3, 3).nextStep(GridPosition(3, 3)), isNull);
+      expect(
+        FlowField.build(_nav(), 3, 3).nextStep(GridPosition(3, 3)),
+        isNull,
+      );
     });
 
-    test('blocked cells (other units) are stepped around, and a fully blocked unit waits', () {
-      final f = FlowField.build(_nav(), 9, 0);
-      final step = f.nextStep(GridPosition(0, 0), blocked: (c, r) => c == 1 && r == 0)!;
-      expect((step.col, step.row), isNot((1, 0)));
-      expect(f.costAt(step.col, step.row), lessThan(f.costAt(0, 0)));
+    test(
+      'blocked cells (other units) are stepped around, and a fully blocked unit waits',
+      () {
+        final f = FlowField.build(_nav(), 9, 0);
+        final step = f.nextStep(
+          GridPosition(0, 0),
+          blocked: (c, r) => c == 1 && r == 0,
+        )!;
+        expect((step.col, step.row), isNot((1, 0)));
+        expect(f.costAt(step.col, step.row), lessThan(f.costAt(0, 0)));
 
-      expect(f.nextStep(GridPosition(0, 0), blocked: (c, r) => true), isNull);
-    });
+        expect(f.nextStep(GridPosition(0, 0), blocked: (c, r) => true), isNull);
+      },
+    );
 
     test('a one-wide corridor forces the route', () {
-      final nav = GridNavigator(cols: 10, rows: 3, terrainCost: (c, r) => r == 1 ? 1 : null);
+      final nav = GridNavigator(
+        cols: 10,
+        rows: 3,
+        terrainCost: (c, r) => r == 1 ? 1 : null,
+      );
       final f = FlowField.build(nav, 9, 1);
       final path = _walk(f, GridPosition(0, 1));
       expect(path.length, 9);
@@ -121,11 +144,19 @@ void main() {
 
     test('invalidate drops everything so changed terrain is re-read', () {
       var wall = false;
-      final nav = GridNavigator(cols: 5, rows: 1, terrainCost: (c, r) => c == 2 && wall ? null : 1);
+      final nav = GridNavigator(
+        cols: 5,
+        rows: 1,
+        terrainCost: (c, r) => c == 2 && wall ? null : 1,
+      );
       final cache = FlowFieldCache(nav);
       expect(cache.fieldFor(4, 0).reaches(0, 0), isTrue);
       wall = true;
-      expect(cache.fieldFor(4, 0).reaches(0, 0), isTrue, reason: 'stale until invalidated');
+      expect(
+        cache.fieldFor(4, 0).reaches(0, 0),
+        isTrue,
+        reason: 'stale until invalidated',
+      );
       cache.invalidate();
       expect(cache.fieldFor(4, 0).reaches(0, 0), isFalse);
     });

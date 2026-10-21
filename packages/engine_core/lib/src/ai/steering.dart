@@ -24,7 +24,12 @@ Velocity seek(Position from, Position to, double maxSpeed) {
 /// the entity decelerates smoothly instead of snapping to a stop.
 /// Outside [slowRadius], returns full [maxSpeed] toward the target.
 /// At distance 0, returns zero velocity.
-Velocity arrive(Position from, Position to, double maxSpeed, double slowRadius) {
+Velocity arrive(
+  Position from,
+  Position to,
+  double maxSpeed,
+  double slowRadius,
+) {
   final dx = to.x - from.x;
   final dy = to.y - from.y;
   final dist = math.sqrt(dx * dx + dy * dy);
@@ -41,7 +46,12 @@ Velocity arrive(Position from, Position to, double maxSpeed, double slowRadius) 
 /// [jitter] controls how much the heading can change per call (in px/s).
 /// Typical usage: call once per tick to get a wandering entity that
 /// drifts smoothly rather than teleporting.
-Velocity wander(Velocity current, double jitter, double maxSpeed, DeterministicRandom rng) {
+Velocity wander(
+  Velocity current,
+  double jitter,
+  double maxSpeed,
+  DeterministicRandom rng,
+) {
   // Random angle offset in [-jitter, +jitter]
   final angle = current.angle + rng.nextDouble() * 2 * jitter - jitter;
   final vx = maxSpeed * math.cos(angle);

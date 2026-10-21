@@ -9,19 +9,28 @@ void main() {
     expect(decoded.spawnPoint, 'doorFromOverworld');
   });
 
-  test('RoomExit serializes through World.toJson/applyPatch like any registered component', () {
-    final world = World(width: 100, height: 100);
-    registerCoreComponents(world);
+  test(
+    'RoomExit serializes through World.toJson/applyPatch like any registered component',
+    () {
+      final world = World(width: 100, height: 100);
+      registerCoreComponents(world);
 
-    final id = world.spawn();
-    world.storeOf<RoomExit>().set(id, RoomExit('caveEntrance', 'doorFromOverworld'));
+      final id = world.spawn();
+      world.storeOf<RoomExit>().set(
+        id,
+        RoomExit('caveEntrance', 'doorFromOverworld'),
+      );
 
-    final serialized = world.components.serializeEntity(id);
-    expect(serialized['roomExit'], {'targetSceneId': 'caveEntrance', 'spawnPoint': 'doorFromOverworld'});
+      final serialized = world.components.serializeEntity(id);
+      expect(serialized['roomExit'], {
+        'targetSceneId': 'caveEntrance',
+        'spawnPoint': 'doorFromOverworld',
+      });
 
-    world.components.applyToEntity(id, {
-      'roomExit': {'targetSceneId': 'town', 'spawnPoint': 'doorFromCave'},
-    });
-    expect(world.storeOf<RoomExit>().get(id)!.targetSceneId, 'town');
-  });
+      world.components.applyToEntity(id, {
+        'roomExit': {'targetSceneId': 'town', 'spawnPoint': 'doorFromCave'},
+      });
+      expect(world.storeOf<RoomExit>().get(id)!.targetSceneId, 'town');
+    },
+  );
 }

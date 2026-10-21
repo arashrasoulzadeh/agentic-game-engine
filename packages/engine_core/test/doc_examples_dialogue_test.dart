@@ -20,26 +20,30 @@ void main() {
   });
 
   DialogueGraph build() => DialogueGraph.fromJson({
-        'startNodeId': 'greet',
-        'nodes': {
-          'greet': {
-            'id': 'greet',
-            'textKey': 'shop.greet',
-            'speaker': 'Shopkeeper',
-            'choices': [
-              {'textKey': 'shop.buy', 'onSelectEvent': 'bought_potion', 'nextNodeId': 'sold'},
-              {
-                'textKey': 'shop.vip',
-                'conditionEventFlag': 'is_vip',
-                'onSelectEvent': 'vip_order',
-                'nextNodeId': 'sold',
-              },
-              {'textKey': 'shop.leave', 'onSelectEvent': 'left_shop'},
-            ],
+    'startNodeId': 'greet',
+    'nodes': {
+      'greet': {
+        'id': 'greet',
+        'textKey': 'shop.greet',
+        'speaker': 'Shopkeeper',
+        'choices': [
+          {
+            'textKey': 'shop.buy',
+            'onSelectEvent': 'bought_potion',
+            'nextNodeId': 'sold',
           },
-          'sold': {'id': 'sold', 'textKey': 'shop.sold', 'choices': []},
-        },
-      });
+          {
+            'textKey': 'shop.vip',
+            'conditionEventFlag': 'is_vip',
+            'onSelectEvent': 'vip_order',
+            'nextNodeId': 'sold',
+          },
+          {'textKey': 'shop.leave', 'onSelectEvent': 'left_shop'},
+        ],
+      },
+      'sold': {'id': 'sold', 'textKey': 'shop.sold', 'choices': []},
+    },
+  });
 
   test('run a conversation: text with {name}, conditional choices, events', () {
     final shown = <String>[];
@@ -55,9 +59,15 @@ void main() {
 
     final view = WorldView(world);
     expect(runner.currentText(view), 'Welcome, Mira!');
-    expect(runner.availableChoices(view).map((c) => c.textKey), ['shop.buy', 'shop.leave']);
+    expect(runner.availableChoices(view).map((c) => c.textKey), [
+      'shop.buy',
+      'shop.leave',
+    ]);
 
-    world.storeOf<GameState>().set(world.entities.all.first, GameState({'name': 'Mira', 'is_vip': true}));
+    world.storeOf<GameState>().set(
+      world.entities.all.first,
+      GameState({'name': 'Mira', 'is_vip': true}),
+    );
     expect(runner.availableChoices(WorldView(world)).length, 3);
 
     expect(runner.advance(world, 0), isTrue);
@@ -78,7 +88,12 @@ void main() {
     final graph = DialogueGraph(
       startNodeId: 'a',
       nodes: {
-        'a': DialogueNode(id: 'a', textKey: 'shop.sold', typewriterDuration: 1, choices: []),
+        'a': DialogueNode(
+          id: 'a',
+          textKey: 'shop.sold',
+          typewriterDuration: 1,
+          choices: [],
+        ),
       },
     );
     final runner = DialogueRunner(graph: graph, stringTable: strings)..reset();
@@ -92,7 +107,8 @@ void main() {
   });
 
   test('a conversation can be saved and resumed', () {
-    final runner = DialogueRunner(graph: build(), stringTable: strings)..advance(world, 0);
+    final runner = DialogueRunner(graph: build(), stringTable: strings)
+      ..advance(world, 0);
     final saved = runner.toJson();
     final resumed = DialogueRunner.fromJson(saved, build(), strings);
     expect(resumed.currentNode!.id, 'sold');

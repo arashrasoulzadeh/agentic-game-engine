@@ -253,7 +253,11 @@ void _danglingEntityRefTests() {
 
     test('accepts a valid entity reference within range', () {
       final doc = levelWithEntities([
-        {'components': {'position': {'x': 0, 'y': 0}}},
+        {
+          'components': {
+            'position': {'x': 0, 'y': 0},
+          },
+        },
         {
           'components': {
             'particle': {'lifetime': 1.0, 'emitterEntityId': 0},
@@ -273,7 +277,10 @@ void _danglingEntityRefTests() {
       ]);
       final issues = validator.validate(doc);
       final messages = issues.map((i) => i.message).toList();
-      expect(messages, contains('emitterEntityId must be an integer entity ID'));
+      expect(
+        messages,
+        contains('emitterEntityId must be an integer entity ID'),
+      );
     });
 
     test('reports a negative entity reference', () {

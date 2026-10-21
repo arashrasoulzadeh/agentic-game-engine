@@ -1,7 +1,8 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:test/test.dart';
 
-GridNavigator _nav() => GridNavigator(cols: 12, rows: 12, terrainCost: (c, r) => 1);
+GridNavigator _nav() =>
+    GridNavigator(cols: 12, rows: 12, terrainCost: (c, r) => 1);
 
 const _worker = {
   'realtimeStats': {'speed': 6.0, 'attackInterval': 1.0},
@@ -9,7 +10,13 @@ const _worker = {
   'gatherer': {'capacity': 4, 'secondsPerUnit': 0.5},
 };
 
-typedef _Rig = ({World world, EntityId worker, EntityId mine, EntityId hall, Treasury treasury});
+typedef _Rig = ({
+  World world,
+  EntityId worker,
+  EntityId mine,
+  EntityId hall,
+  Treasury treasury,
+});
 
 /// A worker at (1,1), a gold mine at (6,1), a town hall at (1,5).
 _Rig _rig({int gold = 6, bool withDepot = true}) {
@@ -51,19 +58,36 @@ void _run(World w, double seconds, {double dt = 0.1}) {
 
 void main() {
   group('gathering', () {
-    test('walks to the node, harvests, hauls to the depot and delivers into the treasury', () {
-      final r = _rig();
-      final delivered = <ResourceDeliveredEvent>[];
-      r.world.events.on<ResourceDeliveredEvent>(delivered.add);
-      expect(assignGather(r.world, r.worker, r.mine), isTrue);
+    test(
+      'walks to the node, harvests, hauls to the depot and delivers into the treasury',
+      () {
+        final r = _rig();
+        final delivered = <ResourceDeliveredEvent>[];
+        r.world.events.on<ResourceDeliveredEvent>(delivered.add);
+        expect(assignGather(r.world, r.worker, r.mine), isTrue);
 
-      _run(r.world, 40);
+        _run(r.world, 40);
 
-      expect(r.treasury.of('gold'), 6, reason: 'the whole mine ends up in the treasury');
-      expect(delivered.map((e) => e.amount), [4, 2], reason: 'capacity 4, then the last 2');
-      expect(r.world.entities.isAlive(r.mine), isFalse, reason: 'an empty node is removed');
-      expect(r.world.storeOf<Gatherer>().get(r.worker)!.phase, GatherPhase.idle);
-    });
+        expect(
+          r.treasury.of('gold'),
+          6,
+          reason: 'the whole mine ends up in the treasury',
+        );
+        expect(delivered.map((e) => e.amount), [
+          4,
+          2,
+        ], reason: 'capacity 4, then the last 2');
+        expect(
+          r.world.entities.isAlive(r.mine),
+          isFalse,
+          reason: 'an empty node is removed',
+        );
+        expect(
+          r.world.storeOf<Gatherer>().get(r.worker)!.phase,
+          GatherPhase.idle,
+        );
+      },
+    );
 
     test('harvesting takes secondsPerUnit per unit', () {
       final r = _rig();
@@ -96,8 +120,16 @@ void main() {
 
     test('assignGather refuses non-gatherers and empty or missing nodes', () {
       final r = _rig(gold: 0);
-      expect(assignGather(r.world, r.worker, r.mine), isFalse, reason: 'empty node');
-      expect(assignGather(r.world, r.hall, r.mine), isFalse, reason: 'not a gatherer');
+      expect(
+        assignGather(r.world, r.worker, r.mine),
+        isFalse,
+        reason: 'empty node',
+      );
+      expect(
+        assignGather(r.world, r.hall, r.mine),
+        isFalse,
+        reason: 'not a gatherer',
+      );
       expect(assignGather(r.world, r.worker, 9999), isFalse);
     });
 
@@ -110,21 +142,27 @@ void main() {
       expect((g.carrying, g.carried), (null, 0));
     });
 
-    test('is deterministic, and a world restored mid-haul finishes identically', () {
-      final a = _rig();
-      assignGather(a.world, a.worker, a.mine);
-      _run(a.world, 6);
-      final snap = WorldSnapshot.capture(a.world);
-      _run(a.world, 30);
+    test(
+      'is deterministic, and a world restored mid-haul finishes identically',
+      () {
+        final a = _rig();
+        assignGather(a.world, a.worker, a.mine);
+        _run(a.world, 6);
+        final snap = WorldSnapshot.capture(a.world);
+        _run(a.world, 30);
 
-      final b = _rig();
-      snap.restoreInto(b.world);
-      _run(b.world, 30);
+        final b = _rig();
+        snap.restoreInto(b.world);
+        _run(b.world, 30);
 
-      // Compared as data: map key order differs after a restore, the content must not.
-      expect(WorldSnapshot.capture(b.world).toJson(), WorldSnapshot.capture(a.world).toJson());
-      expect(a.treasury.of('gold'), 6);
-    });
+        // Compared as data: map key order differs after a restore, the content must not.
+        expect(
+          WorldSnapshot.capture(b.world).toJson(),
+          WorldSnapshot.capture(a.world).toJson(),
+        );
+        expect(a.treasury.of('gold'), 6);
+      },
+    );
 
     test('with several depots the nearest one is used', () {
       final r = _rig();
@@ -139,7 +177,11 @@ void main() {
       assignGather(r.world, r.worker, r.mine);
       _run(r.world, 15);
       final p = r.world.storeOf<GridPosition>().get(r.worker)!;
-      expect(p.chebyshev(GridPosition(6, 3)), lessThanOrEqualTo(3), reason: 'it stayed near the mine');
+      expect(
+        p.chebyshev(GridPosition(6, 3)),
+        lessThanOrEqualTo(3),
+        reason: 'it stayed near the mine',
+      );
       expect(events, isNotEmpty);
     });
   });
@@ -165,24 +207,42 @@ void main() {
       },
     };
 
-    test('placing takes the cost and spawns the building under construction', () {
-      final r = rig();
-      final res = placeBuilding(r.world, _nav(),
-          team: 'red', template: barracks, col: 3, row: 3, cost: {'gold': 40}, buildSeconds: 5);
-      expect(res.failure, isNull);
-      expect(r.treasury.of('gold'), 60);
-      final id = res.id!;
-      expect(r.world.storeOf<Construction>().get(id)!.remaining, 5);
-      expect(r.world.storeOf<Team>().get(id)!.id, 'red');
-      expect(r.world.storeOf<GridPosition>().get(id)!.col, 3);
-    });
+    test(
+      'placing takes the cost and spawns the building under construction',
+      () {
+        final r = rig();
+        final res = placeBuilding(
+          r.world,
+          _nav(),
+          team: 'red',
+          template: barracks,
+          col: 3,
+          row: 3,
+          cost: {'gold': 40},
+          buildSeconds: 5,
+        );
+        expect(res.failure, isNull);
+        expect(r.treasury.of('gold'), 60);
+        final id = res.id!;
+        expect(r.world.storeOf<Construction>().get(id)!.remaining, 5);
+        expect(r.world.storeOf<Team>().get(id)!.id, 'red');
+        expect(r.world.storeOf<GridPosition>().get(id)!.col, 3);
+      },
+    );
 
     test('it completes after buildSeconds and announces it once', () {
       final r = rig();
       final done = <EntityId>[];
       r.world.events.on<BuildingCompletedEvent>((e) => done.add(e.building));
-      final id =
-          placeBuilding(r.world, _nav(), team: 'red', template: barracks, col: 3, row: 3, buildSeconds: 2).id!;
+      final id = placeBuilding(
+        r.world,
+        _nav(),
+        team: 'red',
+        template: barracks,
+        col: 3,
+        row: 3,
+        buildSeconds: 2,
+      ).id!;
       _run(r.world, 1.5);
       expect(r.world.storeOf<Construction>().has(id), isTrue);
       _run(r.world, 1.0);
@@ -190,30 +250,62 @@ void main() {
       expect(done, [id]);
     });
 
-    test('a producer under construction makes nothing until it is finished', () {
-      final r = rig();
-      final id =
-          placeBuilding(r.world, _nav(), team: 'red', template: barracks, col: 3, row: 3, buildSeconds: 3).id!;
-      queueProduction(r.world, id);
-      _run(r.world, 2.5);
-      expect(r.world.storeOf<Producer>().get(id)!.progress, 0);
-      expect(r.treasury.of('gold'), 100, reason: 'nothing was charged for a unit yet');
-      _run(r.world, 3);
-      expect(r.world.storeOf<Producer>().get(id)!.queued, 0, reason: 'one unit built after completion');
-    });
+    test(
+      'a producer under construction makes nothing until it is finished',
+      () {
+        final r = rig();
+        final id = placeBuilding(
+          r.world,
+          _nav(),
+          team: 'red',
+          template: barracks,
+          col: 3,
+          row: 3,
+          buildSeconds: 3,
+        ).id!;
+        queueProduction(r.world, id);
+        _run(r.world, 2.5);
+        expect(r.world.storeOf<Producer>().get(id)!.progress, 0);
+        expect(
+          r.treasury.of('gold'),
+          100,
+          reason: 'nothing was charged for a unit yet',
+        );
+        _run(r.world, 3);
+        expect(
+          r.world.storeOf<Producer>().get(id)!.queued,
+          0,
+          reason: 'one unit built after completion',
+        );
+      },
+    );
 
     test('zero buildSeconds is finished at once', () {
       final r = rig();
-      final id = placeBuilding(r.world, _nav(), team: 'red', template: barracks, col: 3, row: 3).id!;
+      final id = placeBuilding(
+        r.world,
+        _nav(),
+        team: 'red',
+        template: barracks,
+        col: 3,
+        row: 3,
+      ).id!;
       expect(r.world.storeOf<Construction>().has(id), isFalse);
     });
 
     test('every refusal reason, and a refusal spends nothing', () {
       final r = rig(gold: 10);
       final nav = _nav();
-      BuildFailure? fail(int c, int rr, {String team = 'red', int cost = 0}) => placeBuilding(r.world, nav,
-              team: team, template: barracks, col: c, row: rr, cost: {'gold': cost})
-          .failure;
+      BuildFailure? fail(int c, int rr, {String team = 'red', int cost = 0}) =>
+          placeBuilding(
+            r.world,
+            nav,
+            team: team,
+            template: barracks,
+            col: c,
+            row: rr,
+            cost: {'gold': cost},
+          ).failure;
 
       expect(fail(-1, 0), BuildFailure.outOfBounds);
       expect(fail(99, 0), BuildFailure.outOfBounds);
@@ -224,12 +316,27 @@ void main() {
       expect(fail(2, 2), isNull);
       expect(fail(2, 2), BuildFailure.occupied);
 
-      final walled = GridNavigator(cols: 12, rows: 12, terrainCost: (c, rr) => c == 7 ? null : 1);
+      final walled = GridNavigator(
+        cols: 12,
+        rows: 12,
+        terrainCost: (c, rr) => c == 7 ? null : 1,
+      );
       expect(
-        placeBuilding(r.world, walled, team: 'red', template: barracks, col: 7, row: 1).failure,
+        placeBuilding(
+          r.world,
+          walled,
+          team: 'red',
+          template: barracks,
+          col: 7,
+          row: 1,
+        ).failure,
         BuildFailure.blocked,
       );
-      expect(r.world.entities.all.length, 2, reason: 'only the treasury and the one building exist');
+      expect(
+        r.world.entities.all.length,
+        2,
+        reason: 'only the treasury and the one building exist',
+      );
     });
   });
 }

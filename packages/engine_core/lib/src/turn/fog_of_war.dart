@@ -10,7 +10,8 @@ class Vision {
   Vision(this.range);
 
   Map<String, dynamic> toJson() => {'range': range};
-  factory Vision.fromJson(Map<String, dynamic> json) => Vision((json['range'] as num).toInt());
+  factory Vision.fromJson(Map<String, dynamic> json) =>
+      Vision((json['range'] as num).toInt());
 }
 
 /// Per-team visibility of a [cols] x [rows] grid, as world state so an
@@ -25,9 +26,13 @@ class FogOfWar {
   final Map<String, Set<int>> visible;
   final Map<String, Set<int>> explored;
 
-  FogOfWar(this.cols, this.rows, {Map<String, Set<int>>? visible, Map<String, Set<int>>? explored})
-      : visible = visible ?? {},
-        explored = explored ?? {};
+  FogOfWar(
+    this.cols,
+    this.rows, {
+    Map<String, Set<int>>? visible,
+    Map<String, Set<int>>? explored,
+  }) : visible = visible ?? {},
+       explored = explored ?? {};
 
   int key(int col, int row) => row * cols + col;
 
@@ -38,17 +43,21 @@ class FogOfWar {
       explored[team]?.contains(key(col, row)) ?? false;
 
   Map<String, dynamic> toJson() => {
-        'cols': cols,
-        'rows': rows,
-        'visible': {for (final e in visible.entries) e.key: (e.value.toList()..sort())},
-        'explored': {for (final e in explored.entries) e.key: (e.value.toList()..sort())},
-      };
+    'cols': cols,
+    'rows': rows,
+    'visible': {
+      for (final e in visible.entries) e.key: (e.value.toList()..sort()),
+    },
+    'explored': {
+      for (final e in explored.entries) e.key: (e.value.toList()..sort()),
+    },
+  };
 
   factory FogOfWar.fromJson(Map<String, dynamic> json) {
     Map<String, Set<int>> read(Object? raw) => {
-          for (final e in ((raw as Map?) ?? const {}).entries)
-            e.key as String: {for (final v in e.value as List) (v as num).toInt()},
-        };
+      for (final e in ((raw as Map?) ?? const {}).entries)
+        e.key as String: {for (final v in e.value as List) (v as num).toInt()},
+    };
     return FogOfWar(
       (json['cols'] as num).toInt(),
       (json['rows'] as num).toInt(),

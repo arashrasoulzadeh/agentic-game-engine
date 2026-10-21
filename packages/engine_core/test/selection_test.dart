@@ -70,17 +70,20 @@ void main() {
     expect(w.storeOf<OrderQueue>().get(b)!.orders, hasLength(2));
   });
 
-  test('selection drops after the turn passes: stale units are not commanded', () {
-    final w = _world();
-    _unit(w, 'red', 0, 0);
-    _unit(w, 'blue', 5, 5);
-    startTurnBasedGame(w, ['red', 'blue']);
-    selectAtCell(w, 0, 0);
-    endTurn(w);
-    expect(commandSelected(w, 1, 1), 0);
-    clearSelection(w);
-    expect(selectedEntities(w), isEmpty);
-  });
+  test(
+    'selection drops after the turn passes: stale units are not commanded',
+    () {
+      final w = _world();
+      _unit(w, 'red', 0, 0);
+      _unit(w, 'blue', 5, 5);
+      startTurnBasedGame(w, ['red', 'blue']);
+      selectAtCell(w, 0, 0);
+      endTurn(w);
+      expect(commandSelected(w, 1, 1), 0);
+      clearSelection(w);
+      expect(selectedEntities(w), isEmpty);
+    },
+  );
 
   test('GridToWorldSystem centers entities in their cell', () {
     final w = _world();

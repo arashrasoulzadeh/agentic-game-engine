@@ -29,7 +29,10 @@ class InstantiatePrefabCommand implements EditCommand {
     _placed ??= prefab.instantiate(
       x,
       y,
-      taken: {for (final e in document.entities) if (e.name != null) e.name!},
+      taken: {
+        for (final e in document.entities)
+          if (e.name != null) e.name!,
+      },
     );
     document.entities.addAll(_placed!);
   }

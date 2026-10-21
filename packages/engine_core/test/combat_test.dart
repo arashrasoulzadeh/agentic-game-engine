@@ -10,19 +10,42 @@ World _world() {
   return w;
 }
 
-EntityId _unit(World w, String team, int c, int r, {int hp = 5, int atk = 3, int def = 0}) {
+EntityId _unit(
+  World w,
+  String team,
+  int c,
+  int r, {
+  int hp = 5,
+  int atk = 3,
+  int def = 0,
+}) {
   final e = w.spawn();
   w.storeOf<Team>().set(e, Team(team));
   w.storeOf<ActionPoints>().set(e, ActionPoints(4, current: 0));
   w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: hp, attack: atk, defense: def));
+  w.storeOf<UnitStats>().set(
+    e,
+    UnitStats(maxHp: hp, attack: atk, defense: def),
+  );
   return e;
 }
 
 void main() {
   test('damage is attack minus defense, minimum 1', () {
-    expect(damageFor(UnitStats(maxHp: 1, attack: 5), UnitStats(maxHp: 1, defense: 2)), 3);
-    expect(damageFor(UnitStats(maxHp: 1, attack: 1), UnitStats(maxHp: 1, defense: 9)), 1);
+    expect(
+      damageFor(
+        UnitStats(maxHp: 1, attack: 5),
+        UnitStats(maxHp: 1, defense: 2),
+      ),
+      3,
+    );
+    expect(
+      damageFor(
+        UnitStats(maxHp: 1, attack: 1),
+        UnitStats(maxHp: 1, defense: 9),
+      ),
+      1,
+    );
   });
 
   test('attack order damages the target and emits events', () {
@@ -52,25 +75,28 @@ void main() {
     expect(w.storeOf<UnitStats>().get(b)!.hp, 5);
   });
 
-  test('killing the last enemy unit eliminates the team and declares victory', () {
-    final w = _world();
-    final a = _unit(w, 'red', 0, 0);
-    final b = _unit(w, 'blue', 1, 0, hp: 2);
-    startTurnBasedGame(w, ['red', 'blue']);
-    final defeated = <UnitDefeatedEvent>[];
-    final won = <VictoryEvent>[];
-    w.events.on<UnitDefeatedEvent>(defeated.add);
-    w.events.on<VictoryEvent>(won.add);
-    w.step(0.1);
-    submitOrder(w, a, AttackOrder(b));
-    w.step(0.1);
-    w.step(0.1);
-    expect(w.entities.isAlive(b), isFalse);
-    expect(defeated.single.team, 'blue');
-    expect(turnStateOf(w)!.eliminated, ['blue']);
-    expect(turnStateOf(w)!.winner, 'red');
-    expect(won.single.team, 'red');
-  });
+  test(
+    'killing the last enemy unit eliminates the team and declares victory',
+    () {
+      final w = _world();
+      final a = _unit(w, 'red', 0, 0);
+      final b = _unit(w, 'blue', 1, 0, hp: 2);
+      startTurnBasedGame(w, ['red', 'blue']);
+      final defeated = <UnitDefeatedEvent>[];
+      final won = <VictoryEvent>[];
+      w.events.on<UnitDefeatedEvent>(defeated.add);
+      w.events.on<VictoryEvent>(won.add);
+      w.step(0.1);
+      submitOrder(w, a, AttackOrder(b));
+      w.step(0.1);
+      w.step(0.1);
+      expect(w.entities.isAlive(b), isFalse);
+      expect(defeated.single.team, 'blue');
+      expect(turnStateOf(w)!.eliminated, ['blue']);
+      expect(turnStateOf(w)!.winner, 'red');
+      expect(won.single.team, 'red');
+    },
+  );
 
   test('after victory turns stop and orders are refused', () {
     final w = _world();

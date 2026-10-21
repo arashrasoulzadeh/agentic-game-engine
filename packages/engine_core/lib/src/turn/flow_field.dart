@@ -26,7 +26,8 @@ class FlowField {
   factory FlowField.build(GridNavigator navigator, int goalCol, int goalRow) {
     final cols = navigator.cols, rows = navigator.rows;
     final cost = List<int>.filled(cols * rows, unreachable);
-    if (navigator.inBounds(goalCol, goalRow) && navigator.terrainCost(goalCol, goalRow) != null) {
+    if (navigator.inBounds(goalCol, goalRow) &&
+        navigator.terrainCost(goalCol, goalRow) != null) {
       cost[goalRow * cols + goalCol] = 0;
       // Dijkstra with a bucket queue would be faster; a plain sorted frontier
       // keeps this short and is fine at strategy-map sizes.
@@ -55,8 +56,9 @@ class FlowField {
   }
 
   /// Cost from ([col], [row]) to the goal, or [unreachable].
-  int costAt(int col, int row) =>
-      navigator.inBounds(col, row) ? _cost[row * navigator.cols + col] : unreachable;
+  int costAt(int col, int row) => navigator.inBounds(col, row)
+      ? _cost[row * navigator.cols + col]
+      : unreachable;
 
   bool reaches(int col, int row) => costAt(col, row) != unreachable;
 
@@ -64,12 +66,19 @@ class FlowField {
   /// when the goal is unreachable from here, or when every improving neighbour is
   /// [blocked] (by another unit). Never returns a cell that isn't strictly closer
   /// to the goal, so following it always terminates.
-  GridPosition? nextStep(GridPosition from, {bool Function(int col, int row)? blocked}) {
+  GridPosition? nextStep(
+    GridPosition from, {
+    bool Function(int col, int row)? blocked,
+  }) {
     final here = costAt(from.col, from.row);
     if (here == unreachable || here == 0) return null;
     GridPosition? best;
     var bestTotal = 1 << 30;
-    for (final (c, r, enter) in navigator.neighbours(from.col, from.row, blocked: blocked)) {
+    for (final (c, r, enter) in navigator.neighbours(
+      from.col,
+      from.row,
+      blocked: blocked,
+    )) {
       final there = costAt(c, r);
       // Only strictly closer cells count, so following the field always ends.
       if (there == unreachable || there >= here) continue;

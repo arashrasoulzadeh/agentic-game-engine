@@ -18,13 +18,18 @@ class Objective {
 
   Objective(this.id, this.col, this.row, {this.owner});
 
-  Map<String, dynamic> toJson() => {'id': id, 'col': col, 'row': row, 'owner': owner};
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'col': col,
+    'row': row,
+    'owner': owner,
+  };
   factory Objective.fromJson(Map<String, dynamic> json) => Objective(
-        json['id'] as String,
-        (json['col'] as num).toInt(),
-        (json['row'] as num).toInt(),
-        owner: json['owner'] as String?,
-      );
+    json['id'] as String,
+    (json['col'] as num).toInt(),
+    (json['row'] as num).toInt(),
+    owner: json['owner'] as String?,
+  );
 }
 
 /// Optional win-by-holding rule, kept as world state so it saves. A team that
@@ -36,13 +41,20 @@ class ObjectiveRules {
   /// Consecutive qualifying turn starts per team.
   final Map<String, int> holds;
 
-  ObjectiveRules({required this.holdTurnsToWin, Map<String, int>? holds}) : holds = holds ?? {};
+  ObjectiveRules({required this.holdTurnsToWin, Map<String, int>? holds})
+    : holds = holds ?? {};
 
-  Map<String, dynamic> toJson() => {'holdTurnsToWin': holdTurnsToWin, 'holds': holds};
+  Map<String, dynamic> toJson() => {
+    'holdTurnsToWin': holdTurnsToWin,
+    'holds': holds,
+  };
   factory ObjectiveRules.fromJson(Map<String, dynamic> json) => ObjectiveRules(
-        holdTurnsToWin: (json['holdTurnsToWin'] as num).toInt(),
-        holds: {for (final e in ((json['holds'] as Map?) ?? const {}).entries) e.key as String: (e.value as num).toInt()},
-      );
+    holdTurnsToWin: (json['holdTurnsToWin'] as num).toInt(),
+    holds: {
+      for (final e in ((json['holds'] as Map?) ?? const {}).entries)
+        e.key as String: (e.value as num).toInt(),
+    },
+  );
 }
 
 /// Emitted when [team] takes [objective] ([previousOwner] is null if it was neutral).
@@ -69,10 +81,14 @@ void resolveObjectives(World world, String team) {
     if (o.owner == team) continue;
     for (var g = 0; g < grid.length; g++) {
       final p = grid.denseAt(g);
-      if (p.col == o.col && p.row == o.row && teams.get(grid.entityAt(g))?.id == team) {
+      if (p.col == o.col &&
+          p.row == o.row &&
+          teams.get(grid.entityAt(g))?.id == team) {
         final previous = o.owner;
         o.owner = team;
-        world.events.emit(ObjectiveCapturedEvent(objectives.entityAt(i), team, previous));
+        world.events.emit(
+          ObjectiveCapturedEvent(objectives.entityAt(i), team, previous),
+        );
         break;
       }
     }
@@ -87,7 +103,9 @@ void resolveObjectives(World world, String team) {
   }
   r.holds[team] = holdsAll ? (r.holds[team] ?? 0) + 1 : 0;
   final turn = turnStateOf(world);
-  if (turn != null && turn.winner == null && r.holds[team]! >= r.holdTurnsToWin) {
+  if (turn != null &&
+      turn.winner == null &&
+      r.holds[team]! >= r.holdTurnsToWin) {
     turn.winner = team;
     world.events.emit(VictoryEvent(team));
   }

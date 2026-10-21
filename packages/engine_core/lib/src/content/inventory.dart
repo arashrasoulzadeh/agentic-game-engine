@@ -14,8 +14,8 @@ class Inventory {
   Map<String, dynamic> toJson() => {'items': items};
 
   factory Inventory.fromJson(Map<String, dynamic> json) => Inventory(
-        ((json['items'] as Map?) ?? const {}).map(
-          (k, v) => MapEntry(k as String, (v as num).toInt()),
-        ),
-      );
+    ((json['items'] as Map?) ?? const {}).map(
+      (k, v) => MapEntry(k as String, (v as num).toInt()),
+    ),
+  );
 }

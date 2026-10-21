@@ -28,7 +28,9 @@ void main() {
 
   group('missing entry', () {
     test('no entryNodeId at all', () {
-      const graph = Graph(nodes: [GraphNode(id: 'a', kind: 'say')]);
+      const graph = Graph(
+        nodes: [GraphNode(id: 'a', kind: 'say')],
+      );
       expect(
         validateGraph(graph).map((i) => i.kind),
         contains(GraphIssueKind.missingEntry),
@@ -143,7 +145,9 @@ void main() {
         entryNodeId: 'a',
       );
       expect(
-        validateGraph(graph).where((i) => i.kind == GraphIssueKind.cycleWithoutWait),
+        validateGraph(
+          graph,
+        ).where((i) => i.kind == GraphIssueKind.cycleWithoutWait),
         isEmpty,
       );
     });
@@ -195,7 +199,9 @@ void main() {
         entryNodeId: 'a',
       );
       expect(
-        validateGraph(graph).where((i) => i.kind == GraphIssueKind.cycleWithoutWait),
+        validateGraph(
+          graph,
+        ).where((i) => i.kind == GraphIssueKind.cycleWithoutWait),
         isEmpty,
       );
     });

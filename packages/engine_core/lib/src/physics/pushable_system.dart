@@ -53,12 +53,15 @@ class PushableSystem implements System {
         if (dy.abs() > collider.radius) continue; // not roughly level
 
         final minDist = collider.radius + otherCollider.radius;
-        if (dx == 0 || dx.abs() >= minDist) continue; // not overlapping horizontally
+        if (dx == 0 || dx.abs() >= minDist)
+          continue; // not overlapping horizontally
 
         pushDirection += dx > 0 ? 1 : -1;
       }
 
-      vel.x = pushDirection == 0 ? 0 : pushable.pushSpeed * (pushDirection > 0 ? 1 : -1);
+      vel.x = pushDirection == 0
+          ? 0
+          : pushable.pushSpeed * (pushDirection > 0 ? 1 : -1);
     }
   }
 }

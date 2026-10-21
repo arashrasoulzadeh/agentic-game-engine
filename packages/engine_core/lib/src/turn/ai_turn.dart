@@ -136,7 +136,8 @@ class TacticalAI implements TurnAI {
 
     final shared = focusFire ? _weakest(world, mine, enemies) : null;
     for (final unit in mine) {
-      if (_shouldRetreat(world, unit) && _retreat(world, unit, enemies)) continue;
+      if (_shouldRetreat(world, unit) && _retreat(world, unit, enemies))
+        continue;
       final target = shared ?? _nearest(world, unit, enemies);
       submitOrder(world, unit, AttackOrder(target));
     }
@@ -159,7 +160,8 @@ class TacticalAI implements TurnAI {
 
     EntityId best = enemies.first;
     for (final e in enemies.skip(1)) {
-      final hpE = stats.get(e)?.hp ?? 1 << 30, hpB = stats.get(best)?.hp ?? 1 << 30;
+      final hpE = stats.get(e)?.hp ?? 1 << 30,
+          hpB = stats.get(best)?.hp ?? 1 << 30;
       if (hpE < hpB || (hpE == hpB && distance(e) < distance(best))) best = e;
     }
     return best;
@@ -170,7 +172,8 @@ class TacticalAI implements TurnAI {
     final from = grid.get(unit)!;
     EntityId best = enemies.first;
     for (final e in enemies.skip(1)) {
-      if (from.chebyshev(grid.get(e)!) < from.chebyshev(grid.get(best)!)) best = e;
+      if (from.chebyshev(grid.get(e)!) < from.chebyshev(grid.get(best)!))
+        best = e;
     }
     return best;
   }
@@ -182,7 +185,13 @@ class TacticalAI implements TurnAI {
   }
 
   bool _retreat(World world, EntityId unit, List<EntityId> enemies) =>
-      _retreatFrom(world, unit, world.storeOf<GridPosition>().get(unit)!, enemies, navigator!);
+      _retreatFrom(
+        world,
+        unit,
+        world.storeOf<GridPosition>().get(unit)!,
+        enemies,
+        navigator!,
+      );
 
   void _idle(World world, String team, List<EntityId> mine) {
     final fog = fogOf(world);
@@ -190,13 +199,21 @@ class TacticalAI implements TurnAI {
     for (final unit in mine) {
       if (explore && navigator != null && fog != null) {
         final cell = _unexplored(world, team, unit, fog, claimed);
-        if (cell != null && submitOrder(world, unit, MoveOrder(cell.$1, cell.$2))) continue;
+        if (cell != null &&
+            submitOrder(world, unit, MoveOrder(cell.$1, cell.$2)))
+          continue;
       }
       if (defendWhenIdle) submitOrder(world, unit, const DefendOrder());
     }
   }
 
-  (int, int)? _unexplored(World world, String team, EntityId unit, FogOfWar fog, Set<int> claimed) {
+  (int, int)? _unexplored(
+    World world,
+    String team,
+    EntityId unit,
+    FogOfWar fog,
+    Set<int> claimed,
+  ) {
     final from = world.storeOf<GridPosition>().get(unit)!;
     final explored = fog.explored[team] ?? const <int>{};
     (int, int)? best;
@@ -205,10 +222,15 @@ class TacticalAI implements TurnAI {
       for (var c = 0; c < fog.cols; c++) {
         final key = fog.key(c, r);
         if (explored.contains(key) || claimed.contains(key)) continue;
-        final d = (c - from.col).abs() > (r - from.row).abs() ? (c - from.col).abs() : (r - from.row).abs();
+        final d = (c - from.col).abs() > (r - from.row).abs()
+            ? (c - from.col).abs()
+            : (r - from.row).abs();
         if (d >= bestDist) continue;
-        if (navigator!.findPath(from, GridPosition(c, r),
-                blocked: occupiedBy(world.storeOf<GridPosition>(), unit)) ==
+        if (navigator!.findPath(
+              from,
+              GridPosition(c, r),
+              blocked: occupiedBy(world.storeOf<GridPosition>(), unit),
+            ) ==
             null) {
           continue;
         }
@@ -286,9 +308,12 @@ class ObjectiveAI implements TurnAI {
     for (final unit in mine) {
       final at = grid.get(unit)!;
       final nearEnemy = _nearest(grid, at, enemies);
-      final nearDist = nearEnemy == null ? 1 << 30 : at.chebyshev(grid.get(nearEnemy)!);
+      final nearDist = nearEnemy == null
+          ? 1 << 30
+          : at.chebyshev(grid.get(nearEnemy)!);
 
-      if (_playCarryAndEscort(world, team, unit, at, enemies, claimedFlags)) continue;
+      if (_playCarryAndEscort(world, team, unit, at, enemies, claimedFlags))
+        continue;
 
       final onOwned = _objectiveAt(objectives, at, team);
       if (onOwned && nearDist <= holdRadius) {
@@ -329,7 +354,8 @@ class ObjectiveAI implements TurnAI {
     // 1. The Vip keeps away from danger.
     if (world.storeOf<Vip>().has(unit) && enemies.isNotEmpty) {
       final near = _nearest(grid, at, enemies)!;
-      if (at.chebyshev(grid.get(near)!) <= engageRange + 1 && _retreatFrom(world, unit, at, enemies, navigator)) {
+      if (at.chebyshev(grid.get(near)!) <= engageRange + 1 &&
+          _retreatFrom(world, unit, at, enemies, navigator)) {
         return true;
       }
     }
@@ -349,8 +375,13 @@ class ObjectiveAI implements TurnAI {
     for (var i = 0; i < flags.length; i++) {
       final f = flags.denseAt(i);
       final holder = f.carrier;
-      if (f.homeTeam != team || holder == null || !world.entities.isAlive(holder)) continue;
-      if (world.storeOf<Team>().get(holder)?.id == team || !canSee(world, team, holder)) continue;
+      if (f.homeTeam != team ||
+          holder == null ||
+          !world.entities.isAlive(holder))
+        continue;
+      if (world.storeOf<Team>().get(holder)?.id == team ||
+          !canSee(world, team, holder))
+        continue;
       final hp = grid.get(holder);
       if (hp != null && at.chebyshev(hp) <= holdRadius + engageRange) {
         return submitOrder(world, unit, AttackOrder(holder));
@@ -361,7 +392,8 @@ class ObjectiveAI implements TurnAI {
     for (var i = 0; i < flags.length; i++) {
       final f = flags.denseAt(i);
       final id = flags.entityAt(i);
-      if (f.homeTeam == team || f.carrier != null || claimedFlags.contains(id)) continue;
+      if (f.homeTeam == team || f.carrier != null || claimedFlags.contains(id))
+        continue;
       if (world.storeOf<Vip>().has(unit)) continue;
       if (_isNearestTo(world, team, unit, f.col, f.row)) {
         claimedFlags.add(id);
@@ -382,7 +414,10 @@ class ObjectiveAI implements TurnAI {
     var bestD = 1 << 30;
     for (var i = 0; i < teams.length; i++) {
       final e = teams.entityAt(i);
-      if (teams.denseAt(i).id != team || !_canAct(points.get(e)) || world.storeOf<Vip>().has(e)) continue;
+      if (teams.denseAt(i).id != team ||
+          !_canAct(points.get(e)) ||
+          world.storeOf<Vip>().has(e))
+        continue;
       final p = grid.get(e);
       if (p == null) continue;
       final d = p.chebyshev(cell);
@@ -394,7 +429,11 @@ class ObjectiveAI implements TurnAI {
     return best == unit;
   }
 
-  bool _objectiveAt(ComponentStore<Objective> objectives, GridPosition at, String team) {
+  bool _objectiveAt(
+    ComponentStore<Objective> objectives,
+    GridPosition at,
+    String team,
+  ) {
     for (var i = 0; i < objectives.length; i++) {
       final o = objectives.denseAt(i);
       if (o.col == at.col && o.row == at.row && o.owner == team) return true;
@@ -402,7 +441,11 @@ class ObjectiveAI implements TurnAI {
     return false;
   }
 
-  EntityId? _nearest(ComponentStore<GridPosition> grid, GridPosition from, List<EntityId> enemies) {
+  EntityId? _nearest(
+    ComponentStore<GridPosition> grid,
+    GridPosition from,
+    List<EntityId> enemies,
+  ) {
     EntityId? best;
     var bestD = 1 << 30;
     for (final e in enemies) {
@@ -428,7 +471,9 @@ class ObjectiveAI implements TurnAI {
       for (final t in targets) {
         if (pass && claimed.contains(t.$1)) continue;
         final d = from.chebyshev(GridPosition(t.$2.col, t.$2.row));
-        if (d < bestD && navigator.findPath(from, GridPosition(t.$2.col, t.$2.row)) != null) {
+        if (d < bestD &&
+            navigator.findPath(from, GridPosition(t.$2.col, t.$2.row)) !=
+                null) {
           bestD = d;
           best = t;
         }
@@ -454,14 +499,21 @@ bool _retreatFrom(
     var nearest = 1 << 30;
     for (final e in enemies) {
       final p = grid.get(e)!;
-      final d = (col - p.col).abs() > (row - p.row).abs() ? (col - p.col).abs() : (row - p.row).abs();
+      final d = (col - p.col).abs() > (row - p.row).abs()
+          ? (col - p.col).abs()
+          : (row - p.row).abs();
       if (d < nearest) nearest = d;
     }
     return nearest;
   }
 
-  final budget = world.storeOf<ActionPoints>().get(unit)?.current ?? _realtimeRetreatCells;
-  final options = navigator.reachable(from, budget, blocked: occupiedBy(grid, unit));
+  final budget =
+      world.storeOf<ActionPoints>().get(unit)?.current ?? _realtimeRetreatCells;
+  final options = navigator.reachable(
+    from,
+    budget,
+    blocked: occupiedBy(grid, unit),
+  );
   var bestScore = threat(from.col, from.row);
   (int, int)? best;
   for (final cell in options.keys) {
@@ -514,7 +566,8 @@ class AITurnSystem extends System {
     final points = world.storeOf<ActionPoints>();
     for (var i = 0; i < queues.length; i++) {
       final e = queues.entityAt(i);
-      if (queues.denseAt(i).orders.isEmpty || teams.get(e)?.id != team) continue;
+      if (queues.denseAt(i).orders.isEmpty || teams.get(e)?.id != team)
+        continue;
       if ((points.get(e)?.current ?? 0) > 0) return true;
     }
     return false;
@@ -531,7 +584,8 @@ class AITurnSystem extends System {
 /// [interval] for reaction time - 0.5-2 s feels like a human; lower is harder and
 /// costs more.
 class RealtimeAISystem extends System {
-  RealtimeAISystem(this.controllers, {this.interval = 1.0}) : assert(interval > 0);
+  RealtimeAISystem(this.controllers, {this.interval = 1.0})
+    : assert(interval > 0);
 
   final Map<String, TurnAI> controllers;
   final double interval;

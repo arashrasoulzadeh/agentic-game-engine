@@ -154,27 +154,31 @@ class TileMap {
     Map<int, List<int>>? tileAnimations,
     this.tileAnimationFps = 6,
     Map<int, int>? collisionGroups,
-  })  : solidTileIds = solidTileIds ?? <int>{},
-        oneWayTileIds = oneWayTileIds ?? <int>{},
-        slopeUpRightTileIds = slopeUpRightTileIds ?? <int>{},
-        slopeUpLeftTileIds = slopeUpLeftTileIds ?? <int>{},
-        ladderTileIds = ladderTileIds ?? <int>{},
-        conveyorSpeedByTileId = conveyorSpeedByTileId ?? <int, double>{},
-        frictionByTileId = frictionByTileId ?? <int, double>{},
-        regionByTileId = regionByTileId ?? <int, String>{},
-        tileAnimations = tileAnimations ?? <int, List<int>>{},
-        collisionGroups = collisionGroups ?? _computeDefaultCollisionGroups(solidTileIds) {
+  }) : solidTileIds = solidTileIds ?? <int>{},
+       oneWayTileIds = oneWayTileIds ?? <int>{},
+       slopeUpRightTileIds = slopeUpRightTileIds ?? <int>{},
+       slopeUpLeftTileIds = slopeUpLeftTileIds ?? <int>{},
+       ladderTileIds = ladderTileIds ?? <int>{},
+       conveyorSpeedByTileId = conveyorSpeedByTileId ?? <int, double>{},
+       frictionByTileId = frictionByTileId ?? <int, double>{},
+       regionByTileId = regionByTileId ?? <int, String>{},
+       tileAnimations = tileAnimations ?? <int, List<int>>{},
+       collisionGroups =
+           collisionGroups ?? _computeDefaultCollisionGroups(solidTileIds) {
     if (tiles.length != cols * rows) {
       throw ArgumentError(
-          'tiles.length (${tiles.length}) must equal cols*rows (${cols * rows})');
+        'tiles.length (${tiles.length}) must equal cols*rows (${cols * rows})',
+      );
     }
     if (backgroundTiles != null && backgroundTiles!.length != cols * rows) {
       throw ArgumentError(
-          'backgroundTiles.length (${backgroundTiles!.length}) must equal cols*rows (${cols * rows})');
+        'backgroundTiles.length (${backgroundTiles!.length}) must equal cols*rows (${cols * rows})',
+      );
     }
     if (foregroundTiles != null && foregroundTiles!.length != cols * rows) {
       throw ArgumentError(
-          'foregroundTiles.length (${foregroundTiles!.length}) must equal cols*rows (${cols * rows})');
+        'foregroundTiles.length (${foregroundTiles!.length}) must equal cols*rows (${cols * rows})',
+      );
     }
   }
 
@@ -185,13 +189,15 @@ class TileMap {
 
   int backgroundTileAt(int col, int row) {
     final layer = backgroundTiles;
-    if (layer == null || col < 0 || col >= cols || row < 0 || row >= rows) return 0;
+    if (layer == null || col < 0 || col >= cols || row < 0 || row >= rows)
+      return 0;
     return layer[row * cols + col];
   }
 
   int foregroundTileAt(int col, int row) {
     final layer = foregroundTiles;
-    if (layer == null || col < 0 || col >= cols || row < 0 || row >= rows) return 0;
+    if (layer == null || col < 0 || col >= cols || row < 0 || row >= rows)
+      return 0;
     return layer[row * cols + col];
   }
 
@@ -223,8 +229,10 @@ class TileMap {
 
   bool isSolid(int col, int row) => solidTileIds.contains(tileAt(col, row));
   bool isOneWay(int col, int row) => oneWayTileIds.contains(tileAt(col, row));
-  bool isSlopeUpRight(int col, int row) => slopeUpRightTileIds.contains(tileAt(col, row));
-  bool isSlopeUpLeft(int col, int row) => slopeUpLeftTileIds.contains(tileAt(col, row));
+  bool isSlopeUpRight(int col, int row) =>
+      slopeUpRightTileIds.contains(tileAt(col, row));
+  bool isSlopeUpLeft(int col, int row) =>
+      slopeUpLeftTileIds.contains(tileAt(col, row));
   bool isLadder(int col, int row) => ladderTileIds.contains(tileAt(col, row));
 
   /// Returns a new `TileMap` with every cell holding [baseTileId]
@@ -267,7 +275,10 @@ class TileMap {
     }
 
     Set<int> withVariants(Set<int> ids) => ids.contains(baseTileId)
-        ? {...ids, for (final b in usedBitmasks) autotileSyntheticId(baseTileId, b)}
+        ? {
+            ...ids,
+            for (final b in usedBitmasks) autotileSyntheticId(baseTileId, b),
+          }
         : ids;
     Map<int, double> withVariantValues(Map<int, double> byId) {
       final base = byId[baseTileId];
@@ -295,7 +306,10 @@ class TileMap {
       regionByTileId: {
         ...regionByTileId,
         for (final b in usedBitmasks)
-          autotileSyntheticId(baseTileId, b): autotileRegionName(regionPrefix, b),
+          autotileSyntheticId(baseTileId, b): autotileRegionName(
+            regionPrefix,
+            b,
+          ),
       },
       zIndex: zIndex,
       backgroundTiles: backgroundTiles,
@@ -307,29 +321,35 @@ class TileMap {
   }
 
   Map<String, dynamic> toJson() => {
-        'cols': cols,
-        'rows': rows,
-        'tileWidth': tileWidth,
-        'tileHeight': tileHeight,
-        'tiles': tiles,
-        'solidTileIds': solidTileIds.toList(),
-        'oneWayTileIds': oneWayTileIds.toList(),
-        'slopeUpRightTileIds': slopeUpRightTileIds.toList(),
-        'slopeUpLeftTileIds': slopeUpLeftTileIds.toList(),
-        'ladderTileIds': ladderTileIds.toList(),
-        'conveyorSpeedByTileId': conveyorSpeedByTileId.map((k, v) => MapEntry(k.toString(), v)),
-        'frictionByTileId': frictionByTileId.map((k, v) => MapEntry(k.toString(), v)),
-        if (atlasId != null) 'atlasId': atlasId,
-        'regionByTileId': regionByTileId.map((k, v) => MapEntry(k.toString(), v)),
-        'zIndex': zIndex,
-        if (backgroundTiles != null) 'backgroundTiles': backgroundTiles,
-        if (foregroundTiles != null) 'foregroundTiles': foregroundTiles,
-        if (tileAnimations.isNotEmpty)
-          'tileAnimations': tileAnimations.map((k, v) => MapEntry(k.toString(), v)),
-        'tileAnimationFps': tileAnimationFps,
-        if (collisionGroups.isNotEmpty)
-          'collisionGroups': collisionGroups.map((k, v) => MapEntry(k.toString(), v)),
-      };
+    'cols': cols,
+    'rows': rows,
+    'tileWidth': tileWidth,
+    'tileHeight': tileHeight,
+    'tiles': tiles,
+    'solidTileIds': solidTileIds.toList(),
+    'oneWayTileIds': oneWayTileIds.toList(),
+    'slopeUpRightTileIds': slopeUpRightTileIds.toList(),
+    'slopeUpLeftTileIds': slopeUpLeftTileIds.toList(),
+    'ladderTileIds': ladderTileIds.toList(),
+    'conveyorSpeedByTileId': conveyorSpeedByTileId.map(
+      (k, v) => MapEntry(k.toString(), v),
+    ),
+    'frictionByTileId': frictionByTileId.map(
+      (k, v) => MapEntry(k.toString(), v),
+    ),
+    if (atlasId != null) 'atlasId': atlasId,
+    'regionByTileId': regionByTileId.map((k, v) => MapEntry(k.toString(), v)),
+    'zIndex': zIndex,
+    if (backgroundTiles != null) 'backgroundTiles': backgroundTiles,
+    if (foregroundTiles != null) 'foregroundTiles': foregroundTiles,
+    if (tileAnimations.isNotEmpty)
+      'tileAnimations': tileAnimations.map((k, v) => MapEntry(k.toString(), v)),
+    'tileAnimationFps': tileAnimationFps,
+    if (collisionGroups.isNotEmpty)
+      'collisionGroups': collisionGroups.map(
+        (k, v) => MapEntry(k.toString(), v),
+      ),
+  };
 
   /// Accepts either the raw `cols`/`rows`/`tiles` (flat id array) shape
   /// `toJson` emits, or a human-authorable alternative: `legend` (a
@@ -344,27 +364,41 @@ class TileMap {
   factory TileMap.fromJson(Map<String, dynamic> json) {
     final legend = json['legend'];
     final zIndex = (json['zIndex'] as num?)?.toInt() ?? 0;
-    final solidTileIds = ((json['solidTileIds'] as List?) ?? const []).cast<int>().toSet();
-    final oneWayTileIds = ((json['oneWayTileIds'] as List?) ?? const []).cast<int>().toSet();
+    final solidTileIds = ((json['solidTileIds'] as List?) ?? const [])
+        .cast<int>()
+        .toSet();
+    final oneWayTileIds = ((json['oneWayTileIds'] as List?) ?? const [])
+        .cast<int>()
+        .toSet();
     final slopeUpRightTileIds =
-        ((json['slopeUpRightTileIds'] as List?) ?? const []).cast<int>().toSet();
+        ((json['slopeUpRightTileIds'] as List?) ?? const [])
+            .cast<int>()
+            .toSet();
     final slopeUpLeftTileIds =
         ((json['slopeUpLeftTileIds'] as List?) ?? const []).cast<int>().toSet();
-    final ladderTileIds = ((json['ladderTileIds'] as List?) ?? const []).cast<int>().toSet();
-    final conveyorSpeedByTileId = ((json['conveyorSpeedByTileId'] as Map?) ?? const {})
-        .map((k, v) => MapEntry(int.parse(k as String), (v as num).toDouble()));
+    final ladderTileIds = ((json['ladderTileIds'] as List?) ?? const [])
+        .cast<int>()
+        .toSet();
+    final conveyorSpeedByTileId =
+        ((json['conveyorSpeedByTileId'] as Map?) ?? const {}).map(
+          (k, v) => MapEntry(int.parse(k as String), (v as num).toDouble()),
+        );
     final frictionByTileId = ((json['frictionByTileId'] as Map?) ?? const {})
         .map((k, v) => MapEntry(int.parse(k as String), (v as num).toDouble()));
     final atlasId = json['atlasId'] as String?;
-    final regionByTileId = ((json['regionByTileId'] as Map?) ?? const {})
-        .map((k, v) => MapEntry(int.parse(k as String), v as String));
+    final regionByTileId = ((json['regionByTileId'] as Map?) ?? const {}).map(
+      (k, v) => MapEntry(int.parse(k as String), v as String),
+    );
     final backgroundTiles = (json['backgroundTiles'] as List?)?.cast<int>();
     final foregroundTiles = (json['foregroundTiles'] as List?)?.cast<int>();
     final tileAnimations = ((json['tileAnimations'] as Map?) ?? const {}).map(
-        (k, v) => MapEntry(int.parse(k as String), (v as List).cast<int>()));
-    final tileAnimationFps = (json['tileAnimationFps'] as num?)?.toDouble() ?? 6;
+      (k, v) => MapEntry(int.parse(k as String), (v as List).cast<int>()),
+    );
+    final tileAnimationFps =
+        (json['tileAnimationFps'] as num?)?.toDouble() ?? 6;
     final collisionGroups = ((json['collisionGroups'] as Map?) ?? const {}).map(
-        (k, v) => MapEntry(int.parse(k as String), (v as num).toInt()));
+      (k, v) => MapEntry(int.parse(k as String), (v as num).toInt()),
+    );
     if (legend != null) {
       return _fromLegend(
         legend: (legend as Map).cast<String, dynamic>(),
@@ -424,7 +458,9 @@ class TileMap {
     required int zIndex,
   }) {
     if (asciiRows.isEmpty) {
-      throw ArgumentError('TileMap "rows" must not be empty when using "legend"');
+      throw ArgumentError(
+        'TileMap "rows" must not be empty when using "legend"',
+      );
     }
     final cols = asciiRows.first.length;
     final tiles = <int>[];
@@ -432,12 +468,15 @@ class TileMap {
       final row = asciiRows[r];
       if (row.length != cols) {
         throw ArgumentError(
-            'TileMap "rows"[$r] has length ${row.length}, expected $cols (row 0\'s length) — every row must be the same width');
+          'TileMap "rows"[$r] has length ${row.length}, expected $cols (row 0\'s length) — every row must be the same width',
+        );
       }
       for (final ch in row.split('')) {
         final id = legend[ch];
         if (id == null) {
-          throw ArgumentError('TileMap "legend" has no entry for character "$ch"');
+          throw ArgumentError(
+            'TileMap "legend" has no entry for character "$ch"',
+          );
         }
         tiles.add(id as int);
       }

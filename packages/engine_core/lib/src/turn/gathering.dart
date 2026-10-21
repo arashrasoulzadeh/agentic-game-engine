@@ -34,8 +34,11 @@ class Depot {
   bool take(String resource) => accepts.isEmpty || accepts.contains(resource);
 
   Map<String, dynamic> toJson() => {'accepts': accepts.toList()..sort()};
-  factory Depot.fromJson(Map<String, dynamic> json) =>
-      Depot(accepts: {for (final a in (json['accepts'] as List? ?? const [])) a as String});
+  factory Depot.fromJson(Map<String, dynamic> json) => Depot(
+    accepts: {
+      for (final a in (json['accepts'] as List? ?? const [])) a as String,
+    },
+  );
 }
 
 /// Where a [Gatherer] is in its loop.
@@ -74,23 +77,26 @@ class Gatherer {
   });
 
   Map<String, dynamic> toJson() => {
-        'capacity': capacity,
-        'secondsPerUnit': secondsPerUnit,
-        'node': node,
-        'phase': phase.name,
-        'carrying': carrying,
-        'carried': carried,
-        'progress': progress,
-      };
+    'capacity': capacity,
+    'secondsPerUnit': secondsPerUnit,
+    'node': node,
+    'phase': phase.name,
+    'carrying': carrying,
+    'carried': carried,
+    'progress': progress,
+  };
   factory Gatherer.fromJson(Map<String, dynamic> json) => Gatherer(
-        capacity: (json['capacity'] as num?)?.toInt() ?? 10,
-        secondsPerUnit: (json['secondsPerUnit'] as num?)?.toDouble() ?? 1,
-        node: (json['node'] as num?)?.toInt(),
-        phase: GatherPhase.values.firstWhere((p) => p.name == json['phase'], orElse: () => GatherPhase.idle),
-        carrying: json['carrying'] as String?,
-        carried: (json['carried'] as num?)?.toInt() ?? 0,
-        progress: (json['progress'] as num?)?.toDouble() ?? 0,
-      );
+    capacity: (json['capacity'] as num?)?.toInt() ?? 10,
+    secondsPerUnit: (json['secondsPerUnit'] as num?)?.toDouble() ?? 1,
+    node: (json['node'] as num?)?.toInt(),
+    phase: GatherPhase.values.firstWhere(
+      (p) => p.name == json['phase'],
+      orElse: () => GatherPhase.idle,
+    ),
+    carrying: json['carrying'] as String?,
+    carried: (json['carried'] as num?)?.toInt() ?? 0,
+    progress: (json['progress'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 /// A gatherer handed in what it carried.
@@ -142,7 +148,9 @@ class GatherSystem extends System {
   @override
   void update(World world, double dt) {
     final gatherers = world.storeOf<Gatherer>();
-    final ids = [for (var i = 0; i < gatherers.length; i++) gatherers.entityAt(i)]..sort();
+    final ids = [
+      for (var i = 0; i < gatherers.length; i++) gatherers.entityAt(i),
+    ]..sort();
     for (final id in ids) {
       final g = gatherers.get(id);
       if (g == null || !world.entities.isAlive(id)) continue;
@@ -188,7 +196,9 @@ class GatherSystem extends System {
     final node = _liveNode(world, g);
     if (node != null) {
       g.progress += dt;
-      while (g.progress >= g.secondsPerUnit - 1e-9 && g.carried < g.capacity && node.amount > 0) {
+      while (g.progress >= g.secondsPerUnit - 1e-9 &&
+          g.carried < g.capacity &&
+          node.amount > 0) {
         g.progress -= g.secondsPerUnit;
         node.amount--;
         g.carrying = node.resource;
@@ -227,10 +237,17 @@ class GatherSystem extends System {
     g.carried = 0;
     g.carrying = null;
     g.progress = 0;
-    g.phase = _liveNode(world, g) == null ? GatherPhase.idle : GatherPhase.toNode;
+    g.phase = _liveNode(world, g) == null
+        ? GatherPhase.idle
+        : GatherPhase.toNode;
   }
 
-  EntityId? _nearestDepot(World world, String team, String resource, GridPosition from) {
+  EntityId? _nearestDepot(
+    World world,
+    String team,
+    String resource,
+    GridPosition from,
+  ) {
     final depots = world.storeOf<Depot>();
     final teams = world.storeOf<Team>();
     final grid = world.storeOf<GridPosition>();
@@ -239,7 +256,10 @@ class GatherSystem extends System {
     var bestD = 1 << 30;
     for (var i = 0; i < depots.length; i++) {
       final d = depots.entityAt(i);
-      if (!depots.denseAt(i).take(resource) || teams.get(d)?.id != team || building.has(d)) continue;
+      if (!depots.denseAt(i).take(resource) ||
+          teams.get(d)?.id != team ||
+          building.has(d))
+        continue;
       final p = grid.get(d);
       if (p == null) continue;
       final dist = from.chebyshev(p);
@@ -255,11 +275,17 @@ class GatherSystem extends System {
   void _walkNextTo(World world, EntityId id, GridPosition target) {
     final queue = world.storeOf<OrderQueue>().get(id);
     if (queue == null || queue.orders.isNotEmpty) return;
-    final cells = formationCells(navigator, target, 8, taken: cellsHeldExcept(world, [id]))
-        .where((c) => c.chebyshev(target) <= 1);
+    final cells = formationCells(
+      navigator,
+      target,
+      8,
+      taken: cellsHeldExcept(world, [id]),
+    ).where((c) => c.chebyshev(target) <= 1);
     if (cells.isEmpty) return;
     final here = world.storeOf<GridPosition>().get(id)!;
-    final cell = cells.reduce((a, b) => a.chebyshev(here) <= b.chebyshev(here) ? a : b);
+    final cell = cells.reduce(
+      (a, b) => a.chebyshev(here) <= b.chebyshev(here) ? a : b,
+    );
     queue.orders.add(MoveOrder(cell.col, cell.row));
   }
 }
