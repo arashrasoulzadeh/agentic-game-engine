@@ -72,12 +72,15 @@ flowchart LR
   the source schemas.
 
 !!! note "Code samples are tested"
-    The platformer tutorial is checked against current signatures by hand;
-    the turn-based tutorial, the agent tutorial and the turn-based recipes
-    are executed by tests in CI
-    (`packages/engine_strategy/test/doc_examples_test.dart`,
-    `packages/engine_core/test/agent_turn_based_test.dart`). If a sample here
-    drifts from the code, that is a bug — please open an issue or fix both.
+    Samples in these pages are executed by tests in CI, so they cannot silently drift from the code:
+    the tutorials (platformer, turn-based, agent) and the recipes in `examples/`
+    (`packages/engine_platformer/test/doc_examples_*_test.dart`,
+    `packages/engine_strategy/test/doc_examples_test.dart`,
+    `packages/engine_core/test/agent_turn_based_test.dart`), and the concept pages for localization,
+    dialogue, AI, effects, procedural generation, performance, settings, lighting and analytics
+    (`packages/*/test/doc_examples_*_test.dart`). Not yet covered: the multiplayer tutorial, the
+    older concept pages (ECS, architecture, networking, rendering, real-time strategy) and the studio
+    guide. If a sample drifts from the code, that is a bug - please open an issue or fix both.
 
 ## For AI agents reading this
 

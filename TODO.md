@@ -218,9 +218,9 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       `docs/studio/` are excluded from the site; decide which are public.
 - [ ] **Diagrams and screenshots** — add real screenshots (strategy template,
       studio) to the tutorials and getting-started.
-- [ ] **Keep the docs claims honest** — the landing page says the turn-based
-      samples are test-executed; extend that guarantee (and the sentence) as
-      other samples gain tests.
+- [ ] **Extend the executed-samples guarantee** to the multiplayer tutorial and the older concept pages
+      (ECS, architecture, networking, rendering, real-time strategy); the landing page lists what is
+      covered and what is not.
 - [ ] **README badges** — still static placeholders; point at real pub.dev
       badges once packages are published (see Release).
 
