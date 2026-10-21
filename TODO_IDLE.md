@@ -84,13 +84,10 @@ The building blocks are there; the genre's *structure* is not.
       growth, max level, unlock requirement (reusing `requires` / `Provides` tech), and what it multiplies.
       Done when: a level/game JSON file defines a dozen generators and the engine loads, validates (with
       schema errors that name the field) and runs them.
-- [ ] **Cost curves** — geometric (`base * rate^level`, the classic 1.07-1.15), polynomial, and custom
-      table; `costOf(level)`, `costOfNext(n)` for "buy ×10", and `maxAffordable(budget)` using the closed
-      form (no loop to 1e6). Done when: tests compare closed-form bulk cost against summing one by one.
-- [ ] **Multiplier stack** — additive and multiplicative modifiers with named sources (upgrades,
-      achievements, prestige, temporary boosts), recomputed on change not per tick, with a "why is my output
-      X" breakdown. Done when: stacking rules are specified and tested, including order independence of
-      multiplicative terms.
+- [ ] **Cost curves, remaining** — `GeometricCost`, `LinearCost` with closed-form `totalCost` / `maxAffordable`
+      (verified against brute force) are done in `engine_core`. Left: a table curve and a max-level cap.
+- [ ] **Multiplier stack, remaining** — `ModifierStack` (additive + multiplicative, named sources, breakdown,
+      order-independent) is done in `engine_core`; wire it to generators/upgrades/prestige in `engine_idle`.
 - [ ] **Buy modes** — buy 1 / 10 / 100 / max, with correct partial affordability.
 - [ ] **Prestige / reset loops** — a `PrestigeSystem`: on reset, wipe a configurable set of resources and
       generators, convert progress into a persistent currency by a formula (for example

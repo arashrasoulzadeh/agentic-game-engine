@@ -43,6 +43,8 @@ export 'src/ecs/event_helpers.dart';
 export 'src/content/game_state.dart';
 export 'src/content/big_number.dart';
 export 'src/content/big_treasury.dart';
+export 'src/content/cost_curve.dart';
+export 'src/content/modifier_stack.dart';
 export 'src/content/offline_progress.dart';
 export 'src/content/number_format.dart';
 export 'src/content/level_document.dart';
