@@ -98,8 +98,50 @@ condition is true wins), then ticks the (new) state. The current state is writte
   rather than crashing.
 - A state can be a single `behaviorId` instead of a tree; it then runs every step.
 
-## Not covered here yet
+## Steering
 
-Steering (`steering.dart`), hearing and `InvestigateBehavior` (`hearing.dart`), pathfinding
-and `FleeBehavior`; their source has doc comments, but there is no guide or executed
-sample for them yet (tracked in `TODO.md`).
+Pure functions from positions to a `Velocity`, to use inside your own behaviors:
+
+```dart
+seek(from, to, 100);              // straight at the target at 100 units/s
+arrive(from, to, 100, 50);        // same, but slowing linearly inside a 50-unit radius
+wander(velocity, 0.5, 40, rng);   // turn up to +-0.5 rad from the current heading, at speed 40
+```
+
+`wander` needs a `DeterministicRandom` (seeded), so a wandering NPC replays identically. All three
+return a zero velocity or keep the speed exactly; none move anything - you apply the result.
+
+## Hearing
+
+`HearingComponent(range)` on an entity with a `Position` and an `AIState`, plus `HearingSystem`:
+
+```dart
+world.addSystem(HearingSystem());
+world.storeOf<HearingComponent>().set(guard, HearingComponent(range: 200));
+
+world.events.emit(const SoundEvent(x: 150, y: 100, loudness: 120, tag: 'footstep'));
+// next step: guard's AIState.memory['lastHeardSound'] == {x: 150, y: 100, loudness: 120, tag: 'footstep'}
+```
+
+- A sound is heard when the listener is within `min(range, loudness)` of it **and** no solid `TileMap`
+  tile blocks the line between them. Entities do not block sound.
+- It records the *latest* heard sound only, overwriting the last. Clear it when handled.
+- Emit `SoundEvent` from your gameplay code (a gunshot, a thrown rock, a footstep system).
+
+`InvestigateBehavior` (in `engine_platformer`) walks toward `lastHeardSound` along x, avoids ledges, and
+clears the memory on arrival. Its `timeout` parameter is accepted but **not implemented yet**. Use it as a
+leaf in a tree or a state in a machine.
+
+## Fleeing
+
+`FleeBehavior(target: playerId, speed: 80, minDistance: 200)` runs away along **x only** (a platformer
+behavior; it sets horizontal velocity and leaves vertical alone), stops once `minDistance` is reached, and
+with `requireLineOfSight: true` only flees what it can see.
+
+## Pathfinding
+
+- **Grids** (strategy, top-down): `GridNavigator.findPath` and flow fields - see the
+  [turn-based](turn-based-strategy.md) and [real-time](realtime-strategy.md) guides.
+- **Off the main isolate:** `PathfindingJob` runs four-way A* over a tile grid on a worker; see
+  [Performance](performance.md#background-work-jobsystem).
+- Platformer-aware paths that know about jumps and ladders live in `engine_platformer`'s pathfinding.

@@ -191,9 +191,7 @@ Site: <https://meetarash.ir/agentic-game-engine/> (MkDocs Material, built from
 None of these appear anywhere under `docs/` today. Each needs a concept page
 (or a section) and, where it has runtime behaviour, a tested recipe:
 
-- [ ] AI building blocks, remaining: steering, hearing / sound propagation,
-      `InvestigateBehavior`, `FleeBehavior`, pathfinding (behavior trees and state
-      machines are done: `docs/concepts/ai.md`).
+- [ ] `InvestigateBehavior.timeout` is accepted but ignored (no timestamp in `lastHeardSound`).
 - [ ] Cinematics, scene transitions, video playback (tweens and particles are done:
       `docs/concepts/effects.md`).
 - [ ] **Colorblind simulation is an unimplemented placeholder** (`EngineView._drawColorblind`,

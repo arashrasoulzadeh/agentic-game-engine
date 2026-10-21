@@ -140,4 +140,75 @@ void main() {
       expect(t.toJson(), {'toState': 'x', 'condition': 'no_such'});
     },
   );
+
+  group('steering', () {
+    test(
+      'seek heads straight at the target at full speed; arrive slows inside the radius',
+      () {
+        final v = seek(Position(0, 0), Position(30, 40), 100);
+        expect((v.x, v.y), (60, 80), reason: 'a 3-4-5 triangle, 100 units/s');
+        expect(
+          arrive(Position(0, 0), Position(300, 0), 100, 50).x,
+          100,
+          reason: 'far away: full speed',
+        );
+        expect(
+          arrive(Position(0, 0), Position(25, 0), 100, 50).x,
+          50,
+          reason: 'half way into the slow radius',
+        );
+        expect(
+          arrive(Position(5, 5), Position(5, 5), 100, 50).x,
+          0,
+          reason: 'there already',
+        );
+      },
+    );
+
+    test(
+      'wander keeps the speed and is reproducible for a seeded generator',
+      () {
+        List<double> run() {
+          final rng = DeterministicRandom(7);
+          var v = Velocity(1, 0);
+          final out = <double>[];
+          for (var i = 0; i < 5; i++) {
+            v = wander(v, 0.5, 40, rng);
+            out.add(v.x);
+            expect(v.x * v.x + v.y * v.y, closeTo(40 * 40, 1e-6));
+          }
+          return out;
+        }
+
+        expect(run(), run());
+      },
+    );
+  });
+
+  test('hearing: a sound in range is remembered; one out of range is not', () {
+    world.addSystem(HearingSystem());
+    final guardPos = Position(100, 100);
+    world.storeOf<Position>().set(guard, guardPos);
+    world.storeOf<HearingComponent>().set(guard, HearingComponent(range: 200));
+    world.storeOf<AIState>().set(guard, AIState('idle'));
+
+    world.events.emit(
+      const SoundEvent(x: 150, y: 100, loudness: 120, tag: 'footstep'),
+    );
+    world.step(1 / 60);
+    final heard =
+        world.storeOf<AIState>().get(guard)!.memory['lastHeardSound'] as Map;
+    expect(heard['x'], 150);
+    expect(heard['tag'], 'footstep');
+
+    world.storeOf<AIState>().get(guard)!.memory.clear();
+    world.events.emit(
+      const SoundEvent(x: 400, y: 100, loudness: 120),
+    ); // 300 away, louder than range or not
+    world.step(1 / 60);
+    expect(
+      world.storeOf<AIState>().get(guard)!.memory.containsKey('lastHeardSound'),
+      isFalse,
+    );
+  });
 }
