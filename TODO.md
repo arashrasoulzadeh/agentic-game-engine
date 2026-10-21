@@ -196,10 +196,10 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 - [ ] `InvestigateBehavior.timeout` is accepted but ignored (no timestamp in `lastHeardSound`).
 - [ ] Cinematics, scene transitions, video playback (tweens and particles are done:
       `docs/concepts/effects.md`).
-- [ ] **Colorblind simulation is an unimplemented placeholder** (`EngineView._drawColorblind`,
-      `shaders/colorblind.frag` exists); and the engine reads no `PlayerOptions` itself (only
-      `Camera.shakeIntensity` exists as a hook); decide whether `reduceMotion`, text scale, etc. should be
-      engine behaviour.
+- [x] **Colorblind simulation** — `EngineView(colorblindMode:)` applies protanopia / deuteranopia / tritanopia as a colour
+      matrix over the whole view (`colorblindMatrix`, tested); pass `PlayerOptions.colorblindMode`. The unused
+      `ColorblindShader` / `colorblind.frag` could be removed. Still open: whether `reduceMotion`, text scale etc.
+      should be engine behaviour (the engine reads no `PlayerOptions` itself).
 - [ ] A "build your first level" studio tutorial (the user guide, `docs/studio/user-guide.md`,
       is done).
 

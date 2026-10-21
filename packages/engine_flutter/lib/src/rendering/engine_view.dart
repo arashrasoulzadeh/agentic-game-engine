@@ -27,6 +27,7 @@ import 'normal_mapping_combined_shader.dart';
 import 'particle_dot_texture.dart';
 import 'screen_tint.dart';
 import 'text.dart' as txt;
+import 'colorblind_filter.dart';
 import 'debug_memory.dart';
 import '../input/input.dart';
 import 'sprite_atlas.dart';
@@ -122,6 +123,10 @@ class EngineView extends StatefulWidget {
   /// see `Light2D`'s doc comment for what this basic version does and
   /// deliberately doesn't do (no colored tint, no shadow casting).
   final double ambientBrightness;
+
+  /// Colour-vision simulation applied to the whole view: `none`, `protanopia`, `deuteranopia` or
+  /// `tritanopia` (the values of `PlayerOptions.colorblindMode`).
+  final String colorblindMode;
 
   /// When set, drives the ambient-darkness pass's tint, and *scales*
   /// its brightness, from a looping time-of-day clock and current
@@ -237,6 +242,7 @@ class EngineView extends StatefulWidget {
     this.cullBufferPx = 96.0,
     this.singlePassLighting = false,
     this.showAutoTileBitmask = false,
+    this.colorblindMode = 'none',
     this.onPostTick,
     this.viewportConfig,
   });
@@ -609,6 +615,8 @@ class _EngineViewState extends State<EngineView>
       child = CustomPaint(painter: painter, size: Size.infinite);
     }
 
+    child = colorblindFiltered(widget.colorblindMode, child);
+
     if (widget.showFpsOverlay) {
       child = Stack(
         children: [
@@ -947,9 +955,6 @@ class _EnginePainter extends CustomPainter {
         item.paint(canvas);
       }
     }
-
-    // Apply colorblind simulation if enabled
-    _drawColorblind(canvas, size);
 
     _drawScreenTint(canvas, size);
 
@@ -1647,13 +1652,6 @@ class _EnginePainter extends CustomPainter {
       if (color.a == 0) continue;
       canvas.drawRect(fullRect, Paint()..color = color);
     }
-  }
-
-  /// Draws colorblind simulation overlay if enabled in PlayerOptions.
-  void _drawColorblind(Canvas canvas, Size size) {
-    // TODO: Implement colorblind simulation shader
-    // Requires render-to-texture support for full-screen post-processing
-    // For now, this is a placeholder
   }
 
   /// Radial-gradient stop positions shared by the reveal and tint
