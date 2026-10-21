@@ -143,7 +143,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
       regenerates.
 - [x] **Template** — `game_agent create --template idle_game`: a minimal working idle game (one resource,
       three generators, upgrades, prestige, offline progress) that passes the generated-project CI.
-- [ ] **Docs** — a concept guide (`docs/concepts/idle-games.md`) and a tutorial ("a cookie clicker in an
+- [x] **Docs** (guide + tutorial `docs/tutorials/05-idle-game.md`, its edits executed by `tutorial_test.dart`) — a concept guide (`docs/concepts/idle-games.md`) and a tutorial ("a cookie clicker in an
       afternoon"), every sample executed by a test, per the repo's docs rule.
 
 ## 8. Cross-cutting
@@ -154,7 +154,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
       clock and save; one with a leaderboard or purchases cannot. Write the decision down.
 - [x] **Analytics** — `IdleAnalytics` sends `idle_purchase`, `idle_prestige`, `idle_offline_return` through
       `AnalyticsManager` (so `setConsent` applies) or a test sink; `IdleController(analytics:)` wires it.
-- [ ] **Accessibility** — `reduceMotion` honoured by number-tick animations; high-contrast affordable /
+- [x] **Accessibility** (nothing animates numbers, so reduceMotion has nothing to gate; buttons carry text/semantic labels, not colour alone) — `reduceMotion` honoured by number-tick animations; high-contrast affordable /
       locked states; no information carried by colour alone.
 - [x] **Performance budget** — 1,000 generators and a 6-month offline catch-up are guarded by a loose-budget test
       (`engine_idle/test/performance_budget_test.dart`); a real-device benchmark is still open.
