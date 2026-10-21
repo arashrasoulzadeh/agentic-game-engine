@@ -47,6 +47,30 @@ void main() {
     },
   );
 
+  testWidgets(
+    'engine_idle components are offered and templated with no studio-side code',
+    (tester) async {
+      final path = '${dir.path}/level.json';
+      File(path).writeAsStringSync(jsonEncode(_level()));
+      await tester.pumpWidget(
+        MaterialApp(home: LevelScreen(levelPath: path, autosaveInterval: null)),
+      );
+      await tester.enterText(
+        find.byKey(const Key('palette-search')),
+        'generator',
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('palette-generator')));
+      await tester.pump();
+      final canvas = find.byKey(const Key('level-canvas'));
+      await tester.tapAt(tester.getTopLeft(canvas) + const Offset(40, 30));
+      await tester.pump();
+
+      expect(find.byKey(const Key('component-generator')), findsOneWidget);
+      expect(find.byKey(const Key('field-generator.id')), findsOneWidget);
+    },
+  );
+
   testWidgets('the search box narrows the components offered', (tester) async {
     final path = '${dir.path}/level.json';
     File(path).writeAsStringSync(jsonEncode(_level()));

@@ -16,7 +16,7 @@ cd my_game
 flutter run
 ```
 
-Choose a starter with `--template default_game` (platformer, the default) or `--template strategy_game` (turn-based skirmish against an AI, using `engine_strategy`).
+Choose a starter with `--template default_game` (platformer, the default) or `--template strategy_game` (turn-based skirmish against an AI, using `engine_strategy`) or `--template idle_game` (an idle/incremental game defined by one JSON file, using `engine_idle`).
 
 Options: `--template`, `--org com.yourcompany`, `--output-dir path/to/parent`, `--ref <branch-or-tag>` to pin `engine_core` to something other than `main`.
 

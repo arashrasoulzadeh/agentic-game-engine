@@ -35,11 +35,10 @@ and the package maps in `CLAUDE.md`, the root README and the architecture page. 
       nothing), keeping the "every registered component has a schema" test green.
 - [ ] Tests mirroring `lib/`, doc comments explaining *why*, and a benchmark for hot paths
       (`packages/engine_idle/benchmark/`).
-- [ ] Add `engine_idle` to the mkdocs nav once it has a guide, and to the release / versioning checklist beside
-      the other packages (see [TODO.md](TODO.md)).
+- [x] `engine_idle` is in the mkdocs nav (guide) and in the CLI / architecture docs; the release checklist item lives in [TODO.md](TODO.md).
 - [x] `game_agent create --template idle_game` depends on it; `game_agent upgrade` must rewrite its `ref:` like the
       other engine dependencies (extend its list), and the template CI job must pass.
-- [ ] `engine_studio` palette / inspector pick up its schemas without code changes (verify, and add a test).
+- [x] `engine_studio` palette / inspector pick up its schemas without code changes (`entity_palette_test.dart` places a `generator`).
 
 ## 1. Numbers that do not overflow
 

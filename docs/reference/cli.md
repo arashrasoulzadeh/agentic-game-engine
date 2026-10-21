@@ -27,7 +27,7 @@ game_agent create my_game [--template strategy_game] [--org com.acme]
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--template` | `default_game` | `default_game` — a platformer starter. `strategy_game` — a turn-based skirmish against an AI (uses `engine_strategy`). |
+| `--template` | `default_game` | `default_game` — a platformer starter. `strategy_game` — a turn-based skirmish against an AI (uses `engine_strategy`). `idle_game` — a playable idle/incremental game driven by `assets/idle_game.json` (uses `engine_idle`). |
 | `--org` | `com.example` | Reverse-domain id for Android/iOS bundles. |
 | `--output-dir` | `.` | Parent directory for the new project. |
 | `--engine-repo` | this repo's URL | Git URL the generated `pubspec.yaml` depends on. |
@@ -45,7 +45,7 @@ game_agent upgrade --ref v0.2.0
 ```
 
 Rewrites the `ref:` of every engine dependency it finds (`engine_core`,
-`engine_flutter`, `engine_platformer`, `engine_strategy`) in `pubspec.yaml`,
+`engine_flutter`, `engine_platformer`, `engine_strategy`, `engine_idle`) in `pubspec.yaml`,
 then runs `flutter pub upgrade`. Only dependencies your project actually has
 are touched.
 

@@ -13,8 +13,10 @@ flowchart LR
     end
     G --> S[engine_strategy<br/>turn-based strategy]
     G --> P[engine_platformer<br/>platformer gameplay]
+    G --> I[engine_idle<br/>idle / incremental games]
     S --> F[engine_flutter<br/>render · input · audio]
     P --> F
+    I --> F
     F --> C[engine_core<br/>ECS · physics · content · agent API]
     S --> C
     P --> C
