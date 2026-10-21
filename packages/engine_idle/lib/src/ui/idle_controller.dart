@@ -24,6 +24,7 @@ class IdleController extends ChangeNotifier {
     this.tickInterval = const Duration(milliseconds: 100),
     this.team = 'player',
     this.analytics,
+    this.decimalSeparator = '.',
   });
 
   final World world;
@@ -49,6 +50,10 @@ class IdleController extends ChangeNotifier {
   /// Whose technologies unlock purchases.
   final String team;
 
+  /// The decimal mark in every formatted number (`,` for many locales). Games read it from their
+  /// localisation and set it here, so no widget needs to know about locales.
+  String decimalSeparator;
+
   /// Reports purchases and prestiges; null sends nothing.
   final IdleAnalytics? analytics;
 
@@ -64,8 +69,12 @@ class IdleController extends ChangeNotifier {
   }
 
   /// Writes [value] in the controller's current [style].
-  String format(BigNumber value, {int decimals = 2}) =>
-      formatBigNumber(value, style: style, decimals: decimals);
+  String format(BigNumber value, {int decimals = 2}) => formatBigNumber(
+    value,
+    style: style,
+    decimals: decimals,
+    decimalSeparator: decimalSeparator,
+  );
 
   /// Begins stepping the world in real time.
   void start() {

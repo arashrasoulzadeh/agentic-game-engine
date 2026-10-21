@@ -63,6 +63,15 @@ void main() {
     },
   );
 
+  testWidgets('the controller writes numbers with the locale decimal mark', (
+    tester,
+  ) async {
+    final c = _controller(coins: '1234567');
+    c.decimalSeparator = ',';
+    await tester.pumpWidget(_app(ResourceHeader(controller: c)));
+    expect(find.text('1,23M'), findsOneWidget);
+  });
+
   group('prestige panel and achievements', () {
     IdleController game() {
       final c = _controller(coins: '0');
