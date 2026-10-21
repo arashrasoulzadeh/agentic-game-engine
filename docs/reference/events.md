@@ -71,6 +71,12 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | `EnemyTelegraphEvent` | `enemy`, `previousState`, `telegraphDuration` | `EnemyCombatBehavior` |
 | `EnemyAttackEvent` | `enemy`, `attackDuration` | `EnemyCombatBehavior` |
 
+## engine_idle
+
+| Event | Fields | Emitted by |
+|---|---|---|
+| `AchievementUnlockedEvent` | `id` | `checkAchievements` |
+
 ## Patterns
 
 **Don't mutate the world inside a handler for something you're iterating.**
