@@ -195,8 +195,9 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 - [ ] Cinematics, scene transitions, video playback (tweens and particles are done:
       `docs/concepts/effects.md`).
 - [ ] **Colorblind simulation is an unimplemented placeholder** (`EngineView._drawColorblind`,
-      `shaders/colorblind.frag` exists); and nothing in the engine applies `PlayerOptions` such as
-      `reduceMotion` or `screenShakeIntensity` - decide which should be engine behaviour.
+      `shaders/colorblind.frag` exists); and the engine reads no `PlayerOptions` itself (only
+      `Camera.shakeIntensity` exists as a hook); decide whether `reduceMotion`, text scale, etc. should be
+      engine behaviour.
 - [ ] A "build your first level" studio tutorial (the user guide, `docs/studio/user-guide.md`,
       is done).
 

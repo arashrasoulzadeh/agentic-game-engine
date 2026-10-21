@@ -84,13 +84,12 @@ and shake intensity.
 
 Be clear about this when you ship an accessibility menu:
 
-- **Not applied by the engine:** volumes, `textScale`, `highContrast`, `reduceMotion`,
-  `screenShakeIntensity`, `dialogueSpeed`. They are values for *your* systems to honour. For example, scale
-  a camera shake by the player's setting:
-
-  ```dart
-  camera.shake(magnitude: 20 * options.options.screenShakeIntensity, duration: 0.3);
-  ```
+- **Camera shake has a switch:** `Camera.shakeIntensity` multiplies every shake (`0` none, `1` as authored).
+  Bind it once: `options.addListener((o) => camera.shakeIntensity = o.screenShakeIntensity);`. The engine does
+  not read `PlayerOptions` itself.
+- **Not applied by the engine:** volumes, `textScale`, `highContrast`, `reduceMotion`, `dialogueSpeed`. They
+  are values for *your* systems to honour (skip your own animations when `reduceMotion` is on, scale your own
+  UI text, and so on).
 
 - **`colorblindMode` is stored but not rendered.** `EngineView` has a hook for a colorblind
   simulation pass, but it is an unimplemented placeholder; choosing a mode currently changes nothing on

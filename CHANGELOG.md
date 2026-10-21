@@ -16,6 +16,7 @@ pubspec.yaml.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
+- `Camera.shakeIntensity`: multiplies every camera shake (accessibility; bind it to `PlayerOptions.screenShakeIntensity`).
 - Real-time strategy builder units: `BuildWorker`, `assignBuild`, `BuildSystem`, `placeBuilding(needsBuilder: true)`; construction only progresses while assigned team builders stand next to the site (more builders, faster). `installRealtimeStrategySystems(building: true)`. Shared `queueMoveNextTo` helper.
 - Real-time strategy tech trees: `Producer.requires`, `Provides` (finished buildings unlock tech) and `TechState` / `grantTech` (unlock by name); `availableTech`, `missingTech`; `ProductionLockedEvent`.
 - `PathfindingJob` (a `JobSystem` job) now does four-way A* over a tile grid instead of returning an empty path.

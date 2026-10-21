@@ -55,6 +55,11 @@ class Camera {
   double y;
   double zoom;
 
+  /// Multiplies every shake, as the player's accessibility setting: `1` (default) is the shake as
+  /// authored, `0.5` half as strong, `0` none at all (motion-sensitive players). Bind it to
+  /// `PlayerOptions.screenShakeIntensity`; the engine does not read the options itself.
+  double shakeIntensity = 1.0;
+
   final Random _random;
 
   final List<_ShakeEffect> _shakes = [];
@@ -141,8 +146,8 @@ class Camera {
       }
     }
 
-    _shakeOffsetX = totalOffsetX;
-    _shakeOffsetY = totalOffsetY;
+    _shakeOffsetX = totalOffsetX * shakeIntensity;
+    _shakeOffsetY = totalOffsetY * shakeIntensity;
   }
 
   /// Re-centers the camera on [worldX]/[worldY], optionally clamped so the

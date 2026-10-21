@@ -4,17 +4,27 @@ import 'package:engine_flutter/engine_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('a game applies the player\'s screen-shake setting itself', () async {
-    final options = PlayerOptionsManager(InMemoryPlayerOptionsStorage());
-    await options.setOption('screenShakeIntensity', 0.25);
+  test(
+    'binding the screen-shake setting to the camera silences or softens shake',
+    () async {
+      final options = PlayerOptionsManager(InMemoryPlayerOptionsStorage());
+      final camera = Camera(zoom: 1);
+      options.addListener(
+        (o) => camera.shakeIntensity = o.screenShakeIntensity,
+      );
 
-    final camera = Camera(zoom: 1);
-    // The engine does not read PlayerOptions: scaling the effect is the game's job.
-    camera.shake(
-      magnitude: 20 * options.options.screenShakeIntensity,
-      duration: 0.3,
-    );
+      await options.setOption('screenShakeIntensity', 0.0);
+      expect(camera.shakeIntensity, 0.0);
+      camera.shake(magnitude: 20, duration: 0.3);
+      camera.update(0.05);
+      expect(
+        camera.shakeOffset.distance,
+        0,
+        reason: 'the player turned shake off',
+      );
 
-    expect(options.options.screenShakeIntensity, 0.25);
-  });
+      await options.setOption('screenShakeIntensity', 1.0);
+      expect(camera.shakeIntensity, 1.0);
+    },
+  );
 }

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' show Size;
 
 import 'package:engine_flutter/engine_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -141,5 +142,38 @@ void main() {
         greaterThan(linear.shakeOffset.distance),
       );
     });
+  });
+
+  group('Camera.shakeIntensity (accessibility)', () {
+    Offset shakeOnce(double intensity) {
+      final camera = Camera(random: Random(3))..shakeIntensity = intensity;
+      camera.shake(magnitude: 20, duration: 1.0);
+      camera.update(0.1);
+      return camera.shakeOffset;
+    }
+
+    test(
+      '0 turns shake off entirely; 0.5 halves the offset; 1 is unchanged',
+      () {
+        final full = shakeOnce(1.0);
+        expect(full.distance, greaterThan(0));
+        expect(shakeOnce(0.0), Offset.zero);
+        expect(shakeOnce(0.5).dx, closeTo(full.dx * 0.5, 1e-9));
+        expect(shakeOnce(0.5).dy, closeTo(full.dy * 0.5, 1e-9));
+      },
+    );
+
+    test(
+      'it applies to worldToScreen too, so the picture really shakes less',
+      () {
+        final a = Camera(random: Random(3))..shakeIntensity = 0;
+        a.shake(magnitude: 50, duration: 1);
+        a.update(0.1);
+        expect(
+          a.worldToScreen(0, 0, const Size(100, 100)),
+          const Offset(50, 50),
+        );
+      },
+    );
   });
 }
