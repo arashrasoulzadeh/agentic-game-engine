@@ -31,6 +31,80 @@ IdleController _controller({String coins = '1000', int generators = 2}) {
 Widget _app(Widget child) => MaterialApp(home: Scaffold(body: child));
 
 void main() {
+  group('prestige panel and achievements', () {
+    IdleController game() {
+      final c = _controller(coins: '0');
+      c.world.storeOf<PrestigeRule>().set(
+        c.world.spawn(),
+        PrestigeRule(currency: 'gems', basedOn: 'coins', divisor: n('100')),
+      );
+      c.world.storeOf<Achievement>().set(
+        c.world.spawn(),
+        Achievement(
+          id: 'rich',
+          name: 'Rich',
+          stat: 'lifetime:coins',
+          atLeast: n('1000'),
+        ),
+      );
+      return c;
+    }
+
+    testWidgets(
+      'prestige is disabled until it would pay, then asks before resetting',
+      (tester) async {
+        final c = game();
+        await tester.pumpWidget(_app(PrestigePanel(controller: c)));
+        expect(
+          tester
+              .widget<FilledButton>(find.byKey(const Key('prestige-button')))
+              .onPressed,
+          isNull,
+        );
+        expect(find.textContaining('Earn more coins'), findsOneWidget);
+
+        c.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
+        c.wallet.add('coins', n('10000'));
+        c.refresh();
+        await tester.pump();
+        expect(find.textContaining('+10 gems'), findsOneWidget);
+
+        await tester.tap(find.byKey(const Key('prestige-button')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('prestige-cancel')));
+        await tester.pumpAndSettle();
+        expect(c.wallet.of('gems'), BigNumber.zero, reason: 'cancelled');
+
+        await tester.tap(find.byKey(const Key('prestige-button')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('prestige-confirm-yes')));
+        await tester.pumpAndSettle();
+        expect(c.wallet.of('gems'), n('10'));
+        expect(c.wallet.of('coins'), BigNumber.zero);
+      },
+    );
+
+    testWidgets('achievements show progress, then done once unlocked', (
+      tester,
+    ) async {
+      final c = game();
+      c.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('250')});
+      await tester.pumpWidget(_app(AchievementList(controller: c)));
+      expect(find.text('Rich'), findsOneWidget);
+      expect(find.text('250 / 1.00K'), findsOneWidget);
+
+      c.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('5000')});
+      c.tap();
+      await tester.pump();
+      expect(find.text('Done'), findsOneWidget);
+    });
+
+    testWidgets('a game without prestige shows nothing', (tester) async {
+      await tester.pumpWidget(_app(PrestigePanel(controller: _controller())));
+      expect(find.byKey(const Key('prestige-button')), findsNothing);
+    });
+  });
+
   testWidgets(
     'ResourceHeader shows the formatted amount and rate, and follows ticks',
     (tester) async {

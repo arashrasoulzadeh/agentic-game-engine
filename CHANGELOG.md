@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `engine_idle` `PrestigePanel` (gain preview, held bonus, confirm-before-reset) and `AchievementList` (progress bars, done state).
 - `OfflineSummaryDialog(onDouble:)` and `IdleSession.doubleOffline`: an optional "Double it" button for a rewarded-ad flow (the game supplies the ad; the dialog pops `true` when earned). The dialog now pops `false` on Collect.
 - `engine_idle` `ReturnNotifier` interface (+ `RecordingNotifier` for tests): `IdleSession` schedules a "generators are full" reminder at the offline cap when the app pauses and cancels it on resume.
 - `TableCost` cost curve (`{"type": "table", "prices": [...], "tailGrowth": 1.5}`): exact hand-authored prices with a growth rule past the table, closed-form `totalCost` and bisecting `maxAffordable`; accepted by idle definitions and validated with paths.
