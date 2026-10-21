@@ -248,18 +248,71 @@ class CollisionBroadphaseOutput {
   CollisionBroadphaseOutput(this.pairs);
 }
 
-/// A job for pathfinding.
+/// A job for pathfinding: A* over a tile grid, four-way, each step costing one.
 ///
-/// **Stub:** it returns an empty path; the search itself is not implemented. Use the platformer
-/// pathfinding or `GridNavigator` on the main isolate until it is.
+/// Returns the centres of the tiles from the one holding the start to the one holding the goal
+/// (both included), or an empty path when either lies outside the grid or inside a solid tile,
+/// or no route exists. It knows nothing about gravity: [PathPoint.jumpRequired] and
+/// [PathPoint.climbRequired] are always false, so this is for top-down or flying movement. For
+/// platformer-aware paths use the platformer pathfinding on the main isolate.
 class PathfindingJob implements Job<PathfindingInput, PathfindingOutput> {
   @override
   PathfindingOutput run(PathfindingInput input) {
-    // Simple A* pathfinding implementation
-    // In practice, this would use the platformer pathfinding logic
-    final path = <PathPoint>[];
-    // ... pathfinding logic here
-    return PathfindingOutput(path);
+    final grid = input.grid;
+    final rows = grid.length;
+    final cols = rows == 0 ? 0 : grid.first.length;
+    final tw = input.tileWidth, th = input.tileHeight;
+    final sc = (input.startX / tw).floor(), sr = (input.startY / th).floor();
+    final gc = (input.goalX / tw).floor(), gr = (input.goalY / th).floor();
+
+    bool open(int c, int r) =>
+        c >= 0 && r >= 0 && c < cols && r < rows && grid[r][c] == 0;
+    if (!open(sc, sr) || !open(gc, gr)) return PathfindingOutput(const []);
+
+    int key(int c, int r) => r * cols + c;
+    int h(int c, int r) => (c - gc).abs() + (r - gr).abs();
+
+    final cost = <int, int>{key(sc, sr): 0};
+    final from = <int, int>{};
+    // Open set as a list kept small by the grid; ties broken by the lower key so the path is
+    // deterministic.
+    final frontier = <int>[key(sc, sr)];
+    final closed = <int>{};
+
+    while (frontier.isNotEmpty) {
+      var best = 0;
+      for (var i = 1; i < frontier.length; i++) {
+        final a = frontier[i], b = frontier[best];
+        final fa = cost[a]! + h(a % cols, a ~/ cols),
+            fb = cost[b]! + h(b % cols, b ~/ cols);
+        if (fa < fb || (fa == fb && a < b)) best = i;
+      }
+      final cur = frontier.removeAt(best);
+      if (!closed.add(cur)) continue;
+      final c = cur % cols, r = cur ~/ cols;
+      if (c == gc && r == gr) {
+        final tiles = <int>[cur];
+        while (from.containsKey(tiles.last)) {
+          tiles.add(from[tiles.last]!);
+        }
+        return PathfindingOutput([
+          for (final t in tiles.reversed)
+            PathPoint(x: (t % cols + 0.5) * tw, y: (t ~/ cols + 0.5) * th),
+        ]);
+      }
+      for (final (dc, dr) in const [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+        final nc = c + dc, nr = r + dr;
+        if (!open(nc, nr)) continue;
+        final nk = key(nc, nr);
+        final ng = cost[cur]! + 1;
+        if (ng < (cost[nk] ?? 1 << 30)) {
+          cost[nk] = ng;
+          from[nk] = cur;
+          frontier.add(nk);
+        }
+      }
+    }
+    return PathfindingOutput(const []);
   }
 }
 

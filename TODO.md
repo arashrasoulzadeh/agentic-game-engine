@@ -199,7 +199,6 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 - [ ] Settings menus, `PlayerOptions` persistence and accessibility options
       (colorblind modes, text scaling, remapping).
 - [ ] Viewport / aspect-ratio / safe-area handling.
-- [ ] `PathfindingJob` is a stub returning an empty path; implement it or remove it.
 - [ ] Lighting deep-dive (`Light2D`, shadows, single-pass shader, day/night)
       beyond the overview in `concepts/rendering.md`.
 - [ ] Release pipeline (`build-release`) walkthrough: signing for Android and

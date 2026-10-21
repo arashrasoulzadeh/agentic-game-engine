@@ -13,6 +13,7 @@ pubspec.yaml.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
+- `PathfindingJob` (a `JobSystem` job) now does four-way A* over a tile grid instead of returning an empty path.
 - Real Wave Function Collapse: `WFCRules` (learned with `WFCRules.fromSample` or stated by hand) and a propagating, restarting `WFCGenerator`; unsatisfiable rules throw instead of returning a broken level. (`WFCConfig.allowBacktracking`, which did nothing, is removed.)
 - `AnalyticsManager.setConsent` / `hasConsent`: while off nothing is queued or sent, and turning it off discards what was queued.
 - Studio updates window: signed release manifest check, per-item Accept / Later / Skip, checksum-verified atomic installs with retry, offline mode that keeps cached packs usable; `ReleaseManifestVerifier.fromPublicKeyBytes`. Configured via `updates` in `studio_prefs.json`; off by default. `engine_studio/tool/package_macos.sh` builds a `.dmg`.

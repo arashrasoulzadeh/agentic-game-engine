@@ -91,7 +91,7 @@ jobs.shutdown();
 - It costs a copy of the input and output per job, so it pays off for work that takes noticeably
   longer than that (broadphase over thousands of entities, large searches), not for small tasks.
 - Isolates are unavailable on the web: do not use it in a game that ships there.
-- `CollisionBroadphaseJob` is a ready-made job; `PathfindingJob` is a **stub** that returns an
-  empty path.
+- Two ready-made jobs: `CollisionBroadphaseJob` and `PathfindingJob` (four-way A* over a tile grid,
+  returning tile centres; it knows nothing about gravity, so it is for top-down or flying movement).
 
 These behaviours are tested in `packages/engine_core/test/job_system_test.dart`.

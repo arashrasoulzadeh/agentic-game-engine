@@ -120,6 +120,93 @@ void main() {
     },
   );
 
+  group('PathfindingJob', () {
+    PathfindingInput input(
+      List<List<int>> grid,
+      double sx,
+      double sy,
+      double gx,
+      double gy,
+    ) => PathfindingInput(
+      startX: sx,
+      startY: sy,
+      goalX: gx,
+      goalY: gy,
+      grid: grid,
+      tileWidth: 10,
+      tileHeight: 10,
+    );
+
+    test('finds a shortest four-way route around a wall, as tile centres', () {
+      final grid = [
+        [0, 0, 0, 0],
+        [0, 1, 1, 0],
+        [0, 0, 0, 0],
+      ];
+      final path = PathfindingJob().run(input(grid, 5, 5, 35, 25)).path;
+      expect((path.first.x, path.first.y), (5, 5));
+      expect((path.last.x, path.last.y), (35, 25));
+      expect(path.length, 6, reason: '5 steps around the wall = 6 tiles');
+      for (var i = 1; i < path.length; i++) {
+        final d =
+            (path[i].x - path[i - 1].x).abs() +
+            (path[i].y - path[i - 1].y).abs();
+        expect(d, 10, reason: 'one tile at a time, no diagonals');
+      }
+      expect(path.every((p) => !p.jumpRequired && !p.climbRequired), isTrue);
+    });
+
+    test('a start equal to the goal is a one-point path', () {
+      final path = PathfindingJob()
+          .run(
+            input(
+              [
+                [0, 0],
+              ],
+              3,
+              3,
+              4,
+              6,
+            ),
+          )
+          .path;
+      expect(path.length, 1);
+    });
+
+    test(
+      'no route, a solid goal, or points off the grid give an empty path',
+      () {
+        final walled = [
+          [0, 1, 0],
+        ];
+        expect(PathfindingJob().run(input(walled, 5, 5, 25, 5)).path, isEmpty);
+        expect(
+          PathfindingJob().run(input(walled, 5, 5, 15, 5)).path,
+          isEmpty,
+          reason: 'goal is solid',
+        );
+        expect(PathfindingJob().run(input(walled, -5, 5, 25, 5)).path, isEmpty);
+        expect(PathfindingJob().run(input(const [], 0, 0, 0, 0)).path, isEmpty);
+      },
+    );
+
+    test('runs on a worker isolate too', () async {
+      final path = (await jobs.dispatch(
+        PathfindingJob(),
+        input(
+          [
+            [0, 0, 0],
+          ],
+          5,
+          5,
+          25,
+          5,
+        ),
+      )).path;
+      expect(path.length, 3);
+    });
+  });
+
   test('shutdown can be followed by a fresh start', () async {
     expect(await jobs.dispatch(_Square(), 2), 4);
     jobs.shutdown();
