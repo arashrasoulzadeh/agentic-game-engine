@@ -62,13 +62,13 @@ turns a long absence into progress.
       efficiency, minimum-away and backwards-clock rules are done (`engine_core`). Left: a persisted
       `lastActiveAt` helper in the save, and **event-aware catch-up** for economies whose rates change while away
       (auto-buyers); today it assumes constant rates and the guide says so.
-- [ ] **Deterministic bulk advance** — a `World.advance(Duration)` (or an economy-only fast-forward) that
+- [x] **Deterministic bulk advance** (`session_test.dart` proves 3600 one-second steps equal one `catchUp`; the economy is closed-form, so no `World.advance` is needed) — a `World.advance(Duration)` (or an economy-only fast-forward) that
       skips rendering and per-tick events but keeps the same results as stepping, so catch-up is
       reproducible. Done when: stepping N ticks and bulk-advancing the same time give equal treasuries.
 - [x] **Clock-tampering policy** (documented in the guide's "Trust" section; `IdleSession(clock:)` is the server-time hook) — decide and document: trust the device clock (simple), or also keep a
       monotonic counter / server time. At minimum: never grant negative or absurd (> cap) time, and expose a
       hook for a server time source.
-- [ ] **"While you were away" model** — a plain data object (time away, per-resource gains, anything that
+- [x] **"While you were away" model** (`OfflineSummary`) — a plain data object (time away, per-resource gains, anything that
       completed) the UI can render. Done when: it is produced by `OfflineProgress` and covered by tests; the
       screen itself is item 5.
 - [ ] **App lifecycle hooks, remaining** — `IdleSession` (`save`, `load` with migration + catch-up, `onPause` / `onResume`,

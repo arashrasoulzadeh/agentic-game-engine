@@ -171,6 +171,37 @@ void main() {
     },
   );
 
+  test(
+    'stepping the world tick by tick and catching up the same time give the same wallet',
+    () {
+      BigTreasury fresh() {
+        final c = _newGame();
+        c.buy(c.generatorIds.first, count: 5);
+        return c.wallet;
+      }
+
+      final stepped = _newGame();
+      stepped.buy(stepped.generatorIds.first, count: 5);
+      for (var i = 0; i < 3600; i++) {
+        stepped.world.step(1);
+      }
+
+      final bulk = fresh();
+      final t0 = DateTime.utc(2026);
+      OfflineProgress.catchUp(
+        bulk,
+        lastActiveAt: t0,
+        now: t0.add(const Duration(hours: 1)),
+      );
+      expect(
+        stepped.wallet.of('coins').approxEquals(bulk.of('coins')),
+        isTrue,
+        reason: '${stepped.wallet.of('coins')} vs ${bulk.of('coins')}',
+      );
+      stepped.stop();
+    },
+  );
+
   test('a very short absence earns and reports nothing', () {
     final c = _newGame();
     c.buy(c.generatorIds.first);
