@@ -17,6 +17,7 @@ pubspec.yaml.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
+- `engine_idle` balance simulator: `simulateIdle` (deterministic greedy play, milestones, stall reasons) and `dart run tool/simulate.dart <game.json>`; sample game `example/cookie_clicker.json`; the idle guide now covers definitions, saving, screens and tuning.
 - `engine_idle` data-driven games: `validateIdleDefinition` / `loadIdleDefinition` build a whole idle game (resources, generators, upgrades, achievements, prestige, offline rules) from one JSON file and report every problem with its path; `package:engine_idle/engine_idle_logic.dart` is the Flutter-free entry point for tools.
 - `engine_idle` persistence: `IdleSession` (save/load of the whole world with migration and offline catch-up, autosave, pause/resume, export/import codes), `SaveStore` (`MemorySaveStore`, `FileSaveStore`), `IdleLifecycleHost` widget. `IdleController.wallet` is now looked up from the world, so restoring a save never leaves it stale.
 - `engine_idle` UI: `IdleController` (real-time stepping at 10 Hz, number-style switch, buy/tap/prestige entry points), `ResourceHeader`, `GeneratorList` / `GeneratorRow` (×1/×10/×100/Max), `UpgradeList`, `OfflineSummaryDialog`.

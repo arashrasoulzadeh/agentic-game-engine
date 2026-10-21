@@ -8,3 +8,4 @@ export 'src/definition.dart';
 export 'src/economy.dart';
 export 'src/progression.dart';
 export 'src/register_components.dart';
+export 'src/simulator.dart';

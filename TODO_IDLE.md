@@ -137,9 +137,9 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 
 ## 7. Tooling and balance
 
-- [ ] **Balance simulator** — a headless CLI (`game_agent idle simulate`) that runs a scripted buying
-      strategy for N simulated days and prints the time to each milestone / prestige, so designers tune cost
-      curves without playing. Done when: it is deterministic and covered by golden output.
+- [ ] **Balance simulator, remaining** — `simulateIdle` and `dart run tool/simulate.dart` (milestones, stall reasons,
+      deterministic) are done in `engine_idle`. Left: a `game_agent idle simulate` CLI command (needs the rules in a
+      Flutter-free package; `engine_idle_logic.dart` is the first step) and golden-output tests.
 - [ ] **Schema + studio support** — component schemas for the new data (generators, upgrades, prestige,
       achievements) so `studio validate` and the inspector understand them; `docs/reference/components.md`
       regenerates.
