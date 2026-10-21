@@ -199,7 +199,14 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 - [ ] **Colorblind simulation is an unimplemented placeholder** (`EngineView._drawColorblind`,
       `shaders/colorblind.frag` exists); and nothing in the engine applies `PlayerOptions` such as
       `reduceMotion` or `screenShakeIntensity` - decide which should be engine behaviour.
-- [ ] Viewport / aspect-ratio / safe-area handling.
+- [ ] **Viewport / aspect-ratio / safe-area handling is not usable yet** (`rendering/viewport.dart`,
+      opt-in via `EngineView.viewportConfig`; no tests, nothing wires it from `GameConfig`, and
+      `test_game` does not use it). `ViewportManager.computeLayout` computes `scale` as
+      `height / (ratio * height)` = `1 / ratio` whatever the screen, then multiplies the content size
+      by it, so even a screen that matches the target ratio gets a shrunken, letterboxed rect;
+      `ViewportFit.cover` runs the same arithmetic as `contain` (it does not crop/fill); and the
+      config has no reference resolution to define what `scale` is relative to. Needs a design
+      (what is one world unit at zoom 1?), then tests, then a guide. Do not document it until then.
 - [ ] Release pipeline (`build-release`) walkthrough: signing for Android and
       iOS.
 - [ ] A "build your first level" studio tutorial (the user guide, `docs/studio/user-guide.md`,
