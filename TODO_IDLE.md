@@ -59,12 +59,10 @@ fractional carry is a `double` that loses precision at large magnitudes.
 `Treasury.accrue(dt)` is correct for a large `dt`, but nothing records *when* the game was last running or
 turns a long absence into progress.
 
-- [ ] **`OfflineProgress` helper** — stores `lastActiveAt` in the save; on load computes the elapsed time,
-      clamps it (configurable cap, for example 8 h, plus an optional "efficiency while away" factor),
-      advances the economy in a few large steps (not one step per tick), and returns a summary of what was
-      earned. Done when: tests show a 6 h absence equals the same income as 6 h of online ticks (within
-      tolerance) in one call that takes milliseconds, the cap and efficiency apply, and a clock that moved
-      *backwards* grants nothing.
+- [ ] **Offline progress, remaining** — `OfflineProgress.catchUp` / `creditFor` / `untilCap` and the cap,
+      efficiency, minimum-away and backwards-clock rules are done (`engine_core`). Left: a persisted
+      `lastActiveAt` helper in the save, and **event-aware catch-up** for economies whose rates change while away
+      (auto-buyers); today it assumes constant rates and the guide says so.
 - [ ] **Deterministic bulk advance** — a `World.advance(Duration)` (or an economy-only fast-forward) that
       skips rendering and per-tick events but keeps the same results as stepping, so catch-up is
       reproducible. Done when: stepping N ticks and bulk-advancing the same time give equal treasuries.
@@ -176,7 +174,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 ## Suggested order
 
 0. ~~Scaffold `engine_idle`~~ (done).
-1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury` done; next: offline progress.
+1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury` and `OfflineProgress` done; next: generators/upgrades data, cost curves, multipliers.
 2. `OfflineProgress` and deterministic bulk advance.
 3. Generator / upgrade data, cost curves, multiplier stack, buy modes.
 4. Save versioning, autosave, export/import.

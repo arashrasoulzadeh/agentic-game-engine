@@ -16,6 +16,7 @@ pubspec.yaml.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
+- `OfflineProgress` / `OfflineConfig` (`engine_core`): cap, efficiency and minimum-away rules, clock-went-backwards safety, `catchUp` onto a `BigTreasury` with a gains summary, `untilCap` for reminders. Guide: `docs/concepts/idle-games.md`.
 - `BigTreasury` (`engine_core`): named resources and per-second income as `BigNumber`s, all-or-nothing `spend`, `accrue` correct for any step size; registered as the `bigTreasury` component. The int `Treasury` is unchanged.
 - `BigNumber` (mantissa/exponent, ~15 digits, range ~1e±9e15, immutable, JSON as `1.5e300`) and `formatBigNumber` (`1.23K` / `1.23e45` / engineering styles with rounding carry) for idle-game scale numbers. New package scaffold `engine_idle`.
 - `Camera.shakeIntensity`: multiplies every camera shake (accessibility; bind it to `PlayerOptions.screenShakeIntensity`).
