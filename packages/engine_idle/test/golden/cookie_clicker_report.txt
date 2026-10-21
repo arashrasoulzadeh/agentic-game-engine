@@ -1,0 +1,29 @@
+elapsed 172800s, 986 purchases, stalled false
+1000s income reaches 1e0 coins/s
+1522s income reaches 1e1 coins/s
+2064s income reaches 1e2 coins/s
+2064s achievement: ten_cursors
+2435s achievement: rich
+2859s income reaches 1e3 coins/s
+3394s prestige #1 (+1)
+4218s income reaches 1e0 coins/s
+4649s income reaches 1e1 coins/s
+5095s income reaches 1e2 coins/s
+5773s income reaches 1e3 coins/s
+7482s prestige #2 (+2)
+8235s income reaches 1e0 coins/s
+8628s income reaches 1e1 coins/s
+9035s income reaches 1e2 coins/s
+9581s income reaches 1e3 coins/s
+18262s prestige #3 (+6)
+18860s income reaches 1e0 coins/s
+19171s income reaches 1e1 coins/s
+19383s income reaches 1e2 coins/s
+19844s income reaches 1e3 coins/s
+59369s prestige #4 (+18)
+59737s income reaches 1e0 coins/s
+59930s income reaches 1e1 coins/s
+60019s income reaches 1e2 coins/s
+60255s income reaches 1e3 coins/s
+62497s income reaches 1e4 coins/s
+income coins 19.07K/s
