@@ -13,6 +13,7 @@ flowchart LR
     core --> flutter[engine_flutter]
     flutter --> platformer[engine_platformer]
     flutter --> strategy[engine_strategy]
+    flutter --> idle[engine_idle]
     core --> cli[engine_cli]
 ```
 

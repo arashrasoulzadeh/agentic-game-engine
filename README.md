@@ -28,6 +28,7 @@ Android/iOS/Web — the simulation core has no Flutter dependency at all.
 | [`packages/engine_core`](packages/engine_core/README.md) | The genre-general engine: ECS, `Position`/`Velocity`/`Collider`, spatial-hash collision, `TileMap` data, the content DSL, and the agent-facing `WorldView`/`Behavior` API. Pure Dart, zero Flutter imports. |
 | [`packages/engine_flutter`](packages/engine_flutter/README.md) | The Flutter shell: `Game`/`GameRunner` app framework, sprite rendering, camera, input, audio, save/load. No gameplay logic. |
 | [`packages/engine_platformer`](packages/engine_platformer/README.md) | 2D-platformer-genre gameplay: gravity, jump, tile/platform collision, player/enemy spawn helpers, patrol/follow AI behaviors, facing + movement-driven animation. Kept separate from `engine_core` so a non-platformer 2D game isn't forced to depend on gravity/jump concepts. |
+| [`packages/engine_idle`](packages/engine_idle/README.md) | Idle / incremental-game layer (scaffold; plan in [TODO_IDLE.md](TODO_IDLE.md)). |
 | [`packages/engine_strategy`](packages/engine_strategy/README.md) | Turn-based strategy assembly: `installStrategySystems`, `spawnStrategyUnit`, plus the `strategy_game` starter. The rules themselves (turn clock, orders, grid navigation, combat, fog of war, AI turns) live in `engine_core/lib/src/turn/`. |
 | [`packages/engine_cli`](packages/engine_cli/README.md) | The `game_agent` CLI — scaffolds new Flutter games wired to the engine, updates their pinned version, lints content files. |
 
@@ -166,6 +167,7 @@ Each package is tested independently:
 (cd packages/engine_flutter && flutter test && flutter analyze --fatal-infos)
 (cd packages/engine_platformer && flutter test && flutter analyze --fatal-infos)
 (cd packages/engine_strategy && flutter test && flutter analyze --fatal-infos)
+(cd packages/engine_idle && flutter test && flutter analyze --fatal-infos)
 (cd packages/engine_cli && dart test && dart analyze --fatal-infos)
 
 # docs site (needs: pip install -r docs/requirements.txt)

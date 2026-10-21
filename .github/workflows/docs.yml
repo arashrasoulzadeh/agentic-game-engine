@@ -12,6 +12,7 @@ on:
       - "packages/engine_flutter/lib/**"
       - "packages/engine_platformer/lib/**"
       - "packages/engine_strategy/lib/**"
+      - "packages/engine_idle/lib/**"
       - ".github/workflows/docs.yml"
   pull_request:
     paths:
@@ -58,7 +59,7 @@ jobs:
 
       - name: Generate API docs
         run: |
-          for pkg in engine_schema engine_core engine_flutter engine_platformer engine_strategy; do
+          for pkg in engine_schema engine_core engine_flutter engine_platformer engine_strategy engine_idle; do
             if (cd packages/$pkg && flutter pub get && dart doc . ); then
               mkdir -p site/api/$pkg
               cp -r packages/$pkg/doc/api/. site/api/$pkg/

@@ -1,0 +1,33 @@
+name: engine_idle
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/engine_idle/**'
+      - 'packages/engine_core/**'
+      - 'packages/engine_flutter/**'
+      - 'packages/engine_schema/**'
+      - '.github/workflows/engine_idle.yml'
+  pull_request:
+    paths:
+      - 'packages/engine_idle/**'
+      - 'packages/engine_core/**'
+      - 'packages/engine_flutter/**'
+      - 'packages/engine_schema/**'
+      - '.github/workflows/engine_idle.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/engine_idle
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter test

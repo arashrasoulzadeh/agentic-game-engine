@@ -1,0 +1,8 @@
+/// Idle / incremental-game layer on top of `engine_core` and `engine_flutter`.
+///
+/// The genre-general pieces (big numbers, offline progress, save versioning) live in `engine_core`
+/// because they are not specific to idle games; this package holds the genre's components, systems
+/// and widgets. Plan and status: `TODO_IDLE.md` at the repository root.
+library;
+
+export 'src/register_components.dart';
