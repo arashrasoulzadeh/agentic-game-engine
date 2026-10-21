@@ -118,6 +118,44 @@ class OfflineProgress {
     return OfflineSummary(credit: credit, gained: gained);
   }
 
+  /// Like [applyToTreasury], but for economies whose rates change while away (auto-buyers, timed events):
+  /// the credited time is paid in [slices] equal parts and [between] runs after each part but the last, so
+  /// it can buy things and refresh `treasury.incomePerSecond` before the next part earns at the new rate.
+  ///
+  /// The result is as fine-grained as [slices]; with a constant rate it equals [applyToTreasury]. More
+  /// slices cost proportionally more [between] calls, so pick the coarsest that is accurate enough
+  /// (a few hundred is plenty for an 8-hour cap).
+  static OfflineSummary applyInSlices(
+    BigTreasury treasury,
+    OfflineCredit credit, {
+    required int slices,
+    required void Function() between,
+    OfflineConfig config = const OfflineConfig(),
+  }) {
+    assert(slices >= 1, 'at least one slice');
+    if (credit.isNone || config.efficiency == 0) {
+      return OfflineSummary(credit: credit, gained: const {});
+    }
+    final total =
+        credit.credited.inMicroseconds /
+        Duration.microsecondsPerSecond *
+        config.efficiency;
+    final part = total / slices;
+    final gained = <String, BigNumber>{};
+    for (var i = 0; i < slices; i++) {
+      final factor = BigNumber.from(part);
+      for (final e in treasury.incomePerSecond.entries) {
+        final gain = e.value * factor;
+        if (gain > BigNumber.zero) {
+          gained[e.key] = (gained[e.key] ?? BigNumber.zero) + gain;
+        }
+      }
+      treasury.accrue(part);
+      if (i < slices - 1) between();
+    }
+    return OfflineSummary(credit: credit, gained: gained);
+  }
+
   /// [creditFor] then [applyToTreasury], the usual call on app start / resume.
   static OfflineSummary catchUp(
     BigTreasury treasury, {

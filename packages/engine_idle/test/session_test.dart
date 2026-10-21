@@ -202,6 +202,32 @@ void main() {
     },
   );
 
+  test('whileAway lets an auto-buyer change the rate during the absence', () {
+    final c = _newGame();
+    c.buy(c.generatorIds.first);
+    var calls = 0;
+    final s = IdleSession(
+      controller: c,
+      store: store,
+      clock: clock.call,
+      awaySlices: 4,
+      whileAway: () {
+        calls++;
+        c.wallet.incomePerSecond['coins'] = c.wallet.rateOf('coins') * n('2');
+      },
+    )..onPause();
+    final rate = c.wallet.rateOf('coins');
+    clock.now = clock.now.add(const Duration(hours: 4));
+    final before = c.wallet.of('coins');
+    final summary = s.onResume()!;
+    expect(calls, 3);
+    // Slices of one hour at 1x, 2x, 4x, 8x the starting rate.
+    final expected = rate * n('3600') * n('15');
+    expect(summary.gained['coins']!.approxEquals(expected), isTrue);
+    expect(c.wallet.of('coins').approxEquals(before + expected), isTrue);
+    c.stop();
+  });
+
   test('a very short absence earns and reports nothing', () {
     final c = _newGame();
     c.buy(c.generatorIds.first);

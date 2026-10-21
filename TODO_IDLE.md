@@ -58,7 +58,7 @@ fractional carry is a `double` that loses precision at large magnitudes.
 `Treasury.accrue(dt)` is correct for a large `dt`, but nothing records *when* the game was last running or
 turns a long absence into progress.
 
-- [ ] **Offline progress, remaining** — `OfflineProgress.catchUp` / `creditFor` / `untilCap` and the cap,
+- [ ] **Offline progress, remaining** (event-aware catch-up is done: `OfflineProgress.applyInSlices`, `IdleSession(whileAway:)`) — `OfflineProgress.catchUp` / `creditFor` / `untilCap` and the cap,
       efficiency, minimum-away and backwards-clock rules are done (`engine_core`). Left: a persisted
       `lastActiveAt` helper in the save, and **event-aware catch-up** for economies whose rates change while away
       (auto-buyers); today it assumes constant rates and the guide says so.

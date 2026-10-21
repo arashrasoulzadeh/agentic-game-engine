@@ -76,6 +76,8 @@ class IdleSession {
     this.offline = const OfflineConfig(),
     DateTime Function()? clock,
     this.notifier,
+    this.whileAway,
+    this.awaySlices = 200,
     this.returnMessage =
         'Your generators are full - come collect your earnings.',
   }) : migrator = migrator ?? SaveMigrator(currentVersion: 1),
@@ -86,6 +88,14 @@ class IdleSession {
   final SaveMigrator migrator;
   final OfflineConfig offline;
   final DateTime Function() _clock;
+
+  /// For economies whose rates change while the player is away (auto-buyers): called between
+  /// [awaySlices] equal parts of the catch-up, so it can buy things and call `recomputeIncome` before the
+  /// next part earns at the new rate. Null (the default) pays the whole absence at the current rates.
+  final void Function()? whileAway;
+
+  /// How many parts the catch-up is split into when [whileAway] is set.
+  final int awaySlices;
 
   /// Reminds the player when the offline cap is reached; null for no reminders.
   final ReturnNotifier? notifier;
@@ -135,12 +145,25 @@ class IdleSession {
   }
 
   OfflineSummary? _catchUp(DateTime from) {
-    final summary = OfflineProgress.catchUp(
-      controller.wallet,
-      lastActiveAt: from,
-      now: _clock(),
-      config: offline,
-    );
+    final step = whileAway;
+    final summary = step == null
+        ? OfflineProgress.catchUp(
+            controller.wallet,
+            lastActiveAt: from,
+            now: _clock(),
+            config: offline,
+          )
+        : OfflineProgress.applyInSlices(
+            controller.wallet,
+            OfflineProgress.creditFor(
+              lastActiveAt: from,
+              now: _clock(),
+              config: offline,
+            ),
+            slices: awaySlices,
+            between: step,
+            config: offline,
+          );
     if (summary.isEmpty) return null;
     controller.analytics?.offlineReturn(summary);
     final stats = controller.world.storeOf<IdleStats>();

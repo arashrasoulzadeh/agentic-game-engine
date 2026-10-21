@@ -200,4 +200,56 @@ void main() {
       expect(s.gained['coins'], BigNumber.parse('36000'));
     },
   );
+
+  group('applyInSlices', () {
+    final t0 = DateTime.utc(2026);
+    final credit = OfflineProgress.creditFor(
+      lastActiveAt: t0,
+      now: t0.add(const Duration(hours: 1)),
+    );
+
+    test('with a constant rate it equals one accrual', () {
+      BigTreasury make() =>
+          BigTreasury()..incomePerSecond['coins'] = BigNumber.parse('3');
+      final one = make();
+      final sliced = make();
+      final a = OfflineProgress.applyToTreasury(one, credit);
+      final b = OfflineProgress.applyInSlices(
+        sliced,
+        credit,
+        slices: 60,
+        between: () {},
+      );
+      expect(sliced.of('coins').approxEquals(one.of('coins')), isTrue);
+      expect(b.gained['coins']!.approxEquals(a.gained['coins']!), isTrue);
+    });
+
+    test('a rate that doubles halfway earns three times the first half', () {
+      final t = BigTreasury()..incomePerSecond['coins'] = BigNumber.parse('1');
+      var calls = 0;
+      final s = OfflineProgress.applyInSlices(
+        t,
+        credit,
+        slices: 2,
+        between: () {
+          calls++;
+          t.incomePerSecond['coins'] = BigNumber.parse('2');
+        },
+      );
+      expect(calls, 1, reason: 'between runs after every slice but the last');
+      expect(t.of('coins'), BigNumber.parse('5400'));
+      expect(s.gained['coins'], BigNumber.parse('5400'));
+    });
+
+    test('nothing is earned and between never runs for no credit', () {
+      final t = BigTreasury()..incomePerSecond['coins'] = BigNumber.parse('1');
+      final s = OfflineProgress.applyInSlices(
+        t,
+        OfflineCredit.none,
+        slices: 5,
+        between: () => fail('should not be called'),
+      );
+      expect(s.isEmpty, isTrue);
+    });
+  });
 }

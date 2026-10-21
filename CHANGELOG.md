@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- Event-aware offline catch-up for changing rates (auto-buyers): `OfflineProgress.applyInSlices` and `IdleSession(whileAway:, awaySlices:)` pay the absence in slices and let game code buy/recompute between them.
 - `engine_idle` `IdleSettingsPanel` and `IdleController.setStyle`: switch the number format everywhere at once and state the offline cap/efficiency to the player.
 - `engine_idle` `IdleAnalytics`: `idle_purchase`, `idle_prestige` and `idle_offline_return` events, sent through `AnalyticsManager` (consent respected) by `IdleController(analytics:)` and `IdleSession`.
 - `engine_idle` `PrestigePanel` (gain preview, held bonus, confirm-before-reset) and `AchievementList` (progress bars, done state).

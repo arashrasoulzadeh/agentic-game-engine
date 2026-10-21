@@ -71,9 +71,11 @@ summary.credit.capped;        // true if the absence hit the cap
 the **minimum** absence (default 30 s; anything shorter earns and shows nothing). A clock that moved *backwards*
 grants nothing. `OfflineProgress.untilCap` tells you when the cap will be reached, for a reminder.
 
-!!! warning "Constant rates only"
-    Catch-up assumes your income rates stay the same while away. If your game has automation that spends money on
-    upgrades (auto-buyers), simulate that in game code in a few large steps instead; the maths here cannot know it.
+!!! warning "Constant rates by default"
+    Catch-up assumes your income rates stay the same while away. If your game has automation that spends money
+    on upgrades (auto-buyers), pass `whileAway:` to `IdleSession` (or call `OfflineProgress.applyInSlices`): the
+    absence is paid in slices (200 by default) and your callback runs between them to buy things and
+    `recomputeIncome`, so each slice earns at the then-current rate. It is as accurate as the slice count.
 
 ## Describing a whole game as data
 
