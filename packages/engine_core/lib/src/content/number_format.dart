@@ -10,6 +10,10 @@ enum NumberStyle {
 
   /// Like scientific but the exponent is a multiple of three: `123e45`, matching the suffix groups.
   engineering,
+
+  /// Every digit with thousands separators: `1,234,567`. Exact only below 1e15 (a double's whole digits);
+  /// larger numbers fall back to scientific, which is what an idle game wants past that point anyway.
+  grouped,
 }
 
 const _suffixes = [
@@ -35,12 +39,15 @@ const _suffixes = [
 ///   [decimals] places (`1.00K`), which keeps columns of numbers aligned.
 /// - Rounding carries: 999,999 is `1.00M`, not `1000.00K`.
 /// - [decimalSeparator] replaces the `.`; pass the locale's (for example `,`).
+/// - [groupSeparator] is the thousands mark of [NumberStyle.grouped]; by default `,`, or `.` when
+///   [decimalSeparator] is `,` so the two never collide.
 /// - Negatives get a leading `-`.
 String formatBigNumber(
   BigNumber value, {
   NumberStyle style = NumberStyle.suffix,
   int decimals = 2,
   String decimalSeparator = '.',
+  String? groupSeparator,
 }) {
   if (decimals < 0)
     throw ArgumentError.value(decimals, 'decimals', 'must not be negative');
@@ -65,6 +72,23 @@ String formatBigNumber(
   }
 
   switch (style) {
+    case NumberStyle.grouped:
+      if (abs.exponent >= 15) {
+        return formatBigNumber(
+          value,
+          style: NumberStyle.scientific,
+          decimals: decimals,
+          decimalSeparator: decimalSeparator,
+        );
+      }
+      final sep = groupSeparator ?? (decimalSeparator == ',' ? '.' : ',');
+      final digits = abs.toDouble().round().toString();
+      final out = StringBuffer();
+      for (var i = 0; i < digits.length; i++) {
+        if (i > 0 && (digits.length - i) % 3 == 0) out.write(sep);
+        out.write(digits[i]);
+      }
+      return '$sign$out';
     case NumberStyle.suffix:
       final group = abs.exponent ~/ 3;
       return '$sign${swap(_group(abs, group, decimals, style))}';

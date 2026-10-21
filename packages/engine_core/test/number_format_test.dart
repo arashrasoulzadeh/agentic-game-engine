@@ -111,4 +111,30 @@ void main() {
       );
     });
   });
+
+  group('grouped style', () {
+    String g(String v, {String dec = '.', String? sep}) => formatBigNumber(
+      BigNumber.parse(v),
+      style: NumberStyle.grouped,
+      decimalSeparator: dec,
+      groupSeparator: sep,
+    );
+
+    test('writes every digit with thousands separators', () {
+      expect(g('1234567'), '1,234,567');
+      expect(g('1000'), '1,000');
+      expect(g('999999999999999'), '999,999,999,999,999');
+      expect(g('-1234'), '-1,234');
+    });
+
+    test('small numbers are plain, and the mark follows the locale', () {
+      expect(g('12'), '12');
+      expect(g('1234567', dec: ','), '1.234.567');
+      expect(g('1234567', sep: ' '), '1 234 567');
+    });
+
+    test('past a double\'s exact digits it falls back to scientific', () {
+      expect(g('1e20'), '1.00e20');
+    });
+  });
 }

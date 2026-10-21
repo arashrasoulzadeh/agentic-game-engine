@@ -136,6 +136,7 @@ class IdleSettingsPanel extends StatelessWidget {
     NumberStyle.suffix: '1.5M',
     NumberStyle.scientific: '1.5e6',
     NumberStyle.engineering: '1.5e6 (eng)',
+    NumberStyle.grouped: '1,500,000',
   };
 
   @override

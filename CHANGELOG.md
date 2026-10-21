@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `NumberStyle.grouped` and `groupSeparator`: exact digits with thousands separators (`1,234,567`, `1.234.567` in comma locales), scientific past 1e15; offered in `IdleSettingsPanel`.
 - `IdleController.decimalSeparator`: every idle widget writes numbers with the locale's decimal mark (`1,23M`).
 - `engine_idle` golden events ("golden cookie"): `GoldenEvents` component, `GoldenEventSystem(DeterministicRandom)` and `claimGolden`: timed random offers whose reward is a boost or an instant payout; reproducible from the seed, saved mid-wait, announced by `GoldenOfferedEvent`.
 - Event-aware offline catch-up for changing rates (auto-buyers): `OfflineProgress.applyInSlices` and `IdleSession(whileAway:, awaySlices:)` pay the absence in slices and let game code buy/recompute between them.

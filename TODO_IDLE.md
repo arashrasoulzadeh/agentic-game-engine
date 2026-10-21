@@ -50,8 +50,8 @@ fractional carry is a `double` that loses precision at large magnitudes.
       whether `Producer` / gathering / construction should also accept it (they take `Treasury` today); idle
       games do not need them to.
 - [ ] **Number formatting, remaining** — `formatBigNumber` (suffix / scientific / engineering, decimals, decimal
-      separator, rounding carry) is done in `engine_core`. `IdleController.decimalSeparator` carries the locale's mark to every widget (the game sets it from its localisation). Left: reading
-      `LocalizationManager` automatically, and group (thousands) separators for plain numbers.
+      separator, rounding carry) is done in `engine_core`. `IdleController.decimalSeparator` carries the locale's mark to every widget (the game sets it from its localisation). `NumberStyle.grouped` (`1,234,567`, locale-aware group mark) is done. Left: reading
+      `LocalizationManager` automatically.
 
 ## 2. Time: offline progress and catch-up
 
