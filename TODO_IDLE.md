@@ -72,9 +72,9 @@ turns a long absence into progress.
 - [ ] **"While you were away" model** — a plain data object (time away, per-resource gains, anything that
       completed) the UI can render. Done when: it is produced by `OfflineProgress` and covered by tests; the
       screen itself is item 5.
-- [ ] **App lifecycle hooks** — save a timestamp on pause/detach and run catch-up on resume (the engine
-      already has `onPause`/`onResume` for analytics; unify with the game loop). Done when: a widget test
-      simulating pause → 2 h → resume shows the summary exactly once.
+- [ ] **App lifecycle hooks, remaining** — `IdleSession` (`save`, `load` with migration + catch-up, `onPause` / `onResume`,
+      autosave, `exportCode` / `importCode`) and `IdleLifecycleHost` are done and tested. Left: web file-less store
+      (a `SaveStore` over browser storage) and the "watch an ad for 2x" hook.
 
 ## 3. The idle-genre rules layer
 
@@ -164,7 +164,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 ## Suggested order
 
 0. ~~Scaffold `engine_idle`~~ (done).
-1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury`, `OfflineProgress`, cost curves, multipliers, generator/upgrade components and buying done, saving, prestige, achievements and lifetime stats; taps and boosts, and the core widgets; next: lifecycle hooks, prestige/achievements screens, simulator, template, guide.
+1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury`, `OfflineProgress`, cost curves, multipliers, generator/upgrade components and buying done, saving, prestige, achievements and lifetime stats; taps and boosts, and the core widgets; lifecycle/session; next: prestige/achievements screens, notifications, simulator, template, guide.
 2. `OfflineProgress` and deterministic bulk advance.
 3. Generator / upgrade data, cost curves, multiplier stack, buy modes.
 4. Save versioning, autosave, export/import.

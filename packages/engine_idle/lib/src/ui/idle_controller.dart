@@ -19,14 +19,24 @@ import '../progression.dart';
 class IdleController extends ChangeNotifier {
   IdleController({
     required this.world,
-    required this.wallet,
     this.style = NumberStyle.suffix,
     this.tickInterval = const Duration(milliseconds: 100),
     this.team = 'player',
   });
 
   final World world;
-  final BigTreasury wallet;
+
+  /// The game's resources: the world's first [BigTreasury]. Looked up each time rather than held, so
+  /// restoring a save (which replaces the component) never leaves the controller on a stale copy.
+  BigTreasury get wallet {
+    final store = world.storeOf<BigTreasury>();
+    if (store.length == 0) {
+      throw StateError(
+        'The world has no BigTreasury; add one before using IdleController.',
+      );
+    }
+    return store.denseAt(0);
+  }
 
   /// How big numbers are written everywhere in the UI.
   NumberStyle style;
@@ -64,6 +74,9 @@ class IdleController extends ChangeNotifier {
     _timer = null;
     _clock.stop();
   }
+
+  /// Tells listeners the world changed outside the controller's own methods (a restored save).
+  void refresh() => notifyListeners();
 
   /// Advances the world by [dt] seconds and notifies listeners.
   void tick(double dt) {

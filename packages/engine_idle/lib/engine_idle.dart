@@ -12,3 +12,5 @@ export 'src/progression.dart';
 export 'src/register_components.dart';
 export 'src/ui/idle_controller.dart';
 export 'src/ui/idle_widgets.dart';
+export 'src/session.dart';
+export 'src/ui/idle_lifecycle.dart';

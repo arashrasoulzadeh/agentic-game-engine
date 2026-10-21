@@ -25,7 +25,7 @@ IdleController _controller({String coins = '1000', int generators = 2}) {
     );
   }
   w.addSystem(IdleSystem());
-  return IdleController(world: w, wallet: wallet);
+  return IdleController(world: w);
 }
 
 Widget _app(Widget child) => MaterialApp(home: Scaffold(body: child));
