@@ -2,6 +2,7 @@ import 'package:engine_core/engine_core.dart';
 import 'package:engine_schema/engine_schema.dart';
 
 import 'components.dart';
+import 'progression.dart';
 
 /// Registers the idle-genre components on [world] so they take part in `World.toJson()`,
 /// `applyPatch()` and level loading like any other component. Call it after
@@ -28,5 +29,23 @@ void registerIdleComponents(World world) {
     (m) => m.toJson(),
     IdleModifiers.fromJson,
     schema: idleModifiersSchema,
+  );
+  world.components.register<IdleStats>(
+    'idleStats',
+    (s) => s.toJson(),
+    IdleStats.fromJson,
+    schema: idleStatsSchema,
+  );
+  world.components.register<PrestigeRule>(
+    'prestigeRule',
+    (r) => r.toJson(),
+    PrestigeRule.fromJson,
+    schema: prestigeRuleSchema,
+  );
+  world.components.register<Achievement>(
+    'achievement',
+    (a) => a.toJson(),
+    Achievement.fromJson,
+    schema: achievementSchema,
   );
 }

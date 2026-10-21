@@ -88,18 +88,14 @@ The building blocks are there; the genre's *structure* is not.
       (verified against brute force) are done in `engine_core`. Left: a table curve and a max-level cap.
 - [ ] **Multiplier stack, remaining** — `ModifierStack` (additive + multiplicative, named sources, breakdown,
       order-independent) is done in `engine_core`; wire it to generators/upgrades/prestige in `engine_idle`.
-- [ ] **Prestige / reset loops** — a `PrestigeSystem`: on reset, wipe a configurable set of resources and
-      generators, convert progress into a persistent currency by a formula (for example
-      `floor(sqrt(lifetimeEarnings / k))`), apply its bonus as a multiplier source, and keep a lifetime
-      statistics record. Done when: tests cover reset scope, the formula at boundary values, repeated
-      prestiges, and that prestige currency survives save/load.
-- [ ] **Achievements** — declarative conditions over resources/stats/events ("own 100 of X", "earn 1e9
-      total"), one-shot unlock events, optional rewards (a multiplier source). Done when: conditions are
-      evaluated cheaply (not every entity every tick) and unlocks persist.
+- [ ] **Prestige, remaining** — `PrestigeRule`, `prestigeGainNow`, `performPrestige` (reset scope, permanent currency,
+      `1 + bonusPerUnit * held` multiplier, lifetime stats kept) are done in `engine_idle`. Left: the prestige screen
+      (section 5) and more reset-scope options (keep chosen generators).
+- [ ] **Achievements, remaining** — `Achievement` data (`lifetime:` / `run:` / `owned:` / `prestiges` / `taps` / `seconds`
+      stats, optional multiplier reward), `checkAchievements`, `AchievementUnlockedEvent` are done. Left: the
+      achievements screen, and conditions on arbitrary events.
 - [ ] **Active-play hooks** — click/tap income with its own multiplier, timed boosts (×2 for 30 min), and
       "golden cookie" style random events driven by the deterministic RNG.
-- [ ] **Lifetime statistics** — total earned, total taps, time played, prestige count; used by achievements
-      and prestige formulas, stored in the save.
 
 ## 4. Saving
 
@@ -169,7 +165,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 ## Suggested order
 
 0. ~~Scaffold `engine_idle`~~ (done).
-1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury`, `OfflineProgress`, cost curves, multipliers, generator/upgrade components and buying done, and saving (versioning, atomic writes, export/import); next: the widgets, then prestige/achievements.
+1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury`, `OfflineProgress`, cost curves, multipliers, generator/upgrade components and buying done, saving, prestige, achievements and lifetime stats; next: the widgets, then taps/boosts, lifecycle hooks, simulator, template.
 2. `OfflineProgress` and deterministic bulk advance.
 3. Generator / upgrade data, cost curves, multiplier stack, buy modes.
 4. Save versioning, autosave, export/import.

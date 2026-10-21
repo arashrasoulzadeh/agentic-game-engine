@@ -7,4 +7,5 @@ library;
 
 export 'src/components.dart';
 export 'src/economy.dart';
+export 'src/progression.dart';
 export 'src/register_components.dart';

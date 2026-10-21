@@ -17,6 +17,7 @@ pubspec.yaml.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
+- `engine_idle` progression: `IdleStats` (run/lifetime earnings, taps, play time), `PrestigeRule` + `performPrestige` (square-root-style gain, permanent currency as a multiplier, reset scope), `Achievement` + `checkAchievements` (stat goals with multiplier rewards). `IdleSystem` records earnings.
 - Saving for long-lived games: `SaveMigrator` (versioned migration, refuses newer saves), `SaveCodec` (copyable `GSAVE1.<payload>.<checksum>` export/import with clear errors) in `engine_core`, and `AtomicSave` (crash-safe write with backup fallback) in `engine_core_io`.
 - `engine_idle` (scaffold + first features): `Generator`, `Upgrade`, `IdleModifiers` components with schemas, `computeIncome` / `recomputeIncome`, `buyGenerator` (×1/×N/max, ownership cap, tech locks), `buyUpgrade`, `IdleSystem`.
 - `CostCurve` (`GeometricCost`, `LinearCost`) with closed-form bulk `totalCost` and loop-free `maxAffordable`, and `ModifierStack` (named additive/multiplicative bonuses with a breakdown) in `engine_core`, for idle-game pacing.

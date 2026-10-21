@@ -28,3 +28,30 @@ const idleModifiersSchema = ComponentSchema('idleModifiers', [
   FieldSchema('additive', FieldType.object),
   FieldSchema('multiplicative', FieldType.object),
 ]);
+
+const idleStatsSchema = ComponentSchema('idleStats', [
+  FieldSchema('runEarned', FieldType.object),
+  FieldSchema('lifetimeEarned', FieldType.object),
+  FieldSchema('prestigeCount', FieldType.int, min: 0),
+  FieldSchema('taps', FieldType.int, min: 0),
+  FieldSchema('secondsPlayed', FieldType.double, min: 0),
+]);
+
+const prestigeRuleSchema = ComponentSchema('prestigeRule', [
+  FieldSchema('currency', FieldType.string, required: true),
+  FieldSchema('basedOn', FieldType.string, required: true),
+  FieldSchema('divisor', FieldType.string),
+  FieldSchema('exponent', FieldType.double, min: 0),
+  FieldSchema('bonusPerUnit', FieldType.double, min: 0),
+  FieldSchema('startingAmounts', FieldType.object),
+  FieldSchema('keepUpgrades', FieldType.bool),
+]);
+
+const achievementSchema = ComponentSchema('achievement', [
+  FieldSchema('id', FieldType.string, required: true),
+  FieldSchema('name', FieldType.string, optional: true),
+  FieldSchema('stat', FieldType.string, required: true),
+  FieldSchema('atLeast', FieldType.string, required: true),
+  FieldSchema('reward', FieldType.string),
+  FieldSchema('unlocked', FieldType.bool),
+]);

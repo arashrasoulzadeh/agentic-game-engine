@@ -1,6 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 
 import 'components.dart';
+import 'progression.dart';
 
 /// Everything per second a game's generators make right now, by resource: for each generator,
 /// `owned * output`, multiplied by every purchased upgrade that targets it (or `all`) and by the
@@ -134,8 +135,18 @@ class IdleSystem extends System {
   @override
   void update(World world, double dt) {
     final wallets = world.storeOf<BigTreasury>();
+    final stats = world.storeOf<IdleStats>();
+    final track = stats.length == 0 ? null : stats.denseAt(0);
     for (var i = 0; i < wallets.length; i++) {
-      wallets.denseAt(i).accrue(dt);
+      final w = wallets.denseAt(i);
+      w.accrue(dt);
+      if (track != null && dt > 0) {
+        final seconds = BigNumber.from(dt);
+        track.credit({
+          for (final e in w.incomePerSecond.entries) e.key: e.value * seconds,
+        });
+      }
     }
+    if (track != null) track.secondsPlayed += dt;
   }
 }
