@@ -103,13 +103,12 @@ The building blocks are there; the genre's *structure* is not.
 
 ## 4. Saving
 
-- [ ] **Autosave** — periodic and on pause, atomic write (temp file then rename), keep one previous
-      generation, and survive a crash mid-write. Done when: a test that kills the write halfway still loads
-      the last good save.
-- [ ] **Save versioning and migration** — a `saveVersion` and a chain of migrations so new fields or
-      renamed generators never wipe players. Done when: fixtures for every released version load.
-- [ ] **Export / import** — a compressed, checksummed save string the player can copy (also a recovery path
-      for lost devices); rejects corrupted input with a clear message.
+- [ ] **Autosave, remaining** — `AtomicSave` (temp file + rename, `.bak` of the previous save, corrupt-file fallback) is
+      done in `engine_core_io`. Left: the periodic/on-pause trigger, which belongs to the lifecycle hooks.
+- [ ] **Save versioning, remaining** — `SaveMigrator` (versioned steps, newer-save refusal, missing-step error) is done
+      in `engine_core`. Left: keep a fixture save for every released version once there is one.
+- [ ] **Export / import, remaining** — `SaveCodec` (`GSAVE1.<payload>.<checksum>`, clear errors) is done; the UI for
+      copy/paste is in section 5.
 - [ ] **Cloud save hook** — an interface only (platform-specific implementations belong to the game).
 
 ## 5. UI
@@ -170,7 +169,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 ## Suggested order
 
 0. ~~Scaffold `engine_idle`~~ (done).
-1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury`, `OfflineProgress`, cost curves, multipliers, generator/upgrade components and buying done; next: save versioning, then the widgets, then prestige/achievements.
+1. ~~`BigNumber` and number formatting~~ (done, in `engine_core`); `BigTreasury`, `OfflineProgress`, cost curves, multipliers, generator/upgrade components and buying done, and saving (versioning, atomic writes, export/import); next: the widgets, then prestige/achievements.
 2. `OfflineProgress` and deterministic bulk advance.
 3. Generator / upgrade data, cost curves, multiplier stack, buy modes.
 4. Save versioning, autosave, export/import.

@@ -14,6 +14,7 @@ import 'dart:io';
 
 import 'engine_core.dart';
 
+export 'src/io/atomic_save.dart';
 export 'src/io/file_lock.dart';
 
 /// A [NetEndpoint] over a `dart:io` [WebSocket]: each message is one JSON text frame.
