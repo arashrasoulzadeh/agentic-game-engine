@@ -6,6 +6,8 @@ and delete them once shipped — what shipped is recorded in
 Add new work here the moment you discover it rather than leaving it in a
 comment or a side file.
 
+Related task list: [TODO_IDLE.md](TODO_IDLE.md) — what the engine still needs for idle / incremental games.
+
 Related, but not task lists:
 - [docs/studio/design.md](docs/studio/design.md) — the studio's PRD,
   technical design, decisions, and the record of delivered phases (source

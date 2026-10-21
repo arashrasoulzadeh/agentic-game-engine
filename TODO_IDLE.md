@@ -1,0 +1,157 @@
+# Idle / incremental games — what the engine still needs
+
+The engine can already host a simple idle game: `Treasury` accrues fractional per-second income,
+`Producer` / `Gatherer` / `Depot` model generators, tech trees gate unlocks, `WorldSnapshot` / `SaveGame`
+persist everything, and the fixed timestep keeps results reproducible. This file lists what is missing
+for a *real* idle game, in the order I would build it. Same conventions as [TODO.md](TODO.md): check items
+off when they land, delete them once shipped (what shipped goes in [CHANGELOG.md](CHANGELOG.md)), and add
+new work here the moment it is discovered.
+
+Nothing here is built yet. Each item says what "done" means, so it can be tested.
+
+## 1. Numbers that do not overflow
+
+`Treasury.amounts` is `Map<String, int>`: 64-bit, so it overflows in a long incremental game, and the
+fractional carry is a `double` that loses precision at large magnitudes.
+
+- [ ] **`BigNumber` type** (`engine_core`, pure Dart, web-safe) — a mantissa/exponent value (for example
+      `double` mantissa + `int` exponent, or `BigInt`-backed) with `+`, `-`, `*`, `/`, `pow`, comparison,
+      `floor`, `isZero`, `toDouble` (saturating), and exact JSON round-trip. Done when: property tests show
+      `a + b - b == a` within a stated tolerance across 1e0 to 1e300, comparisons are total-ordered, and
+      JSON round-trips bit-identically.
+- [ ] **Treasury on `BigNumber`** — either a `BigTreasury` beside the existing one, or a migration of
+      `Treasury` with old saves (plain ints) still loading. Done when: income of 1e-3/s over 1e9 s is
+      correct to the stated tolerance, `spend` stays all-or-nothing, and an old save loads unchanged.
+- [ ] **Number formatting** — `1.23K`, `4.5e12`, `1.2 Qa`, switchable styles (short suffix, scientific,
+      engineering), locale-aware separators through `LocalizationManager`. Done when: golden table tests
+      cover each style across magnitudes, including 0, negatives, and 1e3 / 1e6 boundaries (999,999 → 1.00M
+      rounding).
+
+## 2. Time: offline progress and catch-up
+
+`Treasury.accrue(dt)` is correct for a large `dt`, but nothing records *when* the game was last running or
+turns a long absence into progress.
+
+- [ ] **`OfflineProgress` helper** — stores `lastActiveAt` in the save; on load computes the elapsed time,
+      clamps it (configurable cap, for example 8 h, plus an optional "efficiency while away" factor),
+      advances the economy in a few large steps (not one step per tick), and returns a summary of what was
+      earned. Done when: tests show a 6 h absence equals the same income as 6 h of online ticks (within
+      tolerance) in one call that takes milliseconds, the cap and efficiency apply, and a clock that moved
+      *backwards* grants nothing.
+- [ ] **Deterministic bulk advance** — a `World.advance(Duration)` (or an economy-only fast-forward) that
+      skips rendering and per-tick events but keeps the same results as stepping, so catch-up is
+      reproducible. Done when: stepping N ticks and bulk-advancing the same time give equal treasuries.
+- [ ] **Clock-tampering policy** — decide and document: trust the device clock (simple), or also keep a
+      monotonic counter / server time. At minimum: never grant negative or absurd (> cap) time, and expose a
+      hook for a server time source.
+- [ ] **"While you were away" model** — a plain data object (time away, per-resource gains, anything that
+      completed) the UI can render. Done when: it is produced by `OfflineProgress` and covered by tests; the
+      screen itself is item 5.
+- [ ] **App lifecycle hooks** — save a timestamp on pause/detach and run catch-up on resume (the engine
+      already has `onPause`/`onResume` for analytics; unify with the game loop). Done when: a widget test
+      simulating pause → 2 h → resume shows the summary exactly once.
+
+## 3. The idle-genre rules layer
+
+The building blocks are there; the genre's *structure* is not.
+
+- [ ] **`Generator` / `Upgrade` definitions as data** — JSON-defined: id, base cost, base output, cost
+      growth, max level, unlock requirement (reusing `requires` / `Provides` tech), and what it multiplies.
+      Done when: a level/game JSON file defines a dozen generators and the engine loads, validates (with
+      schema errors that name the field) and runs them.
+- [ ] **Cost curves** — geometric (`base * rate^level`, the classic 1.07-1.15), polynomial, and custom
+      table; `costOf(level)`, `costOfNext(n)` for "buy ×10", and `maxAffordable(budget)` using the closed
+      form (no loop to 1e6). Done when: tests compare closed-form bulk cost against summing one by one.
+- [ ] **Multiplier stack** — additive and multiplicative modifiers with named sources (upgrades,
+      achievements, prestige, temporary boosts), recomputed on change not per tick, with a "why is my output
+      X" breakdown. Done when: stacking rules are specified and tested, including order independence of
+      multiplicative terms.
+- [ ] **Buy modes** — buy 1 / 10 / 100 / max, with correct partial affordability.
+- [ ] **Prestige / reset loops** — a `PrestigeSystem`: on reset, wipe a configurable set of resources and
+      generators, convert progress into a persistent currency by a formula (for example
+      `floor(sqrt(lifetimeEarnings / k))`), apply its bonus as a multiplier source, and keep a lifetime
+      statistics record. Done when: tests cover reset scope, the formula at boundary values, repeated
+      prestiges, and that prestige currency survives save/load.
+- [ ] **Achievements** — declarative conditions over resources/stats/events ("own 100 of X", "earn 1e9
+      total"), one-shot unlock events, optional rewards (a multiplier source). Done when: conditions are
+      evaluated cheaply (not every entity every tick) and unlocks persist.
+- [ ] **Active-play hooks** — click/tap income with its own multiplier, timed boosts (×2 for 30 min), and
+      "golden cookie" style random events driven by the deterministic RNG.
+- [ ] **Lifetime statistics** — total earned, total taps, time played, prestige count; used by achievements
+      and prestige formulas, stored in the save.
+
+## 4. Saving
+
+- [ ] **Autosave** — periodic and on pause, atomic write (temp file then rename), keep one previous
+      generation, and survive a crash mid-write. Done when: a test that kills the write halfway still loads
+      the last good save.
+- [ ] **Save versioning and migration** — a `saveVersion` and a chain of migrations so new fields or
+      renamed generators never wipe players. Done when: fixtures for every released version load.
+- [ ] **Export / import** — a compressed, checksummed save string the player can copy (also a recovery path
+      for lost devices); rejects corrupted input with a clear message.
+- [ ] **Cloud save hook** — an interface only (platform-specific implementations belong to the game).
+
+## 5. UI
+
+The engine's UI is menu buttons and HUD bars; an idle game's screens are long scrolling lists. These can be
+ordinary Flutter widgets reading the game state, shipped as a small package or a section of `engine_flutter`.
+
+- [ ] **Upgrade list widget** — a scrolling list of generators/upgrades: name, level, cost (formatted), output,
+      progress to next milestone, buy buttons (1/10/100/max), affordable/locked states, and
+      `Semantics` labels. Done when: widget tests cover scrolling 200 rows (virtualised), affordability
+      updating as income ticks, and each buy mode.
+- [ ] **Resource header** — current amounts and per-second rates with smooth updating (not rebuilding the
+      whole tree each tick; throttle to ~10 Hz).
+- [ ] **"While you were away" dialog** — renders the item-2 summary, with a "collect" button and an
+      optional watch-ad-for-2× hook (an interface, not an ad SDK).
+- [ ] **Prestige screen** and **achievements screen**.
+- [ ] **Settings** — number-format style, offline-progress notice, and the existing accessibility options.
+- [ ] **Large-number performance** — formatting is cached; rebuilds are limited to values that changed.
+
+## 6. Background behaviour
+
+An app cannot run while closed on iOS/Android; the standard solution is catch-up on resume plus reminders.
+
+- [ ] **Local notifications interface** — "your generators are full" / "offline cap reached in 8 h" scheduled
+      from the known cap time; the engine defines the interface and a testable scheduler, the game wires a
+      platform plugin (kept out of `engine_core`).
+- [ ] **Offline-cap awareness** — the economy exposes "time until the offline cap is reached" so the
+      notification and the UI agree.
+- [ ] **Web** — pause/resume via page visibility; documented limits (browsers throttle background tabs, so
+      catch-up on focus is the only reliable behaviour).
+
+## 7. Tooling and balance
+
+- [ ] **Balance simulator** — a headless CLI (`game_agent idle simulate`) that runs a scripted buying
+      strategy for N simulated days and prints the time to each milestone / prestige, so designers tune cost
+      curves without playing. Done when: it is deterministic and covered by golden output.
+- [ ] **Schema + studio support** — component schemas for the new data (generators, upgrades, prestige,
+      achievements) so `studio validate` and the inspector understand them; `docs/reference/components.md`
+      regenerates.
+- [ ] **Template** — `game_agent create --template idle_game`: a minimal working idle game (one resource,
+      three generators, upgrades, prestige, offline progress) that passes the generated-project CI.
+- [ ] **Docs** — a concept guide (`docs/concepts/idle-games.md`) and a tutorial ("a cookie clicker in an
+      afternoon"), every sample executed by a test, per the repo's docs rule.
+
+## 8. Cross-cutting
+
+- [ ] **Determinism** — all of the above uses the seeded RNG and fixed timestep; no `DateTime.now()` inside
+      simulation code (time enters only through `OfflineProgress` and is injectable for tests).
+- [ ] **Anti-cheat position** — decide what is client-trusted. A single-player idle game can trust the
+      clock and save; one with a leaderboard or purchases cannot. Write the decision down.
+- [ ] **Analytics** — standard events (`prestige`, `offline_return`, `purchase`) through `AnalyticsManager`,
+      respecting `setConsent`.
+- [ ] **Accessibility** — `reduceMotion` honoured by number-tick animations; high-contrast affordable /
+      locked states; no information carried by colour alone.
+- [ ] **Performance budget** — 1,000 generators and a 6-month offline catch-up each stay under a stated time
+      on a mid-range phone; a benchmark in `packages/engine_core/benchmark/` guards it.
+
+## Suggested order
+
+1. `BigNumber` and number formatting (everything depends on them).
+2. `OfflineProgress` and deterministic bulk advance.
+3. Generator / upgrade data, cost curves, multiplier stack, buy modes.
+4. Save versioning, autosave, export/import.
+5. Upgrade list and "while you were away" widgets.
+6. Prestige, achievements, boosts.
+7. Notifications, balance simulator, template, guide.
