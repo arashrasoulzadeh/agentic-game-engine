@@ -142,6 +142,7 @@ class IdleSession {
       config: offline,
     );
     if (summary.isEmpty) return null;
+    controller.analytics?.offlineReturn(summary);
     final stats = controller.world.storeOf<IdleStats>();
     if (stats.length > 0) {
       stats.denseAt(0).credit(summary.gained);

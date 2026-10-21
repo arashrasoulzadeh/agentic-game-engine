@@ -153,8 +153,8 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
       simulation code (time enters only through `OfflineProgress` and is injectable for tests).
 - [ ] **Anti-cheat position** — decide what is client-trusted. A single-player idle game can trust the
       clock and save; one with a leaderboard or purchases cannot. Write the decision down.
-- [ ] **Analytics** — standard events (`prestige`, `offline_return`, `purchase`) through `AnalyticsManager`,
-      respecting `setConsent`.
+- [x] **Analytics** — `IdleAnalytics` sends `idle_purchase`, `idle_prestige`, `idle_offline_return` through
+      `AnalyticsManager` (so `setConsent` applies) or a test sink; `IdleController(analytics:)` wires it.
 - [ ] **Accessibility** — `reduceMotion` honoured by number-tick animations; high-contrast affordable /
       locked states; no information carried by colour alone.
 - [x] **Performance budget** — 1,000 generators and a 6-month offline catch-up are guarded by a loose-budget test

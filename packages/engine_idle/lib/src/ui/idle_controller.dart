@@ -4,6 +4,7 @@ import 'package:engine_core/engine_core.dart';
 import 'package:flutter/foundation.dart';
 
 import '../active_play.dart';
+import '../analytics.dart';
 import '../components.dart';
 import '../economy.dart';
 import '../progression.dart';
@@ -22,6 +23,7 @@ class IdleController extends ChangeNotifier {
     this.style = NumberStyle.suffix,
     this.tickInterval = const Duration(milliseconds: 100),
     this.team = 'player',
+    this.analytics,
   });
 
   final World world;
@@ -46,6 +48,9 @@ class IdleController extends ChangeNotifier {
 
   /// Whose technologies unlock purchases.
   final String team;
+
+  /// Reports purchases and prestiges; null sends nothing.
+  final IdleAnalytics? analytics;
 
   Timer? _timer;
   final Stopwatch _clock = Stopwatch();
@@ -88,6 +93,11 @@ class IdleController extends ChangeNotifier {
   BuyResult buy(EntityId generator, {int? count = 1}) {
     final r = buyGenerator(world, wallet, generator, count: count, team: team);
     if (r.ok) {
+      analytics?.purchase(
+        world.storeOf<Generator>().get(generator)!.id,
+        r.bought,
+        r.spent,
+      );
       checkAchievements(world, wallet);
       notifyListeners();
     }
@@ -98,6 +108,11 @@ class IdleController extends ChangeNotifier {
   BuyResult buyUpgradeById(EntityId upgrade) {
     final r = buyUpgrade(world, wallet, upgrade, team: team);
     if (r.ok) {
+      analytics?.purchase(
+        world.storeOf<Upgrade>().get(upgrade)!.id,
+        r.bought,
+        r.spent,
+      );
       checkAchievements(world, wallet);
       notifyListeners();
     }
@@ -115,7 +130,13 @@ class IdleController extends ChangeNotifier {
   /// Prestiges if worthwhile; returns the gain or null. See [performPrestige].
   BigNumber? prestige() {
     final gain = performPrestige(world, wallet);
-    if (gain != null) notifyListeners();
+    if (gain != null) {
+      analytics?.prestige(
+        gain,
+        world.storeOf<IdleStats>().denseAt(0).prestigeCount,
+      );
+      notifyListeners();
+    }
     return gain;
   }
 

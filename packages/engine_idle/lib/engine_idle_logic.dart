@@ -3,6 +3,7 @@
 library;
 
 export 'src/active_play.dart';
+export 'src/analytics.dart';
 export 'src/components.dart';
 export 'src/definition.dart';
 export 'src/economy.dart';
