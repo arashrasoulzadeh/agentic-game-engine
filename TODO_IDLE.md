@@ -127,10 +127,10 @@ ordinary Flutter widgets reading the game state, shipped as a small package or a
 
 An app cannot run while closed on iOS/Android; the standard solution is catch-up on resume plus reminders.
 
-- [ ] **Local notifications interface** — "your generators are full" / "offline cap reached in 8 h" scheduled
+- [x] **Local notifications interface** (`ReturnNotifier`, `IdleSession(notifier:)` schedules on pause with `untilCap`, cancels on resume; the game wires the plugin) — "your generators are full" / "offline cap reached in 8 h" scheduled
       from the known cap time; the engine defines the interface and a testable scheduler, the game wires a
       platform plugin (kept out of `engine_core`).
-- [ ] **Offline-cap awareness** — the economy exposes "time until the offline cap is reached" so the
+- [x] **Offline-cap awareness** (`OfflineProgress.untilCap`, used by the session's reminder) — the economy exposes "time until the offline cap is reached" so the
       notification and the UI agree.
 - [ ] **Web** — pause/resume via page visibility; documented limits (browsers throttle background tabs, so
       catch-up on focus is the only reliable behaviour).

@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added
+- `engine_idle` `ReturnNotifier` interface (+ `RecordingNotifier` for tests): `IdleSession` schedules a "generators are full" reminder at the offline cap when the app pauses and cancels it on resume.
 - `TableCost` cost curve (`{"type": "table", "prices": [...], "tailGrowth": 1.5}`): exact hand-authored prices with a growth rule past the table, closed-form `totalCost` and bisecting `maxAffordable`; accepted by idle definitions and validated with paths.
 - `engine_idle` generator milestones: `milestones: [{"owned": 25, "multiplier": "2"}]` multiplies a generator's output once enough copies are owned; reached milestones stack, and the definition validator reports bad ones with their path.
 - `game_agent create --template idle_game`: a playable idle game driven by `assets/idle_game.json` (tap, generators, upgrades, save, offline catch-up) with a widget test. `game_agent upgrade` now repins `engine_idle` too; the CLI CI template matrix builds it.

@@ -131,6 +131,29 @@ void main() {
     },
   );
 
+  test(
+    'leaving schedules a reminder for when the offline cap is reached; returning cancels it',
+    () {
+      final c = _newGame();
+      final notifier = RecordingNotifier();
+      final s = IdleSession(
+        controller: c,
+        store: store,
+        clock: clock.call,
+        offline: const OfflineConfig(cap: Duration(hours: 4)),
+        notifier: notifier,
+        returnMessage: 'full!',
+      );
+      s.onPause();
+      expect(notifier.pending!.delay, const Duration(hours: 4));
+      expect(notifier.pending!.message, 'full!');
+      clock.now = clock.now.add(const Duration(hours: 1));
+      s.onResume();
+      expect(notifier.pending, isNull);
+      c.stop();
+    },
+  );
+
   test('a very short absence earns and reports nothing', () {
     final c = _newGame();
     c.buy(c.generatorIds.first);
