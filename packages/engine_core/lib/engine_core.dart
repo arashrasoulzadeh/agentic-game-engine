@@ -424,10 +424,10 @@ void registerCoreComponents(World world) {
     Gatherer.fromJson,
     schema: gathererSchema,
   );
-  world.components.register<Builder>(
+  world.components.register<BuildWorker>(
     'builder',
     (b) => b.toJson(),
-    Builder.fromJson,
+    BuildWorker.fromJson,
     schema: builderSchema,
   );
   world.components.register<TechState>(

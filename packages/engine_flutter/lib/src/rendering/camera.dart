@@ -1,8 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'viewport.dart';
-
 /// Axis for camera shake.
 enum ShakeAxis { x, y, both }
 
@@ -57,11 +55,6 @@ class Camera {
   double y;
   double zoom;
 
-  /// Viewport manager for aspect-ratio and safe-area handling.
-  /// When set, worldToScreen/screenToWorld will respect letterboxing,
-  /// pillarboxing, and safe-area insets.
-  ViewportManager? viewportManager;
-
   final Random _random;
 
   final List<_ShakeEffect> _shakes = [];
@@ -73,13 +66,8 @@ class Camera {
   /// Recomputed each [update] call; zero when no shake is active.
   Offset get shakeOffset => Offset(_shakeOffsetX, _shakeOffsetY);
 
-  Camera({
-    this.x = 0,
-    this.y = 0,
-    this.zoom = 1,
-    Random? random,
-    this.viewportManager,
-  }) : _random = random ?? Random();
+  Camera({this.x = 0, this.y = 0, this.zoom = 1, Random? random})
+    : _random = random ?? Random();
 
   /// Starts a screen shake effect.
   ///
@@ -186,15 +174,6 @@ class Camera {
   }
 
   Offset worldToScreen(double worldX, double worldY, Size viewportSize) {
-    if (viewportManager != null) {
-      final layout = viewportManager!.computeLayout(
-        viewportSize,
-        null, // Safe area is handled by EngineView's MediaQuery
-      );
-      return layout.worldToScreen(Offset(worldX, worldY), Offset(x, y), zoom) +
-          Offset(_shakeOffsetX * zoom, _shakeOffsetY * zoom);
-    }
-
     return Offset(
       (worldX - x) * zoom + viewportSize.width / 2 + _shakeOffsetX * zoom,
       (worldY - y) * zoom + viewportSize.height / 2 + _shakeOffsetY * zoom,
@@ -209,15 +188,6 @@ class Camera {
   /// shake still resolves to the right world position rather than one
   /// skewed by the jitter.
   Offset screenToWorld(Offset screen, Size viewportSize) {
-    if (viewportManager != null) {
-      final layout = viewportManager!.computeLayout(viewportSize, null);
-      return layout.screenToWorld(
-        screen - Offset(_shakeOffsetX * zoom, _shakeOffsetY * zoom),
-        Offset(x, y),
-        zoom,
-      );
-    }
-
     return Offset(
       (screen.dx - _shakeOffsetX * zoom - viewportSize.width / 2) / zoom + x,
       (screen.dy - _shakeOffsetY * zoom - viewportSize.height / 2) / zoom + y,

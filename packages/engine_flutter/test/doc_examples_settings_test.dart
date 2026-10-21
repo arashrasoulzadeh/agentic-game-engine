@@ -10,7 +10,10 @@ void main() {
 
     final camera = Camera(zoom: 1);
     // The engine does not read PlayerOptions: scaling the effect is the game's job.
-    camera.shake(magnitude: 20 * options.options.screenShakeIntensity, duration: 0.3);
+    camera.shake(
+      magnitude: 20 * options.options.screenShakeIntensity,
+      duration: 0.3,
+    );
 
     expect(options.options.screenShakeIntensity, 0.25);
   });

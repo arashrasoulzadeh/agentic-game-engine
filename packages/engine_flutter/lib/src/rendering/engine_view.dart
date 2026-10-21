@@ -295,6 +295,10 @@ class _EngineViewState extends State<EngineView>
   /// Viewport manager for aspect-ratio and safe-area handling.
   ViewportManager? _viewportManager;
 
+  /// The latest layout from [_viewportManager], so taps and camera-follow use the drawn area's
+  /// own size and origin instead of the whole screen's.
+  ViewportLayout? _viewportLayout;
+
   static const _maxStepsPerFrame = 5;
 
   @override
@@ -305,7 +309,6 @@ class _EngineViewState extends State<EngineView>
 
     if (widget.viewportConfig != null) {
       _viewportManager = ViewportManager(widget.viewportConfig!);
-      widget.camera.viewportManager = _viewportManager;
     }
   }
 
@@ -318,10 +321,9 @@ class _EngineViewState extends State<EngineView>
     if (widget.viewportConfig != oldWidget.viewportConfig) {
       if (widget.viewportConfig != null) {
         _viewportManager = ViewportManager(widget.viewportConfig!);
-        widget.camera.viewportManager = _viewportManager;
       } else {
         _viewportManager = null;
-        widget.camera.viewportManager = null;
+        _viewportLayout = null;
       }
     }
   }
@@ -426,7 +428,7 @@ class _EngineViewState extends State<EngineView>
         widget.camera.follow(
           pos.x,
           pos.y,
-          viewportSize: box?.size,
+          viewportSize: _viewportLayout?.contentRect.size ?? box?.size,
           worldWidth: widget.world.width,
           worldHeight: widget.world.height,
         );
@@ -538,7 +540,6 @@ class _EngineViewState extends State<EngineView>
       singlePassLighting: widget.singlePassLighting,
       showAutoTileBitmask: widget.showAutoTileBitmask,
       combinedTextureCache: _combinedTextureCache,
-      viewportManager: _viewportManager,
     );
 
     Widget child;
@@ -560,6 +561,7 @@ class _EngineViewState extends State<EngineView>
             screenSize,
             safeAreaRRect,
           );
+          _viewportLayout = layout;
 
           // Build the game content with letterboxing
           return Stack(
@@ -642,11 +644,17 @@ class _EngineViewState extends State<EngineView>
         behavior: HitTestBehavior.translucent,
         onTapUp: (details) {
           final box = context.findRenderObject() as RenderBox?;
+          final layout = _viewportLayout;
           onWorldTap(
-            widget.camera.screenToWorld(
-              details.localPosition,
-              box?.size ?? Size.zero,
-            ),
+            layout == null
+                ? widget.camera.screenToWorld(
+                    details.localPosition,
+                    box?.size ?? Size.zero,
+                  )
+                : widget.camera.screenToWorld(
+                    layout.screenToContent(details.localPosition),
+                    layout.contentRect.size,
+                  ),
           );
         },
         child: child,
@@ -812,8 +820,6 @@ class _EnginePainter extends CustomPainter {
   /// Key is "${diffuseAtlasId}:${normalAtlasId}".
   final Map<String, ui.Image> combinedTextureCache;
 
-  final ViewportManager? viewportManager;
-
   _EnginePainter({
     required this.world,
     required this.atlasRegistry,
@@ -833,7 +839,6 @@ class _EnginePainter extends CustomPainter {
     this.singlePassLighting = false,
     this.showAutoTileBitmask = false,
     required this.combinedTextureCache,
-    this.viewportManager,
   }) : super(repaint: null);
 
   /// [current]'s position blended with wherever that entity was just

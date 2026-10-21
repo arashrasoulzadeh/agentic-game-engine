@@ -84,6 +84,34 @@ flashlight mode, flicker, and a day/night ambient cycle
 data, not rendering-specific). `GameConfig.ambientBrightness < 1.0`
 darkens the whole scene, revealed again through each `Light2D` entity.
 
+## Aspect ratio and safe areas
+
+`EngineView(viewportConfig: ViewportConfig(...))` decides the **rectangle** the game is drawn in on screens of
+any shape; it does not scale the world (one world unit is still `Camera.zoom` pixels).
+
+```dart
+EngineView(
+  // ...
+  viewportConfig: const ViewportConfig(
+    targetAspectRatio: 16 / 9,
+    fit: ViewportFit.contain,        // contain | cover | width | height
+    letterboxColorArgb: 0xFF000000,  // the bars
+  ),
+)
+```
+
+| `fit` | Result |
+|---|---|
+| `contain` | Largest 16:9 area that fits; bars fill the rest. Nothing cropped. |
+| `cover` | Smallest 16:9 area that covers the screen. No bars; the overflow is cropped. |
+| `width` / `height` | Spans the screen's width / height; bars or cropping on the other axis. |
+
+With `avoidSystemUi` (default) the area stays inside the system safe area (notches, status and navigation
+bars). A screen that already has the target ratio gets exactly the whole screen and no bars. Taps
+(`onWorldTap`) and camera-follow clamping use the drawn area's own size and origin, so a tap in a bar is
+simply outside the game. To keep a fixed field of view on every screen, choose `Camera.zoom` from the
+screen size yourself. Tested in `packages/engine_flutter/test/viewport_test.dart`.
+
 ## Animation
 
 `AnimationClip`/`AnimationState` + `AnimationSystem` drive sprite-frame

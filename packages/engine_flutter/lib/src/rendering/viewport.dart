@@ -1,241 +1,146 @@
 import 'dart:ui' as ui show Size, Rect, RRect;
 import 'dart:ui' show Offset;
 
-/// Defines how the game viewport should fit within the available screen space.
+/// How the game's drawing area fits a screen whose shape differs from the one the game was designed
+/// for.
 enum ViewportFit {
-  /// Scale to fill the entire screen, potentially cropping content.
-  /// Use for immersive full-screen games where edge content is non-critical.
-  cover,
-
-  /// Scale to fit entirely within the screen, adding letterbox/pillarbox bars.
-  /// Use when all game content must be visible (UI, HUD, etc.).
+  /// The largest area of the target aspect ratio that fits inside the screen. Nothing is cropped;
+  /// the spare space becomes bars (letterbox above and below, pillarbox at the sides).
   contain,
 
-  /// Scale to fill width, crop height (or vice versa). Compromise between
-  /// cover and contain — useful for games with flexible HUD placement.
+  /// The smallest area of the target aspect ratio that covers the whole screen. Nothing is empty;
+  /// whatever sticks out past the screen is cropped.
+  cover,
+
+  /// Always as wide as the screen. If that makes it taller than the screen it is cropped
+  /// vertically; if shorter, there are bars above and below.
   width,
 
-  /// Scale to fill height, crop width. See [width].
+  /// Always as tall as the screen; the width follows, with bars or cropping at the sides.
   height,
 }
 
-/// Configuration for viewport behavior.
+/// Where the game is drawn on screens of any shape.
+///
+/// This decides only the **rectangle** the game occupies (its aspect ratio, the bars around it, the
+/// system safe area). It does not scale the world: one world unit is still `Camera.zoom` pixels,
+/// so on a larger screen you see more of the world, not a bigger picture. Give the camera a `zoom`
+/// chosen for the screen if you need a fixed field of view.
 class ViewportConfig {
-  /// Target aspect ratio (width / height) the game was designed for.
-  /// The viewport will maintain this ratio within the available space.
+  /// Width divided by height of the game's drawing area.
   final double targetAspectRatio;
 
-  /// How to fit the target aspect ratio within the screen.
   final ViewportFit fit;
 
-  /// Minimum scale factor (prevents over-zooming on ultra-wide screens).
-  final double minScale;
-
-  /// Maximum scale factor (prevents under-zooming on very tall screens).
-  final double maxScale;
-
-  /// Whether to avoid system UI areas (notches, status bars, home indicator).
-  /// When true, the viewport will be inset by safe area padding.
+  /// Keep the game inside the system's safe area (notches, status and navigation bars).
   final bool avoidSystemUi;
 
-  /// Background color for letterbox/pillarbox bars.
+  /// Colour of the bars, as ARGB.
   final int letterboxColorArgb;
 
-  /// Whether to allow the viewport to be positioned off-center when
-  /// `fit` is [ViewportFit.cover] and the aspect ratios differ significantly.
-  /// When false, the viewport is centered.
+  /// Centre the area in the available space (true), or pin it to the top left.
   final bool centerViewport;
 
   const ViewportConfig({
     this.targetAspectRatio = 16 / 9,
     this.fit = ViewportFit.contain,
-    this.minScale = 0.5,
-    this.maxScale = 3.0,
     this.avoidSystemUi = true,
     this.letterboxColorArgb = 0xFF000000,
     this.centerViewport = true,
-  });
+  }) : assert(targetAspectRatio > 0, 'targetAspectRatio must be positive');
 }
 
-/// Computed viewport layout for a given screen size.
+/// The result of laying the game out on a particular screen.
 class ViewportLayout {
-  /// The rectangle (in screen pixels) where the game content should be drawn.
+  /// Where the game is drawn, in screen coordinates. With [ViewportFit.cover] (and `width`/`height`
+  /// when they overshoot) it can extend past the screen; the overflow is cropped.
   final ui.Rect contentRect;
 
-  /// The scale factor to apply to world coordinates.
-  final double scale;
-
-  /// Safe area insets (top, right, bottom, left) in screen pixels.
+  /// The screen region the game was allowed to use (the whole screen, or the safe area).
   final ui.RRect safeAreaInsets;
 
-  /// Whether the viewport is letterboxed (has black bars).
+  /// True when there are bars above and below the game.
   final bool isLetterboxed;
 
-  /// Whether the viewport is pillarboxed.
+  /// True when there are bars to the left and right of the game.
   final bool isPillarboxed;
 
-  ViewportLayout({
+  const ViewportLayout({
     required this.contentRect,
-    required this.scale,
     required this.safeAreaInsets,
     required this.isLetterboxed,
     required this.isPillarboxed,
   });
 
-  /// Transforms a world coordinate to screen coordinate within the viewport.
-  Offset worldToScreen(Offset world, Offset worldOrigin, double zoom) {
-    final scaledX =
-        (world.dx - worldOrigin.dx) * zoom * scale + contentRect.left;
-    final scaledY =
-        (world.dy - worldOrigin.dy) * zoom * scale + contentRect.top;
-    return Offset(scaledX, scaledY);
-  }
+  /// A point in the game's own coordinates (origin at the top left of the drawn area) for a point
+  /// on the screen.
+  Offset screenToContent(Offset screen) => screen - contentRect.topLeft;
 
-  /// Transforms a screen coordinate to world coordinate within the viewport.
-  Offset screenToWorld(Offset screen, Offset worldOrigin, double zoom) {
-    final worldX =
-        (screen.dx - contentRect.left) / (zoom * scale) + worldOrigin.dx;
-    final worldY =
-        (screen.dy - contentRect.top) / (zoom * scale) + worldOrigin.dy;
-    return Offset(worldX, worldY);
-  }
+  /// The reverse of [screenToContent].
+  Offset contentToScreen(Offset content) => content + contentRect.topLeft;
 }
 
-/// Computes the optimal viewport layout for a given screen size and config.
+/// Computes [ViewportLayout]s for a [ViewportConfig].
 class ViewportManager {
   final ViewportConfig _config;
 
   ViewportManager(this._config);
 
-  /// Computes the viewport layout for the given screen size and safe area.
+  /// Lays the game out on a screen of [screenSize]. [safeArea] is the usable region (from
+  /// `MediaQuery.padding`); it is only honoured when the config has `avoidSystemUi`.
   ViewportLayout computeLayout(ui.Size screenSize, ui.RRect? safeArea) {
-    final screenWidth = screenSize.width;
-    final screenHeight = screenSize.height;
+    final useSafe = _config.avoidSystemUi && safeArea != null;
+    final areaLeft = useSafe ? safeArea.left : 0.0;
+    final areaTop = useSafe ? safeArea.top : 0.0;
+    final areaWidth = useSafe ? safeArea.width : screenSize.width;
+    final areaHeight = useSafe ? safeArea.height : screenSize.height;
+    final ratio = _config.targetAspectRatio;
 
-    // Apply safe area insets if enabled
-    double effectiveWidth = screenWidth;
-    double effectiveHeight = screenHeight;
-    double leftInset = 0;
-    double topInset = 0;
-
-    if (_config.avoidSystemUi && safeArea != null) {
-      leftInset = safeArea.left;
-      topInset = safeArea.top;
-      // The right/bottom edges don't need their own inset variables --
-      // they're already baked into effectiveWidth/effectiveHeight below
-      // (safeArea.width/height), which the fit-mode switch uses to
-      // compute contentWidth/contentHeight.
-      effectiveWidth = safeArea.width;
-      effectiveHeight = safeArea.height;
-    }
-
-    final effectiveAspectRatio = effectiveWidth / effectiveHeight;
-    final targetRatio = _config.targetAspectRatio;
-
-    double scale;
-    double contentWidth;
-    double contentHeight;
-
+    double width;
+    double height;
     switch (_config.fit) {
       case ViewportFit.contain:
-        // Fit entirely within screen (letterbox/pillarbox)
-        if (effectiveAspectRatio > targetRatio) {
-          // Screen is wider than target: pillarbox (black bars on sides)
-          scale = effectiveHeight / (targetRatio * effectiveHeight);
-          contentHeight = effectiveHeight;
-          contentWidth = effectiveHeight * targetRatio;
+        if (areaWidth / areaHeight > ratio) {
+          height = areaHeight;
+          width = height * ratio;
         } else {
-          // Screen is taller than target: letterbox (black bars on top/bottom)
-          scale = effectiveWidth / (effectiveWidth / targetRatio);
-          contentWidth = effectiveWidth;
-          contentHeight = effectiveWidth / targetRatio;
+          width = areaWidth;
+          height = width / ratio;
         }
-        break;
-
       case ViewportFit.cover:
-        // Cover entire screen (crop if needed)
-        if (effectiveAspectRatio > targetRatio) {
-          // Screen is wider: scale to height, crop sides
-          scale = effectiveHeight / (targetRatio * effectiveHeight);
-          contentHeight = effectiveHeight;
-          contentWidth = effectiveHeight * targetRatio;
+        if (areaWidth / areaHeight > ratio) {
+          width = areaWidth;
+          height = width / ratio;
         } else {
-          // Screen is taller: scale to width, crop top/bottom
-          scale = effectiveWidth / (effectiveWidth / targetRatio);
-          contentWidth = effectiveWidth;
-          contentHeight = effectiveWidth / targetRatio;
+          height = areaHeight;
+          width = height * ratio;
         }
-        break;
-
       case ViewportFit.width:
-        // Always fit width, crop height if needed
-        scale = 1.0;
-        contentWidth = effectiveWidth;
-        contentHeight = effectiveWidth / targetRatio;
-        if (contentHeight > effectiveHeight) {
-          // Too tall, fall back to contain
-          scale = effectiveHeight / contentHeight;
-          contentHeight = effectiveHeight;
-          contentWidth = effectiveHeight * targetRatio;
-        }
-        break;
-
+        width = areaWidth;
+        height = width / ratio;
       case ViewportFit.height:
-        // Always fit height, crop width if needed
-        scale = 1.0;
-        contentHeight = effectiveHeight;
-        contentWidth = effectiveHeight * targetRatio;
-        if (contentWidth > effectiveWidth) {
-          // Too wide, fall back to contain
-          scale = effectiveWidth / contentWidth;
-          contentWidth = effectiveWidth;
-          contentHeight = effectiveWidth / targetRatio;
-        }
-        break;
+        height = areaHeight;
+        width = height * ratio;
     }
 
-    // Clamp scale
-    scale = scale.clamp(_config.minScale, _config.maxScale);
-    contentWidth *= scale;
-    contentHeight *= scale;
-
-    // Position the content rect
-    double contentLeft;
-    double contentTop;
-
-    if (_config.centerViewport) {
-      contentLeft = leftInset + (effectiveWidth - contentWidth) / 2;
-      contentTop = topInset + (effectiveHeight - contentHeight) / 2;
-    } else {
-      contentLeft = leftInset;
-      contentTop = topInset;
-    }
-
-    final contentRect = ui.Rect.fromLTWH(
-      contentLeft,
-      contentTop,
-      contentWidth,
-      contentHeight,
-    );
-
-    // Build safe area insets RRect
-    final safeAreaInsets = _config.avoidSystemUi && safeArea != null
-        ? safeArea
-        : ui.RRect.fromRectXY(
-            ui.Rect.fromLTWH(0, 0, screenWidth, screenHeight),
-            0,
-            0,
-          );
-
-    final isLetterboxed = contentHeight < effectiveHeight - 1;
-    final isPillarboxed = contentWidth < effectiveWidth - 1;
+    final left = _config.centerViewport
+        ? areaLeft + (areaWidth - width) / 2
+        : areaLeft;
+    final top = _config.centerViewport
+        ? areaTop + (areaHeight - height) / 2
+        : areaTop;
 
     return ViewportLayout(
-      contentRect: contentRect,
-      scale: scale,
-      safeAreaInsets: safeAreaInsets,
-      isLetterboxed: isLetterboxed,
-      isPillarboxed: isPillarboxed,
+      contentRect: ui.Rect.fromLTWH(left, top, width, height),
+      safeAreaInsets: useSafe
+          ? safeArea
+          : ui.RRect.fromRectXY(
+              ui.Rect.fromLTWH(0, 0, screenSize.width, screenSize.height),
+              0,
+              0,
+            ),
+      isLetterboxed: height < areaHeight - 1,
+      isPillarboxed: width < areaWidth - 1,
     );
   }
 }

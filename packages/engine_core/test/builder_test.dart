@@ -67,7 +67,11 @@ void main() {
 
       expect(done, [r.site]);
       expect(r.world.storeOf<Construction>().has(r.site), isFalse);
-      expect(r.world.storeOf<Builder>().get(b)!.site, isNull, reason: 'freed');
+      expect(
+        r.world.storeOf<BuildWorker>().get(b)!.site,
+        isNull,
+        reason: 'freed',
+      );
     },
   );
 
@@ -168,7 +172,7 @@ void main() {
       isFalse,
       reason: 'old saves',
     );
-    expect(Builder.fromJson(Builder(site: 7).toJson()).site, 7);
-    expect(Builder.fromJson({}).site, isNull);
+    expect(BuildWorker.fromJson(BuildWorker(site: 7).toJson()).site, 7);
+    expect(BuildWorker.fromJson({}).site, isNull);
   });
 }

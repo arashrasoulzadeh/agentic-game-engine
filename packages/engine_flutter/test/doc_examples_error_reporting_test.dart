@@ -12,8 +12,12 @@ class _Recorder extends ErrorReporter {
   @override
   Future<void> report(CapturedError error) async => seen.add(error);
   @override
-  Future<void> setUserContext({String? userId, String? email, String? username, Map<String, dynamic>? data}) async =>
-      user = userId;
+  Future<void> setUserContext({
+    String? userId,
+    String? email,
+    String? username,
+    Map<String, dynamic>? data,
+  }) async => user = userId;
   @override
   Future<void> setTags(Map<String, String> t) async => tags = t;
   @override
@@ -25,39 +29,60 @@ class _Recorder extends ErrorReporter {
 }
 
 void main() {
-  test('report errors by hand and through the helpers; reporters get user and tags', () async {
-    final recorder = _Recorder();
-    final manager = ErrorReportingManager.instance;
-    await manager.initialize(
-      reporters: [recorder],
-      captureFlutterErrors: false, // leave FlutterError.onError alone in tests
-      captureDartErrors: false,
-    );
-    addTearDown(manager.shutdown);
+  test(
+    'report errors by hand and through the helpers; reporters get user and tags',
+    () async {
+      final recorder = _Recorder();
+      final manager = ErrorReportingManager.instance;
+      await manager.initialize(
+        reporters: [recorder],
+        captureFlutterErrors:
+            false, // leave FlutterError.onError alone in tests
+        captureDartErrors: false,
+      );
+      addTearDown(manager.shutdown);
 
-    await manager.setUserContext(userId: 'player-42');
-    await manager.setTags({'build': 'release'});
-    await manager.reportError(StateError('boom'), context: 'loading level', severity: ErrorSeverity.warning);
-    await 'low on memory'.reportAsError(severity: ErrorSeverity.info);
+      await manager.setUserContext(userId: 'player-42');
+      await manager.setTags({'build': 'release'});
+      await manager.reportError(
+        StateError('boom'),
+        context: 'loading level',
+        severity: ErrorSeverity.warning,
+      );
+      await 'low on memory'.reportAsError(severity: ErrorSeverity.info);
 
-    expect(recorder.user, 'player-42');
-    expect(recorder.tags, {'build': 'release'});
-    expect(recorder.seen.map((e) => e.severity), [ErrorSeverity.warning, ErrorSeverity.info]);
-    expect(recorder.seen.first.context, 'loading level');
-    expect(recorder.seen.first.platform, currentPlatformName());
-    expect(manager.getPendingErrors(), hasLength(2));
-  });
+      expect(recorder.user, 'player-42');
+      expect(recorder.tags, {'build': 'release'});
+      expect(recorder.seen.map((e) => e.severity), [
+        ErrorSeverity.warning,
+        ErrorSeverity.info,
+      ]);
+      expect(recorder.seen.first.context, 'loading level');
+      expect(recorder.seen.first.platform, currentPlatformName());
+      expect(manager.getPendingErrors(), hasLength(2));
+    },
+  );
 
-  test('runWithErrorReporting reports a thrown error and rethrows it', () async {
-    final recorder = _Recorder();
-    final manager = ErrorReportingManager.instance;
-    await manager.initialize(reporters: [recorder], captureFlutterErrors: false, captureDartErrors: false);
-    addTearDown(manager.shutdown);
+  test(
+    'runWithErrorReporting reports a thrown error and rethrows it',
+    () async {
+      final recorder = _Recorder();
+      final manager = ErrorReportingManager.instance;
+      await manager.initialize(
+        reporters: [recorder],
+        captureFlutterErrors: false,
+        captureDartErrors: false,
+      );
+      addTearDown(manager.shutdown);
 
-    await expectLater(
-      runWithErrorReporting<void>(() => throw ArgumentError('bad'), context: 'save'),
-      throwsArgumentError,
-    );
-    expect(recorder.seen.single.context, 'save');
-  });
+      await expectLater(
+        runWithErrorReporting<void>(
+          () => throw ArgumentError('bad'),
+          context: 'save',
+        ),
+        throwsArgumentError,
+      );
+      expect(recorder.seen.single.context, 'save');
+    },
+  );
 }

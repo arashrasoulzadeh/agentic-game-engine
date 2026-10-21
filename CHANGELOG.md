@@ -9,12 +9,14 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Fixed
+- Viewport / aspect-ratio handling (`ViewportConfig`) did not work and was not even exported: its scale was `1/ratio` for every screen (so a matching screen was shrunk and letterboxed), `cover` equalled `contain`, and the camera re-applied the layout offset the widget had already applied. Rewritten as a pure rectangle layout (`contain`/`cover`/`width`/`height`, safe area), exported, with taps and camera-follow using the drawn area. **Breaking, but the feature never worked:** `minScale`/`maxScale`, `ViewportLayout.scale`/`worldToScreen`/`screenToWorld` and `Camera.viewportManager` are removed. Tested in `viewport_test.dart`.
+- The real-time strategy builder component is `BuildWorker`, not `Builder` (which clashed with Flutter's `Builder` widget for anyone importing both).
 - `build-release` produced commands Flutter rejects (`flutter build appbundle --keystore ...`, `flutter build ipa --team-id ...` do not exist), so signed builds could never work. Android signing now goes through a temporary `android/key.properties` and refuses to build if Gradle does not read it (otherwise Flutter signs with the debug key); iOS uses an `ExportOptions.plist` (generated for `--team-id`, or yours). Now tested (`release_plan_test.dart`) and documented in the new Releasing guide.
 - `JobSystem`: every `dispatch` hung forever (the reply was type-matched as `JobResult<Output>` but arrives as `JobResult<dynamic>`), `dispatchBatch` before the workers were up indexed an empty worker list, a `shutdown` during start leaked workers, and jobs in flight at shutdown never completed. Now tested (`job_system_test.dart`) and documented.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
-- Real-time strategy builder units: `Builder`, `assignBuild`, `BuildSystem`, `placeBuilding(needsBuilder: true)`; construction only progresses while assigned team builders stand next to the site (more builders, faster). `installRealtimeStrategySystems(building: true)`. Shared `queueMoveNextTo` helper.
+- Real-time strategy builder units: `BuildWorker`, `assignBuild`, `BuildSystem`, `placeBuilding(needsBuilder: true)`; construction only progresses while assigned team builders stand next to the site (more builders, faster). `installRealtimeStrategySystems(building: true)`. Shared `queueMoveNextTo` helper.
 - Real-time strategy tech trees: `Producer.requires`, `Provides` (finished buildings unlock tech) and `TechState` / `grantTech` (unlock by name); `availableTech`, `missingTech`; `ProductionLockedEvent`.
 - `PathfindingJob` (a `JobSystem` job) now does four-way A* over a tile grid instead of returning an empty path.
 - Real Wave Function Collapse: `WFCRules` (learned with `WFCRules.fromSample` or stated by hand) and a propagating, restarting `WFCGenerator`; unsatisfiable rules throw instead of returning a broken level. (`WFCConfig.allowBacktracking`, which did nothing, is removed.)

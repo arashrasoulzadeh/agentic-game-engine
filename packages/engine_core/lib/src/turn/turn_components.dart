@@ -103,7 +103,7 @@ class Construction {
   /// Seconds still to go.
   double remaining;
 
-  /// Whether the clock only runs while a team `Builder` assigned to this building stands next to
+  /// Whether the clock only runs while a team `BuildWorker` assigned to this building stands next to
   /// it (see `assignBuild`). False: the building builds itself.
   final bool needsBuilder;
 

@@ -21,7 +21,7 @@ enum BuildFailure { outOfBounds, blocked, occupied, noTreasury, cantAfford }
 /// Puts a building for [team] on cell ([col], [row]): checks the cell is on the map, passable
 /// and empty, takes [cost] from the team's [Treasury], and spawns [template] there. With
 /// [buildSeconds] > 0 it starts as a [Construction] that [ConstructionSystem] counts down; with
-/// [needsBuilder] it only counts down while an assigned [Builder] stands next to it.
+/// [needsBuilder] it only counts down while an assigned [BuildWorker] stands next to it.
 ///
 /// All-or-nothing: on any failure nothing is spent and no entity is created.
 ({EntityId? id, BuildFailure? failure}) placeBuilding(
@@ -61,21 +61,21 @@ enum BuildFailure { outOfBounds, blocked, occupied, noTreasury, cantAfford }
 
 /// A unit that can put buildings up. Give it to a unit with `RealtimeStats` and an `OrderQueue`, and
 /// send it with [assignBuild].
-class Builder {
+class BuildWorker {
   /// The building it is working on, or null when idle.
   EntityId? site;
 
-  Builder({this.site});
+  BuildWorker({this.site});
 
   Map<String, dynamic> toJson() => {'site': site};
-  factory Builder.fromJson(Map<String, dynamic> json) =>
-      Builder(site: (json['site'] as num?)?.toInt());
+  factory BuildWorker.fromJson(Map<String, dynamic> json) =>
+      BuildWorker(site: (json['site'] as num?)?.toInt());
 }
 
-/// Sends [unit] to work on [site]. False (nothing changes) when the unit is not a [Builder], the
+/// Sends [unit] to work on [site]. False (nothing changes) when the unit is not a [BuildWorker], the
 /// site is not under construction, or they are on different teams.
 bool assignBuild(World world, EntityId unit, EntityId site) {
-  final b = world.storeOf<Builder>().get(unit);
+  final b = world.storeOf<BuildWorker>().get(unit);
   if (b == null || !world.storeOf<Construction>().has(site)) return false;
   final teams = world.storeOf<Team>();
   if (teams.get(unit)?.id != teams.get(site)?.id) return false;
@@ -84,7 +84,7 @@ bool assignBuild(World world, EntityId unit, EntityId site) {
   return true;
 }
 
-/// Walks assigned [Builder]s up to their building, and frees them when it is finished or gone.
+/// Walks assigned [BuildWorker]s up to their building, and frees them when it is finished or gone.
 /// Run it before `RealtimeOrderSystem` (like `GatherSystem`) so the move starts the same step.
 class BuildSystem extends System {
   BuildSystem(this.navigator);
@@ -96,7 +96,7 @@ class BuildSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final builders = world.storeOf<Builder>();
+    final builders = world.storeOf<BuildWorker>();
     final ids = [for (var i = 0; i < builders.length; i++) builders.entityAt(i)]
       ..sort();
     for (final id in ids) {
@@ -141,7 +141,7 @@ class ConstructionSystem extends System {
   }
 
   int _buildersAt(World world, EntityId site) {
-    final builders = world.storeOf<Builder>();
+    final builders = world.storeOf<BuildWorker>();
     final grid = world.storeOf<GridPosition>();
     final at = grid.get(site);
     if (at == null) return 0;
