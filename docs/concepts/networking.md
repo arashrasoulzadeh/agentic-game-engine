@@ -148,3 +148,10 @@ session code uses, so `ClientSession(world: world, endpoint: endpoint)` is uncha
 the host stays a `dart:io` server (`WebSocketListener`). Serve the page over https and connect with `wss://`
 (browsers block plain `ws://` from an https page), and authenticate in the URL or in a first message your host
 checks before accepting orders.
+
+## A ready-made client screen
+
+`OnlineStrategyView` (in `engine_strategy`) does the client side for a grid-based game: pass it the open endpoint,
+your atlas registry and the grid size, and it mirrors the host, draws it, lets the player tap a unit and then a
+cell (move) or an enemy (attack), and sends those as orders. Nothing is applied locally; the result arrives in the
+host's state, and a refused order reaches `onRejected`.

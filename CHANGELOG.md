@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `OnlineStrategyView` (`engine_strategy`): a multiplayer client screen. Give it an open `NetEndpoint`; it mirrors the host into a local world, draws it with `EngineView`, selects your units on tap and sends move/attack orders (refusals reach `onRejected`; connecting/disconnected states are builders).
 - Networking: a browser transport, `connectBrowserWebSocket` in `package:engine_core/engine_core_web.dart` (a `NetEndpoint` over the page's `WebSocket`, no new dependency), plus `decodeNetFrame`/`encodeNetFrame` shared with the `dart:io` transport. Guide section on browser clients and `wss://`.
 - Docs: Cinematics and transitions guide (the engine already had `CinematicSystem`, scene transitions and `VideoPlayer`; none was documented); samples run by tests. Running them showed `addStep` only extends a cinematic that is still playing, which the guide now says.
 - Strategy: `GridFootprint(size)` gives a unit an NxN body. It blocks (and is blocked by) every cell it covers, turn-based routing keeps a big unit out of gaps it cannot fit, and attack range is measured edge to edge (`footprintDistance`). `occupiedBy` gained `footprints:`/`navigator:`.
