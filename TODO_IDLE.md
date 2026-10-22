@@ -102,7 +102,7 @@ The building blocks are there; the genre's *structure* is not.
       in `engine_core`. Left: keep a fixture save for every released version once there is one.
 - [ ] **Export / import, remaining** — `SaveCodec` (`GSAVE1.<payload>.<checksum>`, clear errors) is done; the UI for
       copy/paste is in section 5.
-- [ ] **Cloud save hook** — an interface only (platform-specific implementations belong to the game).
+- [x] **Cloud save hook** (`CloudSaveStore`, `IdleSession.syncCloud` with newer-wins and an optional resolver) — an interface only (platform-specific implementations belong to the game).
 
 ## 5. UI
 
@@ -116,7 +116,7 @@ ordinary Flutter widgets reading the game state, shipped as a small package or a
 - [ ] **"While you were away" dialog, remaining** — `OfflineSummaryDialog` is done; the 2x hook (`onDouble` callback + `IdleSession.doubleOffline`) and lifecycle wiring are done too.
 - [x] **Prestige screen** and **achievements screen** (`PrestigePanel` with confirmation, `AchievementList` with progress).
 - [x] **Settings** — `IdleSettingsPanel` (number-format switch via `IdleController.setStyle`, offline-rules notice); the game adds its own accessibility toggles.
-- [ ] **Large-number performance** — formatting is cached; rebuilds are limited to values that changed.
+- [x] **Large-number performance** — `IdleController.format` memoises (bounded, style/separator-aware); the controller notifies at 10 Hz.
 
 ## 6. Background behaviour
 

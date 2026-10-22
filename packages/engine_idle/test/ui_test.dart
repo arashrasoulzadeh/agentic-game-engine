@@ -72,6 +72,29 @@ void main() {
     expect(find.text('1,23M'), findsOneWidget);
   });
 
+  test(
+    'format remembers results, and a style or separator change misses the cache',
+    () {
+      final c = _controller();
+      expect(c.format(n('1234567')), '1.23M');
+      expect(c.format(n('1234567')), '1.23M');
+      expect(c.formatCacheSize, 1);
+      c.style = NumberStyle.scientific;
+      expect(c.format(n('1234567')), '1.23e6');
+      c.decimalSeparator = ',';
+      expect(c.format(n('1234567')), '1,23e6');
+      expect(c.formatCacheSize, 3);
+    },
+  );
+
+  test('the format cache stays bounded', () {
+    final c = _controller();
+    for (var i = 0; i < 3000; i++) {
+      c.format(BigNumber.from(i + 1.5));
+    }
+    expect(c.formatCacheSize, lessThanOrEqualTo(1024));
+  });
+
   group('prestige panel and achievements', () {
     IdleController game() {
       final c = _controller(coins: '0');

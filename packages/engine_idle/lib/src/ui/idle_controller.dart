@@ -64,13 +64,29 @@ class IdleController extends ChangeNotifier {
     notifyListeners();
   }
 
+  final Map<String, String> _formatted = {};
+
+  /// How many distinct formatted strings are remembered (observable for tests).
+  int get formatCacheSize => _formatted.length;
+
   /// Writes [value] in the controller's current [style].
-  String format(BigNumber value, {int decimals = 2}) => formatBigNumber(
-    value,
-    style: style,
-    decimals: decimals,
-    decimalSeparator: decimalSeparator,
-  );
+  ///
+  /// Results are remembered: a list of hundreds of rows asks for the same few numbers every frame, and
+  /// formatting a big number is real work. The key includes the style and separator, so changing either
+  /// (even by assigning the public fields) simply misses the cache; it is emptied when it grows past a
+  /// thousand entries rather than tracking recency.
+  String format(BigNumber value, {int decimals = 2}) {
+    final key = '${style.index}|$decimalSeparator|$decimals|${value.toJson()}';
+    final hit = _formatted[key];
+    if (hit != null) return hit;
+    if (_formatted.length >= 1024) _formatted.clear();
+    return _formatted[key] = formatBigNumber(
+      value,
+      style: style,
+      decimals: decimals,
+      decimalSeparator: decimalSeparator,
+    );
+  }
 
   /// Begins stepping the world in real time.
   void start() {

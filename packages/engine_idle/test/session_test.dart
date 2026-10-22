@@ -336,4 +336,85 @@ void main() {
       c.stop();
     },
   );
+
+  group('cloud sync', () {
+    test('an empty cloud receives the local game', () async {
+      final c = _newGame();
+      c.buy(c.generatorIds.first);
+      final cloud = MemoryCloudSaveStore();
+      final r = await session(c).syncCloud(cloud);
+      expect(r, CloudSyncResult.pushed);
+      expect(cloud.value, isNotNull);
+      c.stop();
+    });
+
+    test('a fresh device takes the cloud game', () async {
+      final a = _newGame();
+      a.buy(a.generatorIds.first, count: 3);
+      final cloud = MemoryCloudSaveStore();
+      await session(a).syncCloud(cloud);
+      a.stop();
+
+      final fresh = _newGame();
+      final storeB = MemorySaveStore();
+      final sB = IdleSession(
+        controller: fresh,
+        store: storeB,
+        clock: clock.call,
+      );
+      expect(await sB.syncCloud(cloud), CloudSyncResult.pulled);
+      expect(fresh.world.storeOf<Generator>().denseAt(0).owned, 3);
+      expect(storeB.read(), isNotNull, reason: 'also kept locally');
+      fresh.stop();
+    });
+
+    test('the later save wins, and the player can override', () async {
+      final a = _newGame();
+      a.buy(a.generatorIds.first, count: 2);
+      a.tap();
+      final sA = session(a)..save();
+      final cloud = MemoryCloudSaveStore();
+      await sA.syncCloud(cloud);
+
+      // The cloud moves on (another device played later).
+      clock.now = clock.now.add(const Duration(hours: 1));
+      final b = _newGame();
+      b.buy(b.generatorIds.first, count: 5);
+      b.tap();
+      final sB = IdleSession(
+        controller: b,
+        store: MemorySaveStore(),
+        clock: clock.call,
+      )..save();
+      await sB.syncCloud(cloud);
+      expect(cloud.pushes, 2);
+
+      // Device A syncs again: the cloud is newer, so it is pulled.
+      clock.now = clock.now.add(const Duration(hours: 1));
+      expect(await sA.syncCloud(cloud), CloudSyncResult.pulled);
+      expect(a.world.storeOf<Generator>().denseAt(0).owned, 5);
+
+      // With a resolver that refuses the cloud copy, the local one is pushed instead.
+      clock.now = clock.now.add(const Duration(hours: 1));
+      a.world.storeOf<Generator>().denseAt(0).owned = 4;
+      sA.save();
+      var asked = 0;
+      final r = await sA.syncCloud(
+        cloud,
+        resolve: (l, r) {
+          asked++;
+          return false;
+        },
+      );
+      expect(asked, 1);
+      expect(r, CloudSyncResult.pushed);
+      expect(
+        cloud.pushes,
+        3,
+        reason: 'the local game was pushed over the cloud copy',
+      );
+      a.stop();
+      b.stop();
+    });
+  });
 }

@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Idle cloud saves: `CloudSaveStore` interface + `IdleSession.syncCloud` (later save wins, optional resolver, empty side filled from the other; pulling pays no offline time). `IdleController.format` now memoises results.
 - Idle: generator rows show progress to the next milestone (`Generator.nextMilestone`).
 - Idle: `PrestigeRule.keepGenerators` (generators whose count survives prestige) and game-event achievements: `recordIdleEvent` + the `event:<name>` stat, saved in `IdleStats.eventCounts`.
 - Docs: "Build your first level" studio walkthrough (studio and command-line, the CLI steps tested).

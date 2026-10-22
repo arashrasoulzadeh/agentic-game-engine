@@ -40,6 +40,43 @@ class FileSaveStore implements SaveStore {
   void write(Map<String, dynamic> save) => _file.write(save);
 }
 
+/// A save kept on a server (Game Center, Play Games, your own backend). The engine defines only the
+/// contract; each platform's implementation belongs to the game.
+abstract class CloudSaveStore {
+  /// The saved game in the cloud, or null if there is none.
+  Future<Map<String, dynamic>?> fetch();
+
+  /// Replaces the cloud copy with [save].
+  Future<void> push(Map<String, dynamic> save);
+}
+
+/// A [CloudSaveStore] in memory, for tests.
+class MemoryCloudSaveStore implements CloudSaveStore {
+  Map<String, dynamic>? value;
+  int pushes = 0;
+
+  @override
+  Future<Map<String, dynamic>?> fetch() async => value;
+
+  @override
+  Future<void> push(Map<String, dynamic> save) async {
+    value = save;
+    pushes++;
+  }
+}
+
+/// What [IdleSession.syncCloud] did.
+enum CloudSyncResult {
+  /// Both sides were empty, or already the same moment.
+  unchanged,
+
+  /// The local game replaced the cloud copy.
+  pushed,
+
+  /// The cloud copy replaced the local game.
+  pulled,
+}
+
 /// Schedules the "your generators are full" reminder. The engine only defines the contract; a game wires
 /// a platform notification plugin (kept out of the engine so it stays web-safe and testable).
 abstract class ReturnNotifier {
@@ -246,6 +283,67 @@ class IdleSession {
     ).restoreInto(controller.world);
     _lastActiveAt = _clock();
     controller.refresh();
+  }
+
+  /// Reconciles the local game with [cloud]: whichever was saved later wins, unless [resolve] is given -
+  /// it is shown both saves (the whole save maps) when they differ and returns true to take the cloud one
+  /// (so a game can ask the player). An empty side is filled from the other. A pulled save replaces the
+  /// local game without paying offline time (the player was playing elsewhere).
+  Future<CloudSyncResult> syncCloud(
+    CloudSaveStore cloud, {
+    bool Function(Map<String, dynamic> local, Map<String, dynamic> remote)?
+    resolve,
+  }) async {
+    final remote = await cloud.fetch();
+    // The previous save's time is when this device was last known active; saving now would make the
+    // local side look newer than anything the cloud could hold.
+    final previousAt = DateTime.tryParse(
+      store.read()?['lastActiveAt'] as String? ?? '',
+    );
+    save();
+    final local = store.read()!;
+    if (remote == null) {
+      await cloud.push(local);
+      return CloudSyncResult.pushed;
+    }
+    final migrated = migrator.migrate(remote);
+    final remoteAt = DateTime.tryParse(
+      migrated['lastActiveAt'] as String? ?? '',
+    );
+    final localAt = previousAt;
+    final hasLocalProgress = _hasProgress();
+    final bool takeRemote;
+    if (!hasLocalProgress) {
+      takeRemote = true;
+    } else if (resolve != null && remoteAt != localAt) {
+      takeRemote = resolve(local, migrated);
+    } else {
+      takeRemote =
+          remoteAt != null && (localAt == null || remoteAt.isAfter(localAt));
+    }
+    if (takeRemote) {
+      final world = migrated['world'];
+      if (world is! Map) {
+        throw const SaveFormatException('The cloud save has no game data.');
+      }
+      WorldSnapshot.fromJson(
+        world.cast<String, dynamic>(),
+      ).restoreInto(controller.world);
+      store.write(migrated);
+      _lastActiveAt = _clock();
+      controller.refresh();
+      return CloudSyncResult.pulled;
+    }
+    if (remoteAt == localAt) return CloudSyncResult.unchanged;
+    await cloud.push(local);
+    return CloudSyncResult.pushed;
+  }
+
+  bool _hasProgress() {
+    final stats = controller.world.storeOf<IdleStats>();
+    if (stats.length == 0) return true;
+    final s = stats.denseAt(0);
+    return s.lifetimeEarned.isNotEmpty || s.taps > 0 || s.secondsPlayed > 0;
   }
 
   void dispose() => stopAutosave();
