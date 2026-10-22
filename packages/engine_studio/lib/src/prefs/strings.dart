@@ -25,6 +25,7 @@ class StudioStrings {
     'project.problems': 'Problems in levels and graphs',
     'project.search': 'Find in project (Cmd/Ctrl+Shift+F)',
     'project.close': 'Close',
+    'project.gitRefresh': 'Refresh git status',
     'project.pubGet': 'Get packages (flutter pub get)',
     'project.pubGetDone': 'Packages are up to date',
     'project.pubGetFailed': 'flutter pub get failed',

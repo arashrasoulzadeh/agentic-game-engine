@@ -18,6 +18,7 @@ import 'project_search.dart';
 import 'project_tree.dart';
 import 'studio_project.dart';
 import 'pub_get.dart';
+import 'git_status.dart';
 
 /// A project window: the file manager on the left, and the file you pick open on
 /// the right. Level files open in the level editor, and every other file opens in
@@ -31,11 +32,15 @@ class ProjectScreen extends StatefulWidget {
   /// Starts `flutter pub get`. Tests inject a fake; null runs the real command.
   final PubProcessStarter? pubGetStarter;
 
+  /// Runs git for the file tree's change marks. Tests inject a fake; null runs the real `git`.
+  final GitRunner? gitRunner;
+
   const ProjectScreen({
     super.key,
     required this.project,
     this.useLanguageServer = true,
     this.pubGetStarter,
+    this.gitRunner,
   });
 
   @override
@@ -135,7 +140,24 @@ class _ProjectScreenState extends State<ProjectScreen> {
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _refreshGit();
+  }
+
   bool _pubGetRunning = false;
+
+  /// Files git reports as changed, by project-relative path. Empty outside a repository.
+  Map<String, GitChange> _git = const {};
+
+  Future<void> _refreshGit() async {
+    final found = await readGitStatus(
+      widget.project.root,
+      run: widget.gitRunner,
+    );
+    if (mounted) setState(() => _git = found);
+  }
 
   /// Runs `flutter pub get` and shows what it printed, so a missing dependency is fixed without leaving the studio.
   Future<void> _pubGet() async {
@@ -218,6 +240,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   child: Text(StudioStrings.t('project.newGraph.stateMachine')),
                 ),
               ],
+            ),
+            IconButton(
+              key: const Key('project-git-refresh'),
+              tooltip: StudioStrings.t('project.gitRefresh'),
+              onPressed: _refreshGit,
+              icon: const Icon(Icons.source_outlined),
             ),
             IconButton(
               key: const Key('project-pub-get'),
@@ -424,6 +452,35 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
+  /// The mark beside a file git sees as changed (a letter), or a dot on a folder that contains such files.
+  Widget? _gitBadge(ProjectEntry entry) {
+    if (entry.isDirectory) {
+      return folderHasChanges(_git, entry.relativePath)
+          ? Icon(
+              Icons.circle,
+              key: Key('git-dir-${entry.relativePath}'),
+              size: 8,
+              semanticLabel: 'Contains changes',
+            )
+          : null;
+    }
+    final change = _git[entry.relativePath];
+    if (change == null) return null;
+    return Text(
+      change.badge,
+      key: Key('git-${entry.relativePath}'),
+      semanticsLabel: 'Git: ${change.name}',
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: switch (change) {
+          GitChange.added || GitChange.untracked => Colors.green,
+          GitChange.deleted || GitChange.conflicted => Colors.red,
+          _ => Colors.orange,
+        },
+      ),
+    );
+  }
+
   /// One row of the tree or of a filtered list. A folder toggles open or closed; a
   /// file opens on the right. In a filtered list the path is shown, since names
   /// repeat across folders.
@@ -449,6 +506,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         filtered ? entry.relativePath : entry.name,
         overflow: TextOverflow.ellipsis,
       ),
+      trailing: _gitBadge(entry),
       onTap: () => setState(() {
         if (entry.isDirectory) {
           if (!_expanded.remove(entry.relativePath)) {

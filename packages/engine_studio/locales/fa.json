@@ -94,5 +94,6 @@
   "level.keepMine": "نگه داشتن ویرایش‌های من",
   "project.pubGet": "دریافت بسته‌ها (flutter pub get)",
   "project.pubGetDone": "بسته‌ها به‌روز هستند",
-  "project.pubGetFailed": "flutter pub get ناموفق بود"
+  "project.pubGetFailed": "flutter pub get ناموفق بود",
+  "project.gitRefresh": "به‌روزرسانی وضعیت git"
 }

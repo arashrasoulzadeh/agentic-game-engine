@@ -15,7 +15,7 @@ Start the studio and choose a project folder. A project is a folder with a
 `pubspec.yaml` and an `assets/levels` folder, which `game_agent create` makes. The
 project window then shows:
 
-- a **file tree** on the left (generated and hidden folders are left out), with a filter
+- a **file tree** on the left (files git sees as changed carry a mark - M, A, D, R, ? or ! - and so do the folders that contain them; the toolbar button refreshes it) (generated and hidden folders are left out), with a filter
   for levels, graphs, code, images and so on;
 - the **open file** on the right: a level opens in the level editor, a graph in the graph
   editor, Dart and JSON in the code editor, images in an image view.
