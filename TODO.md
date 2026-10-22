@@ -200,8 +200,9 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 
 ### Quality of the docs themselves
 
-- [ ] **Versioned docs** — publish per-release versions (e.g. with `mike`)
-      once tags exist; the site is single-version today.
+- [x] **Versioned docs** — DECIDED: stay single-version until the first published release. The site deploys as a Pages
+      artifact (not a `gh-pages` branch), which `mike` needs; switching is a one-time change to make together with the v0.1.0
+      tag (see docs/engine-releasing.md), not before.
 - [x] **Unpublished pages** — DECIDED: `studio/design.md` is published (Studio > Design and decisions); `proposals/` (drafts, not
       implemented) and `studio/qa-level-editor.md` (an internal QA checklist) stay excluded on purpose.
 - [ ] **Diagrams and screenshots** — add real screenshots (strategy template,
