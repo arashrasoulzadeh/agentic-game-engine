@@ -8,6 +8,7 @@ import '../assets/atlas_view.dart';
 import '../level/level_editor.dart';
 import 'entity_inspector.dart';
 import '../prefs/strings.dart';
+import '../plugins/studio_plugins.dart';
 
 /// The property panel for the selected entity. One control per schema field,
 /// chosen by the field's type. A value the schema rejects is shown under its
@@ -138,42 +139,53 @@ class _InspectorPanelState extends State<InspectorPanel> {
     final key = '${component.name}.${field.name}';
     final current = component.json[field.name] ?? field.defaultValue;
     final error = _errors[key];
-    final Widget control = switch (field.type) {
-      FieldType.bool => Switch(
-        key: Key('field-$key'),
-        value: current == true,
-        onChanged: (v) => _set(component.name, field.name, v),
-      ),
-      FieldType.enumeration => DropdownButton<String>(
-        key: Key('field-$key'),
-        isExpanded: true,
-        value: field.options.contains(current) ? current as String : null,
-        items: [
-          for (final option in field.options)
-            DropdownMenuItem(value: option, child: Text(option)),
-        ],
-        onChanged: (v) {
-          if (v != null) _set(component.name, field.name, v);
-        },
-      ),
-      FieldType.list || FieldType.object => SelectableText(
-        '${field.name}: ${jsonEncode(current)}',
-        key: Key('field-$key'),
-      ),
-      _ => _TextFieldRow(
-        fieldKey: Key('field-$key'),
-        field: field,
-        initialText: _asText(current, field.type),
-        onSubmit: (text) {
-          final parsed = parseFieldText(field, text);
-          if (parsed.error != null) {
-            setState(() => _errors[key] = parsed.error!);
-            return;
-          }
-          _set(component.name, field.name, parsed.value);
-        },
-      ),
-    };
+    final custom = StudioPlugins.fieldEditorFor(component.name, field.name);
+    final Widget control = custom != null
+        ? custom(
+            context,
+            FieldEditorContext(
+              component: component.name,
+              field: field,
+              value: current,
+              set: (v) => _set(component.name, field.name, v),
+            ),
+          )
+        : switch (field.type) {
+            FieldType.bool => Switch(
+              key: Key('field-$key'),
+              value: current == true,
+              onChanged: (v) => _set(component.name, field.name, v),
+            ),
+            FieldType.enumeration => DropdownButton<String>(
+              key: Key('field-$key'),
+              isExpanded: true,
+              value: field.options.contains(current) ? current as String : null,
+              items: [
+                for (final option in field.options)
+                  DropdownMenuItem(value: option, child: Text(option)),
+              ],
+              onChanged: (v) {
+                if (v != null) _set(component.name, field.name, v);
+              },
+            ),
+            FieldType.list || FieldType.object => SelectableText(
+              '${field.name}: ${jsonEncode(current)}',
+              key: Key('field-$key'),
+            ),
+            _ => _TextFieldRow(
+              fieldKey: Key('field-$key'),
+              field: field,
+              initialText: _asText(current, field.type),
+              onSubmit: (text) {
+                final parsed = parseFieldText(field, text);
+                if (parsed.error != null) {
+                  setState(() => _errors[key] = parsed.error!);
+                  return;
+                }
+                _set(component.name, field.name, parsed.value);
+              },
+            ),
+          };
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),

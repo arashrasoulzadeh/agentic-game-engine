@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:engine_core/engine_core.dart';
+import '../plugins/studio_plugins.dart';
 
 /// Where [GraphEditor.layout] was in the saved file — not part of [Graph]
 /// itself, since node position is the studio canvas's presentation state,
@@ -75,7 +76,8 @@ class GraphEditor {
   String? lastError;
 
   GraphEditor({this.type = GraphType.dialogue, Map<String, NodeKind>? registry})
-    : registry = registry ?? type.registry;
+    : registry =
+          registry ?? {...type.registry, ...StudioPlugins.nodeKindsFor(type)};
 
   factory GraphEditor.fromDocument(
     GraphDocument document, {

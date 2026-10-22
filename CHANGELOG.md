@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Studio plugin API: `StudioPlugin` + `StudioPlugins.register` add graph node kinds (shown in the add-node menu, validated, with inspector params) and replace the inspector control for any `component.field`, with edits still going through the undoable, schema-checked path.
 - Studio profiler: shows the preview's own paint time (smoothed) next to the simulation cost.
 - Studio "Run game": pick the device from `flutter devices`, a stop button while it runs, a relaunch stops the previous game, and closing the level editor stops it (it used to leave games running).
 - `OnlineStrategyView` (`engine_strategy`): a multiplayer client screen. Give it an open `NetEndpoint`; it mirrors the host into a local world, draws it with `EngineView`, selects your units on tap and sends move/attack orders (refusals reach `onRejected`; connecting/disconnected states are builders).

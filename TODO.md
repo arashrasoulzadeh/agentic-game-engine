@@ -177,7 +177,8 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 - [ ] **7.3 (remaining)** Real-time presence and live refresh of another person's saved edits;
       advisory per-level locks are done (`FileLock`, the studio banner, `studio lock`/`unlock`).
 - [ ] **7.4** Embedded play-test in a studio panel (decision D4 alternative).
-- [ ] **7.5** Plugin API for third-party node kinds and inspector widgets.
+- [x] **7.5** Plugin API: `StudioPlugin` / `StudioPlugins.register` adds graph node kinds (editing + validation) and custom
+      inspector field editors (`'<component>.<field>'`), tested; compiling custom node kinds stays the game's job.
 
 ## Documentation
 
