@@ -5,6 +5,7 @@ import 'carry.dart';
 import 'combat.dart';
 import 'flow_field.dart';
 import 'fog_of_war.dart';
+import 'footprint.dart';
 import 'occupancy.dart';
 import 'order.dart';
 import 'turn_components.dart';
@@ -245,7 +246,12 @@ class RealtimeOrderSystem extends System {
   }) {
     final grid = world.storeOf<GridPosition>();
     final pos = grid.get(entity)!;
-    final blocked = occupiedBy(grid, entity, ignore: ignore);
+    final blocked = occupiedBy(
+      grid,
+      entity,
+      ignore: ignore,
+      footprints: world.storeOf<GridFootprint>(),
+    );
     s.moveProgress += s.speed * dt;
     // The epsilon makes exact multiples count: thirty 0.1s sum to 2.9999999999999996,
     // and a unit shouldn't be a whole cell short because of float rounding.

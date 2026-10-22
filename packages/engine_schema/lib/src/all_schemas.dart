@@ -32,6 +32,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'actionPoints': actionPointsSchema,
   'turnState': turnStateSchema,
   'gridPosition': gridPositionSchema,
+  'gridFootprint': gridFootprintSchema,
   'orderQueue': orderQueueSchema,
   'selected': selectedSchema,
   'unitStats': unitStatsSchema,

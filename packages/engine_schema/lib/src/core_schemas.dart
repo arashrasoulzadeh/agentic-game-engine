@@ -191,6 +191,10 @@ const gridPositionSchema = ComponentSchema('gridPosition', [
   FieldSchema('row', FieldType.int, required: true),
 ]);
 
+const gridFootprintSchema = ComponentSchema('gridFootprint', [
+  FieldSchema('size', FieldType.int, min: 1),
+]);
+
 const orderQueueSchema = ComponentSchema('orderQueue', [
   FieldSchema('orders', FieldType.list),
 ]);

@@ -111,6 +111,7 @@ export 'src/turn/gathering.dart';
 export 'src/turn/tech.dart';
 export 'src/turn/construction.dart';
 export 'src/turn/realtime.dart';
+export 'src/turn/footprint.dart';
 export 'src/turn/occupancy.dart';
 export 'src/turn/selection.dart';
 export 'src/turn/combat.dart';
@@ -151,6 +152,7 @@ import 'src/turn/gathering.dart';
 import 'src/turn/tech.dart';
 import 'src/turn/realtime.dart';
 import 'src/turn/fog_of_war.dart';
+import 'src/turn/footprint.dart';
 
 /// Registers the engine's built-in components on [world]. Games/agents
 /// register their own additional component types the same way via
@@ -317,6 +319,12 @@ void registerCoreComponents(World world) {
     (g) => g.toJson(),
     GridPosition.fromJson,
     schema: gridPositionSchema,
+  );
+  world.components.register<GridFootprint>(
+    'gridFootprint',
+    (f) => f.toJson(),
+    GridFootprint.fromJson,
+    schema: gridFootprintSchema,
   );
   world.components.register<OrderQueue>(
     'orderQueue',

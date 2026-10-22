@@ -6,6 +6,7 @@ import 'combat.dart';
 import 'grid_navigation.dart';
 import 'status.dart';
 import 'fog_of_war.dart';
+import 'footprint.dart';
 import 'occupancy.dart';
 import 'order.dart';
 import 'turn_components.dart';
@@ -55,6 +56,10 @@ class OrderSystem extends System {
   /// Defense a `DefendOrder` grants until the unit's next turn starts.
   final int defendBonus;
 
+  /// The navigator routing steps (set by [OrderSystem.withNavigator]); lets units with a `GridFootprint`
+  /// larger than one cell check that every cell they would cover is passable.
+  final GridNavigator? navigator;
+
   /// Returns the next cell from `from` toward `to`, or null if there is
   /// none. `occupied` tells whether a cell holds another entity.
   final GridPosition? Function(
@@ -76,6 +81,7 @@ class OrderSystem extends System {
     this.attackRange = 1,
     this.approachTargets = false,
     this.defendBonus = 2,
+    this.navigator,
     GridPosition? Function(
       World,
       GridPosition,
@@ -100,6 +106,7 @@ class OrderSystem extends System {
       attackRange: attackRange,
       approachTargets: true,
       defendBonus: defendBonus,
+      navigator: nav,
       stepCost: (_, to) => nav.terrainCost(to.col, to.row) ?? 1,
       nextStep: (world, from, to, occupied) {
         final path = nav.findPath(from, to, blocked: occupied);
@@ -141,13 +148,37 @@ class OrderSystem extends System {
     return _fail(world, entity, order, OrderFailure.invalidTarget);
   }
 
+  bool Function(int, int) _occupied(
+    World world,
+    EntityId entity, {
+    EntityId? ignore,
+  }) => occupiedBy(
+    world.storeOf<GridPosition>(),
+    entity,
+    ignore: ignore,
+    footprints: world.storeOf<GridFootprint>(),
+    navigator: navigator,
+  );
+
+  /// Cells between two units' nearest edges (their footprints count), so a 3x3 boss is hit from its edge.
+  int _distance(World world, EntityId a, EntityId b) {
+    final grid = world.storeOf<GridPosition>();
+    final fp = world.storeOf<GridFootprint>();
+    return footprintDistance(
+      grid.get(a)!,
+      fp.get(a)?.size ?? 1,
+      grid.get(b)!,
+      fp.get(b)?.size ?? 1,
+    );
+  }
+
   _Result _move(World world, EntityId entity, MoveOrder order) {
     final grid = world.storeOf<GridPosition>();
     final pos = grid.get(entity);
     if (pos == null)
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     final goal = GridPosition(order.col, order.row);
-    final occupied = occupiedBy(grid, entity);
+    final occupied = _occupied(world, entity);
 
     while (pos.col != goal.col || pos.row != goal.row) {
       final step = nextStep(world, pos, goal, occupied);
@@ -185,14 +216,14 @@ class OrderSystem extends System {
     final profile = world.storeOf<AttackProfile>().get(entity);
     final reach = profile?.range ?? attackRange;
     final price = profile?.cost ?? attackCost;
-    if (me.chebyshev(target) > reach) {
+    if (_distance(world, entity, order.target) > reach) {
       if (!approachTargets)
         return _fail(world, entity, order, OrderFailure.outOfRange);
       // The target's own cell must be walkable for the router, so it is
       // excluded from the occupied set; we stop once in range, before
       // ever entering it.
-      final occupied = occupiedBy(grid, entity, ignore: order.target);
-      while (me.chebyshev(target) > reach) {
+      final occupied = _occupied(world, entity, ignore: order.target);
+      while (_distance(world, entity, order.target) > reach) {
         final step = nextStep(world, me, target, occupied);
         if (step == null)
           return _fail(world, entity, order, OrderFailure.blocked);

@@ -125,8 +125,9 @@ orders, grid navigation, combat, fog of war, selection, AI turns,
 `engine_strategy`, `strategy_game` template). Left:
 
 - [ ] **Real-time strategy, remaining** — gathering and building are done (see the concept
-      guide). Tech trees and builder units are also done. Missing: per-unit collision
-      radii larger than one cell.
+      guide). Tech trees and builder units are also done. Per-unit footprints larger than one cell
+      (`GridFootprint`) are done for blocking, turn-based routing and attack reach; real-time flow fields still
+      route a big unit as one cell for terrain (it is blocked by other bodies).
 
 ## Studio
 

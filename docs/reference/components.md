@@ -4,7 +4,7 @@
 
 Every built-in component and the exact JSON shape it serializes to — what you see in `World.toJson()` and what `applyPatch` / `Level.loadInto` accept. This page is generated from `engine_schema`, the same schemas the studio and `game_agent lint` validate against, so it is always current.
 
-**84 components** across 4 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer) · [engine_idle](#engine_idle)
+**85 components** across 4 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer) · [engine_idle](#engine_idle)
 
 ## engine_core
 
@@ -232,6 +232,12 @@ Genre-general data. Registered by `registerCoreComponents`.
 |---|---|---|
 | `col` | `int` | required |
 | `row` | `int` | required |
+
+### `gridFootprint`
+
+| Field | Type | Notes |
+|---|---|---|
+| `size` | `int` | 1 to ∞ |
 
 ### `orderQueue`
 
