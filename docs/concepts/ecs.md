@@ -61,6 +61,7 @@ timestep tick counter:
 
 ```dart
 final world = World(width: 800, height: 600);
+registerCoreComponents(world); // Position, Velocity, ... (needed once per world)
 world.addSystem(MovementSystem());
 final id = world.spawn();
 world.storeOf<Position>().set(id, Position(0, 0));

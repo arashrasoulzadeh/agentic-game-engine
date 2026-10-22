@@ -79,9 +79,9 @@ flowchart LR
     (`packages/engine_platformer/test/doc_examples_*_test.dart`,
     `packages/engine_strategy/test/doc_examples_test.dart`,
     `packages/engine_core/test/agent_turn_based_test.dart`), and the concept pages for localization,
-    dialogue, AI, effects, procedural generation, performance, settings, lighting and analytics
+    dialogue, AI, ECS, effects, procedural generation, performance, settings, lighting and analytics
     (`packages/*/test/doc_examples_*_test.dart`). Not yet covered: the multiplayer tutorial, the
-    older concept pages (ECS, architecture, networking, rendering, real-time strategy) and the studio
+    older concept pages (architecture, networking, rendering, real-time strategy) and the studio
     guide. If a sample drifts from the code, that is a bug - please open an issue or fix both.
 
 ## For AI agents reading this
