@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Studio: a first non-English catalog, Persian (`packages/engine_studio/locales/fa.json`), with a test that it only uses real keys and covers >85% of the studio's text.
 - Studio: the level screen, entity palette and inspector panel now take their text from `StudioStrings` (translatable); a test guards that every looked-up key exists in the English catalog.
 - `EngineView(colorblindMode:)`: protanopia, deuteranopia and tritanopia simulation over the whole view (the old `_drawColorblind` placeholder drew nothing). `colorblindMatrix` / `colorblindFiltered` are exported and tested.
 - `game_agent idle simulate <game.json> [--days N] [--prestige-at X]`. To make it possible the Flutter-free idle rules (components, economy, progression, golden events, definition loader, simulator) moved from `engine_idle` into `engine_core`, behind a separate `package:engine_core/engine_core_idle.dart` entry point; `engine_idle` re-exports it, so existing imports keep working.

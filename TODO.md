@@ -170,7 +170,7 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 - [ ] **6.6** (remaining) Move the rest of the studio's strings to `StudioStrings`
       (the mechanism, the project window and the level screen / palette / inspector panel are done;
       graph and code editor screens are migrated too; assets, bootstrap, preview and validation panels too; only strings with keys/styles in the call and interpolated messages remain; `strings_keys_test.dart` guards that every used key exists) and ship a first non-English
-      catalog.
+      catalog (done: `packages/engine_studio/locales/fa.json`, Persian).
 
 ### Stretch (not scheduled)
 
