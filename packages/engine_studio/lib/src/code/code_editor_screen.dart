@@ -20,6 +20,7 @@ import 'find_replace.dart';
 import 'marks.dart';
 import 'project_symbols.dart';
 import '../prefs/strings.dart';
+import 'folding.dart';
 
 /// A text editor for one project file. Dart files are coloured as they are typed
 /// and offer completions from the project's own names (classes, atlas ids, entity
@@ -45,6 +46,9 @@ class CodeEditorScreen extends StatefulWidget {
   final int initialLine;
   final int initialCharacter;
 
+  /// Fold regions to offer when there is no language server to ask (tests, offline use).
+  final List<FoldingRange> staticFoldingRanges;
+
   const CodeEditorScreen({
     super.key,
     required this.filePath,
@@ -53,6 +57,7 @@ class CodeEditorScreen extends StatefulWidget {
     this.useLanguageServer = true,
     this.initialLine = 0,
     this.initialCharacter = 0,
+    this.staticFoldingRanges = const [],
   });
 
   @override
@@ -85,7 +90,12 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   String? _hover;
   List<SourceLocation>? _references;
   List<DocumentSymbolEntry>? _outline;
-  List<FoldingRange> _foldingRanges = const [];
+  late List<FoldingRange> _foldingRanges = widget.staticFoldingRanges;
+
+  /// Start lines of the folds currently collapsed, and the text they were collapsed against. A fold is a
+  /// view over the text as it was when the ranges were computed, so any edit expands them all again.
+  final Set<int> _collapsed = {};
+  String _foldedText = '';
   List<CodeActionItem>? _quickFixes;
   int _quickFixRequest = 0;
   List<CompletionItem>? _serverItems;
@@ -168,7 +178,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   }
 
   void _onTextChanged() {
+    _syncFolds();
     _session?.change(widget.filePath, _text.text);
+    _scheduleFoldRefresh();
     setState(() {
       _completionIndex = 0;
       _completionDismissed = false;
@@ -178,6 +190,66 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     _updateSearchHighlights();
     _updateBracketHighlight();
     _maybeAutoClose();
+  }
+
+  /// Keeps the folds honest: an edit invalidates every fold (their line numbers describe the old text), and a
+  /// caret that lands inside hidden text opens the fold it is in, since the player could not see what they
+  /// were typing into.
+  void _syncFolds() {
+    if (_collapsed.isEmpty) return;
+    if (_text.text != _foldedText) {
+      _collapsed.clear();
+      _applyFolds();
+      return;
+    }
+    final hidden = hiddenRangesFor(_text.text, _foldingRanges, _collapsed);
+    final caret = _text.selection.baseOffset;
+    if (caret < 0 || !insideHidden(hidden, caret)) return;
+    final line = '\n'.allMatches(_text.text.substring(0, caret)).length;
+    _collapsed.removeWhere((start) {
+      final r = _foldingRanges.firstWhere((r) => r.startLine == start);
+      return line > r.startLine && line <= r.endLine;
+    });
+    _applyFolds();
+  }
+
+  Timer? _foldRefresh;
+
+  /// Asks the server for fresh fold regions shortly after typing stops, so the indicators describe the text
+  /// as it is now (the ones from before the edit point at the wrong lines).
+  void _scheduleFoldRefresh() {
+    final session = _session;
+    if (session == null) return;
+    _foldRefresh?.cancel();
+    _foldRefresh = Timer(const Duration(milliseconds: 600), () async {
+      try {
+        final ranges = await session.foldingRanges(widget.filePath);
+        if (mounted) setState(() => _foldingRanges = ranges);
+      } on Object {
+        // Keep the old indicators; the next edit retries.
+      }
+    });
+  }
+
+  /// Pushes the collapsed folds to the highlighter (non-Dart files have no folding).
+  void _applyFolds() {
+    final highlighter = _text;
+    _foldedText = _text.text;
+    if (highlighter is DartHighlightController) {
+      highlighter.folded = hiddenRangesFor(
+        _text.text,
+        _foldingRanges,
+        _collapsed,
+      );
+    }
+  }
+
+  /// Collapses or expands the fold that starts on [line].
+  void _toggleFold(int line) {
+    setState(() {
+      if (!_collapsed.remove(line)) _collapsed.add(line);
+      _applyFolds();
+    });
   }
 
   /// Auto-closes a bracket or quote just typed, or types through one already
@@ -281,6 +353,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
   void dispose() {
     _liveSub?.cancel();
     _session?.close();
+    _foldRefresh?.cancel();
     _text.removeListener(_onTextChanged);
     _text.dispose();
     _editorFocus.dispose();
@@ -1206,6 +1279,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
     final digits = '$lineCount'.length;
     final foldStarts = {for (final r in _foldingRanges) r.startLine: r};
     final hasFolds = foldStarts.isNotEmpty;
+    final hiddenLines = hiddenLinesFor(_foldingRanges, _collapsed);
     return Container(
       key: const Key('editor-gutter'),
       width: 24.0 + digits * 8.0 + (hasFolds ? 16 : 0),
@@ -1218,67 +1292,56 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             for (var line = 0; line < lineCount; line++)
-              Container(
-                key: Key('gutter-line-${line + 1}'),
-                height: _lineHeight,
-                width: double.infinity,
-                padding: const EdgeInsets.only(right: 8),
-                color: line == currentLine
-                    ? theme.colorScheme.surfaceContainerHigh
-                    : null,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (hasFolds)
-                      SizedBox(
-                        width: 16,
-                        height: _lineHeight,
-                        child: foldStarts.containsKey(line)
-                            ? InkWell(
-                                key: Key('fold-$line'),
-                                onTap: () => _revealFold(foldStarts[line]!),
-                                child: const Icon(Icons.unfold_more, size: 12),
-                              )
-                            : null,
+              if (!hiddenLines.contains(line))
+                Container(
+                  key: Key('gutter-line-${line + 1}'),
+                  height: _lineHeight,
+                  width: double.infinity,
+                  padding: const EdgeInsets.only(right: 8),
+                  color: line == currentLine
+                      ? theme.colorScheme.surfaceContainerHigh
+                      : null,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (hasFolds)
+                        SizedBox(
+                          width: 16,
+                          height: _lineHeight,
+                          child: foldStarts.containsKey(line)
+                              ? InkWell(
+                                  key: Key('fold-$line'),
+                                  onTap: () => _toggleFold(line),
+                                  child: Icon(
+                                    _collapsed.contains(line)
+                                        ? Icons.chevron_right
+                                        : Icons.expand_more,
+                                    size: 12,
+                                    semanticLabel: _collapsed.contains(line)
+                                        ? 'Expand'
+                                        : 'Collapse',
+                                  ),
+                                )
+                              : null,
+                        ),
+                      Text(
+                        '${line + 1}',
+                        style: TextStyle(
+                          fontFamily: 'Menlo',
+                          fontSize: _fontSize,
+                          height: _editorLineHeightMultiplier,
+                          color: line == currentLine
+                              ? theme.colorScheme.onSurface
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    Text(
-                      '${line + 1}',
-                      style: TextStyle(
-                        fontFamily: 'Menlo',
-                        fontSize: _fontSize,
-                        height: _editorLineHeightMultiplier,
-                        color: line == currentLine
-                            ? theme.colorScheme.onSurface
-                            : theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
           ],
         ),
       ),
     );
-  }
-
-  /// Selects a foldable region's full extent and scrolls it into view.
-  /// There is no way to actually hide a region's lines on top of a plain
-  /// `TextField` (it always renders exactly its controller's full text, and
-  /// the controller's text is the file — hiding lines there would mean
-  /// silently deleting them on save) without replacing the editor's
-  /// rendering with a custom widget, which is its own, much larger piece of
-  /// work. This is the fold affordance a `TextField`-based editor can
-  /// actually offer: select-and-reveal the block a fold indicator marks,
-  /// not collapse/expand.
-  void _revealFold(FoldingRange range) {
-    final start = _offsetOf(range.startLine, 0);
-    final text = _text.text;
-    var end = _offsetOf(range.endLine, 0);
-    while (end < text.length && text.codeUnitAt(end) != 10) {
-      end++;
-    }
-    _text.selection = TextSelection(baseOffset: start, extentOffset: end);
-    _editorFocus.requestFocus();
   }
 
   /// The find bar: a query field with a match count and next/previous, plus a
@@ -1566,6 +1629,12 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                           expands: true,
                           maxLines: null,
                           minLines: null,
+                          // A tiny strut so collapsed (near-zero-size) lines really shrink: the default
+                          // strut would hold every line at full height.
+                          strutStyle: const StrutStyle(
+                            fontSize: 0.01,
+                            height: 0.01,
+                          ),
                           style: TextStyle(
                             fontFamily: 'Menlo',
                             fontSize: _fontSize,

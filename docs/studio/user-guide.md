@@ -137,6 +137,10 @@ Dart and JSON files open in a built-in editor with syntax colouring, find and re
 Dart language-server features (completion, diagnostics, go to definition, rename with `F2`)
 when a Dart SDK is found.
 
+Blocks fold: with the Dart language server running, a chevron appears in the gutter beside each foldable block.
+Click it to collapse the block down to its first line (the file is not changed, only hidden) and again to expand.
+Typing, or moving the cursor into hidden code, expands everything so you never edit what you cannot see.
+
 ## Settings
 
 Per-user settings live outside any project, in `~/.game_agent/`:

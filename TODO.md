@@ -145,13 +145,9 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 
 ### Code editor (phase 3B)
 
-- [ ] **IDE.11 (true folding)** — the data layer (`DartSession.foldingRanges`)
-      and a gutter fold indicator exist, but the indicator selects-and-reveals
-      a block instead of collapsing it: a `TextField` always renders its
-      controller's full text, and that text is the saved file, so hiding
-      lines would silently delete them on save. Real folding needs a custom
-      rendering widget replacing `TextField` — a separate, larger piece of
-      work.
+- [x] **IDE.11 true folding** — the gutter chevron collapses a block: its characters stay in the controller (so the saved file
+      is untouched) but are painted at near-zero size with a tiny strut so their lines take no space, and the gutter
+      skips their numbers. Any edit, or a caret entering hidden text, expands all folds.
 - [ ] Not in the IDE scope yet (each its own phase): a debugger, a terminal,
       git integration, running `pub get` from the studio.
 

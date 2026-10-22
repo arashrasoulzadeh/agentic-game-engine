@@ -61,14 +61,97 @@ void main() {
     expect(find.byKey(const Key('fold-0')), findsNothing);
   });
 
-  // A widget test driving this end to end (real server populating
-  // _foldingRanges inside a pumped CodeEditorScreen, then tapping the
-  // resulting fold-0 indicator) was attempted and dropped: DartSession.open's
-  // Process.start never completed within this harness in that scenario,
-  // the same flakiness disclosed in quick_fixes_test.dart's "real server"
-  // widget test for IDE.5. The real-server unit test above already proves
-  // foldingRanges() itself works; _revealFold's own logic (select from the
-  // start of one line to the end of another) is simple enough that it
-  // doesn't need a server to exercise meaningfully, and there's no way to
-  // inject a fake FoldingRange into the widget's private state from outside.
+  group('collapsing', () {
+    const source = 'void f() {\n  a();\n  b();\n}\nint x = 1;\n';
+
+    Future<TextEditingController> open(WidgetTester tester) async {
+      final path = '${root.path}/lib/fold.dart';
+      File(path).writeAsStringSync(source);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CodeEditorScreen(
+            filePath: path,
+            useLanguageServer: false,
+            staticFoldingRanges: const [FoldingRange(0, 3)],
+          ),
+        ),
+      );
+      return tester
+          .widget<TextField>(find.byKey(const Key('code-text')))
+          .controller!;
+    }
+
+    testWidgets(
+      'the indicator collapses the block: its lines leave the gutter, the text is untouched',
+      (tester) async {
+        final text = await open(tester);
+        expect(find.byKey(const Key('gutter-line-4')), findsOneWidget);
+        final fullHeight = tester
+            .getSize(find.byKey(const Key('code-text')))
+            .height;
+
+        await tester.tap(find.byKey(const Key('fold-0')));
+        await tester.pump();
+
+        expect(
+          find.byKey(const Key('gutter-line-1')),
+          findsOneWidget,
+          reason: 'the first line stays',
+        );
+        for (final hidden in [2, 3, 4]) {
+          expect(
+            find.byKey(Key('gutter-line-$hidden')),
+            findsNothing,
+            reason: 'line $hidden is folded away',
+          );
+        }
+        expect(find.byKey(const Key('gutter-line-5')), findsOneWidget);
+        expect(text.text, source, reason: 'folding must never change the file');
+        expect(
+          tester.getSize(find.byKey(const Key('code-text'))).height,
+          fullHeight,
+          reason: 'expands to fill its box',
+        );
+      },
+    );
+
+    testWidgets('tapping again expands it', (tester) async {
+      await open(tester);
+      await tester.tap(find.byKey(const Key('fold-0')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('fold-0')));
+      await tester.pump();
+      expect(find.byKey(const Key('gutter-line-3')), findsOneWidget);
+    });
+
+    testWidgets(
+      'typing expands every fold, because their lines describe the old text',
+      (tester) async {
+        final text = await open(tester);
+        await tester.tap(find.byKey(const Key('fold-0')));
+        await tester.pump();
+        expect(find.byKey(const Key('gutter-line-3')), findsNothing);
+
+        text.value = TextEditingValue(
+          text: 'x$source',
+          selection: const TextSelection.collapsed(offset: 1),
+        );
+        await tester.pump();
+        expect(find.byKey(const Key('gutter-line-3')), findsOneWidget);
+      },
+    );
+
+    testWidgets('a caret that moves into folded text opens the fold', (
+      tester,
+    ) async {
+      final text = await open(tester);
+      await tester.tap(find.byKey(const Key('fold-0')));
+      await tester.pump();
+      expect(find.byKey(const Key('gutter-line-3')), findsNothing);
+
+      text.selection = TextSelection.collapsed(offset: source.indexOf('b()'));
+      await tester.pump();
+      expect(find.byKey(const Key('gutter-line-3')), findsOneWidget);
+    });
+  });
 }

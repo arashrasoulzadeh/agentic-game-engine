@@ -162,23 +162,69 @@ class DartHighlightController extends TextEditingController {
     notifyListeners();
   }
 
+  List<TextRange> _folded = const [];
+
+  /// The character ranges drawn collapsed (folded code). They stay in [text] - the file is untouched - but are
+  /// painted at near-zero size, so their lines take no vertical space. Ranges must not overlap. An unchanged
+  /// value is ignored for the reason given at [marks].
+  List<TextRange> get folded => _folded;
+  set folded(List<TextRange> value) {
+    if (listEquals(_folded, value)) return;
+    _folded = value;
+    notifyListeners();
+  }
+
+  /// Painted in place of folded text: too small to see or to take a line's height, but still the same
+  /// characters, so every cursor offset and selection stays valid.
+  static const _foldedStyle = TextStyle(
+    fontSize: 0.01,
+    height: 0.01,
+    color: Color(0x00000000),
+    letterSpacing: 0,
+    wordSpacing: 0,
+    decoration: TextDecoration.none,
+  );
+
   @override
   TextSpan buildTextSpan({
     required BuildContext context,
     TextStyle? style,
     required bool withComposing,
   }) {
-    return TextSpan(
-      style: style,
-      children: [
-        for (final run in applyMarks(tokenizeDart(text), [
-          ..._marks,
-          ..._searchMarks,
-          ..._bracketMarks,
-        ]))
-          TextSpan(text: run.text, style: _styleFor(run)),
-      ],
-    );
+    final spans = <TextSpan>[];
+    var offset = 0;
+    for (final run in applyMarks(tokenizeDart(text), [
+      ..._marks,
+      ..._searchMarks,
+      ..._bracketMarks,
+    ])) {
+      spans.addAll(_splitByFolds(run.text, offset, _styleFor(run)));
+      offset += run.text.length;
+    }
+    return TextSpan(style: style, children: spans);
+  }
+
+  /// [piece], which starts at [start] in the text, cut at every fold boundary so folded stretches get the
+  /// collapsed style and the rest keeps [style].
+  List<TextSpan> _splitByFolds(String piece, int start, TextStyle? style) {
+    if (_folded.isEmpty) return [TextSpan(text: piece, style: style)];
+    final out = <TextSpan>[];
+    var at = 0;
+    final end = start + piece.length;
+    for (final r in _folded) {
+      if (r.end <= start || r.start >= end) continue;
+      final from = (r.start - start).clamp(0, piece.length);
+      final to = (r.end - start).clamp(0, piece.length);
+      if (from > at) {
+        out.add(TextSpan(text: piece.substring(at, from), style: style));
+      }
+      out.add(TextSpan(text: piece.substring(from, to), style: _foldedStyle));
+      at = to;
+    }
+    if (at < piece.length) {
+      out.add(TextSpan(text: piece.substring(at), style: style));
+    }
+    return out;
   }
 
   /// The colour of a run, plus a wavy underline for an error/warning or a
