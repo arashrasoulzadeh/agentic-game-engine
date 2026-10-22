@@ -17,7 +17,7 @@
 
 > **📖 Documentation: <https://meetarash.ir/agentic-game-engine/>** — tutorials, concepts, recipes and reference.
 
-A pure-Dart 2D game engine for building platformers and turn-based strategy games (ECS, fixed-timestep
+A pure-Dart 2D game engine for building platformers, turn-based and real-time strategy games and idle/incremental games (ECS, fixed-timestep
 simulation, spatial-hash collision, tile-based and entity-based
 platformer physics, patrol/follow AI, movement-driven animation) built
 to be **AI-agent-friendly**: world state is plain, serializable data an
@@ -34,7 +34,7 @@ Android/iOS/Web — the simulation core has no Flutter dependency at all.
 | [`packages/engine_core`](packages/engine_core/README.md) | The genre-general engine: ECS, `Position`/`Velocity`/`Collider`, spatial-hash collision, `TileMap` data, the content DSL, and the agent-facing `WorldView`/`Behavior` API. Pure Dart, zero Flutter imports. |
 | [`packages/engine_flutter`](packages/engine_flutter/README.md) | The Flutter shell: `Game`/`GameRunner` app framework, sprite rendering, camera, input, audio, save/load. No gameplay logic. |
 | [`packages/engine_platformer`](packages/engine_platformer/README.md) | 2D-platformer-genre gameplay: gravity, jump, tile/platform collision, player/enemy spawn helpers, patrol/follow AI behaviors, facing + movement-driven animation. Kept separate from `engine_core` so a non-platformer 2D game isn't forced to depend on gravity/jump concepts. |
-| [`packages/engine_idle`](packages/engine_idle/README.md) | Idle / incremental-game layer (scaffold; plan in [TODO_IDLE.md](TODO_IDLE.md)). |
+| [`packages/engine_idle`](packages/engine_idle/README.md) | Idle / incremental-game layer: a whole game as one JSON file (generators, upgrades, prestige, achievements, offline progress, golden events), the widgets, saving/cloud/web stores and the `idle_game` starter. The Flutter-free rules live in `engine_core` (`engine_core_idle.dart`); `game_agent idle simulate` balances a definition. |
 | [`packages/engine_strategy`](packages/engine_strategy/README.md) | Turn-based strategy assembly: `installStrategySystems`, `spawnStrategyUnit`, plus the `strategy_game` starter. The rules themselves (turn clock, orders, grid navigation, combat, fog of war, AI turns) live in `engine_core/lib/src/turn/`. |
 | [`packages/engine_cli`](packages/engine_cli/README.md) | The `game_agent` CLI — scaffolds new Flutter games wired to the engine, updates their pinned version, lints content files. |
 
