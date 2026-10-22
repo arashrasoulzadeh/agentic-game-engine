@@ -109,10 +109,41 @@ class _LevelScreenState extends State<LevelScreen> {
   @override
   void dispose() {
     _autosave?.cancel();
+    _gameLauncher.stop();
     if (_holdsLock) _lock.release(_me);
     _vertical.dispose();
     _horizontal.dispose();
     super.dispose();
+  }
+
+  late final PlayTest _gameLauncher = widget.playTest ?? PlayTest();
+
+  /// Asks Flutter which devices exist (not at startup: it can take seconds), then lets the designer pick
+  /// the one the game runs on.
+  Future<void> _chooseDevice() async {
+    final devices = await _gameLauncher.listDevices();
+    if (!mounted) return;
+    final picked = await showDialog<PlayTestDevice>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        key: const Key('device-dialog'),
+        title: Text(StudioStrings.t('level.device')),
+        children: [
+          if (devices.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('No devices found.'),
+            ),
+          for (final d in devices)
+            SimpleDialogOption(
+              key: Key('device-${d.id}'),
+              onPressed: () => Navigator.of(context).pop(d),
+              child: Text('${d.name} (${d.id})'),
+            ),
+        ],
+      ),
+    );
+    if (picked != null) setState(() => _gameLauncher.device = picked.id);
   }
 
   /// Starts the game on the level as it is now, edits included. Needs the level to
@@ -136,10 +167,15 @@ class _LevelScreenState extends State<LevelScreen> {
     if (editor == null || root == null) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await (widget.playTest ?? PlayTest()).launch(
+      final process = await _gameLauncher.launch(
         StudioProject.open(root),
         editor.document,
       );
+      if (mounted) setState(() {});
+      // The game can also end by itself (a crash, the player closing it): the button follows.
+      process.exitCode.then((_) {
+        if (mounted) setState(() {});
+      });
       messenger.showSnackBar(
         SnackBar(
           key: const Key('run-game-started'),
@@ -242,10 +278,26 @@ class _LevelScreenState extends State<LevelScreen> {
             ),
             if (widget.projectRoot != null)
               IconButton(
-                key: const Key('run-game'),
-                tooltip: StudioStrings.t('level.runGame'),
-                onPressed: _runGame,
-                icon: const Icon(Icons.rocket_launch_outlined),
+                key: Key(_gameLauncher.isRunning ? 'stop-game' : 'run-game'),
+                tooltip: StudioStrings.t(
+                  _gameLauncher.isRunning ? 'level.stopGame' : 'level.runGame',
+                ),
+                onPressed: _gameLauncher.isRunning
+                    ? () => setState(_gameLauncher.stop)
+                    : _runGame,
+                icon: Icon(
+                  _gameLauncher.isRunning
+                      ? Icons.stop_circle_outlined
+                      : Icons.rocket_launch_outlined,
+                ),
+              ),
+            if (widget.projectRoot != null)
+              IconButton(
+                key: const Key('game-device'),
+                tooltip:
+                    '${StudioStrings.t('level.device')}: ${_gameLauncher.device}',
+                icon: const Icon(Icons.devices_outlined),
+                onPressed: _chooseDevice,
               ),
             IconButton(
               key: const Key('save'),

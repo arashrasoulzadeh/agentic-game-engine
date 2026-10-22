@@ -87,6 +87,8 @@ class StudioStrings {
     'graph.save': 'Save',
     'level.gameStarted': 'Game started. Its output is in .studio/playtest.log.',
     'level.title': 'Level',
+    'level.stopGame': 'Stop the running game',
+    'level.device': 'Run on',
     'level.runPreview': 'Run the level in the preview',
     'level.runGame': 'Run the game on this level (a separate process)',
     'level.save': 'Save (Cmd/Ctrl+S)',
