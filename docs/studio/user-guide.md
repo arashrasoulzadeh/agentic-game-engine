@@ -144,6 +144,8 @@ Blocks fold: with the Dart language server running, a chevron appears in the gut
 Click it to collapse the block down to its first line (the file is not changed, only hidden) and again to expand.
 Typing, or moving the cursor into hidden code, expands everything so you never edit what you cannot see.
 
+Choose **Get packages** in the project toolbar to run `flutter pub get` in the project and read its output.
+
 ## Settings
 
 Per-user settings live outside any project, in `~/.game_agent/`:

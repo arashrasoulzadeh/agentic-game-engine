@@ -149,8 +149,8 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 - [x] **IDE.11 true folding** — the gutter chevron collapses a block: its characters stay in the controller (so the saved file
       is untouched) but are painted at near-zero size with a tiny strut so their lines take no space, and the gutter
       skips their numbers. Any edit, or a caret entering hidden text, expands all folds.
-- [ ] Not in the IDE scope yet (each its own phase): a debugger, a terminal,
-      git integration, running `pub get` from the studio.
+- [ ] Not in the IDE scope yet (each its own phase): a debugger, a terminal and git integration. (Running `pub get` from the
+      studio is done: the "Get packages" button shows the command's output.)
 
 
 ### Behaviors, profiling, polish (phase 6)

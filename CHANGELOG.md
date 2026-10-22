@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Studio: a "Get packages" button runs `flutter pub get` in the project and shows its output (failures, timeouts and a missing SDK are results, not crashes).
 - Studio: strings with values (counts, paths, errors) are translatable too (`{placeholder}` syntax); the Persian catalog covers them, and a test checks translations keep their placeholders.
 - Networking: `LobbyServer`, a room list over any `NetEndpoint`: hosts `create`/`update`/`close` rooms, players `list` open ones and connect to the room's `url`. Rooms die with their host's connection, only owners change them, sizes and counts are capped. No NAT traversal.
 - Networking: a UDP transport in `engine_core_io.dart` (`UdpListener.bind`, `connectUdp`): per-peer endpoints from the first datagram, goodbye on close, keep-alives and an idle timeout, malformed/oversized messages counted instead of thrown. Guide section on when to use it.

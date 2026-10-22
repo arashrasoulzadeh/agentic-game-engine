@@ -17,6 +17,7 @@ import 'project_problems.dart';
 import 'project_search.dart';
 import 'project_tree.dart';
 import 'studio_project.dart';
+import 'pub_get.dart';
 
 /// A project window: the file manager on the left, and the file you pick open on
 /// the right. Level files open in the level editor, and every other file opens in
@@ -27,10 +28,14 @@ class ProjectScreen extends StatefulWidget {
   /// Passed to each code editor the window opens. Tests turn it off.
   final bool useLanguageServer;
 
+  /// Starts `flutter pub get`. Tests inject a fake; null runs the real command.
+  final PubProcessStarter? pubGetStarter;
+
   const ProjectScreen({
     super.key,
     required this.project,
     this.useLanguageServer = true,
+    this.pubGetStarter,
   });
 
   @override
@@ -130,6 +135,47 @@ class _ProjectScreenState extends State<ProjectScreen> {
     });
   }
 
+  bool _pubGetRunning = false;
+
+  /// Runs `flutter pub get` and shows what it printed, so a missing dependency is fixed without leaving the studio.
+  Future<void> _pubGet() async {
+    if (_pubGetRunning) return;
+    setState(() => _pubGetRunning = true);
+    final result = await runPubGet(
+      widget.project.root,
+      start: widget.pubGetStarter,
+    );
+    if (!mounted) return;
+    setState(() => _pubGetRunning = false);
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const Key('pub-get-result'),
+        title: Text(
+          StudioStrings.t(
+            result.succeeded ? 'project.pubGetDone' : 'project.pubGetFailed',
+          ),
+        ),
+        content: SizedBox(
+          width: 560,
+          height: 280,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              result.output,
+              key: const Key('pub-get-output'),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(StudioStrings.t('project.close')),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final all = listProjectTree(widget.project.root);
@@ -172,6 +218,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   child: Text(StudioStrings.t('project.newGraph.stateMachine')),
                 ),
               ],
+            ),
+            IconButton(
+              key: const Key('project-pub-get'),
+              tooltip: StudioStrings.t('project.pubGet'),
+              onPressed: _pubGet,
+              icon: const Icon(Icons.download_for_offline_outlined),
             ),
             IconButton(
               key: const Key('project-problems'),

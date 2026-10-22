@@ -25,6 +25,9 @@ class StudioStrings {
     'project.problems': 'Problems in levels and graphs',
     'project.search': 'Find in project (Cmd/Ctrl+Shift+F)',
     'project.close': 'Close',
+    'project.pubGet': 'Get packages (flutter pub get)',
+    'project.pubGetDone': 'Packages are up to date',
+    'project.pubGetFailed': 'flutter pub get failed',
     'project.noFile': 'Pick a file on the left to open it.',
     'project.fileGone': 'That file no longer exists.',
     'validation_panel.this_level_has_no_problems':
