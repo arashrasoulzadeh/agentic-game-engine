@@ -5,6 +5,7 @@ import '../bootstrap/bootstrap_screen.dart';
 import '../bootstrap/update_config.dart';
 import '../prefs/shortcuts.dart' show studioPrefsFile;
 import 'project_screen.dart';
+import 'git_status.dart';
 import 'studio_project.dart';
 import '../prefs/strings.dart';
 
@@ -30,7 +31,9 @@ class ProjectOpenScreen extends StatefulWidget {
   /// need to override it.
   static void openProject(BuildContext context, StudioProject project) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => ProjectScreen(project: project)),
+      MaterialPageRoute<void>(
+        builder: (_) => ProjectScreen(project: project, gitRunner: runGit),
+      ),
     );
   }
 

@@ -57,7 +57,8 @@ Map<String, GitChange> parseGitStatus(String porcelain) {
 typedef GitRunner =
     Future<String?> Function(List<String> arguments, String workingDirectory);
 
-Future<String?> _runGit(List<String> arguments, String workingDirectory) async {
+/// Runs the real `git` in [workingDirectory]; null when git is missing or the command fails.
+Future<String?> runGit(List<String> arguments, String workingDirectory) async {
   try {
     final r = await Process.run(
       'git',
@@ -76,7 +77,7 @@ Future<Map<String, GitChange>> readGitStatus(
   String projectRoot, {
   GitRunner? run,
 }) async {
-  final runner = run ?? _runGit;
+  final runner = run ?? runGit;
   final top = (await runner([
     'rev-parse',
     '--show-toplevel',

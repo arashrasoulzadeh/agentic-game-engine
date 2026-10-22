@@ -32,7 +32,8 @@ class ProjectScreen extends StatefulWidget {
   /// Starts `flutter pub get`. Tests inject a fake; null runs the real command.
   final PubProcessStarter? pubGetStarter;
 
-  /// Runs git for the file tree's change marks. Tests inject a fake; null runs the real `git`.
+  /// Runs git for the file tree's change marks (the app passes [runGit]). Null shows no marks, which is also
+  /// what keeps most widget tests from spawning a real process.
   final GitRunner? gitRunner;
 
   const ProjectScreen({
@@ -152,6 +153,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
   Map<String, GitChange> _git = const {};
 
   Future<void> _refreshGit() async {
+    if (widget.gitRunner == null) return;
     final found = await readGitStatus(
       widget.project.root,
       run: widget.gitRunner,
