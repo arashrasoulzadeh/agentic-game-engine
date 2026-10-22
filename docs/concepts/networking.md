@@ -139,3 +139,12 @@ unchanged and share one.
 - **Reliable ordering** is assumed from WebSockets (TCP). Over UDP-like transports
   the sync layer tolerates loss and reordering, but orders need their own
   acknowledgement.
+
+## Browser clients
+
+A Flutter web client cannot use `dart:io`. Import `package:engine_core/engine_core_web.dart` and connect with
+`connectBrowserWebSocket('wss://game.example.com/play')`; it returns the same `NetEndpoint` the rest of the
+session code uses, so `ClientSession(world: world, endpoint: endpoint)` is unchanged. Browsers cannot listen, so
+the host stays a `dart:io` server (`WebSocketListener`). Serve the page over https and connect with `wss://`
+(browsers block plain `ws://` from an https page), and authenticate in the URL or in a first message your host
+checks before accepting orders.

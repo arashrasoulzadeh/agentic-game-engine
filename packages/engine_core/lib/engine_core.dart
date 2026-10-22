@@ -86,6 +86,7 @@ export 'src/ecs/world.dart';
 export 'src/ecs/world_profiler.dart';
 export 'src/net/world_snapshot.dart';
 export 'src/net/net_endpoint.dart';
+export 'src/net/net_frame.dart';
 export 'src/net/loopback_link.dart';
 export 'src/net/rollback_session.dart';
 export 'src/net/lag_compensation.dart';

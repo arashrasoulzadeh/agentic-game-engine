@@ -46,20 +46,12 @@ class WebSocketEndpoint implements NetEndpoint {
   void Function()? onClose;
 
   void _onData(dynamic data) {
-    if (data is! String) {
+    final message = decodeNetFrame(data);
+    if (message == null) {
       malformedFrames++;
       return;
     }
-    try {
-      final decoded = jsonDecode(data);
-      if (decoded is! Map) {
-        malformedFrames++;
-        return;
-      }
-      onMessage?.call(decoded.cast<String, dynamic>());
-    } on FormatException {
-      malformedFrames++;
-    }
+    onMessage?.call(message);
   }
 
   void _closed() {
