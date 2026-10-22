@@ -212,7 +212,7 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 - [ ] **Diagrams and screenshots** — add real screenshots (strategy template,
       studio) to the tutorials and getting-started.
 - [ ] **Extend the executed-samples guarantee** to the multiplayer tutorial and the older concept pages
-      (architecture, networking, rendering, real-time strategy; ECS is done); the landing page lists what is
+      (architecture, rendering, real-time strategy, the multiplayer tutorial; ECS is done and networking's calls are covered by the session/interest tests); the landing page lists what is
       covered and what is not.
 - [ ] **README badges** — still static placeholders; point at real pub.dev
       badges once packages are published (see Release).

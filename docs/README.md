@@ -81,7 +81,7 @@ flowchart LR
     `packages/engine_core/test/agent_turn_based_test.dart`), and the concept pages for localization,
     dialogue, AI, ECS, effects, procedural generation, performance, settings, lighting and analytics
     (`packages/*/test/doc_examples_*_test.dart`). Not yet covered: the multiplayer tutorial, the
-    older concept pages (architecture, networking, rendering, real-time strategy) and the studio
+    older concept pages (architecture, rendering, real-time strategy; the networking page's calls - `ClientSession` clock sync, `nearbyInterest` - are exercised with the same API by `session_test.dart` and `interest_management_test.dart`) and the studio
     guide. If a sample drifts from the code, that is a bug - please open an issue or fix both.
 
 ## For AI agents reading this
