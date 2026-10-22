@@ -14,6 +14,8 @@ import 'dart:io';
 
 import 'engine_core.dart';
 
+export 'src/net/udp_transport.dart';
+
 export 'src/io/atomic_save.dart';
 export 'src/io/file_lock.dart';
 

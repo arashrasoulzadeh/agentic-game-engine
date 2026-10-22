@@ -172,3 +172,14 @@ A connection then gets nothing (no team, no state) until its first message, `hel
 refusal sends `denied` and closes; one that never says hello is dropped after `authTimeoutTicks` calls to
 `afterStep`. The client passes `ClientSession(..., token: ..., name: ...)` and sees `denied`. This is a gate, not
 encryption: serve over `wss://` so the token cannot be read on the way. Orders are validated per team either way.
+
+## UDP
+
+For lower latency, `UdpListener.bind(host.accept)` and `connectUdp('host', port)` (both in `engine_core_io.dart`)
+give the same `NetEndpoint` over UDP datagrams. A lost packet is not waited for; the sync layer repairs it with the
+next snapshot or delta. UDP has no connection, so the first packet introduces a client, `close()` says goodbye at
+once, keep-alives hold an idle peer open and a silent one is dropped after `idleTimeout` (10 s by default).
+
+Keep messages small on the internet: past about 1,400 bytes a datagram is split in transit and losing any piece loses
+it all (the hard limit is `udpMaxMessageBytes`, 60,000; larger messages are counted in `oversized` and not sent).
+A big first snapshot is therefore better sent over a WebSocket. Browsers cannot send UDP at all.

@@ -106,7 +106,7 @@ Sections: [Performance](#performance) ·
 - [ ] **Networking: beyond the WebSocket basics** — host/client sessions, order
       validation, clock sync and a `dart:io` WebSocket transport exist (see the
       networking guide). A browser transport (`engine_core_web.dart`, `connectBrowserWebSocket`, verified end to end against the `dart:io`
-      server from node) and `wss://` guidance are done. Still missing: UDP/WebRTC for lower latency, a matchmaking/lobby
+      server from node) and `wss://` guidance are done. A UDP transport (`UdpListener`, `connectUdp`) is done. Still missing: WebRTC, a matchmaking/lobby
       service with NAT traversal, and a matchmaking service. Host-side authentication (`HostSession(authenticate:)`) is done. The Flutter widget is done (`OnlineStrategyView` in `engine_strategy`).
 - [ ] **Example game** — one complete small game showing the major features,
       playable in the browser. (`test_game/` stays local and gitignored; this
