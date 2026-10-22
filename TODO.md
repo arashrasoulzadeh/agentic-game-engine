@@ -169,7 +169,7 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
       process management.
 - [ ] **6.6** (remaining) Move the rest of the studio's strings to `StudioStrings`
       (the mechanism, the project window and the level screen / palette / inspector panel are done;
-      graph and code screens still hold English literals; `strings_keys_test.dart` guards that every used key exists) and ship a first non-English
+      graph and code editor screens are migrated too; assets/brush/validation panels and interpolated strings still hold English literals; `strings_keys_test.dart` guards that every used key exists) and ship a first non-English
       catalog.
 
 ### Stretch (not scheduled)

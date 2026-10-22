@@ -19,6 +19,7 @@ import 'dart_highlighter.dart';
 import 'find_replace.dart';
 import 'marks.dart';
 import 'project_symbols.dart';
+import '../prefs/strings.dart';
 
 /// A text editor for one project file. Dart files are coloured as they are typed
 /// and offer completions from the project's own names (classes, atlas ids, entity
@@ -501,7 +502,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Rename in other files?'),
+            title: Text(StudioStrings.t('code.renameOthersTitle')),
             content: SizedBox(
               width: 360,
               child: Column(
@@ -519,12 +520,12 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
+                child: Text(StudioStrings.t('common.cancel')),
               ),
               FilledButton(
                 key: const Key('rename-apply'),
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Apply'),
+                child: Text(StudioStrings.t('code.apply')),
               ),
             ],
           ),
@@ -987,9 +988,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         border: Border(top: BorderSide(color: theme.dividerColor)),
       ),
       child: issues.isEmpty
-          ? const ListTile(
+          ? ListTile(
               dense: true,
-              title: Text('No problems in this file.'),
+              title: Text(StudioStrings.t('code.noProblems')),
             )
           : ListView(
               shrinkWrap: true,
@@ -1041,7 +1042,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               ),
               IconButton(
                 key: const Key('references-close'),
-                tooltip: 'Close',
+                tooltip: StudioStrings.t('common.close'),
                 iconSize: 16,
                 onPressed: () => setState(() => _references = null),
                 icon: const Icon(Icons.close),
@@ -1099,7 +1100,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               ),
               IconButton(
                 key: const Key('outline-close'),
-                tooltip: 'Close',
+                tooltip: StudioStrings.t('common.close'),
                 iconSize: 16,
                 onPressed: () => setState(() => _outline = null),
                 icon: const Icon(Icons.close),
@@ -1167,7 +1168,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               ),
               IconButton(
                 key: const Key('quick-fixes-close'),
-                tooltip: 'Close',
+                tooltip: StudioStrings.t('common.close'),
                 iconSize: 16,
                 onPressed: () => setState(() => _quickFixes = null),
                 icon: const Icon(Icons.close),
@@ -1308,9 +1309,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                     controller: _findController,
                     focusNode: _findFocus,
                     autofocus: true,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       isDense: true,
-                      hintText: 'Find',
+                      hintText: StudioStrings.t('code.find'),
                     ),
                     onSubmitted: (_) => _nextMatch(),
                     onChanged: (_) {
@@ -1326,21 +1327,21 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               ),
               IconButton(
                 key: const Key('find-prev'),
-                tooltip: 'Previous match (Shift+Enter)',
+                tooltip: StudioStrings.t('code.prevMatch'),
                 iconSize: 16,
                 onPressed: _previousMatch,
                 icon: const Icon(Icons.keyboard_arrow_up),
               ),
               IconButton(
                 key: const Key('find-next'),
-                tooltip: 'Next match (Enter)',
+                tooltip: StudioStrings.t('code.nextMatch'),
                 iconSize: 16,
                 onPressed: _nextMatch,
                 icon: const Icon(Icons.keyboard_arrow_down),
               ),
               IconButton(
                 key: const Key('find-close'),
-                tooltip: 'Close (Esc)',
+                tooltip: StudioStrings.t('code.closeFind'),
                 iconSize: 16,
                 onPressed: _closeFind,
                 icon: const Icon(Icons.close),
@@ -1354,21 +1355,21 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                   child: TextField(
                     key: const Key('replace-input'),
                     controller: _replaceController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       isDense: true,
-                      hintText: 'Replace',
+                      hintText: StudioStrings.t('code.replace'),
                     ),
                   ),
                 ),
                 TextButton(
                   key: const Key('replace-one'),
                   onPressed: _replaceCurrent,
-                  child: const Text('Replace'),
+                  child: Text(StudioStrings.t('code.replace')),
                 ),
                 TextButton(
                   key: const Key('replace-all'),
                   onPressed: _replaceAll,
-                  child: const Text('Replace All'),
+                  child: Text(StudioStrings.t('code.replaceAll')),
                 ),
               ],
             ),
@@ -1402,7 +1403,7 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
           ),
           IconButton(
             key: const Key('hover-close'),
-            tooltip: 'Close',
+            tooltip: StudioStrings.t('common.close'),
             iconSize: 16,
             onPressed: () => setState(() => _hover = null),
             icon: const Icon(Icons.close),
@@ -1452,19 +1453,19 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
         await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Discard unsaved changes?'),
+            title: Text(StudioStrings.t('code.discardTitle')),
             content: Text(
               '${p.basename(widget.filePath)} has unsaved changes.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
+                child: Text(StudioStrings.t('common.cancel')),
               ),
               FilledButton(
                 key: const Key('discard-changes'),
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Discard'),
+                child: Text(StudioStrings.t('code.discard')),
               ),
             ],
           ),
@@ -1502,14 +1503,14 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               if (_session != null)
                 IconButton(
                   key: const Key('code-outline'),
-                  tooltip: 'Document outline',
+                  tooltip: StudioStrings.t('code.outline'),
                   onPressed: _toggleOutline,
                   icon: const Icon(Icons.list_alt_outlined),
                 ),
               if (widget.projectRoot != null)
                 IconButton(
                   key: const Key('code-analyze'),
-                  tooltip: 'Analyze project (compile check)',
+                  tooltip: StudioStrings.t('code.analyze'),
                   onPressed: _analyzing ? null : _analyze,
                   icon: _analyzing
                       ? const SizedBox(
@@ -1521,14 +1522,14 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
                 ),
               IconButton(
                 key: const Key('code-save'),
-                tooltip: 'Save (Cmd/Ctrl+S)',
+                tooltip: StudioStrings.t('level.save'),
                 onPressed: _dirty ? _save : null,
                 icon: const Icon(Icons.save_outlined),
               ),
               if (widget.projectRoot != null)
                 IconButton(
                   key: const Key('code-settings'),
-                  tooltip: 'Editor settings',
+                  tooltip: StudioStrings.t('code.settings'),
                   onPressed: _showSettings,
                   icon: const Icon(Icons.settings_outlined),
                 ),
@@ -1618,7 +1619,7 @@ class _RenameDialogState extends State<_RenameDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Rename symbol'),
+      title: Text(StudioStrings.t('code.renameTitle')),
       content: TextField(
         key: const Key('rename-input'),
         controller: _controller,
@@ -1628,12 +1629,12 @@ class _RenameDialogState extends State<_RenameDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(StudioStrings.t('common.cancel')),
         ),
         FilledButton(
           key: const Key('rename-confirm'),
           onPressed: () => Navigator.of(context).pop(_controller.text),
-          child: const Text('Rename'),
+          child: Text(StudioStrings.t('code.rename')),
         ),
       ],
     );
@@ -1668,7 +1669,7 @@ class _EditorSettingsDialogState extends State<_EditorSettingsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Editor settings'),
+      title: Text(StudioStrings.t('code.settings')),
       content: SizedBox(
         width: 320,
         child: Column(
@@ -1698,7 +1699,7 @@ class _EditorSettingsDialogState extends State<_EditorSettingsDialog> {
             SwitchListTile(
               key: const Key('settings-format-on-save'),
               contentPadding: EdgeInsets.zero,
-              title: const Text('Format on save'),
+              title: Text(StudioStrings.t('code.formatOnSave')),
               value: _formatOnSave,
               onChanged: (v) => setState(() => _formatOnSave = v),
             ),
@@ -1708,7 +1709,7 @@ class _EditorSettingsDialogState extends State<_EditorSettingsDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(StudioStrings.t('common.cancel')),
         ),
         FilledButton(
           key: const Key('settings-save'),
@@ -1719,7 +1720,7 @@ class _EditorSettingsDialogState extends State<_EditorSettingsDialog> {
               formatOnSave: _formatOnSave,
             ),
           ),
-          child: const Text('Save'),
+          child: Text(StudioStrings.t('graph.save')),
         ),
       ],
     );

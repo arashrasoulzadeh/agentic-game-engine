@@ -5,6 +5,7 @@ import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 
 import 'graph_editor.dart';
+import '../prefs/strings.dart';
 
 /// Pixel spacing between newly-added nodes, so they don't all land on top
 /// of each other before the designer drags them apart.
@@ -242,7 +243,7 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
         actions: [
           IconButton(
             key: const Key('graph-save'),
-            tooltip: 'Save',
+            tooltip: StudioStrings.t('graph.save'),
             onPressed: _dirty ? _save : null,
             icon: const Icon(Icons.save_outlined),
           ),
@@ -272,39 +273,39 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
                 ),
                 IconButton(
                   key: const Key('graph-add-node'),
-                  tooltip: 'Add node',
+                  tooltip: StudioStrings.t('graph.addNode'),
                   onPressed: _addNode,
                   icon: const Icon(Icons.add_box_outlined),
                 ),
                 if (_editor.type != GraphType.dialogue)
                   IconButton(
                     key: const Key('graph-export'),
-                    tooltip: 'Export engine JSON to assets/ai/',
+                    tooltip: StudioStrings.t('graph.export'),
                     onPressed: _export,
                     icon: const Icon(Icons.output),
                   ),
                 if (_editor.type == GraphType.behaviorTree)
                   IconButton(
                     key: const Key('graph-import'),
-                    tooltip: 'Import a behavior tree JSON',
+                    tooltip: StudioStrings.t('graph.importTooltip'),
                     onPressed: _import,
                     icon: const Icon(Icons.input),
                   ),
                 IconButton(
                   key: const Key('graph-zoom-out'),
-                  tooltip: 'Zoom out',
+                  tooltip: StudioStrings.t('graph.zoomOut'),
                   onPressed: () => zoomBy(1 / 1.25),
                   icon: const Icon(Icons.zoom_out),
                 ),
                 IconButton(
                   key: const Key('graph-zoom-in'),
-                  tooltip: 'Zoom in',
+                  tooltip: StudioStrings.t('graph.zoomIn'),
                   onPressed: () => zoomBy(1.25),
                   icon: const Icon(Icons.zoom_in),
                 ),
                 IconButton(
                   key: const Key('graph-zoom-fit'),
-                  tooltip: 'Fit all nodes',
+                  tooltip: StudioStrings.t('graph.fit'),
                   onPressed: () => fitToContent(MediaQuery.sizeOf(context)),
                   icon: const Icon(Icons.fit_screen_outlined),
                 ),
@@ -503,9 +504,9 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
   Widget _inspector(BuildContext context) {
     final nodeId = _editor.selectedNodeId;
     if (nodeId == null) {
-      return const Center(
+      return Center(
         key: Key('graph-no-selection'),
-        child: Text('Select a node to edit it.'),
+        child: Text(StudioStrings.t('graph.selectNode')),
       );
     }
     final node = _editor.nodeById(nodeId);
@@ -678,25 +679,25 @@ class _ImportPathDialogState extends State<_ImportPathDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Import a behavior tree'),
+      title: Text(StudioStrings.t('graph.importTitle')),
       content: TextField(
         key: const Key('graph-import-path'),
         controller: _controller,
         autofocus: true,
-        decoration: const InputDecoration(
-          hintText: 'path relative to the project, e.g. assets/ai/guard.json',
+        decoration: InputDecoration(
+          hintText: StudioStrings.t('graph.importHint'),
         ),
         onSubmitted: (v) => Navigator.pop(context, v),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(StudioStrings.t('common.cancel')),
         ),
         TextButton(
           key: const Key('graph-import-confirm'),
           onPressed: () => Navigator.pop(context, _controller.text),
-          child: const Text('Import'),
+          child: Text(StudioStrings.t('graph.import')),
         ),
       ],
     );
