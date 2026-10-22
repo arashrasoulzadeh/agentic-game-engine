@@ -195,8 +195,8 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 (or a section) and, where it has runtime behaviour, a tested recipe:
 
 - [x] `InvestigateBehavior.timeout` works: `HearingSystem` keeps an `age` on `lastHeardSound`, the behaviour forgets a sound older than the timeout.
-- [ ] Cinematics, scene transitions, video playback (tweens and particles are done:
-      `docs/concepts/effects.md`).
+- [x] Cinematics, scene transitions, video playback: all exist; guide `docs/concepts/cinematics.md` added, its cinematic
+      samples run by `doc_examples_cinematics_test.dart` and its transition config by `doc_examples_transitions_test.dart`.
 - [x] **Colorblind simulation** — `EngineView(colorblindMode:)` applies protanopia / deuteranopia / tritanopia as a colour
       matrix over the whole view (`colorblindMatrix`, tested); pass `PlayerOptions.colorblindMode`. The unused
       `ColorblindShader` / `colorblind.frag` were removed. Still open: whether `reduceMotion`, text scale etc.

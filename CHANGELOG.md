@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Docs: Cinematics and transitions guide (the engine already had `CinematicSystem`, scene transitions and `VideoPlayer`; none was documented); samples run by tests. Running them showed `addStep` only extends a cinematic that is still playing, which the guide now says.
 - Strategy: `GridFootprint(size)` gives a unit an NxN body. It blocks (and is blocked by) every cell it covers, turn-based routing keeps a big unit out of gaps it cannot fit, and attack range is measured edge to edge (`footprintDistance`). `occupiedBy` gained `footprints:`/`navigator:`.
 - Idle: `SaveCodePanel` (show/copy a save code, paste to load, plain-language errors), a v1 save fixture test, a determinism guard test and `benchmark/idle_bench.dart`.
 - `BrowserSaveStore`: an idle `SaveStore` over the browser's `localStorage` (in-memory off the web), tolerant of quota errors and unreadable values.

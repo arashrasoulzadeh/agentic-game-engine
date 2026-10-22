@@ -97,6 +97,7 @@ nav:
       - Procedural generation: concepts/procedural-generation.md
       - AI trees and state machines: concepts/ai.md
       - Tweens and particles: concepts/effects.md
+      - Cinematics and transitions: concepts/cinematics.md
       - Performance: concepts/performance.md
       - Analytics and error reporting: concepts/analytics-and-errors.md
       - The agent API: concepts/agent-api.md
