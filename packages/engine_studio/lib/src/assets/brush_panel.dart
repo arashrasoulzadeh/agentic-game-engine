@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../level/level_editor.dart';
 import 'project_stores.dart';
 import 'tile_pattern.dart';
+import '../prefs/strings.dart';
 
 /// The project's brushes: tile patterns and prefabs, usable in any level. Picking one
 /// switches the editor to the stamp tool; "Save as prefab" turns the selected entity
@@ -125,12 +126,12 @@ class _BrushPanelState extends State<BrushPanel> {
               TextButton(
                 key: const Key('brush-new-tiles'),
                 onPressed: _newTileBrush,
-                child: const Text('New tile brush'),
+                child: Text(StudioStrings.t('brush_panel.new_tile_brush')),
               ),
               TextButton(
                 key: const Key('brush-save-prefab'),
                 onPressed: _saveSelectionAsPrefab,
-                child: const Text('Save as prefab'),
+                child: Text(StudioStrings.t('brush_panel.save_as_prefab')),
               ),
             ],
           ),
@@ -168,7 +169,7 @@ class _BrushPanelState extends State<BrushPanel> {
               ),
               trailing: IconButton(
                 key: Key('brush-delete-${brush.name}'),
-                tooltip: 'Delete brush',
+                tooltip: StudioStrings.t('brush_panel.delete_brush'),
                 iconSize: 16,
                 icon: const Icon(Icons.delete_outline),
                 onPressed: () => _remove(brush),
@@ -221,7 +222,7 @@ class _TextPromptState extends State<_TextPrompt> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(StudioStrings.t('common.cancel')),
         ),
         TextButton(
           key: const Key('prompt-ok'),

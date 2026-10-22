@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import '../prefs/strings.dart';
 
 /// Shows one image file, at its own size, with pan and zoom so a large sprite sheet
 /// can be inspected. The image is read from disk, so the file stays the source of
@@ -36,7 +37,11 @@ class ImageView extends StatelessWidget {
                     ),
                   ),
                 )
-              : const Center(child: Text('That image no longer exists.')),
+              : Center(
+                  child: Text(
+                    StudioStrings.t('image_view.that_image_no_longer_exists'),
+                  ),
+                ),
         ),
       ],
     );

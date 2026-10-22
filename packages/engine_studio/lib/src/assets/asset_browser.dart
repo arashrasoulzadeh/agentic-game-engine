@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'asset_index.dart';
+import '../prefs/strings.dart';
 
 /// The project's art, sound and data in one list: sprite sheets (with how many sprites
 /// each holds), other images, audio, data files and prefabs. Tapping a sprite sheet
@@ -56,7 +57,7 @@ class AssetBrowserPanel extends StatelessWidget {
           ),
           trailing: IconButton(
             key: const Key('asset-browser-close'),
-            tooltip: 'Close',
+            tooltip: StudioStrings.t('project.close'),
             iconSize: 16,
             onPressed: onClose,
             icon: const Icon(Icons.close),

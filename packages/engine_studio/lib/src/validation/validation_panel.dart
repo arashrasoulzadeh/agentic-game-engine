@@ -2,6 +2,7 @@ import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 
 import '../level/level_editor.dart';
+import '../prefs/strings.dart';
 
 /// Lists the level's problems as the validator reports them, live as the level is
 /// edited. Clicking a problem selects the entity it belongs to, so the inspector
@@ -39,9 +40,11 @@ class ValidationPanel extends StatelessWidget {
       initiallyExpanded: false,
       children: [
         if (issues.isEmpty)
-          const ListTile(
+          ListTile(
             dense: true,
-            title: Text('This level has no problems.'),
+            title: Text(
+              StudioStrings.t('validation_panel.this_level_has_no_problems'),
+            ),
           ),
         for (var i = 0; i < issues.length; i++)
           ListTile(

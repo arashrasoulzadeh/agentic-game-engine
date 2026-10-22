@@ -2,6 +2,7 @@ import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 
 import 'bootstrapper.dart';
+import '../prefs/strings.dart';
 
 /// The bootstrap / updates window (design §2.13): what the release server offers, what
 /// each item would change, and a choice per item. Nothing is downloaded until an item is
@@ -67,11 +68,11 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
     final plan = _plan;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Updates and downloads'),
+        title: Text(StudioStrings.t('bootstrap_screen.updates_and_downloads')),
         actions: [
           IconButton(
             key: const Key('bootstrap-refresh'),
-            tooltip: 'Check again',
+            tooltip: StudioStrings.t('bootstrap_screen.check_again'),
             onPressed: _busy ? null : _refresh,
             icon: const Icon(Icons.refresh),
           ),
@@ -92,7 +93,9 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
                       TextButton(
                         key: const Key('bootstrap-retry-check'),
                         onPressed: _refresh,
-                        child: const Text('Try again'),
+                        child: Text(
+                          StudioStrings.t('bootstrap_screen.try_again'),
+                        ),
                       ),
                     ],
                   ),
@@ -134,7 +137,9 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
                               )
                           ? null
                           : _install,
-                      child: const Text('Install accepted'),
+                      child: Text(
+                        StudioStrings.t('bootstrap_screen.install_accepted'),
+                      ),
                     ),
                   ),
                 ),
@@ -178,19 +183,25 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
                   TextButton(
                     key: Key('bootstrap-retry-$name'),
                     onPressed: _busy ? null : _install,
-                    child: const Text('Retry'),
+                    child: Text(StudioStrings.t('bootstrap_screen.retry')),
                   ),
                 SegmentedButton<Decision>(
                   key: Key('bootstrap-decision-$name'),
                   showSelectedIcon: false,
                   emptySelectionAllowed: true,
-                  segments: const [
+                  segments: [
                     ButtonSegment(
                       value: Decision.accept,
-                      label: Text('Accept'),
+                      label: Text(StudioStrings.t('bootstrap_screen.accept')),
                     ),
-                    ButtonSegment(value: Decision.defer, label: Text('Later')),
-                    ButtonSegment(value: Decision.skip, label: Text('Skip')),
+                    ButtonSegment(
+                      value: Decision.defer,
+                      label: Text(StudioStrings.t('bootstrap_screen.later')),
+                    ),
+                    ButtonSegment(
+                      value: Decision.skip,
+                      label: Text(StudioStrings.t('bootstrap_screen.skip')),
+                    ),
                   ],
                   selected: {if (bi.decision != Decision.pending) bi.decision},
                   onSelectionChanged:

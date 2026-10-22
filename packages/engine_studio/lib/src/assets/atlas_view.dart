@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import 'asset_index.dart';
+import '../prefs/strings.dart';
 
 /// A sprite sheet's contents: one tile per packed sprite, drawn from the sheet and
 /// labelled with the name a level refers to it by. Tapping a tile reports it, which is
@@ -230,7 +231,7 @@ class _SpritePickerDialogState extends State<_SpritePickerDialog> {
   Widget build(BuildContext context) {
     final atlas = _atlas;
     return AlertDialog(
-      title: const Text('Pick a sprite'),
+      title: Text(StudioStrings.t('atlas_view.pick_a_sprite')),
       content: SizedBox(
         width: 520,
         height: 420,
@@ -276,7 +277,7 @@ class _SpritePickerDialogState extends State<_SpritePickerDialog> {
         TextButton(
           key: const Key('picker-cancel'),
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(StudioStrings.t('common.cancel')),
         ),
       ],
     );

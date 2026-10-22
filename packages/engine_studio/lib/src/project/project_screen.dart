@@ -316,9 +316,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   key: const Key('project-search-input'),
                   controller: _searchController,
                   autofocus: true,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     isDense: true,
-                    hintText: 'Find in project',
+                    hintText: StudioStrings.t('project_screen.find_in_project'),
                   ),
                   onChanged: _runSearch,
                 ),

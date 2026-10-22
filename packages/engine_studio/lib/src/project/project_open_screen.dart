@@ -6,6 +6,7 @@ import '../bootstrap/update_config.dart';
 import '../prefs/shortcuts.dart' show studioPrefsFile;
 import 'project_screen.dart';
 import 'studio_project.dart';
+import '../prefs/strings.dart';
 
 /// Asks for a game project folder and opens it. Takes a typed path for now: a
 /// native folder picker needs a plugin, which is added once package access is
@@ -68,7 +69,9 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
         context: context,
         builder: (context) => AlertDialog(
           key: const Key('updates-not-configured'),
-          title: const Text('No update server configured'),
+          title: Text(
+            StudioStrings.t('project_open_screen.no_update_server_configured'),
+          ),
           content: const Text(
             'Add an "updates" section with "manifestUrl" and "publicKey" to '
             '~/.game_agent/studio_prefs.json. Without the publisher\'s key nothing '
@@ -106,11 +109,11 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Open project'),
+        title: Text(StudioStrings.t('project_open_screen.open_project')),
         actions: [
           IconButton(
             key: const Key('open-updates'),
-            tooltip: 'Updates and downloads',
+            tooltip: StudioStrings.t('bootstrap_screen.updates_and_downloads'),
             onPressed: _openUpdates,
             icon: const Icon(Icons.system_update_alt),
           ),
@@ -128,8 +131,10 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
                 TextField(
                   key: const Key('project-path'),
                   controller: _path,
-                  decoration: const InputDecoration(
-                    labelText: 'Game project folder',
+                  decoration: InputDecoration(
+                    labelText: StudioStrings.t(
+                      'project_open_screen.game_project_folder',
+                    ),
                     hintText: '/path/to/my_game',
                     border: OutlineInputBorder(),
                   ),
@@ -141,14 +146,18 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
                     OutlinedButton(
                       key: const Key('browse-project'),
                       onPressed: _browse,
-                      child: const Text('Browse…'),
+                      child: Text(
+                        StudioStrings.t('project_open_screen.browse'),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton(
                         key: const Key('open-project'),
                         onPressed: _open,
-                        child: const Text('Open'),
+                        child: Text(
+                          StudioStrings.t('project_open_screen.open'),
+                        ),
                       ),
                     ),
                   ],

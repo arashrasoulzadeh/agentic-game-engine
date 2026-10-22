@@ -8,6 +8,7 @@ import '../level/level_geometry.dart';
 import '../textures/atlas_catalog.dart';
 import 'profiler_panel.dart';
 import 'preview_world.dart';
+import '../prefs/strings.dart';
 
 /// The game actions the preview's controls send, keyed by the names the platformer
 /// input system listens for.
@@ -151,7 +152,11 @@ class _PreviewViewState extends State<PreviewView>
     }
     final preview = _preview;
     if (preview == null) {
-      return const Center(child: Text('Press play to run the level.'));
+      return Center(
+        child: Text(
+          StudioStrings.t('preview_view.press_play_to_run_the_level'),
+        ),
+      );
     }
 
     final geometry = LevelGeometry.of(widget.document);
@@ -274,7 +279,7 @@ class _Controls extends StatelessWidget {
               onHold: onHold,
             ),
             const SizedBox(width: 16),
-            const Text('Fit width'),
+            Text(StudioStrings.t('preview_view.fit_width')),
             Switch(
               key: const Key('fit-width'),
               value: fitWidth,
@@ -288,7 +293,7 @@ class _Controls extends StatelessWidget {
               onChanged: hasTextures ? onTexturesChanged : null,
             ),
             const SizedBox(width: 8),
-            const Text('Profiler'),
+            Text(StudioStrings.t('preview_view.profiler')),
             Switch(
               key: const Key('profiler-toggle'),
               value: profiler,
