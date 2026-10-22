@@ -22,6 +22,7 @@ import 'editor_shortcuts.dart';
 import 'level_canvas.dart';
 import 'level_saver.dart';
 import 'level_editor.dart';
+import '../prefs/strings.dart';
 
 /// Edits one level file in memory. A toolbar picks the tool; gestures on the
 /// canvas go to the [LevelEditor], which turns them into undoable commands. Saving
@@ -140,9 +141,9 @@ class _LevelScreenState extends State<LevelScreen> {
         editor.document,
       );
       messenger.showSnackBar(
-        const SnackBar(
-          key: Key('run-game-started'),
-          content: Text('Game started. Its output is in .studio/playtest.log.'),
+        SnackBar(
+          key: const Key('run-game-started'),
+          content: Text(StudioStrings.t('level.gameStarted')),
         ),
       );
     } on Object catch (e) {
@@ -205,7 +206,7 @@ class _LevelScreenState extends State<LevelScreen> {
     final editor = _editor;
     if (editor == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Level')),
+        appBar: AppBar(title: Text(StudioStrings.t('level.title'))),
         body: Center(child: Text(_loadError!, key: const Key('level-error'))),
       );
     }
@@ -235,20 +236,20 @@ class _LevelScreenState extends State<LevelScreen> {
           actions: [
             IconButton(
               key: const Key('playtest'),
-              tooltip: 'Run the level in the preview',
+              tooltip: StudioStrings.t('level.runPreview'),
               onPressed: _playTest,
               icon: const Icon(Icons.play_arrow),
             ),
             if (widget.projectRoot != null)
               IconButton(
                 key: const Key('run-game'),
-                tooltip: 'Run the game on this level (a separate process)',
+                tooltip: StudioStrings.t('level.runGame'),
                 onPressed: _runGame,
                 icon: const Icon(Icons.rocket_launch_outlined),
               ),
             IconButton(
               key: const Key('save'),
-              tooltip: 'Save (Cmd/Ctrl+S)',
+              tooltip: StudioStrings.t('level.save'),
               onPressed: editor.isDirty && _lockedBy == null ? _save : null,
               icon: const Icon(Icons.save_outlined),
             ),
@@ -274,35 +275,35 @@ class _LevelScreenState extends State<LevelScreen> {
             ),
             _ToggleIcon(
               keyName: 'toggle-grid',
-              tooltip: 'Show grid',
+              tooltip: StudioStrings.t('level.showGrid'),
               icon: Icons.grid_on,
               on: editor.gridVisible,
               onPressed: () => _edit((e) => e.gridVisible = !e.gridVisible),
             ),
             _ToggleIcon(
               keyName: 'toggle-snap',
-              tooltip: 'Snap to grid',
+              tooltip: StudioStrings.t('level.snapGrid'),
               icon: Icons.align_horizontal_left,
               on: editor.snapToGrid,
               onPressed: () => _edit((e) => e.snapToGrid = !e.snapToGrid),
             ),
             _ToggleIcon(
               keyName: 'toggle-tiles',
-              tooltip: 'Show tiles',
+              tooltip: StudioStrings.t('level.showTiles'),
               icon: Icons.view_module_outlined,
               on: editor.showTiles,
               onPressed: () => _edit((e) => e.showTiles = !e.showTiles),
             ),
             _ToggleIcon(
               keyName: 'toggle-entities',
-              tooltip: 'Show entities',
+              tooltip: StudioStrings.t('level.showEntities'),
               icon: Icons.place_outlined,
               on: editor.showEntities,
               onPressed: () => _edit((e) => e.showEntities = !e.showEntities),
             ),
             IconButton(
               key: const Key('delete-selected'),
-              tooltip: 'Delete selected entity',
+              tooltip: StudioStrings.t('level.deleteSelected'),
               onPressed: editor.selected == null
                   ? null
                   : () => _edit((e) => e.deleteSelected()),
@@ -323,7 +324,7 @@ class _LevelScreenState extends State<LevelScreen> {
                   TextButton(
                     key: const Key('lock-take-over'),
                     onPressed: _takeOver,
-                    child: const Text('Take over'),
+                    child: Text(StudioStrings.t('level.takeOver')),
                   ),
                 ],
               ),
@@ -605,15 +606,15 @@ class _ModeSwitch extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       child: SegmentedButton<bool>(
         key: const Key('mode-switch'),
-        segments: const [
+        segments: [
           ButtonSegment(
             value: false,
-            label: Text('Edit'),
+            label: Text(StudioStrings.t('level.modeEdit')),
             icon: Icon(Icons.edit_outlined),
           ),
           ButtonSegment(
             value: true,
-            label: Text('Preview'),
+            label: Text(StudioStrings.t('level.modePreview')),
             icon: Icon(Icons.play_circle_outline),
           ),
         ],

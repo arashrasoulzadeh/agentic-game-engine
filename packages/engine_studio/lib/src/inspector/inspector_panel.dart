@@ -7,6 +7,7 @@ import '../assets/asset_index.dart';
 import '../assets/atlas_view.dart';
 import '../level/level_editor.dart';
 import 'entity_inspector.dart';
+import '../prefs/strings.dart';
 
 /// The property panel for the selected entity. One control per schema field,
 /// chosen by the field's type. A value the schema rejects is shown under its
@@ -65,10 +66,10 @@ class _InspectorPanelState extends State<InspectorPanel> {
         border: Border(left: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: selected == null
-          ? const Center(
+          ? Center(
               child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('Select an entity to edit its properties.'),
+                padding: const EdgeInsets.all(16),
+                child: Text(StudioStrings.t('inspector.none')),
               ),
             )
           : ListView(
@@ -124,7 +125,7 @@ class _InspectorPanelState extends State<InspectorPanel> {
                   child: TextButton.icon(
                     key: const Key('pick-sprite'),
                     icon: const Icon(Icons.image_search, size: 18),
-                    label: const Text('Pick sprite'),
+                    label: Text(StudioStrings.t('inspector.pickSprite')),
                     onPressed: () => _pickSprite(component),
                   ),
                 ),

@@ -27,6 +27,23 @@ class StudioStrings {
     'project.close': 'Close',
     'project.noFile': 'Pick a file on the left to open it.',
     'project.fileGone': 'That file no longer exists.',
+    'level.gameStarted': 'Game started. Its output is in .studio/playtest.log.',
+    'level.title': 'Level',
+    'level.runPreview': 'Run the level in the preview',
+    'level.runGame': 'Run the game on this level (a separate process)',
+    'level.save': 'Save (Cmd/Ctrl+S)',
+    'level.showGrid': 'Show grid',
+    'level.snapGrid': 'Snap to grid',
+    'level.showTiles': 'Show tiles',
+    'level.showEntities': 'Show entities',
+    'level.deleteSelected': 'Delete selected entity',
+    'level.takeOver': 'Take over',
+    'level.modeEdit': 'Edit',
+    'level.modePreview': 'Preview',
+    'palette.search': 'Find a component',
+    'palette.empty': 'Empty entity',
+    'inspector.none': 'Select an entity to edit its properties.',
+    'inspector.pickSprite': 'Pick sprite',
   };
 
   static bool _registered = false;

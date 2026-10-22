@@ -2,6 +2,7 @@ import 'package:engine_schema/engine_schema.dart';
 import 'package:flutter/material.dart';
 
 import '../level/level_editor.dart';
+import '../prefs/strings.dart';
 
 /// The palette of components a designer can place. Every entry comes from the
 /// engine's schemas, so a new component appears here without any studio change.
@@ -60,8 +61,8 @@ class _EntityPaletteState extends State<EntityPalette> {
             padding: const EdgeInsets.all(8),
             child: TextField(
               key: const Key('palette-search'),
-              decoration: const InputDecoration(
-                hintText: 'Find a component',
+              decoration: InputDecoration(
+                hintText: StudioStrings.t('palette.search'),
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
@@ -76,7 +77,7 @@ class _EntityPaletteState extends State<EntityPalette> {
                   dense: true,
                   selected: pending == null,
                   leading: const Icon(Icons.crop_square),
-                  title: const Text('Empty entity'),
+                  title: Text(StudioStrings.t('palette.empty')),
                   onTap: () => _pick(null),
                 ),
                 for (final name in _names)
