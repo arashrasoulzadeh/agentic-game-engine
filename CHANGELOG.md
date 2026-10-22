@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Studio: the level editor notices when the level file is saved by someone else. Clean editors reload (with a note); editors with unsaved edits ask (Reload / Keep my edits). Own saves and half-written files are ignored.
 - Studio code editor: real code folding. The gutter chevron collapses a block to its first line (the text is unchanged and unsaved edits are never lost); an edit or a caret entering hidden code expands everything; fold regions refresh after typing. Replaces the old select-and-reveal.
 - Real-time strategy: big units (`GridFootprint`) now get their own flow fields (`GridNavigator.forFootprint`, `FlowFieldCache.fieldFor(footprint:)`), so a 2x2 unit is routed around gaps it cannot fit and fails a move that only a 1x1 unit can make; real-time attack reach is measured edge to edge.
 - Studio: "Show unsaved changes" in the level editor opens a readable diff (`LevelDiffView`: entities added/removed, per-field old → new) of the open level against the saved file.

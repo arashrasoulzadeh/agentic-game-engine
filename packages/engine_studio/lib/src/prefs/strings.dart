@@ -87,6 +87,11 @@ class StudioStrings {
     'graph.save': 'Save',
     'level.gameStarted': 'Game started. Its output is in .studio/playtest.log.',
     'level.title': 'Level',
+    'level.reloaded': 'Reloaded: someone saved a newer version of this level.',
+    'level.changedOnDisk':
+        'This level was changed on disk while you have unsaved edits.',
+    'level.reloadMine': 'Reload (discard my edits)',
+    'level.keepMine': 'Keep my edits',
     'level.changes': 'Show unsaved changes',
     'level.stopGame': 'Stop the running game',
     'level.device': 'Run on',

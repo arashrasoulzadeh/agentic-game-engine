@@ -447,6 +447,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         key: ValueKey(fullPath),
         levelPath: fullPath,
         projectRoot: widget.project.root,
+        watchInterval: const Duration(seconds: 2),
       );
     }
     if (kindOf(ProjectEntry(open, isDirectory: false)) == FileKind.graph) {

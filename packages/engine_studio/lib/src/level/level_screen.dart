@@ -42,6 +42,11 @@ class LevelScreen extends StatefulWidget {
   /// launcher; tests pass one with a recording process starter.
   final PlayTest? playTest;
 
+  /// How often to check whether someone else changed the level file. Null turns the check off (the
+  /// default, so tests need no timers; the project screen turns it on). A clean editor then reloads
+  /// silently; one with unsaved edits asks.
+  final Duration? watchInterval;
+
   /// Who is editing, for the advisory file lock (see [FileLock]). Null uses `user@host`.
   final String? lockedAs;
 
@@ -52,6 +57,7 @@ class LevelScreen extends StatefulWidget {
     this.autosaveInterval = const Duration(seconds: 30),
     this.playTest,
     this.lockedAs,
+    this.watchInterval,
   });
 
   @override
@@ -75,24 +81,20 @@ class _LevelScreenState extends State<LevelScreen> {
   LockInfo? _lockedBy;
   bool _holdsLock = false;
 
+  Timer? _watch;
+
+  /// Size and modification time of the file as this editor last read or wrote it.
+  String? _diskStamp;
+
+  /// True while the file changed on disk and the editor has unsaved edits (so it did not reload).
+  bool _diskChanged = false;
+
   @override
   void initState() {
     super.initState();
     try {
-      final json =
-          jsonDecode(File(widget.levelPath).readAsStringSync())
-              as Map<String, dynamic>;
-      final editor = LevelEditor(LevelDocument.fromJson(json));
-      final root = widget.projectRoot;
-      if (root != null) {
-        // Project-level help for the editor: which sprites exist (so a missing one is
-        // flagged) and how to load a prefab for a prefab brush.
-        _assets = AssetIndex.scan(root);
-        editor
-          ..atlasRegions = _assets!.declaredRegions
-          ..prefabLoader = PrefabStore(root).load;
-      }
-      _editor = editor;
+      _editor = _readEditor();
+      _diskStamp = _stampOf();
     } on Object catch (e) {
       _loadError = 'Could not open ${widget.levelPath}: $e';
     }
@@ -105,11 +107,85 @@ class _LevelScreenState extends State<LevelScreen> {
     if (interval != null && widget.projectRoot != null) {
       _autosave = Timer.periodic(interval, (_) => _backUpIfDirty());
     }
+    final watch = widget.watchInterval;
+    if (watch != null && _editor != null) {
+      _watch = Timer.periodic(watch, (_) => _checkDisk());
+    }
+  }
+
+  /// A new editor on the file as it is now, with the project help (known sprites, prefabs) attached.
+  LevelEditor _readEditor() {
+    final json =
+        jsonDecode(File(widget.levelPath).readAsStringSync())
+            as Map<String, dynamic>;
+    final editor = LevelEditor(LevelDocument.fromJson(json));
+    final root = widget.projectRoot;
+    if (root != null) {
+      _assets = AssetIndex.scan(root);
+      editor
+        ..atlasRegions = _assets!.declaredRegions
+        ..prefabLoader = PrefabStore(root).load;
+    }
+    return editor;
+  }
+
+  String? _stampOf() {
+    try {
+      final stat = File(widget.levelPath).statSync();
+      return '${stat.modified.microsecondsSinceEpoch}:${stat.size}';
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Notices another person's (or tool's) save. A clean editor reloads; one with unsaved edits shows a
+  /// banner and lets the designer choose, since either side's work would be lost silently otherwise.
+  void _checkDisk() {
+    final editor = _editor;
+    if (editor == null || !mounted) return;
+    final stamp = _stampOf();
+    if (stamp == null || stamp == _diskStamp) return;
+    if (editor.isDirty) {
+      if (!_diskChanged) setState(() => _diskChanged = true);
+      return;
+    }
+    _reloadFromDisk(announce: true);
+  }
+
+  /// Replaces the open document with the file's current content, keeping the selected entity by name.
+  /// A half-written file (parse error) leaves everything as it was and is retried on the next check.
+  void _reloadFromDisk({bool announce = false}) {
+    final selectedName = _editor?.selected?.name;
+    final LevelEditor fresh;
+    try {
+      fresh = _readEditor();
+    } on Object {
+      return;
+    }
+    if (selectedName != null) {
+      for (final e in fresh.document.entities) {
+        if (e.name == selectedName) fresh.selected = e;
+      }
+    }
+    setState(() {
+      _editor = fresh;
+      _diskStamp = _stampOf();
+      _diskChanged = false;
+    });
+    if (announce) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          key: const Key('level-reloaded'),
+          content: Text(StudioStrings.t('level.reloaded')),
+        ),
+      );
+    }
   }
 
   @override
   void dispose() {
     _autosave?.cancel();
+    _watch?.cancel();
     _gameLauncher.stop();
     if (_holdsLock) _lock.release(_me);
     _vertical.dispose();
@@ -228,6 +304,8 @@ class _LevelScreenState extends State<LevelScreen> {
     try {
       LevelSaver.save(widget.levelPath, editor.document);
       editor.markSaved();
+      _diskStamp = _stampOf();
+      _diskChanged = false;
       setState(() => _saveError = null);
     } on FileSystemException catch (e) {
       setState(() => _saveError = 'Could not save: ${e.message}');
@@ -389,6 +467,26 @@ class _LevelScreenState extends State<LevelScreen> {
         ),
         body: Column(
           children: [
+            if (_diskChanged)
+              MaterialBanner(
+                key: const Key('level-changed-on-disk'),
+                content: Text(StudioStrings.t('level.changedOnDisk')),
+                actions: [
+                  TextButton(
+                    key: const Key('disk-reload'),
+                    onPressed: _reloadFromDisk,
+                    child: Text(StudioStrings.t('level.reloadMine')),
+                  ),
+                  TextButton(
+                    key: const Key('disk-keep'),
+                    onPressed: () => setState(() {
+                      _diskStamp = _stampOf();
+                      _diskChanged = false;
+                    }),
+                    child: Text(StudioStrings.t('level.keepMine')),
+                  ),
+                ],
+              ),
             if (_lockedBy != null)
               MaterialBanner(
                 key: const Key('level-locked'),

@@ -168,8 +168,10 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
       rather than a socket; saving in the studio updates a game started with Run game.
 - [x] **7.2** Visual diff in the studio: the "Show unsaved changes" button opens `LevelDiffView` (added / removed / per-field
       old → new). A visual three-way *merge* view is not built; `studio merge` and the git merge-driver recipe cover merging.
-- [ ] **7.3 (remaining)** Real-time presence and live refresh of another person's saved edits;
-      advisory per-level locks are done (`FileLock`, the studio banner, `studio lock`/`unlock`).
+- [x] **7.3** Live refresh of another person's saved edits: the level editor watches its file (every 2 s in a project); a clean
+      editor reloads and says so, one with unsaved edits shows a banner (Reload / Keep mine), its own saves are ignored and a
+      half-written file waits. Presence is the advisory lock banner (who is editing, since when); a live cursor feed is
+      not built.
 - [x] **7.4** Embedded play-test: done by ADR 0005 (the Preview mode runs the edited level in the studio window; Run game starts
       the real game as a separate process).
 - [x] **7.5** Plugin API: `StudioPlugin` / `StudioPlugins.register` adds graph node kinds (editing + validation) and custom

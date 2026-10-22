@@ -69,6 +69,9 @@ the time). If someone else holds it you get a banner, saving is switched off so 
 the other's work, and you can **Take over** (when their editor crashed). A lock older than two
 hours counts as abandoned. `game_agent studio lock` / `unlock` do the same from the command line.
 
+If someone saves the level while you have it open, the studio notices within a couple of seconds: with no unsaved edits it
+reloads and tells you; with unsaved edits it asks whether to reload (dropping yours) or keep them.
+
 The lock is advisory (nothing stops a tool that ignores it) and meant for shared folders. With
 git, use `studio merge` as a merge driver instead (see the [CLI reference](../reference/cli.md)),
 and keep `*.lock` out of version control.
