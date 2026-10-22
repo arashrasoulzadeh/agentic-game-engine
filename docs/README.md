@@ -80,9 +80,13 @@ flowchart LR
     `packages/engine_strategy/test/doc_examples_test.dart`,
     `packages/engine_core/test/agent_turn_based_test.dart`, `doc_examples_multiplayer_test.dart`), and the concept pages for localization,
     dialogue, AI, ECS, effects, cinematics, procedural generation, performance, settings, lighting and analytics
-    (`packages/*/test/doc_examples_*_test.dart`). Not yet covered: the
-    older concept pages (architecture, rendering, real-time strategy; the networking page's calls - `ClientSession` clock sync, `nearbyInterest` - are exercised with the same API by `session_test.dart` and `interest_management_test.dart`) and the studio
-    guide. If a sample drifts from the code, that is a bug - please open an issue or fix both.
+    (`packages/*/test/doc_examples_*_test.dart`). Pages whose samples are calls into APIs
+    that have their own dedicated tests rather than a `doc_examples` file: networking (`session_test.dart`,
+    `interest_management_test.dart`, `udp_transport_test.dart`, `lobby_test.dart`, `session_auth_test.dart`) and
+    real-time strategy (`realtime_strategy_test.dart`, `gathering_test.dart`, `builder_test.dart`,
+    `economy_test.dart`, `tech_test.dart`, `formation_test.dart`, `grid_footprint_test.dart`). Not machine-checked:
+    the architecture overview (no code), the rendering page's Flutter widget snippets and the studio guide's
+    click-through steps (its command-line steps are, by `first_level_tutorial_test.dart`). If a sample drifts from the code, that is a bug - please open an issue or fix both.
 
 ## For AI agents reading this
 

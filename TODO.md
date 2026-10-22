@@ -208,9 +208,9 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       implemented) and `studio/qa-level-editor.md` (an internal QA checklist) stay excluded on purpose.
 - [ ] **Diagrams and screenshots** — add real screenshots (strategy template,
       studio) to the tutorials and getting-started.
-- [ ] **Extend the executed-samples guarantee** to the multiplayer tutorial and the older concept pages
-      (architecture, rendering, real-time strategy;  ECS and the multiplayer tutorial are done and networking's calls are covered by the session/interest tests); the landing page lists what is
-      covered and what is not.
+- [x] **Executed-samples guarantee** — extended to ECS, cinematics, the multiplayer tutorial and the studio first-level steps;
+      networking and real-time strategy samples are covered by their feature tests; the landing page says exactly what is
+      not machine-checked (architecture, rendering widget snippets, studio click-through).
 - [x] **README badges** — now live GitHub Actions status badges per package; swap for pub.dev version badges
       once published (see Release).
 
