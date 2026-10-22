@@ -239,7 +239,9 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
       } else if (keep is List) {
         for (var i = 0; i < keep.length; i++) {
           if (!generatorIds.contains(keep[i])) {
-            errors.add('prestige.keepGenerators[$i] "${keep[i]}" is not a generator id');
+            errors.add(
+              'prestige.keepGenerators[$i] "${keep[i]}" is not a generator id',
+            );
           }
         }
       }

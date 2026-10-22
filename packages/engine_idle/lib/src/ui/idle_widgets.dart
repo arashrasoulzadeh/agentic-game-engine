@@ -165,6 +165,25 @@ class GeneratorRow extends StatelessWidget {
                 ],
               ),
               Text(perUnit.isEmpty ? '—' : '$perUnit each'),
+              if (g.nextMilestone != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Next bonus: ×${controller.format(g.nextMilestone!.multiplier)} at ${g.nextMilestone!.owned} '
+                        '(${g.nextMilestone!.owned - g.owned} to go)',
+                        key: Key('milestone-${g.id}'),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      LinearProgressIndicator(
+                        key: Key('milestone-bar-${g.id}'),
+                        value: g.owned / g.nextMilestone!.owned,
+                      ),
+                    ],
+                  ),
+                ),
               if (locked)
                 Text(
                   'Locked: needs ${g.requires.join(', ')}',

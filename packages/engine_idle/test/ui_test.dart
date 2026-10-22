@@ -185,6 +185,41 @@ void main() {
   });
 
   group('GeneratorList', () {
+    testWidgets(
+      'shows progress to the next milestone, and nothing once all are reached',
+      (tester) async {
+        final c = _controller(generators: 1);
+        final g = c.world.storeOf<Generator>().get(c.generatorIds.first)!;
+        g.milestones.addAll([Milestone(10, n('2')), Milestone(25, n('3'))]);
+        g.owned = 4;
+        await tester.pumpWidget(_app(GeneratorList(controller: c)));
+        expect(
+          find.textContaining('Next bonus: ×2 at 10 (6 to go)'),
+          findsOneWidget,
+        );
+        expect(
+          tester
+              .widget<LinearProgressIndicator>(
+                find.byKey(const Key('milestone-bar-gen0')),
+              )
+              .value,
+          closeTo(0.4, 1e-9),
+        );
+        g.owned = 10;
+        c.refresh();
+        await tester.pump();
+        expect(
+          find.textContaining('Next bonus: ×3 at 25 (15 to go)'),
+          findsOneWidget,
+        );
+        g.owned = 25;
+        c.refresh();
+        await tester.pump();
+        expect(find.byKey(const Key('milestone-gen0')), findsNothing);
+        expect(g.nextMilestone, isNull);
+      },
+    );
+
     testWidgets('lists each generator with its owned count', (tester) async {
       final c = _controller();
       await tester.pumpWidget(_app(GeneratorList(controller: c)));

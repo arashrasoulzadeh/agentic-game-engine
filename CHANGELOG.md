@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Idle: generator rows show progress to the next milestone (`Generator.nextMilestone`).
 - Idle: `PrestigeRule.keepGenerators` (generators whose count survives prestige) and game-event achievements: `recordIdleEvent` + the `event:<name>` stat, saved in `IdleStats.eventCounts`.
 - Docs: "Build your first level" studio walkthrough (studio and command-line, the CLI steps tested).
 - Studio: a first non-English catalog, Persian (`packages/engine_studio/locales/fa.json`), with a test that it only uses real keys and covers >85% of the studio's text.

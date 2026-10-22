@@ -110,8 +110,7 @@ The engine's UI is menu buttons and HUD bars; an idle game's screens are long sc
 ordinary Flutter widgets reading the game state, shipped as a small package or a section of `engine_flutter`.
 
 - [ ] **Upgrade list, remaining** — `GeneratorList` / `GeneratorRow` (×1/×10/×100/Max, affordable/locked states, lazy list
-      tested with 300 rows, semantic labels) and `UpgradeList` are done in `engine_idle`. Left: milestone progress
-      display and a golden test.
+      tested with 300 rows, semantic labels) and `UpgradeList` are done in `engine_idle`. Milestone progress display done (`Generator.nextMilestone`).
 - [ ] **Resource header, remaining** — `ResourceHeader` and `IdleController` (10 Hz notifications, real-time clock, style
       switch) are done. Left: per-widget rebuild throttling beyond the controller's tick.
 - [ ] **"While you were away" dialog, remaining** — `OfflineSummaryDialog` is done; the 2x hook (`onDouble` callback + `IdleSession.doubleOffline`) and lifecycle wiring are done too.

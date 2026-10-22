@@ -66,6 +66,16 @@ class Generator {
        milestones = milestones ?? [],
        requires = requires ?? const [];
 
+  /// The nearest milestone not yet reached, or null when all are (or there are none): what a "next bonus
+  /// at 25" display shows.
+  Milestone? get nextMilestone {
+    Milestone? best;
+    for (final m in milestones) {
+      if (m.owned > owned && (best == null || m.owned < best.owned)) best = m;
+    }
+    return best;
+  }
+
   /// The product of every milestone reached at the current [owned].
   BigNumber get milestoneMultiplier {
     var m = BigNumber.one;

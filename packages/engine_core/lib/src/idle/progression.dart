@@ -147,7 +147,8 @@ class PrestigeRule {
     },
     keepUpgrades: json['keepUpgrades'] as bool? ?? false,
     keepGenerators: [
-      for (final g in (json['keepGenerators'] as List? ?? const [])) g as String,
+      for (final g in (json['keepGenerators'] as List? ?? const []))
+        g as String,
     ],
   );
 }
