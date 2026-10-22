@@ -81,6 +81,42 @@ void main() {
         reason: 'the preview timed its systems',
       );
       expect(find.textContaining(' entities'), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(
+        find.byKey(const Key('profiler-paint')),
+        findsOneWidget,
+        reason: 'the preview timed its own painting',
+      );
     },
   );
+
+  test('PaintTimer keeps the last paint and smooths the average', () {
+    final t = PaintTimer();
+    expect(t.frames, 0);
+    t.record(10);
+    expect((t.lastMs, t.averageMs), (10, 10));
+    t.record(20);
+    expect(t.lastMs, 20);
+    expect(t.averageMs, closeTo(12, 1e-9), reason: '10*0.8 + 20*0.2');
+    expect(t.frames, 2);
+  });
+
+  testWidgets('the paint line appears only when a timer with data is given', (
+    tester,
+  ) async {
+    final p = WorldProfiler()..recordStep(stepMs: 1, eventsMs: 0, entities: 1);
+    Future<void> show(PaintTimer? t) => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProfilerPanel(profiler: p, paintTimer: t),
+        ),
+      ),
+    );
+    await show(null);
+    expect(find.byKey(const Key('profiler-paint')), findsNothing);
+    await show(PaintTimer());
+    expect(find.byKey(const Key('profiler-paint')), findsNothing);
+    await show(PaintTimer()..record(3.5));
+    expect(find.text('paint 3.50 ms (avg 3.50)'), findsOneWidget);
+  });
 }

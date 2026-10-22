@@ -56,6 +56,7 @@ class _PreviewViewState extends State<PreviewView>
   bool _fitWidth = true;
   bool _textures = true;
   bool _profiler = false;
+  final PaintTimer _paintTimer = PaintTimer();
   Map<String, SpriteAtlas> _atlases = const {};
 
   @override
@@ -198,6 +199,7 @@ class _PreviewViewState extends State<PreviewView>
                           drawables: drawables,
                           scale: scale,
                           atlases: _textures ? _atlases : const {},
+                          timer: _paintTimer,
                         ),
                       ),
                       if (_profiler && preview.world.profiler != null)
@@ -206,6 +208,7 @@ class _PreviewViewState extends State<PreviewView>
                           right: 8,
                           child: ProfilerPanel(
                             profiler: preview.world.profiler!,
+                            paintTimer: _paintTimer,
                           ),
                         ),
                     ],
@@ -343,16 +346,24 @@ class _PreviewPainter extends CustomPainter {
   final List<_Drawable> drawables;
   final double scale;
   final Map<String, SpriteAtlas> atlases;
+  final PaintTimer timer;
 
   _PreviewPainter({
     required this.geometry,
     required this.drawables,
     required this.scale,
     required this.atlases,
+    required this.timer,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
+    final stopwatch = Stopwatch()..start();
+    _paint(canvas, size);
+    timer.record(stopwatch.elapsedMicroseconds / 1000);
+  }
+
+  void _paint(Canvas canvas, Size size) {
     canvas.drawRect(
       Offset.zero & size,
       Paint()..color = const Color(0xFF1E1E22),

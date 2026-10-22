@@ -160,10 +160,8 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 
 ### Behaviors, profiling, polish (phase 6)
 
-- [ ] **6.2 / 6.3 (remaining)** The preview now has a profiler panel (`WorldProfiler`: step cost,
-      entity count, step-time sparkline, slowest systems). Not done: `FrameStats` /
-      `FrameTimingMonitor` render metrics, and profiling a *separate* play-test process (the
-      external `PlayTest` is not wired into the studio UI yet, so there is no channel to build).
+- [x] **6.2 / 6.3** The preview profiler shows step cost, entity count, a sparkline, the slowest systems and now the preview's own
+      paint time (`PaintTimer`). Still not done: profiling a *separate* play-test process (no channel exists to build).
 - [x] **Run game** — device choice (`flutter devices --machine` dialog), a stop button while the game runs, relaunch replaces the old process, and closing the editor stops it.
 - [ ] **6.6** (remaining) Move the rest of the studio's strings to `StudioStrings`
       (the mechanism, the project window and the level screen / palette / inspector panel are done;
@@ -172,7 +170,8 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 
 ### Stretch (not scheduled)
 
-- [ ] **7.1** Live reload of levels into a running game over a local socket.
+- [x] **7.1** Live reload of levels into a running game: done by file watching (`AssetHotReloader`, `ASSET_DIR` in the templates)
+      rather than a socket; saving in the studio updates a game started with Run game.
 - [ ] **7.2 (remaining)** A visual diff/merge view in the studio (the engine-side `diffLevels` /
       `mergeLevels`, `studio diff` / `studio merge` and a git merge-driver recipe are done).
 - [ ] **7.3 (remaining)** Real-time presence and live refresh of another person's saved edits;

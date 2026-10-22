@@ -1,17 +1,45 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 
+/// How long the preview's own painting takes, smoothed so the number is readable. The painter records into
+/// it after each frame; [ProfilerPanel] shows it beside the simulation cost.
+class PaintTimer {
+  /// The most recent paint, in milliseconds.
+  double lastMs = 0;
+
+  /// An exponential moving average of recent paints (new samples weigh 20%).
+  double averageMs = 0;
+
+  /// How many paints were recorded.
+  int frames = 0;
+
+  /// Records one paint of [ms] milliseconds.
+  void record(double ms) {
+    lastMs = ms;
+    averageMs = frames == 0 ? ms : averageMs * 0.8 + ms * 0.2;
+    frames++;
+  }
+}
+
 /// Live timings from the running preview's [WorldProfiler]: the step cost, the entity count,
 /// a sparkline of recent step times, and the slowest systems with their smoothed and worst
 /// times. Draws from the profiler each build, so it follows the preview as it ticks.
 ///
-/// This is the *simulation* cost. It does not include the studio's own painting, so a level
-/// that looks slow here is slow in the game too, and one that looks fine here is not
-/// guaranteed to render fast on a device.
+/// The step and system numbers are the *simulation* cost: a level that looks slow there is slow in the game too.
+/// The paint line is the studio preview's own drawing, not the game's renderer, so a level that looks fine
+/// here is still not guaranteed to render fast on a device.
 class ProfilerPanel extends StatelessWidget {
-  const ProfilerPanel({super.key, required this.profiler, this.rows = 6});
+  const ProfilerPanel({
+    super.key,
+    required this.profiler,
+    this.paintTimer,
+    this.rows = 6,
+  });
 
   final WorldProfiler profiler;
+
+  /// When given, the studio's own paint cost is shown too (the numbers below it are simulation only).
+  final PaintTimer? paintTimer;
 
   /// How many systems to list, slowest first.
   final int rows;
@@ -40,6 +68,12 @@ class ProfilerPanel extends StatelessWidget {
                 key: const Key('profiler-summary'),
                 style: theme.textTheme.labelMedium,
               ),
+              if (paintTimer != null && paintTimer!.frames > 0)
+                Text(
+                  'paint ${paintTimer!.lastMs.toStringAsFixed(2)} ms (avg ${paintTimer!.averageMs.toStringAsFixed(2)})',
+                  key: const Key('profiler-paint'),
+                  style: theme.textTheme.labelMedium,
+                ),
               const SizedBox(height: 4),
               SizedBox(
                 height: 28,
