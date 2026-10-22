@@ -254,7 +254,12 @@ class _SpritePickerDialogState extends State<_SpritePickerDialog> {
                       for (final a in widget.atlases)
                         DropdownMenuItem(
                           value: a,
-                          child: Text('${a.id}  (${a.regions.length} sprites)'),
+                          child: Text(
+                            StudioStrings.t('atlas_view.sprites', {
+                              'id': a.id,
+                              'count': a.regions.length,
+                            }),
+                          ),
                         ),
                     ],
                     onChanged: (a) => setState(() => _atlas = a),

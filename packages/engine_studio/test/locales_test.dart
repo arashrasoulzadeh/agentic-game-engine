@@ -44,6 +44,18 @@ void main() {
       },
     );
 
+    test('$code keeps every {placeholder} of the English text', () {
+      final names = RegExp(r'\{(\w+)\}');
+      for (final e in catalog.entries) {
+        final want = names
+            .allMatches(StudioStrings.english[e.key]!)
+            .map((m) => m.group(1))
+            .toSet();
+        final got = names.allMatches(e.value).map((m) => m.group(1)).toSet();
+        expect(got, want, reason: e.key);
+      }
+    });
+
     test('$code loads and is used by StudioStrings', () {
       addTearDown(() => StudioStrings.use('en'));
       StudioStrings.use(code, localesDir: Directory('locales'));

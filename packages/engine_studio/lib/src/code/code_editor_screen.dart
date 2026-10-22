@@ -1110,7 +1110,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12),
-                  child: Text('${found.length} reference(s)'),
+                  child: Text(
+                    StudioStrings.t('code.references', {'count': found.length}),
+                  ),
                 ),
               ),
               IconButton(
@@ -1236,7 +1238,9 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12),
-                  child: Text('${found.length} fix(es)'),
+                  child: Text(
+                    StudioStrings.t('code.fixes', {'count': found.length}),
+                  ),
                 ),
               ),
               IconButton(
@@ -1745,7 +1749,7 @@ class _EditorSettingsDialogState extends State<_EditorSettingsDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Font size: ${_fontSize.round()}'),
+            Text(StudioStrings.t('code.fontSize', {'size': _fontSize.round()})),
             Slider(
               key: const Key('settings-font-size'),
               value: _fontSize,
@@ -1755,7 +1759,7 @@ class _EditorSettingsDialogState extends State<_EditorSettingsDialog> {
               label: _fontSize.round().toString(),
               onChanged: (v) => setState(() => _fontSize = v),
             ),
-            Text('Tab width: $_tabWidth'),
+            Text(StudioStrings.t('code.tabWidth', {'width': _tabWidth})),
             Slider(
               key: const Key('settings-tab-width'),
               value: _tabWidth.toDouble(),

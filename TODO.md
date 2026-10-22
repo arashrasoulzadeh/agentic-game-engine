@@ -158,10 +158,9 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 - [x] **6.2 / 6.3** The preview profiler shows step cost, entity count, a sparkline, the slowest systems and now the preview's own
       paint time (`PaintTimer`). Still not done: profiling a *separate* play-test process (no channel exists to build).
 - [x] **Run game** — device choice (`flutter devices --machine` dialog), a stop button while the game runs, relaunch replaces the old process, and closing the editor stops it.
-- [ ] **6.6** (remaining) Move the rest of the studio's strings to `StudioStrings`
-      (the mechanism, the project window and the level screen / palette / inspector panel are done;
-      graph and code editor screens are migrated too; assets, bootstrap, preview and validation panels too; only strings with keys/styles in the call and interpolated messages remain; `strings_keys_test.dart` guards that every used key exists) and ship a first non-English
-      catalog (done: `packages/engine_studio/locales/fa.json`, Persian).
+- [x] **6.6** Studio strings: every screen takes its text from `StudioStrings` (placeholders such as `{count}` supported), a key-existence
+      guard and a placeholder-parity check protect the catalogs, and a Persian catalog ships (`locales/fa.json`). A few strings that carry
+      their own widget keys/styles in the same call (the mode switch labels, toggle names) remain English.
 
 ### Stretch (not scheduled)
 

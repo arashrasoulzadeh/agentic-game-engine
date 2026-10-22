@@ -77,5 +77,19 @@
   "palette.search": "جستجوی یک کامپوننت",
   "palette.empty": "موجودیت خالی",
   "inspector.none": "برای ویرایش ویژگی‌ها، یک موجودیت را انتخاب کنید.",
-  "inspector.pickSprite": "انتخاب اسپرایت"
+  "inspector.pickSprite": "انتخاب اسپرایت",
+  "graph.exportedTo": "برون‌ریزی شد به {path}",
+  "code.references": "{count} ارجاع",
+  "code.fixes": "{count} اصلاح",
+  "code.fontSize": "اندازه قلم: {size}",
+  "code.tabWidth": "عرض تب: {width}",
+  "level.startFailed": "اجرای بازی ممکن نشد: {error}",
+  "atlas_view.sprites": "{id}  ({count} اسپرایت)",
+  "level.stopGame": "توقف بازی در حال اجرا",
+  "level.device": "اجرا روی",
+  "level.changes": "نمایش تغییرات ذخیره‌نشده",
+  "level.reloaded": "بارگذاری مجدد شد: کسی نسخه جدیدتری از این سطح را ذخیره کرد.",
+  "level.changedOnDisk": "این سطح روی دیسک تغییر کرده در حالی که شما ویرایش ذخیره‌نشده دارید.",
+  "level.reloadMine": "بارگذاری مجدد (حذف ویرایش‌های من)",
+  "level.keepMine": "نگه داشتن ویرایش‌های من"
 }

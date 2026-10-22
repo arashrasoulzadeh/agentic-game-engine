@@ -263,7 +263,7 @@ class _LevelScreenState extends State<LevelScreen> {
       messenger.showSnackBar(
         SnackBar(
           key: const Key('run-game-failed'),
-          content: Text('Could not start the game: $e'),
+          content: Text(StudioStrings.t('level.startFailed', {'error': e})),
         ),
       );
     }

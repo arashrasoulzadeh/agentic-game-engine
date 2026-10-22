@@ -329,7 +329,9 @@ class _GraphCanvasScreenState extends State<GraphCanvasScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(8),
               color: theme.colorScheme.secondaryContainer,
-              child: Text('Exported to $_exportedTo'),
+              child: Text(
+                StudioStrings.t('graph.exportedTo', {'path': _exportedTo}),
+              ),
             ),
           if (_editor.lastError != null)
             Container(

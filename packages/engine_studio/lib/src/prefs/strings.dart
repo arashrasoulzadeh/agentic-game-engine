@@ -86,6 +86,13 @@ class StudioStrings {
     'graph.addNode': 'Add node',
     'graph.save': 'Save',
     'level.gameStarted': 'Game started. Its output is in .studio/playtest.log.',
+    'graph.exportedTo': 'Exported to {path}',
+    'code.references': '{count} reference(s)',
+    'code.fixes': '{count} fix(es)',
+    'code.fontSize': 'Font size: {size}',
+    'code.tabWidth': 'Tab width: {width}',
+    'level.startFailed': 'Could not start the game: {error}',
+    'atlas_view.sprites': '{id}  ({count} sprites)',
     'level.title': 'Level',
     'level.reloaded': 'Reloaded: someone saved a newer version of this level.',
     'level.changedOnDisk':
