@@ -44,6 +44,29 @@ class GridNavigator {
     );
   }
 
+  /// A navigator for a unit whose body is [size] x [size] cells anchored at its top-left cell: a cell is
+  /// passable only if every cell the body would cover is in bounds and passable. [size] 1 is this navigator.
+  /// The corner rule and costs are unchanged (a step costs the anchor cell's terrain cost).
+  GridNavigator forFootprint(int size) {
+    if (size <= 1) return this;
+    return GridNavigator(
+      cols: cols,
+      rows: rows,
+      diagonals: diagonals,
+      terrainCost: (c, r) {
+        for (var dc = 0; dc < size; dc++) {
+          for (var dr = 0; dr < size; dr++) {
+            if (!inBounds(c + dc, r + dr) ||
+                terrainCost(c + dc, r + dr) == null) {
+              return null;
+            }
+          }
+        }
+        return terrainCost(c, r);
+      },
+    );
+  }
+
   bool inBounds(int c, int r) => c >= 0 && r >= 0 && c < cols && r < rows;
 
   int? _cost(int c, int r, bool Function(int, int) blocked) {

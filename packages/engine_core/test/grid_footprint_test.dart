@@ -190,4 +190,71 @@ void main() {
       }
     });
   });
+
+  group('real-time terrain for big units', () {
+    test('forFootprint blocks any anchor whose body would not fit', () {
+      final nav = _nav({4, 5}).forFootprint(2);
+      expect(nav.terrainCost(4, 3), 1, reason: 'covers (4..5, 3..4): all open');
+      expect(nav.terrainCost(3, 3), isNull, reason: 'covers (3,4), a wall');
+      expect(nav.terrainCost(9, 0), isNull, reason: 'off the right edge');
+      expect(
+        _nav({4}).forFootprint(1).terrainCost(3, 4),
+        isNull,
+        reason: 'size 1 is the plain navigator',
+      );
+    });
+
+    test(
+      'flow fields are cached per body size and a big field avoids a 1-wide gap',
+      () {
+        final nav = _nav({4});
+        final cache = FlowFieldCache(nav);
+        final small = cache.fieldFor(4, 8);
+        final big = cache.fieldFor(4, 8, footprint: 2);
+        expect(cache.builds, 2);
+        expect(cache.fieldFor(4, 8, footprint: 2), same(big));
+        expect(small.reaches(4, 0), isTrue, reason: 'a 1x1 unit fits the gap');
+        expect(
+          big.reaches(4, 0),
+          isFalse,
+          reason: 'a 2x2 unit cannot get through',
+        );
+      },
+    );
+
+    test('a real-time 2x2 unit refuses a route only a 1x1 unit can take', () {
+      final w = World(width: 10, height: 10);
+      registerCoreComponents(w);
+      final nav = _nav({4});
+      w.addSystem(RealtimeOrderSystem(fields: FlowFieldCache(nav)));
+      EntityId unit(int size) {
+        final e = w.spawn();
+        w.storeOf<Team>().set(e, Team('red'));
+        w.storeOf<GridPosition>().set(e, GridPosition(4, 1));
+        w.storeOf<RealtimeStats>().set(e, RealtimeStats(speed: 10));
+        w.storeOf<OrderQueue>().set(e, OrderQueue([const MoveOrder(4, 8)]));
+        if (size > 1) w.storeOf<GridFootprint>().set(e, GridFootprint(size));
+        return e;
+      }
+
+      final small = unit(1);
+      final big = unit(2);
+      final failures = <EntityId>[];
+      w.events.on<OrderFailedEvent>((e) => failures.add(e.entity));
+      for (var i = 0; i < 60; i++) {
+        w.step(0.1);
+      }
+      expect(
+        w.storeOf<GridPosition>().get(small)!.row,
+        greaterThan(4),
+        reason: 'the small unit passed the wall',
+      );
+      expect(
+        w.storeOf<GridPosition>().get(big)!.row,
+        lessThan(4),
+        reason: 'the big unit stayed north of it',
+      );
+      expect(failures, [big]);
+    });
+  });
 }

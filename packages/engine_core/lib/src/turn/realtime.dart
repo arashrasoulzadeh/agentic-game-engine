@@ -130,7 +130,11 @@ class RealtimeOrderSystem extends System {
     if (pos == null)
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     if (pos.col == order.col && pos.row == order.row) return _Result.done;
-    final field = fields.fieldFor(order.col, order.row);
+    final field = fields.fieldFor(
+      order.col,
+      order.row,
+      footprint: world.storeOf<GridFootprint>().get(entity)?.size ?? 1,
+    );
     if (!field.reaches(pos.col, pos.row))
       return _fail(world, entity, order, OrderFailure.blocked);
     final boxedIn = _advance(
@@ -171,7 +175,10 @@ class RealtimeOrderSystem extends System {
     }
     final reach =
         world.storeOf<AttackProfile>().get(entity)?.range ?? attackRange;
-    if (me.chebyshev(target) <= reach) {
+    final bodies = world.storeOf<GridFootprint>();
+    final mySize = bodies.get(entity)?.size ?? 1;
+    final theirSize = bodies.get(order.target)?.size ?? 1;
+    if (footprintDistance(me, mySize, target, theirSize) <= reach) {
       if (s.cooldown <= 0) {
         resolveAttack(world, entity, order.target);
         s.cooldown = s.attackInterval;
@@ -179,7 +186,11 @@ class RealtimeOrderSystem extends System {
       }
       return _Result.running;
     }
-    final field = fields.fieldFor(target.col, target.row);
+    final field = fields.fieldFor(
+      target.col,
+      target.row,
+      footprint: world.storeOf<GridFootprint>().get(entity)?.size ?? 1,
+    );
     if (!field.reaches(me.col, me.row))
       return _fail(world, entity, order, OrderFailure.blocked);
     final boxedIn = _advance(
@@ -189,7 +200,7 @@ class RealtimeOrderSystem extends System {
       field,
       dt,
       ignore: order.target,
-      stopWhen: (p) => p.chebyshev(target) <= reach,
+      stopWhen: (p) => footprintDistance(p, mySize, target, theirSize) <= reach,
     );
     if (boxedIn && autoEngage) _engageNearest(world, entity, s);
     return _Result.running;

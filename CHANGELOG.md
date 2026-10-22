@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Real-time strategy: big units (`GridFootprint`) now get their own flow fields (`GridNavigator.forFootprint`, `FlowFieldCache.fieldFor(footprint:)`), so a 2x2 unit is routed around gaps it cannot fit and fails a move that only a 1x1 unit can make; real-time attack reach is measured edge to edge.
 - Studio: "Show unsaved changes" in the level editor opens a readable diff (`LevelDiffView`: entities added/removed, per-field old → new) of the open level against the saved file.
 - Studio plugin API: `StudioPlugin` + `StudioPlugins.register` add graph node kinds (shown in the add-node menu, validated, with inspector params) and replace the inspector control for any `component.field`, with edits still going through the undoable, schema-checked path.
 - Studio profiler: shows the preview's own paint time (smoothed) next to the simulation cost.

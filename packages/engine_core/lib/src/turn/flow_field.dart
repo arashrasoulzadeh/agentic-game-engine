@@ -110,15 +110,24 @@ class FlowFieldCache {
   /// confirm a group is sharing work.
   int builds = 0;
 
-  FlowField fieldFor(int goalCol, int goalRow) {
-    final key = goalRow * navigator.cols + goalCol;
+  final Map<int, GridNavigator> _bodies = {};
+
+  /// The field leading to ([goalCol], [goalRow]) for a unit whose body is [footprint] x [footprint] cells:
+  /// a big unit's field avoids gaps it cannot fit through. Fields are cached per footprint.
+  FlowField fieldFor(int goalCol, int goalRow, {int footprint = 1}) {
+    final key =
+        (footprint * navigator.rows + goalRow) * navigator.cols + goalCol;
     final existing = _fields.remove(key);
     if (existing != null) {
       _fields[key] = existing; // refresh recency
       return existing;
     }
     builds++;
-    final field = FlowField.build(navigator, goalCol, goalRow);
+    final field = FlowField.build(
+      _bodies.putIfAbsent(footprint, () => navigator.forFootprint(footprint)),
+      goalCol,
+      goalRow,
+    );
     _fields[key] = field;
     if (_fields.length > capacity) _fields.remove(_fields.keys.first);
     return field;
@@ -126,5 +135,8 @@ class FlowFieldCache {
 
   int get size => _fields.length;
 
-  void invalidate() => _fields.clear();
+  void invalidate() {
+    _fields.clear();
+    _bodies.clear();
+  }
 }
