@@ -172,8 +172,8 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 
 - [x] **7.1** Live reload of levels into a running game: done by file watching (`AssetHotReloader`, `ASSET_DIR` in the templates)
       rather than a socket; saving in the studio updates a game started with Run game.
-- [ ] **7.2 (remaining)** A visual diff/merge view in the studio (the engine-side `diffLevels` /
-      `mergeLevels`, `studio diff` / `studio merge` and a git merge-driver recipe are done).
+- [x] **7.2** Visual diff in the studio: the "Show unsaved changes" button opens `LevelDiffView` (added / removed / per-field
+      old → new). A visual three-way *merge* view is not built; `studio merge` and the git merge-driver recipe cover merging.
 - [ ] **7.3 (remaining)** Real-time presence and live refresh of another person's saved edits;
       advisory per-level locks are done (`FileLock`, the studio banner, `studio lock`/`unlock`).
 - [ ] **7.4** Embedded play-test in a studio panel (decision D4 alternative).

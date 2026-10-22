@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../diff/level_diff_view.dart';
 import '../inspector/inspector_panel.dart';
 import '../assets/asset_index.dart';
 import '../assets/brush_panel.dart';
@@ -202,6 +203,23 @@ class _LevelScreenState extends State<LevelScreen> {
     });
   }
 
+  /// Compares the open level with the file on disk and shows what saving would change.
+  Future<void> _showChanges() async {
+    final editor = _editor;
+    if (editor == null) return;
+    LevelDocument saved;
+    try {
+      saved = LevelDocument.fromJson(
+        (jsonDecode(File(widget.levelPath).readAsStringSync()) as Map)
+            .cast<String, dynamic>(),
+      );
+    } on Object {
+      saved = LevelDocument(entities: []);
+    }
+    if (!mounted) return;
+    await showLevelChanges(context, before: saved, after: editor.document);
+  }
+
   /// Writes the level file. A failure stays on screen rather than being lost, and
   /// the level stays dirty so nothing is marked saved that was not.
   void _save() {
@@ -299,6 +317,12 @@ class _LevelScreenState extends State<LevelScreen> {
                 icon: const Icon(Icons.devices_outlined),
                 onPressed: _chooseDevice,
               ),
+            IconButton(
+              key: const Key('show-changes'),
+              tooltip: StudioStrings.t('level.changes'),
+              onPressed: editor.isDirty ? _showChanges : null,
+              icon: const Icon(Icons.difference_outlined),
+            ),
             IconButton(
               key: const Key('save'),
               tooltip: StudioStrings.t('level.save'),

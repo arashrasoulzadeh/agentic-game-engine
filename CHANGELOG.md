@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Studio: "Show unsaved changes" in the level editor opens a readable diff (`LevelDiffView`: entities added/removed, per-field old → new) of the open level against the saved file.
 - Studio plugin API: `StudioPlugin` + `StudioPlugins.register` add graph node kinds (shown in the add-node menu, validated, with inspector params) and replace the inspector control for any `component.field`, with edits still going through the undoable, schema-checked path.
 - Studio profiler: shows the preview's own paint time (smoothed) next to the simulation cost.
 - Studio "Run game": pick the device from `flutter devices`, a stop button while it runs, a relaunch stops the previous game, and closing the level editor stops it (it used to leave games running).
