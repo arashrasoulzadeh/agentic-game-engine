@@ -21,13 +21,19 @@ class IdleStats {
   /// Seconds of play time (live ticks only; offline time does not count).
   double secondsPlayed;
 
+  /// How many times each named game event happened (see [recordIdleEvent]); the `event:<name>`
+  /// achievement stat reads it.
+  final Map<String, int> eventCounts;
+
   IdleStats({
     Map<String, BigNumber>? runEarned,
     Map<String, BigNumber>? lifetimeEarned,
     this.prestigeCount = 0,
     this.taps = 0,
     this.secondsPlayed = 0,
-  }) : runEarned = runEarned ?? {},
+    Map<String, int>? eventCounts,
+  }) : eventCounts = eventCounts ?? {},
+       runEarned = runEarned ?? {},
        lifetimeEarned = lifetimeEarned ?? {};
 
   /// Records [gains] (resource -> amount), e.g. an offline catch-up's `OfflineSummary.gained`.
@@ -47,6 +53,7 @@ class IdleStats {
     'prestigeCount': prestigeCount,
     'taps': taps,
     'secondsPlayed': secondsPlayed,
+    if (eventCounts.isNotEmpty) 'eventCounts': eventCounts,
   };
 
   factory IdleStats.fromJson(Map<String, dynamic> json) {
@@ -60,6 +67,10 @@ class IdleStats {
       prestigeCount: (json['prestigeCount'] as num?)?.toInt() ?? 0,
       taps: (json['taps'] as num?)?.toInt() ?? 0,
       secondsPlayed: (json['secondsPlayed'] as num?)?.toDouble() ?? 0,
+      eventCounts: {
+        for (final e in ((json['eventCounts'] as Map?) ?? const {}).entries)
+          e.key as String: (e.value as num).toInt(),
+      },
     );
   }
 }
@@ -91,6 +102,9 @@ class PrestigeRule {
   /// Keep purchased upgrades across prestige.
   final bool keepUpgrades;
 
+  /// Ids of generators whose owned count survives prestige (a "you keep your first farm" perk).
+  final List<String> keepGenerators;
+
   PrestigeRule({
     required this.currency,
     required this.basedOn,
@@ -99,6 +113,7 @@ class PrestigeRule {
     this.bonusPerUnit = 0.1,
     Map<String, BigNumber>? startingAmounts,
     this.keepUpgrades = false,
+    this.keepGenerators = const [],
   }) : startingAmounts = startingAmounts ?? {};
 
   /// What prestiging would give for [earnedThisRun]. Zero until the run is worth at least one unit.
@@ -117,6 +132,7 @@ class PrestigeRule {
       for (final e in startingAmounts.entries) e.key: e.value.toJson(),
     },
     'keepUpgrades': keepUpgrades,
+    if (keepGenerators.isNotEmpty) 'keepGenerators': keepGenerators,
   };
 
   factory PrestigeRule.fromJson(Map<String, dynamic> json) => PrestigeRule(
@@ -130,6 +146,9 @@ class PrestigeRule {
         e.key as String: BigNumber.fromJson(e.value as Object),
     },
     keepUpgrades: json['keepUpgrades'] as bool? ?? false,
+    keepGenerators: [
+      for (final g in (json['keepGenerators'] as List? ?? const [])) g as String,
+    ],
   );
 }
 
@@ -148,7 +167,7 @@ BigNumber prestigeGainNow(World world) {
 /// not yet worth a unit (nothing changes then).
 ///
 /// Resets: every resource except the permanent currency (back to [PrestigeRule.startingAmounts]),
-/// every generator's `owned`, and - unless [PrestigeRule.keepUpgrades] - every upgrade. Keeps: the
+/// every generator's `owned` (except [PrestigeRule.keepGenerators]), and - unless [PrestigeRule.keepUpgrades] - every upgrade. Keeps: the
 /// currency, lifetime stats, achievements. Then refreshes the `prestige` multiplier and the income.
 BigNumber? performPrestige(World world, BigTreasury wallet) {
   final rule = _first<PrestigeRule>(world);
@@ -165,7 +184,8 @@ BigNumber? performPrestige(World world, BigTreasury wallet) {
 
   final generators = world.storeOf<Generator>();
   for (var i = 0; i < generators.length; i++) {
-    generators.denseAt(i).owned = 0;
+    final g = generators.denseAt(i);
+    if (!rule.keepGenerators.contains(g.id)) g.owned = 0;
   }
   if (!rule.keepUpgrades) {
     final upgrades = world.storeOf<Upgrade>();
@@ -195,7 +215,8 @@ class Achievement {
   final String id;
   final String? name;
 
-  /// `lifetime:<resource>`, `run:<resource>`, `owned:<generatorId>`, `prestiges`, `taps` or `seconds`.
+  /// `lifetime:<resource>`, `run:<resource>`, `owned:<generatorId>`, `prestiges`, `taps`, `seconds` or
+  /// `event:<name>` (a count kept by [recordIdleEvent]).
   final String stat;
   final BigNumber atLeast;
   final BigNumber reward;
@@ -246,6 +267,8 @@ BigNumber achievementValue(World world, String stat) {
       return BigNumber.from(stats?.taps ?? 0);
     case 'seconds':
       return BigNumber.from(stats?.secondsPlayed ?? 0);
+    case 'event':
+      return BigNumber.from(stats?.eventCounts[arg] ?? 0);
     case 'owned':
       final gens = world.storeOf<Generator>();
       for (var i = 0; i < gens.length; i++) {
@@ -256,6 +279,21 @@ BigNumber achievementValue(World world, String stat) {
       return BigNumber.zero;
   }
   return BigNumber.zero;
+}
+
+/// Counts one more occurrence of the game event [name] (for example `"dragon_slain"`) and checks the
+/// achievements that depend on it. Returns the ids unlocked by it. This is how achievements react to
+/// things the economy does not know about: the game calls it when they happen.
+List<String> recordIdleEvent(
+  World world,
+  BigTreasury wallet,
+  String name, [
+  int times = 1,
+]) {
+  final stats = _first<IdleStats>(world);
+  if (stats == null || times <= 0) return const [];
+  stats.eventCounts[name] = (stats.eventCounts[name] ?? 0) + times;
+  return checkAchievements(world, wallet);
 }
 
 /// An achievement was just unlocked.

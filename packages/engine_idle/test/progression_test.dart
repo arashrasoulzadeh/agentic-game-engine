@@ -33,6 +33,7 @@ class _Game {
 
   PrestigeRule addRule({
     bool keepUpgrades = false,
+    List<String> keepGenerators = const [],
     Map<String, BigNumber>? start,
   }) {
     final rule = PrestigeRule(
@@ -43,6 +44,7 @@ class _Game {
       bonusPerUnit: 0.1,
       startingAmounts: start ?? {'coins': n('10')},
       keepUpgrades: keepUpgrades,
+      keepGenerators: keepGenerators,
     );
     world.storeOf<PrestigeRule>().set(world.spawn(), rule);
     return rule;
@@ -50,6 +52,34 @@ class _Game {
 }
 
 void main() {
+  group('game events and achievements', () {
+    test(
+      'recordIdleEvent counts and unlocks event: achievements, surviving a save',
+      () {
+        final g = _Game();
+        g.world.storeOf<Achievement>().set(
+          g.world.spawn(),
+          Achievement(id: 'slayer', stat: 'event:dragon', atLeast: n('3')),
+        );
+        expect(recordIdleEvent(g.world, g.wallet, 'dragon', 2), isEmpty);
+        expect(recordIdleEvent(g.world, g.wallet, 'dragon'), ['slayer']);
+        expect(g.stats.eventCounts['dragon'], 3);
+        final back = IdleStats.fromJson(g.stats.toJson());
+        expect(back.eventCounts['dragon'], 3);
+      },
+    );
+
+    test(
+      'an unknown event name is zero, and a non-positive count is ignored',
+      () {
+        final g = _Game();
+        expect(achievementValue(g.world, 'event:nothing'), BigNumber.zero);
+        expect(recordIdleEvent(g.world, g.wallet, 'x', 0), isEmpty);
+        expect(g.stats.eventCounts, isEmpty);
+      },
+    );
+  });
+
   group('stats', () {
     test(
       'IdleSystem records earnings into the run and lifetime totals, and play time',
@@ -200,6 +230,26 @@ void main() {
       );
       performPrestige(g.world, g.wallet);
       expect(g.world.storeOf<Upgrade>().get(e)!.purchased, isTrue);
+    });
+
+    test('keepGenerators keeps only the named generators', () {
+      final g = _Game();
+      g.addRule(keepGenerators: ['cursor']);
+      g.stats.credit({'coins': n('1e6')});
+      final other = g.world.spawn();
+      g.world.storeOf<Generator>().set(
+        other,
+        Generator(
+          id: 'farm',
+          owned: 4,
+          cost: GeometricCost(base: n('10'), growth: 1.1),
+        ),
+      );
+      final cursor = g.world.storeOf<Generator>().get(g.cursor)!;
+      cursor.owned = 7;
+      performPrestige(g.world, g.wallet);
+      expect(cursor.owned, 7);
+      expect(g.world.storeOf<Generator>().get(other)!.owned, 0);
     });
 
     test('without a rule or stats it does nothing', () {

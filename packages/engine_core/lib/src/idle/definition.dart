@@ -208,6 +208,7 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
         'prestiges',
         'taps',
         'seconds',
+        'event',
       };
       if (!kinds.contains(kind)) {
         errors.add('$p.stat "$stat" is unknown (use ${kinds.join(', ')})');
@@ -232,6 +233,16 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
         errors.add('prestige.basedOn is required');
       }
       number(pr['divisor'], 'prestige.divisor', positive: true);
+      final keep = pr['keepGenerators'];
+      if (keep != null && keep is! List) {
+        errors.add('prestige.keepGenerators must be a list');
+      } else if (keep is List) {
+        for (var i = 0; i < keep.length; i++) {
+          if (!generatorIds.contains(keep[i])) {
+            errors.add('prestige.keepGenerators[$i] "${keep[i]}" is not a generator id');
+          }
+        }
+      }
       final ex = pr['exponent'];
       if (ex != null && (ex is! num || ex <= 0)) {
         errors.add('prestige.exponent must be greater than 0');

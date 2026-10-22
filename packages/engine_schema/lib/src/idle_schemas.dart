@@ -36,6 +36,7 @@ const idleStatsSchema = ComponentSchema('idleStats', [
   FieldSchema('prestigeCount', FieldType.int, min: 0),
   FieldSchema('taps', FieldType.int, min: 0),
   FieldSchema('secondsPlayed', FieldType.double, min: 0),
+  FieldSchema('eventCounts', FieldType.object),
 ]);
 
 const prestigeRuleSchema = ComponentSchema('prestigeRule', [
@@ -46,6 +47,7 @@ const prestigeRuleSchema = ComponentSchema('prestigeRule', [
   FieldSchema('bonusPerUnit', FieldType.double, min: 0),
   FieldSchema('startingAmounts', FieldType.object),
   FieldSchema('keepUpgrades', FieldType.bool),
+  FieldSchema('keepGenerators', FieldType.list),
 ]);
 
 const achievementSchema = ComponentSchema('achievement', [

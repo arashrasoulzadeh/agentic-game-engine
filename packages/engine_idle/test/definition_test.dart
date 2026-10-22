@@ -121,6 +121,31 @@ void main() {
       );
     });
 
+    test(
+      'prestige keepGenerators must name generators; event: stats are known',
+      () {
+        expect(
+          problems(
+            (j) => j['prestige'] = {
+              'currency': 'gems',
+              'basedOn': 'coins',
+              'divisor': '1',
+              'keepGenerators': ['cursor', 'ghost'],
+            },
+          ),
+          ['prestige.keepGenerators[1] "ghost" is not a generator id'],
+        );
+        expect(
+          problems(
+            (j) => j['achievements'] = [
+              {'id': 'a', 'stat': 'event:dragon', 'atLeast': '1'},
+            ],
+          ),
+          isEmpty,
+        );
+      },
+    );
+
     test('bad milestones', () {
       List<String> ms(Object v) =>
           problems((j) => (j['generators'] as List)[0]['milestones'] = v);

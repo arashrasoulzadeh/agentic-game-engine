@@ -842,6 +842,7 @@ Idle-game data. Registered by `registerIdleComponents`.
 | `prestigeCount` | `int` | 0 to ∞ |
 | `taps` | `int` | 0 to ∞ |
 | `secondsPlayed` | `double` | 0 to ∞ |
+| `eventCounts` | `object` |  |
 
 ### `prestigeRule`
 
@@ -854,6 +855,7 @@ Idle-game data. Registered by `registerIdleComponents`.
 | `bonusPerUnit` | `double` | 0 to ∞ |
 | `startingAmounts` | `object` |  |
 | `keepUpgrades` | `bool` |  |
+| `keepGenerators` | `list` |  |
 
 ### `achievement`
 

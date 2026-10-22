@@ -88,11 +88,9 @@ The building blocks are there; the genre's *structure* is not.
 - [ ] **Multiplier stack, remaining** — `ModifierStack` (additive + multiplicative, named sources, breakdown,
       order-independent) is done in `engine_core`; wire it to generators/upgrades/prestige in `engine_idle`.
 - [ ] **Prestige, remaining** — `PrestigeRule`, `prestigeGainNow`, `performPrestige` (reset scope, permanent currency,
-      `1 + bonusPerUnit * held` multiplier, lifetime stats kept) are done in `engine_idle`. Left: the prestige screen
-      (section 5) and more reset-scope options (keep chosen generators).
+      `1 + bonusPerUnit * held` multiplier, lifetime stats kept) are done in `engine_idle`. Screen done; `keepGenerators` reset scope done.
 - [ ] **Achievements, remaining** — `Achievement` data (`lifetime:` / `run:` / `owned:` / `prestiges` / `taps` / `seconds`
-      stats, optional multiplier reward), `checkAchievements`, `AchievementUnlockedEvent` are done. Left: the
-      achievements screen, and conditions on arbitrary events.
+      stats, optional multiplier reward), `checkAchievements`, `AchievementUnlockedEvent` are done. Screen done; arbitrary events via `recordIdleEvent` / `event:<name>` done.
 - [ ] **Active-play hooks, remaining** — `tapEarn` (multiplied, counted) and timed `Boost` / `BoostSystem` (restart refreshes,
       distinct boosts multiply) are done. Random "golden cookie" events (`GoldenEvents` + `GoldenEventSystem`, seeded RNG, `claimGolden`) are done too.
 
