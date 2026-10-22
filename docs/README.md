@@ -78,9 +78,9 @@ flowchart LR
     the tutorials (platformer, turn-based, agent) and the recipes in `examples/`
     (`packages/engine_platformer/test/doc_examples_*_test.dart`,
     `packages/engine_strategy/test/doc_examples_test.dart`,
-    `packages/engine_core/test/agent_turn_based_test.dart`), and the concept pages for localization,
+    `packages/engine_core/test/agent_turn_based_test.dart`, `doc_examples_multiplayer_test.dart`), and the concept pages for localization,
     dialogue, AI, ECS, effects, procedural generation, performance, settings, lighting and analytics
-    (`packages/*/test/doc_examples_*_test.dart`). Not yet covered: the multiplayer tutorial, the
+    (`packages/*/test/doc_examples_*_test.dart`). Not yet covered: the
     older concept pages (architecture, rendering, real-time strategy; the networking page's calls - `ClientSession` clock sync, `nearbyInterest` - are exercised with the same API by `session_test.dart` and `interest_management_test.dart`) and the studio
     guide. If a sample drifts from the code, that is a bug - please open an issue or fix both.
 
