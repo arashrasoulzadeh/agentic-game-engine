@@ -73,112 +73,112 @@ void registerPlatformerComponents(World world) {
     'gravity',
     (g) => g.toJson(),
     Gravity.fromJson,
- 
+
     schema: gravitySchema,
   );
   world.components.register<PlatformBody>(
     'platformBody',
     (p) => p.toJson(),
     PlatformBody.fromJson,
- 
+
     schema: platformBodySchema,
   );
   world.components.register<PlatformerController>(
     'platformerController',
     (p) => p.toJson(),
     PlatformerController.fromJson,
- 
+
     schema: platformerControllerSchema,
   );
   world.components.register<MovementAnimationSet>(
     'movementAnimationSet',
     (m) => m.toJson(),
     MovementAnimationSet.fromJson,
- 
+
     schema: movementAnimationSetSchema,
   );
   world.components.register<JumpAnimationSet>(
     'jumpAnimationSet',
     (j) => j.toJson(),
     JumpAnimationSet.fromJson,
- 
+
     schema: jumpAnimationSetSchema,
   );
   world.components.register<JumpAnimationPhaseState>(
     'jumpAnimationPhaseState',
     (j) => j.toJson(),
     JumpAnimationPhaseState.fromJson,
- 
+
     schema: jumpAnimationPhaseStateSchema,
   );
   world.components.register<Health>(
     'health',
     (h) => h.toJson(),
     Health.fromJson,
- 
+
     schema: healthSchema,
   );
   world.components.register<Checkpoint>(
     'checkpoint',
     (c) => c.toJson(),
     Checkpoint.fromJson,
- 
+
     schema: checkpointSchema,
   );
   world.components.register<LastCheckpoint>(
     'lastCheckpoint',
     (l) => l.toJson(),
     LastCheckpoint.fromJson,
- 
+
     schema: lastCheckpointSchema,
   );
   world.components.register<Inventory>(
     'inventory',
     (i) => i.toJson(),
     Inventory.fromJson,
- 
+
     schema: inventorySchema,
   );
   world.components.register<Projectile>(
     'projectile',
     (p) => p.toJson(),
     Projectile.fromJson,
- 
+
     schema: projectileSchema,
   );
   world.components.register<HealthHudLink>(
     'healthHudLink',
     (h) => h.toJson(),
     HealthHudLink.fromJson,
- 
+
     schema: healthHudLinkSchema,
   );
   world.components.register<WaterZone>(
     'waterZone',
     (w) => w.toJson(),
     WaterZone.fromJson,
- 
+
     schema: waterZoneSchema,
   );
   world.components.register<Weapon>(
     'weapon',
     (w) => w.toJson(),
     Weapon.fromJson,
- 
+
     schema: weaponSchema,
   );
   world.components.register<EnemyCombat>(
     'enemyCombat',
     (e) => e.toJson(),
     EnemyCombat.fromJson,
- 
+
     schema: enemyCombatSchema,
   );
   world.components.register<Parry>(
     'parry',
     (p) => p.toJson(),
     Parry.fromJson,
- 
+
     schema: parrySchema,
   );
 }

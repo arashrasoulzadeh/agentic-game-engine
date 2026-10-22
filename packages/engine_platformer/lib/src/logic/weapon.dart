@@ -133,7 +133,8 @@ class Weapon {
 
   /// Returns the damage for the current combo step.
   double get currentDamage {
-    if (comboDamageMultipliers != null && currentComboStep < comboDamageMultipliers!.length) {
+    if (comboDamageMultipliers != null &&
+        currentComboStep < comboDamageMultipliers!.length) {
       return damage * comboDamageMultipliers![currentComboStep];
     }
     return damage;
@@ -149,7 +150,8 @@ class Weapon {
 
   /// Returns the melee range for the current combo step.
   double get currentMeleeRange {
-    if (comboMeleeRanges != null && currentComboStep < comboMeleeRanges!.length) {
+    if (comboMeleeRanges != null &&
+        currentComboStep < comboMeleeRanges!.length) {
       return comboMeleeRanges![currentComboStep];
     }
     return meleeRange;
@@ -165,7 +167,8 @@ class Weapon {
 
   /// Returns the melee duration for the current combo step.
   double get currentMeleeDuration {
-    if (comboMeleeDurations != null && currentComboStep < comboMeleeDurations!.length) {
+    if (comboMeleeDurations != null &&
+        currentComboStep < comboMeleeDurations!.length) {
       return comboMeleeDurations![currentComboStep];
     }
     return meleeDurationSeconds;
@@ -187,54 +190,66 @@ class Weapon {
   }
 
   Map<String, dynamic> toJson() => {
-        'kind': kind.name,
-        'damage': damage,
-        'cooldownSeconds': cooldownSeconds,
-        'cooldownRemaining': cooldownRemaining,
-        'meleeRange': meleeRange,
-        'meleeRadius': meleeRadius,
-        'meleeDurationSeconds': meleeDurationSeconds,
-        'projectileSpeed': projectileSpeed,
-        'projectileRadius': projectileRadius,
-        'projectileLifetimeSeconds': projectileLifetimeSeconds,
-        'comboCount': comboCount,
-        'comboWindowSeconds': comboWindowSeconds,
-        'comboTimer': comboTimer,
-        'currentComboStep': currentComboStep,
-        if (comboDamageMultipliers != null) 'comboDamageMultipliers': comboDamageMultipliers,
-        if (comboCooldowns != null) 'comboCooldowns': comboCooldowns,
-        if (comboMeleeRanges != null) 'comboMeleeRanges': comboMeleeRanges,
-        if (comboMeleeRadii != null) 'comboMeleeRadii': comboMeleeRadii,
-        if (comboMeleeDurations != null) 'comboMeleeDurations': comboMeleeDurations,
-        if (atlasId != null) 'atlasId': atlasId,
-        if (spriteRegion != null) 'spriteRegion': spriteRegion,
-      };
+    'kind': kind.name,
+    'damage': damage,
+    'cooldownSeconds': cooldownSeconds,
+    'cooldownRemaining': cooldownRemaining,
+    'meleeRange': meleeRange,
+    'meleeRadius': meleeRadius,
+    'meleeDurationSeconds': meleeDurationSeconds,
+    'projectileSpeed': projectileSpeed,
+    'projectileRadius': projectileRadius,
+    'projectileLifetimeSeconds': projectileLifetimeSeconds,
+    'comboCount': comboCount,
+    'comboWindowSeconds': comboWindowSeconds,
+    'comboTimer': comboTimer,
+    'currentComboStep': currentComboStep,
+    if (comboDamageMultipliers != null)
+      'comboDamageMultipliers': comboDamageMultipliers,
+    if (comboCooldowns != null) 'comboCooldowns': comboCooldowns,
+    if (comboMeleeRanges != null) 'comboMeleeRanges': comboMeleeRanges,
+    if (comboMeleeRadii != null) 'comboMeleeRadii': comboMeleeRadii,
+    if (comboMeleeDurations != null) 'comboMeleeDurations': comboMeleeDurations,
+    if (atlasId != null) 'atlasId': atlasId,
+    if (spriteRegion != null) 'spriteRegion': spriteRegion,
+  };
 
   factory Weapon.fromJson(Map<String, dynamic> json) => Weapon(
-        kind: WeaponKind.values.firstWhere(
-          (k) => k.name == json['kind'],
-          orElse: () => WeaponKind.melee,
-        ),
-        damage: (json['damage'] as num?)?.toDouble() ?? 10,
-        cooldownSeconds: (json['cooldownSeconds'] as num?)?.toDouble() ?? 0.4,
-        cooldownRemaining: (json['cooldownRemaining'] as num?)?.toDouble() ?? 0,
-        meleeRange: (json['meleeRange'] as num?)?.toDouble() ?? 24,
-        meleeRadius: (json['meleeRadius'] as num?)?.toDouble() ?? 12,
-        meleeDurationSeconds: (json['meleeDurationSeconds'] as num?)?.toDouble() ?? 0.12,
-        projectileSpeed: (json['projectileSpeed'] as num?)?.toDouble() ?? 400,
-        projectileRadius: (json['projectileRadius'] as num?)?.toDouble() ?? 4,
-        projectileLifetimeSeconds:
-            (json['projectileLifetimeSeconds'] as num?)?.toDouble() ?? 2,
-        comboCount: (json['comboCount'] as int?) ?? 1,
-        comboWindowSeconds: (json['comboWindowSeconds'] as num?)?.toDouble() ?? 0.5,
-        comboTimer: (json['comboTimer'] as num?)?.toDouble() ?? 0,
-        currentComboStep: (json['currentComboStep'] as int?) ?? 0,
-        comboDamageMultipliers: (json['comboDamageMultipliers'] as List?)?.map((e) => (e as num).toDouble()).toList(),
-        comboCooldowns: (json['comboCooldowns'] as List?)?.map((e) => (e as num).toDouble()).toList(),
-        comboMeleeRanges: (json['comboMeleeRanges'] as List?)?.map((e) => (e as num).toDouble()).toList(),
-        comboMeleeRadii: (json['comboMeleeRadii'] as List?)?.map((e) => (e as num).toDouble()).toList(),
-        comboMeleeDurations: (json['comboMeleeDurations'] as List?)?.map((e) => (e as num).toDouble()).toList(),
-        atlasId: json['atlasId'] as String?,
-        spriteRegion: json['spriteRegion'] as String?,
-      );
+    kind: WeaponKind.values.firstWhere(
+      (k) => k.name == json['kind'],
+      orElse: () => WeaponKind.melee,
+    ),
+    damage: (json['damage'] as num?)?.toDouble() ?? 10,
+    cooldownSeconds: (json['cooldownSeconds'] as num?)?.toDouble() ?? 0.4,
+    cooldownRemaining: (json['cooldownRemaining'] as num?)?.toDouble() ?? 0,
+    meleeRange: (json['meleeRange'] as num?)?.toDouble() ?? 24,
+    meleeRadius: (json['meleeRadius'] as num?)?.toDouble() ?? 12,
+    meleeDurationSeconds:
+        (json['meleeDurationSeconds'] as num?)?.toDouble() ?? 0.12,
+    projectileSpeed: (json['projectileSpeed'] as num?)?.toDouble() ?? 400,
+    projectileRadius: (json['projectileRadius'] as num?)?.toDouble() ?? 4,
+    projectileLifetimeSeconds:
+        (json['projectileLifetimeSeconds'] as num?)?.toDouble() ?? 2,
+    comboCount: (json['comboCount'] as int?) ?? 1,
+    comboWindowSeconds: (json['comboWindowSeconds'] as num?)?.toDouble() ?? 0.5,
+    comboTimer: (json['comboTimer'] as num?)?.toDouble() ?? 0,
+    currentComboStep: (json['currentComboStep'] as int?) ?? 0,
+    comboDamageMultipliers: (json['comboDamageMultipliers'] as List?)
+        ?.map((e) => (e as num).toDouble())
+        .toList(),
+    comboCooldowns: (json['comboCooldowns'] as List?)
+        ?.map((e) => (e as num).toDouble())
+        .toList(),
+    comboMeleeRanges: (json['comboMeleeRanges'] as List?)
+        ?.map((e) => (e as num).toDouble())
+        .toList(),
+    comboMeleeRadii: (json['comboMeleeRadii'] as List?)
+        ?.map((e) => (e as num).toDouble())
+        .toList(),
+    comboMeleeDurations: (json['comboMeleeDurations'] as List?)
+        ?.map((e) => (e as num).toDouble())
+        .toList(),
+    atlasId: json['atlasId'] as String?,
+    spriteRegion: json['spriteRegion'] as String?,
+  );
 }

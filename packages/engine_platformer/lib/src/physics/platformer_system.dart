@@ -94,7 +94,11 @@ class PlatformerSystem implements System {
             bottom: bottom,
           );
           landedOnThis = side == CollisionSide.top;
-          applyCollisionSideToController(side: side, controller: controller, vel: vel);
+          applyCollisionSideToController(
+            side: side,
+            controller: controller,
+            vel: vel,
+          );
         }
 
         if (landedOnThis) {

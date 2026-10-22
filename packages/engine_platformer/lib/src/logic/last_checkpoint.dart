@@ -10,7 +10,7 @@ class LastCheckpoint {
   Map<String, dynamic> toJson() => {'x': x, 'y': y};
 
   factory LastCheckpoint.fromJson(Map<String, dynamic> json) => LastCheckpoint(
-        (json['x'] as num).toDouble(),
-        (json['y'] as num).toDouble(),
-      );
+    (json['x'] as num).toDouble(),
+    (json['y'] as num).toDouble(),
+  );
 }

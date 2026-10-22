@@ -64,19 +64,23 @@ class JumpSystem implements System {
         controller.timeSinceJumpPressed += dt;
       }
 
-      final canGroundJump = controller.timeSinceGrounded <= controller.coyoteTimeSeconds;
-      final jumpWanted = controller.timeSinceJumpPressed <= controller.jumpBufferSeconds;
+      final canGroundJump =
+          controller.timeSinceGrounded <= controller.coyoteTimeSeconds;
+      final jumpWanted =
+          controller.timeSinceJumpPressed <= controller.jumpBufferSeconds;
 
       if (vel != null && jumpWanted) {
         if (canGroundJump) {
           vel.y = -controller.jumpSpeed;
           _consumeJump(controller);
-        } else if ((controller.touchingWallLeft || controller.touchingWallRight) &&
+        } else if ((controller.touchingWallLeft ||
+                controller.touchingWallRight) &&
             controller.wallJumpPushSpeed > 0) {
           vel.y = -controller.jumpSpeed;
           // Push away from whichever wall is touched -- touching a wall
           // on this entity's left means push right, and vice versa.
-          vel.x = controller.wallJumpPushSpeed *
+          vel.x =
+              controller.wallJumpPushSpeed *
               (controller.touchingWallLeft ? 1 : -1);
           _consumeJump(controller);
         } else if (controller.airJumpsUsed < controller.maxAirJumps) {

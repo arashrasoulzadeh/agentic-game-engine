@@ -13,14 +13,14 @@ class PlatformBody {
   PlatformBody(this.width, this.height, {this.oneWay = false});
 
   Map<String, dynamic> toJson() => {
-        'width': width,
-        'height': height,
-        'oneWay': oneWay,
-      };
+    'width': width,
+    'height': height,
+    'oneWay': oneWay,
+  };
 
   factory PlatformBody.fromJson(Map<String, dynamic> json) => PlatformBody(
-        (json['width'] as num).toDouble(),
-        (json['height'] as num).toDouble(),
-        oneWay: json['oneWay'] as bool? ?? false,
-      );
+    (json['width'] as num).toDouble(),
+    (json['height'] as num).toDouble(),
+    oneWay: json['oneWay'] as bool? ?? false,
+  );
 }

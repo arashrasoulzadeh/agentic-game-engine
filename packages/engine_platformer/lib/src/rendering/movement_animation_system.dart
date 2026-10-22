@@ -64,7 +64,10 @@ class MovementAnimationSystem implements System {
         }
         animStates.set(
           entity,
-          AnimationState(target, crossfadeSeconds: current?.crossfadeSeconds ?? 0),
+          AnimationState(
+            target,
+            crossfadeSeconds: current?.crossfadeSeconds ?? 0,
+          ),
         );
       }
     }

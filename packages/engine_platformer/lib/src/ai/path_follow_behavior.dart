@@ -21,7 +21,8 @@ class PathFollowBehavior implements Behavior {
   /// The waypoint currently being walked toward, or `null` once the
   /// path is complete — useful for a game that wants to know (e.g. to
   /// decide whether to jump toward it).
-  PlatformerPathPoint? get currentTarget => _index < path.length ? path[_index] : null;
+  PlatformerPathPoint? get currentTarget =>
+      _index < path.length ? path[_index] : null;
 
   @override
   Action decide(WorldView view, EntityId self) {
@@ -49,7 +50,13 @@ class PathFollowBehavior implements Behavior {
     return _decideMovement(self, pos, controller, vel, target);
   }
 
-  Action _decideMovement(EntityId self, Position pos, PlatformerController? controller, Velocity? vel, PlatformerPathPoint target) {
+  Action _decideMovement(
+    EntityId self,
+    Position pos,
+    PlatformerController? controller,
+    Velocity? vel,
+    PlatformerPathPoint target,
+  ) {
     if (controller == null) return _SetVelocityXAction(self, 0);
 
     final dx = target.x - pos.x;

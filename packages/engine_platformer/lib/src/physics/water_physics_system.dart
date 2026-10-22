@@ -43,7 +43,13 @@ class WaterPhysicsSystem implements System {
         final zone = zones.denseAt(j);
         final zonePos = positions.get(zoneEntity);
         if (zonePos == null) continue;
-        if (!_circleOverlapsRect(pos, collider.radius, zonePos, zone.width, zone.height)) {
+        if (!_circleOverlapsRect(
+          pos,
+          collider.radius,
+          zonePos,
+          zone.width,
+          zone.height,
+        )) {
           continue;
         }
 

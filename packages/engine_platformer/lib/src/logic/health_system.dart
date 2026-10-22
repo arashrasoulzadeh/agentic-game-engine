@@ -23,19 +23,30 @@ class HealthSystem implements System {
 
       // Count down invincibility frames
       if (health.invincibleSeconds > 0) {
-        health.invincibleSeconds = (health.invincibleSeconds - dt).clamp(0, double.infinity);
+        health.invincibleSeconds = (health.invincibleSeconds - dt).clamp(
+          0,
+          double.infinity,
+        );
       }
 
       // Count down guard break stun
       if (health.guardBreakTimer > 0) {
-        health.guardBreakTimer = (health.guardBreakTimer - dt).clamp(0, double.infinity);
+        health.guardBreakTimer = (health.guardBreakTimer - dt).clamp(
+          0,
+          double.infinity,
+        );
       }
 
       // Regenerate stability when not guarding and not guard broken
       // Use wasGuardBroken to prevent regen during the tick guard break ends
-      if (!health.isGuarding && !wasGuardBroken && health.stability < health.effectiveMaxStability) {
-        health.stability = (health.stability + health.stabilityRegenPerSecond * dt)
-            .clamp(0, health.effectiveMaxStability);
+      if (!health.isGuarding &&
+          !wasGuardBroken &&
+          health.stability < health.effectiveMaxStability) {
+        health.stability =
+            (health.stability + health.stabilityRegenPerSecond * dt).clamp(
+              0,
+              health.effectiveMaxStability,
+            );
       }
     }
   }

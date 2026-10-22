@@ -62,7 +62,9 @@ class PlatformerInputSystem implements System {
     var vx = 0.0;
     if (input.isPressed(leftAction)) vx -= moveSpeed;
     if (input.isPressed(rightAction)) vx += moveSpeed;
-    if (controller != null && controller.grounded && controller.groundFriction < 1.0) {
+    if (controller != null &&
+        controller.grounded &&
+        controller.groundFriction < 1.0) {
       // Blend toward the target instead of snapping — groundFriction is
       // read from last tick's TileCollisionSystem pass (see
       // PlatformerController.groundFriction), so this is one tick stale

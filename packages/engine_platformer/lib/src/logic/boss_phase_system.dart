@@ -74,9 +74,10 @@ class BossPhaseSystem implements System {
     for (var i = 1; i < phases.length; i++) {
       if (phases[i].healthFraction > phases[i - 1].healthFraction) {
         throw ArgumentError(
-            'BossPhaseSystem.phases must be given in descending healthFraction '
-            'order (phase $i has ${phases[i].healthFraction}, phase ${i - 1} has '
-            '${phases[i - 1].healthFraction})');
+          'BossPhaseSystem.phases must be given in descending healthFraction '
+          'order (phase $i has ${phases[i].healthFraction}, phase ${i - 1} has '
+          '${phases[i - 1].healthFraction})',
+        );
       }
     }
   }
@@ -105,7 +106,9 @@ class BossPhaseSystem implements System {
       final phase = phases[_nextPhaseIndex];
       final phaseIndex = _nextPhaseIndex;
       _nextPhaseIndex++;
-      world.events.emit(BossPhaseChangedEvent(entity, phase.patternId, phaseIndex));
+      world.events.emit(
+        BossPhaseChangedEvent(entity, phase.patternId, phaseIndex),
+      );
 
       final steps = phase.cinematicSteps?.call();
       if (steps != null && steps.isNotEmpty) {

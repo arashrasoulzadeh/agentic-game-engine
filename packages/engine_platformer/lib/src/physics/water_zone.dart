@@ -22,19 +22,24 @@ class WaterZone {
   /// jump arc.
   double swimUpSpeed;
 
-  WaterZone(this.width, this.height, {this.maxFallSpeed = 80, this.swimUpSpeed = 140});
+  WaterZone(
+    this.width,
+    this.height, {
+    this.maxFallSpeed = 80,
+    this.swimUpSpeed = 140,
+  });
 
   Map<String, dynamic> toJson() => {
-        'width': width,
-        'height': height,
-        'maxFallSpeed': maxFallSpeed,
-        'swimUpSpeed': swimUpSpeed,
-      };
+    'width': width,
+    'height': height,
+    'maxFallSpeed': maxFallSpeed,
+    'swimUpSpeed': swimUpSpeed,
+  };
 
   factory WaterZone.fromJson(Map<String, dynamic> json) => WaterZone(
-        (json['width'] as num).toDouble(),
-        (json['height'] as num).toDouble(),
-        maxFallSpeed: (json['maxFallSpeed'] as num?)?.toDouble() ?? 80,
-        swimUpSpeed: (json['swimUpSpeed'] as num?)?.toDouble() ?? 140,
-      );
+    (json['width'] as num).toDouble(),
+    (json['height'] as num).toDouble(),
+    maxFallSpeed: (json['maxFallSpeed'] as num?)?.toDouble() ?? 80,
+    swimUpSpeed: (json['swimUpSpeed'] as num?)?.toDouble() ?? 140,
+  );
 }

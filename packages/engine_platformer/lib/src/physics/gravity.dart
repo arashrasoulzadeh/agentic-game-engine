@@ -18,10 +18,13 @@ class Gravity {
 
   Gravity({this.scale = 1, this.fallMultiplier = 1});
 
-  Map<String, dynamic> toJson() => {'scale': scale, 'fallMultiplier': fallMultiplier};
+  Map<String, dynamic> toJson() => {
+    'scale': scale,
+    'fallMultiplier': fallMultiplier,
+  };
 
   factory Gravity.fromJson(Map<String, dynamic> json) => Gravity(
-        scale: (json['scale'] as num?)?.toDouble() ?? 1,
-        fallMultiplier: (json['fallMultiplier'] as num?)?.toDouble() ?? 1,
-      );
+    scale: (json['scale'] as num?)?.toDouble() ?? 1,
+    fallMultiplier: (json['fallMultiplier'] as num?)?.toDouble() ?? 1,
+  );
 }

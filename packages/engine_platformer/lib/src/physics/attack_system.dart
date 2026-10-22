@@ -68,7 +68,9 @@ class AttackSystem implements System {
     if (!_listenersRegistered) {
       world.events.on<MeleeHitEvent>((event) {
         final weapon = weapons.get(event.attacker);
-        if (weapon != null && weapon.kind == WeaponKind.melee && weapon.comboCount > 1) {
+        if (weapon != null &&
+            weapon.kind == WeaponKind.melee &&
+            weapon.comboCount > 1) {
           // Start combo window for next hit
           weapon.comboTimer = weapon.comboWindowSeconds;
           weapon.advanceCombo();
@@ -101,7 +103,8 @@ class AttackSystem implements System {
       // Check if we can fire: either normal ready, or in combo window with attack buffered
       final requested = weapon.attackRequested;
       final canFireNormal = requested && weapon.isReady;
-      final canFireCombo = requested &&
+      final canFireCombo =
+          requested &&
           weapon.comboTimer > 0 &&
           weapon.currentComboStep > 0 &&
           weapon.currentComboStep < weapon.comboCount;
@@ -115,7 +118,8 @@ class AttackSystem implements System {
           final facing = controllers.get(entity)?.facingSign ?? 1.0;
 
           // Check line of sight if required
-          if (!requireLineOfSight || _hasLineOfSight(world, view!, pos, weapon, facing)) {
+          if (!requireLineOfSight ||
+              _hasLineOfSight(world, view!, pos, weapon, facing)) {
             _fire(world, entity, weapon, pos, facing);
             weapon.cooldownRemaining = weapon.currentCooldown;
           }
@@ -126,7 +130,13 @@ class AttackSystem implements System {
 
   /// Checks if there's a clear line of sight from [pos] to the attack's
   /// max range in the [facing] direction.
-  bool _hasLineOfSight(World world, WorldView view, Position pos, Weapon weapon, double facing) {
+  bool _hasLineOfSight(
+    World world,
+    WorldView view,
+    Position pos,
+    Weapon weapon,
+    double facing,
+  ) {
     double maxRange;
     if (weapon.kind == WeaponKind.melee) {
       maxRange = weapon.currentMeleeRange;
@@ -140,7 +150,13 @@ class AttackSystem implements System {
     return view.hasLineOfSight(pos.x, pos.y, targetX, targetY);
   }
 
-  void _fire(World world, EntityId entity, Weapon weapon, Position pos, double facing) {
+  void _fire(
+    World world,
+    EntityId entity,
+    Weapon weapon,
+    Position pos,
+    double facing,
+  ) {
     switch (weapon.kind) {
       case WeaponKind.ranged:
         spawnProjectile(

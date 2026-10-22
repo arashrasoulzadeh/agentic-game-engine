@@ -74,13 +74,22 @@ class HearingComponent {
 /// 2. The sound is not fully tile-occluded (uses `raycastTileMap` / `hasLineOfSight`).
 ///
 /// On a heard sound, writes `memory['lastHeardSound'] = {'x': ..., 'y': ..., 'loudness': ..., 'tag': ..., 'data': ...}`
-/// to the entity's `AIState`, overwriting any previous heard sound.
+/// to the entity's `AIState`, overwriting any previous heard sound. `age` (seconds since it was heard)
+/// starts at 0 and grows each update, so a behaviour can ignore a sound that is too old.
 class HearingSystem implements System {
   @override
   String get name => 'hearing';
 
   @override
   void update(World world, double dt) {
+    // Ages the memory so behaviours can give up on stale sounds (InvestigateBehavior.timeout).
+    final states = world.storeOf<AIState>();
+    for (var i = 0; i < states.length; i++) {
+      final heard = states.denseAt(i).memory['lastHeardSound'];
+      if (heard is Map && dt > 0) {
+        heard['age'] = ((heard['age'] as num?) ?? 0).toDouble() + dt;
+      }
+    }
     // We process sounds by subscribing to events during update.
     // This is a bit unusual - typically systems are polled each tick,
     // but since SoundEvents are emitted asynchronously via the EventBus,
@@ -141,6 +150,7 @@ class HearingSystem implements System {
           'x': sound.x,
           'y': sound.y,
           'loudness': sound.loudness,
+          'age': 0.0,
           if (sound.tag != null) 'tag': sound.tag,
           if (sound.data != null) 'data': sound.data,
         };

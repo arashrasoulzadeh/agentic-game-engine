@@ -98,48 +98,60 @@ class JumpAnimationSet {
     double landingHoldSeconds = 0.06,
     double completedHoldSeconds = 0.08,
     double moveInterruptThreshold = 5,
-  }) =>
-      JumpAnimationSet(
-        start: AnimationClip('jumpStart', start, loop: false),
-        rising: AnimationClip('jumpRising', rising, loop: true, frameDurationSeconds: 0.08),
-        peak: AnimationClip('jumpPeak', peak, loop: false),
-        falling: AnimationClip('jumpFalling', falling, loop: false),
-        landing: AnimationClip('jumpLanding', landing, loop: false),
-        completed: AnimationClip('jumpCompleted', completed, loop: false),
-        peakVelocityThreshold: peakVelocityThreshold,
-        startHoldSeconds: startHoldSeconds,
-        landingHoldSeconds: landingHoldSeconds,
-        completedHoldSeconds: completedHoldSeconds,
-        moveInterruptThreshold: moveInterruptThreshold,
-      );
+  }) => JumpAnimationSet(
+    start: AnimationClip('jumpStart', start, loop: false),
+    rising: AnimationClip(
+      'jumpRising',
+      rising,
+      loop: true,
+      frameDurationSeconds: 0.08,
+    ),
+    peak: AnimationClip('jumpPeak', peak, loop: false),
+    falling: AnimationClip('jumpFalling', falling, loop: false),
+    landing: AnimationClip('jumpLanding', landing, loop: false),
+    completed: AnimationClip('jumpCompleted', completed, loop: false),
+    peakVelocityThreshold: peakVelocityThreshold,
+    startHoldSeconds: startHoldSeconds,
+    landingHoldSeconds: landingHoldSeconds,
+    completedHoldSeconds: completedHoldSeconds,
+    moveInterruptThreshold: moveInterruptThreshold,
+  );
 
   Map<String, dynamic> toJson() => {
-        'start': start.toJson(),
-        'rising': rising.toJson(),
-        'peak': peak.toJson(),
-        'falling': falling.toJson(),
-        'landing': landing.toJson(),
-        'completed': completed.toJson(),
-        'peakVelocityThreshold': peakVelocityThreshold,
-        'startHoldSeconds': startHoldSeconds,
-        'landingHoldSeconds': landingHoldSeconds,
-        'completedHoldSeconds': completedHoldSeconds,
-        'moveInterruptThreshold': moveInterruptThreshold,
-      };
+    'start': start.toJson(),
+    'rising': rising.toJson(),
+    'peak': peak.toJson(),
+    'falling': falling.toJson(),
+    'landing': landing.toJson(),
+    'completed': completed.toJson(),
+    'peakVelocityThreshold': peakVelocityThreshold,
+    'startHoldSeconds': startHoldSeconds,
+    'landingHoldSeconds': landingHoldSeconds,
+    'completedHoldSeconds': completedHoldSeconds,
+    'moveInterruptThreshold': moveInterruptThreshold,
+  };
 
-  factory JumpAnimationSet.fromJson(Map<String, dynamic> json) => JumpAnimationSet(
-        start: AnimationClip.fromJson(json['start'] as Map<String, dynamic>),
-        rising: AnimationClip.fromJson(json['rising'] as Map<String, dynamic>),
-        peak: AnimationClip.fromJson(json['peak'] as Map<String, dynamic>),
-        falling: AnimationClip.fromJson(json['falling'] as Map<String, dynamic>),
-        landing: AnimationClip.fromJson(json['landing'] as Map<String, dynamic>),
-        completed: AnimationClip.fromJson(json['completed'] as Map<String, dynamic>),
-        peakVelocityThreshold: (json['peakVelocityThreshold'] as num?)?.toDouble() ?? 40,
-        startHoldSeconds: (json['startHoldSeconds'] as num?)?.toDouble() ?? 0.08,
-        landingHoldSeconds: (json['landingHoldSeconds'] as num?)?.toDouble() ?? 0.06,
-        completedHoldSeconds: (json['completedHoldSeconds'] as num?)?.toDouble() ?? 0.08,
-        moveInterruptThreshold: (json['moveInterruptThreshold'] as num?)?.toDouble() ?? 5,
-      );
+  factory JumpAnimationSet.fromJson(
+    Map<String, dynamic> json,
+  ) => JumpAnimationSet(
+    start: AnimationClip.fromJson(json['start'] as Map<String, dynamic>),
+    rising: AnimationClip.fromJson(json['rising'] as Map<String, dynamic>),
+    peak: AnimationClip.fromJson(json['peak'] as Map<String, dynamic>),
+    falling: AnimationClip.fromJson(json['falling'] as Map<String, dynamic>),
+    landing: AnimationClip.fromJson(json['landing'] as Map<String, dynamic>),
+    completed: AnimationClip.fromJson(
+      json['completed'] as Map<String, dynamic>,
+    ),
+    peakVelocityThreshold:
+        (json['peakVelocityThreshold'] as num?)?.toDouble() ?? 40,
+    startHoldSeconds: (json['startHoldSeconds'] as num?)?.toDouble() ?? 0.08,
+    landingHoldSeconds:
+        (json['landingHoldSeconds'] as num?)?.toDouble() ?? 0.06,
+    completedHoldSeconds:
+        (json['completedHoldSeconds'] as num?)?.toDouble() ?? 0.08,
+    moveInterruptThreshold:
+        (json['moveInterruptThreshold'] as num?)?.toDouble() ?? 5,
+  );
 }
 
 /// Which `JumpAnimationSet` phase is currently showing (`'start'`,
@@ -160,9 +172,9 @@ class JumpAnimationPhaseState {
   JumpAnimationPhaseState({this.phase, this.elapsed = 0});
 
   Map<String, dynamic> toJson() => {
-        if (phase != null) 'phase': phase,
-        'elapsed': elapsed,
-      };
+    if (phase != null) 'phase': phase,
+    'elapsed': elapsed,
+  };
 
   factory JumpAnimationPhaseState.fromJson(Map<String, dynamic> json) =>
       JumpAnimationPhaseState(

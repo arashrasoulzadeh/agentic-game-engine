@@ -53,10 +53,14 @@ class TileCollisionSystem implements System {
         final collider = colliders.get(entity);
         if (pos == null || vel == null || collider == null) continue;
 
-        final minCol = ((pos.x - collider.radius - origin.x) / map.tileWidth).floor();
-        final maxCol = ((pos.x + collider.radius - origin.x) / map.tileWidth).ceil();
-        final minRow = ((pos.y - collider.radius - origin.y) / map.tileHeight).floor();
-        final maxRow = ((pos.y + collider.radius - origin.y) / map.tileHeight).ceil();
+        final minCol = ((pos.x - collider.radius - origin.x) / map.tileWidth)
+            .floor();
+        final maxCol = ((pos.x + collider.radius - origin.x) / map.tileWidth)
+            .ceil();
+        final minRow = ((pos.y - collider.radius - origin.y) / map.tileHeight)
+            .floor();
+        final maxRow = ((pos.y + collider.radius - origin.y) / map.tileHeight)
+            .ceil();
 
         for (var row = minRow; row <= maxRow; row++) {
           for (var col = minCol; col <= maxCol; col++) {
@@ -103,7 +107,11 @@ class TileCollisionSystem implements System {
                 top: top,
                 bottom: bottom,
               );
-              applyCollisionSideToController(side: side, controller: controller, vel: vel);
+              applyCollisionSideToController(
+                side: side,
+                controller: controller,
+                vel: vel,
+              );
               landedOnThisTile = side == CollisionSide.top;
             } else if (map.slopeUpRightTileIds.contains(tileId) ||
                 map.slopeUpLeftTileIds.contains(tileId)) {

@@ -193,7 +193,7 @@ Site: <https://meetarash.ir/agentic-game-engine/> (MkDocs Material, built from
 None of these appear anywhere under `docs/` today. Each needs a concept page
 (or a section) and, where it has runtime behaviour, a tested recipe:
 
-- [ ] `InvestigateBehavior.timeout` is accepted but ignored (no timestamp in `lastHeardSound`).
+- [x] `InvestigateBehavior.timeout` works: `HearingSystem` keeps an `age` on `lastHeardSound`, the behaviour forgets a sound older than the timeout.
 - [ ] Cinematics, scene transitions, video playback (tweens and particles are done:
       `docs/concepts/effects.md`).
 - [x] **Colorblind simulation** — `EngineView(colorblindMode:)` applies protanopia / deuteranopia / tritanopia as a colour

@@ -29,18 +29,18 @@ EntityId spawnHealthHudBar(
   final id = world.spawn();
   world.storeOf<Position>().set(id, Position(x, y));
   world.storeOf<HudBar>().set(
-        id,
-        HudBar(
-          value: 0,
-          maxValue: 0,
-          width: width,
-          height: height,
-          fillColorArgb: fillColorArgb,
-          backgroundColorArgb: backgroundColorArgb,
-          screenSpace: screenSpace,
-          zIndex: zIndex,
-        ),
-      );
+    id,
+    HudBar(
+      value: 0,
+      maxValue: 0,
+      width: width,
+      height: height,
+      fillColorArgb: fillColorArgb,
+      backgroundColorArgb: backgroundColorArgb,
+      screenSpace: screenSpace,
+      zIndex: zIndex,
+    ),
+  );
   world.storeOf<HealthHudLink>().set(id, HealthHudLink(source));
   return id;
 }

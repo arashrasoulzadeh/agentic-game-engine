@@ -39,7 +39,11 @@ class AvoidanceBehavior implements Behavior {
   /// physics for something this cheap to fake.
   final double avoidStrength;
 
-  AvoidanceBehavior(this.inner, {this.avoidRadius = 40, this.avoidStrength = 80});
+  AvoidanceBehavior(
+    this.inner, {
+    this.avoidRadius = 40,
+    this.avoidStrength = 80,
+  });
 
   @override
   Action decide(WorldView view, EntityId self) {
@@ -48,7 +52,12 @@ class AvoidanceBehavior implements Behavior {
     if (pos == null) return innerAction;
 
     var pushX = 0.0;
-    for (final other in view.entitiesWithinRadius(pos.x, pos.y, avoidRadius, exclude: self)) {
+    for (final other in view.entitiesWithinRadius(
+      pos.x,
+      pos.y,
+      avoidRadius,
+      exclude: self,
+    )) {
       if (view.component<AIState>(other) == null) continue;
       final otherPos = view.component<Position>(other);
       if (otherPos == null) continue;
@@ -60,7 +69,8 @@ class AvoidanceBehavior implements Behavior {
       // leaving both entities stuck exactly on top of each other with
       // zero net force.
       final direction = distance < 0.001 ? 1.0 : dx.sign;
-      final strength = avoidStrength * (1 - (distance / avoidRadius).clamp(0.0, 1.0));
+      final strength =
+          avoidStrength * (1 - (distance / avoidRadius).clamp(0.0, 1.0));
       pushX += direction * strength;
     }
 
@@ -74,7 +84,11 @@ class _AvoidancePushAction implements Action {
   final EntityId entity;
   final double pushX;
 
-  _AvoidancePushAction({required this.inner, required this.entity, required this.pushX});
+  _AvoidancePushAction({
+    required this.inner,
+    required this.entity,
+    required this.pushX,
+  });
 
   @override
   void apply(World world) {

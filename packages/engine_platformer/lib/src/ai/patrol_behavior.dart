@@ -65,11 +65,13 @@ class PatrolBehavior implements Behavior {
     final effectiveMinX = (state.memory['minX'] as num?)?.toDouble() ?? minX;
     final effectiveMaxX = (state.memory['maxX'] as num?)?.toDouble() ?? maxX;
     final effectiveSpeed = (state.memory['speed'] as num?)?.toDouble() ?? speed;
-    if (effectiveMinX == null || effectiveMaxX == null) return const NoOpAction();
+    if (effectiveMinX == null || effectiveMaxX == null)
+      return const NoOpAction();
 
     final dir = (state.memory['dir'] as num?)?.toDouble() ?? 1.0;
     var shouldFlip =
-        (dir > 0 && pos.x >= effectiveMaxX) || (dir < 0 && pos.x <= effectiveMinX);
+        (dir > 0 && pos.x >= effectiveMaxX) ||
+        (dir < 0 && pos.x <= effectiveMinX);
 
     // Gated on `grounded` (when a `PlatformerController` is present —
     // an entity with no controller at all, e.g. a simple non-physics
@@ -93,7 +95,11 @@ class PatrolBehavior implements Behavior {
     }
 
     final newDir = shouldFlip ? -dir : dir;
-    return _PatrolStepAction(self, newDir * effectiveSpeed, shouldFlip ? newDir : null);
+    return _PatrolStepAction(
+      self,
+      newDir * effectiveSpeed,
+      shouldFlip ? newDir : null,
+    );
   }
 
   /// Whether any `TileMap` in the world has a solid tile directly below

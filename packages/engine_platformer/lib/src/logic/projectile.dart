@@ -32,16 +32,16 @@ class Projectile {
   });
 
   Map<String, dynamic> toJson() => {
-        'damage': damage,
-        'lifetimeSeconds': lifetimeSeconds,
-        'elapsed': elapsed,
-        if (owner != null) 'owner': owner,
-      };
+    'damage': damage,
+    'lifetimeSeconds': lifetimeSeconds,
+    'elapsed': elapsed,
+    if (owner != null) 'owner': owner,
+  };
 
   factory Projectile.fromJson(Map<String, dynamic> json) => Projectile(
-        damage: (json['damage'] as num).toDouble(),
-        lifetimeSeconds: (json['lifetimeSeconds'] as num?)?.toDouble() ?? 3,
-        elapsed: (json['elapsed'] as num?)?.toDouble() ?? 0,
-        owner: (json['owner'] as num?)?.toInt(),
-      );
+    damage: (json['damage'] as num).toDouble(),
+    lifetimeSeconds: (json['lifetimeSeconds'] as num?)?.toDouble() ?? 3,
+    elapsed: (json['elapsed'] as num?)?.toDouble() ?? 0,
+    owner: (json['owner'] as num?)?.toInt(),
+  );
 }

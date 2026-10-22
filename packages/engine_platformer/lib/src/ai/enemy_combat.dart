@@ -7,24 +7,34 @@ import 'package:engine_platformer/engine_platformer.dart';
 enum EnemyCombatState {
   /// Standing still, unaware of player
   idle,
+
   /// Walking back and forth on patrol route
   patrol,
+
   /// Aware of player but not yet engaging (heard sound, saw movement)
   alert,
+
   /// Moving toward player to get in attack range
   approach,
+
   /// Winding up attack (telegraph) - player can see this and react (parry/dodge)
   telegraph,
+
   /// Active attack hitbox out
   attack,
+
   /// Recovering after attack (cooldown, vulnerable)
   recovery,
+
   /// Moving to a new position after attack
   reposition,
+
   /// Stunned from parry/guard break/heavy hit
   stagger,
+
   /// Actively guarding/blocking
   guard,
+
   /// Fleeing (low health, overwhelmed)
   retreat,
 }
@@ -44,32 +54,46 @@ class EnemyCombat {
   /// Configuration - all overridable per-entity via AIState.memory
   /// Detection range for entering Alert state
   final double detectionRange;
+
   /// Range at which enemy starts Approach toward target
   final double engageRange;
+
   /// Range at which enemy triggers Telegraph (wind-up)
   final double attackRange;
+
   /// How long Telegraph (wind-up) lasts before Attack fires
   final double telegraphDuration;
+
   /// How long Attack hitbox stays active
   final double attackDuration;
+
   /// Recovery time after attack before can act again
   final double recoveryDuration;
+
   /// Time to spend in Reposition before returning to Patrol/Approach
   final double repositionDuration;
+
   /// Stagger duration (set externally when parried/guard broken)
   final double staggerDuration;
+
   /// Guard duration when choosing to block
   final double guardDuration;
+
   /// Retreat trigger health fraction (0-1)
   final double retreatHealthFraction;
+
   /// Speed when approaching
   final double approachSpeed;
+
   /// Speed when repositioning
   final double repositionSpeed;
+
   /// Speed when retreating
   final double retreatSpeed;
+
   /// Patrol speed (when no target)
   final double patrolSpeed;
+
   /// Patrol min/max X (for idle/patrol states)
   final double? patrolMinX;
   final double? patrolMaxX;
@@ -103,51 +127,52 @@ class EnemyCombat {
   }
 
   Map<String, dynamic> toJson() => {
-        'state': state.name,
-        'stateTimer': stateTimer,
-        'target': target,
-        'detectionRange': detectionRange,
-        'engageRange': engageRange,
-        'attackRange': attackRange,
-        'telegraphDuration': telegraphDuration,
-        'attackDuration': attackDuration,
-        'recoveryDuration': recoveryDuration,
-        'repositionDuration': repositionDuration,
-        'staggerDuration': staggerDuration,
-        'guardDuration': guardDuration,
-        'retreatHealthFraction': retreatHealthFraction,
-        'approachSpeed': approachSpeed,
-        'repositionSpeed': repositionSpeed,
-        'retreatSpeed': retreatSpeed,
-        'patrolSpeed': patrolSpeed,
-        if (patrolMinX != null) 'patrolMinX': patrolMinX,
-        if (patrolMaxX != null) 'patrolMaxX': patrolMaxX,
-      };
+    'state': state.name,
+    'stateTimer': stateTimer,
+    'target': target,
+    'detectionRange': detectionRange,
+    'engageRange': engageRange,
+    'attackRange': attackRange,
+    'telegraphDuration': telegraphDuration,
+    'attackDuration': attackDuration,
+    'recoveryDuration': recoveryDuration,
+    'repositionDuration': repositionDuration,
+    'staggerDuration': staggerDuration,
+    'guardDuration': guardDuration,
+    'retreatHealthFraction': retreatHealthFraction,
+    'approachSpeed': approachSpeed,
+    'repositionSpeed': repositionSpeed,
+    'retreatSpeed': retreatSpeed,
+    'patrolSpeed': patrolSpeed,
+    if (patrolMinX != null) 'patrolMinX': patrolMinX,
+    if (patrolMaxX != null) 'patrolMaxX': patrolMaxX,
+  };
 
   factory EnemyCombat.fromJson(Map<String, dynamic> json) => EnemyCombat(
-        state: EnemyCombatState.values.firstWhere(
-          (s) => s.name == json['state'],
-          orElse: () => EnemyCombatState.idle,
-        ),
-        stateTimer: (json['stateTimer'] as num?)?.toDouble() ?? 0,
-        target: json['target'] != null ? (json['target'] as int) : null,
-        detectionRange: (json['detectionRange'] as num?)?.toDouble() ?? 300,
-        engageRange: (json['engageRange'] as num?)?.toDouble() ?? 200,
-        attackRange: (json['attackRange'] as num?)?.toDouble() ?? 48,
-        telegraphDuration: (json['telegraphDuration'] as num?)?.toDouble() ?? 0.5,
-        attackDuration: (json['attackDuration'] as num?)?.toDouble() ?? 0.2,
-        recoveryDuration: (json['recoveryDuration'] as num?)?.toDouble() ?? 0.5,
-        repositionDuration: (json['repositionDuration'] as num?)?.toDouble() ?? 1.0,
-        staggerDuration: (json['staggerDuration'] as num?)?.toDouble() ?? 1.0,
-        guardDuration: (json['guardDuration'] as num?)?.toDouble() ?? 0.5,
-        retreatHealthFraction: (json['retreatHealthFraction'] as num?)?.toDouble() ?? 0.25,
-        approachSpeed: (json['approachSpeed'] as num?)?.toDouble() ?? 80,
-        repositionSpeed: (json['repositionSpeed'] as num?)?.toDouble() ?? 60,
-        retreatSpeed: (json['retreatSpeed'] as num?)?.toDouble() ?? 100,
-        patrolSpeed: (json['patrolSpeed'] as num?)?.toDouble() ?? 40,
-        patrolMinX: (json['patrolMinX'] as num?)?.toDouble(),
-        patrolMaxX: (json['patrolMaxX'] as num?)?.toDouble(),
-      );
+    state: EnemyCombatState.values.firstWhere(
+      (s) => s.name == json['state'],
+      orElse: () => EnemyCombatState.idle,
+    ),
+    stateTimer: (json['stateTimer'] as num?)?.toDouble() ?? 0,
+    target: json['target'] != null ? (json['target'] as int) : null,
+    detectionRange: (json['detectionRange'] as num?)?.toDouble() ?? 300,
+    engageRange: (json['engageRange'] as num?)?.toDouble() ?? 200,
+    attackRange: (json['attackRange'] as num?)?.toDouble() ?? 48,
+    telegraphDuration: (json['telegraphDuration'] as num?)?.toDouble() ?? 0.5,
+    attackDuration: (json['attackDuration'] as num?)?.toDouble() ?? 0.2,
+    recoveryDuration: (json['recoveryDuration'] as num?)?.toDouble() ?? 0.5,
+    repositionDuration: (json['repositionDuration'] as num?)?.toDouble() ?? 1.0,
+    staggerDuration: (json['staggerDuration'] as num?)?.toDouble() ?? 1.0,
+    guardDuration: (json['guardDuration'] as num?)?.toDouble() ?? 0.5,
+    retreatHealthFraction:
+        (json['retreatHealthFraction'] as num?)?.toDouble() ?? 0.25,
+    approachSpeed: (json['approachSpeed'] as num?)?.toDouble() ?? 80,
+    repositionSpeed: (json['repositionSpeed'] as num?)?.toDouble() ?? 60,
+    retreatSpeed: (json['retreatSpeed'] as num?)?.toDouble() ?? 100,
+    patrolSpeed: (json['patrolSpeed'] as num?)?.toDouble() ?? 40,
+    patrolMinX: (json['patrolMinX'] as num?)?.toDouble(),
+    patrolMaxX: (json['patrolMaxX'] as num?)?.toDouble(),
+  );
 }
 
 /// Emitted when an enemy enters Telegraph state - the "wind-up" before
@@ -186,20 +211,46 @@ class EnemyCombatBehavior implements Behavior {
     }
 
     // Apply per-entity memory overrides
-    final detectionRange = (aiState.memory['detectionRange'] as num?)?.toDouble() ?? combat.detectionRange;
-    final engageRange = (aiState.memory['engageRange'] as num?)?.toDouble() ?? combat.engageRange;
-    final attackRange = (aiState.memory['attackRange'] as num?)?.toDouble() ?? combat.attackRange;
-    final telegraphDuration = (aiState.memory['telegraphDuration'] as num?)?.toDouble() ?? combat.telegraphDuration;
-    final attackDuration = (aiState.memory['attackDuration'] as num?)?.toDouble() ?? combat.attackDuration;
-    final recoveryDuration = (aiState.memory['recoveryDuration'] as num?)?.toDouble() ?? combat.recoveryDuration;
-    final repositionDuration = (aiState.memory['repositionDuration'] as num?)?.toDouble() ?? combat.repositionDuration;
-    final approachSpeed = (aiState.memory['approachSpeed'] as num?)?.toDouble() ?? combat.approachSpeed;
-    final repositionSpeed = (aiState.memory['repositionSpeed'] as num?)?.toDouble() ?? combat.repositionSpeed;
-    final retreatSpeed = (aiState.memory['retreatSpeed'] as num?)?.toDouble() ?? combat.retreatSpeed;
-    final patrolSpeed = (aiState.memory['patrolSpeed'] as num?)?.toDouble() ?? combat.patrolSpeed;
-    final patrolMinX = (aiState.memory['patrolMinX'] as num?)?.toDouble() ?? combat.patrolMinX;
-    final patrolMaxX = (aiState.memory['patrolMaxX'] as num?)?.toDouble() ?? combat.patrolMaxX;
-    final retreatHealthFraction = (aiState.memory['retreatHealthFraction'] as num?)?.toDouble() ?? combat.retreatHealthFraction;
+    final detectionRange =
+        (aiState.memory['detectionRange'] as num?)?.toDouble() ??
+        combat.detectionRange;
+    final engageRange =
+        (aiState.memory['engageRange'] as num?)?.toDouble() ??
+        combat.engageRange;
+    final attackRange =
+        (aiState.memory['attackRange'] as num?)?.toDouble() ??
+        combat.attackRange;
+    final telegraphDuration =
+        (aiState.memory['telegraphDuration'] as num?)?.toDouble() ??
+        combat.telegraphDuration;
+    final attackDuration =
+        (aiState.memory['attackDuration'] as num?)?.toDouble() ??
+        combat.attackDuration;
+    final recoveryDuration =
+        (aiState.memory['recoveryDuration'] as num?)?.toDouble() ??
+        combat.recoveryDuration;
+    final repositionDuration =
+        (aiState.memory['repositionDuration'] as num?)?.toDouble() ??
+        combat.repositionDuration;
+    final approachSpeed =
+        (aiState.memory['approachSpeed'] as num?)?.toDouble() ??
+        combat.approachSpeed;
+    final repositionSpeed =
+        (aiState.memory['repositionSpeed'] as num?)?.toDouble() ??
+        combat.repositionSpeed;
+    final retreatSpeed =
+        (aiState.memory['retreatSpeed'] as num?)?.toDouble() ??
+        combat.retreatSpeed;
+    final patrolSpeed =
+        (aiState.memory['patrolSpeed'] as num?)?.toDouble() ??
+        combat.patrolSpeed;
+    final patrolMinX =
+        (aiState.memory['patrolMinX'] as num?)?.toDouble() ?? combat.patrolMinX;
+    final patrolMaxX =
+        (aiState.memory['patrolMaxX'] as num?)?.toDouble() ?? combat.patrolMaxX;
+    final retreatHealthFraction =
+        (aiState.memory['retreatHealthFraction'] as num?)?.toDouble() ??
+        combat.retreatHealthFraction;
 
     // Count down state timer
     if (combat.stateTimer > 0) {
@@ -219,7 +270,8 @@ class EnemyCombatBehavior implements Behavior {
         : double.infinity;
 
     // Check health for retreat
-    final shouldRetreat = health != null &&
+    final shouldRetreat =
+        health != null &&
         health.current > 0 &&
         health.current / health.max <= retreatHealthFraction;
 
@@ -240,7 +292,14 @@ class EnemyCombatBehavior implements Behavior {
           combat.changeState(EnemyCombatState.alert);
           return const NoOpAction();
         }
-        return _patrolAction(self, pos, aiState, patrolSpeed, patrolMinX, patrolMaxX);
+        return _patrolAction(
+          self,
+          pos,
+          aiState,
+          patrolSpeed,
+          patrolMinX,
+          patrolMaxX,
+        );
 
       case EnemyCombatState.alert:
         if (!hasTarget || targetPos == null) {
@@ -264,8 +323,15 @@ class EnemyCombatBehavior implements Behavior {
           return const NoOpAction();
         }
         if (distToTarget <= attackRange) {
-          combat.changeState(EnemyCombatState.telegraph, timer: telegraphDuration);
-          return _EmitTelegraphEventAction(self, EnemyCombatState.approach, telegraphDuration);
+          combat.changeState(
+            EnemyCombatState.telegraph,
+            timer: telegraphDuration,
+          );
+          return _EmitTelegraphEventAction(
+            self,
+            EnemyCombatState.approach,
+            telegraphDuration,
+          );
         }
         return _approachAction(self, pos, targetPos, controller, approachSpeed);
 
@@ -295,19 +361,32 @@ class EnemyCombatBehavior implements Behavior {
           combat.changeState(EnemyCombatState.retreat);
           return const NoOpAction();
         }
-        combat.changeState(EnemyCombatState.reposition, timer: repositionDuration);
+        combat.changeState(
+          EnemyCombatState.reposition,
+          timer: repositionDuration,
+        );
         return const NoOpAction();
 
       case EnemyCombatState.reposition:
         if (!hasTarget || targetPos == null) {
-          combat.changeState(patrolMinX != null ? EnemyCombatState.patrol : EnemyCombatState.idle);
+          combat.changeState(
+            patrolMinX != null
+                ? EnemyCombatState.patrol
+                : EnemyCombatState.idle,
+          );
           return const NoOpAction();
         }
         if (shouldRetreat) {
           combat.changeState(EnemyCombatState.retreat);
           return const NoOpAction();
         }
-        return _repositionAction(self, pos, targetPos, controller, repositionSpeed);
+        return _repositionAction(
+          self,
+          pos,
+          targetPos,
+          controller,
+          repositionSpeed,
+        );
 
       case EnemyCombatState.stagger:
         // Stunned - cannot act, timer counts down externally
@@ -349,7 +428,14 @@ class EnemyCombatBehavior implements Behavior {
     return nearest;
   }
 
-  Action _patrolAction(EntityId self, Position pos, AIState aiState, double speed, double? minX, double? maxX) {
+  Action _patrolAction(
+    EntityId self,
+    Position pos,
+    AIState aiState,
+    double speed,
+    double? minX,
+    double? maxX,
+  ) {
     if (minX == null || maxX == null) return const NoOpAction();
     final dir = (aiState.memory['dir'] as num?)?.toDouble() ?? 1.0;
     var shouldFlip = (dir > 0 && pos.x >= maxX) || (dir < 0 && pos.x <= minX);
@@ -357,7 +443,12 @@ class EnemyCombatBehavior implements Behavior {
     return _PatrolStepAction(self, newDir * speed, shouldFlip ? newDir : null);
   }
 
-  Action _faceTargetAction(EntityId self, Position pos, Position targetPos, PlatformerController? controller) {
+  Action _faceTargetAction(
+    EntityId self,
+    Position pos,
+    Position targetPos,
+    PlatformerController? controller,
+  ) {
     final dir = targetPos.x > pos.x ? 1.0 : -1.0;
     if (controller != null) {
       return _SetFacingAction(self, dir);
@@ -365,7 +456,13 @@ class EnemyCombatBehavior implements Behavior {
     return const NoOpAction();
   }
 
-  Action _approachAction(EntityId self, Position pos, Position targetPos, PlatformerController? controller, double speed) {
+  Action _approachAction(
+    EntityId self,
+    Position pos,
+    Position targetPos,
+    PlatformerController? controller,
+    double speed,
+  ) {
     final dir = targetPos.x > pos.x ? 1.0 : -1.0;
     if (controller != null) {
       return _SetFacingAndVelocityAction(self, dir, speed);
@@ -373,7 +470,13 @@ class EnemyCombatBehavior implements Behavior {
     return const NoOpAction();
   }
 
-  Action _repositionAction(EntityId self, Position pos, Position targetPos, PlatformerController? controller, double speed) {
+  Action _repositionAction(
+    EntityId self,
+    Position pos,
+    Position targetPos,
+    PlatformerController? controller,
+    double speed,
+  ) {
     // Move away from target to create spacing
     final dir = targetPos.x > pos.x ? -1.0 : 1.0;
     if (controller != null) {
@@ -382,7 +485,13 @@ class EnemyCombatBehavior implements Behavior {
     return const NoOpAction();
   }
 
-  Action _retreatAction(EntityId self, Position pos, Position targetPos, PlatformerController? controller, double speed) {
+  Action _retreatAction(
+    EntityId self,
+    Position pos,
+    Position targetPos,
+    PlatformerController? controller,
+    double speed,
+  ) {
     // Run away from target
     final dir = targetPos.x > pos.x ? -1.0 : 1.0;
     if (controller != null) {
@@ -453,11 +562,17 @@ class _EmitTelegraphEventAction implements Action {
   final EntityId enemy;
   final EnemyCombatState previousState;
   final double telegraphDuration;
-  _EmitTelegraphEventAction(this.enemy, this.previousState, this.telegraphDuration);
+  _EmitTelegraphEventAction(
+    this.enemy,
+    this.previousState,
+    this.telegraphDuration,
+  );
 
   @override
   void apply(World world) {
-    world.events.emit(EnemyTelegraphEvent(enemy, previousState, telegraphDuration));
+    world.events.emit(
+      EnemyTelegraphEvent(enemy, previousState, telegraphDuration),
+    );
   }
 }
 

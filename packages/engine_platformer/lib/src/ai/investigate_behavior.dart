@@ -17,7 +17,8 @@ class InvestigateBehavior implements Behavior {
   final double arriveDistance;
 
   /// Optional time (seconds) after which the heard sound is considered
-  /// stale and the entity gives up. If null, never times out.
+  /// stale and the entity gives up (the sound's `age`, kept by
+  /// `HearingSystem`). If null, never times out.
   final double? timeout;
 
   /// Whether to stop at gaps (like FollowBehavior with jumpAcrossGaps).
@@ -44,6 +45,12 @@ class InvestigateBehavior implements Behavior {
     final soundData = state.memory['lastHeardSound'];
     if (soundData == null) return const NoOpAction();
 
+    // Stale sound: give up and forget it, as if the entity had arrived.
+    final age = (soundData['age'] as num?)?.toDouble() ?? 0;
+    if (timeout != null && age >= timeout!) {
+      return _InvestigateAction(self, 0, clearMemory: true);
+    }
+
     final soundX = (soundData['x'] as num).toDouble();
 
     final dx = soundX - pos.x;
@@ -53,12 +60,6 @@ class InvestigateBehavior implements Behavior {
     if (distance <= arriveDistance) {
       // Clear the memory and stop
       return _InvestigateAction(self, 0, clearMemory: true);
-    }
-
-    // Check timeout if set
-    if (timeout != null) {
-      // We'd need a timestamp in the sound data to check this.
-      // For now, skip timeout check - could be added later with a timestamp field.
     }
 
     // If avoidGaps is enabled, check for gaps ahead (like PatrolBehavior/FollowBehavior)
@@ -76,8 +77,17 @@ class InvestigateBehavior implements Behavior {
           final origin = view.component<Position>(mapEntity) ?? Position(0, 0);
 
           // Use the same hasGroundAhead logic
-          if (_hasGroundAhead(map, origin, pos.x, pos.y, collider.radius, aheadX, 4,
-              map.solidTileIds, map.oneWayTileIds)) {
+          if (_hasGroundAhead(
+            map,
+            origin,
+            pos.x,
+            pos.y,
+            collider.radius,
+            aheadX,
+            4,
+            map.solidTileIds,
+            map.oneWayTileIds,
+          )) {
             hasGround = true;
             break;
           }
@@ -112,7 +122,11 @@ class InvestigateBehavior implements Behavior {
     final entityFootY = entityY + radius;
     final startRow = ((entityFootY - origin.y) / map.tileHeight).floor();
 
-    for (int row = startRow; row <= startRow + maxRowsDown && row < map.rows; row++) {
+    for (
+      int row = startRow;
+      row <= startRow + maxRowsDown && row < map.rows;
+      row++
+    ) {
       if (row < 0) continue;
       final tileId = map.tileAt(col, row);
       if (tileId == 0) continue;

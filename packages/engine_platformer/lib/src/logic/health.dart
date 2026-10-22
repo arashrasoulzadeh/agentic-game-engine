@@ -64,34 +64,40 @@ class Health {
   double get effectiveMaxStability => maxStability > 0 ? maxStability : max;
 
   /// Whether the entity can currently guard (not dead, not invincible, not guard broken).
-  bool get canGuard => !isDead && !isInvincible && !isGuardBroken && effectiveMaxStability > 0;
+  bool get canGuard =>
+      !isDead && !isInvincible && !isGuardBroken && effectiveMaxStability > 0;
 
   /// Current stability as a fraction of max (0.0 to 1.0).
-  double get stabilityFraction => effectiveMaxStability > 0 ? (stability / effectiveMaxStability).clamp(0.0, 1.0) : 0.0;
+  double get stabilityFraction => effectiveMaxStability > 0
+      ? (stability / effectiveMaxStability).clamp(0.0, 1.0)
+      : 0.0;
 
   Map<String, dynamic> toJson() => {
-        'current': current,
-        'max': max,
-        'invincibleSeconds': invincibleSeconds,
-        'isGuarding': isGuarding,
-        'guardDamageReduction': guardDamageReduction,
-        'stability': stability,
-        'maxStability': maxStability,
-        'guardBreakStunSeconds': guardBreakStunSeconds,
-        'guardBreakTimer': guardBreakTimer,
-        'stabilityRegenPerSecond': stabilityRegenPerSecond,
-      };
+    'current': current,
+    'max': max,
+    'invincibleSeconds': invincibleSeconds,
+    'isGuarding': isGuarding,
+    'guardDamageReduction': guardDamageReduction,
+    'stability': stability,
+    'maxStability': maxStability,
+    'guardBreakStunSeconds': guardBreakStunSeconds,
+    'guardBreakTimer': guardBreakTimer,
+    'stabilityRegenPerSecond': stabilityRegenPerSecond,
+  };
 
   factory Health.fromJson(Map<String, dynamic> json) => Health(
-        current: (json['current'] as num).toDouble(),
-        max: (json['max'] as num).toDouble(),
-        invincibleSeconds: (json['invincibleSeconds'] as num?)?.toDouble() ?? 0,
-        isGuarding: (json['isGuarding'] as bool?) ?? false,
-        guardDamageReduction: (json['guardDamageReduction'] as num?)?.toDouble() ?? 1.0,
-        stability: (json['stability'] as num?)?.toDouble() ?? 0,
-        maxStability: (json['maxStability'] as num?)?.toDouble() ?? 0,
-        guardBreakStunSeconds: (json['guardBreakStunSeconds'] as num?)?.toDouble() ?? 1.0,
-        guardBreakTimer: (json['guardBreakTimer'] as num?)?.toDouble() ?? 0,
-        stabilityRegenPerSecond: (json['stabilityRegenPerSecond'] as num?)?.toDouble() ?? 10,
-      );
+    current: (json['current'] as num).toDouble(),
+    max: (json['max'] as num).toDouble(),
+    invincibleSeconds: (json['invincibleSeconds'] as num?)?.toDouble() ?? 0,
+    isGuarding: (json['isGuarding'] as bool?) ?? false,
+    guardDamageReduction:
+        (json['guardDamageReduction'] as num?)?.toDouble() ?? 1.0,
+    stability: (json['stability'] as num?)?.toDouble() ?? 0,
+    maxStability: (json['maxStability'] as num?)?.toDouble() ?? 0,
+    guardBreakStunSeconds:
+        (json['guardBreakStunSeconds'] as num?)?.toDouble() ?? 1.0,
+    guardBreakTimer: (json['guardBreakTimer'] as num?)?.toDouble() ?? 0,
+    stabilityRegenPerSecond:
+        (json['stabilityRegenPerSecond'] as num?)?.toDouble() ?? 10,
+  );
 }

@@ -19,7 +19,12 @@ void _attachBody(World world, EntityId id, double x, double y, double radius) {
 /// Attaches a `Sprite` only if both [atlasId] and [spriteRegion] are
 /// given — shared so "sprite is optional, both-or-neither" isn't
 /// reimplemented (and potentially left inconsistent) per spawn helper.
-void _attachSprite(World world, EntityId id, String? atlasId, String? spriteRegion) {
+void _attachSprite(
+  World world,
+  EntityId id,
+  String? atlasId,
+  String? spriteRegion,
+) {
   if (atlasId != null && spriteRegion != null) {
     world.storeOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
   }
@@ -27,7 +32,11 @@ void _attachSprite(World world, EntityId id, String? atlasId, String? spriteRegi
 
 /// Attaches `MovementAnimationSet` + an initial `AnimationState` on the
 /// idle clip, if [animations] is given.
-void _attachAnimations(World world, EntityId id, MovementAnimationSet? animations) {
+void _attachAnimations(
+  World world,
+  EntityId id,
+  MovementAnimationSet? animations,
+) {
   if (animations != null) {
     world.storeOf<MovementAnimationSet>().set(id, animations);
     world.storeOf<AnimationState>().set(id, AnimationState(animations.idle));
@@ -80,9 +89,9 @@ EntityId spawnPlayer(
   _attachBody(world, id, x, y, radius);
   world.storeOf<Gravity>().set(id, Gravity(scale: gravityScale));
   world.storeOf<PlatformerController>().set(
-        id,
-        PlatformerController(jumpSpeed: jumpSpeed),
-      );
+    id,
+    PlatformerController(jumpSpeed: jumpSpeed),
+  );
   world.storeOf<InputState>().set(id, input);
   _attachSprite(world, id, atlasId, spriteRegion);
   _attachAnimations(world, id, animations);

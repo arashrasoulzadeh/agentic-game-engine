@@ -63,6 +63,9 @@ EntityId _spawnInvestigator(
   return id;
 }
 
+late World _lastWorld;
+late EntityId _lastId;
+
 void main() {
   group('InvestigateBehavior', () {
     test('constructs with all fields and defaults correctly', () {
@@ -86,6 +89,73 @@ void main() {
       expect(behavior.timeout, isNull);
       expect(behavior.avoidGaps, isTrue);
       expect(behavior.gapCheckAheadDistance, 64);
+    });
+
+    group('timeout', () {
+      Action decideWith(double age, {double? timeout}) {
+        final world = _buildWorld();
+        final id = _spawnInvestigator(world, x: 100, y: 200);
+        world.storeOf<AIState>().get(id)!.memory['lastHeardSound'] = {
+          'x': 900.0,
+          'y': 200.0,
+          'age': age,
+        };
+        final action = InvestigateBehavior(
+          speed: 60,
+          timeout: timeout,
+          avoidGaps: false,
+        ).decide(WorldView(world), id);
+        action.apply(world);
+        _lastWorld = world;
+        _lastId = id;
+        return action;
+      }
+
+      test(
+        'a sound older than the timeout is forgotten and the entity stops',
+        () {
+          decideWith(6, timeout: 5);
+          expect(
+            _lastWorld
+                .storeOf<AIState>()
+                .get(_lastId)!
+                .memory['lastHeardSound'],
+            isNull,
+          );
+          expect(_lastWorld.storeOf<Velocity>().get(_lastId)!.x, 0);
+        },
+      );
+
+      test('a fresh sound is still pursued', () {
+        decideWith(2, timeout: 5);
+        expect(
+          _lastWorld.storeOf<AIState>().get(_lastId)!.memory['lastHeardSound'],
+          isNotNull,
+        );
+        expect(_lastWorld.storeOf<Velocity>().get(_lastId)!.x, greaterThan(0));
+      });
+
+      test('without a timeout an old sound is pursued forever', () {
+        decideWith(9999);
+        expect(_lastWorld.storeOf<Velocity>().get(_lastId)!.x, greaterThan(0));
+      });
+
+      test('HearingSystem ages a remembered sound each update', () {
+        final world = _buildWorld();
+        _createFloorMap(world, y: 400);
+        final id = _spawnInvestigator(world, x: 100, y: 200);
+        for (var i = 0; i < 50; i++) {
+          world.step(0.016);
+        }
+        world.events.emit(SoundEvent(x: 300, y: 388, loudness: 250));
+        world.step(0.016);
+        final memory = world.storeOf<AIState>().get(id)!.memory;
+        expect(memory['lastHeardSound']['age'], 0.0);
+        for (var i = 0; i < 2; i++) {
+          world.step(0.5);
+        }
+        expect(memory['lastHeardSound']['age'] as double, closeTo(1.0, 0.01));
+      });
     });
 
     group('with HearingSystem integration', () {

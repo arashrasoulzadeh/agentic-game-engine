@@ -18,7 +18,10 @@ class HitstunSystem implements System {
     for (var i = 0; i < controllers.length; i++) {
       final controller = controllers.denseAt(i);
       if (controller.hitstunSeconds > 0) {
-        controller.hitstunSeconds = (controller.hitstunSeconds - dt).clamp(0, double.infinity);
+        controller.hitstunSeconds = (controller.hitstunSeconds - dt).clamp(
+          0,
+          double.infinity,
+        );
       }
     }
   }

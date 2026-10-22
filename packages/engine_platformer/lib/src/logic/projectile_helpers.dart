@@ -38,9 +38,9 @@ EntityId spawnProjectile(
   world.storeOf<Velocity>().set(id, Velocity(vx, vy));
   world.storeOf<Collider>().set(id, Collider(radius));
   world.storeOf<Projectile>().set(
-        id,
-        Projectile(damage: damage, lifetimeSeconds: lifetimeSeconds, owner: owner),
-      );
+    id,
+    Projectile(damage: damage, lifetimeSeconds: lifetimeSeconds, owner: owner),
+  );
   if (atlasId != null && spriteRegion != null) {
     world.storeOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
   }
@@ -75,7 +75,9 @@ void _handleHit(World world, EntityId maybeProjectile, EntityId other) {
     // to enable combo chain tracking in AttackSystem
     final vel = world.storeOf<Velocity>().get(maybeProjectile);
     if (vel != null && vel.x == 0 && vel.y == 0 && projectile.owner != null) {
-      world.events.emit(MeleeHitEvent(projectile.owner!, other, projectile.damage));
+      world.events.emit(
+        MeleeHitEvent(projectile.owner!, other, projectile.damage),
+      );
     }
     world.destroy(maybeProjectile);
   }

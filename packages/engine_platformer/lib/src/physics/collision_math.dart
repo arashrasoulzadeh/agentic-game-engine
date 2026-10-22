@@ -60,8 +60,12 @@ CollisionSide resolveSolidCircleAabb({
   final overlapRight = right - (pos.x - radius);
   final overlapTop = (pos.y + radius) - top;
   final overlapBottom = bottom - (pos.y - radius);
-  final minOverlap =
-      [overlapLeft, overlapRight, overlapTop, overlapBottom].reduce((a, b) => a < b ? a : b);
+  final minOverlap = [
+    overlapLeft,
+    overlapRight,
+    overlapTop,
+    overlapBottom,
+  ].reduce((a, b) => a < b ? a : b);
 
   if (minOverlap == overlapTop) {
     pos.y = top - radius;
@@ -148,7 +152,9 @@ bool resolveSlopeCircleAabb({
   if (pos.x < left || pos.x > right) return false;
 
   final t = ((pos.x - left) / (right - left)).clamp(0.0, 1.0);
-  final floorY = ascendingRight ? bottom + (top - bottom) * t : top + (bottom - top) * t;
+  final floorY = ascendingRight
+      ? bottom + (top - bottom) * t
+      : top + (bottom - top) * t;
   final foot = pos.y + radius;
   if (foot < floorY) return false;
 
@@ -205,7 +211,11 @@ bool hasGroundAhead(
   final entityFootY = entityY + radius;
   final startRow = ((entityFootY - mapOrigin.y) / map.tileHeight).floor();
 
-  for (int row = startRow; row <= startRow + maxRowsDown && row < map.rows; row++) {
+  for (
+    int row = startRow;
+    row <= startRow + maxRowsDown && row < map.rows;
+    row++
+  ) {
     if (row < 0) continue;
     final tileId = map.tileAt(col, row);
     if (tileId == 0) continue;

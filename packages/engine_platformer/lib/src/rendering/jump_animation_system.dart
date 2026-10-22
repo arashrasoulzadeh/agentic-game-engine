@@ -54,7 +54,8 @@ class JumpAnimationSystem implements System {
         phaseState.elapsed += dt;
       }
 
-      if (nextPhase == null) continue; // grounded -- MovementAnimationSystem owns it
+      if (nextPhase == null)
+        continue; // grounded -- MovementAnimationSystem owns it
 
       final target = _clipFor(set, nextPhase);
       final current = animStates.get(entity);
@@ -94,23 +95,29 @@ class JumpAnimationSystem implements System {
     if (phase == null) return null;
     final movingNow = vel.x.abs() > set.moveInterruptThreshold;
     if (phase == 'landing') {
-      if (movingNow) return null; // player wants to move -- don't sit through the recovery beat
-      return phaseState.elapsed < set.landingHoldSeconds ? _JumpPhase.landing : _JumpPhase.completed;
+      if (movingNow)
+        return null; // player wants to move -- don't sit through the recovery beat
+      return phaseState.elapsed < set.landingHoldSeconds
+          ? _JumpPhase.landing
+          : _JumpPhase.completed;
     }
     if (phase == 'completed') {
       if (movingNow) return null;
-      return phaseState.elapsed < set.completedHoldSeconds ? _JumpPhase.completed : null;
+      return phaseState.elapsed < set.completedHoldSeconds
+          ? _JumpPhase.completed
+          : null;
     }
     // Was airborne (start/rising/peak/falling) last tick, just touched down.
     return _JumpPhase.landing;
   }
 
-  AnimationClip _clipFor(JumpAnimationSet set, _JumpPhase phase) => switch (phase) {
-    _JumpPhase.start => set.start,
-    _JumpPhase.rising => set.rising,
-    _JumpPhase.peak => set.peak,
-    _JumpPhase.falling => set.falling,
-    _JumpPhase.landing => set.landing,
-    _JumpPhase.completed => set.completed,
-  };
+  AnimationClip _clipFor(JumpAnimationSet set, _JumpPhase phase) =>
+      switch (phase) {
+        _JumpPhase.start => set.start,
+        _JumpPhase.rising => set.rising,
+        _JumpPhase.peak => set.peak,
+        _JumpPhase.falling => set.falling,
+        _JumpPhase.landing => set.landing,
+        _JumpPhase.completed => set.completed,
+      };
 }

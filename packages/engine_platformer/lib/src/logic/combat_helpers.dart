@@ -31,7 +31,12 @@ class BlockedEvent {
   final double originalDamage;
   final double stabilityLost;
   final EntityId? source;
-  BlockedEvent(this.entity, this.originalDamage, this.stabilityLost, {this.source});
+  BlockedEvent(
+    this.entity,
+    this.originalDamage,
+    this.stabilityLost, {
+    this.source,
+  });
 }
 
 /// Emitted when an entity's guard breaks (stability depleted).
@@ -104,7 +109,9 @@ bool damageEntity(
       parry.parryTimer = 0; // Consume the parry window
 
       // Stun the attacker
-      final attackerController = world.storeOf<PlatformerController>().get(source);
+      final attackerController = world.storeOf<PlatformerController>().get(
+        source,
+      );
       if (attackerController != null) {
         attackerController.hitstunSeconds = parry.parryStunSeconds;
       }
@@ -125,7 +132,9 @@ bool damageEntity(
     stabilityLost = amount * health.guardDamageReduction;
     health.stability -= stabilityLost;
 
-    world.events.emit(BlockedEvent(entity, amount, stabilityLost, source: source));
+    world.events.emit(
+      BlockedEvent(entity, amount, stabilityLost, source: source),
+    );
 
     // Check for guard break
     if (health.stability <= 0) {
@@ -181,7 +190,8 @@ bool damageEntity(
   }
 
   if (hitstunSeconds > 0) {
-    world.storeOf<PlatformerController>().get(entity)?.hitstunSeconds = hitstunSeconds;
+    world.storeOf<PlatformerController>().get(entity)?.hitstunSeconds =
+        hitstunSeconds;
   }
 
   return true;
@@ -200,7 +210,10 @@ void healEntity(World world, EntityId entity, double amount) {
 void restoreStability(World world, EntityId entity, double amount) {
   final health = world.storeOf<Health>().get(entity);
   if (health == null) return;
-  health.stability = (health.stability + amount).clamp(0, health.effectiveMaxStability);
+  health.stability = (health.stability + amount).clamp(
+    0,
+    health.effectiveMaxStability,
+  );
 }
 
 /// Wires up "touching anything in [hazards] deals damage" in one call —

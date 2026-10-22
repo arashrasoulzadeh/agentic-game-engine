@@ -12,7 +12,7 @@ class Checkpoint {
   Map<String, dynamic> toJson() => {'id': id, 'activated': activated};
 
   factory Checkpoint.fromJson(Map<String, dynamic> json) => Checkpoint(
-        json['id'] as String,
-        activated: json['activated'] as bool? ?? false,
-      );
+    json['id'] as String,
+    activated: json['activated'] as bool? ?? false,
+  );
 }

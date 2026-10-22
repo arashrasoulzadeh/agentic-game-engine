@@ -73,7 +73,8 @@ class FollowBehavior implements Behavior {
     final dx = targetPos.x - pos.x;
     final distance = dx.abs();
     final outOfRange = maxDistance != null && distance > maxDistance!;
-    final blocked = requireLineOfSight &&
+    final blocked =
+        requireLineOfSight &&
         !view.hasLineOfSight(pos.x, pos.y, targetPos.x, targetPos.y);
     if (outOfRange || blocked || distance <= stopDistance) {
       return _SetVelocityXAction(self, 0);
@@ -158,7 +159,10 @@ class _FollowWithJumpAction implements Action {
     final controller = world.storeOf<PlatformerController>().get(self);
     final collider = world.storeOf<Collider>().get(self);
     final targetPos = world.storeOf<Position>().get(target);
-    if (pos == null || controller == null || collider == null || targetPos == null) {
+    if (pos == null ||
+        controller == null ||
+        collider == null ||
+        targetPos == null) {
       return true; // assume ground exists if we can't check
     }
 
@@ -213,7 +217,8 @@ class _FollowWithJumpAction implements Action {
         if (row < 0) continue;
         final tileId = map.tileAt(col, row);
         if (tileId == 0) continue;
-        if (map.solidTileIds.contains(tileId) || map.oneWayTileIds.contains(tileId)) {
+        if (map.solidTileIds.contains(tileId) ||
+            map.oneWayTileIds.contains(tileId)) {
           final tileTop = origin.y + row * map.tileHeight;
           // Entity foot is at or just above the tile top
           if ((footY - tileTop).abs() <= 2.0) return true;

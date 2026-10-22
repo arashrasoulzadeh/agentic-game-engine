@@ -43,24 +43,34 @@ class MovementAnimationSet {
     double moveThreshold = 5,
   }) {
     return MovementAnimationSet(
-      idle: AnimationClip('idle', [idleRegion],
-          frameDurationSeconds: idleFrameDurationSeconds),
-      walk: AnimationClip.sequence('walk', walkPrefix, walkFrameCount,
-          frameDurationSeconds: walkFrameDurationSeconds),
+      idle: AnimationClip('idle', [
+        idleRegion,
+      ], frameDurationSeconds: idleFrameDurationSeconds),
+      walk: AnimationClip.sequence(
+        'walk',
+        walkPrefix,
+        walkFrameCount,
+        frameDurationSeconds: walkFrameDurationSeconds,
+      ),
       jump: (jumpPrefix != null && jumpFrameCount != null)
-          ? AnimationClip.sequence('jump', jumpPrefix, jumpFrameCount,
-              frameDurationSeconds: jumpFrameDurationSeconds, loop: false)
+          ? AnimationClip.sequence(
+              'jump',
+              jumpPrefix,
+              jumpFrameCount,
+              frameDurationSeconds: jumpFrameDurationSeconds,
+              loop: false,
+            )
           : null,
       moveThreshold: moveThreshold,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'idle': idle.toJson(),
-        'walk': walk.toJson(),
-        if (jump != null) 'jump': jump!.toJson(),
-        'moveThreshold': moveThreshold,
-      };
+    'idle': idle.toJson(),
+    'walk': walk.toJson(),
+    if (jump != null) 'jump': jump!.toJson(),
+    'moveThreshold': moveThreshold,
+  };
 
   factory MovementAnimationSet.fromJson(Map<String, dynamic> json) =>
       MovementAnimationSet(

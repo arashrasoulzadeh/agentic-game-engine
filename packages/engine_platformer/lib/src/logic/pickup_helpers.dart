@@ -15,7 +15,12 @@ class ItemCollectedEvent {
 /// [ItemCollectedEvent]. A no-op if [holder] has no `Inventory`
 /// component — safe to call from a collision handler without checking
 /// first, the same pattern `damageEntity` uses for `Health`.
-void collectItem(World world, EntityId holder, String itemId, {int amount = 1}) {
+void collectItem(
+  World world,
+  EntityId holder,
+  String itemId, {
+  int amount = 1,
+}) {
   final inventory = world.storeOf<Inventory>().get(holder);
   if (inventory == null) return;
 

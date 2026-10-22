@@ -64,20 +64,22 @@ class Parry {
   }
 
   Map<String, dynamic> toJson() => {
-        'parryTimer': parryTimer,
-        'parryCooldownTimer': parryCooldownTimer,
-        'parryWindowSeconds': parryWindowSeconds,
-        'parryStunSeconds': parryStunSeconds,
-        'parryCooldownSeconds': parryCooldownSeconds,
-      };
+    'parryTimer': parryTimer,
+    'parryCooldownTimer': parryCooldownTimer,
+    'parryWindowSeconds': parryWindowSeconds,
+    'parryStunSeconds': parryStunSeconds,
+    'parryCooldownSeconds': parryCooldownSeconds,
+  };
 
   factory Parry.fromJson(Map<String, dynamic> json) => Parry(
-        parryTimer: (json['parryTimer'] as num?)?.toDouble() ?? 0,
-        parryCooldownTimer: (json['parryCooldownTimer'] as num?)?.toDouble() ?? 0,
-        parryWindowSeconds: (json['parryWindowSeconds'] as num?)?.toDouble() ?? 0.15,
-        parryStunSeconds: (json['parryStunSeconds'] as num?)?.toDouble() ?? 0.5,
-        parryCooldownSeconds: (json['parryCooldownSeconds'] as num?)?.toDouble() ?? 0.5,
-      );
+    parryTimer: (json['parryTimer'] as num?)?.toDouble() ?? 0,
+    parryCooldownTimer: (json['parryCooldownTimer'] as num?)?.toDouble() ?? 0,
+    parryWindowSeconds:
+        (json['parryWindowSeconds'] as num?)?.toDouble() ?? 0.15,
+    parryStunSeconds: (json['parryStunSeconds'] as num?)?.toDouble() ?? 0.5,
+    parryCooldownSeconds:
+        (json['parryCooldownSeconds'] as num?)?.toDouble() ?? 0.5,
+  );
 }
 
 /// Emitted when a parry successfully deflects an attack. The attacker
@@ -103,7 +105,10 @@ class ParrySystem implements System {
         parry.parryTimer = (parry.parryTimer - dt).clamp(0, double.infinity);
       }
       if (parry.parryCooldownTimer > 0) {
-        parry.parryCooldownTimer = (parry.parryCooldownTimer - dt).clamp(0, double.infinity);
+        parry.parryCooldownTimer = (parry.parryCooldownTimer - dt).clamp(
+          0,
+          double.infinity,
+        );
       }
     }
   }
