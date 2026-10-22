@@ -12,8 +12,10 @@ import 'package:flutter/services.dart' show rootBundle;
 //   `dart run tool/simulate.dart` from the engine_idle package) without touching Dart.
 // - IdleController steps the world and notifies the widgets; IdleSession saves, restores and pays
 //   offline progress; IdleLifecycleHost ties the session to the app lifecycle.
-// - Saving here is in memory so the template has no extra dependencies. For a real game use
-//   `FileSaveStore('<documents dir>/save.json')` (get the directory with the path_provider package).
+// - Saving uses BrowserSaveStore: localStorage on the web, in memory elsewhere. On mobile/desktop use
+//   `FileSaveStore('<documents dir>/save.json')` instead (get the directory with the path_provider package).
+// - The Progress tab shows prestige and achievements; Settings has the number format and a save code you
+//   can copy to another device.
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,7 +61,7 @@ class _IdleHomeState extends State<IdleHome> {
       ..addSystem(IdleSystem())
       ..addSystem(BoostSystem());
     controller = IdleController(world: world)..start();
-    session = IdleSession(controller: controller, store: MemorySaveStore(), offline: game.offline)
+    session = IdleSession(controller: controller, store: BrowserSaveStore(), offline: game.offline)
       ..load()
       ..startAutosave();
   }
@@ -84,11 +86,14 @@ class _IdleHomeState extends State<IdleHome> {
       session: session,
       onAway: _showAway,
       child: DefaultTabController(
-        length: 2,
+        length: 4,
         child: Scaffold(
           appBar: AppBar(
             title: const Text('{{PROJECT_NAME}}'),
-            bottom: const TabBar(tabs: [Tab(text: 'Generators'), Tab(text: 'Upgrades')]),
+            bottom: const TabBar(
+              isScrollable: true,
+              tabs: [Tab(text: 'Generators'), Tab(text: 'Upgrades'), Tab(text: 'Progress'), Tab(text: 'Settings')],
+            ),
           ),
           body: Column(
             children: [
@@ -106,6 +111,23 @@ class _IdleHomeState extends State<IdleHome> {
                   children: [
                     GeneratorList(controller: controller),
                     UpgradeList(controller: controller),
+                    Column(
+                      children: [
+                        Padding(padding: const EdgeInsets.all(12), child: PrestigePanel(controller: controller)),
+                        Expanded(child: AchievementList(controller: controller)),
+                      ],
+                    ),
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          IdleSettingsPanel(controller: controller, offline: session.offline),
+                          const SizedBox(height: 24),
+                          SaveCodePanel(session: session),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),

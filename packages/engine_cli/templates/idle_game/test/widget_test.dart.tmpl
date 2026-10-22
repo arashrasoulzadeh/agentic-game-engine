@@ -24,6 +24,19 @@ void main() {
     await tester.pump();
     expect(tester.takeException(), isNull);
 
+    // The other tabs build: progress (prestige, achievements) and settings (number format, save code).
+    await tester.tap(find.text('Progress'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('prestige-button')), findsOneWidget);
+    expect(find.byKey(const Key('achievement-ten_cursors')), findsOneWidget);
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('settings-number-style')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('save-export')));
+    await tester.pump();
+    expect(tester.widget<SelectableText>(find.byKey(const Key('save-code'))).data, startsWith('GSAVE1.'));
+    expect(tester.takeException(), isNull);
+
     // Leave the tree so the controller's timer is disposed.
     await tester.pumpWidget(const SizedBox());
   });

@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `idle_game` template: Progress (prestige + achievements) and Settings (number format + save code) tabs, and `BrowserSaveStore` so web builds keep their save.
 - Studio: git status marks in the project file tree (M/A/D/R/?/! beside files, a dot on folders that contain changes; works for a project inside a larger repository; no git or no repository just shows nothing).
 - Studio: a "Get packages" button runs `flutter pub get` in the project and shows its output (failures, timeouts and a missing SDK are results, not crashes).
 - Studio: strings with values (counts, paths, errors) are translatable too (`{placeholder}` syntax); the Persian catalog covers them, and a test checks translations keep their placeholders.
