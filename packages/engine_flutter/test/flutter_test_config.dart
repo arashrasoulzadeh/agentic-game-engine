@@ -13,7 +13,6 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
     'ambient_lighting.frag',
     'normal_mapping.frag',
     'normal_mapping_combined.frag',
-    'colorblind.frag',
   ];
   for (final name in shaderNames) {
     final compiled = File('build/unit_test_assets/shaders/$name');

@@ -8,6 +8,9 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Removed
+- The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
+
 ### Added
 - `EngineView(colorblindMode:)`: protanopia, deuteranopia and tritanopia simulation over the whole view (the old `_drawColorblind` placeholder drew nothing). `colorblindMatrix` / `colorblindFiltered` are exported and tested.
 - `game_agent idle simulate <game.json> [--days N] [--prestige-at X]`. To make it possible the Flutter-free idle rules (components, economy, progression, golden events, definition loader, simulator) moved from `engine_idle` into `engine_core`, behind a separate `package:engine_core/engine_core_idle.dart` entry point; `engine_idle` re-exports it, so existing imports keep working.

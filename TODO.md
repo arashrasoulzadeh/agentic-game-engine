@@ -198,7 +198,7 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       `docs/concepts/effects.md`).
 - [x] **Colorblind simulation** — `EngineView(colorblindMode:)` applies protanopia / deuteranopia / tritanopia as a colour
       matrix over the whole view (`colorblindMatrix`, tested); pass `PlayerOptions.colorblindMode`. The unused
-      `ColorblindShader` / `colorblind.frag` could be removed. Still open: whether `reduceMotion`, text scale etc.
+      `ColorblindShader` / `colorblind.frag` were removed. Still open: whether `reduceMotion`, text scale etc.
       should be engine behaviour (the engine reads no `PlayerOptions` itself).
 - [ ] A "build your first level" studio tutorial (the user guide, `docs/studio/user-guide.md`,
       is done).
