@@ -19,3 +19,10 @@ The engine ships as one unit. Every package under `packages/` has the same `vers
 5. When publishing to pub.dev starts: remove `publish_to: none` per package, publish in dependency order
    (`engine_schema`, `engine_core`, `engine_flutter`, then `engine_platformer`, `engine_strategy`,
    `engine_idle`, `engine_cli`), and replace the git dependencies with version constraints.
+
+## Publishing readiness (checked)
+
+`dart pub publish --dry-run` on `engine_schema` (with `publish_to: none` removed in a scratch copy) reports **0 warnings**: it
+has a LICENSE, README, CHANGELOG and valid metadata. The other packages cannot dry-run yet only because their dependency on
+`engine_schema`/`engine_core` is a git dependency; once those two are on pub.dev, replace the git blocks with
+`^0.1.0` constraints and re-run the dry run in dependency order.
