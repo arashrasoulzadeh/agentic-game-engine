@@ -183,3 +183,22 @@ once, keep-alives hold an idle peer open and a silent one is dropped after `idle
 Keep messages small on the internet: past about 1,400 bytes a datagram is split in transit and losing any piece loses
 it all (the hard limit is `udpMaxMessageBytes`, 60,000; larger messages are counted in `oversized` and not sent).
 A big first snapshot is therefore better sent over a WebSocket. Browsers cannot send UDP at all.
+
+## Finding a game: the lobby
+
+`LobbyServer` is a room list. Run one anywhere reachable, on the same listeners as a game host
+(`WebSocketListener.bind(lobby.accept)`). A game host announces itself, keeps the connection open, and updates its
+player count; a player lists open rooms and connects to a room's `url` with the normal client:
+
+```text
+host -> lobby    {"type":"create","name":"Duel","url":"wss://play.example.com:4040","maxPlayers":2}
+lobby -> host    {"type":"created","id":7}
+host -> lobby    {"type":"update","id":7,"players":1}
+player -> lobby  {"type":"list"}
+lobby -> player  {"type":"rooms","rooms":[{"id":7,"name":"Duel","url":"wss://...","maxPlayers":2,"players":1}]}
+```
+
+Full rooms are hidden, a room vanishes when its host's connection ends (so a crashed host never lingers), only the
+creator can change or close it, and sizes and counts are capped. The lobby does not relay traffic or get through
+NAT: hosts must be reachable (a server or a forwarded port), and it has no accounts. Protect it with the same
+`wss://` and, if needed, your own token check in front of `accept`.

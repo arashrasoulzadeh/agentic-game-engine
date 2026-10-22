@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Networking: `LobbyServer`, a room list over any `NetEndpoint`: hosts `create`/`update`/`close` rooms, players `list` open ones and connect to the room's `url`. Rooms die with their host's connection, only owners change them, sizes and counts are capped. No NAT traversal.
 - Networking: a UDP transport in `engine_core_io.dart` (`UdpListener.bind`, `connectUdp`): per-peer endpoints from the first datagram, goodbye on close, keep-alives and an idle timeout, malformed/oversized messages counted instead of thrown. Guide section on when to use it.
 - Networking authentication: `HostSession(authenticate: (token, name) => ...)` (sync or async) holds new connections until a `hello` with a valid token arrives; refusals get `denied` and are closed, silent connections time out (`authTimeoutTicks`). `ClientSession(token:, name:)` and `denied`.
 - Studio: the level editor notices when the level file is saved by someone else. Clean editors reload (with a note); editors with unsaved edits ask (Reload / Keep my edits). Own saves and half-written files are ignored.
