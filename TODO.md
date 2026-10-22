@@ -205,8 +205,8 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 
 - [ ] **Versioned docs** — publish per-release versions (e.g. with `mike`)
       once tags exist; the site is single-version today.
-- [ ] **Publish or retire the unpublished pages** — `docs/proposals/` and
-      `docs/studio/` are excluded from the site; decide which are public.
+- [x] **Unpublished pages** — DECIDED: `studio/design.md` is published (Studio > Design and decisions); `proposals/` (drafts, not
+      implemented) and `studio/qa-level-editor.md` (an internal QA checklist) stay excluded on purpose.
 - [ ] **Diagrams and screenshots** — add real screenshots (strategy template,
       studio) to the tutorials and getting-started.
 - [ ] **Extend the executed-samples guarantee** to the multiplayer tutorial and the older concept pages

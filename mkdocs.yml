@@ -61,7 +61,6 @@ hooks:
 
 exclude_docs: |
   proposals/
-  studio/design.md
   studio/qa-level-editor.md
 
 validation:
@@ -86,6 +85,7 @@ nav:
   - Studio:
       - User guide: studio/user-guide.md
       - Build your first level: studio/first-level.md
+      - Design and decisions: studio/design.md
   - Concepts:
       - Architecture: concepts/architecture.md
       - The ECS: concepts/ecs.md
