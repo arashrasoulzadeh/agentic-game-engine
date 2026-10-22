@@ -417,4 +417,57 @@ void main() {
       b.stop();
     });
   });
+
+  testWidgets(
+    'SaveCodePanel exports a code, and importing it on another device restores the game',
+    (tester) async {
+      final a = _newGame();
+      a.buy(a.generatorIds.first, count: 4);
+      final sA = session(a);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: SaveCodePanel(session: sA)),
+        ),
+      );
+      await tester.tap(find.byKey(const Key('save-export')));
+      await tester.pump();
+      final code = tester
+          .widget<SelectableText>(find.byKey(const Key('save-code')))
+          .data!;
+      expect(code, startsWith('GSAVE1.'));
+
+      final b = _newGame();
+      final sB = IdleSession(
+        controller: b,
+        store: MemorySaveStore(),
+        clock: clock.call,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: SaveCodePanel(session: sB)),
+        ),
+      );
+      await tester.enterText(find.byKey(const Key('save-input')), '$code ');
+      await tester.tap(find.byKey(const Key('save-import')));
+      await tester.pump();
+      expect(find.text('Game loaded.'), findsOneWidget);
+      expect(b.world.storeOf<Generator>().denseAt(0).owned, 4);
+
+      await tester.enterText(
+        find.byKey(const Key('save-input')),
+        'GSAVE1.nonsense.00000000',
+      );
+      await tester.tap(find.byKey(const Key('save-import')));
+      await tester.pump();
+      expect(find.textContaining('damaged'), findsOneWidget);
+      expect(
+        b.world.storeOf<Generator>().denseAt(0).owned,
+        4,
+        reason: 'a bad code changes nothing',
+      );
+      a.stop();
+      b.stop();
+    },
+  );
 }

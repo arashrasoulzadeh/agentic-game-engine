@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Idle: `SaveCodePanel` (show/copy a save code, paste to load, plain-language errors), a v1 save fixture test, a determinism guard test and `benchmark/idle_bench.dart`.
 - `BrowserSaveStore`: an idle `SaveStore` over the browser's `localStorage` (in-memory off the web), tolerant of quota errors and unreadable values.
 - Idle cloud saves: `CloudSaveStore` interface + `IdleSession.syncCloud` (later save wins, optional resolver, empty side filled from the other; pulling pays no offline time). `IdleController.format` now memoises results.
 - Idle: generator rows show progress to the next milestone (`Generator.nextMilestone`).

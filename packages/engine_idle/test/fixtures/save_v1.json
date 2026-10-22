@@ -1,0 +1,50 @@
+{
+  "world": {
+    "tick": 0,
+    "entities": {
+      "0": {
+        "bigTreasury": {
+          "amounts": {
+            "coins": "4.5e3",
+            "gems": "3.0e0"
+          },
+          "incomePerSecond": {
+            "coins": "1.2e1"
+          }
+        }
+      },
+      "1": {
+        "idleModifiers": {
+          "additive": {},
+          "multiplicative": {}
+        }
+      },
+      "2": {
+        "idleStats": {
+          "runEarned": {},
+          "lifetimeEarned": {},
+          "prestigeCount": 1,
+          "taps": 40,
+          "secondsPlayed": 0.0
+        }
+      },
+      "3": {
+        "generator": {
+          "id": "cursor",
+          "owned": 12,
+          "costResource": "coins",
+          "cost": {
+            "type": "geometric",
+            "base": "1.0e1",
+            "growth": 1.1
+          },
+          "output": {
+            "coins": "1.0e0"
+          }
+        }
+      }
+    }
+  },
+  "lastActiveAt": "2026-01-01T12:00:00.000Z",
+  "saveVersion": 1
+}

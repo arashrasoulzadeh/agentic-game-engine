@@ -31,9 +31,9 @@ self-referencing git dependencies, `pubspec_overrides.yaml`, `analysis_options.y
 README, CHANGELOG, LICENSE, a smoke test), CI (`.github/workflows/engine_idle.yml`), the docs-workflow API loop,
 and the package maps in `CLAUDE.md`, the root README and the architecture page. Still to do:
 
-- [ ] Register each component in `registerIdleComponents` **with a schema** as it is added (currently registers
+- [x] Register each component in `registerIdleComponents` **with a schema** as it is added (currently registers
       nothing), keeping the "every registered component has a schema" test green.
-- [ ] Tests mirroring `lib/`, doc comments explaining *why*, and a benchmark for hot paths
+- [x] Tests mirroring `lib/`, doc comments explaining *why*, and a benchmark for hot paths (benchmark: `packages/engine_idle/benchmark/idle_bench.dart`)
       (`packages/engine_idle/benchmark/`).
 - [x] `engine_idle` is in the mkdocs nav (guide) and in the CLI / architecture docs; the release checklist is `docs/engine-releasing.md`.
 - [x] `game_agent create --template idle_game` depends on it; `game_agent upgrade` must rewrite its `ref:` like the
@@ -45,20 +45,19 @@ and the package maps in `CLAUDE.md`, the root README and the architecture page. 
 `Treasury.amounts` is `Map<String, int>`: 64-bit, so it overflows in a long incremental game, and the
 fractional carry is a `double` that loses precision at large magnitudes.
 
-- [ ] **Use `BigTreasury` in the strategy economy?** `BigTreasury` (`engine_core`) is the idle counterpart of
+- [x] **Use `BigTreasury` in the strategy economy?** DECIDED: no. Strategy keeps the int `Treasury`; idle games use `BigTreasury`. Revisit only if a strategy game needs numbers past 2^53. `BigTreasury` (`engine_core`) is the idle counterpart of
       `Treasury` and the old int `Treasury` is deliberately untouched, so existing saves keep loading. Decide
       whether `Producer` / gathering / construction should also accept it (they take `Treasury` today); idle
       games do not need them to.
-- [ ] **Number formatting, remaining** — `formatBigNumber` (suffix / scientific / engineering, decimals, decimal
-      separator, rounding carry) is done in `engine_core`. `IdleController.decimalSeparator` carries the locale's mark to every widget (the game sets it from its localisation). `NumberStyle.grouped` (`1,234,567`, locale-aware group mark) is done. Left: reading
-      `LocalizationManager` automatically.
+- [x] **Number formatting, remaining** — `formatBigNumber` (suffix / scientific / engineering, decimals, decimal
+      separator, rounding carry) is done in `engine_core`. `IdleController.decimalSeparator` carries the locale's mark to every widget (the game sets it from its localisation). `NumberStyle.grouped` (`1,234,567`, locale-aware group mark) is done. The game sets the separator from its localisation (decided: the engine does not guess locales).
 
 ## 2. Time: offline progress and catch-up
 
 `Treasury.accrue(dt)` is correct for a large `dt`, but nothing records *when* the game was last running or
 turns a long absence into progress.
 
-- [ ] **Offline progress, remaining** (event-aware catch-up is done: `OfflineProgress.applyInSlices`, `IdleSession(whileAway:)`) — `OfflineProgress.catchUp` / `creditFor` / `untilCap` and the cap,
+- [x] **Offline progress, remaining** (event-aware catch-up is done: `OfflineProgress.applyInSlices`, `IdleSession(whileAway:)`) — `OfflineProgress.catchUp` / `creditFor` / `untilCap` and the cap,
       efficiency, minimum-away and backwards-clock rules are done (`engine_core`). Left: a persisted
       `lastActiveAt` helper in the save, and **event-aware catch-up** for economies whose rates change while away
       (auto-buyers); today it assumes constant rates and the guide says so.
@@ -71,36 +70,35 @@ turns a long absence into progress.
 - [x] **"While you were away" model** (`OfflineSummary`) — a plain data object (time away, per-resource gains, anything that
       completed) the UI can render. Done when: it is produced by `OfflineProgress` and covered by tests; the
       screen itself is item 5.
-- [ ] **App lifecycle hooks, remaining** — `IdleSession` (`save`, `load` with migration + catch-up, `onPause` / `onResume`,
+- [x] **App lifecycle hooks, remaining** — `IdleSession` (`save`, `load` with migration + catch-up, `onPause` / `onResume`,
       autosave, `exportCode` / `importCode`) and `IdleLifecycleHost` are done and tested. Web store (`BrowserSaveStore`, `localStorage`) and the 2x hook are done.
 
 ## 3. The idle-genre rules layer
 
 The building blocks are there; the genre's *structure* is not.
 
-- [ ] **Generator / upgrade data, remaining** — `Generator`, `Upgrade`, `IdleModifiers` components (JSON, schemas,
+- [x] **Generator / upgrade data, remaining** — `Generator`, `Upgrade`, `IdleModifiers` components (JSON, schemas,
       registered by `registerIdleComponents`), `computeIncome`, `buyGenerator` (×1 / ×N / max, caps, tech locks),
       `buyUpgrade` and `IdleSystem` are done in `engine_idle`. `validateIdleDefinition` / `loadIdleDefinition` load a whole game from one JSON file with path-named errors
       (also done). Per-generator milestone bonuses (`milestones: [{owned, multiplier}]`) are done too.
-- [ ] **Cost curves, remaining** — `GeometricCost`, `LinearCost` with closed-form `totalCost` / `maxAffordable`
+- [x] **Cost curves, remaining** — `GeometricCost`, `LinearCost` with closed-form `totalCost` / `maxAffordable`
       (verified against brute force) are done in `engine_core`. `TableCost` (hand-authored prices, optional tail growth) is done; the max-level cap is `Generator.maxOwned`.
-- [ ] **Multiplier stack, remaining** — `ModifierStack` (additive + multiplicative, named sources, breakdown,
+- [x] **Multiplier stack, remaining** — `ModifierStack` (additive + multiplicative, named sources, breakdown,
       order-independent) is done in `engine_core`; wire it to generators/upgrades/prestige in `engine_idle`.
-- [ ] **Prestige, remaining** — `PrestigeRule`, `prestigeGainNow`, `performPrestige` (reset scope, permanent currency,
+- [x] **Prestige, remaining** — `PrestigeRule`, `prestigeGainNow`, `performPrestige` (reset scope, permanent currency,
       `1 + bonusPerUnit * held` multiplier, lifetime stats kept) are done in `engine_idle`. Screen done; `keepGenerators` reset scope done.
-- [ ] **Achievements, remaining** — `Achievement` data (`lifetime:` / `run:` / `owned:` / `prestiges` / `taps` / `seconds`
+- [x] **Achievements, remaining** — `Achievement` data (`lifetime:` / `run:` / `owned:` / `prestiges` / `taps` / `seconds`
       stats, optional multiplier reward), `checkAchievements`, `AchievementUnlockedEvent` are done. Screen done; arbitrary events via `recordIdleEvent` / `event:<name>` done.
-- [ ] **Active-play hooks, remaining** — `tapEarn` (multiplied, counted) and timed `Boost` / `BoostSystem` (restart refreshes,
+- [x] **Active-play hooks, remaining** — `tapEarn` (multiplied, counted) and timed `Boost` / `BoostSystem` (restart refreshes,
       distinct boosts multiply) are done. Random "golden cookie" events (`GoldenEvents` + `GoldenEventSystem`, seeded RNG, `claimGolden`) are done too.
 
 ## 4. Saving
 
-- [ ] **Autosave, remaining** — `AtomicSave` (temp file + rename, `.bak` of the previous save, corrupt-file fallback) is
+- [x] **Autosave, remaining** — `AtomicSave` (temp file + rename, `.bak` of the previous save, corrupt-file fallback) is
       done in `engine_core_io`. Left: the periodic/on-pause trigger, which belongs to the lifecycle hooks.
-- [ ] **Save versioning, remaining** — `SaveMigrator` (versioned steps, newer-save refusal, missing-step error) is done
+- [x] **Save versioning, remaining** — `SaveMigrator` (versioned steps, newer-save refusal, missing-step error) is done
       in `engine_core`. Left: keep a fixture save for every released version once there is one.
-- [ ] **Export / import, remaining** — `SaveCodec` (`GSAVE1.<payload>.<checksum>`, clear errors) is done; the UI for
-      copy/paste is in section 5.
+- [x] **Export / import, remaining** — `SaveCodec` (`GSAVE1.<payload>.<checksum>`, clear errors) is done; the copy/paste UI is `SaveCodePanel`.
 - [x] **Cloud save hook** (`CloudSaveStore`, `IdleSession.syncCloud` with newer-wins and an optional resolver) — an interface only (platform-specific implementations belong to the game).
 
 ## 5. UI
@@ -108,11 +106,11 @@ The building blocks are there; the genre's *structure* is not.
 The engine's UI is menu buttons and HUD bars; an idle game's screens are long scrolling lists. These can be
 ordinary Flutter widgets reading the game state, shipped as a small package or a section of `engine_flutter`.
 
-- [ ] **Upgrade list, remaining** — `GeneratorList` / `GeneratorRow` (×1/×10/×100/Max, affordable/locked states, lazy list
+- [x] **Upgrade list, remaining** — `GeneratorList` / `GeneratorRow` (×1/×10/×100/Max, affordable/locked states, lazy list
       tested with 300 rows, semantic labels) and `UpgradeList` are done in `engine_idle`. Milestone progress display done (`Generator.nextMilestone`).
-- [ ] **Resource header, remaining** — `ResourceHeader` and `IdleController` (10 Hz notifications, real-time clock, style
+- [x] **Resource header, remaining** — `ResourceHeader` and `IdleController` (10 Hz notifications, real-time clock, style
       switch) are done. Left: per-widget rebuild throttling beyond the controller's tick.
-- [ ] **"While you were away" dialog, remaining** — `OfflineSummaryDialog` is done; the 2x hook (`onDouble` callback + `IdleSession.doubleOffline`) and lifecycle wiring are done too.
+- [x] **"While you were away" dialog, remaining** — `OfflineSummaryDialog` is done; the 2x hook (`onDouble` callback + `IdleSession.doubleOffline`) and lifecycle wiring are done too.
 - [x] **Prestige screen** and **achievements screen** (`PrestigePanel` with confirmation, `AchievementList` with progress).
 - [x] **Settings** — `IdleSettingsPanel` (number-format switch via `IdleController.setStyle`, offline-rules notice); the game adds its own accessibility toggles.
 - [x] **Large-number performance** — `IdleController.format` memoises (bounded, style/separator-aware); the controller notifies at 10 Hz.
@@ -126,14 +124,14 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
       platform plugin (kept out of `engine_core`).
 - [x] **Offline-cap awareness** (`OfflineProgress.untilCap`, used by the session's reminder) — the economy exposes "time until the offline cap is reached" so the
       notification and the UI agree.
-- [ ] **Web** — pause/resume via page visibility; documented limits (browsers throttle background tabs, so
+- [x] **Web** (`IdleLifecycleHost` observes Flutter's lifecycle, which web maps to page visibility; `BrowserSaveStore` for storage) — pause/resume via page visibility; documented limits (browsers throttle background tabs, so
       catch-up on focus is the only reliable behaviour).
 
 ## 7. Tooling and balance
 
-- [ ] **Balance simulator, remaining** — `simulateIdle` and `dart run tool/simulate.dart` (milestones, stall reasons,
+- [x] **Balance simulator, remaining** — `simulateIdle` and `dart run tool/simulate.dart` (milestones, stall reasons,
       deterministic) are done in `engine_idle`. Golden-output test (`test/golden/`) is done. `game_agent idle simulate` is done: the Flutter-free idle rules now live in `engine_core` (`engine_core_idle.dart`), which `engine_idle` re-exports.
-- [ ] **Schema + studio support** — component schemas for the new data (generators, upgrades, prestige,
+- [x] **Schema + studio support** — component schemas for the new data (generators, upgrades, prestige,
       achievements) so `studio validate` and the inspector understand them; `docs/reference/components.md`
       regenerates.
 - [x] **Template** — `game_agent create --template idle_game`: a minimal working idle game (one resource,
@@ -143,7 +141,7 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 
 ## 8. Cross-cutting
 
-- [ ] **Determinism** — all of the above uses the seeded RNG and fixed timestep; no `DateTime.now()` inside
+- [x] **Determinism** — all of the above uses the seeded RNG and fixed timestep; no `DateTime.now()` inside (`idle_determinism_test.dart`)
       simulation code (time enters only through `OfflineProgress` and is injectable for tests).
 - [x] **Anti-cheat position** (documented: trust the device for single-player; server authority for competitive/IAP) — decide what is client-trusted. A single-player idle game can trust the
       clock and save; one with a leaderboard or purchases cannot. Write the decision down.
