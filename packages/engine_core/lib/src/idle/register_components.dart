@@ -2,6 +2,7 @@ import '../../engine_core.dart';
 import 'package:engine_schema/engine_schema.dart';
 
 import 'active_play.dart';
+import 'auto_buyer.dart';
 import 'components.dart';
 import 'golden_events.dart';
 import 'progression.dart';
@@ -61,5 +62,11 @@ void registerIdleComponents(World world) {
     (g) => g.toJson(),
     GoldenEvents.fromJson,
     schema: goldenEventsSchema,
+  );
+  world.components.register<AutoBuyer>(
+    'autoBuyer',
+    (a) => a.toJson(),
+    AutoBuyer.fromJson,
+    schema: autoBuyerSchema,
   );
 }

@@ -162,3 +162,9 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 5. Upgrade list and "while you were away" widgets.
 6. Prestige, achievements, boosts.
 7. Notifications, balance simulator, template, guide.
+
+## 9. Extras added after the plan
+
+- [x] `bestPurchase` (the simulator's greedy choice as a public function) and `AutoBuyer` / `AutoBuySystem` / `runAutoBuyer`:
+      automation tier, definition support, schema, tests.
+- [x] `game_agent idle validate`.

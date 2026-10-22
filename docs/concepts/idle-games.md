@@ -164,6 +164,10 @@ and a pulled save pays no offline time. `SaveCodePanel` lets players move a game
   `"stat": "event:dragon_slain"`.
 - **Golden events** (`GoldenEvents` + `GoldenEventSystem(DeterministicRandom(seed))`, `claimGolden`) offer timed
   random boosts or payouts, reproducible from the seed.
+- **Automation:** an `AutoBuyer` (in the definition as `"autoBuyer": {"intervalSeconds": 5, "maxPerRun": 10}`) buys the
+  affordable purchase with the best payback on a timer; add `AutoBuySystem()` after `IdleSystem()`, flip `enabled` when
+  the player unlocks it, and use `IdleSession(whileAway: ...)` with `runAutoBuyer` so it also works offline.
+  `bestPurchase(world, wallet)` is the same recommendation as a function (for a "buy this next" hint).
 - **Analytics** (`IdleAnalytics`) reports purchases, prestiges and returns through the consent-aware manager.
 
 ## Trust: the clock and the save

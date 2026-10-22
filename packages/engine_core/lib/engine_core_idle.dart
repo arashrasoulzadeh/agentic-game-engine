@@ -8,7 +8,9 @@
 library;
 
 export 'src/idle/active_play.dart';
+export 'src/idle/advisor.dart';
 export 'src/idle/analytics.dart';
+export 'src/idle/auto_buyer.dart';
 export 'src/idle/components.dart';
 export 'src/idle/definition.dart';
 export 'src/idle/economy.dart';

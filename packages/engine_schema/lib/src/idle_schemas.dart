@@ -73,3 +73,11 @@ const goldenEventsSchema = ComponentSchema('goldenEvents', [
   FieldSchema('offered', FieldType.int, min: 0, optional: true),
   FieldSchema('offerRemaining', FieldType.double, min: 0),
 ]);
+
+const autoBuyerSchema = ComponentSchema('autoBuyer', [
+  FieldSchema('enabled', FieldType.bool),
+  FieldSchema('intervalSeconds', FieldType.double, min: 0.01),
+  FieldSchema('mainResource', FieldType.string),
+  FieldSchema('maxPerRun', FieldType.int, min: 1),
+  FieldSchema('elapsed', FieldType.double, min: 0),
+]);

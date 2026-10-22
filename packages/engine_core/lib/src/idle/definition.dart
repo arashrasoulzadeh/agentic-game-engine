@@ -1,5 +1,6 @@
 import '../../engine_core.dart';
 
+import 'auto_buyer.dart';
 import 'components.dart';
 import 'progression.dart';
 import 'register_components.dart';
@@ -251,6 +252,27 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
       }
     }
   }
+  final ab = json['autoBuyer'];
+  if (ab != null) {
+    if (ab is! Map) {
+      errors.add('autoBuyer must be an object');
+    } else {
+      final every = ab['intervalSeconds'];
+      if (every != null && (every is! num || every <= 0)) {
+        errors.add('autoBuyer.intervalSeconds must be greater than 0');
+      }
+      final per = ab['maxPerRun'];
+      if (per != null && (per is! int || per < 1)) {
+        errors.add('autoBuyer.maxPerRun must be a whole number >= 1');
+      }
+      final main = ab['mainResource'];
+      if (main != null &&
+          (main is! String ||
+              (resources.isNotEmpty && !resources.contains(main)))) {
+        errors.add('autoBuyer.mainResource must be a declared resource');
+      }
+    }
+  }
   return errors;
 }
 
@@ -317,6 +339,13 @@ IdleGame loadIdleDefinition(World world, Map<String, dynamic> json) {
     world.storeOf<PrestigeRule>().set(
       world.spawn(),
       PrestigeRule.fromJson((json['prestige'] as Map).cast<String, dynamic>()),
+    );
+  }
+
+  if (json['autoBuyer'] is Map) {
+    world.storeOf<AutoBuyer>().set(
+      world.spawn(),
+      AutoBuyer.fromJson((json['autoBuyer'] as Map).cast<String, dynamic>()),
     );
   }
 

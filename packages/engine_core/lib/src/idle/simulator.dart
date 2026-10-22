@@ -1,6 +1,6 @@
 import '../../engine_core.dart';
 
-import 'components.dart';
+import 'advisor.dart';
 import 'economy.dart';
 import 'progression.dart';
 
@@ -124,44 +124,7 @@ SimulationReport simulateIdle(
       }
     }
 
-    // Candidates: one more copy of each generator, each unbought upgrade.
-    _Option? best;
-    // An option the player can never afford (nothing earns the resource it costs) is not a candidate.
-    bool reachable(_Option o) =>
-        o.cost <= wallet.of(o.resource) ||
-        wallet.rateOf(o.resource) > BigNumber.zero;
-    final before = computeIncome(world);
-    final main = before[mainResource] ?? BigNumber.zero;
-
-    final gens = world.storeOf<Generator>();
-    for (var i = 0; i < gens.length; i++) {
-      final id = gens.entityAt(i);
-      final g = gens.denseAt(i);
-      if (g.maxOwned != null && g.owned >= g.maxOwned!) continue;
-      if (missingTech(world, 'player', g.requires).isNotEmpty) continue;
-      g.owned++;
-      final after =
-          (computeIncome(world)[mainResource] ?? BigNumber.zero) - main;
-      g.owned--;
-      final cost = g.cost.costOfNext(g.owned);
-      final option = _Option(id, false, g.costResource, cost, after);
-      if (reachable(option)) best = _better(best, option);
-    }
-    final ups = world.storeOf<Upgrade>();
-    for (var i = 0; i < ups.length; i++) {
-      final id = ups.entityAt(i);
-      final u = ups.denseAt(i);
-      if (u.purchased || missingTech(world, 'player', u.requires).isNotEmpty) {
-        continue;
-      }
-      u.purchased = true;
-      final after =
-          (computeIncome(world)[mainResource] ?? BigNumber.zero) - main;
-      u.purchased = false;
-      final cost = u.cost[mainResource] ?? BigNumber.zero;
-      final option = _Option(id, true, mainResource, cost, after);
-      if (reachable(option)) best = _better(best, option);
-    }
+    final best = bestPurchase(world, wallet, mainResource: mainResource);
 
     if (best == null || best.gain <= BigNumber.zero) {
       stalled = true;
@@ -204,25 +167,6 @@ SimulationReport simulateIdle(
     stalled,
     stallReason,
   );
-}
-
-class _Option {
-  _Option(this.entity, this.isUpgrade, this.resource, this.cost, this.gain);
-  final EntityId entity;
-  final bool isUpgrade;
-  final String resource;
-  final BigNumber cost;
-  final BigNumber gain;
-
-  /// Cost per unit of income gained: lower is better.
-  BigNumber get payback =>
-      gain <= BigNumber.zero ? BigNumber.from(double.maxFinite) : cost / gain;
-}
-
-_Option? _better(_Option? current, _Option candidate) {
-  if (candidate.gain <= BigNumber.zero) return current;
-  if (current == null || candidate.payback < current.payback) return candidate;
-  return current;
 }
 
 String _duration(Duration d) {
