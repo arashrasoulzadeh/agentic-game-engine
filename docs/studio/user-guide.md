@@ -26,6 +26,11 @@ search** (`Cmd/Ctrl+Shift+F`).
 
 ## Edit a level
 
+![The studio with a level open: file tree on the left, the tool bar and canvas in the middle, the inspector on the right](../img/studio-level-editor.png)
+
+*(Entity names on the canvas show as plain bars in this picture because it is rendered by the test harness, which has no text font for custom painting.)*
+
+
 Open a `*.level.json` file. The canvas shows the tile map and the entities; the toolbar
 above it picks what a click or drag does:
 

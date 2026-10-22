@@ -5,6 +5,8 @@ without playing, and wire in the player-facing extras. No Dart is needed until t
 
 ## 1. Generate it
 
+![The finished game](../img/idle-game.png)
+
 ```bash
 game_agent create bakery --template idle_game
 cd bakery

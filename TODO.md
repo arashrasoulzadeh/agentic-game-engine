@@ -205,8 +205,9 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       tag (see docs/engine-releasing.md), not before.
 - [x] **Unpublished pages** — DECIDED: `studio/design.md` is published (Studio > Design and decisions); `proposals/` (drafts, not
       implemented) and `studio/qa-level-editor.md` (an internal QA checklist) stay excluded on purpose.
-- [ ] **Diagrams and screenshots** — add real screenshots (strategy template,
-      studio) to the tutorials and getting-started.
+- [x] **Diagrams and screenshots** — real screenshots of the studio and the idle game, rendered by `screenshots_test.dart` in each
+      package (`UPDATE_SCREENSHOTS=1 flutter test test/screenshots_test.dart` rewrites `docs/img/`). Still open: a strategy
+      template screenshot (needs its art), and a studio picture with proper entity-label text.
 - [x] **Executed-samples guarantee** — extended to ECS, cinematics, the multiplayer tutorial and the studio first-level steps;
       networking and real-time strategy samples are covered by their feature tests; the landing page says exactly what is
       not machine-checked (architecture, rendering widget snippets, studio click-through).

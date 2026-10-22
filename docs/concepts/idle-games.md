@@ -8,6 +8,8 @@ The genre code is the `engine_idle` package; the number, offline, cost and save 
 Samples are executed by `packages/engine_core/test/doc_examples_idle_test.dart` and
 `packages/engine_idle/test/doc_examples_test.dart`.
 
+![The idle game template after fifty minutes of simulated play: resources and income at the top, a row of buy buttons per generator, greyed-out ones unaffordable](../img/idle-game.png)
+
 ## Numbers that do not overflow
 
 An incremental game's totals outgrow a 64-bit integer within hours, and a `double` stops at 1e308. `BigNumber`
