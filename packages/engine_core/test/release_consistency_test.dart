@@ -35,4 +35,22 @@ void main() {
       expect(field(d, 'publish_to'), 'none', reason: d.path);
     }
   });
+
+  test(
+    'every package a consumer could fetch carries a LICENSE, README and CHANGELOG',
+    () {
+      // engine_studio is an application, not a dependency.
+      for (final d in packages.where(
+        (d) => !d.path.endsWith('engine_studio'),
+      )) {
+        for (final f in ['LICENSE', 'README.md', 'CHANGELOG.md']) {
+          expect(
+            File('${d.path}/$f').existsSync(),
+            isTrue,
+            reason: '${d.path} is missing $f',
+          );
+        }
+      }
+    },
+  );
 }
