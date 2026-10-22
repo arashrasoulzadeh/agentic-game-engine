@@ -146,6 +146,24 @@ when unaffordable, lazily built so hundreds of rows stay smooth), `UpgradeList`,
 `PrestigePanel` (previews the gain and asks before resetting), `AchievementList` and `IdleSettingsPanel`.
 `controller.setStyle(NumberStyle.scientific)` switches every number at once.
 
+## Storage choices
+
+`FileSaveStore` (atomic, with a backup) on mobile and desktop; `BrowserSaveStore` (`localStorage`) on the web;
+`MemorySaveStore` in tests. For several devices, implement `CloudSaveStore` over your platform's service and call
+`IdleSession.syncCloud`: the save from the device that was active later wins, `resolve:` lets you ask the player,
+and a pulled save pays no offline time. `SaveCodePanel` lets players move a game by copying text.
+
+## More rules, all data
+
+- **Milestones** on a generator (`"milestones": [{"owned": 25, "multiplier": "2"}]`) multiply its output; the row
+  shows progress to the next.
+- **Prestige** can keep chosen generators (`"keepGenerators": ["farm"]`) and upgrades (`keepUpgrades`).
+- **Achievements** can count your own events: call `recordIdleEvent(world, wallet, 'dragon_slain')` and use
+  `"stat": "event:dragon_slain"`.
+- **Golden events** (`GoldenEvents` + `GoldenEventSystem(DeterministicRandom(seed))`, `claimGolden`) offer timed
+  random boosts or payouts, reproducible from the seed.
+- **Analytics** (`IdleAnalytics`) reports purchases, prestiges and returns through the consent-aware manager.
+
 ## Trust: the clock and the save
 
 The engine makes a deliberate, simple choice: **a single-player idle game trusts the device**.
