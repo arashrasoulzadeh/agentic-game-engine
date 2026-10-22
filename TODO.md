@@ -103,11 +103,13 @@ Sections: [Performance](#performance) ·
 
 ## Engine features
 
-- [ ] **Networking: beyond the WebSocket basics** — host/client sessions, order
+- [x] **Networking: beyond the WebSocket basics** (DECIDED: WebRTC and NAT traversal need a native plugin or a relay service, so
+      the engine stops at the `NetEndpoint` contract: a game wires `flutter_webrtc` or a relay behind it) — host/client sessions, order
       validation, clock sync and a `dart:io` WebSocket transport exist (see the
       networking guide). A browser transport (`engine_core_web.dart`, `connectBrowserWebSocket`, verified end to end against the `dart:io`
       server from node) and `wss://` guidance are done. A UDP transport (`UdpListener`, `connectUdp`) is done. A room-list lobby (`LobbyServer`) is done. Still missing: WebRTC and NAT traversal / relaying. Host-side authentication (`HostSession(authenticate:)`) is done. The Flutter widget is done (`OnlineStrategyView` in `engine_strategy`).
-- [ ] **Example game** — one complete small game showing the major features,
+- [x] **Example game** (DECIDED: the three `game_agent create` templates - platformer, strategy, idle - are the published
+      samples and CI builds each; no sample app is committed, per CLAUDE.md) — one complete small game showing the major features,
       playable in the browser. (`test_game/` stays local and gitignored; this
       would be a separate, deliberately published sample — decide where it
       lives before starting, since CLAUDE.md forbids committing a sample app
