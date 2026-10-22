@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../ecs/entity.dart';
 import '../ecs/world.dart';
 import '../turn/order.dart';
@@ -37,6 +39,8 @@ class HostSession {
     required this.teams,
     this.syncEveryTicks = 1,
     StateSyncServer? sync,
+    this.authenticate,
+    this.authTimeoutTicks = 200,
   }) : assert(teams.isNotEmpty, 'a game needs at least one playable team'),
        assert(syncEveryTicks >= 1),
        sync = sync ?? StateSyncServer(world: world);
@@ -50,6 +54,22 @@ class HostSession {
   /// latency).
   final int syncEveryTicks;
   final StateSyncServer sync;
+
+  /// When set, a connection must prove itself before it gets a team: it is held, hears nothing and takes no
+  /// slot until its first message, `{"type": "hello", "token": ...}`, passes this check (given the token and
+  /// the optional `name`). A refusal sends `denied` and closes. May be async (a database or token service).
+  ///
+  /// This is the host's gate against strangers and does not encrypt anything: serve over `wss://` so the
+  /// token is not readable in transit.
+  final FutureOr<bool> Function(String? token, String? name)? authenticate;
+
+  /// Ticks (calls to [afterStep]) a connection may stay unauthenticated before it is dropped.
+  final int authTimeoutTicks;
+
+  final Map<NetEndpoint, int> _pending = {};
+
+  /// How many connections are waiting to authenticate (for tests and monitoring).
+  int get pendingCount => _pending.length;
 
   final Map<int, PlayerSlot> players = {};
   int _nextId = 1;
@@ -67,7 +87,39 @@ class HostSession {
 
   /// Takes a new connection. Returns the player slot, or null (after telling the
   /// peer `full` and closing it) when every team is already taken.
+  ///
+  /// With [authenticate] set, returns null at once and admits the connection later if it passes.
   PlayerSlot? accept(NetEndpoint endpoint) {
+    if (authenticate == null) return _admit(endpoint);
+    _pending[endpoint] = 0;
+    endpoint.onMessage = (m) {
+      if (m['type'] == 'hello' && _pending.containsKey(endpoint)) {
+        _check(endpoint, m['token'] as String?, m['name'] as String?);
+      }
+    };
+    endpoint.onClose = () => _pending.remove(endpoint);
+    return null;
+  }
+
+  Future<void> _check(NetEndpoint endpoint, String? token, String? name) async {
+    bool ok;
+    try {
+      ok = await authenticate!(token, name);
+    } on Object {
+      ok = false;
+    }
+    if (_pending.remove(endpoint) == null)
+      return; // dropped or timed out meanwhile
+    if (!ok) {
+      endpoint.send({'type': 'denied'});
+      endpoint.close();
+      return;
+    }
+    final slot = _admit(endpoint);
+    if (slot != null) slot.name = name;
+  }
+
+  PlayerSlot? _admit(NetEndpoint endpoint) {
     final taken = {for (final p in players.values) p.team};
     final free = teams.where((t) => !taken.contains(t));
     if (free.isEmpty) {
@@ -102,6 +154,18 @@ class HostSession {
 
   /// Call once after every `world.step`: replicates state on schedule.
   void afterStep() {
+    if (_pending.isNotEmpty) {
+      for (final e in _pending.keys.toList()) {
+        final waited = _pending[e]! + 1;
+        if (waited > authTimeoutTicks) {
+          _pending.remove(e);
+          e.send({'type': 'denied'});
+          e.close();
+        } else {
+          _pending[e] = waited;
+        }
+      }
+    }
     _ticksSinceSync++;
     if (_ticksSinceSync >= syncEveryTicks) {
       _ticksSinceSync = 0;
@@ -178,12 +242,21 @@ class ClientSession {
     required this.endpoint,
     this.clock,
     StateSyncClient? sync,
+    String? token,
+    String? name,
   }) : sync = sync ?? StateSyncClient(world: world, send: endpoint.send) {
     endpoint.onMessage = _handle;
     endpoint.onClose = () {
       connected = false;
       onDisconnected?.call();
     };
+    if (token != null || name != null) {
+      endpoint.send({
+        'type': 'hello',
+        if (token != null) 'token': token,
+        if (name != null) 'name': name,
+      });
+    }
   }
 
   final World world;
@@ -207,6 +280,9 @@ class ClientSession {
 
   /// True if the host turned us away because every team was taken.
   bool rejectedAsFull = false;
+
+  /// True if the host refused our credentials (see `HostSession.authenticate`).
+  bool denied = false;
 
   /// Round-trip time of the latest ping, in milliseconds.
   double? rttMs;
@@ -254,6 +330,8 @@ class ClientSession {
         onWelcome?.call();
       case 'full':
         rejectedAsFull = true;
+      case 'denied':
+        denied = true;
       case 'start':
         started = true;
         onStart?.call();

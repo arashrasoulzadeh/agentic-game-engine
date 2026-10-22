@@ -155,3 +155,20 @@ checks before accepting orders.
 your atlas registry and the grid size, and it mirrors the host, draws it, lets the player tap a unit and then a
 cell (move) or an enemy (attack), and sends those as orders. Nothing is applied locally; the result arrives in the
 host's state, and a refused order reaches `onRejected`.
+
+## Who may join
+
+By default any connection takes a free team. To require credentials, give the host a check:
+
+```dart
+final host = HostSession(
+  world: world,
+  teams: ['red', 'blue'],
+  authenticate: (token, name) => tokens.isValid(token),   // may be async
+);
+```
+
+A connection then gets nothing (no team, no state) until its first message, `hello` with the token, passes. A
+refusal sends `denied` and closes; one that never says hello is dropped after `authTimeoutTicks` calls to
+`afterStep`. The client passes `ClientSession(..., token: ..., name: ...)` and sees `denied`. This is a gate, not
+encryption: serve over `wss://` so the token cannot be read on the way. Orders are validated per team either way.
