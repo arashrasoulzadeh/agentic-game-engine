@@ -1,13 +1,19 @@
 # agentic-game-engine
 
-[![engine_core](https://img.shields.io/badge/pub-engine__core%20v0.1.0-blue?logo=dart)](packages/engine_core)
-[![engine_flutter](https://img.shields.io/badge/pub-engine__flutter%20v0.1.0-blue?logo=flutter)](packages/engine_flutter)
-[![engine_platformer](https://img.shields.io/badge/pub-engine__platformer%20v0.1.0-blue?logo=dart)](packages/engine_platformer)
+[![engine_core](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_core.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_core.yml)
+[![engine_flutter](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_flutter.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_flutter.yml)
+[![engine_platformer](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_platformer.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_platformer.yml)
+[![engine_strategy](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_strategy.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_strategy.yml)
+[![engine_idle](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_idle.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_idle.yml)
+[![engine_studio](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_studio.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_studio.yml)
+[![engine_cli](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_cli.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_cli.yml)
+[![engine_schema](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_schema.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_schema.yml)
+[![docs](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/docs.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/docs.yml)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-> Badges above are placeholders (`v0.1.0`, pre-1.0, not yet published to
-> pub.dev — see [API stability](#api-stability)). Once published, these
-> should point at real pub.dev version badges instead of static text.
+> The badges are live CI status for each package. Version `0.1.0`, pre-1.0, not yet on pub.dev
+> (see [API stability](#api-stability) and [releasing the engine](docs/engine-releasing.md)); pub.dev version badges
+> replace these once the packages are published.
 
 > **📖 Documentation: <https://meetarash.ir/agentic-game-engine/>** — tutorials, concepts, recipes and reference.
 

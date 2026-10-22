@@ -212,8 +212,8 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
 - [ ] **Extend the executed-samples guarantee** to the multiplayer tutorial and the older concept pages
       (architecture, rendering, real-time strategy;  ECS and the multiplayer tutorial are done and networking's calls are covered by the session/interest tests); the landing page lists what is
       covered and what is not.
-- [ ] **README badges** — still static placeholders; point at real pub.dev
-      badges once packages are published (see Release).
+- [x] **README badges** — now live GitHub Actions status badges per package; swap for pub.dev version badges
+      once published (see Release).
 
 ## Release
 
