@@ -72,8 +72,7 @@ turns a long absence into progress.
       completed) the UI can render. Done when: it is produced by `OfflineProgress` and covered by tests; the
       screen itself is item 5.
 - [ ] **App lifecycle hooks, remaining** — `IdleSession` (`save`, `load` with migration + catch-up, `onPause` / `onResume`,
-      autosave, `exportCode` / `importCode`) and `IdleLifecycleHost` are done and tested. Left: web file-less store
-      (a `SaveStore` over browser storage) and the "watch an ad for 2x" hook.
+      autosave, `exportCode` / `importCode`) and `IdleLifecycleHost` are done and tested. Web store (`BrowserSaveStore`, `localStorage`) and the 2x hook are done.
 
 ## 3. The idle-genre rules layer
 
