@@ -107,6 +107,16 @@ refusal Flutter would sign with the debug key, which Google Play rejects. See [R
     Passwords on the command line end up in shell history. Prefer environment
     variables (as above) or your CI's secret store.
 
+## idle validate
+
+```bash
+game_agent idle validate assets/idle_game.json
+```
+
+Checks an idle game definition and prints every problem with its path (`generators[2].cost.growth must be a number >= 1`),
+exit 1 if there are any; on success prints `OK` with the number of generators and upgrades. Run it after editing the JSON, in
+CI, or from an agent.
+
 ## idle simulate
 
 ```bash

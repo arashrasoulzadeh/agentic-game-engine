@@ -9,6 +9,7 @@ import 'package:engine_core/engine_core_idle.dart';
 class IdleCommand extends Command<int> {
   IdleCommand({StringSink? out}) {
     addSubcommand(SimulateCommand(out: out));
+    addSubcommand(ValidateIdleCommand(out: out));
   }
 
   @override
@@ -94,5 +95,54 @@ class SimulateCommand extends Command<int> {
     );
     (_out ?? stdout).write(describeSimulation(report));
     return 0;
+  }
+}
+
+/// Checks an idle game definition and lists every problem with the path to it, without running anything.
+/// Exits 0 when valid, 1 otherwise: the check an agent or CI runs after editing the JSON.
+class ValidateIdleCommand extends Command<int> {
+  ValidateIdleCommand({StringSink? out}) : _out = out;
+
+  final StringSink? _out;
+
+  @override
+  final name = 'validate';
+  @override
+  final description =
+      'Validate an idle game definition (JSON) and list every problem.';
+  @override
+  final invocation = 'game_agent idle validate <game.json>';
+
+  @override
+  Future<int> run() async {
+    final rest = argResults!.rest;
+    if (rest.isEmpty) usageException('Missing the game definition file.');
+    final file = File(rest.first);
+    if (!file.existsSync()) {
+      stderr.writeln('Error: ${file.path} does not exist.');
+      return 1;
+    }
+    final Map<String, dynamic> json;
+    try {
+      json = (jsonDecode(file.readAsStringSync()) as Map)
+          .cast<String, dynamic>();
+    } on Object catch (e) {
+      stderr.writeln('Error: ${file.path} is not a valid JSON object: $e');
+      return 1;
+    }
+    final problems = validateIdleDefinition(json);
+    final out = _out ?? stdout;
+    if (problems.isEmpty) {
+      final generators = (json['generators'] as List?)?.length ?? 0;
+      final upgrades = (json['upgrades'] as List?)?.length ?? 0;
+      out.writeln(
+        '${file.path}: OK ($generators generators, $upgrades upgrades)',
+      );
+      return 0;
+    }
+    for (final p in problems) {
+      out.writeln('${file.path}: $p');
+    }
+    return 1;
   }
 }
