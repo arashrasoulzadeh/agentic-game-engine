@@ -176,7 +176,8 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
       old → new). A visual three-way *merge* view is not built; `studio merge` and the git merge-driver recipe cover merging.
 - [ ] **7.3 (remaining)** Real-time presence and live refresh of another person's saved edits;
       advisory per-level locks are done (`FileLock`, the studio banner, `studio lock`/`unlock`).
-- [ ] **7.4** Embedded play-test in a studio panel (decision D4 alternative).
+- [x] **7.4** Embedded play-test: done by ADR 0005 (the Preview mode runs the edited level in the studio window; Run game starts
+      the real game as a separate process).
 - [x] **7.5** Plugin API: `StudioPlugin` / `StudioPlugins.register` adds graph node kinds (editing + validation) and custom
       inspector field editors (`'<component>.<field>'`), tested; compiling custom node kinds stays the game's job.
 
