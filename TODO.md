@@ -200,8 +200,8 @@ None of these appear anywhere under `docs/` today. Each needs a concept page
       matrix over the whole view (`colorblindMatrix`, tested); pass `PlayerOptions.colorblindMode`. The unused
       `ColorblindShader` / `colorblind.frag` were removed. Still open: whether `reduceMotion`, text scale etc.
       should be engine behaviour (the engine reads no `PlayerOptions` itself).
-- [ ] A "build your first level" studio tutorial (the user guide, `docs/studio/user-guide.md`,
-      is done).
+- [x] "Build your first level" studio tutorial (`docs/studio/first-level.md`; its command-line steps are run by
+      `first_level_tutorial_test.dart`, the studio steps are not machine-checked).
 
 ### Quality of the docs themselves
 
