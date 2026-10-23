@@ -168,3 +168,6 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 - [x] `bestPurchase` (the simulator's greedy choice as a public function) and `AutoBuyer` / `AutoBuySystem` / `runAutoBuyer`:
       automation tier, definition support, schema, tests.
 - [x] `game_agent idle validate`.
+- [x] Prestige layers (ascension): `PrestigeRule.id` / `resetsCurrencies`, `"prestiges"` in definitions, per-layer bonuses and panels.
+- [x] Golden offers end to end: `"golden"` definition block, `GoldenOffer` widget, template.
+- [ ] Ideas not started: challenges (restricted runs), multiple wallets per layer in the simulator (it only auto-prestiges the first layer).
