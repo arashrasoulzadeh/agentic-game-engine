@@ -146,6 +146,61 @@ void main() {
       },
     );
 
+    test(
+      'prestige layers: a prestiges list loads, ids must be unique, resets must be names',
+      () {
+        final layered = valid()
+          ..remove('prestige')
+          ..['prestiges'] = [
+            {'currency': 'gems', 'basedOn': 'coins', 'divisor': '1e6'},
+            {
+              'id': 'ascend',
+              'currency': 'stars',
+              'basedOn': 'gems',
+              'divisor': '100',
+              'resetsCurrencies': ['gems'],
+            },
+          ];
+        expect(validateIdleDefinition(layered), isEmpty);
+        final w = World(width: 4, height: 4);
+        registerCoreComponents(w);
+        loadIdleDefinition(w, layered);
+        expect(w.storeOf<PrestigeRule>().length, 2);
+        expect(prestigeRuleOf(w, 'ascend')!.currency, 'stars');
+        expect(prestigeRuleOf(w)!.id, 'prestige');
+
+        expect(
+          problems(
+            (j) => j['prestiges'] = [
+              {'currency': 'a', 'basedOn': 'coins', 'divisor': '1'},
+              {'currency': 'b', 'basedOn': 'a', 'divisor': '1'},
+            ],
+          ),
+          contains('prestiges[1].id "prestige" is used twice'),
+        );
+        expect(
+          problems(
+            (j) => j['prestiges'] = [
+              {
+                'id': 'x',
+                'currency': 'a',
+                'basedOn': 'coins',
+                'divisor': '1',
+                'resetsCurrencies': [3],
+              },
+            ],
+          ),
+          contains(
+            'prestiges[0].resetsCurrencies must be a list of currency names',
+          ),
+        );
+        expect(
+          problems((j) => j['prestiges'] = 'no'),
+          contains('prestiges must be a list'),
+        );
+      },
+    );
+
     test('bad milestones', () {
       List<String> ms(Object v) =>
           problems((j) => (j['generators'] as List)[0]['milestones'] = v);

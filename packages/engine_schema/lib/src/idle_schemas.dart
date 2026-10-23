@@ -48,6 +48,8 @@ const prestigeRuleSchema = ComponentSchema('prestigeRule', [
   FieldSchema('startingAmounts', FieldType.object),
   FieldSchema('keepUpgrades', FieldType.bool),
   FieldSchema('keepGenerators', FieldType.list),
+  FieldSchema('id', FieldType.string),
+  FieldSchema('resetsCurrencies', FieldType.list),
 ]);
 
 const achievementSchema = ComponentSchema('achievement', [

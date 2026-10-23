@@ -102,10 +102,20 @@ class PrestigeRule {
   /// Keep purchased upgrades across prestige.
   final bool keepUpgrades;
 
+  /// Names this layer when a game has several (`"prestige"` for the usual single one). A layer's income bonus is
+  /// the modifier source `prestige` for the default id and `prestige:<id>` for the others.
+  final String id;
+
+  /// Currencies of **lower** layers this prestige wipes (an ascension that also resets the first layer's gems).
+  /// Layers not listed keep their currency.
+  final List<String> resetsCurrencies;
+
   /// Ids of generators whose owned count survives prestige (a "you keep your first farm" perk).
   final List<String> keepGenerators;
 
   PrestigeRule({
+    this.id = 'prestige',
+    this.resetsCurrencies = const [],
     required this.currency,
     required this.basedOn,
     required this.divisor,
@@ -123,6 +133,8 @@ class PrestigeRule {
   }
 
   Map<String, dynamic> toJson() => {
+    if (id != 'prestige') 'id': id,
+    if (resetsCurrencies.isNotEmpty) 'resetsCurrencies': resetsCurrencies,
     'currency': currency,
     'basedOn': basedOn,
     'divisor': divisor.toJson(),
@@ -136,6 +148,11 @@ class PrestigeRule {
   };
 
   factory PrestigeRule.fromJson(Map<String, dynamic> json) => PrestigeRule(
+    id: json['id'] as String? ?? 'prestige',
+    resetsCurrencies: [
+      for (final c in (json['resetsCurrencies'] as List? ?? const []))
+        c as String,
+    ],
     currency: json['currency'] as String,
     basedOn: json['basedOn'] as String,
     divisor: BigNumber.fromJson((json['divisor'] ?? '1') as Object),
@@ -156,31 +173,63 @@ class PrestigeRule {
 /// Name of the modifier source prestige writes into [IdleModifiers].
 const prestigeSource = 'prestige';
 
-/// What prestiging right now would give, from the game's [IdleStats] and [PrestigeRule].
-BigNumber prestigeGainNow(World world) {
-  final rule = _first<PrestigeRule>(world);
+/// The prestige rule called [id], or the first one when [id] is null; null if the game has none.
+PrestigeRule? prestigeRuleOf(World world, [String? id]) {
+  final rules = world.storeOf<PrestigeRule>();
+  for (var i = 0; i < rules.length; i++) {
+    if (id == null || rules.denseAt(i).id == id) return rules.denseAt(i);
+  }
+  return null;
+}
+
+/// Every currency some prestige layer produces (what a run reset must not erase from the stats).
+Set<String> _prestigeCurrencies(World world) {
+  final rules = world.storeOf<PrestigeRule>();
+  return {for (var i = 0; i < rules.length; i++) rules.denseAt(i).currency};
+}
+
+String _sourceFor(PrestigeRule rule) =>
+    rule.id == 'prestige' ? prestigeSource : '$prestigeSource:${rule.id}';
+
+/// What prestiging right now would give, from the game's [IdleStats] and the rule [id] (the first by default).
+BigNumber prestigeGainNow(World world, [String? id]) {
+  final rule = prestigeRuleOf(world, id);
   final stats = _first<IdleStats>(world);
   if (rule == null || stats == null) return BigNumber.zero;
   return rule.gainFor(stats.runEarned[rule.basedOn] ?? BigNumber.zero);
 }
 
-/// Resets the run and banks the prestige currency. Returns the amount gained, or null if the run is
-/// not yet worth a unit (nothing changes then).
+/// Resets the run and banks the prestige currency of rule [id] (the first by default). Returns the amount
+/// gained, or null if the run is not yet worth a unit (nothing changes then).
 ///
-/// Resets: every resource except the permanent currency (back to [PrestigeRule.startingAmounts]),
+/// Resets: every resource except the permanent currencies (back to [PrestigeRule.startingAmounts]),
 /// every generator's `owned` (except [PrestigeRule.keepGenerators]), and - unless [PrestigeRule.keepUpgrades] - every upgrade. Keeps: the
 /// currency, lifetime stats, achievements. Then refreshes the `prestige` multiplier and the income.
-BigNumber? performPrestige(World world, BigTreasury wallet) {
-  final rule = _first<PrestigeRule>(world);
+///
+/// With several layers, another layer's currency survives unless this rule lists it in
+/// [PrestigeRule.resetsCurrencies] (then that layer's bonus ends too). What a layer earns is counted in the
+/// run stats of the next, so a second rule can be `basedOn` the first one's currency.
+BigNumber? performPrestige(World world, BigTreasury wallet, [String? id]) {
+  final rule = prestigeRuleOf(world, id);
   final stats = _first<IdleStats>(world);
   if (rule == null || stats == null) return null;
   final gain = rule.gainFor(stats.runEarned[rule.basedOn] ?? BigNumber.zero);
   if (gain < BigNumber.one) return null;
 
+  final currencies = _prestigeCurrencies(world);
+  final wiped = rule.resetsCurrencies.toSet();
   final bank = wallet.of(rule.currency) + gain;
+  final kept = {
+    for (final c in currencies)
+      if (c != rule.currency &&
+          !wiped.contains(c) &&
+          wallet.of(c) > BigNumber.zero)
+        c: wallet.of(c),
+  };
   wallet.amounts
     ..clear()
-    ..addAll(rule.startingAmounts);
+    ..addAll(rule.startingAmounts)
+    ..addAll(kept);
   wallet.amounts[rule.currency] = bank;
 
   final generators = world.storeOf<Generator>();
@@ -195,14 +244,24 @@ BigNumber? performPrestige(World world, BigTreasury wallet) {
     }
   }
 
-  stats.runEarned.clear();
+  // The run's earnings restart, except what prestige layers produced: those feed the layer above and are
+  // cleared only by a layer that wipes them. This prestige's own gain is counted for the layer above.
+  stats.runEarned.removeWhere(
+    (resource, _) => !currencies.contains(resource) || wiped.contains(resource),
+  );
+  stats.credit({rule.currency: gain});
   stats.prestigeCount++;
 
   final mods = _first<IdleModifiers>(world);
   mods?.stack.setMultiplier(
-    prestigeSource,
+    _sourceFor(rule),
     BigNumber.one + BigNumber.from(rule.bonusPerUnit) * bank,
   );
+  final rules = world.storeOf<PrestigeRule>();
+  for (var i = 0; i < rules.length; i++) {
+    final other = rules.denseAt(i);
+    if (wiped.contains(other.currency)) mods?.stack.remove(_sourceFor(other));
+  }
   recomputeIncome(world, wallet);
   return gain;
 }

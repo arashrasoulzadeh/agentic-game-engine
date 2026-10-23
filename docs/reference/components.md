@@ -862,6 +862,8 @@ Idle-game data. Registered by `registerIdleComponents`.
 | `startingAmounts` | `object` |  |
 | `keepUpgrades` | `bool` |  |
 | `keepGenerators` | `list` |  |
+| `id` | `string` |  |
+| `resetsCurrencies` | `list` |  |
 
 ### `achievement`
 

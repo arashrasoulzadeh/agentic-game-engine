@@ -163,6 +163,48 @@ void main() {
       expect(find.text('Done'), findsOneWidget);
     });
 
+    testWidgets(
+      'a second layer gets its own panel with its own keys and prestiges that layer',
+      (tester) async {
+        final c = game();
+        c.world.storeOf<PrestigeRule>().set(
+          c.world.spawn(),
+          PrestigeRule(
+            id: 'ascend',
+            currency: 'stars',
+            basedOn: 'gems',
+            divisor: n('1'),
+          ),
+        );
+        c.wallet.add('gems', n('9'));
+        c.world.storeOf<IdleStats>().denseAt(0).credit({'gems': n('9')});
+        c.refresh();
+        await tester.pumpWidget(
+          _app(
+            Column(
+              children: [
+                PrestigePanel(controller: c),
+                PrestigePanel(controller: c, ruleId: 'ascend'),
+              ],
+            ),
+          ),
+        );
+        expect(find.byKey(const Key('prestige-button')), findsOneWidget);
+        expect(find.byKey(const Key('prestige-button-ascend')), findsOneWidget);
+        expect(
+          find.textContaining('+3 stars'),
+          findsOneWidget,
+          reason: 'sqrt(9 / 1)',
+        );
+
+        await tester.tap(find.byKey(const Key('prestige-button-ascend')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('prestige-confirm-yes-ascend')));
+        await tester.pumpAndSettle();
+        expect(c.wallet.of('stars'), n('3'));
+      },
+    );
+
     testWidgets('a game without prestige shows nothing', (tester) async {
       await tester.pumpWidget(_app(PrestigePanel(controller: _controller())));
       expect(find.byKey(const Key('prestige-button')), findsNothing);

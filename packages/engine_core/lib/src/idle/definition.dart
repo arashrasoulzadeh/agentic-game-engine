@@ -222,34 +222,55 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
     if (a['reward'] != null) number(a['reward'], '$p.reward', positive: true);
   }
 
-  final pr = json['prestige'];
-  if (pr != null) {
+  final prestigeIds = <String>{};
+  void checkPrestige(Object? pr, String path) {
     if (pr is! Map) {
-      errors.add('prestige must be an object');
-    } else {
-      if (pr['currency'] is! String) {
-        errors.add('prestige.currency is required');
-      }
-      if (pr['basedOn'] is! String) {
-        errors.add('prestige.basedOn is required');
-      }
-      number(pr['divisor'], 'prestige.divisor', positive: true);
-      final keep = pr['keepGenerators'];
-      if (keep != null && keep is! List) {
-        errors.add('prestige.keepGenerators must be a list');
-      } else if (keep is List) {
-        for (var i = 0; i < keep.length; i++) {
-          if (!generatorIds.contains(keep[i])) {
-            errors.add(
-              'prestige.keepGenerators[$i] "${keep[i]}" is not a generator id',
-            );
-          }
+      errors.add('$path must be an object');
+      return;
+    }
+    if (pr['currency'] is! String) {
+      errors.add('$path.currency is required');
+    }
+    if (pr['basedOn'] is! String) {
+      errors.add('$path.basedOn is required');
+    }
+    final id = pr['id'] ?? 'prestige';
+    if (id is! String || id.isEmpty) {
+      errors.add('$path.id must be a non-empty string');
+    } else if (!prestigeIds.add(id)) {
+      errors.add('$path.id "$id" is used twice');
+    }
+    number(pr['divisor'], '$path.divisor', positive: true);
+    final keep = pr['keepGenerators'];
+    if (keep != null && keep is! List) {
+      errors.add('$path.keepGenerators must be a list');
+    } else if (keep is List) {
+      for (var i = 0; i < keep.length; i++) {
+        if (!generatorIds.contains(keep[i])) {
+          errors.add(
+            '$path.keepGenerators[$i] "${keep[i]}" is not a generator id',
+          );
         }
       }
-      final ex = pr['exponent'];
-      if (ex != null && (ex is! num || ex <= 0)) {
-        errors.add('prestige.exponent must be greater than 0');
-      }
+    }
+    final resets = pr['resetsCurrencies'];
+    if (resets != null &&
+        (resets is! List || resets.any((c) => c is! String))) {
+      errors.add('$path.resetsCurrencies must be a list of currency names');
+    }
+    final ex = pr['exponent'];
+    if (ex != null && (ex is! num || ex <= 0)) {
+      errors.add('$path.exponent must be greater than 0');
+    }
+  }
+
+  if (json['prestige'] != null) checkPrestige(json['prestige'], 'prestige');
+  final layers = json['prestiges'];
+  if (layers != null && layers is! List) {
+    errors.add('prestiges must be a list');
+  } else if (layers is List) {
+    for (var i = 0; i < layers.length; i++) {
+      checkPrestige(layers[i], 'prestiges[$i]');
     }
   }
   final ab = json['autoBuyer'];
@@ -335,13 +356,15 @@ IdleGame loadIdleDefinition(World world, Map<String, dynamic> json) {
       Achievement.fromJson((a as Map).cast<String, dynamic>()),
     );
   }
-  if (json['prestige'] is Map) {
+  for (final rule in [
+    if (json['prestige'] is Map) json['prestige'],
+    for (final r in (json['prestiges'] as List? ?? const [])) r,
+  ]) {
     world.storeOf<PrestigeRule>().set(
       world.spawn(),
-      PrestigeRule.fromJson((json['prestige'] as Map).cast<String, dynamic>()),
+      PrestigeRule.fromJson((rule as Map).cast<String, dynamic>()),
     );
   }
-
   if (json['autoBuyer'] is Map) {
     world.storeOf<AutoBuyer>().set(
       world.spawn(),

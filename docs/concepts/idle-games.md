@@ -160,6 +160,11 @@ and a pulled save pays no offline time. `SaveCodePanel` lets players move a game
 - **Milestones** on a generator (`"milestones": [{"owned": 25, "multiplier": "2"}]`) multiply its output; the row
   shows progress to the next.
 - **Prestige** can keep chosen generators (`"keepGenerators": ["farm"]`) and upgrades (`keepUpgrades`).
+- **Prestige layers:** use `"prestiges": [ {...}, {"id": "ascend", "currency": "stars", "basedOn": "gems", "divisor": "100",
+  "resetsCurrencies": ["gems"]} ]` instead of a single `"prestige"`. A layer's gain counts toward the next layer's
+  `basedOn`; a layer keeps the other layers' currencies unless it lists them in `resetsCurrencies`; each has its own
+  income bonus (`prestige`, `prestige:<id>`). Call `performPrestige(world, wallet, 'ascend')` or show a
+  `PrestigePanel(controller:, ruleId: 'ascend')` per layer.
 - **Achievements** can count your own events: call `recordIdleEvent(world, wallet, 'dragon_slain')` and use
   `"stat": "event:dragon_slain"`.
 - **Golden events** (`GoldenEvents` + `GoldenEventSystem(DeterministicRandom(seed))`, `claimGolden`) offer timed

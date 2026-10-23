@@ -11,19 +11,24 @@ import 'idle_controller.dart';
 /// Prestige throws the run away, so the button asks for confirmation first; nothing is hidden when the
 /// game has no prestige rule (the panel is simply empty).
 class PrestigePanel extends StatelessWidget {
-  const PrestigePanel({super.key, required this.controller});
+  const PrestigePanel({super.key, required this.controller, this.ruleId});
 
   final IdleController controller;
+
+  /// Which prestige layer this panel shows (`PrestigeRule.id`); null is the first. A game with several layers
+  /// shows one panel per layer; keys of a non-default layer end in `-<id>`.
+  final String? ruleId;
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        final rules = controller.world.storeOf<PrestigeRule>();
-        if (rules.length == 0) return const SizedBox.shrink();
-        final rule = rules.denseAt(0);
-        final gain = prestigeGainNow(controller.world);
+        final rule = prestigeRuleOf(controller.world, ruleId);
+        if (rule == null) return const SizedBox.shrink();
+        Key k(String base) =>
+            Key(rule.id == 'prestige' ? base : '$base-${rule.id}');
+        final gain = prestigeGainNow(controller.world, rule.id);
         final held = controller.wallet.of(rule.currency);
         final bonus = held * BigNumber.from(rule.bonusPerUnit);
         return Column(
@@ -33,42 +38,42 @@ class PrestigePanel extends StatelessWidget {
             Text(
               'You hold ${controller.format(held)} ${rule.currency} '
               '(+${controller.format(bonus * BigNumber.from(100))}% income)',
-              key: const Key('prestige-held'),
+              key: k('prestige-held'),
             ),
             Text(
               gain < BigNumber.one
                   ? 'Earn more ${rule.basedOn} to prestige.'
                   : 'Prestige now for +${controller.format(gain)} ${rule.currency}.',
-              key: const Key('prestige-gain'),
+              key: k('prestige-gain'),
             ),
             FilledButton(
-              key: const Key('prestige-button'),
+              key: k('prestige-button'),
               onPressed: gain < BigNumber.one
                   ? null
                   : () async {
                       final ok = await showDialog<bool>(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          key: const Key('prestige-confirm'),
+                          key: k('prestige-confirm'),
                           title: const Text('Prestige?'),
                           content: Text(
                             'Your run resets. You keep ${rule.currency}, achievements and statistics.',
                           ),
                           actions: [
                             TextButton(
-                              key: const Key('prestige-cancel'),
+                              key: k('prestige-cancel'),
                               onPressed: () => Navigator.of(ctx).pop(false),
                               child: const Text('Not yet'),
                             ),
                             FilledButton(
-                              key: const Key('prestige-confirm-yes'),
+                              key: k('prestige-confirm-yes'),
                               onPressed: () => Navigator.of(ctx).pop(true),
                               child: const Text('Prestige'),
                             ),
                           ],
                         ),
                       );
-                      if (ok == true) controller.prestige();
+                      if (ok == true) controller.prestige(rule.id);
                     },
               child: const Text('Prestige'),
             ),

@@ -155,9 +155,9 @@ class IdleController extends ChangeNotifier {
     return earned;
   }
 
-  /// Prestiges if worthwhile; returns the gain or null. See [performPrestige].
-  BigNumber? prestige() {
-    final gain = performPrestige(world, wallet);
+  /// Prestiges layer [ruleId] (the first by default) if worthwhile; returns the gain or null. See [performPrestige].
+  BigNumber? prestige([String? ruleId]) {
+    final gain = performPrestige(world, wallet, ruleId);
     if (gain != null) {
       analytics?.prestige(
         gain,

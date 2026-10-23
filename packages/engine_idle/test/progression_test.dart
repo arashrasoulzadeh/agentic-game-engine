@@ -52,6 +52,120 @@ class _Game {
 }
 
 void main() {
+  group('prestige layers', () {
+    /// Layer 1 turns coins into gems; layer 2 ("ascend") turns gems into stars and wipes the gems.
+    _Game layered() {
+      final g = _Game();
+      g.addRule();
+      g.world.storeOf<PrestigeRule>().set(
+        g.world.spawn(),
+        PrestigeRule(
+          id: 'ascend',
+          currency: 'stars',
+          basedOn: 'gems',
+          divisor: n('100'),
+          exponent: 1,
+          bonusPerUnit: 0.5,
+          resetsCurrencies: ['gems'],
+        ),
+      );
+      return g;
+    }
+
+    test(
+      'the first prestige leaves the second layer\'s currency alone and feeds it',
+      () {
+        final g = layered();
+        g.stats.credit({'coins': n('4e12')});
+        expect(performPrestige(g.world, g.wallet), n('2000'));
+        expect(g.stats.runEarned['gems'], n('2000'));
+        expect(
+          prestigeGainNow(g.world, 'ascend'),
+          n('20'),
+          reason: '2000 gems / 100',
+        );
+        expect(
+          prestigeGainNow(g.world),
+          BigNumber.zero,
+          reason: 'coins were reset',
+        );
+      },
+    );
+
+    test(
+      'the second prestige banks stars, wipes gems, keeps stars through a later first-layer prestige',
+      () {
+        final g = layered();
+        g.stats.credit({'coins': n('4e12')});
+        performPrestige(g.world, g.wallet);
+        expect(performPrestige(g.world, g.wallet, 'ascend'), n('20'));
+        expect(g.wallet.of('stars'), n('20'));
+        expect(g.wallet.of('gems'), BigNumber.zero);
+        expect(
+          g.stats.runEarned.containsKey('gems'),
+          isFalse,
+          reason: 'the gem count restarted',
+        );
+
+        g.stats.credit({'coins': n('4e12')});
+        performPrestige(g.world, g.wallet);
+        expect(g.wallet.of('gems'), n('2000'));
+        expect(
+          g.wallet.of('stars'),
+          n('20'),
+          reason: 'a lower layer never costs the upper one',
+        );
+      },
+    );
+
+    test(
+      'each layer has its own income bonus, and wiping a layer ends its bonus',
+      () {
+        final g = layered();
+        g.stats.credit({'coins': n('4e12')});
+        performPrestige(g.world, g.wallet);
+        final mods = g.world.storeOf<IdleModifiers>().denseAt(0).stack;
+        expect(mods.sources, contains('prestige'));
+        expect(mods.sources, isNot(contains('prestige:ascend')));
+        performPrestige(g.world, g.wallet, 'ascend');
+        expect(
+          mods.sources,
+          isNot(contains('prestige')),
+          reason: 'the gems are gone, so is their bonus',
+        );
+        expect(mods.sources, contains('prestige:ascend'));
+      },
+    );
+
+    test(
+      'a layer below the threshold does nothing, and an unknown id is ignored',
+      () {
+        final g = layered();
+        expect(performPrestige(g.world, g.wallet, 'ascend'), isNull);
+        expect(performPrestige(g.world, g.wallet, 'nope'), isNull);
+        expect(prestigeGainNow(g.world, 'nope'), BigNumber.zero);
+      },
+    );
+
+    test('rule JSON carries id and resets', () {
+      final r = PrestigeRule.fromJson(
+        PrestigeRule(
+          id: 'ascend',
+          currency: 'stars',
+          basedOn: 'gems',
+          divisor: n('1'),
+          resetsCurrencies: ['gems'],
+        ).toJson(),
+      );
+      expect(r.id, 'ascend');
+      expect(r.resetsCurrencies, ['gems']);
+      expect(
+        PrestigeRule.fromJson({'currency': 'g', 'basedOn': 'c'}).id,
+        'prestige',
+      );
+    });
+  });
+
   group('game events and achievements', () {
     test(
       'recordIdleEvent counts and unlocks event: achievements, surviving a save',
@@ -174,7 +288,12 @@ void main() {
       );
       expect(g.world.storeOf<Generator>().get(g.cursor)!.owned, 0);
       expect(g.world.storeOf<Upgrade>().get(upgrade)!.purchased, isFalse);
-      expect(g.stats.runEarned, isEmpty);
+      expect(
+        g.stats.runEarned.keys,
+        ['gems'],
+        reason:
+            'the run restarts; only the prestige currency is counted, for any layer above',
+      );
       expect(
         g.stats.lifetimeEarned['coins'],
         n('4e12'),
