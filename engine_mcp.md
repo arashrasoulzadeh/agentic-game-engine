@@ -1,7 +1,7 @@
 # engine_mcp: an API and MCP server for the engine (plan, not implemented)
 
-Status: **planning only.** Nothing here is built. The owner answered the first round of questions (see Decisions); a
-second round is listed under "Still open".
+Status: **planning only.** Nothing here is built. Two rounds of questions are answered (see Decisions); the few remaining
+details are under "Still open".
 
 ## Goal
 
@@ -78,13 +78,24 @@ is in v1 (see questions).
 | MCP self-description | **All four:** resources (schemas, project files, docs pages), prompts (guided workflows), rich tool descriptions (examples + error codes), and generated reference docs (MCP, REST/OpenAPI, CLI) from the registry. |
 | Naming / versioning | **`group.verb`** dotted names (`level.add_entity`, `idle.simulate`) shared by MCP tools, REST paths and CLI groups; the registry has a semver, removed operations are deprecated for one release. |
 
-### Still open (to ask next)
+### Second round (answered)
 
-- Where the undo log lives and how long it is kept (proposal: `.studio/undo/` inside the project, last 100 writes).
-- Concurrency with a running studio: respect the existing advisory `FileLock`, or take over?
-- Whether destructive-operation previews return a diff in the existing `LevelDiff` format (proposal: yes).
-- Observability: request log, per-operation timing, and a `health` / `capabilities` operation.
-- How MCP prompts are authored and tested (proposal: files under `engine_api/prompts/`, each executed by a test against a scratch project).
+| Topic | Decision |
+|---|---|
+| Undo log | **Inside the project at `.studio/undo/`, keeping the last 100 writes**; each entry stores the before-state of the touched file. |
+| Locks | **Respect the advisory `FileLock`:** a write to a locked level fails with a clear "locked by X" error. Explicit `level.lock` / `level.unlock` / forced takeover operations exist. |
+| Dry-run preview | **The engine's `LevelDiff`** (added/removed/changed entities and fields) **plus a summary and a confirmation token** that must be echoed in the apply call, so a stale preview cannot be applied. |
+| Observability and trust (all four) | `engine.health` + `engine.capabilities` (versions, enabled groups, read-only flag); a **JSON-lines request log with per-operation timing**; a **per-operation allow/deny list** in config; **rate and size limits** (request, result, calls per minute). |
+
+### Still open
+
+- Prompt authoring and testing (proposal: files under `engine_api/prompts/`, each executed by a test against a scratch
+  project).
+- Exact REST route shape for `group.verb` (proposal: `POST /v1/<group>/<verb>`, JSON body = params) and the JSON-RPC method
+  naming (proposal: the dotted name itself).
+- Token handling details: where the generated token is printed/stored, rotation, and whether stdio MCP needs any auth
+  (proposal: no, the parent process owns it).
+- Config file format and location (proposal: `engine_api.yaml` in the project root or `--config`, with CLI flags winning).
 
 ## Operation groups (draft, to be turned into the registry)
 
@@ -103,8 +114,9 @@ operation catalogue) - `undo.*` (list, undo, redo).
 2. **Registry design in `engine_core`:** `Operation` (name, summary, description, params schema, result schema, errors,
    examples, `kind`: read|write|destructive, `scope`: pure|project), `OperationContext` (project root, read-only flag,
    undo log, clock), `OperationResult`/`OperationError` taxonomy, JSON-Schema generation from `FieldSchema`.
-3. **Write-safety layer** (shared by every surface): dry-run result as a `LevelDiff`-style preview, `apply` flag, undo log,
-   read-only enforcement, advisory-lock handling. Tested once, inherited by all operations.
+3. **Write-safety layer** (shared by every surface): dry-run result as a `LevelDiff` preview with a confirmation token,
+   `apply` flag, undo log in `.studio/undo/` (last 100), read-only enforcement, advisory-lock handling (fail with "locked by X"),
+   per-operation allow/deny list, size/rate limits, JSON-lines request log. Tested once, inherited by all operations.
 4. **Move the existing CLI commands onto the registry** (behaviour-preserving; the existing ~130 CLI tests are the
    regression suite), adding `--json` and stdin input. 1:1 is true from here on.
 5. **Add missing operations** group by group (each: tests, CLI binding, doc entry, example).
