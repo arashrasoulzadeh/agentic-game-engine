@@ -201,6 +201,57 @@ void main() {
       },
     );
 
+    test(
+      'a golden block loads, and bad rewards are reported with their path',
+      () {
+        final j = valid()
+          ..['golden'] = {
+            'meanInterval': 120,
+            'lifetime': 12,
+            'rewards': [
+              {'kind': 'boost', 'multiplier': '7', 'seconds': 30, 'weight': 2},
+              {'kind': 'payout', 'seconds': 600},
+            ],
+          };
+        expect(validateIdleDefinition(j), isEmpty);
+        final w = World(width: 4, height: 4);
+        registerCoreComponents(w);
+        loadIdleDefinition(w, j);
+        final g = w.storeOf<GoldenEvents>().denseAt(0);
+        expect(
+          (g.meanInterval, g.lifetime, g.rewards.length),
+          (120.0, 12.0, 2),
+        );
+
+        expect(
+          problems(
+            (j) => j['golden'] = {
+              'meanInterval': 0,
+              'lifetime': 'x',
+              'rewards': [
+                {'kind': 'steal', 'seconds': 5},
+                {'kind': 'boost', 'seconds': 0},
+              ],
+            },
+          ),
+          containsAll([
+            'golden.meanInterval must be a number greater than 0',
+            'golden.lifetime must be a number greater than 0',
+            'golden.rewards[0].kind must be "boost" or "payout"',
+            'golden.rewards[1].seconds must be a number greater than 0',
+            'golden.rewards[1].multiplier is not a number',
+          ]),
+        );
+        expect(
+          problems(
+            (j) =>
+                j['golden'] = {'meanInterval': 1, 'lifetime': 1, 'rewards': []},
+          ),
+          contains('golden.rewards must be a non-empty list'),
+        );
+      },
+    );
+
     test('bad milestones', () {
       List<String> ms(Object v) =>
           problems((j) => (j['generators'] as List)[0]['milestones'] = v);

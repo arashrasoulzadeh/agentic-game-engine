@@ -95,6 +95,71 @@ void main() {
     expect(c.formatCacheSize, lessThanOrEqualTo(1024));
   });
 
+  group('golden offer', () {
+    IdleController withGolden() {
+      final c = _controller(coins: '0');
+      c.world.storeOf<GoldenEvents>().set(
+        c.world.spawn(),
+        GoldenEvents(
+          meanInterval: 60,
+          lifetime: 10,
+          rewards: [GoldenReward(kind: 'payout', seconds: 60)],
+        ),
+      );
+      c.wallet.incomePerSecond['coins'] = n('10');
+      return c;
+    }
+
+    testWidgets(
+      'shows nothing until an offer appears, then pays out when pressed',
+      (tester) async {
+        final c = withGolden();
+        GoldenReward? claimed;
+        await tester.pumpWidget(
+          _app(GoldenOffer(controller: c, onClaimed: (r) => claimed = r)),
+        );
+        expect(find.byKey(const Key('golden-offer')), findsNothing);
+
+        final g = c.world.storeOf<GoldenEvents>().denseAt(0)
+          ..offered = 0
+          ..offerRemaining = 7.2;
+        c.refresh();
+        await tester.pump();
+        expect(find.text('Bonus · 8s'), findsOneWidget);
+
+        await tester.tap(find.byKey(const Key('golden-offer')));
+        await tester.pump();
+        expect(c.wallet.of('coins'), n('600'));
+        expect(claimed!.kind, 'payout');
+        expect(g.offered, isNull);
+        expect(find.byKey(const Key('golden-offer')), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'a game without golden events shows nothing and claiming does nothing',
+      (tester) async {
+        final c = _controller();
+        await tester.pumpWidget(_app(GoldenOffer(controller: c)));
+        expect(find.byKey(const Key('golden-offer')), findsNothing);
+        expect(c.claimGoldenOffer(), isNull);
+      },
+    );
+
+    testWidgets('describe names the reward', (tester) async {
+      final c = withGolden();
+      c.world.storeOf<GoldenEvents>().denseAt(0)
+        ..offered = 0
+        ..offerRemaining = 3;
+      await tester.pumpWidget(
+        _app(
+          GoldenOffer(controller: c, describe: (r) => 'One minute of income'),
+        ),
+      );
+      expect(find.text('One minute of income · 3s'), findsOneWidget);
+    });
+  });
+
   group('prestige panel and achievements', () {
     IdleController game() {
       final c = _controller(coins: '0');

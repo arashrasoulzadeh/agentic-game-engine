@@ -168,6 +168,13 @@ class IdleController extends ChangeNotifier {
     return gain;
   }
 
+  /// Claims the showing golden offer (see [claimGolden]); returns what it gave, or null if none was showing.
+  GoldenReward? claimGoldenOffer() {
+    final reward = claimGolden(world, wallet);
+    if (reward != null) notifyListeners();
+    return reward;
+  }
+
   /// Every generator entity in a stable order.
   List<EntityId> get generatorIds {
     final s = world.storeOf<Generator>();

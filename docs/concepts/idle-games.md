@@ -167,8 +167,10 @@ and a pulled save pays no offline time. `SaveCodePanel` lets players move a game
   `PrestigePanel(controller:, ruleId: 'ascend')` per layer.
 - **Achievements** can count your own events: call `recordIdleEvent(world, wallet, 'dragon_slain')` and use
   `"stat": "event:dragon_slain"`.
-- **Golden events** (`GoldenEvents` + `GoldenEventSystem(DeterministicRandom(seed))`, `claimGolden`) offer timed
-  random boosts or payouts, reproducible from the seed.
+- **Golden events** offer timed random boosts or payouts, reproducible from the seed: a `"golden": {"meanInterval": 90,
+  "lifetime": 12, "rewards": [{"kind": "boost", "multiplier": "7", "seconds": 30}, {"kind": "payout", "seconds": 300}]}`
+  block in the definition, `GoldenEventSystem(DeterministicRandom(seed))` in the world, and a `GoldenOffer(controller:)` widget
+  (or `claimGolden` yourself).
 - **Automation:** an `AutoBuyer` (in the definition as `"autoBuyer": {"intervalSeconds": 5, "maxPerRun": 10}`) buys the
   affordable purchase with the best payback on a timer; add `AutoBuySystem()` after `IdleSystem()`, flip `enabled` when
   the player unlocks it, and use `IdleSession(whileAway: ...)` with `runAutoBuyer` so it also works offline.

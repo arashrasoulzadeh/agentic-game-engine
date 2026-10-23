@@ -37,6 +37,11 @@ void main() {
     expect(tester.widget<SelectableText>(find.byKey(const Key('save-code'))).data, startsWith('GSAVE1.'));
     expect(tester.takeException(), isNull);
 
+    // A golden offer, when one is showing, pays out through the same widget.
+    await tester.tap(find.text('Generators'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('golden-offer')), findsNothing, reason: 'none has appeared yet');
+
     // Leave the tree so the controller's timer is disposed.
     await tester.pumpWidget(const SizedBox());
   });

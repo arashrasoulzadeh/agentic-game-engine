@@ -2,6 +2,7 @@ import '../../engine_core.dart';
 
 import 'auto_buyer.dart';
 import 'components.dart';
+import 'golden_events.dart';
 import 'progression.dart';
 import 'register_components.dart';
 
@@ -273,6 +274,43 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
       checkPrestige(layers[i], 'prestiges[$i]');
     }
   }
+  final golden = json['golden'];
+  if (golden != null) {
+    if (golden is! Map) {
+      errors.add('golden must be an object');
+    } else {
+      for (final f in ['meanInterval', 'lifetime']) {
+        final v = golden[f];
+        if (v is! num || v <= 0)
+          errors.add('golden.$f must be a number greater than 0');
+      }
+      final rewards = golden['rewards'];
+      if (rewards is! List || rewards.isEmpty) {
+        errors.add('golden.rewards must be a non-empty list');
+      } else {
+        for (var i = 0; i < rewards.length; i++) {
+          final r = rewards[i];
+          final p = 'golden.rewards[$i]';
+          if (r is! Map) {
+            errors.add('$p must be an object');
+            continue;
+          }
+          if (r['kind'] != 'boost' && r['kind'] != 'payout') {
+            errors.add('$p.kind must be "boost" or "payout"');
+          }
+          final sec = r['seconds'];
+          if (sec is! num || sec <= 0)
+            errors.add('$p.seconds must be a number greater than 0');
+          if (r['kind'] == 'boost')
+            number(r['multiplier'], '$p.multiplier', positive: true);
+          final w = r['weight'];
+          if (w != null && (w is! num || w <= 0))
+            errors.add('$p.weight must be greater than 0');
+        }
+      }
+    }
+  }
+
   final ab = json['autoBuyer'];
   if (ab != null) {
     if (ab is! Map) {
@@ -363,6 +401,12 @@ IdleGame loadIdleDefinition(World world, Map<String, dynamic> json) {
     world.storeOf<PrestigeRule>().set(
       world.spawn(),
       PrestigeRule.fromJson((rule as Map).cast<String, dynamic>()),
+    );
+  }
+  if (json['golden'] is Map) {
+    world.storeOf<GoldenEvents>().set(
+      world.spawn(),
+      GoldenEvents.fromJson((json['golden'] as Map).cast<String, dynamic>()),
     );
   }
   if (json['autoBuyer'] is Map) {

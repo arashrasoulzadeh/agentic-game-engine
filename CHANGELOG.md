@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Idle golden offers end to end: `"golden"` block in definitions (validated with paths), `GoldenOffer` widget and `IdleController.claimGoldenOffer`; the `idle_game` template includes them.
 - Idle prestige layers: several `PrestigeRule`s with an `id` (`"prestiges": [...]` in definitions), `resetsCurrencies` for ascensions that wipe lower layers, per-layer bonuses (`prestige:<id>`), `performPrestige`/`prestigeGainNow`/`PrestigePanel(ruleId:)`. Behaviour change: after a prestige the run stats now hold the prestige currency just earned (they used to be empty), which is what lets the next layer be based on it.
 - Idle automation: `AutoBuyer` component + `AutoBuySystem` (buys the best-payback affordable purchase on an interval, capped per run), `runAutoBuyer` for offline catch-up, `"autoBuyer"` in definitions; `bestPurchase` exposes the simulator's recommendation (the simulator now uses it; its golden report is unchanged).
 - `game_agent idle validate <game.json>`: validates an idle definition and lists every problem with its path (exit 1), for agents and CI.
