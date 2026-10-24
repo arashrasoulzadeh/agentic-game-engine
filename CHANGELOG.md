@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Operation registry core (`package:engine_core/engine_core_ops.dart`, phase 1 of `engine_mcp.md`): typed `Operation`s with a validating, policy-enforcing, write-serializing dispatcher, a uniform result/error envelope with stable error codes, JSON Schema generation, the project path sandbox and the `engine.health/capabilities/operations/operation` operations.
 - `packages/engine_api` scaffold (phase 0 of [engine_mcp.md](engine_mcp.md)): package, CI workflow, version/`--version` smoke tests. The operation registry, CLI parity and the MCP/HTTP server follow in later phases.
 - Idle challenges: restricted runs (`noUpgrades`, `noGenerator:<id>`, `incomeMultiplier:<x>`) with a goal and a permanent reward; `Challenge` component, `startChallenge`/`abandonChallenge`/`checkChallenges` (settled by `checkAchievements`), `ChallengeCompletedEvent`, `BuyFailure.challenge`, `"challenges"` in definitions and `ChallengePanel`.
 - Idle golden offers end to end: `"golden"` block in definitions (validated with paths), `GoldenOffer` widget and `IdleController.claimGoldenOffer`; the `idle_game` template includes them.

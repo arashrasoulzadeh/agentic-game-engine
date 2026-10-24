@@ -3,6 +3,7 @@
 **Progress log** (update after each phase):
 
 - [x] Phase 0 - scaffolding (`packages/engine_api`, CI workflow, docs rows)
+- [x] Phase 1 - registry core in `engine_core` (`engine_core_ops.dart`: Operation, Param/ParamValidator, results/errors, context/policy, registry+dispatcher, JSON Schema, path sandbox, `engine.*` operations); tests in `packages/engine_core/test/ops/`
 
 
 Status: **planning only.** Nothing here is built. Three rounds of decisions are recorded below; nothing is left open.
