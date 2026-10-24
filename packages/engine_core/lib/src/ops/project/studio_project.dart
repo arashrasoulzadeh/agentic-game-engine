@@ -50,6 +50,16 @@ class StudioProject {
     ]..sort();
   }
 
+  /// The prefabs in this project (`prefabs/*.json`, where the studio saves them), sorted and relative to [root].
+  List<String> prefabPaths() {
+    final dir = Directory(p.join(root, 'prefabs'));
+    if (!dir.existsSync()) return [];
+    return [
+      for (final file in dir.listSync().whereType<File>())
+        if (file.path.endsWith('.json')) p.relative(file.path, from: root),
+    ]..sort();
+  }
+
   /// The visual-scripting graphs in this project (`graphs/*.json`), sorted and
   /// relative to [root]. Empty until the designer creates one.
   List<String> graphPaths() {

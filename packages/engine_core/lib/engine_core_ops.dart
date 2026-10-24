@@ -28,6 +28,7 @@ export 'src/ops/level_check.dart';
 export 'src/ops/groups/project_ops.dart' show projectOperations;
 export 'src/ops/groups/idle_ops.dart' show idleOperations;
 export 'src/ops/groups/level_write_ops.dart' show levelWriteOperations;
+export 'src/ops/groups/prefab_ops.dart' show prefabOperations;
 export 'src/ops/groups/save_ops.dart' show saveOperations;
 export 'src/ops/groups/level_ops.dart'
     show levelReadOperations, levelText, parseLevel, knownComponents;

@@ -51,7 +51,7 @@ Map<String, Object?> _info(ProjectRoot root) {
     'counts': {
       'levels': project.levelPaths().length,
       'graphs': project.graphPaths().length,
-      'prefabs': count('assets/prefabs', '.json'),
+      'prefabs': count('prefabs', '.json'),
       'codeFiles': project.codeFiles().length,
     },
   };

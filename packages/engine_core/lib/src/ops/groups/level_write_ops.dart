@@ -17,11 +17,11 @@ import 'level_ops.dart';
 
 const _path = Param('path', ParamType.path, required: true, positional: true);
 
-/// Loads [path], lets [edit] mutate the document through an [EditCommand], and proposes the validated result.
+/// Loads the level at `a['path']`, lets [edit] mutate the document through an [EditCommand], and proposes the validated result.
 ///
 /// Validating the *edited* document is what stops an agent from writing a level the engine would refuse to load;
 /// the same check guards the studio's CLI edits.
-OpOutcome _edit(
+OpOutcome editLevel(
   OpContext ctx,
   Map<String, Object?> a,
   Object? Function(LevelDocument doc, List<String> warnings) edit,
@@ -274,7 +274,7 @@ List<Operation> levelWriteOperations() => [
       Param('index', ParamType.integer, min: 0),
       Param('values', ParamType.object),
     ],
-    handler: (ctx, a) => _edit(ctx, a, (doc, _) {
+    handler: (ctx, a) => editLevel(ctx, a, (doc, _) {
       final components = <String, Map<String, dynamic>>{
         for (final c in (a['components'] as List? ?? const []).cast<String>())
           c: _template(c),
@@ -311,7 +311,7 @@ List<Operation> levelWriteOperations() => [
     kind: OperationKind.destructive,
     scope: OperationScope.project,
     params: const [_path, Param('name', ParamType.string, required: true)],
-    handler: (ctx, a) => _edit(ctx, a, (doc, _) {
+    handler: (ctx, a) => editLevel(ctx, a, (doc, _) {
       final e = _entity(doc, a['name']! as String);
       _apply(RemoveEntityCommand(e), doc);
       return {'removed': e.toJson()};
@@ -330,7 +330,7 @@ List<Operation> levelWriteOperations() => [
       Param('x', ParamType.number, required: true),
       Param('y', ParamType.number, required: true),
     ],
-    handler: (ctx, a) => _edit(ctx, a, (doc, _) {
+    handler: (ctx, a) => editLevel(ctx, a, (doc, _) {
       final e = _entity(doc, a['name']! as String);
       _apply(
         MoveEntityCommand(
@@ -358,7 +358,7 @@ List<Operation> levelWriteOperations() => [
       Param('field', ParamType.string, required: true),
       Param('value', ParamType.json, required: true),
     ],
-    handler: (ctx, a) => _edit(ctx, a, (doc, _) {
+    handler: (ctx, a) => editLevel(ctx, a, (doc, _) {
       final e = _entity(doc, a['entity']! as String);
       final component = a['component']! as String;
       final field = a['field']! as String;
@@ -388,7 +388,7 @@ List<Operation> levelWriteOperations() => [
       Param('component', ParamType.string, required: true),
       Param('z', ParamType.integer, required: true),
     ],
-    handler: (ctx, a) => _edit(ctx, a, (doc, _) {
+    handler: (ctx, a) => editLevel(ctx, a, (doc, _) {
       final e = _entity(doc, a['entity']! as String);
       final component = a['component']! as String;
       if (!e.components.containsKey(component)) {
@@ -423,7 +423,7 @@ List<Operation> levelWriteOperations() => [
       Param('values', ParamType.object),
     ],
     errors: {ErrorCode.conflict: 'The entity already has the component.'},
-    handler: (ctx, a) => _edit(ctx, a, (doc, _) {
+    handler: (ctx, a) => editLevel(ctx, a, (doc, _) {
       final e = _entity(doc, a['entity']! as String);
       final name = a['component']! as String;
       if (e.components.containsKey(name)) {
@@ -450,7 +450,7 @@ List<Operation> levelWriteOperations() => [
       Param('entity', ParamType.string, required: true),
       Param('component', ParamType.string, required: true),
     ],
-    handler: (ctx, a) => _edit(ctx, a, (doc, _) {
+    handler: (ctx, a) => editLevel(ctx, a, (doc, _) {
       final e = _entity(doc, a['entity']! as String);
       final removed = e.components.remove(a['component']! as String);
       if (removed == null) {
@@ -477,7 +477,7 @@ List<Operation> levelWriteOperations() => [
       Param('row', ParamType.integer, required: true, min: 0),
       Param('tileId', ParamType.integer, required: true, min: 0),
     ],
-    handler: (ctx, a) => _edit(ctx, a, (doc, _) {
+    handler: (ctx, a) => editLevel(ctx, a, (doc, _) {
       final e = _tileEntity(doc, a);
       _inGrid(e, a);
       _apply(
@@ -507,7 +507,7 @@ List<Operation> levelWriteOperations() => [
       Param('row', ParamType.integer, required: true, min: 0),
       Param('tileId', ParamType.integer, required: true, min: 0),
     ],
-    handler: (ctx, a) => _edit(ctx, a, (doc, _) {
+    handler: (ctx, a) => editLevel(ctx, a, (doc, _) {
       final e = _tileEntity(doc, a);
       _inGrid(e, a);
       final tiles = List<Object?>.of(e.components['tileMap']!['tiles'] as List);

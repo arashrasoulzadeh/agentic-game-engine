@@ -2,6 +2,7 @@ import 'groups/engine_ops.dart';
 import 'groups/idle_ops.dart';
 import 'groups/level_ops.dart';
 import 'groups/level_write_ops.dart';
+import 'groups/prefab_ops.dart';
 import 'groups/project_ops.dart';
 import 'groups/release_ops.dart';
 import 'groups/save_ops.dart';
@@ -19,6 +20,7 @@ OperationRegistry buildRegistry({ProposalFinisher? finisher}) {
     ...projectOperations(),
     ...levelReadOperations(),
     ...levelWriteOperations(),
+    ...prefabOperations(),
     ...saveOperations(),
     ...schemaOperations(),
     ...idleOperations(),
