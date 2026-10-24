@@ -6,7 +6,10 @@ import '../../command/tile_commands.dart';
 import '../../content/level_document.dart';
 import '../../content/level_format.dart';
 import '../../validation/level_validator.dart';
+import '../../io/file_lock.dart';
 import '../context.dart';
+import '../project/studio_project.dart';
+import '../../content/level_diff.dart';
 import '../operation.dart';
 import '../param.dart';
 import '../result.dart';
@@ -28,11 +31,7 @@ OpOutcome _edit(
   final doc = parseLevel(before);
   final warnings = <String>[];
   final data = edit(doc, warnings);
-  final errors = LevelValidator.forSchemas(allComponentSchemas)
-      .validate(doc)
-      .where((i) => i.severity == IssueSeverity.error)
-      .map((i) => i.toString())
-      .toList();
+  final errors = _errors(doc);
   if (errors.isNotEmpty) {
     throw OpError(
       ErrorCode.validationFailed,
@@ -52,6 +51,13 @@ OpOutcome _edit(
     warnings: warnings,
   );
 }
+
+List<String> _errors(LevelDocument doc) =>
+    LevelValidator.forSchemas(allComponentSchemas)
+        .validate(doc)
+        .where((i) => i.severity == IssueSeverity.error)
+        .map((i) => i.toString())
+        .toList();
 
 LevelEntity _entity(LevelDocument doc, String name) =>
     doc.entityNamed(name) ??
@@ -98,6 +104,158 @@ List<Operation> levelWriteOperations() => [
       return OpOutcome.proposal(
         Proposal([FileChange(path: rel, after: encodeLevelJson(doc.toJson()))]),
         data: {'path': rel, 'entities': doc.entities.length},
+      );
+    },
+  ),
+  Operation(
+    name: 'level.lock',
+    summary: 'Take the advisory edit lock on a level.',
+    description:
+        'Writes `<level>.lock` naming this session as owner. Other writers are refused while a live lock is held; '
+        'a lock older than two hours counts as abandoned. Conflicts when someone else holds it.',
+    kind: OperationKind.write,
+    scope: OperationScope.project,
+    idempotent: true,
+    params: const [_path],
+    errors: {ErrorCode.locked: 'Someone else holds the lock.'},
+    handler: (ctx, a) {
+      final lock = FileLock(ctx.project!.resolve(a['path']! as String));
+      final r = lock.acquire(ctx.lockOwner);
+      if (!r.acquired) {
+        throw OpError(
+          ErrorCode.locked,
+          '${a['path']} is locked by ${r.holder.owner}.',
+          details: {'owner': r.holder.owner},
+        );
+      }
+      return OpOutcome.data({
+        'owner': r.holder.owner,
+        'acquiredAt': r.holder.acquiredAt.toUtc().toIso8601String(),
+      });
+    },
+  ),
+  Operation(
+    name: 'level.unlock',
+    summary: 'Release the advisory edit lock on a level.',
+    description: 'Only the owner releases a live lock unless `force` is true.',
+    kind: OperationKind.write,
+    scope: OperationScope.project,
+    idempotent: true,
+    params: const [
+      _path,
+      Param('force', ParamType.boolean, defaultValue: false),
+    ],
+    errors: {ErrorCode.locked: 'Someone else holds a live lock.'},
+    handler: (ctx, a) {
+      final lock = FileLock(ctx.project!.resolve(a['path']! as String));
+      final holder = lock.inspect();
+      if (!lock.release(ctx.lockOwner, force: a['force'] == true)) {
+        throw OpError(
+          ErrorCode.locked,
+          '${a['path']} is locked by ${holder?.owner}.',
+          hint: 'Pass force:true to break it.',
+        );
+      }
+      return OpOutcome.data({'released': true});
+    },
+  ),
+  Operation(
+    name: 'level.export_canonical',
+    summary: 'Rewrite levels in the canonical format (indent, key order).',
+    description:
+        'Only formatting changes. A level that does not load is skipped and listed under `skipped`. '
+        'Without `paths` every level of the project is processed.',
+    kind: OperationKind.write,
+    scope: OperationScope.project,
+    idempotent: true,
+    params: const [Param('paths', ParamType.array, items: Param.string())],
+    handler: (ctx, a) {
+      final rels =
+          (a['paths'] as List?)?.cast<String>() ??
+          StudioProject.open(ctx.project!.root).levelPaths();
+      final changes = <FileChange>[];
+      final skipped = <String>[];
+      for (final rel in rels) {
+        final before = ctx.files.read(ctx.project!.resolve(rel));
+        if (before == null) {
+          throw OpError(ErrorCode.notFound, 'No file at $rel.');
+        }
+        try {
+          final doc = parseLevel(before);
+          if (_errors(doc).isNotEmpty) {
+            skipped.add(rel);
+            continue;
+          }
+          final after = encodeLevelJson(doc.toJson());
+          if (after != before) {
+            changes.add(FileChange(path: rel, before: before, after: after));
+          }
+        } on OpError {
+          skipped.add(rel);
+        }
+      }
+      return OpOutcome.proposal(
+        Proposal(changes),
+        data: {
+          'rewritten': [for (final c in changes) c.path],
+          'skipped': skipped,
+        },
+      );
+    },
+  ),
+  Operation(
+    name: 'level.merge',
+    summary: 'Three-way merge two edits of a level.',
+    description:
+        'Per entity and component: one-sided changes win, identical changes apply once, differing ones are conflicts '
+        '(ours is kept in the result). Without `output` only the merged level is returned. With `output` it is written, '
+        'but never while conflicts remain.',
+    kind: OperationKind.write,
+    scope: OperationScope.project,
+    params: const [
+      Param('base', ParamType.path, required: true),
+      Param('ours', ParamType.path, required: true),
+      Param('theirs', ParamType.path, required: true),
+      Param('output', ParamType.path),
+    ],
+    errors: {
+      ErrorCode.conflict: 'Both sides changed the same thing differently.',
+    },
+    handler: (ctx, a) {
+      LevelDocument load(String key) =>
+          parseLevel(levelText(ctx, a, path: key), what: key);
+      final merge = mergeLevels(load('base'), load('ours'), load('theirs'));
+      final conflicts = [
+        for (final c in merge.conflicts)
+          {
+            'entity': c.entity,
+            if (c.component != null) 'component': c.component,
+            'base': c.base,
+            'ours': c.ours,
+            'theirs': c.theirs,
+          },
+      ];
+      final merged = merge.merged.toJson();
+      final out = a['output'] as String?;
+      if (out == null) {
+        return OpOutcome.data({'merged': merged, 'conflicts': conflicts});
+      }
+      if (merge.hasConflicts) {
+        throw OpError(
+          ErrorCode.conflict,
+          '${conflicts.length} conflict(s); resolve them before writing $out.',
+          details: {'conflicts': conflicts},
+        );
+      }
+      return OpOutcome.proposal(
+        Proposal([
+          FileChange(
+            path: out,
+            before: ctx.files.read(ctx.project!.resolve(out)),
+            after: encodeLevelJson(merged),
+          ),
+        ]),
+        data: {'merged': merged, 'conflicts': conflicts},
       );
     },
   ),

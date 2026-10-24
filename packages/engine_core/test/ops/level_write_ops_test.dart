@@ -222,4 +222,98 @@ void main() {
     await s.data('undo.undo');
     expect(s.read(lv), before);
   });
+
+  test('level.lock / unlock hold, refuse others and release', () async {
+    final s = await Scratch.create();
+    final d = await s.map('level.lock', {'path': lv});
+    expect(d['owner'], isA<String>());
+    expect((await s.map('level.lock_status', {'path': lv}))['locked'], isTrue);
+    await s.data('level.lock', {'path': lv});
+    await s.data('level.unlock', {'path': lv});
+    expect((await s.map('level.lock_status', {'path': lv}))['locked'], isFalse);
+
+    s.write(
+      '$lv.lock',
+      jsonEncode({
+        'owner': 'someone-else',
+        'acquiredAt': DateTime.now().toUtc().toIso8601String(),
+      }),
+    );
+    expect(await s.failure('level.lock', {'path': lv}), ErrorCode.locked);
+    expect(await s.failure('level.unlock', {'path': lv}), ErrorCode.locked);
+    await s.data('level.unlock', {'path': lv, 'force': true});
+    expect(s.exists('$lv.lock'), isFalse);
+  });
+
+  test(
+    'level.export_canonical rewrites only reformatted levels and skips broken ones',
+    () async {
+      final s = await Scratch.create();
+      s.write(
+        'assets/levels/ugly.json',
+        '{"entities":[{"name":"a","components":{"position":{"x":1,"y":2}}}]}',
+      );
+      final d = await s.map('level.export_canonical');
+      expect(d['rewritten'], contains('assets/levels/ugly.json'));
+      expect(d['rewritten'], isNot(contains('assets/levels/level1.json')));
+      expect(d['skipped'], ['assets/levels/broken.json']);
+      expect(s.read('assets/levels/ugly.json'), contains('\n  "entities"'));
+      expect((await s.map('level.export_canonical'))['rewritten'], isEmpty);
+    },
+  );
+
+  test(
+    'level.merge returns the merge, and writes only when conflict-free',
+    () async {
+      final s = await Scratch.create();
+      Map<String, dynamic> moved(String who, double x) => {
+        'entities': [
+          {
+            'name': 'a',
+            'components': {
+              'position': {'x': x, 'y': 0.0},
+            },
+          },
+          {
+            'name': who,
+            'components': {
+              'position': {'x': 1.0, 'y': 1.0},
+            },
+          },
+        ],
+      };
+      final base = {
+        'entities': [
+          {
+            'name': 'a',
+            'components': {
+              'position': {'x': 0.0, 'y': 0.0},
+            },
+          },
+        ],
+      };
+      s.write('b.json', jsonEncode(base));
+      s.write('o.json', jsonEncode(moved('ours_only', 0.0)));
+      s.write('t.json', jsonEncode(moved('theirs_only', 5.0)));
+      final args = {'base': 'b.json', 'ours': 'o.json', 'theirs': 't.json'};
+      final r = await s.map('level.merge', args);
+      expect(r['conflicts'], isEmpty);
+      expect(((r['merged']! as Map)['entities'] as List).length, 3);
+      await s.data('level.merge', {...args, 'output': 'assets/levels/m.json'});
+      expect(s.exists('assets/levels/m.json'), isTrue);
+
+      s.write('t.json', jsonEncode(moved('theirs_only', 5.0)));
+      s.write('o.json', jsonEncode(moved('ours_only', 7.0)));
+      final c = await s.map('level.merge', args);
+      expect((c['conflicts'] as List).single['entity'], 'a');
+      expect(
+        await s.failure('level.merge', {
+          ...args,
+          'output': 'assets/levels/m2.json',
+        }),
+        ErrorCode.conflict,
+      );
+      expect(s.exists('assets/levels/m2.json'), isFalse);
+    },
+  );
 }
