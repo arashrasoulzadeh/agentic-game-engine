@@ -1,7 +1,10 @@
 import 'dart:convert';
 
 import '../../../engine_core.dart';
+import '../../idle/advisor.dart';
+import '../../idle/components.dart';
 import '../../idle/definition.dart';
+import '../../idle/economy.dart';
 import '../../idle/simulator.dart';
 import '../context.dart';
 import '../operation.dart';
@@ -196,5 +199,67 @@ List<Operation> idleOperations() => [
     examples: const [
       Example('Millions', {'value': '1234567'}, expect: {'text': '1.23M'}),
     ],
+  ),
+  Operation(
+    name: 'idle.best_purchase',
+    summary:
+        'The purchase the greedy advisor would make next, with its cost and income gain.',
+    description:
+        'Loads the definition at its starting state (optionally with `owned` counts applied to generators) and asks the '
+        'same advisor the auto-buyer and balance simulator use. `null` data means nothing adds income.',
+    kind: OperationKind.read,
+    scope: OperationScope.pure,
+    idempotent: true,
+    params: const [
+      Param('path', ParamType.path, positional: true),
+      Param('json', ParamType.json, cliFlag: 'inline-json'),
+      Param(
+        'owned',
+        ParamType.object,
+        description: 'Generator id -> copies already owned.',
+      ),
+      Param('mainResource', ParamType.string, defaultValue: 'coins'),
+    ],
+    errors: {
+      ErrorCode.validationFailed:
+          'The definition has problems (details.problems).',
+    },
+    handler: (ctx, a) {
+      final json = _definition(ctx, a);
+      final problems = validateIdleDefinition(json);
+      if (problems.isNotEmpty) {
+        throw OpError(
+          ErrorCode.validationFailed,
+          'The definition has ${problems.length} problem(s).',
+          details: {'problems': problems},
+        );
+      }
+      final world = World(width: 10, height: 10);
+      registerCoreComponents(world);
+      final game = loadIdleDefinition(world, json);
+      final owned = (a['owned'] as Map?) ?? const {};
+      final gens = world.storeOf<Generator>();
+      for (var i = 0; i < gens.length; i++) {
+        final g = gens.denseAt(i);
+        final n = owned[g.id];
+        if (n is int) g.owned = n;
+      }
+      recomputeIncome(world, game.wallet);
+      final best = bestPurchase(
+        world,
+        game.wallet,
+        mainResource: a['mainResource']! as String,
+      );
+      if (best == null) return const OpOutcome.data(null);
+      final gen = gens.get(best.entity);
+      return OpOutcome.data({
+        'id': gen?.id ?? best.entity.toString(),
+        'isUpgrade': best.isUpgrade,
+        'resource': best.resource,
+        'cost': formatBigNumber(best.cost),
+        'gain': formatBigNumber(best.gain),
+        'payback': formatBigNumber(best.payback),
+      });
+    },
   ),
 ];

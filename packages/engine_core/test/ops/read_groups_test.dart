@@ -412,4 +412,32 @@ void main() {
       }
     },
   );
+
+  test(
+    'idle.best_purchase recommends the generator and honours owned counts',
+    () async {
+      final s = await Scratch.create();
+      final first = await s.map('idle.best_purchase', {
+        'path': 'assets/idle_game.json',
+      });
+      expect(first['id'], 'cursor');
+      expect(first['isUpgrade'], false);
+      expect(first['cost'], '15');
+      final more = await s.map('idle.best_purchase', {
+        'path': 'assets/idle_game.json',
+        'owned': {'cursor': 10},
+      });
+      expect(
+        more['cost'],
+        isNot('15'),
+        reason: 'the price grows with copies owned',
+      );
+      expect(
+        await s.failure('idle.best_purchase', {
+          'json': {'generators': 5},
+        }),
+        ErrorCode.validationFailed,
+      );
+    },
+  );
 }
