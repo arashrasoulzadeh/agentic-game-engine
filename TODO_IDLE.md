@@ -170,4 +170,5 @@ An app cannot run while closed on iOS/Android; the standard solution is catch-up
 - [x] `game_agent idle validate`.
 - [x] Prestige layers (ascension): `PrestigeRule.id` / `resetsCurrencies`, `"prestiges"` in definitions, per-layer bonuses and panels.
 - [x] Golden offers end to end: `"golden"` definition block, `GoldenOffer` widget, template.
-- [ ] Ideas not started: challenges (restricted runs), multiple wallets per layer in the simulator (it only auto-prestiges the first layer).
+- [x] Challenges (restricted runs with a reward): `Challenge`, `startChallenge`/`abandonChallenge`/`checkChallenges`, `ChallengePanel`, definition `challenges`.
+- [ ] Not done: the simulator only auto-prestiges the first layer and does not play challenges.

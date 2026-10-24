@@ -175,6 +175,20 @@ class IdleController extends ChangeNotifier {
     return reward;
   }
 
+  /// Starts challenge [id] (see [startChallenge]); notifies listeners when it started.
+  bool startChallengeById(String id) {
+    final ok = startChallenge(world, wallet, id);
+    if (ok) notifyListeners();
+    return ok;
+  }
+
+  /// Gives up the running challenge without a reward.
+  bool abandonRunningChallenge() {
+    final ok = abandonChallenge(world, wallet);
+    if (ok) notifyListeners();
+    return ok;
+  }
+
   /// Every generator entity in a stable order.
   List<EntityId> get generatorIds {
     final s = world.storeOf<Generator>();

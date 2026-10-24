@@ -95,6 +95,68 @@ void main() {
     expect(c.formatCacheSize, lessThanOrEqualTo(1024));
   });
 
+  group('challenge panel', () {
+    testWidgets(
+      'lists a challenge, starts it after confirming, and shows it running with an Abandon button',
+      (tester) async {
+        final c = _controller();
+        c.world.storeOf<Challenge>().set(
+          c.world.spawn(),
+          Challenge(
+            id: 'frugal',
+            name: 'Frugal',
+            rules: ['noUpgrades'],
+            goalStat: 'run:coins',
+            goalAtLeast: n('500'),
+            reward: n('3'),
+          ),
+        );
+        await tester.pumpWidget(_app(ChallengePanel(controller: c)));
+        expect(find.text('Frugal'), findsOneWidget);
+        expect(find.textContaining('No upgrades'), findsOneWidget);
+        expect(find.textContaining('reward x3'), findsOneWidget);
+
+        await tester.tap(find.byKey(const Key('challenge-start-frugal')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('challenge-confirm-frugal')));
+        await tester.pumpAndSettle();
+        expect(activeChallenge(c.world)!.id, 'frugal');
+        expect(
+          find.byKey(const Key('challenge-abandon-frugal')),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byKey(const Key('challenge-abandon-frugal')));
+        await tester.pumpAndSettle();
+        expect(activeChallenge(c.world), isNull);
+        expect(find.byKey(const Key('challenge-start-frugal')), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'a game without challenges shows nothing; a completed one has no button',
+      (tester) async {
+        final c = _controller();
+        await tester.pumpWidget(_app(ChallengePanel(controller: c)));
+        expect(find.byType(ListTile), findsNothing);
+
+        c.world.storeOf<Challenge>().set(
+          c.world.spawn(),
+          Challenge(
+            id: 'done',
+            goalStat: 'taps',
+            goalAtLeast: n('1'),
+            completed: true,
+          ),
+        );
+        c.refresh();
+        await tester.pump();
+        expect(find.textContaining('Completed'), findsOneWidget);
+        expect(find.byKey(const Key('challenge-start-done')), findsNothing);
+      },
+    );
+  });
+
   group('golden offer', () {
     IdleController withGolden() {
       final c = _controller(coins: '0');

@@ -160,6 +160,10 @@ and a pulled save pays no offline time. `SaveCodePanel` lets players move a game
 - **Milestones** on a generator (`"milestones": [{"owned": 25, "multiplier": "2"}]`) multiply its output; the row
   shows progress to the next.
 - **Prestige** can keep chosen generators (`"keepGenerators": ["farm"]`) and upgrades (`keepUpgrades`).
+- **Challenges** are restricted runs with a goal and a lasting reward: `"challenges": [{"id": "frugal", "rules": ["noUpgrades"],
+  "goalStat": "run:coins", "goalAtLeast": "1e6", "reward": "3"}]`. Rules: `noUpgrades`, `noGenerator:<id>`,
+  `incomeMultiplier:<factor>`. Starting one restarts the run (`startChallenge`), completing it (settled by
+  `checkAchievements`) lifts the rules and multiplies income for good, and `ChallengePanel` lists, starts and abandons them.
 - **Prestige layers:** use `"prestiges": [ {...}, {"id": "ascend", "currency": "stars", "basedOn": "gems", "divisor": "100",
   "resetsCurrencies": ["gems"]} ]` instead of a single `"prestige"`. A layer's gain counts toward the next layer's
   `basedOn`; a layer keeps the other layers' currencies unless it lists them in `resetsCurrencies`; each has its own

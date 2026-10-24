@@ -1,6 +1,7 @@
 import '../../engine_core.dart';
 
 import 'auto_buyer.dart';
+import 'challenges.dart';
 import 'components.dart';
 import 'golden_events.dart';
 import 'progression.dart';
@@ -274,6 +275,43 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
       checkPrestige(layers[i], 'prestiges[$i]');
     }
   }
+  final challengeIds = <String>{};
+  final challenges = list('challenges');
+  for (var i = 0; i < challenges.length; i++) {
+    final c = challenges[i];
+    final p = 'challenges[$i]';
+    final id = c['id'];
+    if (id is! String || id.isEmpty) {
+      errors.add('$p.id is required');
+    } else if (!challengeIds.add(id)) {
+      errors.add('$p.id "$id" is used twice');
+    }
+    if (c['goalStat'] is! String) errors.add('$p.goalStat is required');
+    number(c['goalAtLeast'], '$p.goalAtLeast');
+    if (c['reward'] != null) number(c['reward'], '$p.reward', positive: true);
+    final rules = c['rules'];
+    if (rules != null && rules is! List) {
+      errors.add('$p.rules must be a list');
+    } else if (rules is List) {
+      for (var j = 0; j < rules.length; j++) {
+        final r = rules[j];
+        final ok =
+            r == 'noUpgrades' ||
+            (r is String &&
+                r.startsWith('noGenerator:') &&
+                generatorIds.contains(r.substring(12))) ||
+            (r is String &&
+                r.startsWith('incomeMultiplier:') &&
+                (double.tryParse(r.substring(17)) ?? 0) > 0);
+        if (!ok) {
+          errors.add(
+            '$p.rules[$j] "$r" is not a rule (noUpgrades, noGenerator:<id>, incomeMultiplier:<number>)',
+          );
+        }
+      }
+    }
+  }
+
   final golden = json['golden'];
   if (golden != null) {
     if (golden is! Map) {
@@ -401,6 +439,12 @@ IdleGame loadIdleDefinition(World world, Map<String, dynamic> json) {
     world.storeOf<PrestigeRule>().set(
       world.spawn(),
       PrestigeRule.fromJson((rule as Map).cast<String, dynamic>()),
+    );
+  }
+  for (final c in (json['challenges'] as List? ?? const [])) {
+    world.storeOf<Challenge>().set(
+      world.spawn(),
+      Challenge.fromJson((c as Map).cast<String, dynamic>()),
     );
   }
   if (json['golden'] is Map) {

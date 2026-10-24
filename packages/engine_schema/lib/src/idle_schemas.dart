@@ -83,3 +83,14 @@ const autoBuyerSchema = ComponentSchema('autoBuyer', [
   FieldSchema('maxPerRun', FieldType.int, min: 1),
   FieldSchema('elapsed', FieldType.double, min: 0),
 ]);
+
+const challengeSchema = ComponentSchema('challenge', [
+  FieldSchema('id', FieldType.string, required: true),
+  FieldSchema('name', FieldType.string, optional: true),
+  FieldSchema('rules', FieldType.list),
+  FieldSchema('goalStat', FieldType.string, required: true),
+  FieldSchema('goalAtLeast', FieldType.string, required: true),
+  FieldSchema('reward', FieldType.string),
+  FieldSchema('active', FieldType.bool),
+  FieldSchema('completed', FieldType.bool),
+]);

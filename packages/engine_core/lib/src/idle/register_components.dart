@@ -3,6 +3,7 @@ import 'package:engine_schema/engine_schema.dart';
 
 import 'active_play.dart';
 import 'auto_buyer.dart';
+import 'challenges.dart';
 import 'components.dart';
 import 'golden_events.dart';
 import 'progression.dart';
@@ -68,5 +69,11 @@ void registerIdleComponents(World world) {
     (a) => a.toJson(),
     AutoBuyer.fromJson,
     schema: autoBuyerSchema,
+  );
+  world.components.register<Challenge>(
+    'challenge',
+    (c) => c.toJson(),
+    Challenge.fromJson,
+    schema: challengeSchema,
   );
 }

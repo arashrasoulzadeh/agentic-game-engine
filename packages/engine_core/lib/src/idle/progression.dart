@@ -1,5 +1,6 @@
 import '../../engine_core.dart';
 
+import 'challenges.dart';
 import 'components.dart';
 import 'economy.dart';
 
@@ -385,6 +386,7 @@ List<String> checkAchievements(World world, BigTreasury wallet) {
     world.events.emit(AchievementUnlockedEvent(a.id));
   }
   if (rewardsChanged) recomputeIncome(world, wallet);
+  checkChallenges(world, wallet);
   return unlocked;
 }
 

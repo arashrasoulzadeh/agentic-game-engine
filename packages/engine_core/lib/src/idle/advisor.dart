@@ -1,4 +1,5 @@
 import '../../engine_core.dart';
+import 'challenges.dart';
 import 'components.dart';
 import 'economy.dart';
 
@@ -65,6 +66,7 @@ PurchaseOption? bestPurchase(
     final g = gens.denseAt(i);
     if (g.maxOwned != null && g.owned >= g.maxOwned!) continue;
     if (missingTech(world, team, g.requires).isNotEmpty) continue;
+    if (challengeBlocks(world, isUpgrade: false, generatorId: g.id)) continue;
     g.owned++;
     final gain = gainOf();
     g.owned--;
@@ -81,7 +83,9 @@ PurchaseOption? bestPurchase(
   final ups = world.storeOf<Upgrade>();
   for (var i = 0; i < ups.length; i++) {
     final u = ups.denseAt(i);
-    if (u.purchased || missingTech(world, team, u.requires).isNotEmpty) {
+    if (u.purchased ||
+        missingTech(world, team, u.requires).isNotEmpty ||
+        challengeBlocks(world, isUpgrade: true)) {
       continue;
     }
     u.purchased = true;

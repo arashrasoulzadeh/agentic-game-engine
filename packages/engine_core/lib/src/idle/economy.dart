@@ -1,5 +1,6 @@
 import '../../engine_core.dart';
 
+import 'challenges.dart';
 import 'components.dart';
 import 'progression.dart';
 
@@ -53,7 +54,16 @@ List<int> _sortedIds(int length, int Function(int) entityAt) =>
     [for (var i = 0; i < length; i++) entityAt(i)]..sort();
 
 /// Why a purchase did or did not happen.
-enum BuyFailure { unaffordable, locked, maxOwned, alreadyBought, nothing }
+enum BuyFailure {
+  unaffordable,
+  locked,
+  maxOwned,
+  alreadyBought,
+  nothing,
+
+  /// The running challenge forbids it.
+  challenge,
+}
 
 /// The outcome of a purchase.
 class BuyResult {
@@ -88,6 +98,9 @@ BuyResult buyGenerator(
   if (missingTech(world, team, g.requires).isNotEmpty) {
     return const BuyResult(0, {}, BuyFailure.locked);
   }
+  if (challengeBlocks(world, isUpgrade: false, generatorId: g.id)) {
+    return const BuyResult(0, {}, BuyFailure.challenge);
+  }
   final room = g.maxOwned == null ? (1 << 30) : g.maxOwned! - g.owned;
   if (room <= 0) return const BuyResult(0, {}, BuyFailure.maxOwned);
 
@@ -115,6 +128,9 @@ BuyResult buyUpgrade(
   final u = world.storeOf<Upgrade>().get(upgrade);
   if (u == null) return const BuyResult(0, {}, BuyFailure.nothing);
   if (u.purchased) return const BuyResult(0, {}, BuyFailure.alreadyBought);
+  if (challengeBlocks(world, isUpgrade: true)) {
+    return const BuyResult(0, {}, BuyFailure.challenge);
+  }
   if (missingTech(world, team, u.requires).isNotEmpty) {
     return const BuyResult(0, {}, BuyFailure.locked);
   }
