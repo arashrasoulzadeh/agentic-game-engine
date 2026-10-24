@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:engine_core/engine_core_ops.dart';
@@ -248,6 +249,22 @@ void main() {
         await s.failure('project.read_file', {'path': 'big.txt'}),
         ErrorCode.tooLarge,
       );
+    },
+  );
+
+  test(
+    'search and the tree never expose the API token or the undo journal',
+    () async {
+      final s = await Scratch.create();
+      s.write('.studio/api-token', 'TOPSECRETTOKEN');
+      s.write('.studio/undo/x.json', '{"note": "TOPSECRETTOKEN"}');
+      s.write('lib/a.txt', 'TOPSECRETTOKEN');
+      final hits = jsonEncode(
+        await s.data('project.search', {'query': 'TOPSECRETTOKEN'}),
+      );
+      expect(hits, isNot(contains('.studio')));
+      final tree = jsonEncode(await s.data('project.tree'));
+      expect(tree, isNot(contains('api-token')));
     },
   );
 }
