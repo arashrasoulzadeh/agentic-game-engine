@@ -4,6 +4,7 @@ import '../io/file_lock.dart' as locks;
 import 'files.dart';
 import 'operation.dart';
 import 'paths.dart';
+import 'world_sandbox.dart';
 import 'result.dart';
 import 'undo_log.dart';
 
@@ -70,6 +71,9 @@ class OpContext {
   static void _ignore(String _) {}
 
   static String _defaultOwner() => locks.lockOwner();
+
+  /// In-memory worlds for the `world.*` operations; shared by every transport of this context.
+  final WorldSandbox sandbox = WorldSandbox();
 
   /// Who this process is when taking advisory locks; another owner's lock blocks writes.
   final String lockOwner;

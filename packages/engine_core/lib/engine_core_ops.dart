@@ -30,6 +30,8 @@ export 'src/ops/groups/idle_ops.dart' show idleOperations;
 export 'src/ops/groups/level_write_ops.dart' show levelWriteOperations;
 export 'src/ops/groups/prefab_ops.dart' show prefabOperations;
 export 'src/ops/groups/tmx_ops.dart' show tmxOperations;
+export 'src/ops/groups/world_ops.dart' show worldOperations;
+export 'src/ops/world_sandbox.dart';
 export 'src/ops/groups/save_ops.dart' show saveOperations;
 export 'src/ops/groups/level_ops.dart'
     show levelReadOperations, levelText, parseLevel, knownComponents;
