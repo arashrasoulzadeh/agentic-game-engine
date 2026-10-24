@@ -981,7 +981,245 @@ change as little as possible. **Rule:** a file moves only together with its test
 | `studio_edit_commands.dart` | helpers `loadLevelOrNull`, `validateAndWrite`, `entityNamedOrNull`, `parseFieldValue` and each command's `run()` body | the `level.*` edit handlers (they currently print and write directly; the new handlers **return a Proposal** instead of writing) |
 | `studio_diff_commands.dart` | diff/merge/lock/unlock bodies (use `diffLevels`, `mergeLevels`, `FileLock`) | `level.diff`, `level.merge`, `level.lock/unlock` |
 | `studio_asset_commands.dart` | `export-tmx`, `save-prefab`, `place-prefab` bodies | `level.export_tmx`, `prefab.save`, `prefab.place` |
-| `lint_command.dart` | `_checkPlayable(entities)` and `_render(entities, path)` (PNG via `package:image`) | `level.lint` handler; **`image` becomes a dependency of `engine_core`?** No: keep `image` in `engine_cli`/`engine_api` and give `level.lint` a `renderer` hook in `OpContext` (`Uint8List Function(TileMap, entities)?`); core ships no image code. `engine_api` and `engine_cli` both pass the same renderer from a small shared file in `engine_api`... **decision:** put the renderer in `engine_core` behind a tiny dependency-free PNG encoder (about 80 lines: zlib via `dart:io`/`archive` is avoided; use stored (uncompressed) deflate blocks) so no package dependency is added. |
+| `lint_command.dart` | `_checkPlayable(entities)` (pure: move to core) and `_render(entities, path)` (PNG via `package:image`) | `level.lint`. **Decision:** core contains no image code. Rendering and decoding go through an `ImageCodec` interface injected in `OpContext` (`decode(bytes)`, `resize`, `encodePng`, and a `renderTileMap(...)` helper built on them); `engine_cli` and `engine_api` each supply the same small implementation over `package:image` (about 40 lines, in `image_codec.dart` of each package). Without a codec the render/pack parts return `unsupported`. |
+| `pack_assets_command.dart` (~500 lines, private `_PackItem`, `_Rect`, `_PackedSheet`) | the whole packer (rect packing is pure; decode/resize/encode use `package:image`) | `asset.pack` in core, written against the same injected `ImageCodec` (the packing algorithm moves to core as is; only the pixel calls go through the interface). |
+| `release_plan.dart` |
+| `release.build` | W | as plan | exit codes | **`requiresFlutter`** |
+| `engine.health` / `engine.capabilities` / `engine.operations` | R | - | see I | registry |
+| `engine.docs` | R | `page?:string` | list of docs pages or one page's markdown | files under `docs/` shipped with the package |
+| `undo.list` / `undo.undo` / `undo.redo` | R / W / W | see E.3 | | `undo_log.dart` |
+
+## K. Documentation generation
+
+`engine_api docs` (and `tool/gen_docs.dart`) produces from the registry, deterministically (sorted by name):
+
+- `docs/reference/operations.md` - one section per operation: summary, kind, scope, description, params table (type, required,
+  default, constraints), result schema, errors, examples as **CLI**, **MCP tools/call**, **REST curl**, **JSON-RPC** snippets.
+- `docs/reference/api/openapi.json` - OpenAPI 3.1 (`paths`: `/v1/<group>/<verb>`, shared `OpResult`/`OpError` components,
+  `securitySchemes: bearer`, tags per group, `x-kind`, `x-cli`).
+- `docs/reference/cli.md` - the operation-derived part is generated (marker comments `<!-- generated:ops -->`), hand-written
+  sections (create/upgrade narrative) stay.
+- `docs/reference/mcp.md` - tools table, resources, prompts, transport setup for Claude Desktop/Code (`claude mcp add`, JSON config
+  snippet), troubleshooting.
+
+Drift tests (like `component_docs_test.dart`): the generated files must equal the committed ones; failing prints the regenerate command.
+
+## L. Testing specification
+
+### L.1 Registry/unit (in `engine_core`)
+
+- `operation_registry_test`: unique dotted names, valid pattern, every param typed, every example's `args` validate against the
+  operation's own schema, every `errors` code exists in `ErrorCode`, `requiresFlutter` ops have no handler in core.
+- `json_schema_test`: golden JSON Schema for each `ParamType`/`FieldType`; every component schema converts and a generated template
+  validates against its own JSON Schema (property test over `allComponentSchemas`).
+- `paths_test`: traversal (`../x`, absolute, NUL, `a/../../b`), symlink escape (create a symlink to a temp dir), case/dots/Windows
+  separators, very long paths.
+- `safety_test`: preview for destructive ops writes nothing; token verifies, becomes `confirmation_stale` after any touched file
+  changes or TTL elapses (injected `Clock`), rejects a token from a different op/args; read-only blocks writes before proposals;
+  lock held by another owner -> `locked` with owner; atomic write leaves the old file intact when the second file fails; undo
+  journal written before the first rename; 100-entry pruning; undo then redo restores bytes; undo refuses on changed file unless
+  `force`.
+- One test file **per group** exercising every operation against a scratch project (copy of a fixture in `test/fixtures/project/`):
+  happy path, each documented error code, `--dry-run` result, and (for writes) that the file content equals what the legacy CLI
+  produced for the same inputs (golden comparison, proving the migration is behaviour-preserving).
+
+### L.2 CLI (`engine_cli`)
+
+- Existing ~130 tests untouched and green after phase 4 (legacy adapters).
+- `ops_cli_test`: for **every** registered operation, `game_agent <group> <verb> --help` renders, a call with `--json` returns a valid
+  envelope, required-param errors exit 64, destructive without `--apply` exits 78, `--stdin` merges. Generated from the registry so a
+  new operation is covered automatically.
+
+### L.3 API (`engine_api`)
+
+- `mcp_protocol_test`: initialize/negotiation, tools/list pagination, tools/call success + `isError`, resources/templates/read,
+  prompts/get rendering, ping, cancellation, unknown method, malformed JSON, batch handling over stdio and `/mcp`.
+- `rest_test` / `jsonrpc_test`: status code and error mapping table B.1 (one assertion per code), auth missing/wrong/right,
+  constant-time compare helper test, rate limit and size limit, `Idempotency-Key`, CORS off/on, `Origin` rejection on `/mcp`,
+  `405`, `404`, OpenAPI document validity (structural) and that every path exists.
+- `config_test`: file+flag precedence, unknown key error, remote bind refusal without `--allow-remote`.
+- `request_log_test`: one line per call, no args by default, redaction of `secret` params at debug level, rotation.
+- `docs_drift_test`: generated docs equal committed docs.
+- **`parity_test` (the 1:1 rule)**: iterates `buildRegistry()`; asserts for each operation: has a CLI command name (or is in
+  `legacyAliases`), and unless `requiresFlutter` also an MCP tool, a REST route, an OpenAPI path and a JSON-RPC method; asserts the
+  reverse (no CLI group/verb, tool, route or method without an operation); asserts `requiresFlutter` ops are listed in
+  `engine.capabilities.unsupported`; asserts allow/deny filtering hides an operation on **all** surfaces simultaneously.
+- `e2e_test` (process level, runs in CI): start `engine_api mcp-stdio` as a subprocess with a scratch project; a small Dart MCP client
+  performs: initialize -> tools/list (count == registry non-Flutter count) -> project.info -> level.create -> level.add_entity ->
+  level.remove_entity (preview, then apply with the token) -> project.validate -> undo.undo -> idle.simulate on the sample game ->
+  `world.build/step/snapshot`. Repeat the same script over HTTP (`/mcp`, `/rpc`, `/v1`) with the bearer token and assert identical
+  `data` for the same operation across all four transports.
+
+### L.4 Prompts
+
+Each prompt file has a sibling `*.test.yaml` listing the tool calls its steps imply; the test renders the prompt, checks every tool
+name it mentions exists in the registry and that the listed calls succeed against the fixture project.
+
+## M. Build order, tasks and acceptance criteria
+
+Each phase = one or more commits, pushed after the **package's tests and `analyze --fatal-infos` are green** (gate the commit on the
+real "All tests passed" line, not on a pipe). Phases are sequential; within a phase, groups can be done in any order.
+
+**Phase 0 - scaffolding (1 commit).** Create `packages/engine_api` (pubspec with `publish_to: none`, version 0.1.0, README/CHANGELOG/
+LICENSE), `.github/workflows/engine_api.yml` (paths: engine_api, engine_core, engine_schema, engine_cli), CLAUDE.md package map
+row, root README row, `docs.yml` API loop entry, mkdocs nav placeholder, `release_consistency_test` passes (it picks the package up
+automatically: same version, `publish_to: none`, LICENSE/README/CHANGELOG). *Accept:* CI green with an empty `lib/engine_api.dart`.
+
+**Phase 1 - registry core (2-3 commits).** `operation.dart`, `param.dart`, `result.dart`, `context.dart`, `registry.dart`,
+`json_schema.dart`, `paths.dart`, error taxonomy, dispatcher (`registry.call(name, args, ctx)`: validate -> handler -> envelope ->
+duration), `engine.*` operations as the first (trivial) operations. *Accept:* L.1 registry/json_schema/paths tests green; `engine.operations`
+works through the dispatcher.
+
+**Phase 2 - write safety (2 commits).** `safety.dart`, `undo_log.dart`, change sets, tokens, locks, read-only, allow/deny. Tested with a
+**fake operation** that proposes file changes. *Accept:* `safety_test` complete (all cases in L.1).
+
+**Phase 3 - move existing read operations (2 commits).** `project.validate`, `level.lint`, `level.diff`, `idle.validate`,
+`idle.simulate`, `asset.pack`, `release.plan` etc. into groups; legacy commands call the registry. *Accept:* all old CLI tests green; the
+new per-group tests green; `ops_cli` generates the commands for these.
+
+**Phase 4 - move existing write operations (3 commits).** `level.add_entity ... fill_region`, `level.import/export_tmx`,
+`level.export_canonical`, `level.lock/unlock`, `level.merge`, `prefab.save/place`, `project.manifest`. Handlers return Proposals;
+legacy commands become adapters; golden comparisons prove identical files. *Accept:* old tests green; every legacy command has an
+operation; legacy files reduced.
+
+**Phase 5 - new operations (one commit per group).** `project.*` extras, `level.read/list/validate/create/add_component/remove_component`,
+`graph.*`, `schema.*`, `i18n.*`, `save.*`, `strategy.*`, `idle.state/best_purchase/format_number`, `engine.docs`, `world.*`, `undo.*`.
+Each with CLI binding (automatic), tests (L.1/L.2), doc examples. *Accept:* `parity_test` skeleton in core lists no operation without a CLI
+command.
+
+**Phase 6 - engine_api server (4 commits).** (a) config, auth, limits, request log; (b) MCP protocol + stdio + tools; (c) resources +
+prompts; (d) HTTP: `/mcp`, REST, JSON-RPC, OpenAPI. *Accept:* L.3 tests green except e2e/parity/docs.
+
+**Phase 7 - parity, docs, e2e (2 commits).** `parity_test`, `docs_drift_test`, generator, `e2e_test`, generated references committed,
+`docs/reference/mcp.md` and a tutorial "Drive the engine from Claude" (executed by the e2e script). *Accept:* all engine_api tests green in CI.
+
+**Phase 8 - release plumbing (1 commit).** CHANGELOG entries per phase, `docs/engine-releasing.md` mention, README badges row,
+`engine_mcp.md` marked **Implemented** with a link to the generated reference, TODO.md entry closed.
+
+## N. Operational details and edge cases
+
+- **Determinism:** operations with randomness take an explicit `seed:int` (default 1) and use `DeterministicRandom`; the request log
+  records it. `idle.simulate`, `world.step` and `strategy.simulate_turns` are reproducible from their args.
+- **Time:** every handler gets time only from `OpContext.clock`; tests inject a fixed clock; the determinism guard test
+  (`idle_determinism_test` style) is extended to `src/ops/` forbidding `DateTime.now()` outside `context.dart`.
+- **Long-running operations:** none in v1 (Flutter exclusions). Every handler must finish within `limits.maxOperationSeconds` (default
+  30); the dispatcher enforces it with a timeout (`internal` + `details.timeout`) and, for `world.step`, a cap on ticks per call (10,000).
+- **Result size:** `level.read` of a huge level pages with `entityOffset/entityLimit`; `project.tree`, `project.search`, `undo.list` take
+  `limit`. Streams are not used in v1.
+- **Encoding:** all files UTF-8; levels written with `canonicalJson` (sorted keys, 2-space indent) exactly like the CLI does; CRLF in
+  input is accepted and normalized to LF on write (documented).
+- **Windows:** path separator normalization in `paths.dart`; lock file and token permission handling are best-effort; stdio MCP reads
+  in binary-safe UTF-8.
+- **Secrets:** no operation returns environment variables, signing keys or keystore passwords; `release.plan` redacts `key.properties`
+  values; `project.read_file` equivalents never serve `.studio/api-token`, `*.jks`, `*.keystore`, `key.properties`, `.env*`.
+- **Plugins:** studio plugin node kinds (`StudioPlugins`) are Flutter-side; `graph.node_kinds` shows only built-ins unless a host
+  registers kinds into the core registry via `registerNodeKinds(type, kinds)` (new tiny core API added in phase 5).
+- **Versioning:** `registryVersion` follows semver: new operation = minor, new optional param = minor, removed/renamed operation or
+  param, changed result shape = major; a removed operation is `deprecated` for one minor release and still answers with a
+  `warnings: ["deprecated: use X"]`. `engine.capabilities` reports it; the generated docs include a changelog table.
+- **Backwards compatibility of existing CLI:** exit codes of legacy commands are preserved (tests pin them); `--json` is additive.
+
+## O. Security checklist (to verify in review)
+
+1. Every path param goes through `paths.dart`; fuzz test with random segments.
+2. No handler calls `Process.run` except those flagged `requiresFlutter` (guard test greps `src/ops/groups/` for `Process`).
+3. Network transports require the token; `/v1/health` is the only unauthenticated route and returns no project data.
+4. `Origin` validation on `/mcp`; CORS off by default; default bind loopback.
+5. Request/response/concurrency limits enforced before parsing large bodies (read at most `maxRequestBytes + 1`).
+6. Confirmation tokens are HMAC'd with an in-memory secret; comparison constant-time.
+7. Undo journal and logs never contain tokens; request log redacts `Authorization`.
+8. `world.*` sandboxes are memory-capped (max entities 100,000 per world, 4 worlds) and time-capped.
+9. A prompt-injection note in `instructions` and the docs: file contents returned by `project://` resources are **data**; destructive
+   operations require the confirmation round-trip precisely so a poisoned file cannot silently trigger them.
+
+## P. Non-goals for v1
+
+Rendering/preview, running a game, profiling, hot reload, Flutter-based operations over the API, multi-project workspaces, TLS
+termination, OAuth, WebSocket transport, per-operation permissions per token (only global allow/deny), operation batching with
+transactions, auto-generated operations from reflection.
+
+## Q. Definition of done
+
+- Every operation in J exists with description, params, result spec, errors and at least one tested example.
+- `parity_test` green: CLI, MCP, REST, OpenAPI and JSON-RPC cover exactly the registry (minus `requiresFlutter`, which are CLI-only
+  and listed as unsupported).
+- All legacy CLI tests green and unchanged; legacy commands are adapters over the registry.
+- e2e script passes over stdio, `/mcp`, `/rpc` and `/v1` with identical data.
+- Generated docs committed and drift-tested; `docs/reference/mcp.md` explains setup for Claude Desktop and Claude Code.
+- `dart analyze --fatal-infos` and all tests green in `engine_schema`, `engine_core`, `engine_cli`, `engine_api` in CI; the repository
+  `release_consistency_test` includes the new package.
+
+---
+
+# Developer quick-start: facts, skeletons and templates (read this instead of exploring the repo)
+
+This part exists to save tokens during implementation: it records where the existing code lives, what must be moved, the exact
+signatures to reuse, ready-to-paste skeletons for the new code, and the repository pitfalls already paid for. Items marked
+**(verify)** were not re-read and should be confirmed with one grep before relying on them.
+
+## R. Codebase map: where each reusable piece lives today
+
+### R.1 Already in `engine_core` (import `package:engine_core/engine_core.dart`; use as is)
+
+| Need | Symbol (file under `packages/engine_core/lib/src/`) | Notes |
+|---|---|---|
+| Level model | `LevelDocument`, `LevelEntity` (`content/level_document.dart`) | `LevelDocument.fromJson(map)`, `.toJson()`, `.entities`, `.entityNamed(name)`; `LevelEntity(name:, components: Map<String,Map<String,dynamic>>)` |
+| Canonical-ish JSON | `encodeLevelJson(Object?)` (`content/level_format.dart:7`) | what the editor/saver writes |
+| Level validation | `LevelValidator.forSchemas(allComponentSchemas).validate(doc)` -> `List<LevelIssue>`; `LevelIssue.severity` (`IssueSeverity.error/warning`) (`validation/level_validator.dart`) | used by every edit command today |
+| Raw level check | `Level.validate(json)` -> `List<Map>` entities, throws `LevelLoadException` (`content/level.dart`) | used by `lint` |
+| Edit commands | `AddEntityCommand(entity,{index})`, `RemoveEntityCommand(entity)`, `SetComponentFieldCommand({entity, component, field, value})`, `SetLayerCommand({...})`, `MoveEntityCommand({entity,x,y})`, `SetTileCommand({...})`, `FillRegionCommand({...})`, `InstantiatePrefabCommand(prefab,{x,y})`, `FlattenTileMapCommand(entity)` (`command/*.dart`); all implement `EditCommand.apply(LevelDocument)` / `revert` | the 1:1 operations call these exactly like `studio_edit_commands.dart` does |
+| Diff / merge | `diffLevels(before, after)` -> `LevelDiff` (`added`, `removed`, `changed`, `isEmpty`, `format()`, `toJson()`), `mergeLevels(base, ours, theirs)` -> `LevelMerge` (`content/level_diff.dart:100,188`) | |
+| Prefab | `Prefab`, `Prefab.fromEntities(name, entities)`, `toJson` (`content/prefab.dart`) | |
+| Brushes | `BrushLibrary` (`content/brush.dart`) | |
+| Locks | `FileLock(path)`, `.inspect()`, `.acquire(owner)` -> `LockResult(acquired, holder)`, `.release(owner,{force})`, `LockInfo(owner, acquiredAt)`, `lockOwner()` (`io/file_lock.dart`; **dart:io**) | |
+| Atomic file save | `AtomicSave(path).write(map)/read()` (`io/atomic_save.dart`, exported via `engine_core_io.dart`) | JSON maps only; ops need a string variant (see S.4) |
+| Save codes | `SaveCodec.export/import`, `SaveMigrator` (`content/save_codec.dart`) | |
+| Idle | everything via `package:engine_core/engine_core_idle.dart` (`validateIdleDefinition`, `loadIdleDefinition`, `simulateIdle`, `describeSimulation`, `bestPurchase`, `computeIncome`, ...) | |
+| Numbers | `BigNumber`, `formatBigNumber(value,{style,decimals,decimalSeparator,groupSeparator})` | |
+| Schemas | `allComponentSchemas` (`Map<String, ComponentSchema>`), `ComponentSchema(name, fields)` `.template` (default JSON), `FieldSchema(name,type,{min,max,options,defaultValue,required,optional})`, `FieldType {int,double,bool,string,enumeration,vector2,list,object}` (package `engine_schema`, re-exported through core; **import `package:engine_schema/engine_schema.dart` explicitly** as the CLI does) | |
+| World | `World(width:, height:)`, `registerCoreComponents(world)`, `WorldSnapshot.capture/.toJson/.fromJson/.restoreInto`, `world.applyPatch`, `world.toJson()`, `world.components.register`, `world.storeOf<T>()`, `world.step(dt)`, `world.events.on/emit/flush` | for `world.*` ops |
+| Graphs | `Graph`, `GraphNode`, `GraphEdge`, `GraphType {dialogue, behaviorTree, stateMachine}` (`.registry`), `NodeKind`, `GraphPort`, `PortType`, `validateGraph(graph,{registry})`, `GraphIssue`, `compile*` (`graph/*.dart`) | |
+| Turn/strategy | `OrderSystem`, `TurnSystem`, `startTurnBasedGame`, `submitOrder`, `HostSession` etc. (`turn/*`, `net/*`) | |
+| Localization | `LocalizationManager` (`content/localization.dart`), `StringTable` | |
+| Time/random | `DeterministicRandom(seed)` (`ecs/deterministic_random.dart`) | |
+| Tmx | `TmxImport`, `tileMapToTmx` (check exact names with `grep -rn "tileMapToTmx\|class TmxImport" packages/engine_core/lib`) **(verify)** | used by `studio import-tmx/export-tmx` |
+
+### R.2 Currently in `engine_studio` (Flutter package) but **pure Dart** -> must move to `engine_core` in phase 3/5
+
+`engine_studio` depends on Flutter, so the CLI and `engine_api` cannot import it. These files have **no Flutter imports** and move
+(git mv, then fix imports; the studio re-imports them from core; their tests move with them):
+
+| From `packages/engine_studio/lib/src/` | To `packages/engine_core/lib/src/ops/project/` | Public symbols |
+|---|---|---|
+| `project/studio_project.dart` | `studio_project.dart` | `StudioProject.open(path)`, `.root`, `.levelPaths()`, `.graphPaths()`, `.codeFiles()`, `.nextGraphPath()`, `ProjectOpenException` (imports `../playtest/play_test.dart` only for a constant: replace with a literal) |
+| `project/project_tree.dart` | `project_tree.dart` | `ProjectEntry(relativePath,isDirectory,depth,name)`, `listProjectTree(root)`, `FileKind`, `kindOf`, `visibleTree`, `filterFiles` |
+| `project/project_search.dart` | `project_search.dart` | `ProjectMatch`, `searchProject(root, entries, query)` (imports `../code/find_replace.dart`: move that tiny pure file too) |
+| `project/project_problems.dart` | `project_problems.dart` | `ProjectProblem`, `ProblemSource`, `collectProjectProblems(project)` (**depends on `graph/graph_editor.dart`**, which is Flutter-tainted via `dart:ui`: extract its pure `validate()` logic into core `graph/graph_validate.dart` first, see R.4) |
+| `project/git_status.dart` | `git_status.dart` | `GitChange`, `parseGitStatus`, `readGitStatus`, `runGit`, `folderHasChanges` |
+| `project/pub_get.dart` | (stays Flutter-agnostic) `pub_get.dart` | `runPubGet`, `PubGetResult` |
+| `assets/asset_index.dart` | `asset_index.dart` | `AssetIndex.scan(root)`, `.atlases`, `.declaredRegions`, `.atlasById`, `AtlasInfo` (imports `../textures/atlas_catalog.dart`: **verify** it is pure, it showed a flutter match = 1, probably an image decode; if it uses `dart:ui`, split the catalog JSON part out) |
+| `assets/asset_references.dart` | `asset_references.dart` | `checkAssetReferences(...)` -> `List<LevelIssue>` |
+| `assets/project_stores.dart` | `project_stores.dart` | `PrefabStore(root).save/load/list`, `BrushStore` |
+| `code/project_symbols.dart` | `project_symbols.dart` | `ProjectSymbols.scan(root)`, `.classes/.atlasIds/.entityNames`, `completionsFor` |
+| `level/level_saver.dart` | `level_saver.dart` | `LevelSaver.save(path, doc)`, `.autosave(...)` (**verify** exact methods; the studio and the new undo-aware pipeline must share one writer) |
+| `inspector/entity_inspector.dart` | `entity_inspector.dart` | `EntityInspector(editor).components()` uses `LevelEditor` (Flutter-tainted): move only `ParsedField parseFieldText(FieldSchema, String)` and `InspectedComponent` |
+| `code/analysis.dart` | stays in studio | analyzer output parsing; `project.analyze` is **not** in v1 (needs the Dart SDK process) |
+
+`engine_studio` keeps thin re-export shims (`export 'package:engine_core/engine_core_ops.dart' show ...`) so studio code and its ~450 tests
+change as little as possible. **Rule:** a file moves only together with its tests, in the same commit, with `flutter test` green in
+`engine_studio`.
+
+### R.3 Currently inside `engine_cli` command classes -> extract into core ops
+
+| CLI file | Private logic to extract | Becomes |
+|---|---|---|
+| `studio_command.dart:226` `canonicalJson(Object?)` | the canonical JSON writer used by every studio command | `core/ops/canonical_json.dart` (also fixes duplication with `encodeLevelJson`: **verify** whether they are byte-identical; if yes keep one) |
+| `studio_command.dart` `StudioValidateCommand` | project-wide level validation incl. `--strict` | `project.validate` handler |
+| `studio_command.dart` import-tmx / export-levels / project-manifest classes | TMX import, canonical rewrite, manifest build | `level.import_tmx`, `level.export_canonical`, `project.manifest` |
+| `studio_edit_commands.dart` | helpers `loadLevelOrNull`, `validateAndWrite`, `entityNamedOrNull`, `parseFieldValue` and each command's `run()` body | the `level.*` edit handlers (they currently print and write directly; the new handlers **return a Proposal** instead of writing) |
+| `studio_diff_commands.dart` | diff/merge/lock/unlock bodies (use `diffLevels`, `mergeLevels`, `FileLock`) | `level.diff`, `level.merge`, `level.lock/unlock` |
+| `studio_asset_commands.dart` | `export-tmx`, `save-prefab`, `place-prefab` bodies | `level.export_tmx`, `prefab.save`, `prefab.place` |
+| `lint_command.dart` | `_checkPlayable(entities)` (pure: move to core) and `_render(entities, path)` (PNG via `package:image`) | `level.lint`. **Decision:** core contains no image code. Rendering and decoding go through an `ImageCodec` interface injected in `OpContext` (`decode(bytes)`, `resize`, `encodePng`, and a `renderTileMap(...)` helper built on them); `engine_cli` and `engine_api` each supply the same small implementation over `package:image` (about 40 lines, in `image_codec.dart` of each package). Without a codec the render/pack parts return `unsupported`. |
 | `pack_assets_command.dart` (~500 lines, private `_PackItem`, `_Rect`, `_PackedSheet`) | the whole packer | `asset.pack`; **needs `package:image`** for decode/resize/encode: so `asset.pack` is the **one** operation implemented in `engine_cli` and `engine_api` via an injected `ImageCodec` interface in `OpContext` (`decode(bytes)`, `encodePng`, `resize`), with the implementation in a new tiny package-internal file `engine_api/lib/src/image_codec.dart` and `engine_cli/lib/src/image_codec.dart` (each wraps `package:image`). Registry-wise it stays a normal operation; if no codec is in the context it returns `unsupported`. |
 | `release_plan.dart` | `planAndroid(...)`, `planIos(...)`, `ReleasePlan`, `automaticExportOptions` (already pure functions) | `release.plan` handler (move file to core as is; pure) |
 | `idle_command.dart` | `SimulateCommand.run`, `ValidateIdleCommand.run` bodies | `idle.simulate`, `idle.validate` |
