@@ -82,6 +82,7 @@ nav:
       - "3 · An agent-driven game": tutorials/03-agent-driven-game.md
       - "4 · Multiplayer": tutorials/04-multiplayer.md
       - "5 · An idle game": tutorials/05-idle-game.md
+      - "6 · Drive the engine from an agent": tutorials/06-agent-api.md
   - Studio:
       - User guide: studio/user-guide.md
       - Build your first level: studio/first-level.md

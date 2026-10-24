@@ -8,6 +8,7 @@ on:
       - 'packages/engine_core/**'
       - 'packages/engine_schema/**'
       - 'packages/engine_cli/**'
+      - 'docs/reference/operations.md'
       - '.github/workflows/engine_api.yml'
   pull_request:
     paths:
@@ -15,6 +16,7 @@ on:
       - 'packages/engine_core/**'
       - 'packages/engine_schema/**'
       - 'packages/engine_cli/**'
+      - 'docs/reference/operations.md'
       - '.github/workflows/engine_api.yml'
 
 jobs:

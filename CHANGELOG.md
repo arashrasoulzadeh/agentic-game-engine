@@ -15,6 +15,7 @@ pubspec.yaml.
 - `engine_api` MCP server over stdio (phase 6, part 1 of `engine_mcp.md`): one tool per non-Flutter operation with JSON Schema, annotations and a detailed description, `tools/call` returning the result envelope, resources for the catalogue and schemas, `--project`, `--read-only`, `--allow/--deny`, `--underscore-tool-names`.
 - `engine_api --http`: REST (`/v1/<group>/<verb>`), JSON-RPC (`/rpc`), MCP (`/mcp`) and a generated OpenAPI document on one localhost port, behind a bearer token (`.studio/api-token`), with a Host-header check and request size limit.
 - `engine_api` operations: JSONL request log with rotation (`--log`), result size limit (`--max-result-bytes`) and HTTP rate/concurrency limits (`--requests-per-minute`).
+- Tutorial 6, "Drive the engine from an AI agent" (MCP client config, the agent workflow, the same calls from the CLI and over HTTP).
 - `engine_api` hardening: CORS for listed origins (`--allow-origin`), `Idempotency-Key` replay for writes (10 minutes), a delay after repeated failed logins, and an `engine_api.yaml` config (unknown keys are errors; flags override the file).
 - `project.read_file` operation (UTF-8 text, 1 MiB cap, never the API token) and MCP `project://` resources (info, tree, problems, undo, levels, prefabs, graphs, file).
 - `project.problems` operation: levels, graphs and the idle game's problems as one flat list with file and severity.

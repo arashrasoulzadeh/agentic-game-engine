@@ -9,6 +9,7 @@ Linear walkthroughs. Each ends with something that runs.
 | 3 | [An agent-driven game](03-agent-driven-game.md) | A JSON-only agent that plays and beats the built-in AI | ~20 min |
 | 4 | [Multiplayer](04-multiplayer.md) | A host and two WebSocket clients, each on their own team | ~25 min |
 | 5 | [An idle game](05-idle-game.md) | Generate an idle game, edit its economy as JSON, check the pacing with the simulator | ~30 min |
+| 6 | [Drive the engine from an agent](06-agent-api.md) | Start the MCP / REST server, let an agent build and check a level, undo it | ~15 min |
 
 **New to the engine?** Do [Getting started](../getting-started.md) first, then
 whichever of 1 or 2 matches your game. Do 3 if you want an AI agent, a bot or
