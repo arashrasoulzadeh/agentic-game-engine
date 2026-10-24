@@ -4,6 +4,7 @@ import 'groups/level_ops.dart';
 import 'groups/level_write_ops.dart';
 import 'groups/project_ops.dart';
 import 'groups/release_ops.dart';
+import 'groups/save_ops.dart';
 import 'groups/schema_ops.dart';
 import 'groups/undo_ops.dart';
 import 'operation.dart';
@@ -18,6 +19,7 @@ OperationRegistry buildRegistry({ProposalFinisher? finisher}) {
     ...projectOperations(),
     ...levelReadOperations(),
     ...levelWriteOperations(),
+    ...saveOperations(),
     ...schemaOperations(),
     ...idleOperations(),
     ...releaseOperations(),
