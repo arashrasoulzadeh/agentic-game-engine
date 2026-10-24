@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `game_agent <group> <verb>` commands generated from the operation registry (`--json`, `--stdin`, `--args`, `--dry-run/--apply/--yes/--confirmation`); hand-written verbs keep precedence.
 - Read operations on the registry (phase 3 of `engine_mcp.md`): `project.*` (open, close, info, tree, search, validate, git_status), `level.*` (list, read, validate, diff, lock_status), `schema.*`, `idle.validate/simulate/format_number`, `release.plan`. The project model, tree, search, git status and release planner moved from `engine_studio`/`engine_cli` into `engine_core` (old paths re-export them).
 - Operation write safety (phase 2 of `engine_mcp.md`): every write goes through a pipeline that validates the changed files, respects advisory locks, builds a diff, previews destructive changes behind an HMAC confirmation token (bound to the call, the files' content and an expiry), writes atomically with rollback and journals the change in `.studio/undo/` (last 100). `undo.list`, `undo.undo` and `undo.redo` operations.
 - Operation registry core (`package:engine_core/engine_core_ops.dart`, phase 1 of `engine_mcp.md`): typed `Operation`s with a validating, policy-enforcing, write-serializing dispatcher, a uniform result/error envelope with stable error codes, JSON Schema generation, the project path sandbox and the `engine.health/capabilities/operations/operation` operations.

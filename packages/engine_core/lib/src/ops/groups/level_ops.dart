@@ -161,6 +161,7 @@ List<Operation> levelReadOperations() => [
       Param(
         'json',
         ParamType.json,
+        cliFlag: 'inline-json',
         description: 'The level content, instead of a file.',
       ),
     ],

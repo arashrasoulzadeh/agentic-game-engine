@@ -4,6 +4,8 @@ import 'package:args/command_runner.dart';
 import 'package:engine_cli/src/create_command.dart';
 import 'package:engine_cli/src/idle_command.dart';
 import 'package:engine_cli/src/lint_command.dart';
+import 'package:engine_cli/src/ops_cli.dart';
+import 'package:engine_core/engine_core_ops.dart';
 import 'package:engine_cli/src/pack_assets_command.dart';
 import 'package:engine_cli/src/upgrade_command.dart';
 import 'package:engine_cli/src/build_release_command.dart';
@@ -22,6 +24,8 @@ Future<void> main(List<String> arguments) async {
         ..addCommand(BuildReleaseCommand())
         ..addCommand(IdleCommand())
         ..addCommand(StudioCommand());
+
+  addOperationCommands(runner, buildRegistry());
 
   // CommandRunner.run resolves the exit code but never applies it to the
   // process on its own — without this, every command "succeeds" from a

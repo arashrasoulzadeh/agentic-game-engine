@@ -51,6 +51,7 @@ List<Operation> idleOperations() => [
       Param(
         'json',
         ParamType.json,
+        cliFlag: 'inline-json',
         description: 'The definition, instead of a file.',
       ),
     ],
@@ -86,7 +87,7 @@ List<Operation> idleOperations() => [
     idempotent: true,
     params: const [
       Param('path', ParamType.path, positional: true),
-      Param('json', ParamType.json),
+      Param('json', ParamType.json, cliFlag: 'inline-json'),
       Param('days', ParamType.number, min: 0.01, max: 3650, defaultValue: 3),
       Param(
         'prestigeAt',
