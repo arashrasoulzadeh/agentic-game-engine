@@ -1703,3 +1703,108 @@ order (insert `engine_api` after `engine_cli`); `CHANGELOG.md` `### Added`; `TOD
 Suggested working method to minimise tokens: implement **one operation group per session**, starting each by reading only the rows of
 sections J and R for that group, the matching legacy source file named in R.3, and the worked example S.3; write the handler, its test
 from T.2, run only that test file plus `dart analyze`, commit, move on.
+
+---
+
+# Appendix: one operation on every surface, checklists and rationale
+
+## X. The same call on all five surfaces (use as the doc-generator template and as the e2e expectation)
+
+Operation: `level.set_field` (write; applies immediately; always previewable).
+
+**CLI**
+```bash
+game_agent level set-field assets/levels/level1.json --entity player --component position --field x --value 48
+game_agent level set-field assets/levels/level1.json --entity player --component position --field x --value 48 --dry-run --json
+game_agent studio set-field assets/levels/level1.json --entity player --component position --field x --value 48   # legacy alias, same result
+```
+
+**MCP `tools/call`** (stdio line or `POST /mcp`)
+```json
+{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"level.set_field","arguments":
+  {"path":"assets/levels/level1.json","entity":"player","component":"position","field":"x","value":48}}}
+```
+Response `result`: `{"content":[{"type":"text","text":"{...envelope...}"}],"structuredContent":{...envelope...},"isError":false}`.
+
+**REST**
+```bash
+curl -s -X POST http://127.0.0.1:7421/v1/level/set_field \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"path":"assets/levels/level1.json","entity":"player","component":"position","field":"x","value":48}'
+```
+
+**JSON-RPC**
+```bash
+curl -s -X POST http://127.0.0.1:7421/rpc -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"level.set_field","params":{"path":"assets/levels/level1.json","entity":"player","component":"position","field":"x","value":48}}'
+```
+
+**Envelope (identical `data` on every surface)**
+```json
+{"ok":true,"data":{"before":24,"after":48},"warnings":[],
+ "diff":{"added":[],"removed":[],"changed":[{"name":"player","components":[{"component":"position","before":{"x":24,"y":8},"after":{"x":48,"y":8}}]}]},
+ "undoId":"000042-20261024T101500Z-level.set_field","durationMs":3}
+```
+
+**A destructive call, end to end** (`level.remove_entity`)
+1. Call without `confirmation` -> `{"ok":true,"data":{"preview":true,"summary":"Removes entity 'guard' (3 components)","diff":{...},"confirmation":"<token>","expiresAt":"..."}}`; nothing written.
+2. Call again with the same args plus `"confirmation":"<token>"` -> `{"ok":true,"data":{"removed":"guard"},"undoId":"..."}`.
+3. If the level changed in between -> `{"ok":false,"error":{"code":"confirmation_stale","message":"The level changed since the preview.","hint":"Preview again."}}`.
+4. `undo.undo` with no args restores the file bytes.
+
+## Y. Per-phase checklist and commit message templates
+
+Copy the checklist into the working notes of each phase and tick as you go.
+
+- [ ] Read only the J/R rows for this group and the legacy source named in R.3.
+- [ ] Extraction commits first (move files with `git mv`, fix imports, shims in `engine_studio`), each green on its own package tests.
+- [ ] Handler returns `OpOutcome` (reads) or a `Proposal` (writes); no direct file writes; no `Process`; no `DateTime.now()`.
+- [ ] Params typed with descriptions; errors listed; at least one example (executed by the registry test).
+- [ ] Per-operation test file from T.2, golden comparison with the legacy command where one exists.
+- [ ] CLI command appears automatically; legacy adapter calls the registry; old tests unchanged and green.
+- [ ] `dart analyze --fatal-infos` clean in every touched package; format only touched files.
+- [ ] CHANGELOG entry; docs example added to the operation (generated docs refreshed in phase 7).
+- [ ] Commit gated on the real result line (see V.1), then push; check CI if the push touched shared packages.
+
+Commit message template (the repository asks for the *why*):
+```
+engine_core ops: <group> operations (<list>)
+
+Why: <what the CLI/API could not do before, or what duplicated logic this removes>.
+How verified: <per-operation tests, golden comparison with legacy <command>, counts of tests per package>.
+Behaviour: <unchanged for legacy commands | new: ...>.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+```
+
+## Z. Rationale for the less obvious decisions (so they are not re-litigated)
+
+- **Registry in `engine_core`, not in `engine_api`:** the CLI must bind to it without depending on a server package, and the package DAG
+  (`engine_schema -> engine_core -> everything else`) must stay one-way (CLAUDE.md).
+- **One project per server run:** an agent that can name any path can touch any folder; a single root plus the path sandbox bounds the damage
+  and makes the undo log and locks unambiguous.
+- **Confirmation tokens instead of a plain `apply:true`:** a preview and the later apply can be separated by minutes and by other writers; the
+  token binds the apply to the exact files the human/agent saw, and a poisoned file cannot trigger a destructive call without a fresh
+  round-trip.
+- **Operations over data, not raw functions:** closures, streams and live objects cannot cross JSON; a curated set stays stable for clients
+  while the engine's internals change.
+- **Pure Dart, hand-written HTTP:** same toolchain as the engine, no new dependency to resolve offline, and the server compiles to one native
+  executable users can drop next to a project.
+- **`requiresFlutter` flag instead of excluding commands from the CLI:** keeps the CLI's 1:1 promise (everything is a command) while being honest
+  that an API host without the Flutter SDK cannot serve them.
+- **Headless `world.*` sandbox:** gives agents the "engine functions" they can actually use (step, snapshot, patch, query) without rendering,
+  and is deterministic (fixed clock, seeded random), so results are reproducible across transports.
+- **Undo journal inside `.studio/`:** it travels with the project and the studio can adopt it later; capped at 100 so it cannot grow without bound.
+
+## AA. Glossary
+
+| Term | Meaning here |
+|---|---|
+| Operation | one named, typed, documented function in the registry (`group.verb`) |
+| Surface | a way to call operations: CLI, MCP (stdio or HTTP), REST, JSON-RPC |
+| Envelope | the uniform `{ok, data, warnings, diff?, undoId?, durationMs}` / `{ok:false, error}` result |
+| Proposal | a write handler's list of file changes, not yet applied |
+| Preview | the dry-run result of a proposal (diff, summary, confirmation token) |
+| Project | a game folder with `pubspec.yaml` and `assets/levels`; at most one is open per server |
+| `requiresFlutter` | an operation implemented in the CLI (needs the Flutter SDK or long-running processes) and not served by `engine_api` |
+| Parity test | the test that fails when the registry and any surface disagree |
