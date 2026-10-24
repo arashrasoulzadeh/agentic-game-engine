@@ -46,3 +46,13 @@ dart run tool/gen_component_docs.dart > ../../docs/reference/components.md
 ```
 
 A test fails if the committed file is stale.
+
+`docs/reference/operations.md` is generated from the operation registry (every CLI command, MCP tool, REST route and
+JSON-RPC method). After adding or changing an operation:
+
+```bash
+cd packages/engine_api
+dart run tool/gen_api_docs.dart > ../../docs/reference/operations.md
+```
+
+`packages/engine_api/test/docs_test.dart` fails when the committed page is stale.

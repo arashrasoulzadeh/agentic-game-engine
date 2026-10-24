@@ -34,6 +34,7 @@ flowchart LR
 | Understand how the engine is put together | [Architecture](concepts/architecture.md) · [ECS](concepts/ecs.md) |
 | Copy a focused snippet | [Examples](examples/README.md) |
 | Look up a component's JSON shape | [Component reference](reference/components.md) |
+| Look up an operation (CLI / MCP / REST) | [Operations reference](reference/operations.md) |
 | Look up an event, system order or command | [Cheat sheet](reference/cheatsheet.md) · [Events](reference/events.md) · [CLI](reference/cli.md) |
 | Fix something that isn't working | [FAQ & troubleshooting](faq.md) |
 

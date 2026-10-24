@@ -12,3 +12,4 @@ export 'src/http/openapi.dart';
 export 'src/http/token.dart';
 export 'src/request_log.dart';
 export 'src/mcp/prompts.dart';
+export 'src/docs.dart';

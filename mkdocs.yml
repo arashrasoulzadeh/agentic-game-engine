@@ -120,6 +120,7 @@ nav:
   - Reference:
       - Cheat sheet: reference/cheatsheet.md
       - Components: reference/components.md
+      - Operations (CLI, MCP, REST): reference/operations.md
       - Events: reference/events.md
       - CLI: reference/cli.md
       - Glossary: reference/glossary.md
