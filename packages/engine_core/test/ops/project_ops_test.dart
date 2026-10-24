@@ -188,4 +188,36 @@ void main() {
       expect((await s.call(op)).ok, isTrue, reason: op);
     }
   });
+
+  test(
+    'project.read_file serves text, refuses binary, the token, escapes and big files',
+    () async {
+      final s = await Scratch.create();
+      final r = await s.map('project.read_file', {'path': 'lib/main.dart'});
+      expect(r['text'], 'class Hero {}\n');
+      expect(
+        await s.failure('project.read_file', {'path': 'lib/none.dart'}),
+        ErrorCode.notFound,
+      );
+      expect(
+        await s.failure('project.read_file', {'path': '../etc/passwd'}),
+        ErrorCode.invalidParams,
+      );
+      File('${s.dir.path}/blob.bin').writeAsBytesSync([0xff, 0xfe, 0x00, 0x80]);
+      expect(
+        await s.failure('project.read_file', {'path': 'blob.bin'}),
+        ErrorCode.forbidden,
+      );
+      s.write('.studio/api-token', 'secret');
+      expect(
+        await s.failure('project.read_file', {'path': '.studio/api-token'}),
+        ErrorCode.forbidden,
+      );
+      s.write('big.txt', 'x' * (1024 * 1024 + 1));
+      expect(
+        await s.failure('project.read_file', {'path': 'big.txt'}),
+        ErrorCode.tooLarge,
+      );
+    },
+  );
 }

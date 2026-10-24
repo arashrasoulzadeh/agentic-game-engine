@@ -259,7 +259,7 @@ void main() {
       req(5, 'resources/read', {'uri': 'engine://nope'}),
     ]);
     expect((replies[0]['result'] as Map)['resources'], isNotEmpty);
-    expect((replies[1]['result'] as Map)['resourceTemplates'], hasLength(2));
+    expect((replies[1]['result'] as Map)['resourceTemplates'], hasLength(6));
     final spec =
         jsonDecode(
               ((replies[2]['result'] as Map)['contents'] as List).single['text']
@@ -284,4 +284,28 @@ void main() {
     );
     expect(jsonDecode(out.single), hasLength(2));
   });
+
+  test(
+    'project:// resources read levels, files, info and refuse the token',
+    () async {
+      File('${project.path}/.studio').createSync(recursive: true);
+      final replies = await talk([
+        req(1, 'resources/read', {'uri': 'project://info'}),
+        req(2, 'resources/read', {'uri': 'project://levels/a'}),
+        req(3, 'resources/read', {'uri': 'project://file/pubspec.yaml'}),
+        req(4, 'resources/read', {'uri': 'project://tree'}),
+        req(5, 'resources/read', {'uri': 'project://file/.studio/api-token'}),
+        req(6, 'resources/read', {'uri': 'project://levels/missing'}),
+      ]);
+      String text(int i) =>
+          ((replies[i]['result'] as Map)['contents'] as List).single['text']
+              as String;
+      expect(jsonDecode(text(0))['name'], 'demo');
+      expect(text(1), contains('player'));
+      expect(jsonDecode(text(2))['text'], contains('name: demo'));
+      expect(text(3), contains('assets'));
+      expect(replies[4]['error'], isNotNull);
+      expect(replies[5]['error'], isNotNull);
+    },
+  );
 }

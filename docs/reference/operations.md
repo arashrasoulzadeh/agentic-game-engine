@@ -1065,6 +1065,26 @@ game_agent project problems
 
 REST: `POST /v1/project/problems` · MCP tool: `project.problems` · JSON-RPC method: `project.problems`
 
+### `project.read_file`
+
+Read one text file of the project.
+
+Any UTF-8 text file inside the project, up to 1 MiB. Binary files are refused, and so is the API token (`.studio/api-token`).
+
+*read*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path; required | |
+
+Errors: `not_found`, `too_large`, `forbidden`.
+
+```bash
+game_agent project read-file <path>
+```
+
+REST: `POST /v1/project/read_file` · MCP tool: `project.read_file` · JSON-RPC method: `project.read_file`
+
 ### `project.search`
 
 Find text in the project's code, level, graph and data files.

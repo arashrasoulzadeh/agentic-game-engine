@@ -6,7 +6,9 @@ import 'package:test/test.dart';
 
 void main() {
   test('docs/reference/operations.md is up to date with the registry', () {
-    final committed = File('../../docs/reference/operations.md').readAsStringSync();
+    final committed = File(
+      '../../docs/reference/operations.md',
+    ).readAsStringSync();
     expect(
       committed,
       renderOperationsReference(buildRegistry()),

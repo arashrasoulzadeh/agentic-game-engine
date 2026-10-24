@@ -119,6 +119,10 @@ class McpSession {
           'resources': [
             _resource('engine://operations', 'Operation catalogue'),
             _resource('engine://schemas/components', 'Component names'),
+            _resource('project://info', 'Open project'),
+            _resource('project://tree', 'Project file tree'),
+            _resource('project://problems', 'Project problems'),
+            _resource('project://undo', 'Undo journal'),
           ],
         };
       case 'resources/templates/list':
@@ -133,6 +137,26 @@ class McpSession {
               'uriTemplate': 'engine://schemas/components/{name}',
               'name': 'Component schema',
               'mimeType': 'application/json',
+            },
+            {
+              'uriTemplate': 'project://levels/{name}',
+              'name': 'Level',
+              'mimeType': 'application/json',
+            },
+            {
+              'uriTemplate': 'project://prefabs/{name}',
+              'name': 'Prefab',
+              'mimeType': 'application/json',
+            },
+            {
+              'uriTemplate': 'project://graphs/{name}',
+              'name': 'Graph',
+              'mimeType': 'application/json',
+            },
+            {
+              'uriTemplate': 'project://file/{path}',
+              'name': 'Project text file',
+              'mimeType': 'text/plain',
             },
           ],
         };
@@ -224,6 +248,26 @@ class McpSession {
       _ when uri.startsWith('engine://schemas/components/') => (
         'schema.component',
         {'name': uri.substring('engine://schemas/components/'.length)},
+      ),
+      'project://info' => ('project.info', <String, Object?>{}),
+      'project://tree' => ('project.tree', <String, Object?>{}),
+      'project://problems' => ('project.problems', <String, Object?>{}),
+      'project://undo' => ('undo.list', <String, Object?>{}),
+      _ when uri.startsWith('project://levels/') => (
+        'level.read',
+        {'path': 'assets/levels/${uri.substring('project://levels/'.length)}.json'},
+      ),
+      _ when uri.startsWith('project://prefabs/') => (
+        'prefab.read',
+        {'name': uri.substring('project://prefabs/'.length)},
+      ),
+      _ when uri.startsWith('project://graphs/') => (
+        'graph.read',
+        {'path': 'graphs/${uri.substring('project://graphs/'.length)}.json'},
+      ),
+      _ when uri.startsWith('project://file/') => (
+        'project.read_file',
+        {'path': uri.substring('project://file/'.length)},
       ),
       _ => throw RpcException(-32002, 'Unknown resource: $uri'),
     };

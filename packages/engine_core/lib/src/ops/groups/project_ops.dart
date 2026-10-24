@@ -282,6 +282,48 @@ List<Operation> projectOperations() => [
     },
   ),
   Operation(
+    name: 'project.read_file',
+    summary: 'Read one text file of the project.',
+    description:
+        'Any UTF-8 text file inside the project, up to 1 MiB. Binary files are refused, and so is the API token '
+        '(`.studio/api-token`).',
+    kind: OperationKind.read,
+    scope: OperationScope.project,
+    idempotent: true,
+    params: const [
+      Param('path', ParamType.path, required: true, positional: true),
+    ],
+    errors: {
+      ErrorCode.notFound: 'No such file.',
+      ErrorCode.tooLarge: 'Over 1 MiB.',
+      ErrorCode.forbidden: 'The file is withheld or not text.',
+    },
+    handler: (ctx, a) {
+      final rel = (a['path']! as String).replaceAll('\\', '/');
+      final abs = ctx.project!.resolve(rel);
+      if (rel == '.studio/api-token' || rel.endsWith('/.studio/api-token')) {
+        throw OpError(ErrorCode.forbidden, 'That file is never served.');
+      }
+      final String? text;
+      try {
+        text = ctx.files.read(abs);
+      } on Exception {
+        throw OpError(
+          ErrorCode.forbidden,
+          '$rel is not readable as UTF-8 text.',
+        );
+      }
+      if (text == null) throw OpError(ErrorCode.notFound, 'No file at $rel.');
+      if (text.length > 1024 * 1024) {
+        throw OpError(ErrorCode.tooLarge, '$rel is larger than 1 MiB.');
+      }
+      if (text.contains('\u0000') || text.contains('\uFFFD')) {
+        throw OpError(ErrorCode.forbidden, '$rel is not a UTF-8 text file.');
+      }
+      return OpOutcome.data({'path': rel, 'text': text, 'bytes': text.length});
+    },
+  ),
+  Operation(
     name: 'project.git_status',
     summary:
         'Which files git sees as changed (empty when the project is not in a git repository).',
