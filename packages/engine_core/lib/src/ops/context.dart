@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import '../io/file_lock.dart' as locks;
 import 'files.dart';
 import 'operation.dart';
 import 'paths.dart';
 import 'result.dart';
+import 'undo_log.dart';
 
 /// Per-process rules about which operations may run: allow/deny globs (`*` matches within a name) and read-only.
 class Policy {
@@ -54,12 +56,37 @@ class OpContext {
     this.actor = 'api',
     void Function(String message)? log,
     DateTime? startedAt,
-  }) : files = files ?? const DiskFiles(),
+    String? lockOwner,
+    this.undoKeep = 100,
+    this.confirmationTtl = const Duration(minutes: 5),
+  }) : lockOwner = lockOwner ?? _defaultOwner(),
+       files = files ?? const DiskFiles(),
        clock = clock ?? DateTime.now,
        log = log ?? _ignore,
        startedAt = startedAt ?? (clock ?? DateTime.now)();
 
   static void _ignore(String _) {}
+
+  static String _defaultOwner() => locks.lockOwner();
+
+  /// Who this process is when taking advisory locks; another owner's lock blocks writes.
+  final String lockOwner;
+
+  /// How many writes the undo journal keeps.
+  final int undoKeep;
+
+  /// How long a destructive preview's confirmation token stays valid.
+  final Duration confirmationTtl;
+
+  UndoLog? _undoLog;
+
+  /// The project's write journal (`.studio/undo/`). Requires an open project.
+  UndoLog undoLog() => _undoLog ??= UndoLog(
+    files: files,
+    projectRoot: project!.root,
+    clock: clock,
+    keep: undoKeep,
+  );
 
   /// The open project, or null.
   ProjectRoot? project;
