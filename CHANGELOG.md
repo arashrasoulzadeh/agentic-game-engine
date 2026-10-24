@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Level write operations on the registry (phase 4 of `engine_mcp.md`): `level.create`, `add_entity`, `remove_entity` (destructive, confirmation token), `move_entity`, `set_field`, `set_layer`, `add_component`, `remove_component` (destructive), `paint_tile`, `fill_region`. Each validates the edited level before proposing it and is undoable via `undo.undo`.
 - `game_agent <group> <verb>` commands generated from the operation registry (`--json`, `--stdin`, `--args`, `--dry-run/--apply/--yes/--confirmation`); hand-written verbs keep precedence.
 - Read operations on the registry (phase 3 of `engine_mcp.md`): `project.*` (open, close, info, tree, search, validate, git_status), `level.*` (list, read, validate, diff, lock_status), `schema.*`, `idle.validate/simulate/format_number`, `release.plan`. The project model, tree, search, git status and release planner moved from `engine_studio`/`engine_cli` into `engine_core` (old paths re-export them).
 - Operation write safety (phase 2 of `engine_mcp.md`): every write goes through a pipeline that validates the changed files, respects advisory locks, builds a diff, previews destructive changes behind an HMAC confirmation token (bound to the call, the files' content and an expiry), writes atomically with rollback and journals the change in `.studio/undo/` (last 100). `undo.list`, `undo.undo` and `undo.redo` operations.

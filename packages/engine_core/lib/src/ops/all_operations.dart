@@ -1,6 +1,7 @@
 import 'groups/engine_ops.dart';
 import 'groups/idle_ops.dart';
 import 'groups/level_ops.dart';
+import 'groups/level_write_ops.dart';
 import 'groups/project_ops.dart';
 import 'groups/release_ops.dart';
 import 'groups/schema_ops.dart';
@@ -16,6 +17,7 @@ OperationRegistry buildRegistry({ProposalFinisher? finisher}) {
     ...engineOperations(() => registry),
     ...projectOperations(),
     ...levelReadOperations(),
+    ...levelWriteOperations(),
     ...schemaOperations(),
     ...idleOperations(),
     ...releaseOperations(),
