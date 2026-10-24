@@ -27,6 +27,7 @@ export 'src/ops/release_plan.dart';
 export 'src/ops/level_check.dart';
 export 'src/ops/groups/project_ops.dart' show projectOperations;
 export 'src/ops/groups/idle_ops.dart' show idleOperations;
+export 'src/ops/groups/asset_ops.dart' show assetOperations;
 export 'src/ops/groups/graph_ops.dart' show graphOperations, checkGraphText;
 export 'src/ops/groups/problems_ops.dart' show problemOperations;
 export 'src/ops/groups/level_lint_ops.dart' show levelLintOperations;
@@ -40,3 +41,5 @@ export 'src/ops/groups/level_ops.dart'
     show levelReadOperations, levelText, parseLevel, knownComponents;
 export 'src/ops/groups/release_ops.dart' show releaseOperations;
 export 'src/ops/groups/schema_ops.dart' show schemaOperations;
+export 'src/ops/project/asset_index.dart';
+export 'src/ops/project/atlas_catalog.dart';

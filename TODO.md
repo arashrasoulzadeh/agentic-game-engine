@@ -128,8 +128,7 @@ Phases 0-7 are done (registry, safety pipeline, CLI binding, MCP/REST/JSON-RPC s
       write beside the registry operations of the same name (which add undo, locks and structured errors). Make them thin
       adapters that keep the golden output of `studio_golden_test.dart`; behaviour changes (an undo entry per edit) need an
       owner decision first.
-- [ ] **Operations not built yet:** `asset.index/atlas_regions/pack` (`AssetIndex` and `pack_assets_command.dart` need their pure
-      parts moved out of Flutter-tainted code), `i18n.*` (no project convention for locale files yet), `strategy.rules` /
+- [ ] **Operations not built yet:** `asset.pack` (`pack_assets_command.dart` has ~500 lines of private logic to extract into core), `i18n.*` (no project convention for locale files yet), `strategy.rules` /
       `strategy.simulate_turns` (the assembly lives in `engine_strategy`), `engine.docs`, `project.symbols`,
       `level.lint --render` as an operation (needs an injected image codec).
 - [ ] **Server extras:** SSE streaming and progress notifications, cancellation (`notifications/cancelled`), `Retry-After`

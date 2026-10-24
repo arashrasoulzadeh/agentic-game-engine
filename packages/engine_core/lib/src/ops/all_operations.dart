@@ -1,3 +1,4 @@
+import 'groups/asset_ops.dart';
 import 'groups/engine_ops.dart';
 import 'groups/graph_ops.dart';
 import 'groups/idle_ops.dart';
@@ -24,6 +25,7 @@ OperationRegistry buildRegistry({ProposalFinisher? finisher}) {
     ...engineOperations(() => registry),
     ...projectOperations(),
     ...levelReadOperations(),
+    ...assetOperations(),
     ...graphOperations(),
     ...problemOperations(),
     ...levelLintOperations(),

@@ -4,6 +4,42 @@
 
 Every operation is a CLI command, an MCP tool, a REST route and a JSON-RPC method. Reads change nothing; writes apply immediately and can be undone with `undo.undo`; destructive writes return a preview and a confirmation token first. Results are `{ok, data, warnings, diff?, undoId?, durationMs}` or `{ok:false, error:{code, message, hint?}}`.
 
+## asset
+
+### `asset.atlas_regions`
+
+The named regions of one atlas, with their rectangles.
+
+Look the atlas up by the id `asset.index` shows. Region objects are returned as the manifest stores them.
+
+*read*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `atlas` | string; required | |
+
+Errors: `not_found`.
+
+```bash
+game_agent asset atlas-regions <atlas>
+```
+
+REST: `POST /v1/asset/atlas_regions` · MCP tool: `asset.atlas_regions` · JSON-RPC method: `asset.atlas_regions`
+
+### `asset.index`
+
+List the project's atlases, images, audio, data files and prefabs.
+
+Atlases come from `assets/studio_atlases.json` (which gives them an id levels can use as `atlasId`) and from any `X.json` with a `regions` map next to `X.png` (what `game_agent pack-assets` writes). Images already part of an atlas are not listed again under `images`.
+
+*read*, needs an open project, idempotent.
+
+```bash
+game_agent asset index
+```
+
+REST: `POST /v1/asset/index` · MCP tool: `asset.index` · JSON-RPC method: `asset.index`
+
 ## engine
 
 ### `engine.capabilities`
