@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:engine_core/engine_core_ops.dart';
 
 import '../request_log.dart';
+import 'prompts.dart';
 import '../version.dart';
 import 'rpc.dart';
 import 'tools.dart';
@@ -138,11 +139,38 @@ class McpSession {
       case 'resources/read':
         return _resourcesRead(params);
       case 'prompts/list':
-        return {'prompts': <Object?>[]};
+        return {
+          'prompts': [for (final p in enginePrompts) p.toListJson()],
+        };
+      case 'prompts/get':
+        return _promptsGet(params);
       case 'logging/setLevel':
         return <String, Object?>{};
       default:
         throw RpcException(-32601, 'Method not found: $method');
+    }
+  }
+
+  Map<String, Object?> _promptsGet(Map<String, Object?> params) {
+    final name = params['name'];
+    final spec = enginePrompts.where((p) => p.name == name).firstOrNull;
+    if (spec == null) throw RpcException(-32602, 'Unknown prompt: $name');
+    try {
+      final text = spec.render({
+        for (final e in (params['arguments'] as Map? ?? const {}).entries)
+          e.key as String: '${e.value}',
+      });
+      return {
+        'description': spec.description,
+        'messages': [
+          {
+            'role': 'user',
+            'content': {'type': 'text', 'text': text},
+          },
+        ],
+      };
+    } on ArgumentError catch (e) {
+      throw RpcException(-32602, e.message as String);
     }
   }
 
