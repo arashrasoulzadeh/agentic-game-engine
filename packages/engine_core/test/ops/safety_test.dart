@@ -55,6 +55,18 @@ class Rig {
           FileChange(path: 'assets/levels/b.json', before: null, after: levelA),
         ],
       ),
+      _writeOp(
+        't.create_then_fail',
+        OperationKind.write,
+        (a) => [
+          FileChange(
+            path: 'assets/levels/new.json',
+            before: null,
+            after: levelA,
+          ),
+          FileChange(path: 'assets/levels/b.json', before: null, after: levelA),
+        ],
+      ),
       ...undoOperations(),
     ], finisher: SafetyPipeline(secret: List.filled(32, 7)).finish);
   }
@@ -152,6 +164,23 @@ void main() {
         ErrorCode.readOnly,
       );
       expect(r.read('assets/levels/a.json'), levelA);
+    });
+
+    test('a failure after creating a file removes the file again', () async {
+      final r = Rig();
+      r.files.failWrites.add(p.join(Rig.root, 'assets/levels/b.json'));
+      final res = await r.call('t.create_then_fail', {});
+      expect(res.error!.code, ErrorCode.ioError);
+      expect(r.read('assets/levels/new.json'), isNull);
+    });
+
+    test('a write with no project open says so', () async {
+      final r = Rig();
+      r.ctx.project = null;
+      expect(
+        (await r.call('t.edit', {'after': level(5)})).error!.code,
+        ErrorCode.notFound,
+      );
     });
 
     test(

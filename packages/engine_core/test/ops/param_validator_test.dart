@@ -137,4 +137,68 @@ void main() {
     );
     expect(r, {'a': 'x', 'apply': false});
   });
+
+  group('wrong JSON types', () {
+    test(
+      'a number where a string is wanted, a string where a number is wanted',
+      () {
+        expect(problems(const [Param('s', ParamType.string)], {'s': 5}), [
+          '"s" must be a string',
+        ]);
+        expect(problems(const [Param('n', ParamType.number)], {'n': 'abc'}), [
+          '"n" must be a number',
+        ]);
+      },
+    );
+
+    test('an untyped array is kept as given', () {
+      final r = coerce(
+        const [Param('xs', ParamType.array)],
+        {
+          'xs': [1, 'a', null],
+        },
+      );
+      expect(r['xs'], [1, 'a', null]);
+    });
+  });
+
+  test('errors print their code and message', () {
+    expect(
+      OpError(ErrorCode.notFound, 'nope').toString(),
+      'OpError(not_found): nope',
+    );
+  });
+
+  test(
+    'a deprecated operation says what replaced it, and a handler can be swapped',
+    () async {
+      final op = Operation(
+        name: 'old.thing',
+        summary: 'Old.',
+        description: 'Old.',
+        kind: OperationKind.read,
+        scope: OperationScope.pure,
+        deprecated: const Deprecation(
+          since: '0.1.0',
+          removeIn: '0.3.0',
+          replacement: 'new.thing',
+        ),
+        handler: (ctx, a) => const OpOutcome.data(1),
+      );
+      final detail = operationDetailJson(op);
+      expect(detail['deprecation'], {
+        'since': '0.1.0',
+        'removeIn': '0.3.0',
+        'replacement': 'new.thing',
+      });
+      final swapped = op.copyWith(handler: (ctx, a) => const OpOutcome.data(2));
+      final r = await OperationRegistry([
+        swapped,
+      ]).call('old.thing', {}, OpContext());
+      expect(r.data, 2);
+      expect(r.warnings.join(), contains('deprecated'));
+      const spec = ResultSpec.any();
+      expect(spec.schema, isEmpty);
+    },
+  );
 }

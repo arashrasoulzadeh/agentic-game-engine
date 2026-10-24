@@ -1,8 +1,7 @@
 import 'dart:io';
 
-import 'package:engine_studio/src/project/project_search.dart';
-import 'package:engine_studio/src/project/project_tree.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:engine_core/engine_core_ops.dart';
+import 'package:test/test.dart';
 
 void main() {
   late Directory root;
