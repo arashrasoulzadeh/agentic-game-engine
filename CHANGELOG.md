@@ -15,6 +15,7 @@ pubspec.yaml.
 - `engine_api` MCP server over stdio (phase 6, part 1 of `engine_mcp.md`): one tool per non-Flutter operation with JSON Schema, annotations and a detailed description, `tools/call` returning the result envelope, resources for the catalogue and schemas, `--project`, `--read-only`, `--allow/--deny`, `--underscore-tool-names`.
 - `engine_api --http`: REST (`/v1/<group>/<verb>`), JSON-RPC (`/rpc`), MCP (`/mcp`) and a generated OpenAPI document on one localhost port, behind a bearer token (`.studio/api-token`), with a Host-header check and request size limit.
 - `engine_api` operations: JSONL request log with rotation (`--log`), result size limit (`--max-result-bytes`) and HTTP rate/concurrency limits (`--requests-per-minute`).
+- `level.export_tmx` and `level.import_tmx` operations (Tiled interchange).
 - `prefab.list`, `prefab.read`, `prefab.save`, `prefab.place` operations. `project.info` now counts prefabs in `prefabs/` (where the studio saves them), not `assets/prefabs`.
 - `idle.best_purchase` operation (the advisor's next purchase, optionally with owned counts).
 - `save.encode`, `save.decode`, `save.migrate` operations (shareable save text, version stamping) available from the CLI, MCP, REST and JSON-RPC.
