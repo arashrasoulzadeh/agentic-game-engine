@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:engine_core/engine_core_ops.dart';
 
+import 'http/http_server.dart';
+import 'http/token.dart';
 import 'mcp/session.dart';
 import 'mcp/stdio.dart';
 import 'version.dart';
@@ -18,6 +20,32 @@ ArgParser buildServerParser() => ArgParser()
   )
   ..addMultiOption('allow', help: 'Only serve operations matching this glob.')
   ..addMultiOption('deny', help: 'Hide operations matching this glob.')
+  ..addFlag(
+    'http',
+    negatable: false,
+    help: 'Serve REST, JSON-RPC and MCP over HTTP instead of MCP over stdio.',
+  )
+  ..addOption(
+    'port',
+    defaultsTo: '7421',
+    help: 'HTTP port (0 = pick a free one).',
+  )
+  ..addOption(
+    'bind',
+    defaultsTo: '127.0.0.1',
+    help: 'HTTP address to listen on.',
+  )
+  ..addFlag(
+    'allow-remote',
+    negatable: false,
+    help: 'Allow --bind beyond localhost (no TLS here; use a reverse proxy).',
+  )
+  ..addOption(
+    'token',
+    help: 'Bearer token (default: ENGINE_API_TOKEN or .studio/api-token).',
+  )
+  ..addFlag('rotate-token', negatable: false, help: 'Replace the stored token.')
+  ..addFlag('print-token', negatable: false, help: 'Print the token to stderr.')
   ..addFlag(
     'underscore-tool-names',
     negatable: false,
@@ -72,6 +100,35 @@ Future<int> runServer(
     ctx,
     underscoreNames: r['underscore-tool-names'] as bool,
   );
-  await serveStdio(session, input ?? stdin, out);
+  if (!(r['http'] as bool)) {
+    await serveStdio(session, input ?? stdin, out);
+    return 0;
+  }
+  final token = resolveToken(
+    explicit:
+        (r['token'] as String?) ?? Platform.environment['ENGINE_API_TOKEN'],
+    projectRoot: project?.root,
+    rotate: r['rotate-token'] as bool,
+  );
+  final EngineHttpServer server;
+  try {
+    server = await EngineHttpServer.start(
+      session,
+      token: token,
+      host: r['bind'] as String,
+      port: int.tryParse(r['port'] as String) ?? 7421,
+      allowRemote: r['allow-remote'] as bool,
+    );
+  } on Object catch (e) {
+    error('Cannot start the HTTP server: $e');
+    return 69;
+  }
+  error('engine_api: listening on http://${r['bind']}:${server.port}');
+  if (project != null && r['token'] == null) {
+    error('engine_api: bearer token in ${project.root}/.studio/api-token');
+  }
+  if (r['print-token'] as bool) error('engine_api: token $token');
+  await ProcessSignal.sigint.watch().first;
+  await server.close();
   return 0;
 }
