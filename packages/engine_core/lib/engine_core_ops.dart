@@ -27,6 +27,7 @@ export 'src/ops/release_plan.dart';
 export 'src/ops/level_check.dart';
 export 'src/ops/groups/project_ops.dart' show projectOperations;
 export 'src/ops/groups/idle_ops.dart' show idleOperations;
+export 'src/ops/groups/level_lint_ops.dart' show levelLintOperations;
 export 'src/ops/groups/level_write_ops.dart' show levelWriteOperations;
 export 'src/ops/groups/prefab_ops.dart' show prefabOperations;
 export 'src/ops/groups/tmx_ops.dart' show tmxOperations;
