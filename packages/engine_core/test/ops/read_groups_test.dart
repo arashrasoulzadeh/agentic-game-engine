@@ -440,4 +440,23 @@ void main() {
       );
     },
   );
+
+  test('idle.state shows the start, then what a simulated hour buys', () async {
+    final s = await Scratch.create();
+    final start = await s.map('idle.state', {'path': 'assets/idle_game.json'});
+    expect((start['wallet']! as Map)['coins'], '15');
+    expect((start['owned']! as Map)['cursor'], 0);
+    final later = await s.map('idle.state', {
+      'path': 'assets/idle_game.json',
+      'afterSeconds': 3600,
+    });
+    expect((later['owned']! as Map)['cursor'], greaterThan(5));
+    expect((later['incomePerSecond']! as Map)['coins'], isNot('0'));
+    expect(
+      await s.failure('idle.state', {
+        'json': {'generators': 5},
+      }),
+      ErrorCode.validationFailed,
+    );
+  });
 }

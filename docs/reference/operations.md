@@ -376,6 +376,29 @@ game_agent idle simulate <path>
 
 REST: `POST /v1/idle/simulate` · MCP tool: `idle.simulate` · JSON-RPC method: `idle.simulate`
 
+### `idle.state`
+
+The wallet, income and owned counts of an idle game after a simulated stretch of play.
+
+Loads the definition and, when `afterSeconds` is above zero, plays it with the greedy balance simulator for that long (no prestige). Numbers are formatted strings because they exceed a double.
+
+*read*, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path | |
+| `json` | json | |
+| `afterSeconds` | integer; default `0`; 0 to 31536000 | |
+| `mainResource` | string; default `"coins"` | |
+
+Errors: `validation_failed`.
+
+```bash
+game_agent idle state <path>
+```
+
+REST: `POST /v1/idle/state` · MCP tool: `idle.state` · JSON-RPC method: `idle.state`
+
 ### `idle.validate`
 
 Check an idle game definition and list every problem with its path.

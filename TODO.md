@@ -130,7 +130,7 @@ Phases 0-7 are done (registry, safety pipeline, CLI binding, MCP/REST/JSON-RPC s
       owner decision first.
 - [ ] **Operations not built yet:** `asset.index/atlas_regions/pack` (`AssetIndex` and `pack_assets_command.dart` need their pure
       parts moved out of Flutter-tainted code), `i18n.*` (no project convention for locale files yet), `strategy.rules` /
-      `strategy.simulate_turns` (the assembly lives in `engine_strategy`), `engine.docs`, `idle.state`, `project.symbols`,
+      `strategy.simulate_turns` (the assembly lives in `engine_strategy`), `engine.docs`, `project.symbols`,
       `level.lint --render` as an operation (needs an injected image codec).
 - [ ] **Server extras:** SSE streaming and progress notifications, cancellation (`notifications/cancelled`), `Retry-After`
       for the concurrency limit, request-log levels, `allowOpen` globs for `project.open` over the network.

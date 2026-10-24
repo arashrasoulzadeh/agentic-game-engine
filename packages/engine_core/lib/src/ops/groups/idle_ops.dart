@@ -201,6 +201,74 @@ List<Operation> idleOperations() => [
     ],
   ),
   Operation(
+    name: 'idle.state',
+    summary:
+        'The wallet, income and owned counts of an idle game after a simulated stretch of play.',
+    description:
+        'Loads the definition and, when `afterSeconds` is above zero, plays it with the greedy balance simulator for that '
+        'long (no prestige). Numbers are formatted strings because they exceed a double.',
+    kind: OperationKind.read,
+    scope: OperationScope.pure,
+    idempotent: true,
+    params: const [
+      Param('path', ParamType.path, positional: true),
+      Param('json', ParamType.json, cliFlag: 'inline-json'),
+      Param(
+        'afterSeconds',
+        ParamType.integer,
+        min: 0,
+        max: 31536000,
+        defaultValue: 0,
+      ),
+      Param('mainResource', ParamType.string, defaultValue: 'coins'),
+    ],
+    errors: {
+      ErrorCode.validationFailed:
+          'The definition has problems (details.problems).',
+    },
+    handler: (ctx, a) {
+      final json = _definition(ctx, a);
+      final problems = validateIdleDefinition(json);
+      if (problems.isNotEmpty) {
+        throw OpError(
+          ErrorCode.validationFailed,
+          'The definition has ${problems.length} problem(s).',
+          details: {'problems': problems},
+        );
+      }
+      final world = World(width: 10, height: 10);
+      registerCoreComponents(world);
+      final game = loadIdleDefinition(world, json);
+      final seconds = a['afterSeconds']! as int;
+      if (seconds > 0) {
+        simulateIdle(
+          world,
+          game.wallet,
+          limit: Duration(seconds: seconds),
+          mainResource: a['mainResource']! as String,
+        );
+      } else {
+        recomputeIncome(world, game.wallet);
+      }
+      final gens = world.storeOf<Generator>();
+      return OpOutcome.data({
+        'afterSeconds': seconds,
+        'wallet': {
+          for (final e in game.wallet.amounts.entries)
+            e.key: formatBigNumber(e.value),
+        },
+        'incomePerSecond': {
+          for (final e in game.wallet.incomePerSecond.entries)
+            e.key: formatBigNumber(e.value),
+        },
+        'owned': {
+          for (var i = 0; i < gens.length; i++)
+            gens.denseAt(i).id: gens.denseAt(i).owned,
+        },
+      });
+    },
+  ),
+  Operation(
     name: 'idle.best_purchase',
     summary:
         'The purchase the greedy advisor would make next, with its cost and income gain.',
