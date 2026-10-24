@@ -60,6 +60,47 @@ Map<String, Object?> _info(ProjectRoot root) {
 /// `project.*`: opening a project and looking at it.
 List<Operation> projectOperations() => [
   Operation(
+    name: 'project.create',
+    summary:
+        'Generate a new game project from a starter template (needs the Flutter SDK; available from the CLI).',
+    description:
+        'Implemented by `game_agent create` because it runs `flutter create` and `pub get`; servers without Flutter '
+        'list it under `engine.capabilities.unsupported`.',
+    kind: OperationKind.write,
+    scope: OperationScope.pure,
+    requiresFlutter: true,
+    params: const [
+      Param('name', ParamType.string, required: true, positional: true),
+      Param(
+        'template',
+        ParamType.enumeration,
+        options: ['default_game', 'strategy_game', 'idle_game'],
+        defaultValue: 'default_game',
+      ),
+      Param('org', ParamType.string, defaultValue: 'com.example'),
+      Param('outputDir', ParamType.string, defaultValue: '.'),
+      Param('ref', ParamType.string, defaultValue: 'main'),
+    ],
+    handler: (ctx, a) => throw OpError(
+      ErrorCode.unsupported,
+      'project.create needs the Flutter SDK; run game_agent create.',
+    ),
+  ),
+  Operation(
+    name: 'project.upgrade',
+    summary:
+        'Upgrade a project to the current engine version (needs the Flutter SDK; available from the CLI).',
+    description:
+        'Implemented by `game_agent upgrade` because it runs `flutter pub upgrade`.',
+    kind: OperationKind.write,
+    scope: OperationScope.project,
+    requiresFlutter: true,
+    handler: (ctx, a) => throw OpError(
+      ErrorCode.unsupported,
+      'project.upgrade needs the Flutter SDK; run game_agent upgrade.',
+    ),
+  ),
+  Operation(
     name: 'project.open',
     summary:
         'Open a game project folder; every project operation then works inside it.',

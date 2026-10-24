@@ -58,7 +58,7 @@ void main() {
     'every operation has a command with working --help (1:1, generated from the registry)',
     () async {
       final registry = buildRegistry();
-      for (final op in registry.all) {
+      for (final op in registry.all.where((o) => !o.requiresFlutter)) {
         final r = await run([
           op.cli.group ?? op.group,
           op.cli.verb ?? op.verb.replaceAll('_', '-'),
@@ -66,6 +66,15 @@ void main() {
         ], withProject: false);
         expect(r.code, 0, reason: op.name);
       }
+    },
+  );
+
+  test(
+    'Flutter-dependent operations are not generated as group verbs',
+    () async {
+      final r = await run(['project', '--help'], withProject: false);
+      expect(r.out, isNot(contains('create')));
+      expect(r.out, isNot(contains('upgrade')));
     },
   );
 

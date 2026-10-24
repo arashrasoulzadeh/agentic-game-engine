@@ -66,6 +66,8 @@ void addOperationCommands(
 
   final groups = <String, Command<int>>{};
   for (final op in registry.all) {
+    // Flutter-dependent operations keep their dedicated top-level commands (create, upgrade, build-release).
+    if (op.requiresFlutter) continue;
     final groupName = op.cli.group ?? op.group;
     final group = groups.putIfAbsent(
       groupName,
