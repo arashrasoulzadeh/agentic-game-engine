@@ -348,6 +348,116 @@ void main() {
     );
   });
 
+  test(
+    'CORS: only listed origins are answered, preflight needs no token',
+    () async {
+      await server.close();
+      server = await EngineHttpServer.start(
+        McpSession(
+          buildRegistry(),
+          OpContext(project: ProjectRoot(project.path)),
+        ),
+        token: token,
+        allowedOrigins: ['https://studio.example'],
+      );
+      final ok = await send(
+        'POST',
+        '/v1/level/list',
+        headers: {'origin': 'https://studio.example'},
+      );
+      expect(
+        ok.headers.value('access-control-allow-origin'),
+        'https://studio.example',
+      );
+      final other = await send(
+        'POST',
+        '/v1/level/list',
+        headers: {'origin': 'https://evil.example'},
+      );
+      expect(other.headers.value('access-control-allow-origin'), isNull);
+      final pre = await send(
+        'OPTIONS',
+        '/v1/level/list',
+        auth: null,
+        headers: {'origin': 'https://studio.example'},
+      );
+      expect(pre.status, 204);
+      expect(
+        pre.headers.value('access-control-allow-headers'),
+        contains('authorization'),
+      );
+    },
+  );
+
+  test(
+    'Idempotency-Key replays the stored answer and rejects a different body',
+    () async {
+      final body = {
+        'path': 'assets/levels/a.json',
+        'name': 'player',
+        'x': 4,
+        'y': 4,
+      };
+      final first = await send(
+        'POST',
+        '/v1/level/move-entity',
+        body: body,
+        headers: {'idempotency-key': 'k1'},
+      );
+      final again = await send(
+        'POST',
+        '/v1/level/move-entity',
+        body: body,
+        headers: {'idempotency-key': 'k1'},
+      );
+      expect(first.status, 200);
+      expect(
+        again.body['undoId'],
+        first.body['undoId'],
+        reason: 'replayed, not re-run',
+      );
+      final undo = await send('POST', '/v1/undo/list');
+      expect((undo.body['data'] as List), hasLength(1));
+      final other = await send(
+        'POST',
+        '/v1/level/move-entity',
+        body: {...body, 'x': 5},
+        headers: {'idempotency-key': 'k1'},
+      );
+      expect(other.status, 409);
+      final fresh = await send(
+        'POST',
+        '/v1/level/move-entity',
+        body: {...body, 'x': 5},
+        headers: {'idempotency-key': 'k2'},
+      );
+      expect(fresh.status, 200);
+    },
+  );
+
+  test('repeated bad tokens are slowed down', () async {
+    server.authFailureDelay = const Duration(milliseconds: 300);
+    for (var i = 0; i < 5; i++) {
+      expect(
+        (await send('POST', '/v1/level/list', auth: 'Bearer nope')).status,
+        401,
+      );
+    }
+    final sw = Stopwatch()..start();
+    expect(
+      (await send('POST', '/v1/level/list', auth: 'Bearer nope')).status,
+      401,
+    );
+    expect(sw.elapsedMilliseconds, greaterThanOrEqualTo(250));
+    sw.reset();
+    expect(
+      (await send('POST', '/v1/level/list')).status,
+      200,
+      reason: 'a good token is not penalised',
+    );
+    expect(sw.elapsedMilliseconds, lessThan(250));
+  });
+
   group('tokens', () {
     test('generated tokens are 43 url-safe characters and unique', () {
       final a = generateToken(), b = generateToken();

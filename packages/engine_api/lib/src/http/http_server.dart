@@ -22,6 +22,7 @@ class EngineHttpServer {
     this._maxBody,
     this._perMinute,
     this._concurrent,
+    this._origins,
   );
 
   final HttpServer _server;
@@ -30,9 +31,15 @@ class EngineHttpServer {
   final int _maxBody;
   final int _perMinute;
   final int _concurrent;
+  final Set<String> _origins;
+  final Map<String, int> _authFailures = {};
+  final Map<String, _Stored> _idempotent = {};
   final List<DateTime> _recent = [];
   int _inFlight = 0;
   Future<void> _writes = Future.value();
+
+  /// How long a client that keeps failing authentication is made to wait (after 5 failures).
+  Duration authFailureDelay = const Duration(seconds: 1);
 
   /// The bound port (useful with `port: 0`).
   int get port => _server.port;
@@ -47,6 +54,7 @@ class EngineHttpServer {
     int maxRequestBytes = 1048576,
     int requestsPerMinute = 120,
     int concurrent = 4,
+    List<String> allowedOrigins = const [],
   }) async {
     final loopback =
         host == '127.0.0.1' || host == '::1' || host == 'localhost';
@@ -63,6 +71,7 @@ class EngineHttpServer {
       maxRequestBytes,
       requestsPerMinute,
       concurrent,
+      allowedOrigins.toSet(),
     );
     unawaited(server.forEach(s._handle));
     return s;
@@ -77,7 +86,22 @@ class EngineHttpServer {
     req.response.headers
       ..set('x-request-id', requestId)
       ..contentType = ContentType.parse(_json);
+    final origin = req.headers.value('origin');
+    if (origin != null && _origins.contains(origin)) {
+      req.response.headers
+        ..set('access-control-allow-origin', origin)
+        ..set('vary', 'Origin')
+        ..set(
+          'access-control-allow-headers',
+          'authorization, content-type, idempotency-key, x-request-id',
+        )
+        ..set('access-control-allow-methods', 'GET, POST, OPTIONS');
+    }
     try {
+      if (req.method == 'OPTIONS') {
+        req.response.statusCode = 204;
+        return await req.response.close();
+      }
       if (!_hostAllowed(req)) {
         return _send(req, 403, _fail(ErrorCode.forbidden, 'Host not allowed.'));
       }
@@ -92,7 +116,11 @@ class EngineHttpServer {
               .inMilliseconds,
         });
       }
+      final remote = req.connectionInfo?.remoteAddress.address ?? '?';
       if (!_authorized(req)) {
+        final failures = _authFailures[remote] =
+            (_authFailures[remote] ?? 0) + 1;
+        if (failures > 5) await Future<void>.delayed(authFailureDelay);
         req.response.headers.set('www-authenticate', 'Bearer');
         return _send(
           req,
@@ -100,6 +128,7 @@ class EngineHttpServer {
           _fail(ErrorCode.unauthorized, 'A valid bearer token is required.'),
         );
       }
+      _authFailures.remove(remote);
       final now = _session.ctx.clock();
       _recent.removeWhere((t) => now.difference(t).inSeconds >= 60);
       if (_recent.length >= _perMinute || _inFlight >= _concurrent) {
@@ -240,6 +269,28 @@ class EngineHttpServer {
         _fail(ErrorCode.invalidParams, 'The body must be a JSON object.'),
       );
     }
+    final key = op.kind == OperationKind.read
+        ? null
+        : req.headers.value('idempotency-key');
+    final fingerprint = jsonEncode([op.name, body]);
+    if (key != null) {
+      final now = _session.ctx.clock();
+      _idempotent.removeWhere((_, v) => now.isAfter(v.expires));
+      final stored = _idempotent[key];
+      if (stored != null) {
+        if (stored.fingerprint != fingerprint) {
+          return _send(
+            req,
+            409,
+            _fail(
+              ErrorCode.conflict,
+              'That Idempotency-Key was already used with a different request.',
+            ),
+          );
+        }
+        return _send(req, stored.status, stored.body);
+      }
+    }
     final r = await _run(
       op,
       () => _session.invoke(
@@ -249,7 +300,17 @@ class EngineHttpServer {
         requestId: req.response.headers.value('x-request-id'),
       ),
     );
-    return _send(req, r.ok ? 200 : r.error!.code.http, r.toJson());
+    final status = r.ok ? 200 : r.error!.code.http;
+    final json = r.toJson();
+    if (key != null) {
+      _idempotent[key] = _Stored(
+        fingerprint,
+        status,
+        json,
+        _session.ctx.clock().add(const Duration(minutes: 10)),
+      );
+    }
+    return _send(req, status, json);
   }
 
   Future<void> _rpc(HttpRequest req) async {
@@ -317,3 +378,11 @@ class EngineHttpServer {
 }
 
 class _TooLarge implements Exception {}
+
+class _Stored {
+  _Stored(this.fingerprint, this.status, this.body, this.expires);
+  final String fingerprint;
+  final int status;
+  final Object? body;
+  final DateTime expires;
+}

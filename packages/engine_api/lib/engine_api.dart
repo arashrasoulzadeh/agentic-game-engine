@@ -13,3 +13,4 @@ export 'src/http/token.dart';
 export 'src/request_log.dart';
 export 'src/mcp/prompts.dart';
 export 'src/docs.dart';
+export 'src/config.dart';

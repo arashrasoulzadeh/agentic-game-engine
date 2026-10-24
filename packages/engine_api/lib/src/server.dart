@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:engine_core/engine_core_ops.dart';
 
+import 'config.dart';
 import 'http/http_server.dart';
 import 'http/token.dart';
 import 'mcp/session.dart';
@@ -22,6 +23,10 @@ ArgParser buildServerParser() => ArgParser()
   ..addMultiOption('allow', help: 'Only serve operations matching this glob.')
   ..addMultiOption('deny', help: 'Hide operations matching this glob.')
   ..addOption(
+    'config',
+    help: 'Config file (default: <project>/engine_api.yaml).',
+  )
+  ..addOption(
     'log',
     help: 'Request log file (default: <project>/.studio/api-requests.jsonl).',
   )
@@ -34,6 +39,10 @@ ArgParser buildServerParser() => ArgParser()
     'requests-per-minute',
     defaultsTo: '120',
     help: 'HTTP rate limit.',
+  )
+  ..addMultiOption(
+    'allow-origin',
+    help: 'Browser origin allowed to call the HTTP API (CORS), exact match.',
   )
   ..addFlag(
     'http',
@@ -78,7 +87,18 @@ Future<int> runServer(
   final error = err ?? (l) => stderr.writeln(l);
   final ArgResults r;
   try {
-    r = buildServerParser().parse(args);
+    var parsed = buildServerParser().parse(args);
+    final fromFile = loadConfigArgs(
+      path: parsed['config'] as String?,
+      projectRoot: parsed['project'] as String?,
+    );
+    if (fromFile.isNotEmpty) {
+      parsed = buildServerParser().parse([...fromFile, ...args]);
+    }
+    r = parsed;
+  } on ConfigException catch (e) {
+    error(e.message);
+    return 78;
   } on FormatException catch (e) {
     error(e.message);
     return 64;

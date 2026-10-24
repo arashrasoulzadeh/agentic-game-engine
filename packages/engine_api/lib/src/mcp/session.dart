@@ -255,7 +255,10 @@ class McpSession {
       'project://undo' => ('undo.list', <String, Object?>{}),
       _ when uri.startsWith('project://levels/') => (
         'level.read',
-        {'path': 'assets/levels/${uri.substring('project://levels/'.length)}.json'},
+        {
+          'path':
+              'assets/levels/${uri.substring('project://levels/'.length)}.json',
+        },
       ),
       _ when uri.startsWith('project://prefabs/') => (
         'prefab.read',
