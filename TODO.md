@@ -121,7 +121,12 @@ Sections: [Performance](#performance) ·
 ## Operation registry and agent API (`engine_mcp.md`)
 
 Phases 0-7 are done (registry, safety pipeline, CLI binding, MCP/REST/JSON-RPC server, generated docs, e2e test); see
-`engine_mcp.md`'s progress log. What is left:
+`engine_mcp.md`'s progress log. **Adding an operation:** write it in `engine_core/lib/src/ops/groups/` (writes return a `Proposal`, never touch files), add it
+to `all_operations.dart` and `engine_core_ops.dart`, test it in `engine_core/test/ops/`, then regenerate the reference with
+`cd packages/engine_api && dart run tool/gen_api_docs.dart > ../../docs/reference/operations.md`. The CLI command, MCP tool,
+REST route and JSON-RPC method appear on their own; the parity and docs-drift tests fail if anything is missed.
+
+What is left:
 
 - [ ] **Legacy `studio` edit commands as adapters of the `level.*` operations.** `studio_edit_commands.dart` (add/remove-entity,
       set-field, move-entity, set-layer, paint-tile, fill-region) still carries its own parsing, validation and direct file
