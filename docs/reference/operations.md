@@ -73,6 +73,240 @@ game_agent engine operations
 
 REST: `POST /v1/engine/operations` · MCP tool: `engine.operations` · JSON-RPC method: `engine.operations`
 
+## graph
+
+### `graph.add_node`
+
+Add a node of a kind; the first node becomes the entry.
+
+The id defaults to `<kind><index>`. Parameters start at the kind's defaults (non-dialogue graphs) and `params` overrides them. Problems with the graph so far come back as warnings.
+
+*write*, needs an open project.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path; required | |
+| `kind` | string; required | |
+| `id` | string | |
+| `params` | object | |
+| `x` | number; default `0` | |
+| `y` | number; default `0` | |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+```bash
+game_agent graph add-node <path>
+```
+
+REST: `POST /v1/graph/add_node` · MCP tool: `graph.add_node` · JSON-RPC method: `graph.add_node`
+
+### `graph.compile`
+
+Compile a behavior tree or state machine graph to engine JSON.
+
+Behavior-tree children follow the canvas left to right. Dialogue graphs have no single compiled form here (`compiled` is null). With `output` the JSON is also written there.
+
+*write*, needs an open project.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path; required | |
+| `output` | path | |
+| `id` | string; default `"fsm"` | |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+Errors: `validation_failed`.
+
+```bash
+game_agent graph compile <path>
+```
+
+REST: `POST /v1/graph/compile` · MCP tool: `graph.compile` · JSON-RPC method: `graph.compile`
+
+### `graph.connect`
+
+Connect an output port to an input port of the same type.
+
+Ports are checked against the node kinds; a mismatch is `validation_failed` and nothing is written.
+
+*write*, needs an open project.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path; required | |
+| `from` | string; required | |
+| `fromPort` | string; required | |
+| `to` | string; required | |
+| `toPort` | string; required | |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+```bash
+game_agent graph connect <path>
+```
+
+REST: `POST /v1/graph/connect` · MCP tool: `graph.connect` · JSON-RPC method: `graph.connect`
+
+### `graph.create`
+
+Create an empty graph file.
+
+Files live under `graphs/`. Fails with `conflict` when the file exists.
+
+*write*, needs an open project.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path; required | |
+| `type` | enumeration; default `"dialogue"`; one of `dialogue`, `behaviorTree`, `stateMachine` | |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+Errors: `conflict`.
+
+```bash
+game_agent graph create <path>
+```
+
+REST: `POST /v1/graph/create` · MCP tool: `graph.create` · JSON-RPC method: `graph.create`
+
+### `graph.disconnect`
+
+Remove one connection.
+
+Exact match on both ends; `not_found` when there is no such edge.
+
+*write*, needs an open project.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path; required | |
+| `from` | string; required | |
+| `fromPort` | string; required | |
+| `to` | string; required | |
+| `toPort` | string; required | |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+```bash
+game_agent graph disconnect <path>
+```
+
+REST: `POST /v1/graph/disconnect` · MCP tool: `graph.disconnect` · JSON-RPC method: `graph.disconnect`
+
+### `graph.list`
+
+List the project's graphs with their type and node count.
+
+Every `graphs/*.json`.
+
+*read*, needs an open project, idempotent.
+
+```bash
+game_agent graph list
+```
+
+REST: `POST /v1/graph/list` · MCP tool: `graph.list` · JSON-RPC method: `graph.list`
+
+### `graph.node_kinds`
+
+The node kinds available for a graph type, with ports and parameters.
+
+Ports are typed (flow, string, number, boolean, entity, event); `connect` only joins equal types.
+
+*read*, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `type` | enumeration; default `"dialogue"`; one of `dialogue`, `behaviorTree`, `stateMachine` | |
+
+```bash
+game_agent graph node-kinds <type>
+```
+
+REST: `POST /v1/graph/node_kinds` · MCP tool: `graph.node_kinds` · JSON-RPC method: `graph.node_kinds`
+
+### `graph.read`
+
+Read a graph file.
+
+The file as saved: type, graph (nodes, edges, variables, entryNodeId) and canvas layout.
+
+*read*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path; required | |
+
+```bash
+game_agent graph read <path>
+```
+
+REST: `POST /v1/graph/read` · MCP tool: `graph.read` · JSON-RPC method: `graph.read`
+
+### `graph.remove_node`
+
+Remove a node and every edge touching it.
+
+Destructive: previews first. Clears the entry node if it was this one.
+
+*destructive*, needs an open project.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path; required | |
+| `id` | string; required | |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+```bash
+game_agent graph remove-node <path>
+```
+
+REST: `POST /v1/graph/remove_node` · MCP tool: `graph.remove_node` · JSON-RPC method: `graph.remove_node`
+
+### `graph.set_param`
+
+Set one parameter of a node.
+
+Free-form: the value is stored as given. Use graph.node_kinds to see what a kind expects.
+
+*write*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path; required | |
+| `node` | string; required | |
+| `param` | string; required | |
+| `value` | json; required | |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+```bash
+game_agent graph set-param <path>
+```
+
+REST: `POST /v1/graph/set_param` · MCP tool: `graph.set_param` · JSON-RPC method: `graph.set_param`
+
+### `graph.validate`
+
+Check a graph for unknown kinds, mismatched ports, unreachable nodes and cycles.
+
+Uses the checks of the graph's type (trees check shape, state machines allow loops). `ok` is false when any issue exists.
+
+*read*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path; required | |
+
+```bash
+game_agent graph validate <path>
+```
+
+REST: `POST /v1/graph/validate` · MCP tool: `graph.validate` · JSON-RPC method: `graph.validate`
+
 ## idle
 
 ### `idle.best_purchase`
