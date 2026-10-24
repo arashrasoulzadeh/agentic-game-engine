@@ -65,4 +65,39 @@ void main() {
       contains('not a graph file'),
     );
   });
+
+  test(
+    'project.symbols lists classes, atlas ids, entity names and components; prefix gives completions',
+    () async {
+      final s = await Scratch.create();
+      s.write(
+        'lib/hero.dart',
+        'abstract class Hero {}\nfinal class Boss extends Hero {}\n',
+      );
+      s.write(
+        'assets/studio_atlases.json',
+        '{"atlases": {"terrain": {"image": "a.png", "manifest": "a.json"}}}',
+      );
+      final all = await s.map('project.symbols');
+      expect(all['classes'], containsAll(['Hero', 'Boss']));
+      expect(all['atlasIds'], ['terrain']);
+      expect(all['entityNames'], containsAll(['ground', 'player', 'coin_1']));
+      expect(all['components'], contains('position'));
+      final comp = await s.map('project.symbols', {'prefix': 'po'});
+      expect(
+        (comp['completions']! as List).map((c) => (c as Map)['name']),
+        contains('position'),
+      );
+      expect(
+        (comp['completions']! as List).every(
+          (c) => ((c as Map)['name'] as String).startsWith('po'),
+        ),
+        isTrue,
+      );
+      expect(
+        (await s.map('project.symbols', {'prefix': 'zzzz'}))['completions'],
+        isEmpty,
+      );
+    },
+  );
 }

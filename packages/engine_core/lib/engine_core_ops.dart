@@ -43,3 +43,4 @@ export 'src/ops/groups/release_ops.dart' show releaseOperations;
 export 'src/ops/groups/schema_ops.dart' show schemaOperations;
 export 'src/ops/project/asset_index.dart';
 export 'src/ops/project/atlas_catalog.dart';
+export 'src/ops/project/project_symbols.dart';

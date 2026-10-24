@@ -1163,6 +1163,24 @@ game_agent project search <query>
 
 REST: `POST /v1/project/search` · MCP tool: `project.search` · JSON-RPC method: `project.search`
 
+### `project.symbols`
+
+The names a project defines: its classes, atlas ids, entity names and the engine's components.
+
+Found by scanning `lib/*.dart` for class declarations, `assets/studio_atlases.json`, the entity names of every level and the component schemas. Use `prefix` to get completions (case-sensitive) instead of the full lists.
+
+*read*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `prefix` | string | Only names starting with this. |
+
+```bash
+game_agent project symbols
+```
+
+REST: `POST /v1/project/symbols` · MCP tool: `project.symbols` · JSON-RPC method: `project.symbols`
+
 ### `project.tree`
 
 List the project files (generated and hidden folders left out), optionally by kind.
