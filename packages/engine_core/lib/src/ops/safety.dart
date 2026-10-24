@@ -1,3 +1,4 @@
+import 'package:path/path.dart' as p;
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
@@ -83,6 +84,21 @@ class SafetyPipeline {
       for (final c in proposal.changes)
         if (c.before != c.after) c,
     ];
+
+    for (final c in changes) {
+      final rel = p.posix.normalize(c.path.replaceAll('\\', '/'));
+      if (rel == '.studio' ||
+          rel.startsWith('.studio/') ||
+          rel == '.git' ||
+          rel.startsWith('.git/')) {
+        throw OpError(
+          ErrorCode.forbidden,
+          'Operations never write to ${c.path}.',
+          hint:
+              '.studio holds the API token and the undo journal, .git is the repository.',
+        );
+      }
+    }
 
     final problems = [
       for (final c in changes)

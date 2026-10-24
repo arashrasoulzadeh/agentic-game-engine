@@ -15,6 +15,7 @@ pubspec.yaml.
 - `engine_api` MCP server over stdio (phase 6, part 1 of `engine_mcp.md`): one tool per non-Flutter operation with JSON Schema, annotations and a detailed description, `tools/call` returning the result envelope, resources for the catalogue and schemas, `--project`, `--read-only`, `--allow/--deny`, `--underscore-tool-names`.
 - `engine_api --http`: REST (`/v1/<group>/<verb>`), JSON-RPC (`/rpc`), MCP (`/mcp`) and a generated OpenAPI document on one localhost port, behind a bearer token (`.studio/api-token`), with a Host-header check and request size limit.
 - `engine_api` operations: JSONL request log with rotation (`--log`), result size limit (`--max-result-bytes`) and HTTP rate/concurrency limits (`--requests-per-minute`).
+- Operations can no longer write into `.studio/` (API token, undo journal) or `.git/`, whatever `output` path they are given.
 - `engine_api` project locking: `--allow-open <glob>` limits which folders `project.open` may open, and an HTTP server started with `--project` stays on it (`project.close` is refused too, so closing cannot be used to re-open elsewhere).
 - `project.symbols` operation (classes, atlas ids, entity names, components, plus prefix completions); `ProjectSymbols` moved from `engine_studio` into `engine_core` (re-exported).
 - `asset.index` and `asset.atlas_regions` operations. `AssetIndex` and the data half of `AtlasCatalog` moved from `engine_studio` into `engine_core` (the studio re-exports them; decoding atlases with `dart:ui` stays in the studio as an extension).

@@ -69,4 +69,34 @@ void main() {
       ErrorCode.notFound,
     );
   });
+
+  test(
+    'no operation can write into .studio (token, undo journal) or .git',
+    () async {
+      final s = await Scratch.create();
+      s.write('.studio/api-token', 'secret');
+      for (final out in [
+        '.studio/api-token',
+        './.studio/undo/x.tmx',
+        '.git/config',
+        'assets/../.studio/y',
+      ]) {
+        final r = await s.call('level.export_tmx', {'path': lv, 'output': out});
+        expect(
+          r.error?.code,
+          anyOf(ErrorCode.forbidden, ErrorCode.invalidParams),
+          reason: out,
+        );
+      }
+      expect(s.read('.studio/api-token'), 'secret');
+      expect(s.exists('.git/config'), isFalse);
+      expect(
+        (await s.call('level.export_tmx', {
+          'path': lv,
+          'output': 'assets/ok.tmx',
+        })).ok,
+        isTrue,
+      );
+    },
+  );
 }
