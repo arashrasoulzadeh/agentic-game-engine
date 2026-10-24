@@ -12,6 +12,7 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `packages/engine_api` scaffold (phase 0 of [engine_mcp.md](engine_mcp.md)): package, CI workflow, version/`--version` smoke tests. The operation registry, CLI parity and the MCP/HTTP server follow in later phases.
 - Idle challenges: restricted runs (`noUpgrades`, `noGenerator:<id>`, `incomeMultiplier:<x>`) with a goal and a permanent reward; `Challenge` component, `startChallenge`/`abandonChallenge`/`checkChallenges` (settled by `checkAchievements`), `ChallengeCompletedEvent`, `BuyFailure.challenge`, `"challenges"` in definitions and `ChallengePanel`.
 - Idle golden offers end to end: `"golden"` block in definitions (validated with paths), `GoldenOffer` widget and `IdleController.claimGoldenOffer`; the `idle_game` template includes them.
 - Idle prestige layers: several `PrestigeRule`s with an `id` (`"prestiges": [...]` in definitions), `resetsCurrencies` for ascensions that wipe lower layers, per-layer bonuses (`prestige:<id>`), `performPrestige`/`prestigeGainNow`/`PrestigePanel(ruleId:)`. Behaviour change: after a prestige the run stats now hold the prestige currency just earned (they used to be empty), which is what lets the next layer be based on it.

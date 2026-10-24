@@ -6,6 +6,7 @@
 [![engine_strategy](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_strategy.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_strategy.yml)
 [![engine_idle](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_idle.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_idle.yml)
 [![engine_studio](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_studio.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_studio.yml)
+[![engine_api](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_api.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_api.yml)
 [![engine_cli](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_cli.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_cli.yml)
 [![engine_schema](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_schema.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_schema.yml)
 [![docs](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/docs.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/docs.yml)
@@ -36,6 +37,7 @@ Android/iOS/Web — the simulation core has no Flutter dependency at all.
 | [`packages/engine_platformer`](packages/engine_platformer/README.md) | 2D-platformer-genre gameplay: gravity, jump, tile/platform collision, player/enemy spawn helpers, patrol/follow AI behaviors, facing + movement-driven animation. Kept separate from `engine_core` so a non-platformer 2D game isn't forced to depend on gravity/jump concepts. |
 | [`packages/engine_idle`](packages/engine_idle/README.md) | Idle / incremental-game layer: a whole game as one JSON file (generators, upgrades, prestige, achievements, offline progress, golden events), the widgets, saving/cloud/web stores and the `idle_game` starter. The Flutter-free rules live in `engine_core` (`engine_core_idle.dart`); `game_agent idle simulate` balances a definition. |
 | [`packages/engine_strategy`](packages/engine_strategy/README.md) | Turn-based strategy assembly: `installStrategySystems`, `spawnStrategyUnit`, plus the `strategy_game` starter. The rules themselves (turn clock, orders, grid navigation, combat, fog of war, AI turns) live in `engine_core/lib/src/turn/`. |
+| [`packages/engine_api`](packages/engine_api/README.md) | MCP server and HTTP / JSON-RPC API over one operation registry (`engine_core`); every operation is also a `game_agent` command. In progress, spec in [engine_mcp.md](engine_mcp.md). |
 | [`packages/engine_cli`](packages/engine_cli/README.md) | The `game_agent` CLI — scaffolds new Flutter games wired to the engine, updates their pinned version, lints content files. |
 
 This repo is the **engine library**, not a game — there's no sample app

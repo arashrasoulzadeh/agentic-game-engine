@@ -1,4 +1,9 @@
-# engine_mcp: an API and MCP server for the engine (plan, not implemented)
+# engine_mcp: an API and MCP server for the engine (specification; implementation in progress)
+
+**Progress log** (update after each phase):
+
+- [x] Phase 0 - scaffolding (`packages/engine_api`, CI workflow, docs rows)
+
 
 Status: **planning only.** Nothing here is built. Three rounds of decisions are recorded below; nothing is left open.
 

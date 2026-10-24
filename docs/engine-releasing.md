@@ -18,7 +18,7 @@ The engine ships as one unit. Every package under `packages/` has the same `vers
    limitation in `CLAUDE.md`).
 5. When publishing to pub.dev starts: remove `publish_to: none` per package, publish in dependency order
    (`engine_schema`, `engine_core`, `engine_flutter`, then `engine_platformer`, `engine_strategy`,
-   `engine_idle`, `engine_cli`), and replace the git dependencies with version constraints.
+   `engine_idle`, `engine_cli`, `engine_api`), and replace the git dependencies with version constraints.
 
 ## Publishing readiness (checked)
 

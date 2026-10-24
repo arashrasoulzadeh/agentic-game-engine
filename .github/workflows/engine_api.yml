@@ -1,0 +1,31 @@
+name: engine_api
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/engine_api/**'
+      - 'packages/engine_core/**'
+      - 'packages/engine_schema/**'
+      - 'packages/engine_cli/**'
+      - '.github/workflows/engine_api.yml'
+  pull_request:
+    paths:
+      - 'packages/engine_api/**'
+      - 'packages/engine_core/**'
+      - 'packages/engine_schema/**'
+      - 'packages/engine_cli/**'
+      - '.github/workflows/engine_api.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/engine_api
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test

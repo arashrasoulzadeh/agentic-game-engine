@@ -1,0 +1,6 @@
+# Local monorepo development only; ignored when engine_api is fetched as a git dependency.
+dependency_overrides:
+  engine_core:
+    path: ../engine_core
+  engine_schema:
+    path: ../engine_schema
