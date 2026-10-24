@@ -2,7 +2,7 @@
 
 !!! note "Work in progress"
     The engine can host an idle (incremental) game today, but the genre layer is still being built. This page covers
-    what exists; what is still to come is tracked in [`TODO_IDLE.md`](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO_IDLE.md).
+    what exists; what is still to come is tracked in [`TODO.md`](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md).
 
 The genre code is the `engine_idle` package; the number, offline, cost and save maths are in `engine_core`.
 Samples are executed by `packages/engine_core/test/doc_examples_idle_test.dart` and

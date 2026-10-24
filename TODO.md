@@ -6,8 +6,6 @@ and delete them once shipped — what shipped is recorded in
 Add new work here the moment you discover it rather than leaving it in a
 comment or a side file.
 
-Related task list: [TODO_IDLE.md](TODO_IDLE.md) — what the engine still needs for idle / incremental games.
-
 Related, but not task lists:
 - [docs/studio/design.md](docs/studio/design.md) — the studio's PRD,
   technical design, decisions, and the record of delivered phases (source
@@ -16,7 +14,7 @@ Related, but not task lists:
   — how the finished turn-based layer works and why.
 
 Sections: [Performance](#performance) ·
-[Engine features](#engine-features) · [Turn-based strategy](#turn-based-strategy) ·
+[Engine features](#engine-features) · [Operation registry and agent API](#operation-registry-and-agent-api-engine_mcpmd) · [Idle games](#idle--incremental-games) · [Turn-based strategy](#turn-based-strategy) ·
 [Studio](#studio) · [Documentation](#documentation) · [Release](#release) ·
 [Parked decisions](#parked-decisions)
 
@@ -120,8 +118,14 @@ Sections: [Performance](#performance) ·
 
 ## Operation registry and agent API (`engine_mcp.md`)
 
-Phases 0-7 are done (registry, safety pipeline, CLI binding, MCP/REST/JSON-RPC server, generated docs, e2e test); see
-`engine_mcp.md`'s progress log. **Adding an operation:** write it in `engine_core/lib/src/ops/groups/` (writes return a `Proposal`, never touch files), add it
+- [x] Phases 0-7: registry, safety pipeline, CLI binding, MCP/REST/JSON-RPC server, generated docs, e2e test (details in
+      `engine_mcp.md`'s progress log).
+- [x] Operations built: `project.*`, `level.*` (reads, writes, lint, TMX, merge, locks), `graph.*`, `prefab.*`, `asset.index` /
+      `asset.atlas_regions`, `idle.*`, `save.*`, `world.*`, `schema.*`, `undo.*`, `release.plan`, `engine.*`.
+- [x] Server hardening: token, Host check, limits, request log, CORS, idempotency keys, `engine_api.yaml`, project lock and
+      `--allow-open`, no writes into `.studio`/`.git`.
+
+**Adding an operation:** write it in `engine_core/lib/src/ops/groups/` (writes return a `Proposal`, never touch files), add it
 to `all_operations.dart` and `engine_core_ops.dart`, test it in `engine_core/test/ops/`, then regenerate the reference with
 `cd packages/engine_api && dart run tool/gen_api_docs.dart > ../../docs/reference/operations.md`. The CLI command, MCP tool,
 REST route and JSON-RPC method appear on their own; the parity and docs-drift tests fail if anything is missed.
@@ -138,6 +142,30 @@ What is left:
       `level.lint --render` as an operation (needs an injected image codec).
 - [ ] **Server extras:** SSE streaming and progress notifications, cancellation (`notifications/cancelled`), `Retry-After`
       for the concurrency limit, request-log levels.
+
+## Idle / incremental games
+
+Everything planned in the former `TODO_IDLE.md` is shipped (what shipped is in [CHANGELOG.md](CHANGELOG.md); the guide is
+`docs/concepts/idle-games.md`, the tutorial `docs/tutorials/05-idle-game.md`). Genre code lives in `engine_idle`; the
+Flutter-free rules live in `engine_core` (`engine_core_idle.dart`).
+
+- [x] **`engine_idle` package** — scaffold, CI, docs, schemas registered, template depends on it, studio picks up its schemas.
+- [x] **Big numbers** — `BigNumber`, `BigTreasury` (strategy keeps the int `Treasury`, decided), `formatBigNumber` with suffix /
+      scientific / engineering / grouped styles and locale separator.
+- [x] **Time** — `OfflineProgress` (cap, efficiency, backwards clock), event-aware catch-up, deterministic bulk advance,
+      clock-tampering policy, `OfflineSummary`, `IdleSession` lifecycle hooks.
+- [x] **Rules layer** — generators, upgrades, cost curves (geometric, linear, table), multiplier stack, prestige (layers),
+      achievements, taps and boosts, golden events, challenges, auto-buyer, `bestPurchase`.
+- [x] **Saving** — `AtomicSave`, `SaveMigrator`, `SaveCodec` export/import, cloud-save hook.
+- [x] **UI** — generator / upgrade lists, resource header, offline dialog, prestige, achievements, settings, challenge panel,
+      memoised formatting.
+- [x] **Background behaviour** — return notifications interface, offline-cap awareness, web lifecycle and storage.
+- [x] **Tooling** — balance simulator (`game_agent idle simulate`), `idle validate`, schemas, `idle_game` template, docs.
+- [x] **Cross-cutting** — determinism, anti-cheat position, analytics, accessibility, performance-budget test.
+- [ ] The balance simulator only auto-prestiges the first layer and does not play challenges.
+- [ ] A real-device performance benchmark for 1,000 generators / long offline catch-up (the loose-budget test exists).
+- [ ] Keep a fixture save for every released version once there is one (`SaveMigrator`).
+- [ ] Per-widget rebuild throttling beyond the controller's 10 Hz tick.
 
 ## Turn-based strategy
 

@@ -7,7 +7,7 @@ offline rules); you write Dart only for what is yours.
 
 Start from the template (`game_agent create my_game --template idle_game`) or read the
 [idle games guide](../../docs/concepts/idle-games.md) and the
-[tutorial](../../docs/tutorials/05-idle-game.md). Plan and history: [TODO_IDLE.md](../../TODO_IDLE.md).
+[tutorial](../../docs/tutorials/05-idle-game.md). Status: [TODO.md](../../TODO.md).
 
 ## Where things live
 
