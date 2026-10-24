@@ -118,6 +118,23 @@ Sections: [Performance](#performance) ·
       needs but the engine lacks (see `zahaak/docs/engine-gap-analysis.md`).
       Not scoped; revisit once its combat/dialogue scope is locked.
 
+## Operation registry and agent API (`engine_mcp.md`)
+
+Phases 0-7 are done (registry, safety pipeline, CLI binding, MCP/REST/JSON-RPC server, generated docs, e2e test); see
+`engine_mcp.md`'s progress log. What is left:
+
+- [ ] **Legacy `studio` edit commands as adapters of the `level.*` operations.** `studio_edit_commands.dart` (add/remove-entity,
+      set-field, move-entity, set-layer, paint-tile, fill-region) still carries its own parsing, validation and direct file
+      write beside the registry operations of the same name (which add undo, locks and structured errors). Make them thin
+      adapters that keep the golden output of `studio_golden_test.dart`; behaviour changes (an undo entry per edit) need an
+      owner decision first.
+- [ ] **Operations not built yet:** `asset.index/atlas_regions/pack` (`AssetIndex` and `pack_assets_command.dart` need their pure
+      parts moved out of Flutter-tainted code), `i18n.*` (no project convention for locale files yet), `strategy.rules` /
+      `strategy.simulate_turns` (the assembly lives in `engine_strategy`), `engine.docs`, `idle.state`, `project.symbols`,
+      `level.lint --render` as an operation (needs an injected image codec).
+- [ ] **Server extras:** SSE streaming and progress notifications, cancellation (`notifications/cancelled`), `Retry-After`
+      for the concurrency limit, request-log levels, `allowOpen` globs for `project.open` over the network.
+
 ## Turn-based strategy
 
 The turn-based layer is feature-complete for a first release (turn clock,
