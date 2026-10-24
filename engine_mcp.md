@@ -5,6 +5,7 @@
 - [x] Phase 0 - scaffolding (`packages/engine_api`, CI workflow, docs rows)
 - [x] Phase 1 - registry core in `engine_core` (`engine_core_ops.dart`: Operation, Param/ParamValidator, results/errors, context/policy, registry+dispatcher, JSON Schema, path sandbox, `engine.*` operations); tests in `packages/engine_core/test/ops/`
 - [x] Phase 2 - write safety (`safety.dart` SafetyPipeline: validation, locks, diff, preview + HMAC confirmation token, atomic write with rollback, undo journal `.studio/undo/`; `undo.list/undo/redo`). Token format `v1:<op>:<argsHash>:<beforeHash>:<expiry>:<hmac>` (base64url). Redo walks forward from the oldest undone entry.
+- [~] Phase 3 - read operations in `engine_core`: `project.open/close/info/tree/search/validate/git_status`, `level.list/read/validate/diff/lock_status`, `schema.components/component/template/validate_component`, `idle.validate/simulate/format_number`, `release.plan` (+ declared `release.build`, requiresFlutter). Moved into core with shims left in `engine_studio`/`engine_cli`: `StudioProject`, project tree/search, git status, find/replace, `release_plan.dart`. Still to do in this phase: CLI binding generated from the registry (`ops_cli.dart`), `level.lint`, `asset.*`, `project.symbols/problems`, `graph.*`.
 
 
 Status: **planning only.** Nothing here is built. Three rounds of decisions are recorded below; nothing is left open.

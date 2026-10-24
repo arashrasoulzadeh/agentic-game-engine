@@ -59,6 +59,8 @@ class OpContext {
     String? lockOwner,
     this.undoKeep = 100,
     this.confirmationTtl = const Duration(minutes: 5),
+    this.allowProjectOpen = true,
+    this.allowProjectSwitch = true,
   }) : lockOwner = lockOwner ?? _defaultOwner(),
        files = files ?? const DiskFiles(),
        clock = clock ?? DateTime.now,
@@ -77,6 +79,12 @@ class OpContext {
 
   /// How long a destructive preview's confirmation token stays valid.
   final Duration confirmationTtl;
+
+  /// Whether `project.open` may run at all (false when the server is bound to one project).
+  final bool allowProjectOpen;
+
+  /// Whether `project.open` may replace an already open project.
+  final bool allowProjectSwitch;
 
   UndoLog? _undoLog;
 

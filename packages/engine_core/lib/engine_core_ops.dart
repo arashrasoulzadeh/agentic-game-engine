@@ -18,3 +18,16 @@ export 'src/ops/registry.dart';
 export 'src/ops/result.dart';
 export 'src/ops/safety.dart';
 export 'src/ops/undo_log.dart';
+export 'src/ops/project/find_replace.dart';
+export 'src/ops/project/git_status.dart';
+export 'src/ops/project/project_search.dart';
+export 'src/ops/project/project_tree.dart';
+export 'src/ops/project/studio_project.dart';
+export 'src/ops/release_plan.dart';
+export 'src/ops/level_check.dart';
+export 'src/ops/groups/project_ops.dart' show projectOperations;
+export 'src/ops/groups/idle_ops.dart' show idleOperations;
+export 'src/ops/groups/level_ops.dart'
+    show levelReadOperations, levelText, parseLevel, knownComponents;
+export 'src/ops/groups/release_ops.dart' show releaseOperations;
+export 'src/ops/groups/schema_ops.dart' show schemaOperations;
