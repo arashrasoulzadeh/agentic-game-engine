@@ -62,6 +62,18 @@ _GraphFile _load(OpContext ctx, String rel) {
   }
 }
 
+/// The validator's issues for the graph file [text], or a single fatal message when it is not a graph file.
+({List<GraphIssue> issues, String? fatal}) checkGraphText(String text) {
+  try {
+    final json = (jsonDecode(text) as Map).cast<String, dynamic>();
+    final file = _GraphFile('', text, json);
+    file.graph;
+    return (issues: file.issues(), fatal: null);
+  } on Object catch (e) {
+    return (issues: const <GraphIssue>[], fatal: 'not a graph file ($e)');
+  }
+}
+
 Map<String, Object?> _issueJson(GraphIssue i) => {
   'kind': i.kind.name,
   'message': i.message,

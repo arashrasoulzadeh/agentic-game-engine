@@ -1051,6 +1051,20 @@ game_agent project open <path>
 
 REST: `POST /v1/project/open` · MCP tool: `project.open` · JSON-RPC method: `project.open`
 
+### `project.problems`
+
+Every problem in the project's levels, graphs and idle game as one flat list.
+
+Combines `project.validate` (levels), the graph validators and the idle definition check. Each entry has the file, a severity (`error` or `warning`) and a message; fix errors first. Empty means the project is clean.
+
+*read*, needs an open project, idempotent.
+
+```bash
+game_agent project problems
+```
+
+REST: `POST /v1/project/problems` · MCP tool: `project.problems` · JSON-RPC method: `project.problems`
+
 ### `project.search`
 
 Find text in the project's code, level, graph and data files.
