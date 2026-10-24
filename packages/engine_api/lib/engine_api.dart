@@ -10,3 +10,4 @@ export 'src/version.dart';
 export 'src/http/http_server.dart';
 export 'src/http/openapi.dart';
 export 'src/http/token.dart';
+export 'src/request_log.dart';

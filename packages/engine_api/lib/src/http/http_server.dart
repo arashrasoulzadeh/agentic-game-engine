@@ -15,12 +15,23 @@ const _json = 'application/json; charset=utf-8';
 /// REST (`/v1`), JSON-RPC (`/rpc`) and MCP (`/mcp`) on one port, all backed by the same [McpSession] so an opened
 /// project, the policy and the undo journal are shared by every transport.
 class EngineHttpServer {
-  EngineHttpServer._(this._server, this._session, this._token, this._maxBody);
+  EngineHttpServer._(
+    this._server,
+    this._session,
+    this._token,
+    this._maxBody,
+    this._perMinute,
+    this._concurrent,
+  );
 
   final HttpServer _server;
   final McpSession _session;
   final String _token;
   final int _maxBody;
+  final int _perMinute;
+  final int _concurrent;
+  final List<DateTime> _recent = [];
+  int _inFlight = 0;
   Future<void> _writes = Future.value();
 
   /// The bound port (useful with `port: 0`).
@@ -34,6 +45,8 @@ class EngineHttpServer {
     int port = 0,
     bool allowRemote = false,
     int maxRequestBytes = 1048576,
+    int requestsPerMinute = 120,
+    int concurrent = 4,
   }) async {
     final loopback =
         host == '127.0.0.1' || host == '::1' || host == 'localhost';
@@ -43,7 +56,14 @@ class EngineHttpServer {
       );
     }
     final server = await HttpServer.bind(host, port);
-    final s = EngineHttpServer._(server, session, token, maxRequestBytes);
+    final s = EngineHttpServer._(
+      server,
+      session,
+      token,
+      maxRequestBytes,
+      requestsPerMinute,
+      concurrent,
+    );
     unawaited(server.forEach(s._handle));
     return s;
   }
@@ -77,13 +97,26 @@ class EngineHttpServer {
         return _send(
           req,
           401,
-          _fail(ErrorCode.forbidden, 'A valid bearer token is required.'),
+          _fail(ErrorCode.unauthorized, 'A valid bearer token is required.'),
         );
       }
-      if (path == '/mcp') return await _mcp(req);
-      if (path == '/rpc') return await _rpc(req);
-      if (path.startsWith('/v1/')) return await _rest(req, path.substring(4));
-      return _send(req, 404, _fail(ErrorCode.notFound, 'No such path: $path'));
+      final now = _session.ctx.clock();
+      _recent.removeWhere((t) => now.difference(t).inSeconds >= 60);
+      if (_recent.length >= _perMinute || _inFlight >= _concurrent) {
+        req.response.headers.set('retry-after', '1');
+        return _send(
+          req,
+          429,
+          _fail(ErrorCode.rateLimited, 'Too many requests; retry shortly.'),
+        );
+      }
+      _recent.add(now);
+      _inFlight++;
+      try {
+        return await _route(req, path);
+      } finally {
+        _inFlight--;
+      }
     } on _TooLarge {
       await _send(
         req,
@@ -96,6 +129,13 @@ class EngineHttpServer {
       _session.ctx.log('http error: $e');
       await _send(req, 500, _fail(ErrorCode.internal, 'Internal error.'));
     }
+  }
+
+  Future<void> _route(HttpRequest req, String path) async {
+    if (path == '/mcp') return _mcp(req);
+    if (path == '/rpc') return _rpc(req);
+    if (path.startsWith('/v1/')) return _rest(req, path.substring(4));
+    return _send(req, 404, _fail(ErrorCode.notFound, 'No such path: $path'));
   }
 
   /// Rejects Host headers that are not the loopback names, which is what stops DNS rebinding from a web page.
@@ -202,10 +242,11 @@ class EngineHttpServer {
     }
     final r = await _run(
       op,
-      () => _session.registry.call(
+      () => _session.invoke(
         op.name,
         (body as Map?)?.cast<String, Object?>() ?? {},
-        _session.ctx,
+        transport: 'rest',
+        requestId: req.response.headers.value('x-request-id'),
       ),
     );
     return _send(req, r.ok ? 200 : r.error!.code.http, r.toJson());

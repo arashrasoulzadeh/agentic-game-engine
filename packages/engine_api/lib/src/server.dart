@@ -6,6 +6,7 @@ import 'package:engine_core/engine_core_ops.dart';
 import 'http/http_server.dart';
 import 'http/token.dart';
 import 'mcp/session.dart';
+import 'request_log.dart';
 import 'mcp/stdio.dart';
 import 'version.dart';
 
@@ -20,6 +21,20 @@ ArgParser buildServerParser() => ArgParser()
   )
   ..addMultiOption('allow', help: 'Only serve operations matching this glob.')
   ..addMultiOption('deny', help: 'Hide operations matching this glob.')
+  ..addOption(
+    'log',
+    help: 'Request log file (default: <project>/.studio/api-requests.jsonl).',
+  )
+  ..addOption(
+    'max-result-bytes',
+    defaultsTo: '8388608',
+    help: 'Larger results become a too_large error.',
+  )
+  ..addOption(
+    'requests-per-minute',
+    defaultsTo: '120',
+    help: 'HTTP rate limit.',
+  )
   ..addFlag(
     'http',
     negatable: false,
@@ -99,6 +114,8 @@ Future<int> runServer(
     buildRegistry(),
     ctx,
     underscoreNames: r['underscore-tool-names'] as bool,
+    maxResultBytes: int.tryParse(r['max-result-bytes'] as String) ?? 8388608,
+    log: _requestLog(r['log'] as String?, project),
   );
   if (!(r['http'] as bool)) {
     await serveStdio(session, input ?? stdin, out);
@@ -118,6 +135,8 @@ Future<int> runServer(
       host: r['bind'] as String,
       port: int.tryParse(r['port'] as String) ?? 7421,
       allowRemote: r['allow-remote'] as bool,
+      requestsPerMinute:
+          int.tryParse(r['requests-per-minute'] as String) ?? 120,
     );
   } on Object catch (e) {
     error('Cannot start the HTTP server: $e');
@@ -131,4 +150,10 @@ Future<int> runServer(
   await ProcessSignal.sigint.watch().first;
   await server.close();
   return 0;
+}
+
+RequestLog? _requestLog(String? explicit, ProjectRoot? project) {
+  if (explicit != null) return RequestLog(explicit);
+  if (project == null) return null;
+  return RequestLog('${project.root}/.studio/api-requests.jsonl');
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:engine_core/engine_core_ops.dart';
 
+import '../request_log.dart';
 import '../version.dart';
 import 'rpc.dart';
 import 'tools.dart';
@@ -14,13 +15,63 @@ const _pageSize = 100;
 /// One MCP conversation: owns the [OpContext] (so an opened project lives for the session) and answers the
 /// protocol methods over the shared operation registry.
 class McpSession {
-  McpSession(this.registry, this.ctx, {this.underscoreNames = false});
+  McpSession(
+    this.registry,
+    this.ctx, {
+    this.underscoreNames = false,
+    this.log,
+    this.maxResultBytes = 8 * 1024 * 1024,
+  });
+
+  /// Where every call is recorded, if anywhere.
+  final RequestLog? log;
+
+  /// Larger results are replaced by a `too_large` error so one call cannot flood a client.
+  final int maxResultBytes;
 
   final OperationRegistry registry;
   final OpContext ctx;
 
   /// Expose `level_add_entity` instead of `level.add_entity` for clients that reject dots in tool names.
   final bool underscoreNames;
+
+  /// Runs one operation for any transport: applies the result size limit and records the call in the request log.
+  Future<OpResult> invoke(
+    String name,
+    Map<String, Object?> args, {
+    String transport = 'mcp',
+    String? requestId,
+  }) async {
+    var result = await registry.call(name, args, ctx);
+    var bytes = jsonEncode(result.toJson()).length;
+    if (bytes > maxResultBytes) {
+      result = OpResult.failure(
+        OpError(
+          ErrorCode.tooLarge,
+          'The result is $bytes bytes; the limit is $maxResultBytes.',
+          hint: 'Narrow the request (paths, limit, offset).',
+        ),
+        durationMs: result.durationMs,
+      );
+      bytes = jsonEncode(result.toJson()).length;
+    }
+    final op = registry.lookup(name);
+    log?.write({
+      'ts': ctx.clock().toUtc().toIso8601String(),
+      if (requestId != null) 'requestId': requestId,
+      'transport': transport,
+      'actor': ctx.actor,
+      'op': name,
+      if (op != null) 'kind': op.kind.name,
+      'ok': result.ok,
+      if (!result.ok) 'code': result.error!.code.code,
+      'durationMs': result.durationMs,
+      'bytesOut': bytes,
+      'project': ctx.project?.root,
+      if (result.undoId != null) 'undoId': result.undoId,
+    });
+    return result;
+  }
 
   String _wire(String name) =>
       underscoreNames ? name.replaceAll('.', '_') : name;
@@ -120,11 +171,12 @@ class McpSession {
     if (args != null && args is! Map) {
       throw RpcException(-32602, 'arguments must be an object');
     }
-    return callTool(
-      registry,
-      ctx,
-      op.name,
-      (args as Map?)?.cast<String, Object?>() ?? {},
+    return toolResult(
+      await invoke(
+        op.name,
+        (args as Map?)?.cast<String, Object?>() ?? {},
+        transport: 'mcp',
+      ),
     );
   }
 

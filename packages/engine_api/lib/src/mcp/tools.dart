@@ -46,14 +46,9 @@ Map<String, Object?> toolFor(Operation op, {String? name}) => {
   },
 };
 
-/// Runs [name] and wraps the envelope as an MCP `tools/call` result (`isError` mirrors `ok:false`).
-Future<Map<String, Object?>> callTool(
-  OperationRegistry registry,
-  OpContext ctx,
-  String name,
-  Map<String, Object?> args,
-) async {
-  final envelope = (await registry.call(name, args, ctx)).toJson();
+/// Wraps an operation result as an MCP `tools/call` result (`isError` mirrors `ok:false`).
+Map<String, Object?> toolResult(OpResult result) {
+  final envelope = result.toJson();
   return {
     'content': [
       {
