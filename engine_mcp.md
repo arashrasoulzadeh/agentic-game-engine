@@ -1,7 +1,6 @@
 # engine_mcp: an API and MCP server for the engine (plan, not implemented)
 
-Status: **planning only.** Nothing here is built. Two rounds of questions are answered (see Decisions); the few remaining
-details are under "Still open".
+Status: **planning only.** Nothing here is built. Three rounds of decisions are recorded below; nothing is left open.
 
 ## Goal
 
@@ -87,15 +86,54 @@ is in v1 (see questions).
 | Dry-run preview | **The engine's `LevelDiff`** (added/removed/changed entities and fields) **plus a summary and a confirmation token** that must be echoed in the apply call, so a stale preview cannot be applied. |
 | Observability and trust (all four) | `engine.health` + `engine.capabilities` (versions, enabled groups, read-only flag); a **JSON-lines request log with per-operation timing**; a **per-operation allow/deny list** in config; **rate and size limits** (request, result, calls per minute). |
 
-### Still open
+### Third round (settled with the recommended defaults, as the owner asked not to be asked again)
 
-- Prompt authoring and testing (proposal: files under `engine_api/prompts/`, each executed by a test against a scratch
-  project).
-- Exact REST route shape for `group.verb` (proposal: `POST /v1/<group>/<verb>`, JSON body = params) and the JSON-RPC method
-  naming (proposal: the dotted name itself).
-- Token handling details: where the generated token is printed/stored, rotation, and whether stdio MCP needs any auth
-  (proposal: no, the parent process owns it).
-- Config file format and location (proposal: `engine_api.yaml` in the project root or `--config`, with CLI flags winning).
+| Topic | Decision |
+|---|---|
+| MCP prompts | Files under `packages/engine_api/prompts/*.md` (front matter: name, description, arguments); every prompt is executed by a test against a scratch project so it cannot rot. |
+| REST routes | `POST /v1/<group>/<verb>` with the params as the JSON body; `GET /v1/engine/operations` lists the catalogue; OpenAPI served at `/v1/openapi.json`. |
+| JSON-RPC | One endpoint (`POST /rpc`), method = the dotted operation name, params = the same object; batch requests allowed. |
+| Token | Generated at start, printed once to stderr and written to `.studio/api-token` (mode 600) unless `--token` is given; `--rotate-token` makes a new one; stdio MCP needs no token (the parent process owns the pipe). |
+| Config | `engine_api.yaml` in the project root (or `--config`); command-line flags win over the file; the file may set allow/deny lists, limits, bind address and read-only. |
+
+## Inventory of what exists today (step 1 of the plan, to be re-verified against the code when the registry is built)
+
+Every row becomes one operation (kind: R read, W write, D destructive; scope: P pure, J project). The `game_agent` command on
+the left is what the friendly CLI form keeps being.
+
+| Today's CLI | Operation | Kind | Scope | Notes |
+|---|---|---|---|---|
+| `create <name> --template --org --output-dir` | `project.create` | W | P | needs the Flutter SDK; shells out to `flutter create` (long-running, **excluded from v1 API**, stays CLI-only until a host exists; the registry marks it `requiresFlutter`) |
+| `upgrade --ref` | `project.upgrade` | W | J | rewrites engine `ref:` in pubspec, runs pub; `requiresFlutter` |
+| `lint <level> --render --playable` | `level.lint` | R | J | `--render` returns a PNG (base64 in API) |
+| `pack-assets -i -o -m --padding --max-width --scales` | `asset.pack` | W | J | pure Dart (image package) |
+| `build-release ...` | `release.build` | W | J | `requiresFlutter`; its plan part (`release_plan.dart`) is pure and becomes `release.plan` (R) |
+| `idle simulate <game.json> --days --prestige-at` | `idle.simulate` | R | P | already a registry-shaped function (`simulateIdle`) |
+| `idle validate <game.json>` | `idle.validate` | R | P | |
+| `studio validate [project]` | `project.validate` | R | J | all levels against schemas; `--strict` |
+| `studio import-tmx` / `export-tmx` | `level.import_tmx` / `level.export_tmx` | W | J | |
+| `studio export-levels` | `level.export_canonical` | W | J | rewrites files canonically |
+| `studio project-manifest` | `project.manifest` | W | J | |
+| `studio diff a b` | `level.diff` | R | P | `--json`, `--exit-code` |
+| `studio merge base ours theirs` | `level.merge` | D | J | writes over ours; conflict = error |
+| `studio lock` / `unlock` | `level.lock` / `level.unlock` | W | J | advisory lock file |
+| `studio save-prefab` / `place-prefab` | `prefab.save` / `prefab.place` | W | J | |
+| `studio add-entity` | `level.add_entity` | W | J | `--name --component* --index` |
+| `studio remove-entity` | `level.remove_entity` | D | J | |
+| `studio move-entity` | `level.move_entity` | W | J | |
+| `studio set-field` | `level.set_field` | W | J | `--entity --component --field --value` (JSON) |
+| `studio set-layer` | `level.set_layer` | W | J | |
+| `studio paint-tile` / `fill-region` | `level.paint_tile` / `level.fill_region` | W | J | |
+
+Operations with no CLI form yet (to add, each with a CLI command): `project.open/info/tree/search/problems/symbols/git_status`,
+`level.list/read/validate_text`, `graph.*`, `schema.components/fields/docs`, `world.snapshot/patch/validate`,
+`idle.state/buy_plan/best_purchase`, `strategy.*`, `asset.index/atlas_regions`, `i18n.*`, `save.encode/decode/migrate`,
+`engine.health/capabilities/operations`, `undo.list/undo/redo`.
+
+**Consequence of the 1:1 rule for Flutter-dependent commands.** `create`, `upgrade` and `build-release` need the Flutter SDK and
+long-running processes. They stay in the registry as operations flagged `requiresFlutter`, **implemented in `engine_cli`** (which
+may run processes) and **not served by `engine_api` in v1**; the parity test knows this flag, so the rule reads: every operation has
+a CLI command; every non-`requiresFlutter` operation also has MCP, REST and JSON-RPC bindings.
 
 ## Operation groups (draft, to be turned into the registry)
 
