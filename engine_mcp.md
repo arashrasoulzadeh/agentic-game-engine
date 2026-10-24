@@ -910,3 +910,558 @@ transactions, auto-generated operations from reflection.
 - Generated docs committed and drift-tested; `docs/reference/mcp.md` explains setup for Claude Desktop and Claude Code.
 - `dart analyze --fatal-infos` and all tests green in `engine_schema`, `engine_core`, `engine_cli`, `engine_api` in CI; the repository
   `release_consistency_test` includes the new package.
+
+---
+
+# Developer quick-start: facts, skeletons and templates (read this instead of exploring the repo)
+
+This part exists to save tokens during implementation: it records where the existing code lives, what must be moved, the exact
+signatures to reuse, ready-to-paste skeletons for the new code, and the repository pitfalls already paid for. Items marked
+**(verify)** were not re-read and should be confirmed with one grep before relying on them.
+
+## R. Codebase map: where each reusable piece lives today
+
+### R.1 Already in `engine_core` (import `package:engine_core/engine_core.dart`; use as is)
+
+| Need | Symbol (file under `packages/engine_core/lib/src/`) | Notes |
+|---|---|---|
+| Level model | `LevelDocument`, `LevelEntity` (`content/level_document.dart`) | `LevelDocument.fromJson(map)`, `.toJson()`, `.entities`, `.entityNamed(name)`; `LevelEntity(name:, components: Map<String,Map<String,dynamic>>)` |
+| Canonical-ish JSON | `encodeLevelJson(Object?)` (`content/level_format.dart:7`) | what the editor/saver writes |
+| Level validation | `LevelValidator.forSchemas(allComponentSchemas).validate(doc)` -> `List<LevelIssue>`; `LevelIssue.severity` (`IssueSeverity.error/warning`) (`validation/level_validator.dart`) | used by every edit command today |
+| Raw level check | `Level.validate(json)` -> `List<Map>` entities, throws `LevelLoadException` (`content/level.dart`) | used by `lint` |
+| Edit commands | `AddEntityCommand(entity,{index})`, `RemoveEntityCommand(entity)`, `SetComponentFieldCommand({entity, component, field, value})`, `SetLayerCommand({...})`, `MoveEntityCommand({entity,x,y})`, `SetTileCommand({...})`, `FillRegionCommand({...})`, `InstantiatePrefabCommand(prefab,{x,y})`, `FlattenTileMapCommand(entity)` (`command/*.dart`); all implement `EditCommand.apply(LevelDocument)` / `revert` | the 1:1 operations call these exactly like `studio_edit_commands.dart` does |
+| Diff / merge | `diffLevels(before, after)` -> `LevelDiff` (`added`, `removed`, `changed`, `isEmpty`, `format()`, `toJson()`), `mergeLevels(base, ours, theirs)` -> `LevelMerge` (`content/level_diff.dart:100,188`) | |
+| Prefab | `Prefab`, `Prefab.fromEntities(name, entities)`, `toJson` (`content/prefab.dart`) | |
+| Brushes | `BrushLibrary` (`content/brush.dart`) | |
+| Locks | `FileLock(path)`, `.inspect()`, `.acquire(owner)` -> `LockResult(acquired, holder)`, `.release(owner,{force})`, `LockInfo(owner, acquiredAt)`, `lockOwner()` (`io/file_lock.dart`; **dart:io**) | |
+| Atomic file save | `AtomicSave(path).write(map)/read()` (`io/atomic_save.dart`, exported via `engine_core_io.dart`) | JSON maps only; ops need a string variant (see S.4) |
+| Save codes | `SaveCodec.export/import`, `SaveMigrator` (`content/save_codec.dart`) | |
+| Idle | everything via `package:engine_core/engine_core_idle.dart` (`validateIdleDefinition`, `loadIdleDefinition`, `simulateIdle`, `describeSimulation`, `bestPurchase`, `computeIncome`, ...) | |
+| Numbers | `BigNumber`, `formatBigNumber(value,{style,decimals,decimalSeparator,groupSeparator})` | |
+| Schemas | `allComponentSchemas` (`Map<String, ComponentSchema>`), `ComponentSchema(name, fields)` `.template` (default JSON), `FieldSchema(name,type,{min,max,options,defaultValue,required,optional})`, `FieldType {int,double,bool,string,enumeration,vector2,list,object}` (package `engine_schema`, re-exported through core; **import `package:engine_schema/engine_schema.dart` explicitly** as the CLI does) | |
+| World | `World(width:, height:)`, `registerCoreComponents(world)`, `WorldSnapshot.capture/.toJson/.fromJson/.restoreInto`, `world.applyPatch`, `world.toJson()`, `world.components.register`, `world.storeOf<T>()`, `world.step(dt)`, `world.events.on/emit/flush` | for `world.*` ops |
+| Graphs | `Graph`, `GraphNode`, `GraphEdge`, `GraphType {dialogue, behaviorTree, stateMachine}` (`.registry`), `NodeKind`, `GraphPort`, `PortType`, `validateGraph(graph,{registry})`, `GraphIssue`, `compile*` (`graph/*.dart`) | |
+| Turn/strategy | `OrderSystem`, `TurnSystem`, `startTurnBasedGame`, `submitOrder`, `HostSession` etc. (`turn/*`, `net/*`) | |
+| Localization | `LocalizationManager` (`content/localization.dart`), `StringTable` | |
+| Time/random | `DeterministicRandom(seed)` (`ecs/deterministic_random.dart`) | |
+| Tmx | `TmxImport`, `tileMapToTmx` (check exact names with `grep -rn "tileMapToTmx\|class TmxImport" packages/engine_core/lib`) **(verify)** | used by `studio import-tmx/export-tmx` |
+
+### R.2 Currently in `engine_studio` (Flutter package) but **pure Dart** -> must move to `engine_core` in phase 3/5
+
+`engine_studio` depends on Flutter, so the CLI and `engine_api` cannot import it. These files have **no Flutter imports** and move
+(git mv, then fix imports; the studio re-imports them from core; their tests move with them):
+
+| From `packages/engine_studio/lib/src/` | To `packages/engine_core/lib/src/ops/project/` | Public symbols |
+|---|---|---|
+| `project/studio_project.dart` | `studio_project.dart` | `StudioProject.open(path)`, `.root`, `.levelPaths()`, `.graphPaths()`, `.codeFiles()`, `.nextGraphPath()`, `ProjectOpenException` (imports `../playtest/play_test.dart` only for a constant: replace with a literal) |
+| `project/project_tree.dart` | `project_tree.dart` | `ProjectEntry(relativePath,isDirectory,depth,name)`, `listProjectTree(root)`, `FileKind`, `kindOf`, `visibleTree`, `filterFiles` |
+| `project/project_search.dart` | `project_search.dart` | `ProjectMatch`, `searchProject(root, entries, query)` (imports `../code/find_replace.dart`: move that tiny pure file too) |
+| `project/project_problems.dart` | `project_problems.dart` | `ProjectProblem`, `ProblemSource`, `collectProjectProblems(project)` (**depends on `graph/graph_editor.dart`**, which is Flutter-tainted via `dart:ui`: extract its pure `validate()` logic into core `graph/graph_validate.dart` first, see R.4) |
+| `project/git_status.dart` | `git_status.dart` | `GitChange`, `parseGitStatus`, `readGitStatus`, `runGit`, `folderHasChanges` |
+| `project/pub_get.dart` | (stays Flutter-agnostic) `pub_get.dart` | `runPubGet`, `PubGetResult` |
+| `assets/asset_index.dart` | `asset_index.dart` | `AssetIndex.scan(root)`, `.atlases`, `.declaredRegions`, `.atlasById`, `AtlasInfo` (imports `../textures/atlas_catalog.dart`: **verify** it is pure, it showed a flutter match = 1, probably an image decode; if it uses `dart:ui`, split the catalog JSON part out) |
+| `assets/asset_references.dart` | `asset_references.dart` | `checkAssetReferences(...)` -> `List<LevelIssue>` |
+| `assets/project_stores.dart` | `project_stores.dart` | `PrefabStore(root).save/load/list`, `BrushStore` |
+| `code/project_symbols.dart` | `project_symbols.dart` | `ProjectSymbols.scan(root)`, `.classes/.atlasIds/.entityNames`, `completionsFor` |
+| `level/level_saver.dart` | `level_saver.dart` | `LevelSaver.save(path, doc)`, `.autosave(...)` (**verify** exact methods; the studio and the new undo-aware pipeline must share one writer) |
+| `inspector/entity_inspector.dart` | `entity_inspector.dart` | `EntityInspector(editor).components()` uses `LevelEditor` (Flutter-tainted): move only `ParsedField parseFieldText(FieldSchema, String)` and `InspectedComponent` |
+| `code/analysis.dart` | stays in studio | analyzer output parsing; `project.analyze` is **not** in v1 (needs the Dart SDK process) |
+
+`engine_studio` keeps thin re-export shims (`export 'package:engine_core/engine_core_ops.dart' show ...`) so studio code and its ~450 tests
+change as little as possible. **Rule:** a file moves only together with its tests, in the same commit, with `flutter test` green in
+`engine_studio`.
+
+### R.3 Currently inside `engine_cli` command classes -> extract into core ops
+
+| CLI file | Private logic to extract | Becomes |
+|---|---|---|
+| `studio_command.dart:226` `canonicalJson(Object?)` | the canonical JSON writer used by every studio command | `core/ops/canonical_json.dart` (also fixes duplication with `encodeLevelJson`: **verify** whether they are byte-identical; if yes keep one) |
+| `studio_command.dart` `StudioValidateCommand` | project-wide level validation incl. `--strict` | `project.validate` handler |
+| `studio_command.dart` import-tmx / export-levels / project-manifest classes | TMX import, canonical rewrite, manifest build | `level.import_tmx`, `level.export_canonical`, `project.manifest` |
+| `studio_edit_commands.dart` | helpers `loadLevelOrNull`, `validateAndWrite`, `entityNamedOrNull`, `parseFieldValue` and each command's `run()` body | the `level.*` edit handlers (they currently print and write directly; the new handlers **return a Proposal** instead of writing) |
+| `studio_diff_commands.dart` | diff/merge/lock/unlock bodies (use `diffLevels`, `mergeLevels`, `FileLock`) | `level.diff`, `level.merge`, `level.lock/unlock` |
+| `studio_asset_commands.dart` | `export-tmx`, `save-prefab`, `place-prefab` bodies | `level.export_tmx`, `prefab.save`, `prefab.place` |
+| `lint_command.dart` | `_checkPlayable(entities)` and `_render(entities, path)` (PNG via `package:image`) | `level.lint` handler; **`image` becomes a dependency of `engine_core`?** No: keep `image` in `engine_cli`/`engine_api` and give `level.lint` a `renderer` hook in `OpContext` (`Uint8List Function(TileMap, entities)?`); core ships no image code. `engine_api` and `engine_cli` both pass the same renderer from a small shared file in `engine_api`... **decision:** put the renderer in `engine_core` behind a tiny dependency-free PNG encoder (about 80 lines: zlib via `dart:io`/`archive` is avoided; use stored (uncompressed) deflate blocks) so no package dependency is added. |
+| `pack_assets_command.dart` (~500 lines, private `_PackItem`, `_Rect`, `_PackedSheet`) | the whole packer | `asset.pack`; **needs `package:image`** for decode/resize/encode: so `asset.pack` is the **one** operation implemented in `engine_cli` and `engine_api` via an injected `ImageCodec` interface in `OpContext` (`decode(bytes)`, `encodePng`, `resize`), with the implementation in a new tiny package-internal file `engine_api/lib/src/image_codec.dart` and `engine_cli/lib/src/image_codec.dart` (each wraps `package:image`). Registry-wise it stays a normal operation; if no codec is in the context it returns `unsupported`. |
+| `release_plan.dart` | `planAndroid(...)`, `planIos(...)`, `ReleasePlan`, `automaticExportOptions` (already pure functions) | `release.plan` handler (move file to core as is; pure) |
+| `idle_command.dart` | `SimulateCommand.run`, `ValidateIdleCommand.run` bodies | `idle.simulate`, `idle.validate` |
+| `create_command.dart`, `upgrade_command.dart`, `build_release_command.dart`, `template.dart`, `process_utils.dart` | process-running code | stay in `engine_cli` as `requiresFlutter` handlers registered into the registry at CLI start-up |
+
+### R.4 Studio graph code
+
+`engine_studio/lib/src/graph/graph_editor.dart` mixes pure graph editing (add/remove node, connect with port-type check, params,
+`validate()`, `compile()`) with `dart:ui` types (`Offset` positions). Extract a pure `GraphModel`/`GraphEditorCore` into
+`engine_core/lib/src/graph/graph_edit.dart` using plain `double x, y` for positions; `GraphEditor` in the studio wraps it and converts to
+`Offset`. The `graph.*` write operations call the core class. **(verify)** the exact method names with
+`grep -n "^  [A-Za-z<>?]* [a-z][A-Za-z]*(" packages/engine_studio/lib/src/graph/graph_editor.dart` before writing the handlers.
+
+## S. Code skeletons (paste, then fill)
+
+### S.1 `packages/engine_core/lib/src/ops/operation.dart`
+
+```dart
+import 'dart:async';
+
+import 'context.dart';
+import 'param.dart';
+import 'result.dart';
+
+enum OperationKind { read, write, destructive }
+enum OperationScope { pure, project }
+
+typedef OpHandler = FutureOr<OpOutcome> Function(OpContext ctx, Map<String, Object?> args);
+
+class Example {
+  const Example(this.title, this.args, {this.expect});
+  final String title;
+  final Map<String, Object?> args;
+  /// Subset of the result `data` the example must produce (checked by the registry test against the fixture project).
+  final Map<String, Object?>? expect;
+}
+
+class Deprecation {
+  const Deprecation({required this.since, required this.removeIn, this.replacement});
+  final String since, removeIn;
+  final String? replacement;
+}
+
+class CliHints {
+  const CliHints({this.group, this.verb, this.legacy = const []});
+  final String? group, verb;            // default: split the dotted name, underscores -> hyphens
+  final List<String> legacy;            // e.g. ['studio add-entity'] (space-separated command path)
+}
+
+class Operation {
+  const Operation({
+    required this.name,
+    required this.summary,
+    required this.description,
+    required this.kind,
+    required this.scope,
+    required this.handler,
+    this.params = const [],
+    this.result = const ResultSpec.any(),
+    this.errors = const {},             // ErrorCode -> one-sentence meaning
+    this.examples = const [],
+    this.requiresFlutter = false,
+    this.idempotent = false,
+    this.since = '0.1.0',
+    this.deprecated,
+    this.cli = const CliHints(),
+  });
+  final String name, summary, description, since;
+  final OperationKind kind;
+  final OperationScope scope;
+  final OpHandler handler;
+  final List<Param> params;
+  final ResultSpec result;
+  final Map<ErrorCode, String> errors;
+  final List<Example> examples;
+  final bool requiresFlutter, idempotent;
+  final Deprecation? deprecated;
+  final CliHints cli;
+
+  String get group => name.split('.').first;
+  String get verb => name.split('.').last;
+}
+```
+
+`OpOutcome` is what a handler returns: `OpOutcome.data(Object? data, {warnings})` for reads, or `OpOutcome.proposal(Proposal p, {data})`
+for writes (E.1). Throw `OpError(code, message, {details, hint})` for failures.
+
+### S.2 Dispatcher (the only place that validates, logs, times and enforces policy)
+
+```dart
+class OperationRegistry {
+  OperationRegistry(Iterable<Operation> ops, {this.version = '0.1.0'})
+      : _byName = {for (final o in ops) o.name: o};
+  final String version;
+  final Map<String, Operation> _byName;
+  Iterable<Operation> get all => _byName.values;
+  Operation? lookup(String name) => _byName[name];
+
+  Future<OpResult> call(String name, Map<String, Object?> rawArgs, OpContext ctx) async {
+    final sw = Stopwatch()..start();
+    try {
+      final op = _byName[name];
+      if (op == null) throw OpError(ErrorCode.unknownOperation, 'No operation "$name".', hint: 'List them with engine.operations.');
+      ctx.policy.check(op, ctx);                                   // allow/deny, read-only (kind != read), flutter flag
+      final args = ParamValidator(op).coerce(rawArgs);            // types, ranges, unknown keys -> invalid_params
+      if (op.scope == OperationScope.project && ctx.project == null) {
+        throw OpError(ErrorCode.notFound, 'No project is open.', hint: 'Call project.open first.');
+      }
+      final outcome = await ctx.serialize(op, () async => op.handler(ctx, args)); // write ops under the project mutex
+      final result = await ctx.safety.finish(op, args, outcome, ctx);             // preview/confirm/apply/undo (E.1-E.3)
+      return result.withDuration(sw.elapsedMilliseconds);
+    } on OpError catch (e) {
+      return OpResult.failure(e, durationMs: sw.elapsedMilliseconds);
+    } catch (e, st) {
+      ctx.log('internal error in $name: $e\n$st');
+      return OpResult.failure(OpError(ErrorCode.internal, 'Internal error.'), durationMs: sw.elapsedMilliseconds);
+    }
+  }
+}
+```
+
+### S.3 Worked example: `level.add_entity` (the pattern every write op follows)
+
+```dart
+final levelAddEntity = Operation(
+  name: 'level.add_entity',
+  summary: 'Add an entity (optionally with components at their default values) to a level.',
+  description: 'Adds one entity. Each name in `components` starts at the schema defaults (the same values the studio '
+      'palette uses); `values` overrides fields per component. The result must still validate or nothing is written.',
+  kind: OperationKind.write,
+  scope: OperationScope.project,
+  params: [
+    Param('path', ParamType.path, required: true, positional: true, description: 'Level file, e.g. assets/levels/level1.json'),
+    Param('name', ParamType.string, description: 'Entity name (unique names make later edits easier).'),
+    Param('components', ParamType.array, items: Param.string(), cliFlag: 'component', description: 'Component names to add.'),
+    Param('index', ParamType.integer, min: 0, description: 'Insert position; default end.'),
+    Param('values', ParamType.object, description: 'Per-component field overrides: {"position": {"x": 3}}.'),
+  ],
+  errors: {
+    ErrorCode.notFound: 'The level file does not exist.',
+    ErrorCode.validationFailed: 'The level would become invalid (details.problems).',
+    ErrorCode.locked: 'Someone holds the level lock (details.owner).',
+  },
+  examples: [
+    Example('Add a coin', {'path': 'assets/levels/level1.json', 'name': 'coin_1', 'components': ['position'], 'values': {'position': {'x': 64, 'y': 32}}}),
+  ],
+  cli: CliHints(legacy: ['studio add-entity']),
+  handler: (ctx, a) {
+    final file = ctx.project!.resolve(a['path']! as String);        // sandboxed path
+    final before = ctx.files.read(file);                              // String? (null = missing)
+    if (before == null) throw OpError(ErrorCode.notFound, 'No level at ${a['path']}.');
+    final doc = LevelDocument.fromJson(jsonDecode(before) as Map<String, dynamic>);
+    final components = <String, Map<String, dynamic>>{};
+    for (final c in (a['components'] as List?)?.cast<String>() ?? const []) {
+      final schema = allComponentSchemas[c] ?? (throw OpError(ErrorCode.invalidParams, 'Unknown component "$c".'));
+      components[c] = Map<String, dynamic>.of(schema.template);
+    }
+    ((a['values'] as Map?) ?? const {}).forEach((c, v) => components.putIfAbsent(c as String, () => {}).addAll((v as Map).cast()));
+    final entity = LevelEntity(name: a['name'] as String?, components: components);
+    AddEntityCommand(entity, index: a['index'] as int?).apply(doc);
+    return OpOutcome.proposal(
+      Proposal([FileChange(path: a['path']! as String, before: before, after: canonicalJson(doc.toJson()))]),
+      data: {'index': doc.entities.indexOf(entity), 'entity': entity.name},
+    );
+  },
+);
+```
+
+Every other write operation differs only in how it builds `after`. Reads return `OpOutcome.data(...)`.
+
+### S.4 File access abstraction (makes core ops testable without disk)
+
+```dart
+abstract class ProjectFiles {            // implemented by DiskFiles (dart:io) and MemoryFiles (tests)
+  String? read(String absolutePath);
+  List<String> list(String absoluteDir, {bool recursive});
+  bool exists(String absolutePath);
+  void writeAtomic(String absolutePath, String content);   // temp file + rename
+  void delete(String absolutePath);
+}
+```
+`OpContext.files` is a `ProjectFiles`. `MemoryFiles` makes the per-operation tests fast and lets the web build of `engine_core` keep
+compiling (the disk implementation lives in `ops/disk_files.dart`, imported only by `engine_core_ops.dart`; if `engine_core_ops.dart`
+must also compile for web, put it behind a conditional import, but v1 targets the VM only).
+
+### S.5 CLI binding core (`engine_cli/lib/src/ops_cli.dart`)
+
+```dart
+List<Command<int>> buildOpCommands(OperationRegistry registry, OpContext Function(ArgResults) makeCtx) {
+  final groups = <String, _GroupCommand>{};
+  for (final op in registry.all) {
+    groups.putIfAbsent(op.group, () => _GroupCommand(op.group)).addSubcommand(_OpCommand(op, registry, makeCtx));
+  }
+  return groups.values.toList();
+}
+
+class _OpCommand extends Command<int> {
+  _OpCommand(this.op, this.registry, this.makeCtx) {
+    for (final p in op.params.where((p) => !p.positional)) { addParamOption(argParser, p); }   // flag per param (S.6)
+    argParser..addFlag('json', negatable: false)..addFlag('dry-run', negatable: false)..addFlag('apply', negatable: false)
+             ..addFlag('yes', negatable: false)..addOption('confirmation')..addFlag('stdin', negatable: false)..addOption('args');
+  }
+  @override String get name => op.cli.verb ?? op.verb.replaceAll('_', '-');
+  @override String get description => op.summary;
+  @override String get invocation => '${runner!.executableName} ${op.group} $name ${op.params.where((p) => p.positional).map((p) => '<${p.name}>').join(' ')}';
+  @override Future<int> run() async {
+    final args = await collectArgs(op, argResults!);                  // flags + positionals + --args + --stdin (flags win)
+    final result = await registry.call(op.name, args, makeCtx(argResults!));
+    return renderAndExit(op, result, json: argResults!['json'] as bool, yes: argResults!['yes'] as bool);
+  }
+}
+```
+
+`renderAndExit` prints text via `ops_cli_format.dart` (a `Map<String, String Function(OpResult)>` keyed by operation name; default pretty
+JSON), maps `ErrorCode -> exit code` from B.1, and for a destructive preview prints the diff plus "run again with --apply" then exits 78.
+
+### S.6 Param -> CLI option rules (`addParamOption`)
+
+`boolean` -> `addFlag(name, negatable: true)`; `array` -> `addMultiOption(cliFlag ?? name)`; `enumeration` -> `addOption(name, allowed: options)`;
+others -> `addOption(name, abbr: cliAbbr, defaultsTo: defaultValue?.toString(), help: description)`. Coercion back to typed values uses the
+same `ParamValidator` as the API (`'3'` -> 3; `json` params go through `parseFieldValue`).
+
+### S.7 MCP dispatch core (`engine_api/lib/src/mcp/tools.dart`)
+
+```dart
+Map<String, Object?> toolFor(Operation op, Policy policy) => {
+  'name': op.name,
+  'title': op.summary,
+  'description': renderToolDescription(op),          // summary + description + Kind line + examples + error codes (G.2)
+  'inputSchema': inputSchemaFor(op),                 // C converter + implicit apply/confirmation for writes
+  'annotations': {
+    'readOnlyHint': op.kind == OperationKind.read,
+    'destructiveHint': op.kind == OperationKind.destructive,
+    'idempotentHint': op.idempotent,
+    'openWorldHint': false,
+  },
+};
+
+Future<Map<String, Object?>> callTool(OperationRegistry reg, OpContext ctx, String name, Map<String, Object?> args) async {
+  final r = await reg.call(name, args, ctx);
+  return {
+    'content': [{'type': 'text', 'text': const JsonEncoder.withIndent('  ').convert(r.toJson())}],
+    'structuredContent': r.toJson(),
+    'isError': !r.ok,
+  };
+}
+```
+
+### S.8 Minimal JSON-RPC server loop (shared by stdio and HTTP)
+
+```dart
+Future<Object?> handleRpc(Object? message, McpSession s) async {          // message: Map or List (batch)
+  if (message is List) return [for (final m in message) await handleRpc(m, s)].where((r) => r != null).toList();
+  if (message is! Map) return rpcError(null, -32600, 'Invalid Request');
+  final id = message['id'], method = message['method'], params = (message['params'] as Map?)?.cast<String, Object?>() ?? {};
+  try {
+    final result = await s.dispatch(method as String, params);            // switch on method (G.1); throws RpcException(code, message)
+    return id == null ? null : {'jsonrpc': '2.0', 'id': id, 'result': result};   // notification -> no reply
+  } on RpcException catch (e) {
+    return id == null ? null : rpcError(id, e.code, e.message, e.data);
+  }
+}
+```
+
+stdio: `stdin.transform(utf8.decoder).transform(const LineSplitter()).listen((line) async { final r = await handleRpc(jsonDecode(line), s); if (r != null) stdout.writeln(jsonEncode(r)); });`.
+
+### S.9 Safety pipeline core (`safety.dart`), pseudo-Dart
+
+```dart
+Future<OpResult> finish(Operation op, Map args, OpOutcome out, OpContext ctx) async {
+  if (out is! ProposalOutcome) return OpResult.ok(out.data, warnings: out.warnings);
+  final p = out.proposal;
+  _validate(p);                                          // LevelValidator / graph / prefab by file kind -> validation_failed
+  for (final c in p.changes) { ctx.locks.ensureFree(c.path); }       // -> locked
+  final diff = diffFor(p);                               // LevelDiff for levels, text summary otherwise
+  final wantsApply = args['apply'] == true || args['confirmation'] != null || (op.kind == OperationKind.write && args['apply'] != false);
+  if (op.kind == OperationKind.destructive) {
+    if (args['confirmation'] != null) tokens.verify(args['confirmation'] as String, op, args, p);      // stale/invalid
+    else return OpResult.ok({'preview': true, 'summary': p.summary, 'diff': diff.toJson(), 'confirmation': tokens.issue(op, args, p)}, ...);
+  } else if (!wantsApply) { return OpResult.ok({'preview': true, 'diff': diff.toJson()}); }
+  final undoId = ctx.undo!.record(op, args, p);          // journal BEFORE the first rename
+  for (final c in p.changes) { ctx.files.writeAtomic(ctx.project!.resolve(c.path), c.after!); }
+  return OpResult.ok(out.data, diff: diff, undoId: undoId);
+}
+```
+
+(`readOnly` and allow/deny are enforced earlier in `policy.check`; `world.*` ops return plain data outcomes and never reach this code.)
+
+## T. Test templates and fixtures
+
+### T.1 Fixture project (`packages/engine_core/test/fixtures/ops_project/`, copied to a temp dir per test)
+
+```
+pubspec.yaml                      # name: ops_demo\nenvironment: {sdk: ^3.9.0}\n
+assets/levels/level1.json         # entities: ground(tileMap 14x8 + position), player(position), coin_1(position)
+assets/levels/empty.json          # {"entities": []}
+assets/prefabs/                   # empty
+graphs/graph1.json                # tiny dialogue graph (say -> end)
+lib/main.dart                     # class Hero {}
+assets/idle_game.json             # copy of packages/engine_idle/example/cookie_clicker.json
+```
+
+Helper `Future<OpContext> scratchContext({bool readOnly = false, FakeClock? clock})` copies the fixture into `Directory.systemTemp`, returns a
+context bound to it (and registers `addTearDown` cleanup). **All** per-operation tests start with it.
+
+### T.2 Per-operation test pattern (generated list + hand cases)
+
+```dart
+void main() {
+  final registry = buildRegistry();
+  group('every operation example runs', () {
+    for (final op in registry.all.where((o) => !o.requiresFlutter)) {
+      for (final ex in op.examples) {
+        test('${op.name}: ${ex.title}', () async {
+          final ctx = await scratchContext();
+          final r = await registry.call(op.name, ex.args, ctx);
+          expect(r.ok, isTrue, reason: r.error?.message);
+          if (ex.expect != null) expect(r.data, containsPair(...));   // subset match helper
+        });
+      }
+    }
+  });
+  group('level.add_entity', () {
+    test('adds and validates', ...);                       // read file back, compare to legacy CLI output (golden)
+    test('invalid component -> invalid_params', ...);
+    test('would-be-invalid result -> validation_failed and file untouched', ...);
+    test('locked -> locked with owner', ...);
+    test('read-only -> read_only', ...);
+    test('dry run writes nothing', ...);
+    test('undo restores bytes', ...);
+  });
+}
+```
+
+### T.3 Golden comparison with the legacy CLI (proves behaviour is preserved during phase 3/4)
+
+For each migrated command, a test runs the **legacy** command (already exercised by `runStudio([...])` in
+`packages/engine_cli/test/support/run_studio.dart`) and the new operation on two copies of the same level and asserts the resulting files are
+byte-identical. Delete the golden test only when the legacy command is removed.
+
+### T.4 Parity test skeleton (`engine_api/test/parity_test.dart`)
+
+```dart
+test('registry, CLI, MCP, REST, OpenAPI and JSON-RPC cover the same operations', () {
+  final reg = buildRegistry();
+  final ops = {for (final o in reg.all) o.name: o};
+  final flutterOnly = {for (final o in reg.all) if (o.requiresFlutter) o.name};
+  final cli = cliOperationNames(buildOpCommands(reg, ...));               // walk Command tree -> 'group.verb' (hyphens -> underscores)
+  expect(cli..removeAll(legacyAliasNames), equals(ops.keys.toSet()));
+  final served = ops.keys.toSet().difference(flutterOnly);
+  expect(mcpToolNames(reg), served);
+  expect(restRoutes(reg).map(routeToName).toSet(), served);
+  expect(openApiPaths(reg).map(pathToName).toSet(), served);
+  expect(rpcMethods(reg), served);
+});
+```
+
+## U. Files to create verbatim
+
+### U.1 `packages/engine_api/pubspec.yaml`
+
+```yaml
+name: engine_api
+description: MCP server and HTTP/JSON-RPC API for the engine: every studio command, engine function and project function as one operation.
+version: 0.1.0
+publish_to: none
+homepage: https://github.com/arashrasoulzadeh/agentic-game-engine
+repository: https://github.com/arashrasoulzadeh/agentic-game-engine
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  args: ^2.5.0
+  path: ^1.9.0
+  yaml: ^3.1.2
+  crypto: ^3.0.3
+  image: ^4.7.0              # image codec for asset.pack / level.lint render (same version as engine_cli)
+  engine_schema:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_schema
+      ref: main
+  engine_core:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_core
+      ref: main
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^5.0.0
+
+executables:
+  engine_api: engine_api
+```
+
+plus `pubspec_overrides.yaml` (gitignored-safe, local development; copy the pattern from `packages/engine_cli/pubspec_overrides.yaml`):
+
+```yaml
+dependency_overrides:
+  engine_schema:
+    path: ../engine_schema
+  engine_core:
+    path: ../engine_core
+```
+
+(`engine_core` is already declared with the self-referencing git dependency pattern described in CLAUDE.md; follow the same comment block.)
+
+### U.2 `.github/workflows/engine_api.yml`
+
+```yaml
+name: engine_api
+on:
+  push:
+    branches: [main]
+    paths: ['packages/engine_api/**', 'packages/engine_core/**', 'packages/engine_schema/**', 'packages/engine_cli/**', '.github/workflows/engine_api.yml']
+  pull_request:
+    paths: ['packages/engine_api/**', 'packages/engine_core/**', 'packages/engine_schema/**', 'packages/engine_cli/**', '.github/workflows/engine_api.yml']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: packages/engine_api } }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test
+```
+
+Also add `engine_api` to the `paths` of `engine_core.yml` consumers only if needed; add `packages/engine_core/**` changes to `engine_cli.yml` (already present) so the parity test in `engine_cli` runs when the registry changes. `docs.yml`: add `engine_api` to the API-doc loop (`dart doc` works for pure Dart: use `dart pub get`).
+
+### U.3 Docs touch list (do in phase 0 and phase 7)
+
+`CLAUDE.md` package map row: `packages/engine_api` - "MCP/HTTP/JSON-RPC server over the operation registry in `engine_core`; depends on `engine_core` only" ;
+`README.md` package table + badge row; `mkdocs.yml` nav: Reference > Operations (generated), MCP server; `docs/engine-releasing.md` dependency
+order (insert `engine_api` after `engine_cli`); `CHANGELOG.md` `### Added`; `TODO.md` new item "engine_api: see engine_mcp.md".
+
+## V. Pitfalls already paid for (do not rediscover)
+
+1. **Gate every commit on the real test result.** `cmd | grep ... && git commit` succeeds even when tests fail (this shipped a broken commit once).
+   Capture `r=$(dart test 2>&1 | tail -1)` and test `case "$r" in *"All tests passed"*) ... ;; esac`, and also run `dart analyze --fatal-infos`
+   (the `unnecessary_import` lint failed CI twice).
+2. `engine_core` tests run with `dart test`; Flutter packages with `flutter test --no-pub` and `flutter_test` (not `package:test`).
+   Flutter SDK is at `~/develop/flutter/bin` (not on PATH). pub.dev is unreachable in the sandbox: use `--offline`/`--no-pub`; packages
+   resolve through `pubspec_overrides.yaml`.
+3. Shell aliases `rm`/`cp`/`mv` are interactive and hang or no-op: use `rm -f`, `python3` for copies/moves, `git mv` for repo moves.
+4. `dart format` reflows code, so scripted string replacements must re-read the file first; do not run it on packages never formatted
+   (unrelated diffs). Format only files you touched.
+5. A widget test that spawns a real process leaves a pending timer (FakeAsync): inject runners (`GitRunner`, `ProcessStarter`, `PubProcessStarter`).
+   The new ops must never spawn processes except `requiresFlutter` ones.
+6. Adding a public `*Event` class requires a row in `docs/reference/events.md` (drift test); adding a component requires a schema +
+   `dart run tool/gen_component_docs.dart > ../../docs/reference/components.md` (from `packages/engine_schema`). The same drift-test
+   idea applies to the generated operation docs.
+7. `release_consistency_test` (engine_core) requires every package to share the version, have `publish_to: none`, LICENSE, README and
+   CHANGELOG. Create them in phase 0.
+8. `game_agent` legacy exit codes and stdout wording are pinned by ~130 tests in `packages/engine_cli/test/`; keep adapters byte-compatible
+   and change those tests only when behaviour is intentionally extended (additive `--json`).
+9. Dart records compare lists by identity in `expect`; compare fields separately.
+10. GitHub may be unreachable for a while; commit locally and retry the push later, nothing is lost.
+11. `FileLock` files are `<path>.lock` next to the level; ignore them in `project.tree` (the studio tree already hides generated files: reuse
+    `listProjectTree`).
+12. Keep `engine_core` web-compilable: nothing under `src/ops/` may be exported from `engine_core.dart`; `dart:io` code lives behind
+    `engine_core_ops.dart` (the same split as `engine_core_io.dart`).
+
+## W. Effort map (for planning, not a promise)
+
+| Phase | Rough size | Largest risk |
+|---|---|---|
+| 0 scaffolding | small | none |
+| 1 registry core | medium (about 1,200 lines + tests) | parameter schema ergonomics; settle it with `engine.*` ops first |
+| 2 write safety | medium | atomicity and token design; heavy unit tests |
+| 3 move read ops | medium-large | moving files out of `engine_studio` without breaking its tests (do one file per commit) |
+| 4 move write ops | medium | byte-identical output vs legacy; golden tests |
+| 5 new ops | large (many small handlers) | `graph_editor` extraction, `asset.pack` image-codec injection |
+| 6 server | large | MCP details; keep a thin protocol layer and test against the spec text |
+| 7 parity/docs/e2e | medium | doc generator drift; e2e flakiness (use ephemeral ports, fixed clocks) |
+| 8 release plumbing | small | none |
+
+Suggested working method to minimise tokens: implement **one operation group per session**, starting each by reading only the rows of
+sections J and R for that group, the matching legacy source file named in R.3, and the worked example S.3; write the handler, its test
+from T.2, run only that test file plus `dart analyze`, commit, move on.
