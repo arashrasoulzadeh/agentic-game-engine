@@ -62,6 +62,7 @@ class OpContext {
     this.confirmationTtl = const Duration(minutes: 5),
     this.allowProjectOpen = true,
     this.allowProjectSwitch = true,
+    this.allowOpen = const [],
   }) : lockOwner = lockOwner ?? _defaultOwner(),
        files = files ?? const DiskFiles(),
        clock = clock ?? DateTime.now,
@@ -89,6 +90,9 @@ class OpContext {
 
   /// Whether `project.open` may replace an already open project.
   final bool allowProjectSwitch;
+
+  /// Globs (`*` matches anything) of absolute folders `project.open` may open; empty means any.
+  final List<String> allowOpen;
 
   UndoLog? _undoLog;
 

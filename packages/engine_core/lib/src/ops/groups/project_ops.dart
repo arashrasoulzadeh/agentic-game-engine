@@ -131,6 +131,21 @@ List<Operation> projectOperations() => [
           'This server cannot open or switch projects.',
         );
       }
+      if (ctx.allowOpen.isNotEmpty) {
+        final abs = ProjectRoot(a['path']! as String).root;
+        final allowed = ctx.allowOpen.any(
+          (g) => RegExp(
+            '^${g.split('*').map(RegExp.escape).join('.*')}\$',
+          ).hasMatch(abs),
+        );
+        if (!allowed) {
+          throw OpError(
+            ErrorCode.forbidden,
+            'This server may not open $abs.',
+            hint: 'Allowed: ${ctx.allowOpen.join(', ')}',
+          );
+        }
+      }
       try {
         StudioProject.open(a['path']! as String);
       } on ProjectOpenException catch (e) {
@@ -148,7 +163,14 @@ List<Operation> projectOperations() => [
     kind: OperationKind.read,
     scope: OperationScope.project,
     idempotent: true,
+    errors: {ErrorCode.forbidden: 'This server is fixed to one project.'},
     handler: (ctx, a) {
+      if (!ctx.allowProjectSwitch) {
+        throw OpError(
+          ErrorCode.forbidden,
+          'This server is fixed to its project and cannot close it.',
+        );
+      }
       ctx.project = null;
       return const OpOutcome.data({'closed': true});
     },

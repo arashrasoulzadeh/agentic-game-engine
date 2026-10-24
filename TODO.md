@@ -137,7 +137,7 @@ What is left:
       `strategy.simulate_turns` (the assembly lives in `engine_strategy`), `engine.docs`,
       `level.lint --render` as an operation (needs an injected image codec).
 - [ ] **Server extras:** SSE streaming and progress notifications, cancellation (`notifications/cancelled`), `Retry-After`
-      for the concurrency limit, request-log levels, `allowOpen` globs for `project.open` over the network.
+      for the concurrency limit, request-log levels.
 
 ## Turn-based strategy
 

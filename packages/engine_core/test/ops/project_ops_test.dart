@@ -59,6 +59,36 @@ void main() {
     );
   });
 
+  test('a fixed server cannot get around the lock by closing first', () async {
+    final s = await Scratch.create();
+    final noSwitch = OpContext(
+      project: s.ctx.project,
+      allowProjectSwitch: false,
+    );
+    expect(
+      (await s.registry.call('project.close', {}, noSwitch)).error!.code,
+      ErrorCode.forbidden,
+    );
+    expect(noSwitch.project, isNotNull);
+  });
+
+  test('allowOpen restricts which folders project.open accepts', () async {
+    final s = await Scratch.create(open: false);
+    final inside = OpContext(
+      allowOpen: ['${s.dir.resolveSymbolicLinksSync()}*'],
+    );
+    expect(
+      (await s.registry.call('project.open', {'path': s.dir.path}, inside)).ok,
+      isTrue,
+    );
+    final elsewhere = OpContext(allowOpen: ['/nonexistent/*']);
+    final r = await s.registry.call('project.open', {
+      'path': s.dir.path,
+    }, elsewhere);
+    expect(r.error!.code, ErrorCode.forbidden);
+    expect(elsewhere.project, isNull);
+  });
+
   test('project.close forgets the project', () async {
     final s = await Scratch.create();
     expect((await s.map('project.close'))['closed'], isTrue);

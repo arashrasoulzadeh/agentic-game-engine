@@ -458,6 +458,50 @@ void main() {
     expect(sw.elapsedMilliseconds, lessThan(250));
   });
 
+  test(
+    'an HTTP server started on a project cannot be pointed elsewhere',
+    () async {
+      final root = ProjectRoot(project.path);
+      final http = contextFromArgs(
+        buildServerParser().parse(['--http']),
+        root,
+        (_) {},
+      );
+      expect(http.allowProjectSwitch, isFalse);
+      final stdio = contextFromArgs(
+        buildServerParser().parse([]),
+        root,
+        (_) {},
+      );
+      expect(
+        stdio.allowProjectSwitch,
+        isTrue,
+        reason: 'a local stdio client may switch',
+      );
+      final unbound = contextFromArgs(
+        buildServerParser().parse(['--http']),
+        null,
+        (_) {},
+      );
+      expect(
+        unbound.allowProjectSwitch,
+        isTrue,
+        reason: 'with no project yet there is something to open',
+      );
+      final r = await buildRegistry().call('project.close', {}, http);
+      expect(r.error!.code, ErrorCode.forbidden);
+      final restricted = contextFromArgs(
+        buildServerParser().parse(['--allow-open', '/only/here/*']),
+        null,
+        (_) {},
+      );
+      final denied = await buildRegistry().call('project.open', {
+        'path': project.path,
+      }, restricted);
+      expect(denied.error!.code, ErrorCode.forbidden);
+    },
+  );
+
   group('tokens', () {
     test('generated tokens are 43 url-safe characters and unique', () {
       final a = generateToken(), b = generateToken();

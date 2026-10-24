@@ -41,6 +41,10 @@ ArgParser buildServerParser() => ArgParser()
     help: 'HTTP rate limit.',
   )
   ..addMultiOption(
+    'allow-open',
+    help: 'Absolute folder glob project.open may open (default: any).',
+  )
+  ..addMultiOption(
     'allow-origin',
     help: 'Browser origin allowed to call the HTTP API (CORS), exact match.',
   )
@@ -121,15 +125,7 @@ Future<int> runServer(
       return 66;
     }
   }
-  final ctx = OpContext(
-    project: project,
-    policy: Policy(
-      allow: (r['allow'] as List).cast<String>(),
-      deny: (r['deny'] as List).cast<String>(),
-      readOnly: r['read-only'] as bool,
-    ),
-    log: error,
-  );
+  final ctx = contextFromArgs(r, project, error);
   final session = McpSession(
     buildRegistry(),
     ctx,
@@ -171,6 +167,24 @@ Future<int> runServer(
   await server.close();
   return 0;
 }
+
+/// The operation context a parsed command line asks for: policy, project, project-switching rules.
+OpContext contextFromArgs(
+  ArgResults r,
+  ProjectRoot? project,
+  void Function(String) log,
+) => OpContext(
+  project: project,
+  policy: Policy(
+    allow: (r['allow'] as List).cast<String>(),
+    deny: (r['deny'] as List).cast<String>(),
+    readOnly: r['read-only'] as bool,
+  ),
+  log: log,
+  allowOpen: (r['allow-open'] as List).cast<String>(),
+  // Over HTTP a server started on a project stays on it; switching needs a restart.
+  allowProjectSwitch: !((r['http'] as bool) && project != null),
+);
 
 RequestLog? _requestLog(String? explicit, ProjectRoot? project) {
   if (explicit != null) return RequestLog(explicit);

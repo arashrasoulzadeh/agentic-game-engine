@@ -1034,6 +1034,8 @@ Forgets the open project; project operations fail until another is opened.
 
 *read*, needs an open project, idempotent.
 
+Errors: `forbidden`.
+
 ```bash
 game_agent project close
 ```
