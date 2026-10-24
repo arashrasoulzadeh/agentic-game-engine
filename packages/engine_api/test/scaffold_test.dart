@@ -10,7 +10,11 @@ void main() {
   });
 
   test('the executable reports its version', () async {
-    final r = await Process.run(Platform.resolvedExecutable, ['run', 'bin/engine_api.dart', '--version']);
+    final r = await Process.run(Platform.resolvedExecutable, [
+      'run',
+      'bin/engine_api.dart',
+      '--version',
+    ]);
     expect(r.exitCode, 0);
     expect(r.stdout, contains('engine_api $engineApiVersion'));
   });
