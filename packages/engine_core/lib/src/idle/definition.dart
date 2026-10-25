@@ -162,6 +162,20 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
     if (max != null && (max is! int || max < 1)) {
       errors.add('$p.maxOwned must be a whole number >= 1');
     }
+    final costResource = g['costResource'] as String? ?? 'coins';
+    if (resources.isNotEmpty && !resources.contains(costResource)) {
+      errors.add('$p.costResource "$costResource" is not a declared resource');
+    }
+    final requires = g['requires'];
+    if (requires != null && requires is! List) {
+      errors.add('$p.requires must be a list');
+    } else if (requires is List) {
+      for (var j = 0; j < requires.length; j++) {
+        if (requires[j] is! String || (requires[j] as String).isEmpty) {
+          errors.add('$p.requires[$j] must be a non-empty string');
+        }
+      }
+    }
   }
 
   final upgradeIds = <String>{};
@@ -184,6 +198,19 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
     if (cost is Map) {
       for (final e in cost.entries) {
         number(e.value, '$p.cost.${e.key}', nonNegative: true);
+        if (resources.isNotEmpty && !resources.contains(e.key)) {
+          errors.add('$p.cost.${e.key} is not a declared resource');
+        }
+      }
+    }
+    final requires = u['requires'];
+    if (requires != null && requires is! List) {
+      errors.add('$p.requires must be a list');
+    } else if (requires is List) {
+      for (var j = 0; j < requires.length; j++) {
+        if (requires[j] is! String || (requires[j] as String).isEmpty) {
+          errors.add('$p.requires[$j] must be a non-empty string');
+        }
       }
     }
   }
@@ -232,9 +259,19 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
     }
     if (pr['currency'] is! String) {
       errors.add('$path.currency is required');
+    } else if (resources.isNotEmpty &&
+        !resources.contains(pr['currency'] as String)) {
+      errors.add(
+        '$path.currency "${pr['currency']}" is not a declared resource',
+      );
     }
     if (pr['basedOn'] is! String) {
       errors.add('$path.basedOn is required');
+    } else if (resources.isNotEmpty &&
+        !resources.contains(pr['basedOn'] as String)) {
+      errors.add(
+        '$path.basedOn "${pr['basedOn']}" is not a declared resource',
+      );
     }
     final id = pr['id'] ?? 'prestige';
     if (id is! String || id.isEmpty) {
@@ -367,6 +404,22 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
           (main is! String ||
               (resources.isNotEmpty && !resources.contains(main)))) {
         errors.add('autoBuyer.mainResource must be a declared resource');
+      }
+    }
+  }
+
+  final offline = json['offline'];
+  if (offline != null) {
+    if (offline is! Map) {
+      errors.add('offline must be an object');
+    } else {
+      final cap = offline['capHours'];
+      if (cap != null && (cap is! num || cap <= 0)) {
+        errors.add('offline.capHours must be a number greater than 0');
+      }
+      final eff = offline['efficiency'];
+      if (eff != null && (eff is! num || eff < 0 || eff > 1)) {
+        errors.add('offline.efficiency must be a number between 0 and 1');
       }
     }
   }

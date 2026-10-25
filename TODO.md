@@ -11,8 +11,9 @@ Related (not task lists):
 - [engine_mcp.md](engine_mcp.md) — agent API (phases 0–7 shipped; add ops via
   `engine_core` groups + `gen_api_docs.dart`)
 
-Sections: [Performance](#performance) · [Engine](#engine) · [Studio](#studio) ·
-[Docs](#docs) · [Release](#release) · [Parked decisions](#parked-decisions)
+Sections: [Performance](#performance) · [Engine](#engine) · [Idle polish](#idle-polish) ·
+[Studio](#studio) · [Docs](#docs) · [Release](#release) ·
+[Parked decisions](#parked-decisions)
 
 ## Performance
 
@@ -29,13 +30,30 @@ Sections: [Performance](#performance) · [Engine](#engine) · [Studio](#studio) 
 
 ## Engine
 
-- Idle / incremental genre is complete for creating new games
-  (`game_agent create --template idle_game`, full subsystem table in
-  [docs/concepts/idle-games.md](docs/concepts/idle-games.md)). Only the
-  device bench under Performance remains for idle.
 - [ ] **Zahaak gaps** — features that local `zahaak` needs but the engine
       lacks (`zahaak/docs/engine-gap-analysis.md`). Not scoped; revisit once
       its combat/dialogue scope is locked.
+
+## Idle polish
+
+Create path is shippable (`--template idle_game`: durable save, cold-start
+offline dialog, challenges, stats, golden, validate currency/`offline`).
+Guide checklist: [docs/concepts/idle-games.md](docs/concepts/idle-games.md).
+Depth / genre extras still open:
+
+- [ ] Persist number format (and decimal separator) across launches.
+- [ ] Template `onDouble` stub + docs for rewarded-ad offline double.
+- [ ] Multi-currency header that follows declared `resources` (not a fixed list).
+- [ ] Prestige-layer UI in the template (`"prestiges"` + one `PrestigePanel` each).
+- [ ] Auto-buyer wired in the template (JSON + `AutoBuySystem` + `whileAway`).
+- [ ] `ReturnNotifier` example (schedule on pause; OS plugin stays the game's job).
+- [ ] Cloud-save walkthrough (Game Center / Play Games / HTTP sample).
+- [ ] Sound / SFX hooks on buy, prestige, golden claim.
+- [ ] Localisation of definition display names (string keys / locale tables).
+- [ ] Whole-file JSON Schema for `idle_game.json` (component schemas exist).
+- [ ] Synergy upgrades ("+X per other generator owned").
+- [ ] Research-tree definition block + UI (tech `requires` already work).
+- [ ] Prestige-shop UI (filter gem-cost upgrades); time-warp / season pass.
 
 ## Studio
 

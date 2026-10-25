@@ -27,15 +27,18 @@ common path; optional blocks are noted.
 | Resources + generators + upgrades | `assets/idle_game.json` | yes |
 | Cost curves (`geometric` / `linear` / `table`) | definition | yes (geometric) |
 | Milestones on generators | definition | add when you want |
+| Tech gates (`requires` on generators/upgrades) | definition + `TechState` in Dart | opt-in |
 | Taps + timed boosts | `IdleController.tap` / `BoostSystem` | yes |
 | Achievements | definition + `AchievementList` | yes |
 | Prestige (single or layered `prestiges`) | definition + `PrestigePanel` | yes (single) |
 | Challenges | definition + `ChallengePanel` | yes |
 | Golden offers | `"golden"` + `GoldenEventSystem` + `GoldenOffer` | yes |
 | Auto-buyer | `"autoBuyer"` + `AutoBuySystem` | opt-in (see below) |
-| Offline catch-up + lifecycle | `IdleSession` + `IdleLifecycleHost` | yes |
-| Save / export code / cloud hook | `BrowserSaveStore` / `FileSaveStore` / `SaveCodePanel` | yes |
-| Number formats | `IdleSettingsPanel` / `formatBigNumber` | yes |
+| Offline catch-up + lifecycle | `IdleSession` + `IdleLifecycleHost` | yes (cold start + resume) |
+| Durable save | web `BrowserSaveStore` / else `FileSaveStore` | yes |
+| Export code / cloud hook | `SaveCodePanel` / `CloudSaveStore` | export yes; cloud is a contract |
+| Stats | `StatsPanel` | yes |
+| Number formats | `IdleSettingsPanel` / `formatBigNumber` | yes (not persisted yet) |
 | Balance check | `game_agent idle simulate` / `idle.validate` | CLI / agent |
 | Headless agent ops | `idle.*` on MCP/REST/CLI | yes |
 
@@ -180,8 +183,10 @@ game is refused with a readable message and left untouched.
 prestige. The ready-made widgets read from it: `ResourceHeader`, `GeneratorList` (×1 / ×10 / ×100 / Max, disabled
 when unaffordable, lazily built so hundreds of rows stay smooth), `UpgradeList`, `OfflineSummaryDialog`
 (with an optional "Double it" button for a rewarded ad: pass `onDouble`, then call `IdleSession.doubleOffline`),
-`PrestigePanel` (previews the gain and asks before resetting), `AchievementList` and `IdleSettingsPanel`.
-`controller.setStyle(NumberStyle.scientific)` switches every number at once.
+`PrestigePanel` (previews the gain and asks before resetting), `ChallengePanel`, `AchievementList`,
+`StatsPanel` (taps / prestiges / play time / earned), `GoldenOffer` and `IdleSettingsPanel`.
+`controller.setStyle(NumberStyle.scientific)` switches every number at once (styles: `suffix`, `scientific`,
+`engineering`, `grouped`).
 
 ## Storage choices
 

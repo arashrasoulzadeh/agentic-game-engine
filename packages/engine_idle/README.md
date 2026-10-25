@@ -8,8 +8,8 @@ what is yours.
 
 Start from the template (`game_agent create my_game --template idle_game`) or
 read the [idle games guide](../../docs/concepts/idle-games.md) and
-[tutorial 5](../../docs/tutorials/05-idle-game.md). The genre layer is complete
-for a first release; remaining work is the device-bench item in
+[tutorial 5](../../docs/tutorials/05-idle-game.md). The create path is
+shippable; device bench and genre-depth polish are listed under Idle polish in
 [TODO.md](../../TODO.md).
 
 ## Where things live
@@ -25,7 +25,7 @@ save formats. This package re-exports all of that and adds what needs Flutter:
 | `IdleController` | Steps the world about ten times a second, notifies widgets, number format and locale mark |
 | `IdleSession` | Saving, loading, offline catch-up, app lifecycle, export/import codes, cloud sync, return reminders |
 | `FileSaveStore`, `BrowserSaveStore`, `MemorySaveStore`, `CloudSaveStore` | Where a save lives |
-| Widgets | `ResourceHeader`, `GeneratorList`, `UpgradeList`, `OfflineSummaryDialog`, `PrestigePanel`, `AchievementList`, `ChallengePanel`, `GoldenOffer`, `IdleSettingsPanel`, `SaveCodePanel`, `IdleLifecycleHost` |
+| Widgets | `ResourceHeader`, `GeneratorList`, `UpgradeList`, `OfflineSummaryDialog`, `PrestigePanel`, `AchievementList`, `ChallengePanel`, `StatsPanel`, `GoldenOffer`, `IdleSettingsPanel`, `SaveCodePanel`, `IdleLifecycleHost` |
 | `IdleAnalytics` | Purchase, prestige and return events through the consent-aware analytics manager |
 
 ```dart

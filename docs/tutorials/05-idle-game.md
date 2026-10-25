@@ -13,8 +13,9 @@ cd bakery
 flutter run
 ```
 
-You get a tap button, generators and upgrades, resource header, golden offers, prestige and achievements,
-challenges, saving, and a "while you were away" summary. The whole game is `assets/idle_game.json`.
+You get a tap button, generators and upgrades, resource header, golden offers, prestige, challenges,
+achievements, a stats card, durable saving (files on mobile/desktop, `localStorage` on web), and a
+"while you were away" summary on both cold start and resume. The whole game is `assets/idle_game.json`.
 
 ## 2. Change the economy
 

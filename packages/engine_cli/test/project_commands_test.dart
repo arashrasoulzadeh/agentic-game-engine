@@ -309,6 +309,10 @@ dependencies:
     expect(main, contains('loadIdleDefinition'));
     expect(main, contains('ChallengePanel'));
     expect(main, contains('GoldenOffer'));
+    expect(main, contains('StatsPanel'));
+    expect(main, contains('FileSaveStore'));
+    expect(main, contains('openIdleSaveStore'));
+    expect(pubspec, contains('path_provider'));
     final def = File(
       '${tmp.path}/cookie_game/assets/idle_game.json',
     ).readAsStringSync();

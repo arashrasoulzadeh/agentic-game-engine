@@ -365,6 +365,44 @@ void main() {
         problems((j) => (j['prestige'] as Map)['exponent'] = -1),
         contains('prestige.exponent must be greater than 0'),
       );
+      expect(
+        problems((j) => (j['prestige'] as Map)['currency'] = 'mana'),
+        contains('prestige.currency "mana" is not a declared resource'),
+      );
+      expect(
+        problems((j) => (j['prestige'] as Map)['basedOn'] = 'mana'),
+        contains('prestige.basedOn "mana" is not a declared resource'),
+      );
+    });
+
+    test('offline, costResource and requires are checked', () {
+      expect(
+        problems((j) => j['offline'] = 'later'),
+        contains('offline must be an object'),
+      );
+      expect(
+        problems((j) => j['offline'] = {'capHours': 0, 'efficiency': 2}),
+        allOf(
+          contains('offline.capHours must be a number greater than 0'),
+          contains('offline.efficiency must be a number between 0 and 1'),
+        ),
+      );
+      expect(
+        problems((j) => (j['generators'] as List)[0]['costResource'] = 'mana'),
+        contains(
+          'generators[0].costResource "mana" is not a declared resource',
+        ),
+      );
+      expect(
+        problems(
+          (j) => (j['upgrades'] as List)[0]['cost'] = {'mana': '10'},
+        ),
+        contains('upgrades[0].cost.mana is not a declared resource'),
+      );
+      expect(
+        problems((j) => (j['generators'] as List)[0]['requires'] = [1]),
+        contains('generators[0].requires[0] must be a non-empty string'),
+      );
     });
 
     test('wrong shapes are reported, not thrown', () {

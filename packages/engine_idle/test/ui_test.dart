@@ -133,6 +133,21 @@ void main() {
       },
     );
 
+    testWidgets('StatsPanel shows taps, prestiges and play time', (
+      tester,
+    ) async {
+      final c = _controller();
+      final stats = c.world.storeOf<IdleStats>().denseAt(0);
+      stats.taps = 7;
+      stats.prestigeCount = 2;
+      stats.secondsPlayed = 3660;
+      await tester.pumpWidget(_app(StatsPanel(controller: c)));
+      expect(find.byKey(const Key('stats-panel')), findsOneWidget);
+      expect(find.byKey(const Key('stats-taps')), findsOneWidget);
+      expect(find.textContaining('7'), findsWidgets);
+      expect(find.textContaining('2'), findsWidgets);
+    });
+
     testWidgets(
       'a game without challenges shows nothing; a completed one has no button',
       (tester) async {

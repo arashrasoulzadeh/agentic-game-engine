@@ -2,7 +2,7 @@
 ///
 /// The genre-general pieces (big numbers, offline progress, cost curves, the modifier stack) live in
 /// `engine_core` because they are not specific to idle games; this package holds the genre's components,
-/// systems and widgets. Plan and status: the idle section of `TODO.md` at the repository root.
+/// systems and widgets. Create-path status and polish backlog: Idle polish in `TODO.md`.
 library;
 
 export 'engine_idle_logic.dart';

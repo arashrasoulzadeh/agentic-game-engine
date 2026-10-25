@@ -9,8 +9,10 @@ import 'package:{{PROJECT_NAME}}/main.dart';
 void main() {
   testWidgets('the idle game boots, taps earn coins and a generator can be bought', (tester) async {
     final definition = jsonDecode(File('assets/idle_game.json').readAsStringSync()) as Map<String, dynamic>;
-    await tester.pumpWidget(IdleApp(definition: definition));
+    // Memory store: avoids path_provider / disk in widget tests.
+    await tester.pumpWidget(IdleApp(definition: definition, saveStore: MemorySaveStore()));
     await tester.pump();
+    await tester.pump(); // finish async boot
 
     expect(find.byKey(const Key('amount-coins')), findsOneWidget);
     expect(find.text('Cursor'), findsOneWidget);
