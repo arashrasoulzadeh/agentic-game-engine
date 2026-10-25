@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:engine_core/engine_core_ops.dart';
+import 'package:path/path.dart' as p;
 
 import 'config.dart';
 import 'http/http_server.dart';
@@ -79,6 +80,12 @@ ArgParser buildServerParser() => ArgParser()
     'underscore-tool-names',
     negatable: false,
     help: 'Expose level_add_entity instead of level.add_entity.',
+  )
+  ..addOption(
+    'docs-root',
+    help:
+        'Folder of engine markdown docs for engine.docs (default: nearest '
+        'repo docs/ above the working directory, if present).',
   );
 
 /// Runs the server: MCP over stdio for now. Returns the process exit code.
@@ -169,24 +176,46 @@ Future<int> runServer(
   return 0;
 }
 
+/// Walks up from [from] looking for a `docs/getting-started.md` sibling of a
+/// package checkout (the monorepo layout). Returns null when none is found.
+String? findDocsRoot({String? from}) {
+  var dir = p.normalize(p.absolute(from ?? Directory.current.path));
+  while (true) {
+    final candidate = p.join(dir, 'docs');
+    if (File(p.join(candidate, 'getting-started.md')).existsSync()) {
+      return candidate;
+    }
+    final parent = p.dirname(dir);
+    if (parent == dir) return null;
+    dir = parent;
+  }
+}
+
 /// The operation context a parsed command line asks for: policy, project, project-switching rules.
 OpContext contextFromArgs(
   ArgResults r,
   ProjectRoot? project,
   void Function(String) log,
-) => OpContext(
-  project: project,
-  policy: Policy(
-    allow: (r['allow'] as List).cast<String>(),
-    deny: (r['deny'] as List).cast<String>(),
-    readOnly: r['read-only'] as bool,
-  ),
-  log: log,
-  allowOpen: (r['allow-open'] as List).cast<String>(),
-  // Over HTTP a server started on a project stays on it; switching needs a restart.
-  allowProjectSwitch: !((r['http'] as bool) && project != null),
-  imageCodec: const PackageImageCodec(),
-);
+) {
+  final docsFlag = r['docs-root'] as String?;
+  final docsRoot = docsFlag != null
+      ? p.normalize(p.absolute(docsFlag))
+      : findDocsRoot();
+  return OpContext(
+    project: project,
+    policy: Policy(
+      allow: (r['allow'] as List).cast<String>(),
+      deny: (r['deny'] as List).cast<String>(),
+      readOnly: r['read-only'] as bool,
+    ),
+    log: log,
+    allowOpen: (r['allow-open'] as List).cast<String>(),
+    // Over HTTP a server started on a project stays on it; switching needs a restart.
+    allowProjectSwitch: !((r['http'] as bool) && project != null),
+    imageCodec: const PackageImageCodec(),
+    docsRoot: docsRoot,
+  );
+}
 
 RequestLog? _requestLog(String? explicit, ProjectRoot? project) {
   if (explicit != null) return RequestLog(explicit);

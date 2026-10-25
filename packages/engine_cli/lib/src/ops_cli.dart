@@ -8,6 +8,20 @@ import 'package:path/path.dart' as p;
 
 import 'image_codec.dart';
 
+/// Walks up from [from] looking for `docs/getting-started.md` (monorepo layout).
+String? findDocsRoot({String? from}) {
+  var dir = p.normalize(p.absolute(from ?? Directory.current.path));
+  while (true) {
+    final candidate = p.join(dir, 'docs');
+    if (File(p.join(candidate, 'getting-started.md')).existsSync()) {
+      return candidate;
+    }
+    final parent = p.dirname(dir);
+    if (parent == dir) return null;
+    dir = parent;
+  }
+}
+
 /// Where a command writes. Injected so tests read output without capturing the process streams.
 class CliIo {
   CliIo({StringSink? out, StringSink? err, Stream<List<int>>? stdinStream})
@@ -64,6 +78,7 @@ void addOperationCommands(
       policy: Policy(readOnly: global['read-only'] == true),
       actor: 'cli',
       imageCodec: const PackageImageCodec(),
+      docsRoot: findDocsRoot(),
     );
   }
 

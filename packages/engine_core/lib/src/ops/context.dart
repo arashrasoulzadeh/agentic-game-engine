@@ -66,6 +66,7 @@ class OpContext {
     this.allowProjectSwitch = true,
     this.allowOpen = const [],
     this.imageCodec,
+    this.docsRoot,
   }) : lockOwner = lockOwner ?? _defaultOwner(),
        files = files ?? const DiskFiles(),
        clock = clock ?? DateTime.now,
@@ -114,6 +115,10 @@ class OpContext {
 
   /// Pixel codec for `asset.pack` / render ops; null means those return `unsupported`.
   final ImageCodec? imageCodec;
+
+  /// Absolute path to the engine's `docs/` tree for `engine.docs`. Null means that
+  /// operation returns [ErrorCode.unsupported] (docs are not bundled in the package yet).
+  final String? docsRoot;
 
   /// Token for the call currently running on this isolate zone, if any.
   ///

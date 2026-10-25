@@ -25,6 +25,8 @@ pubspec.yaml.
   actions. The resource header still follows every tick.
 
 ### Added
+- `engine.docs` operation: list or read markdown under a configured docs root (`engine_api --docs-root`,
+  auto-detects the monorepo `docs/` tree; returns `unsupported` when none is set).
 - Cooperative cancellation: `CancellationToken` / `ErrorCode.cancelled`, wired through `OpContext` (Zone-scoped)
   and `notifications/cancelled` on the MCP session so in-flight `tools/call` / JSON-RPC can stop; long
   `strategy.simulate_turns` runs poll the token between steps.

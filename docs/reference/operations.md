@@ -84,6 +84,26 @@ game_agent engine capabilities
 
 REST: `POST /v1/engine/capabilities` · MCP tool: `engine.capabilities` · JSON-RPC method: `engine.capabilities`
 
+### `engine.docs`
+
+List documentation pages, or return one page as markdown.
+
+Reads the engine's `docs/` tree pointed at by the server's docs root (`engine_api --docs-root`, or `OpContext.docsRoot`). Without a docs root the call returns `unsupported` — the markdown is not bundled inside the package yet. Omitting `page` lists every readable `.md` (drafts under `proposals/` and the studio QA checklist are excluded, matching the published site). With `page` (e.g. `concepts/ecs.md` or `concepts/ecs`) returns `{page, markdown}`.
+
+*read*, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `page` | string | Docs-relative path (`.md` optional), e.g. concepts/ecs. |
+
+Errors: `unsupported`, `not_found`.
+
+```bash
+game_agent engine docs <page>
+```
+
+REST: `POST /v1/engine/docs` · MCP tool: `engine.docs` · JSON-RPC method: `engine.docs`
+
 ### `engine.health`
 
 Report that the server is alive, its versions and whether a project is open.

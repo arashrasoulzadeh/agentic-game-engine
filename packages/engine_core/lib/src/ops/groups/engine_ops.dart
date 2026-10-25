@@ -1,8 +1,21 @@
+import 'package:path/path.dart' as p;
+
 import '../json_schema.dart';
 import '../operation.dart';
 import '../param.dart';
 import '../registry.dart';
 import '../result.dart';
+
+/// Pages under [docsRoot] that agents may read (same exclusions as the published site).
+bool _docsPageAllowed(String rel) {
+  if (!rel.endsWith('.md')) return false;
+  if (rel.startsWith('proposals/') || rel.contains('/proposals/')) return false;
+  if (rel == 'studio/qa-level-editor.md') return false;
+  return true;
+}
+
+String _docsRel(String abs, String root) =>
+    p.normalize(p.relative(abs, from: root)).replaceAll('\\', '/');
 
 /// `engine.*`: what the server is, what it can do and what operations exist. The registry is passed in because
 /// these operations describe it.
@@ -126,6 +139,73 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
       Example('Describe the catalogue operation', {
         'name': 'engine.operations',
       }),
+    ],
+  ),
+  Operation(
+    name: 'engine.docs',
+    summary: 'List documentation pages, or return one page as markdown.',
+    description:
+        'Reads the engine\'s `docs/` tree pointed at by the server\'s docs root (`engine_api --docs-root`, or '
+        '`OpContext.docsRoot`). Without a docs root the call returns `unsupported` — the markdown is not '
+        'bundled inside the package yet. Omitting `page` lists every readable `.md` (drafts under `proposals/` '
+        'and the studio QA checklist are excluded, matching the published site). With `page` (e.g. '
+        '`concepts/ecs.md` or `concepts/ecs`) returns `{page, markdown}`.',
+    kind: OperationKind.read,
+    scope: OperationScope.pure,
+    idempotent: true,
+    params: const [
+      Param(
+        'page',
+        ParamType.string,
+        positional: true,
+        description: 'Docs-relative path (`.md` optional), e.g. concepts/ecs.',
+      ),
+    ],
+    errors: {
+      ErrorCode.unsupported: 'No docs root is configured on this server.',
+      ErrorCode.notFound: 'That page is missing or excluded.',
+    },
+    handler: (ctx, a) {
+      final root = ctx.docsRoot;
+      if (root == null || root.isEmpty) {
+        throw OpError(
+          ErrorCode.unsupported,
+          'No documentation root is configured.',
+          hint: 'Start engine_api with --docs-root pointing at the repo docs/ folder.',
+        );
+      }
+      final page = a['page'] as String?;
+      if (page == null || page.isEmpty) {
+        final files = ctx.files.list(root, recursive: true);
+        final pages = [
+          for (final abs in files)
+            if (_docsPageAllowed(_docsRel(abs, root))) _docsRel(abs, root),
+        ]..sort();
+        return OpOutcome.data({
+          'root': root,
+          'pages': pages,
+          'count': pages.length,
+        });
+      }
+      var rel = page.replaceAll('\\', '/');
+      if (rel.startsWith('/')) rel = rel.substring(1);
+      if (!rel.endsWith('.md')) rel = '$rel.md';
+      if (!_docsPageAllowed(rel) || rel.contains('..')) {
+        throw OpError(ErrorCode.notFound, 'No documentation page "$page".');
+      }
+      final abs = p.normalize(p.join(root, rel));
+      if (!p.isWithin(root, abs) && abs != p.normalize(root)) {
+        throw OpError(ErrorCode.notFound, 'No documentation page "$page".');
+      }
+      final text = ctx.files.read(abs);
+      if (text == null) {
+        throw OpError(ErrorCode.notFound, 'No documentation page "$page".');
+      }
+      return OpOutcome.data({'page': rel, 'markdown': text});
+    },
+    examples: const [
+      Example('List pages', {}),
+      Example('Read the ECS concept page', {'page': 'concepts/ecs'}),
     ],
   ),
 ];
