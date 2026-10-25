@@ -8,9 +8,9 @@ the balance simulator live in `engine_core` (`engine_core_idle.dart`) so CLI and
 agents can use them without Flutter.
 
 Samples are executed by `packages/engine_core/test/doc_examples_idle_test.dart` and
-`packages/engine_idle/test/doc_examples_test.dart`. The only open idle item in
-[`TODO.md`](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md)
-is a real-device performance bench (host baseline already exists).
+`packages/engine_idle/test/doc_examples_test.dart`. Remaining idle work (device bench,
+cloud-save walkthrough, SFX, localisation, research UI, …) lives under Idle polish in
+[`TODO.md`](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md).
 
 ## Creating a new idle game
 
@@ -30,21 +30,23 @@ common path; optional blocks are noted.
 | Tech gates (`requires` on generators/upgrades) | definition + `TechState` in Dart | opt-in |
 | Taps + timed boosts | `IdleController.tap` / `BoostSystem` | yes |
 | Achievements | definition + `AchievementList` | yes |
-| Prestige (single or layered `prestiges`) | definition + `PrestigePanel` | yes (single) |
+| Prestige (single or layered `prestiges`) | definition + `PrestigePanel` | yes (layered) |
 | Challenges | definition + `ChallengePanel` | yes |
 | Golden offers | `"golden"` + `GoldenEventSystem` + `GoldenOffer` | yes |
-| Auto-buyer | `"autoBuyer"` + `AutoBuySystem` | opt-in (see below) |
-| Offline catch-up + lifecycle | `IdleSession` + `IdleLifecycleHost` | yes (cold start + resume) |
+| Auto-buyer | `"autoBuyer"` + `AutoBuySystem` + `whileAway` | yes |
+| Synergy upgrades | `"bonusPerOwned"` + `"synergyOf"` | yes (sample) |
+| Offline catch-up + lifecycle | `IdleSession` + `IdleLifecycleHost` | yes (cold start + resume; `onDouble` stub) |
 | Durable save | web `BrowserSaveStore` / else `FileSaveStore` | yes |
 | Export code / cloud hook | `SaveCodePanel` / `CloudSaveStore` | export yes; cloud is a contract |
+| Return reminder | `ReturnNotifier` | yes (`LogReturnNotifier` stub) |
 | Stats | `StatsPanel` | yes |
-| Number formats | `IdleSettingsPanel` / `formatBigNumber` | yes (not persisted yet) |
+| Number formats | `IdleSettingsPanel` / `PlayerOptions` | yes (persisted) |
 | Balance check | `game_agent idle simulate` / `idle.validate` | CLI / agent |
 | Headless agent ops | `idle.*` on MCP/REST/CLI | yes |
 
-To enable automation, add `"autoBuyer": { "intervalSeconds": 5, "maxPerRun": 10 }`
-to the JSON and `world.addSystem(AutoBuySystem())` after `IdleSystem()`, then pass
-`whileAway: runAutoBuyer` into `IdleSession` so it also buys offline.
+Automation is on by default in the template (`"autoBuyer"` + `AutoBuySystem()` after
+`IdleSystem()`, plus `whileAway:` that calls `runAutoBuyer(world, wallet, buyer)`). Flip
+`AutoBuyer.enabled` when the player unlocks it.
 
 ![The idle game template after fifty minutes of simulated play: resources and income at the top, a row of buy buttons per generator, greyed-out ones unaffordable](../img/idle-game.png)
 
@@ -217,8 +219,14 @@ and a pulled save pays no offline time. `SaveCodePanel` lets players move a game
   (or `claimGolden` yourself).
 - **Automation:** an `AutoBuyer` (in the definition as `"autoBuyer": {"intervalSeconds": 5, "maxPerRun": 10}`) buys the
   affordable purchase with the best payback on a timer; add `AutoBuySystem()` after `IdleSystem()`, flip `enabled` when
-  the player unlocks it, and use `IdleSession(whileAway: ...)` with `runAutoBuyer` so it also works offline.
-  `bestPurchase(world, wallet)` is the same recommendation as a function (for a "buy this next" hint).
+  the player unlocks it, and pass `whileAway:` that reads the buyer and calls `runAutoBuyer(world, wallet, buyer)` so
+  offline catch-up also buys. `bestPurchase(world, wallet)` is the same recommendation as a function (for a "buy this next" hint).
+- **Synergy upgrades:** `"bonusPerOwned": "0.01", "synergyOf": "grandma"` on an upgrade multiplies the target by
+  `1 + bonusPerOwned * owned(synergyOf)` once purchased (stacks with a plain `multiplier` when both are set).
+- **Offline double:** pass `onDouble` to `OfflineSummaryDialog` (show a rewarded ad; return `true` if earned), then call
+  `IdleSession.doubleOffline(summary)` when the dialog pops `true`. The template stubs `onDouble: () async => true`.
+- **Number format persistence:** `IdleSettingsPanel(onStyleChanged:, onDecimalSeparatorChanged:)` — store the values in
+  `PlayerOptions` (template uses `numberStyle` / `decimalSeparator` custom keys) and re-apply on boot.
 - **Analytics** (`IdleAnalytics`) reports purchases, prestiges and returns through the consent-aware manager.
 
 ## Trust: the clock and the save

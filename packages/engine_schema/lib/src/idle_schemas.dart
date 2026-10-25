@@ -21,6 +21,8 @@ const upgradeSchema = ComponentSchema('upgrade', [
   FieldSchema('cost', FieldType.object),
   FieldSchema('target', FieldType.string),
   FieldSchema('multiplier', FieldType.string),
+  FieldSchema('bonusPerOwned', FieldType.string, optional: true),
+  FieldSchema('synergyOf', FieldType.string, optional: true),
   FieldSchema('purchased', FieldType.bool),
   FieldSchema('requires', FieldType.list),
 ]);

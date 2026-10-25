@@ -56,10 +56,37 @@ void main() {
         find.textContaining('50% of your income, for up to 6 hours'),
         findsOneWidget,
       );
+      expect(find.byKey(const Key('settings-decimal-separator')), findsOneWidget);
+      NumberStyle? persisted;
+      String? sepPersisted;
+      await tester.pumpWidget(
+        _app(
+          Column(
+            children: [
+              ResourceHeader(controller: c),
+              IdleSettingsPanel(
+                controller: c,
+                offline: const OfflineConfig(
+                  cap: Duration(hours: 6),
+                  efficiency: 0.5,
+                ),
+                onStyleChanged: (s) => persisted = s,
+                onDecimalSeparatorChanged: (s) => sepPersisted = s,
+              ),
+            ],
+          ),
+        ),
+      );
       await tester.tap(find.text('1.5e6'));
       await tester.pump();
       expect(c.style, NumberStyle.scientific);
+      expect(persisted, NumberStyle.scientific);
       expect(find.text('1.23e6'), findsOneWidget);
+      await tester.tap(find.text('1,5'));
+      await tester.pump();
+      expect(c.decimalSeparator, ',');
+      expect(sepPersisted, ',');
+      expect(c.resourceIds, ['coins']);
     },
   );
 

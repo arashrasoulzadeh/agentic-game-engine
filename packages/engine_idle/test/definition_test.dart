@@ -150,17 +150,18 @@ void main() {
       'prestige layers: a prestiges list loads, ids must be unique, resets must be names',
       () {
         final layered = valid()
-          ..remove('prestige')
-          ..['prestiges'] = [
-            {'currency': 'gems', 'basedOn': 'coins', 'divisor': '1e6'},
-            {
-              'id': 'ascend',
-              'currency': 'stars',
-              'basedOn': 'gems',
-              'divisor': '100',
-              'resetsCurrencies': ['gems'],
-            },
-          ];
+          ..remove('prestige');
+        (layered['resources'] as Map)['stars'] = <String, dynamic>{};
+        layered['prestiges'] = [
+          {'currency': 'gems', 'basedOn': 'coins', 'divisor': '1e6'},
+          {
+            'id': 'ascend',
+            'currency': 'stars',
+            'basedOn': 'gems',
+            'divisor': '100',
+            'resetsCurrencies': ['gems'],
+          },
+        ];
         expect(validateIdleDefinition(layered), isEmpty);
         final w = World(width: 4, height: 4);
         registerCoreComponents(w);
@@ -200,6 +201,54 @@ void main() {
         );
       },
     );
+
+    test('synergy upgrades need synergyOf naming a generator', () {
+      expect(
+        problems(
+          (j) => (j['upgrades'] as List)[0] = {
+            'id': 'syn',
+            'target': 'farm',
+            'bonusPerOwned': '0.01',
+            'synergyOf': 'cursor',
+            'cost': {'coins': '1'},
+          },
+        ),
+        isEmpty,
+      );
+      expect(
+        problems(
+          (j) => (j['upgrades'] as List)[0] = {
+            'id': 'syn',
+            'target': 'farm',
+            'bonusPerOwned': '0.01',
+            'cost': {'coins': '1'},
+          },
+        ),
+        contains('upgrades[0].synergyOf is required when bonusPerOwned is set'),
+      );
+      expect(
+        problems(
+          (j) => (j['upgrades'] as List)[0] = {
+            'id': 'syn',
+            'target': 'farm',
+            'bonusPerOwned': '0.01',
+            'synergyOf': 'ghost',
+            'cost': {'coins': '1'},
+          },
+        ),
+        contains('upgrades[0].synergyOf "ghost" is not a generator id'),
+      );
+      expect(
+        problems(
+          (j) => (j['upgrades'] as List)[0] = {
+            'id': 'bare',
+            'target': 'cursor',
+            'cost': {'coins': '1'},
+          },
+        ),
+        contains('upgrades[0] needs multiplier and/or bonusPerOwned'),
+      );
+    });
 
     test(
       'a golden block loads, and bad rewards are reported with their path',

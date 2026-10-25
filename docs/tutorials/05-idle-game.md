@@ -52,28 +52,15 @@ visible diff.
 
 ## 4. Extras already in the template
 
-- **Offline earnings:** `"offline": { "capHours": 8, "efficiency": 0.5 }` — `OfflineSummaryDialog` on return.
-- **Prestige and achievements:** Progress tab (`PrestigePanel`, `AchievementList`).
+- **Offline earnings:** `"offline": { "capHours": 8, "efficiency": 0.5 }` — `OfflineSummaryDialog` on return,
+  with an `onDouble` stub for a rewarded-ad 2× (`IdleSession.doubleOffline`).
+- **Prestige layers and achievements:** Progress tab (one `PrestigePanel` per layer, `AchievementList`).
 - **Challenges:** `"challenges"` in the JSON + `ChallengePanel` on Progress.
+- **Auto-buyer:** `"autoBuyer"` + `AutoBuySystem` + offline `whileAway` that calls `runAutoBuyer`.
+- **Synergy upgrades:** e.g. `"bonusPerOwned": "0.01", "synergyOf": "grandma"` on a farm upgrade.
 - **Golden offers:** `"golden"` block + `GoldenEventSystem` + `GoldenOffer` (tap quickly when it appears).
-- **Save codes:** Settings tab (`SaveCodePanel`) to move a run between devices.
-
-## 5. Opt-in: auto-buyer
-
-Add to the JSON:
-
-```json
-"autoBuyer": { "intervalSeconds": 5, "maxPerRun": 10 }
-```
-
-In `lib/main.dart`, after `IdleSystem()`:
-
-```dart
-..addSystem(AutoBuySystem())
-```
-
-and pass `whileAway: runAutoBuyer` into `IdleSession` so offline catch-up also buys. Flip `AutoBuyer.enabled`
-when the player unlocks automation.
+- **Save codes + number format:** Settings tab (`SaveCodePanel`; format/decimal mark persist via `PlayerOptions`).
+- **Return reminder:** `LogReturnNotifier` prints schedule/cancel — swap for a real notification plugin.
 
 Read the [idle games guide](../concepts/idle-games.md) for how each piece works (prestige layers, cloud save,
 analytics, trust model).

@@ -76,6 +76,13 @@ class IdleController extends ChangeNotifier {
     _notifyUrgent();
   }
 
+  /// Changes the decimal mark and tells every listening widget at once.
+  void setDecimalSeparator(String value) {
+    if (value == decimalSeparator) return;
+    decimalSeparator = value;
+    _notifyUrgent();
+  }
+
   final Map<String, String> _formatted = {};
 
   /// How many distinct formatted strings are remembered (observable for tests).
@@ -211,6 +218,15 @@ class IdleController extends ChangeNotifier {
   List<EntityId> get upgradeIds {
     final s = world.storeOf<Upgrade>();
     return [for (var i = 0; i < s.length; i++) s.entityAt(i)]..sort();
+  }
+
+  /// Declared resource ids (including zero balances), sorted for a stable header.
+  List<String> get resourceIds => wallet.amounts.keys.toList()..sort();
+
+  /// Prestige layer ids in store order (one [PrestigePanel] per id).
+  List<String> get prestigeRuleIds {
+    final s = world.storeOf<PrestigeRule>();
+    return [for (var i = 0; i < s.length; i++) s.denseAt(i).id];
   }
 
   @override

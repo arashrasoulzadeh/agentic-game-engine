@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -9,12 +10,21 @@ import 'package:{{PROJECT_NAME}}/main.dart';
 void main() {
   testWidgets('the idle game boots, taps earn coins and a generator can be bought', (tester) async {
     final definition = jsonDecode(File('assets/idle_game.json').readAsStringSync()) as Map<String, dynamic>;
+    final options = PlayerOptionsManager(InMemoryPlayerOptionsStorage());
     // Memory store: avoids path_provider / disk in widget tests.
-    await tester.pumpWidget(IdleApp(definition: definition, saveStore: MemorySaveStore()));
+    await tester.pumpWidget(
+      IdleApp(
+        definition: definition,
+        saveStore: MemorySaveStore(),
+        optionsManager: options,
+      ),
+    );
     await tester.pump();
     await tester.pump(); // finish async boot
 
     expect(find.byKey(const Key('amount-coins')), findsOneWidget);
+    expect(find.byKey(const Key('amount-gems')), findsOneWidget);
+    expect(find.byKey(const Key('amount-stars')), findsOneWidget);
     expect(find.text('Cursor'), findsOneWidget);
 
     // The starting 15 coins buy one cursor.
@@ -26,14 +36,22 @@ void main() {
     await tester.pump();
     expect(tester.takeException(), isNull);
 
-    // The other tabs build: progress (prestige, achievements) and settings (number format, save code).
+    // Progress: both prestige layers, achievements.
     await tester.tap(find.text('Progress'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('prestige-button')), findsOneWidget);
+    expect(find.byKey(const Key('prestige-button-ascend')), findsOneWidget);
     expect(find.byKey(const Key('achievement-ten_cursors')), findsOneWidget);
+
+    // Settings: number format persists via PlayerOptions.
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('settings-number-style')), findsOneWidget);
+    expect(find.byKey(const Key('settings-decimal-separator')), findsOneWidget);
+    await tester.tap(find.text('1.5e6'));
+    await tester.pump();
+    expect(options.getOption('numberStyle'), 'scientific');
+
     await tester.tap(find.byKey(const Key('save-export')));
     await tester.pump();
     expect(tester.widget<SelectableText>(find.byKey(const Key('save-code'))).data, startsWith('GSAVE1.'));

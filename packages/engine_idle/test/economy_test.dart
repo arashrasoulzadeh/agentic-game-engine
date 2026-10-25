@@ -139,6 +139,29 @@ void main() {
     test('with nothing owned there is no income', () {
       expect(computeIncome(_game().world), isEmpty);
     });
+
+    test('synergy upgrades scale with owned count of synergyOf', () {
+      final g = _game();
+      g.world.storeOf<Generator>().get(g.cursor)!.owned = 10;
+      g.world.storeOf<Generator>().get(g.farm)!.owned = 1;
+      // farms: 5/s base; +1% per cursor → 5 * (1 + 0.01*10) = 5.5
+      final syn = Upgrade(
+        id: 'syn',
+        target: 'farm',
+        bonusPerOwned: n('0.01'),
+        synergyOf: 'cursor',
+        cost: {'coins': n('1')},
+      )..purchased = true;
+      g.world.storeOf<Upgrade>().set(g.world.spawn(), syn);
+      expect(
+        computeIncome(g.world)['coins']!.approxEquals(n('6.5')),
+        isTrue,
+        reason: '10*0.1 + 5*(1+0.1)',
+      );
+      final back = Upgrade.fromJson(syn.toJson());
+      expect(back.bonusPerOwned, n('0.01'));
+      expect(back.synergyOf, 'cursor');
+    });
   });
 
   group('buying generators', () {

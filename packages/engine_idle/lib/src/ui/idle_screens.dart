@@ -130,17 +130,28 @@ class AchievementList extends StatelessWidget {
 
 /// Player-facing settings for an idle game: how big numbers are written, and a plain statement of the
 /// offline-progress rules so the cap is never a surprise.
+///
+/// Persist style / separator across launches by wiring [onStyleChanged] and
+/// [onDecimalSeparatorChanged] (e.g. into `PlayerOptions` custom keys).
 class IdleSettingsPanel extends StatelessWidget {
   const IdleSettingsPanel({
     super.key,
     required this.controller,
     this.offline = const OfflineConfig(),
+    this.onStyleChanged,
+    this.onDecimalSeparatorChanged,
   });
 
   final IdleController controller;
 
   /// The offline rules to describe (usually the session's).
   final OfflineConfig offline;
+
+  /// Called after the player picks a [NumberStyle] (persist here).
+  final void Function(NumberStyle style)? onStyleChanged;
+
+  /// Called after the player picks a decimal mark (`.` or `,`).
+  final void Function(String separator)? onDecimalSeparatorChanged;
 
   static const _labels = {
     NumberStyle.suffix: '1.5M',
@@ -170,7 +181,26 @@ class IdleSettingsPanel extends StatelessWidget {
                 ),
             ],
             selected: {controller.style},
-            onSelectionChanged: (s) => controller.setStyle(s.first),
+            onSelectionChanged: (s) {
+              final style = s.first;
+              controller.setStyle(style);
+              onStyleChanged?.call(style);
+            },
+          ),
+          const SizedBox(height: 12),
+          const Text('Decimal mark'),
+          SegmentedButton<String>(
+            key: const Key('settings-decimal-separator'),
+            segments: const [
+              ButtonSegment(value: '.', label: Text('1.5'), tooltip: 'dot'),
+              ButtonSegment(value: ',', label: Text('1,5'), tooltip: 'comma'),
+            ],
+            selected: {controller.decimalSeparator},
+            onSelectionChanged: (s) {
+              final sep = s.first;
+              controller.setDecimalSeparator(sep);
+              onDecimalSeparatorChanged?.call(sep);
+            },
           ),
           const SizedBox(height: 12),
           Text(

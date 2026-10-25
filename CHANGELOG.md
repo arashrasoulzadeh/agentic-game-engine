@@ -12,6 +12,11 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Changed
+- Idle template polish: persists number format via `PlayerOptions`, multi-currency
+  `resourceIds` header, layered `"prestiges"`, wired `AutoBuySystem` + `whileAway`,
+  `onDouble` / `doubleOffline` stub, `LogReturnNotifier`, synergy upgrade sample.
+  `Upgrade` gains `bonusPerOwned` / `synergyOf`; `IdleSettingsPanel` exposes decimal-mark
+  persistence callbacks.
 - Idle create path hardened: durable `FileSaveStore` off-web (`path_provider`), cold-start
   offline dialog, `StatsPanel`, tighter `validateIdleDefinition` (`offline`, currencies,
   `costResource`, `requires`). Docs checklist + Idle polish TODO for remaining depth.

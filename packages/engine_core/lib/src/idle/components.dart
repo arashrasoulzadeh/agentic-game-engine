@@ -119,7 +119,8 @@ class Generator {
   );
 }
 
-/// A one-off purchase that multiplies output once bought: "double all cursors".
+/// A one-off purchase that multiplies output once bought: "double all cursors", or a synergy
+/// (`bonusPerOwned` × how many of [synergyOf] are owned).
 class Upgrade {
   /// Stable identifier (also the name of its source in the modifier breakdown).
   final String id;
@@ -133,8 +134,14 @@ class Upgrade {
   /// A [Generator.id] it applies to, or `all` for every generator.
   final String target;
 
-  /// What it multiplies the target's output by.
+  /// What it multiplies the target's output by (stacks with [bonusPerOwned] when both are set).
   final BigNumber multiplier;
+
+  /// Extra multiplier per owned unit of [synergyOf]: `1 + bonusPerOwned * owned`. Null = no synergy.
+  final BigNumber? bonusPerOwned;
+
+  /// Generator whose owned count feeds [bonusPerOwned]. Required when that field is set.
+  final String? synergyOf;
 
   /// Whether the player has bought it.
   bool purchased;
@@ -144,10 +151,12 @@ class Upgrade {
 
   Upgrade({
     required this.id,
-    required this.multiplier,
+    this.multiplier = BigNumber.one,
     this.name,
     Map<String, BigNumber>? cost,
     this.target = 'all',
+    this.bonusPerOwned,
+    this.synergyOf,
     this.purchased = false,
     List<String>? requires,
   }) : cost = cost ?? {},
@@ -159,6 +168,8 @@ class Upgrade {
     'cost': {for (final e in cost.entries) e.key: e.value.toJson()},
     'target': target,
     'multiplier': multiplier.toJson(),
+    if (bonusPerOwned != null) 'bonusPerOwned': bonusPerOwned!.toJson(),
+    if (synergyOf != null) 'synergyOf': synergyOf,
     'purchased': purchased,
     if (requires.isNotEmpty) 'requires': requires,
   };
@@ -172,6 +183,10 @@ class Upgrade {
     },
     target: json['target'] as String? ?? 'all',
     multiplier: BigNumber.fromJson((json['multiplier'] ?? '1') as Object),
+    bonusPerOwned: json['bonusPerOwned'] == null
+        ? null
+        : BigNumber.fromJson(json['bonusPerOwned'] as Object),
+    synergyOf: json['synergyOf'] as String?,
     purchased: json['purchased'] as bool? ?? false,
     requires: [
       for (final r in (json['requires'] as List? ?? const [])) r as String,

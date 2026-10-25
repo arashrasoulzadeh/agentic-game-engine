@@ -189,7 +189,21 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
     } else if (!upgradeIds.add(id)) {
       errors.add('$p.id "$id" is used twice');
     }
-    number(u['multiplier'], '$p.multiplier', positive: true);
+    final hasMult = u.containsKey('multiplier');
+    final hasBonus = u.containsKey('bonusPerOwned');
+    if (!hasMult && !hasBonus) {
+      errors.add('$p needs multiplier and/or bonusPerOwned');
+    }
+    if (hasMult) number(u['multiplier'], '$p.multiplier', positive: true);
+    if (hasBonus) {
+      number(u['bonusPerOwned'], '$p.bonusPerOwned', positive: true);
+      final syn = u['synergyOf'];
+      if (syn is! String || syn.isEmpty) {
+        errors.add('$p.synergyOf is required when bonusPerOwned is set');
+      } else if (!generatorIds.contains(syn)) {
+        errors.add('$p.synergyOf "$syn" is not a generator id');
+      }
+    }
     final target = u['target'] ?? 'all';
     if (target != 'all' && !generatorIds.contains(target)) {
       errors.add('$p.target "$target" is not a generator id');

@@ -37,21 +37,15 @@ Sections: [Performance](#performance) · [Engine](#engine) · [Idle polish](#idl
 ## Idle polish
 
 Create path is shippable (`--template idle_game`: durable save, cold-start
-offline dialog, challenges, stats, golden, validate currency/`offline`).
+offline dialog, challenges, stats, golden, layered prestiges, auto-buyer,
+synergy upgrades, format persistence, offline double stub, return notifier).
 Guide checklist: [docs/concepts/idle-games.md](docs/concepts/idle-games.md).
 Depth / genre extras still open:
 
-- [ ] Persist number format (and decimal separator) across launches.
-- [ ] Template `onDouble` stub + docs for rewarded-ad offline double.
-- [ ] Multi-currency header that follows declared `resources` (not a fixed list).
-- [ ] Prestige-layer UI in the template (`"prestiges"` + one `PrestigePanel` each).
-- [ ] Auto-buyer wired in the template (JSON + `AutoBuySystem` + `whileAway`).
-- [ ] `ReturnNotifier` example (schedule on pause; OS plugin stays the game's job).
 - [ ] Cloud-save walkthrough (Game Center / Play Games / HTTP sample).
 - [ ] Sound / SFX hooks on buy, prestige, golden claim.
 - [ ] Localisation of definition display names (string keys / locale tables).
 - [ ] Whole-file JSON Schema for `idle_game.json` (component schemas exist).
-- [ ] Synergy upgrades ("+X per other generator owned").
 - [ ] Research-tree definition block + UI (tech `requires` already work).
 - [ ] Prestige-shop UI (filter gem-cost upgrades); time-warp / season pass.
 

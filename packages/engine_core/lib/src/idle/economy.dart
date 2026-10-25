@@ -6,11 +6,17 @@ import 'progression.dart';
 
 /// Everything per second a game's generators make right now, by resource: for each generator,
 /// `owned * output`, multiplied by every purchased upgrade that targets it (or `all`) and by the
-/// game-wide [IdleModifiers].
+/// game-wide [IdleModifiers]. Synergy upgrades (`Upgrade.bonusPerOwned`) scale with how many of
+/// [Upgrade.synergyOf] are owned.
 Map<String, BigNumber> computeIncome(World world) {
   final generators = world.storeOf<Generator>();
   final upgrades = world.storeOf<Upgrade>();
   final global = _globalMultiplier(world);
+
+  final ownedById = <String, int>{
+    for (var i = 0; i < generators.length; i++)
+      generators.denseAt(i).id: generators.denseAt(i).owned,
+  };
 
   final bought = [
     for (var i = 0; i < upgrades.length; i++)
@@ -23,7 +29,15 @@ Map<String, BigNumber> computeIncome(World world) {
     if (g.owned <= 0) continue;
     var factor = global * BigNumber.from(g.owned) * g.milestoneMultiplier;
     for (final u in bought) {
-      if (u.target == 'all' || u.target == g.id) factor = factor * u.multiplier;
+      if (u.target != 'all' && u.target != g.id) continue;
+      factor = factor * u.multiplier;
+      final bonus = u.bonusPerOwned;
+      final syn = u.synergyOf;
+      if (bonus != null && syn != null) {
+        factor =
+            factor *
+            (BigNumber.one + bonus * BigNumber.from(ownedById[syn] ?? 0));
+      }
     }
     for (final e in g.output.entries) {
       income[e.key] = (income[e.key] ?? BigNumber.zero) + e.value * factor;

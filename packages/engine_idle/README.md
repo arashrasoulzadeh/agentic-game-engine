@@ -32,12 +32,21 @@ save formats. This package re-exports all of that and adds what needs Flutter:
 final world = World(width: 10, height: 10);
 registerCoreComponents(world);
 final game = loadIdleDefinition(world, jsonDecode(await rootBundle.loadString('assets/idle_game.json')));
-world..addSystem(IdleSystem())..addSystem(BoostSystem());
+world
+  ..addSystem(IdleSystem())
+  ..addSystem(AutoBuySystem())
+  ..addSystem(BoostSystem());
 
 final controller = IdleController(world: world)..start();
-final session = IdleSession(controller: controller, store: BrowserSaveStore(), offline: game.offline)
-  ..load()
-  ..startAutosave();
+final session = IdleSession(
+  controller: controller,
+  store: BrowserSaveStore(),
+  offline: game.offline,
+  whileAway: () {
+    final buyers = world.storeOf<AutoBuyer>();
+    if (buyers.length > 0) runAutoBuyer(world, controller.wallet, buyers.denseAt(0));
+  },
+)..load()..startAutosave();
 ```
 
 Tests: `flutter test`; hot-path costs: `dart run benchmark/idle_bench.dart`; pacing of a definition:

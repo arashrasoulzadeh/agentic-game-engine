@@ -829,6 +829,8 @@ Idle-game data. Registered by `registerIdleComponents`.
 | `cost` | `object` |  |
 | `target` | `string` |  |
 | `multiplier` | `string` |  |
+| `bonusPerOwned` | `string` | may be null |
+| `synergyOf` | `string` | may be null |
 | `purchased` | `bool` |  |
 | `requires` | `list` |  |
 

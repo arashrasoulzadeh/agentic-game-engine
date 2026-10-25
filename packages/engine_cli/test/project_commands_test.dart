@@ -312,12 +312,19 @@ dependencies:
     expect(main, contains('StatsPanel'));
     expect(main, contains('FileSaveStore'));
     expect(main, contains('openIdleSaveStore'));
+    expect(main, contains('AutoBuySystem'));
+    expect(main, contains('onDouble'));
+    expect(main, contains('LogReturnNotifier'));
+    expect(main, contains('resourceIds'));
     expect(pubspec, contains('path_provider'));
     final def = File(
       '${tmp.path}/cookie_game/assets/idle_game.json',
     ).readAsStringSync();
     expect(def, contains('"challenges"'));
     expect(def, contains('"golden"'));
+    expect(def, contains('"prestiges"'));
+    expect(def, contains('"autoBuyer"'));
+    expect(def, contains('"bonusPerOwned"'));
     expect(
       File('${tmp.path}/cookie_game/test/widget_test.dart').readAsStringSync(),
       contains('cookie_game'),
