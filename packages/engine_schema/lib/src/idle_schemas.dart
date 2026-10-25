@@ -84,6 +84,15 @@ const timeWarpOfferSchema = ComponentSchema('timeWarpOffer', [
   FieldSchema('cost', FieldType.object),
 ]);
 
+const seasonPassSchema = ComponentSchema('seasonPass', [
+  FieldSchema('id', FieldType.string, required: true),
+  FieldSchema('name', FieldType.string, optional: true),
+  FieldSchema('nameKey', FieldType.string, optional: true),
+  FieldSchema('xpStat', FieldType.string, required: true),
+  FieldSchema('tiers', FieldType.list),
+  FieldSchema('claimed', FieldType.int, min: 0),
+]);
+
 const boostSchema = ComponentSchema('boost', [
   FieldSchema('id', FieldType.string, required: true),
   FieldSchema('multiplier', FieldType.string, required: true),

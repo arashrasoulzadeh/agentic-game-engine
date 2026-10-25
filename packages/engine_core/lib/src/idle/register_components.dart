@@ -8,6 +8,7 @@ import 'components.dart';
 import 'golden_events.dart';
 import 'progression.dart';
 import 'research.dart';
+import 'season_pass.dart';
 import 'time_warp.dart';
 
 /// Registers the idle-genre components on [world] so they take part in `World.toJson()`,
@@ -89,5 +90,11 @@ void registerIdleComponents(World world) {
     (t) => t.toJson(),
     TimeWarpOffer.fromJson,
     schema: timeWarpOfferSchema,
+  );
+  world.components.register<SeasonPass>(
+    'seasonPass',
+    (s) => s.toJson(),
+    SeasonPass.fromJson,
+    schema: seasonPassSchema,
   );
 }

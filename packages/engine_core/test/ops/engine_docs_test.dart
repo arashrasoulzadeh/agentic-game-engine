@@ -28,19 +28,36 @@ void main() {
     docsRoot: docs,
   );
 
-  test('without docsRoot returns a remote curated index', () async {
+  test('without docsRoot returns bundled curated pages with markdown', () async {
     final r = await registry.call('engine.docs', {}, ctx());
     expect(r.ok, isTrue, reason: '${r.error}');
     final data = (r.data! as Map).cast<String, Object?>();
-    expect(data['source'], 'remote');
+    expect(data['source'], 'bundled');
     expect(data['docsUrl'], kEngineDocsUrl);
     expect(data['pages'], kRemoteDocsPages);
+    expect(data['bundled'], isTrue);
     final page = await registry.call('engine.docs', {
       'page': 'getting-started',
     }, ctx());
     expect(page.ok, isTrue);
-    expect((page.data! as Map)['url'], contains('getting-started'));
-    expect((page.data! as Map)['markdown'], isNull);
+    final body = (page.data! as Map).cast<String, Object?>();
+    expect(body['source'], 'bundled');
+    expect(body['url'], contains('getting-started'));
+    expect(body['markdown'], contains('Getting started'));
+  });
+
+  test('bundled_docs.g.dart matches docs/ for every curated page', () {
+    final docsRoot = Directory(
+      p.normalize(p.join(Directory.current.path, '..', '..', 'docs')),
+    );
+    for (final rel in kRemoteDocsPages) {
+      final onDisk = File(p.join(docsRoot.path, rel)).readAsStringSync();
+      expect(
+        kBundledDocs[rel],
+        onDisk,
+        reason: 'Run: cd packages/engine_core && dart run tool/gen_bundled_docs.dart',
+      );
+    }
   });
 
   test('lists pages excluding drafts and QA checklist', () async {

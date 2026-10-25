@@ -88,7 +88,7 @@ REST: `POST /v1/engine/capabilities` · MCP tool: `engine.capabilities` · JSON-
 
 List documentation pages, or return one page as markdown.
 
-With a docs root (`engine_api --docs-root` / `OpContext.docsRoot`) reads the local `docs/` tree: omit `page` to list readable `.md` files (drafts under `proposals/` and the studio QA checklist excluded); with `page` returns `{page, markdown, source: local}`. Without a docs root, returns a curated remote index (`source: remote`, `docsUrl`) so agents on a created project still know what to open; `page` then returns `{page, url}` (no markdown body).
+With a docs root (`engine_api --docs-root` / `OpContext.docsRoot`) reads the local `docs/` tree: omit `page` to list readable `.md` files (drafts under `proposals/` and the studio QA checklist excluded); with `page` returns `{page, markdown, source: local}`. Without a docs root, serves the curated package bundle (`source: bundled`, markdown bodies for `kRemoteDocsPages`) so agents offline still get full pages; `url` / `docsUrl` remain for the site.
 
 *read*, idempotent.
 

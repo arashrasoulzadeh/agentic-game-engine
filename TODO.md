@@ -41,10 +41,8 @@ Agent create → edit → verify path is shippable for all three templates:
 `project.open` (idle/strategy too), strategy `skirmish.level.json`, platformer
 enemy/coin/HUD, pause/settings/credits + PlayerOptions (colorblind/shake/
 volume) on platformer & strategy, `assets/i18n/en.json`, `project.manifest`
-op, `engine.docs` remote index when no local `docs/`. Still open:
-
-- [ ] Optional: bundle markdown into the package so `engine.docs` returns
-      bodies without `--docs-root` / network.
+op, `engine.docs` remote index when no local `docs/`, curated markdown bundled
+in-package (`kBundledDocs` / `dart run tool/gen_bundled_docs.dart`).
 
 ## Idle polish
 
@@ -52,12 +50,9 @@ Create path is shippable (`--template idle_game`: durable save, cold-start
 offline dialog, challenges, stats, golden, layered prestiges, auto-buyer,
 synergy upgrades, format persistence, offline double stub, return notifier,
 Material pause/settings/credits + volumes, `IdleSfx` stubs, prestige shop,
-`schema.idle_game`, research tree, time warps, `nameKey` + i18n,
+`schema.idle_game`, research tree, time warps, season pass, `nameKey` + i18n,
 `HttpCloudSaveStore` walkthrough). Guide checklist:
 [docs/concepts/idle-games.md](docs/concepts/idle-games.md).
-Depth / genre extras still open:
-
-- [ ] Season pass / battle-pass style track (time-warp shipped).
 
 ## Studio
 
@@ -76,8 +71,6 @@ Site: <https://meetarash.ir/agentic-game-engine/>.
 
 - [ ] Strategy-template screenshot (needs art) and a studio shot with real
       entity-label text (`UPDATE_SCREENSHOTS=1` regenerates `docs/img/`).
-- [ ] Decide whether `reduceMotion` / text scale etc. should be engine
-      behaviour (`PlayerOptions` is not read by the engine today).
 
 ## Release
 
@@ -104,3 +97,9 @@ the stated trigger.
   `studio/qa-level-editor.md` stay unpublished on purpose.
 - **Studio stretch not scheduled:** separate play-test process profiling,
   live cursor feed, visual three-way merge UI (`studio merge` covers CLI).
+- **`PlayerOptions` stay shell-applied.** The engine stores/presents settings
+  but does not read them itself. Games wire `colorblindMode` /
+  `screenShakeIntensity` (templates zero shake when `reduceMotion`), volumes,
+  and `textScale` in their own UI. Re-open only if a second genre needs the
+  same wiring and duplication becomes painful — see
+  [docs/concepts/settings.md](docs/concepts/settings.md).

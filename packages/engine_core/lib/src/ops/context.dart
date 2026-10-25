@@ -117,8 +117,8 @@ class OpContext {
   /// Pixel codec for `asset.pack` / render ops; null means those return `unsupported`.
   final ImageCodec? imageCodec;
 
-  /// Absolute path to the engine's `docs/` tree for `engine.docs`. Null means that
-  /// operation returns [ErrorCode.unsupported] (docs are not bundled in the package yet).
+  /// Absolute path to the engine's `docs/` tree for `engine.docs`. Null falls
+  /// back to the curated package-bundled markdown (then the published site URL).
   final String? docsRoot;
 
   /// Default progress sink (tests). Prefer the Zone-scoped sink installed by

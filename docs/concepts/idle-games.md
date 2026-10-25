@@ -46,6 +46,7 @@ common path; optional blocks are noted.
 | Prestige shop | `PrestigeShop` / `UpgradeList(costResource:)` | yes (gem sample) |
 | Research tree | `"research"` + `ResearchPanel` / `buyResearch` | yes (gates Mine) |
 | Time warp | `"timeWarps"` + `TimeWarpPanel` / `buyTimeWarp` | yes (1h for 1 gem) |
+| Season pass | `"seasonPass"` + `SeasonPassPanel` / `claimSeasonPass` | yes |
 | Localised names | `nameKey` + `StringTable` / `assets/i18n/en.json` | yes |
 | Definition JSON Schema | `schema.idle_game` / `idleGameDefinitionJsonSchema` | yes |
 | Balance check | `game_agent idle simulate` / `idle.validate` | CLI / agent |
@@ -262,6 +263,9 @@ about cheating (see Trust below); `syncCloud` alone is for convenience, not anti
   `"requires": ["mining"]` on a generator/upgrade. `ResearchPanel` / `buyResearch` spends and `grantTech`s the unlocks.
 - **Time warp:** `"timeWarps": [{"id": "hour", "seconds": 3600, "cost": {"gems": "1"}}]` — `TimeWarpPanel` /
   `buyTimeWarp` credits that many seconds of *current* income (not offline efficiency).
+- **Season pass:** `"seasonPass": {"id": "spring", "xpStat": "lifetime:coins", "tiers": [{"at": "100", "grant": {"gems": "1"}}]}`
+  — XP uses the same stat keys as achievements; `claimSeasonPass` (also called from `checkAchievements`)
+  grants resources / multipliers / tech in order. `SeasonPassPanel` shows progress.
 - **Localised names:** put `"nameKey": "gen.cursor"` on entities and load `StringTable.fromFlatLocale` from
   `assets/i18n/en.json`; pass it as `IdleController(strings:)`. Literal `name` remains the fallback.
 - **Offline double:** pass `onDouble` to `OfflineSummaryDialog` (show a rewarded ad; return `true` if earned), then call

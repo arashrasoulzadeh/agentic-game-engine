@@ -25,7 +25,7 @@ save formats. This package re-exports all of that and adds what needs Flutter:
 | `IdleController` | Steps the world about ten times a second, notifies widgets, number format and locale mark |
 | `IdleSession` | Saving, loading, offline catch-up, app lifecycle, export/import codes, cloud sync, return reminders |
 | `FileSaveStore`, `BrowserSaveStore`, `MemorySaveStore`, `CloudSaveStore` | Where a save lives |
-| Widgets | `ResourceHeader`, `GeneratorList`, `UpgradeList`, `PrestigeShop`, `ResearchPanel`, `TimeWarpPanel`, `OfflineSummaryDialog`, `PrestigePanel`, `AchievementList`, `ChallengePanel`, `StatsPanel`, `GoldenOffer`, `IdleSettingsPanel`, `SaveCodePanel`, `IdleLifecycleHost`, `showIdlePauseMenu` / `showIdleCredits` |
+| Widgets | `ResourceHeader`, `GeneratorList`, `UpgradeList`, `PrestigeShop`, `ResearchPanel`, `SeasonPassPanel`, `TimeWarpPanel`, `OfflineSummaryDialog`, `PrestigePanel`, `AchievementList`, `ChallengePanel`, `StatsPanel`, `GoldenOffer`, `IdleSettingsPanel`, `SaveCodePanel`, `IdleLifecycleHost`, `showIdlePauseMenu` / `showIdleCredits` |
 | `IdleSfx` | Optional one-shot hooks on buy / upgrade / tap / prestige / golden (wire to `AudioManager`) |
 | `HttpCloudSaveStore` | HTTP(S) cloud save with injected get/put (IO / web / tests) |
 | `IdleAnalytics` | Purchase, prestige and return events through the consent-aware analytics manager |

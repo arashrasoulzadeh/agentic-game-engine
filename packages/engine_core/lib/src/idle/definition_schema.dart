@@ -208,6 +208,42 @@ Map<String, Object?> idleGameDefinitionJsonSchema() => {
             'additionalProperties': true,
           },
         },
+        'seasonPass': {
+          'type': 'object',
+          'required': ['id', 'xpStat', 'tiers'],
+          'properties': {
+            'id': {'type': 'string', 'minLength': 1},
+            'name': {'type': 'string'},
+            'nameKey': {'type': 'string'},
+            'xpStat': {'type': 'string', 'minLength': 1},
+            'tiers': {
+              'type': 'array',
+              'minItems': 1,
+              'items': {
+                'type': 'object',
+                'required': ['at'],
+                'properties': {
+                  'at': {
+                    'oneOf': [
+                      {'type': 'string'},
+                      {'type': 'number'},
+                    ],
+                  },
+                  'grant': {'type': 'object'},
+                  'multiplier': {
+                    'oneOf': [
+                      {'type': 'string'},
+                      {'type': 'number'},
+                    ],
+                  },
+                  'tech': {'type': 'string'},
+                },
+                'additionalProperties': true,
+              },
+            },
+          },
+          'additionalProperties': true,
+        },
       },
     };
 

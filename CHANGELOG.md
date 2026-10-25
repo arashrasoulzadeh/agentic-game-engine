@@ -12,6 +12,11 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `engine.docs` serves curated markdown from an in-package bundle
+  (`kBundledDocs`, regenerate with `dart run tool/gen_bundled_docs.dart`) when
+  no `--docs-root` is set (`source: bundled`).
+- Idle season pass (`"seasonPass"` / `SeasonPass` / `SeasonPassPanel` /
+  `claimSeasonPass`), claimed automatically from `checkAchievements`.
 - Idle research tree (`"research"` / `ResearchNode` / `ResearchPanel` /
   `buyResearch`), time warps (`"timeWarps"` / `TimeWarpOffer` / `TimeWarpPanel` /
   `buyTimeWarp` / `timeWarp`), definition `nameKey` + `StringTable.fromFlatLocale`

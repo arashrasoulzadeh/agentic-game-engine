@@ -1,10 +1,13 @@
 import 'package:path/path.dart' as p;
 
+import '../bundled_docs.g.dart';
 import '../json_schema.dart';
 import '../operation.dart';
 import '../param.dart';
 import '../registry.dart';
 import '../result.dart';
+
+export '../bundled_docs.g.dart' show kBundledDocs;
 
 /// Pages under [docsRoot] that agents may read (same exclusions as the published site).
 bool _docsPageAllowed(String rel) {
@@ -85,7 +88,9 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
         'groups': groups,
         'operationCount': visible.length,
         'docsUrl': kEngineDocsUrl,
-        'docsAvailable': ctx.docsRoot != null && ctx.docsRoot!.isNotEmpty,
+        'docsAvailable':
+            (ctx.docsRoot != null && ctx.docsRoot!.isNotEmpty) ||
+            kBundledDocs.isNotEmpty,
         'unsupported': [
           for (final o in visible)
             if (o.requiresFlutter)
@@ -172,8 +177,8 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
         'With a docs root (`engine_api --docs-root` / `OpContext.docsRoot`) reads the local `docs/` tree: '
         'omit `page` to list readable `.md` files (drafts under `proposals/` and the studio QA checklist '
         'excluded); with `page` returns `{page, markdown, source: local}`. '
-        'Without a docs root, returns a curated remote index (`source: remote`, `docsUrl`) so agents on a '
-        'created project still know what to open; `page` then returns `{page, url}` (no markdown body).',
+        'Without a docs root, serves the curated package bundle (`source: bundled`, markdown bodies for '
+        '`kRemoteDocsPages`) so agents offline still get full pages; `url` / `docsUrl` remain for the site.',
     kind: OperationKind.read,
     scope: OperationScope.pure,
     idempotent: true,
@@ -194,12 +199,14 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
       if (root == null || root.isEmpty) {
         if (page == null || page.isEmpty) {
           return OpOutcome.data({
-            'source': 'remote',
+            'source': 'bundled',
             'docsUrl': kEngineDocsUrl,
             'pages': kRemoteDocsPages,
             'count': kRemoteDocsPages.length,
+            'bundled': true,
             'hint':
-                'No local docs root. Open docsUrl + page in a browser, or pass --docs-root.',
+                'Markdown bodies are bundled for these pages. Pass page to read one, '
+                'or --docs-root for the full tree.',
           });
         }
         var rel = page.replaceAll('\\', '/');
@@ -214,13 +221,24 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
             hint: 'List pages with engine.docs (no page arg).',
           );
         }
+        final md = kBundledDocs[rel];
+        if (md == null) {
+          return OpOutcome.data({
+            'source': 'remote',
+            'page': rel,
+            'url': _docsPageUrl(rel),
+            'docsUrl': kEngineDocsUrl,
+            'markdown': null,
+            'hint':
+                'Page listed but not in the package bundle; fetch url or use --docs-root.',
+          });
+        }
         return OpOutcome.data({
-          'source': 'remote',
+          'source': 'bundled',
           'page': rel,
+          'markdown': md,
           'url': _docsPageUrl(rel),
           'docsUrl': kEngineDocsUrl,
-          'markdown': null,
-          'hint': 'Fetch url, or start the server with --docs-root for markdown.',
         });
       }
       if (page == null || page.isEmpty) {

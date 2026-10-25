@@ -7,6 +7,7 @@ import 'golden_events.dart';
 import 'progression.dart';
 import 'register_components.dart';
 import 'research.dart';
+import 'season_pass.dart';
 import 'time_warp.dart';
 
 /// A whole idle game described as data: resources, generators, upgrades, achievements, prestige. One JSON
@@ -493,6 +494,54 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
     }
   }
 
+  final season = json['seasonPass'];
+  if (season != null) {
+    if (season is! Map) {
+      errors.add('seasonPass must be an object');
+    } else {
+      final id = season['id'];
+      if (id is! String || id.isEmpty) {
+        errors.add('seasonPass.id is required');
+      }
+      final xp = season['xpStat'];
+      if (xp is! String || xp.isEmpty) {
+        errors.add('seasonPass.xpStat is required');
+      }
+      final tiers = season['tiers'];
+      if (tiers is! List || tiers.isEmpty) {
+        errors.add('seasonPass.tiers must be a non-empty list');
+      } else {
+        for (var i = 0; i < tiers.length; i++) {
+          final t = tiers[i];
+          final p = 'seasonPass.tiers[$i]';
+          if (t is! Map) {
+            errors.add('$p must be an object');
+            continue;
+          }
+          number(t['at'], '$p.at', positive: true);
+          final grant = t['grant'];
+          if (grant != null && grant is! Map) {
+            errors.add('$p.grant must be an object');
+          } else if (grant is Map) {
+            for (final e in grant.entries) {
+              number(e.value, '$p.grant.${e.key}', nonNegative: true);
+              if (resources.isNotEmpty && !resources.contains(e.key)) {
+                errors.add('$p.grant.${e.key} is not a declared resource');
+              }
+            }
+          }
+          if (t['multiplier'] != null) {
+            number(t['multiplier'], '$p.multiplier', positive: true);
+          }
+          final tech = t['tech'];
+          if (tech != null && (tech is! String || tech.isEmpty)) {
+            errors.add('$p.tech must be a non-empty string');
+          }
+        }
+      }
+    }
+  }
+
   final offline = json['offline'];
   if (offline != null) {
     if (offline is! Map) {
@@ -607,6 +656,14 @@ IdleGame loadIdleDefinition(World world, Map<String, dynamic> json) {
     world.storeOf<TimeWarpOffer>().set(
       world.spawn(),
       TimeWarpOffer.fromJson((w as Map).cast<String, dynamic>()),
+    );
+  }
+  if (json['seasonPass'] is Map) {
+    world.storeOf<SeasonPass>().set(
+      world.spawn(),
+      SeasonPass.fromJson(
+        (json['seasonPass'] as Map).cast<String, dynamic>(),
+      ),
     );
   }
 

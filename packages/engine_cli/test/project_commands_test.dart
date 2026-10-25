@@ -345,6 +345,7 @@ dependencies:
     expect(main, contains('IdleSfx'));
     expect(main, contains('PrestigeShop'));
     expect(main, contains('ResearchPanel'));
+    expect(main, contains('SeasonPassPanel'));
     expect(main, contains('TimeWarpPanel'));
     expect(main, contains('StringTable.fromFlatLocale'));
     expect(pubspec, contains('path_provider'));
@@ -360,6 +361,7 @@ dependencies:
     expect(def, contains('"gems": "5"'));
     expect(def, contains('"research"'));
     expect(def, contains('"timeWarps"'));
+    expect(def, contains('"seasonPass"'));
     expect(
       File('${tmp.path}/cookie_game/assets/i18n/en.json').existsSync(),
       isTrue,

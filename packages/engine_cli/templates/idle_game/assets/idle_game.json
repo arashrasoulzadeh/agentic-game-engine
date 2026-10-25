@@ -20,6 +20,17 @@
   "timeWarps": [
     { "id": "hour", "name": "1 hour warp", "nameKey": "warp.hour", "seconds": 3600, "cost": { "gems": "1" } }
   ],
+  "seasonPass": {
+    "id": "spring",
+    "name": "Spring pass",
+    "nameKey": "pass.spring",
+    "xpStat": "lifetime:coins",
+    "tiers": [
+      { "at": "100", "grant": { "gems": "1" } },
+      { "at": "1000", "multiplier": "1.05" },
+      { "at": "10000", "grant": { "gems": "5" } }
+    ]
+  },
   "achievements": [
     { "id": "ten_cursors", "name": "Ten cursors", "nameKey": "ach.ten_cursors", "stat": "owned:cursor", "atLeast": "10", "reward": "1.05" },
     { "id": "rich", "name": "Rich", "stat": "lifetime:coins", "atLeast": "100000", "reward": "1.1" }

@@ -16,6 +16,7 @@ export 'src/ops/groups/engine_ops.dart'
     show
         allInputSchemas,
         engineOperations,
+        kBundledDocs,
         kEngineDocsUrl,
         kRemoteDocsPages;
 export 'src/ops/groups/undo_ops.dart' show undoOperations;

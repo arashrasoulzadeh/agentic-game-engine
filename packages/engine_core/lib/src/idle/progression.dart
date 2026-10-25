@@ -3,6 +3,7 @@ import '../../engine_core.dart';
 import 'challenges.dart';
 import 'components.dart';
 import 'economy.dart';
+import 'season_pass.dart';
 
 /// Lifetime numbers the genre's rules are built on: prestige formulas, achievements and "stats"
 /// screens. One per game, on any entity.
@@ -393,6 +394,7 @@ List<String> checkAchievements(World world, BigTreasury wallet) {
   }
   if (rewardsChanged) recomputeIncome(world, wallet);
   checkChallenges(world, wallet);
+  claimSeasonPass(world, wallet);
   return unlocked;
 }
 

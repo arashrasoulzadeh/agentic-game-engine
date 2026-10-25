@@ -43,7 +43,10 @@ class MyGame extends Game {
   String get colorblindMode => options.options.colorblindMode;
 
   @override
-  double get screenShakeIntensity => options.options.screenShakeIntensity;
+  double get screenShakeIntensity {
+    final o = options.options;
+    return o.reduceMotion ? 0 : o.screenShakeIntensity;
+  }
 
   @override
   InputController createInputController() => _input;
@@ -223,6 +226,11 @@ class GameSettingsMenu extends SettingsMenuScene {
             'tritanopia': 'Tritanopia',
           },
         ),
+        SettingsToggleSpec(
+          id: 'reduceMotion',
+          label: 'Reduce motion',
+          optionKey: 'reduceMotion',
+        ),
         SettingsSliderSpec(
           id: 'screenShakeIntensity',
           label: 'Screen shake',
@@ -230,6 +238,14 @@ class GameSettingsMenu extends SettingsMenuScene {
           min: 0,
           max: 1,
           steps: 10,
+        ),
+        SettingsSliderSpec(
+          id: 'textScale',
+          label: 'Text size',
+          optionKey: 'textScale',
+          min: 0.5,
+          max: 2,
+          steps: 6,
         ),
       ];
 
