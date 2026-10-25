@@ -3,6 +3,12 @@
 // a long offline catch-up.
 //
 //   dart run benchmark/idle_bench.dart
+//
+// Host baseline (macOS Apple Silicon, 2026-10-25): recomputeIncome≈312 us/op,
+// geometric maxAffordable≈1.5 us, offline catch-up≈0.8 us, formatBigNumber≈0.5 us.
+// Real-device (release APK) confirmation is still open in TODO.md — phone CPUs can
+// differ; re-run this script on-device via a Flutter isolate or compare against
+// test/performance_budget_test.dart's loose CI ceilings.
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_idle/engine_idle_logic.dart';
 

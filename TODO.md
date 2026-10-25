@@ -163,8 +163,8 @@ Flutter-free rules live in `engine_core` (`engine_core_idle.dart`).
 - [x] **Tooling** — balance simulator (`game_agent idle simulate`), `idle validate`, schemas, `idle_game` template, docs.
 - [x] **Cross-cutting** — determinism, anti-cheat position, analytics, accessibility, performance-budget test.
 - [x] The balance simulator only auto-prestiges the first layer and does not play challenges.
-- [ ] A real-device performance benchmark for 1,000 generators / long offline catch-up (the loose-budget test and host `benchmark/idle_bench.dart` exist; still needs timings from a release APK / real device).
-- [ ] Keep a fixture save for every released version once there is one (`SaveMigrator`; harness + `save_v1.json` already exist).
+- [ ] A real-device performance benchmark for 1,000 generators / long offline catch-up (the loose-budget test and host `benchmark/idle_bench.dart` exist; host baseline recorded in that file's header on 2026-10-25 — still needs timings from a release APK / phone).
+- [x] Keep a fixture save for every released version once there is one (`SaveMigrator`; harness + `save_v1.json` + the version-coverage test enforce it — add `save_vN.json` whenever `currentVersion` bumps).
 - [x] Per-widget rebuild throttling beyond the controller's 10 Hz tick.
 
 ## Turn-based strategy
