@@ -674,7 +674,7 @@ REST: `POST /v1/level/import_tmx` · MCP tool: `level.import_tmx` · JSON-RPC me
 
 Check a level loads and, optionally, that every entity is reachable from the spawn.
 
-Always checks structure like the engine loader. With `playable:true` it also walks, falls and jumps over the tileMap from the spawn (a positioned entity named with "player" or "spawn") to every other positioned entity - the same heuristic the studio validator uses. A conservative model, not a physics simulation: it can pass a level that needs wall jumps or ladders. `ok` is false when something fails; `problems` says what.
+Always checks structure like the engine loader. With `playable:true` it also walks, falls and jumps over the tileMap from the spawn (a positioned entity named with "player" or "spawn") to every other positioned entity - the same heuristic the studio validator uses. A conservative model, not a physics simulation: it can pass a level that needs wall jumps or ladders. With `includeRender:true` and an [ImageCodec] on the context, the result also carries a base64 PNG structural preview (`pngBase64`) — the same image `game_agent lint --render` writes. Without a codec, `includeRender` adds a problem instead of failing the whole call. `ok` is false when something fails; `problems` says what.
 
 *read*, needs an open project, idempotent.
 
@@ -683,6 +683,7 @@ Always checks structure like the engine loader. With `playable:true` it also wal
 | `path` | path | |
 | `json` | json | |
 | `playable` | boolean; default `false` | |
+| `includeRender` | boolean; default `false` | Include a base64 PNG structural preview of the tileMap (needs ImageCodec). |
 
 ```bash
 game_agent level lint <path>

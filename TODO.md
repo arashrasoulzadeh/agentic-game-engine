@@ -138,12 +138,11 @@ What is left:
       adapters that keep the golden output of `studio_golden_test.dart`; behaviour changes (an undo entry per edit) need an
       owner decision first.
 - [ ] **Operations not built yet:** `i18n.*` (no project convention for locale files yet), `strategy.rules` /
-      `strategy.simulate_turns` (the assembly lives in `engine_strategy`), `engine.docs`,
-      `level.lint --render` as an operation (needs an injected image codec — `ImageCodec` / binary
-      `FileChange` already land with `asset.pack`).
+      `strategy.simulate_turns` (the assembly lives in `engine_strategy`), `engine.docs`.
 - [x] **`asset.pack`** — MaxRects packer + `ImageCodec` in core; CLI `pack-assets` is a thin adapter;
-      binary `FileChange` / undo; `engine_api` still returns `unsupported` until it can depend on
-      `package:image` (pub auth blocked adding it here — inject the same wrapper as `engine_cli`).
+      binary `FileChange` / undo; `engine_api` injects the same `PackageImageCodec` as `engine_cli`.
+- [x] **`level.lint` `includeRender`** — structural PNG via `renderLevelPreview` + injected `ImageCodec`;
+      result carries `pngBase64` / `render` meta; CLI `lint --render` is a thin adapter that writes the PNG.
 - [ ] **Server extras:** SSE streaming and progress notifications, cancellation (`notifications/cancelled`), `Retry-After`
       for the concurrency limit, request-log levels.
 

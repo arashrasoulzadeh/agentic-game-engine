@@ -59,7 +59,7 @@ game_agent lint level.json --render level.png --playable
 | Option | Meaning |
 |---|---|
 | *(none)* | Validate the file against the content DSL. Exit 0 with a summary, or 1 with the exact error path (e.g. `entities[2].components["position"] must be an object`). |
-| `--render <png>` | Also rasterize the `TileMap` (solid / one-way / slope colour-coded, entities as dots). |
+| `--render <png>` | Also rasterize the `TileMap` (solid / one-way / slope colour-coded, entities as dots). Same preview as `level.lint` with `includeRender` (API returns base64). |
 | `--[no-]playable` | Also flood-fill from the spawn entity and report anything unreachable. A conservative tile-connectivity heuristic, **not** a physics simulation. |
 
 Great in CI, and for an agent to check a level it just wrote.

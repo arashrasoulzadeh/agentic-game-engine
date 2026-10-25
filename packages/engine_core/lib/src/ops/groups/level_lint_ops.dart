@@ -3,15 +3,14 @@ import 'dart:convert';
 import '../../content/level.dart';
 import '../../physics/tile_map.dart';
 import '../../validation/reachability.dart';
+import '../image_codec.dart';
+import '../level_render.dart';
 import '../operation.dart';
 import '../param.dart';
 import '../result.dart';
 import 'level_ops.dart';
 
-/// `level.lint`: the loadability check plus, on request, the studio's walk/fall/jump reachability heuristic.
-///
-/// The PNG render of `game_agent lint --render` is not part of this operation: it needs an image codec, which
-/// the pure-Dart core does not carry. The CLI keeps that flag.
+/// `level.lint`: loadability, optional reachability, optional structural PNG preview.
 List<Operation> levelLintOperations() => [
   Operation(
     name: 'level.lint',
@@ -21,7 +20,10 @@ List<Operation> levelLintOperations() => [
         'Always checks structure like the engine loader. With `playable:true` it also walks, falls and jumps over the '
         'tileMap from the spawn (a positioned entity named with "player" or "spawn") to every other positioned entity - '
         'the same heuristic the studio validator uses. A conservative model, not a physics simulation: it can pass a '
-        'level that needs wall jumps or ladders. `ok` is false when something fails; `problems` says what.',
+        'level that needs wall jumps or ladders. With `includeRender:true` and an [ImageCodec] on the context, the '
+        'result also carries a base64 PNG structural preview (`pngBase64`) — the same image `game_agent lint --render` '
+        'writes. Without a codec, `includeRender` adds a problem instead of failing the whole call. `ok` is false when '
+        'something fails; `problems` says what.',
     kind: OperationKind.read,
     scope: OperationScope.project,
     idempotent: true,
@@ -29,6 +31,14 @@ List<Operation> levelLintOperations() => [
       Param('path', ParamType.path, positional: true),
       Param('json', ParamType.json, cliFlag: 'inline-json'),
       Param('playable', ParamType.boolean, defaultValue: false),
+      Param(
+        'includeRender',
+        ParamType.boolean,
+        defaultValue: false,
+        description:
+            'Include a base64 PNG structural preview of the tileMap (needs ImageCodec).',
+        cliFlag: 'include-render',
+      ),
     ],
     handler: (ctx, a) {
       final Map<String, dynamic> json;
@@ -58,12 +68,31 @@ List<Operation> levelLintOperations() => [
         message = r.problems.isEmpty ? r.message : message;
         unreachable = r.unreachable;
       }
+
+      Map<String, Object?>? render;
+      if (a['includeRender'] == true) {
+        final codec = ctx.imageCodec;
+        if (codec == null) {
+          problems.add(
+            'includeRender needs an ImageCodec (use game_agent lint --render, or start the API with one).',
+          );
+        } else {
+          final built = _render(entities, codec);
+          if (built.error != null) {
+            problems.add(built.error!);
+          } else {
+            render = built.data;
+          }
+        }
+      }
+
       return OpOutcome.data({
         'ok': problems.isEmpty,
         'message': message,
         'problems': problems,
         'entities': entities.length,
         if (unreachable != null) 'unreachable': unreachable,
+        if (render != null) ...render,
       });
     },
   ),
@@ -74,6 +103,56 @@ class _Playable {
   final List<String> problems;
   final String message;
   final List<String>? unreachable;
+}
+
+class _Render {
+  _Render({this.data, this.error});
+  final Map<String, Object?>? data;
+  final String? error;
+}
+
+_Render _render(List<Map<String, dynamic>> entities, ImageCodec codec) {
+  Map<String, dynamic>? tileMapJson;
+  final markers = <LevelRenderMarker>[];
+  for (final entity in entities) {
+    final components =
+        entity['components'] as Map<String, dynamic>? ?? const {};
+    final position = components['position'] as Map<String, dynamic>?;
+    final tileMap = components['tileMap'] as Map<String, dynamic>?;
+    if (tileMap != null) {
+      tileMapJson = tileMap;
+    } else if (position != null) {
+      markers.add(
+        LevelRenderMarker(
+          (position['x'] as num).toDouble(),
+          (position['y'] as num).toDouble(),
+          entity['name'] as String?,
+        ),
+      );
+    }
+  }
+  if (tileMapJson == null) {
+    return _Render(
+      error: 'includeRender requires a "tileMap" component; none found.',
+    );
+  }
+  final preview = renderLevelPreview(
+    codec,
+    TileMap.fromJson(tileMapJson),
+    markers: markers,
+  );
+  return _Render(
+    data: {
+      'pngBase64': base64Encode(preview.png),
+      'render': {
+        'cols': preview.cols,
+        'rows': preview.rows,
+        'width': preview.width,
+        'height': preview.height,
+        'markers': preview.markerCount,
+      },
+    },
+  );
 }
 
 _Playable _playable(List<Map<String, dynamic>> entities) {

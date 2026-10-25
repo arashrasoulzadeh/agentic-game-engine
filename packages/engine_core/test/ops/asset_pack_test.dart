@@ -43,6 +43,37 @@ class _FakeCodec implements ImageCodec {
   EngineImage create(int width, int height) => _FakeImage(width, height, 0, 0, 0);
 
   @override
+  void fill(EngineImage image, EngineColor color) {}
+
+  @override
+  void fillRect(
+    EngineImage image, {
+    required int x1,
+    required int y1,
+    required int x2,
+    required int y2,
+    required EngineColor color,
+  }) {}
+
+  @override
+  void fillCircle(
+    EngineImage image, {
+    required int x,
+    required int y,
+    required int radius,
+    required EngineColor color,
+  }) {}
+
+  @override
+  void drawString(
+    EngineImage image,
+    String text, {
+    required int x,
+    required int y,
+    required EngineColor color,
+  }) {}
+
+  @override
   void composite(
     EngineImage dest,
     EngineImage src, {

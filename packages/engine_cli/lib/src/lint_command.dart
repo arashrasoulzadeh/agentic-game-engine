@@ -2,25 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
-import 'package:engine_core/engine_core.dart';
-import 'package:image/image.dart' as img;
+import 'package:engine_core/engine_core_ops.dart';
+import 'package:path/path.dart' as p;
 
-/// Pixels per tile in a `--render` PNG — not the level's own
-/// `tileWidth`/`tileHeight` (which could be tiny or huge), so a level
-/// with 8px tiles and one with 128px tiles render at a consistent,
-/// readable size either way.
-const _pixelsPerTile = 16;
+import 'image_codec.dart';
 
-/// Tile-collision-kind colors — chosen to be distinguishable from each
-/// other and from the black entity-marker dots at a glance, not to
-/// match any particular game's actual art (this is a structural
-/// preview, not a mockup of what the level will look like rendered).
-final _emptyColor = img.ColorRgb8(30, 30, 34);
-final _solidColor = img.ColorRgb8(120, 120, 128);
-final _oneWayColor = img.ColorRgb8(140, 180, 220);
-final _slopeColor = img.ColorRgb8(210, 150, 90);
-final _entityMarkerColor = img.ColorRgb8(230, 60, 60);
-
+/// Thin CLI adapter over `level.lint`: keeps the historical `game_agent lint`
+/// invocation (including `--render <png>`) while loadability, reachability and
+/// the structural PNG live in `engine_core`.
 class LintCommand extends Command<int> {
   @override
   final name = 'lint';
@@ -61,215 +50,96 @@ class LintCommand extends Command<int> {
       );
     }
 
-    final file = File(args.rest.first);
+    final file = File(p.normalize(p.absolute(args.rest.first)));
     if (!file.existsSync()) {
       stderr.writeln('Error: ${file.path} does not exist.');
       return 1;
     }
 
-    final Map<String, dynamic> json;
-    try {
-      json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
-    } on FormatException catch (e) {
-      stderr.writeln('Error: ${file.path} is not valid JSON: ${e.message}');
+    final renderPath = args['render'] as String?;
+    final root = p.dirname(file.path);
+    final result = await buildRegistry().call(
+      'level.lint',
+      {
+        'path': p.basename(file.path),
+        'playable': args['playable'] as bool,
+        'includeRender': renderPath != null,
+      },
+      OpContext(
+        project: ProjectRoot(root),
+        actor: 'cli',
+        imageCodec: const PackageImageCodec(),
+      ),
+    );
+
+    if (!result.ok) {
+      stderr.writeln('Error: ${result.error!.message}');
+      if (result.error!.hint != null) stderr.writeln(result.error!.hint);
       return 1;
     }
 
-    final List<Map<String, dynamic>> entities;
-    try {
-      entities = Level.validate(json);
-    } on LevelLoadException catch (e) {
-      stderr.writeln('${file.path}: ${e.message}');
-      return 1;
-    }
-    stdout.writeln('${file.path}: OK (${entities.length} entities)');
+    final data = (result.data as Map).cast<String, Object?>();
+    final problems = (data['problems'] as List?)?.cast<String>() ?? const [];
+    final ok = data['ok'] == true;
+    final entities = data['entities'];
 
-    var exitCode = 0;
+    if (entities is int) {
+      stdout.writeln('${file.path}: OK ($entities entities)');
+    }
 
     if (args['playable'] as bool) {
-      final playableResult = _checkPlayable(entities);
-      if (playableResult != 0) exitCode = playableResult;
+      if (ok || problems.any((p) => p.contains('unreachable'))) {
+        final message = data['message'] as String? ?? '';
+        if (message.contains('reachable') &&
+            !problems.any((p) => p.contains('unreachable'))) {
+          stdout.writeln('--playable: $message');
+        }
+      }
+      for (final problem in problems.where(_isPlayableProblem)) {
+        stderr.writeln(
+          problem.contains('unreachable')
+              ? '--playable: $problem'
+              : 'Error: $problem',
+        );
+      }
     }
 
-    final renderPath = args['render'] as String?;
+    for (final problem in problems.where((p) => !_isPlayableProblem(p))) {
+      if (problem.startsWith('Not valid JSON: ')) {
+        stderr.writeln(
+          'Error: ${file.path} is not valid JSON: '
+          '${problem.substring('Not valid JSON: '.length)}',
+        );
+      } else if (problem.startsWith('includeRender')) {
+        stderr.writeln(
+          'Error: ${problem.replaceFirst('includeRender', '--render')}',
+        );
+      } else {
+        stderr.writeln(
+          entities is int ? 'Error: $problem' : '${file.path}: $problem',
+        );
+      }
+    }
+
     if (renderPath != null) {
-      final renderResult = _render(entities, renderPath);
-      if (renderResult != 0) exitCode = renderResult;
-    }
-
-    return exitCode;
-  }
-
-  /// Checks that every positioned entity is reachable from the spawn entity
-  /// (name contains "player" or "spawn", case-insensitive) via
-  /// [isTileReachable] — the same walk/fall/jump heuristic
-  /// `LevelValidator`'s own exit-reachability check uses, so `lint
-  /// --playable` and the studio's validation panel can never disagree about
-  /// what counts as reachable (docs/studio/design.md 2.8). This used to run its own,
-  /// simpler four-connected flood-fill that didn't know about jumping, so it
-  /// could flag a gap a platformer jump clears as unreachable when the
-  /// validator would not.
-  int _checkPlayable(List<Map<String, dynamic>> entities) {
-    Map<String, dynamic>? tileMapJson;
-    final positioned = <(String name, double x, double y)>[];
-    for (final entity in entities) {
-      final components =
-          entity['components'] as Map<String, dynamic>? ?? const {};
-      final position = components['position'] as Map<String, dynamic>?;
-      final tileMap = components['tileMap'] as Map<String, dynamic>?;
-      if (tileMap != null) tileMapJson = tileMap;
-      if (position != null) {
-        positioned.add((
-          entity['name'] as String? ?? '<unnamed>',
-          (position['x'] as num).toDouble(),
-          (position['y'] as num).toDouble(),
-        ));
-      }
-    }
-
-    if (tileMapJson == null) {
-      stderr.writeln(
-        'Error: --playable requires a "tileMap" component somewhere in this level; none found.',
+      final b64 = data['pngBase64'] as String?;
+      final meta = data['render'] as Map?;
+      if (b64 == null) return 1;
+      final out = File(p.normalize(p.absolute(renderPath)));
+      out.parent.createSync(recursive: true);
+      out.writeAsBytesSync(base64Decode(b64));
+      stdout.writeln(
+        '${out.path}: rendered (${meta?['cols']}x${meta?['rows']} tiles, '
+        '${meta?['markers']} entity markers)',
       );
-      return 1;
-    }
-    final map = TileMap.fromJson(tileMapJson);
-
-    final spawnIndex = positioned.indexWhere(
-      (e) =>
-          e.$1.toLowerCase().contains('player') ||
-          e.$1.toLowerCase().contains('spawn'),
-    );
-    if (spawnIndex == -1) {
-      stderr.writeln(
-        'Error: --playable found no spawn entity (a positioned entity named '
-        'with "player" or "spawn" in it).',
-      );
-      return 1;
-    }
-    final spawn = positioned[spawnIndex];
-
-    final spawnOnSolidTile = !isTileReachable(
-      map,
-      startX: spawn.$2,
-      startY: spawn.$3,
-      targetX: spawn.$2,
-      targetY: spawn.$3,
-    );
-    if (spawnOnSolidTile) {
-      stderr.writeln(
-        'Error: --playable spawn entity "${spawn.$1}" sits on a solid tile.',
-      );
-      return 1;
     }
 
-    final unreachable = <String>[];
-    for (var i = 0; i < positioned.length; i++) {
-      if (i == spawnIndex) continue;
-      final (name, x, y) = positioned[i];
-      final reachable = isTileReachable(
-        map,
-        startX: spawn.$2,
-        startY: spawn.$3,
-        targetX: x,
-        targetY: y,
-      );
-      if (!reachable) unreachable.add(name);
-    }
-
-    if (unreachable.isNotEmpty) {
-      stderr.writeln(
-        '--playable: ${unreachable.length} entity(ies) unreachable from spawn '
-        '"${spawn.$1}": ${unreachable.join(', ')}',
-      );
-      return 1;
-    }
-    stdout.writeln(
-      '--playable: OK (all ${positioned.length - 1} other entities reachable from "${spawn.$1}")',
-    );
-    return 0;
-  }
-
-  int _render(List<Map<String, dynamic>> entities, String outputPath) {
-    Map<String, dynamic>? tileMapJson;
-    final positions = <(double x, double y, String? name)>[];
-    for (final entity in entities) {
-      final components =
-          entity['components'] as Map<String, dynamic>? ?? const {};
-      final position = components['position'] as Map<String, dynamic>?;
-      final tileMap = components['tileMap'] as Map<String, dynamic>?;
-      if (tileMap != null) {
-        tileMapJson = tileMap;
-      } else if (position != null) {
-        positions.add((
-          (position['x'] as num).toDouble(),
-          (position['y'] as num).toDouble(),
-          entity['name'] as String?,
-        ));
-      }
-    }
-
-    if (tileMapJson == null) {
-      stderr.writeln(
-        'Error: --render requires a "tileMap" component somewhere in this level; none found.',
-      );
-      return 1;
-    }
-
-    final map = TileMap.fromJson(tileMapJson);
-    final image = img.Image(
-      width: map.cols * _pixelsPerTile,
-      height: map.rows * _pixelsPerTile,
-    );
-    img.fill(image, color: _emptyColor);
-
-    for (var row = 0; row < map.rows; row++) {
-      for (var col = 0; col < map.cols; col++) {
-        final tileId = map.tileAt(col, row);
-        if (tileId == 0) continue;
-        final color = map.isSolid(col, row)
-            ? _solidColor
-            : map.isOneWay(col, row)
-            ? _oneWayColor
-            : (map.isSlopeUpRight(col, row) || map.isSlopeUpLeft(col, row))
-            ? _slopeColor
-            : _emptyColor; // a tile id with no recognized collision kind
-        img.fillRect(
-          image,
-          x1: col * _pixelsPerTile,
-          y1: row * _pixelsPerTile,
-          x2: (col + 1) * _pixelsPerTile - 1,
-          y2: (row + 1) * _pixelsPerTile - 1,
-          color: color,
-        );
-      }
-    }
-
-    // Entity markers use the level's own world-space coordinates scaled
-    // into this render's pixel grid, via the TileMap's own tile size --
-    // consistent regardless of _pixelsPerTile.
-    final scaleX = _pixelsPerTile / map.tileWidth;
-    final scaleY = _pixelsPerTile / map.tileHeight;
-    for (final (x, y, name) in positions) {
-      final px = (x * scaleX).round();
-      final py = (y * scaleY).round();
-      img.fillCircle(image, x: px, y: py, radius: 3, color: _entityMarkerColor);
-      if (name != null) {
-        img.drawString(
-          image,
-          name,
-          font: img.arial14,
-          x: px + 5,
-          y: py - 6,
-          color: _entityMarkerColor,
-        );
-      }
-    }
-
-    File(outputPath).writeAsBytesSync(img.encodePng(image));
-    stdout.writeln(
-      '$outputPath: rendered (${map.cols}x${map.rows} tiles, ${positions.length} entity markers)',
-    );
-    return 0;
+    return ok ? 0 : 1;
   }
 }
+
+bool _isPlayableProblem(String problem) =>
+    problem.contains('playable') ||
+    problem.contains('unreachable') ||
+    problem.contains('spawn') ||
+    problem.contains('solid tile');

@@ -11,7 +11,7 @@
 - [x] Phase 7 (partial) - `engine_api/test/parity_test.dart`: every served operation is an MCP tool and a REST path, Flutter-only ones (`release.build`, `project.create`, `project.upgrade`) are declared but CLI-only; CLI parity is `engine_cli/test/ops_cli_test.dart`. `engine_api/test/e2e_test.dart` walks the whole agent workflow (open, create, edit, validate, world.build/step/query, destructive preview + confirmation, undo). Generated reference `docs/reference/operations.md` with a drift test is done. Still to do: a generated per-transport quick-start page.
 
 
-Status: **implemented through phase 7**; the remaining items are in `TODO.md` under "Operation registry and agent API". Three rounds of decisions are recorded below; nothing is left open. The text below is the original specification and is kept as the design record; where the progress log says otherwise (for example prompts live in code, `level.lint` has no `render`, the world sandbox's `world.*` take `ticks`/`dt`), the progress log and the code win.
+Status: **implemented through phase 7**; the remaining items are in `TODO.md` under "Operation registry and agent API". Three rounds of decisions are recorded below; nothing is left open. The text below is the original specification and is kept as the design record; where the progress log says otherwise (for example prompts live in code, `level.lint` render is `includeRender` + `pngBase64` via injected `ImageCodec`, the world sandbox's `world.*` take `ticks`/`dt`), the progress log and the code win.
 
 ## Goal
 

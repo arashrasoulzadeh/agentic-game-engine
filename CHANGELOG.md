@@ -12,6 +12,8 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Changed
+- `game_agent lint --render` is now a thin adapter over `level.lint` with `includeRender` (preview raster
+  lives in `engine_core` via injected `ImageCodec`); the API returns `pngBase64` instead of writing a file.
 - `game_agent pack-assets` is now a thin adapter over the `asset.pack` operation (packing algorithm and
   proposal live in `engine_core`); binary atlas PNGs go through `FileChange.afterBytes` so undo works.
 - Idle balance simulator (`simulateIdle` / `idle.simulate`): prestiges **every** layer that meets `prestigeAt`
@@ -23,8 +25,12 @@ pubspec.yaml.
   actions. The resource header still follows every tick.
 
 ### Added
+- `level.lint` `includeRender`: optional base64 PNG structural preview of the tileMap (needs `ImageCodec`);
+  `renderLevelPreview` + drawing helpers on `ImageCodec` (`fill` / `fillRect` / `fillCircle` / `drawString`).
 - `asset.pack` operation: MaxRects atlas packing via an injected `ImageCodec` (no `package:image` in
   core); `ProjectFiles.writeAtomicBytes` / binary undo journal entries for PNG sheets.
+- `engine_api` injects `PackageImageCodec` (`package:image`) so `asset.pack` and `level.lint` render work
+  over MCP/HTTP the same as the CLI.
 - `engine_api` MCP server over stdio (phase 6, part 1 of `engine_mcp.md`): one tool per non-Flutter operation with JSON Schema, annotations and a detailed description, `tools/call` returning the result envelope, resources for the catalogue and schemas, `--project`, `--read-only`, `--allow/--deny`, `--underscore-tool-names`.
 - `engine_api --http`: REST (`/v1/<group>/<verb>`), JSON-RPC (`/rpc`), MCP (`/mcp`) and a generated OpenAPI document on one localhost port, behind a bearer token (`.studio/api-token`), with a Host-header check and request size limit.
 - `engine_api` operations: JSONL request log with rotation (`--log`), result size limit (`--max-result-bytes`) and HTTP rate/concurrency limits (`--requests-per-minute`).
@@ -39,7 +45,7 @@ pubspec.yaml.
 - `project.problems` operation: levels, graphs and the idle game's problems as one flat list with file and severity.
 - `graph.*` operations (list, read, node_kinds, validate, compile, create, add_node, remove_node, connect, disconnect, set_param) over dialogue, behavior-tree and state-machine graphs, working on the graph JSON directly so they need no GUI types.
 - Generated operations reference (`docs/reference/operations.md`) for every CLI command, MCP tool, REST route and JSON-RPC method, with a test that fails when it is stale.
-- `level.lint` operation (loadability plus the studio's `playable` reachability heuristic; the PNG render stays a `game_agent lint --render` feature because the pure-Dart core has no image codec).
+- `level.lint` operation (loadability plus the studio's `playable` reachability heuristic).
 - `world.build`, `world.step`, `world.snapshot`, `world.patch`, `world.query`, `world.discard`: headless in-memory worlds (max 4, 10 minute idle expiry) an agent can step and inspect without touching files; allowed on read-only servers.
 - `level.export_tmx` and `level.import_tmx` operations (Tiled interchange).
 - `prefab.list`, `prefab.read`, `prefab.save`, `prefab.place` operations. `project.info` now counts prefabs in `prefabs/` (where the studio saves them), not `assets/prefabs`.

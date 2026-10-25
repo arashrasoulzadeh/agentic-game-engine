@@ -6,6 +6,7 @@ import 'package:engine_core/engine_core_ops.dart';
 import 'config.dart';
 import 'http/http_server.dart';
 import 'http/token.dart';
+import 'image_codec.dart';
 import 'mcp/session.dart';
 import 'request_log.dart';
 import 'mcp/stdio.dart';
@@ -184,8 +185,7 @@ OpContext contextFromArgs(
   allowOpen: (r['allow-open'] as List).cast<String>(),
   // Over HTTP a server started on a project stays on it; switching needs a restart.
   allowProjectSwitch: !((r['http'] as bool) && project != null),
-  // ImageCodec for asset.pack: injected once engine_api can depend on package:image
-  // (same wrapper as engine_cli). Until then asset.pack returns unsupported over HTTP/MCP.
+  imageCodec: const PackageImageCodec(),
 );
 
 RequestLog? _requestLog(String? explicit, ProjectRoot? project) {

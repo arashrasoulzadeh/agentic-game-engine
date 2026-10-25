@@ -7,6 +7,8 @@ import 'package:image/image.dart' as img;
 class PackageImageCodec implements ImageCodec {
   const PackageImageCodec();
 
+  img.Color _c(EngineColor c) => img.ColorRgba8(c.r, c.g, c.b, c.a);
+
   @override
   EngineImage? decode(Uint8List bytes) {
     final decoded = img.decodeImage(bytes);
@@ -28,6 +30,65 @@ class PackageImageCodec implements ImageCodec {
   @override
   EngineImage create(int width, int height) =>
       _Img(img.Image(width: width, height: height, numChannels: 4));
+
+  @override
+  void fill(EngineImage image, EngineColor color) {
+    img.fill((image as _Img).image, color: _c(color));
+  }
+
+  @override
+  void fillRect(
+    EngineImage image, {
+    required int x1,
+    required int y1,
+    required int x2,
+    required int y2,
+    required EngineColor color,
+  }) {
+    img.fillRect(
+      (image as _Img).image,
+      x1: x1,
+      y1: y1,
+      x2: x2,
+      y2: y2,
+      color: _c(color),
+    );
+  }
+
+  @override
+  void fillCircle(
+    EngineImage image, {
+    required int x,
+    required int y,
+    required int radius,
+    required EngineColor color,
+  }) {
+    img.fillCircle(
+      (image as _Img).image,
+      x: x,
+      y: y,
+      radius: radius,
+      color: _c(color),
+    );
+  }
+
+  @override
+  void drawString(
+    EngineImage image,
+    String text, {
+    required int x,
+    required int y,
+    required EngineColor color,
+  }) {
+    img.drawString(
+      (image as _Img).image,
+      text,
+      font: img.arial14,
+      x: x,
+      y: y,
+      color: _c(color),
+    );
+  }
 
   @override
   void composite(

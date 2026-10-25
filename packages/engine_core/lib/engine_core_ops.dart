@@ -10,6 +10,7 @@ export 'src/ops/atlas_packer.dart';
 export 'src/ops/context.dart';
 export 'src/ops/files.dart';
 export 'src/ops/image_codec.dart';
+export 'src/ops/level_render.dart';
 export 'src/ops/groups/engine_ops.dart' show allInputSchemas, engineOperations;
 export 'src/ops/groups/undo_ops.dart' show undoOperations;
 export 'src/ops/json_schema.dart';

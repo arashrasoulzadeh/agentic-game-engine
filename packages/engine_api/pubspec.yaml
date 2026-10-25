@@ -28,6 +28,7 @@ dependencies:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
       path: packages/engine_core
       ref: main
+  image: ^4.7.0
 
 dev_dependencies:
   test: ^1.25.0
