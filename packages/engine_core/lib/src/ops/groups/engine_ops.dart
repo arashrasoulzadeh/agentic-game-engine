@@ -203,10 +203,8 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
       }
       return OpOutcome.data({'page': rel, 'markdown': text});
     },
-    examples: const [
-      Example('List pages', {}),
-      Example('Read the ECS concept page', {'page': 'concepts/ecs'}),
-    ],
+    // No registry examples: without a docsRoot the op returns unsupported, and
+    // the dedicated engine_docs_test covers list/read with a fixture tree.
   ),
 ];
 

@@ -18,6 +18,7 @@ dependencies:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
       path: packages/engine_schema
       ref: main
+  path: ^1.9.0
   # For TmxImport (Tiled .tmx/.tsx -> TileMap) -- a standard, minimal
   # XML parser rather than hand-rolling one for a real interchange
   # format's actual grammar.

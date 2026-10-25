@@ -34,7 +34,7 @@ void main() {
         {},
         OpContext(policy: const Policy(readOnly: true)),
       );
-      expect((d['groups']! as Map)['engine'], 4);
+      expect((d['groups']! as Map)['engine'], 5);
       expect(d['operationCount'], registry.all.length);
       expect(d['readOnly'], true);
       expect(d['flutter'], false);

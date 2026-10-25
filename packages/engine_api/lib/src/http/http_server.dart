@@ -109,11 +109,15 @@ class EngineHttpServer {
         return await req.response.close();
       }
       if (!_hostAllowed(req)) {
-        return _send(req, 403, _fail(ErrorCode.forbidden, 'Host not allowed.'));
+        return await _send(
+          req,
+          403,
+          _fail(ErrorCode.forbidden, 'Host not allowed.'),
+        );
       }
       final path = req.uri.path;
       if (req.method == 'GET' && path == '/v1/health') {
-        return _send(req, 200, {
+        return await _send(req, 200, {
           'status': 'ok',
           'version': engineApiVersion,
           'uptimeMs': _session.ctx
@@ -128,7 +132,7 @@ class EngineHttpServer {
             (_authFailures[remote] ?? 0) + 1;
         if (failures > 5) await Future<void>.delayed(authFailureDelay);
         req.response.headers.set('www-authenticate', 'Bearer');
-        return _send(
+        return await _send(
           req,
           401,
           _fail(ErrorCode.unauthorized, 'A valid bearer token is required.'),
@@ -145,7 +149,7 @@ class EngineHttpServer {
       if (!isSse &&
           (_recent.length >= _perMinute || _inFlight >= _concurrent)) {
         req.response.headers.set('retry-after', '1');
-        return _send(
+        return await _send(
           req,
           429,
           _fail(ErrorCode.rateLimited, 'Too many requests; retry shortly.'),
