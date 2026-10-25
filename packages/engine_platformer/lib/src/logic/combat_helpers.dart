@@ -1,10 +1,24 @@
 import 'dart:math';
 
 import 'package:engine_core/engine_core.dart';
+import 'package:engine_flutter/engine_flutter.dart' show flashHit;
 
 import '../physics/platformer_controller.dart';
 import 'health.dart';
 import 'parry.dart';
+
+/// Emits [DamageEvent] and, when [amount] > 0, triggers [flashHit] if the
+/// entity has a `HitFlash` component (no-op otherwise — same "harmless if
+/// unused" pattern as the rest of this package).
+void _emitDamage(
+  World world,
+  EntityId entity,
+  double amount, {
+  EntityId? source,
+}) {
+  world.events.emit(DamageEvent(entity, amount, source: source));
+  if (amount > 0) flashHit(world, entity);
+}
 
 /// Emitted by [damageEntity] every time it actually applies damage —
 /// regardless of whether the hit was lethal (see [DeathEvent] for
@@ -73,6 +87,8 @@ class DeathEvent {
 /// Emits [DamageEvent] every time it actually applies damage (to health
 /// or stability), plus [DeathEvent] the moment `current` crosses to
 /// zero or below (both fire on a killing blow — [DamageEvent] first).
+/// When the applied amount is > 0, also calls [flashHit] so entities
+/// with a `HitFlash` component blink without a separate listener.
 /// Emits [BlockedEvent] when damage is blocked, [GuardBreakEvent] on
 /// guard break. Returns `true` if damage was actually applied.
 ///
@@ -146,7 +162,7 @@ bool damageEntity(
       finalDamage = amount;
       health.invincibleSeconds = invincibilitySeconds;
       health.current -= finalDamage;
-      world.events.emit(DamageEvent(entity, finalDamage, source: source));
+      _emitDamage(world, entity, finalDamage, source: source);
       if (health.isDead) {
         world.events.emit(DeathEvent(entity));
       }
@@ -155,20 +171,20 @@ bool damageEntity(
       health.invincibleSeconds = invincibilitySeconds;
       if (finalDamage > 0) {
         health.current -= finalDamage;
-        world.events.emit(DamageEvent(entity, finalDamage, source: source));
+        _emitDamage(world, entity, finalDamage, source: source);
         if (health.isDead) {
           world.events.emit(DeathEvent(entity));
         }
       } else {
         // Fully blocked - still emit DamageEvent with 0 for feedback
-        world.events.emit(DamageEvent(entity, 0, source: source));
+        _emitDamage(world, entity, 0, source: source);
       }
     }
   } else {
     // Not guarding or can't guard - apply full damage to health
     health.current -= amount;
     health.invincibleSeconds = invincibilitySeconds;
-    world.events.emit(DamageEvent(entity, amount, source: source));
+    _emitDamage(world, entity, amount, source: source);
     if (health.isDead) {
       world.events.emit(DeathEvent(entity));
     }

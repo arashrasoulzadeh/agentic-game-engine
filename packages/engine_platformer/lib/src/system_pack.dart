@@ -45,15 +45,17 @@ import 'physics/water_physics_system.dart';
 /// `HitstunSystem` (ticks down `PlatformerController.hitstunSeconds`,
 /// same reasoning), `HealthHudSystem` (syncs any `HudBar` wired up via
 /// `spawnHealthHudBar`/`HealthHudLink` — same "harmless if unused"
-/// reasoning), `ProjectileSystem` (ages/expires `Projectile`s, same
-/// reasoning again), and `AttackSystem` (fires any entity's `Weapon` on
-/// its `"attack"` action or a directly-set `Weapon.attackRequested` --
-/// harmless with no `Weapon` components in the world, same reasoning).
-/// Damage/death/respawn themselves, and projectile-vs-target damage
-/// (`installProjectileDamage`, needed for melee and ranged `Weapon`s
-/// since both spawn a `Projectile` under the hood -- see
-/// `AttackSystem`'s doc comment), are helpers you call explicitly
-/// (`damageEntity`, `dealDamageOnTouch`, `respawnOnDeath`,
+/// reasoning), `HitFlashSystem` (syncs `Sprite.tintArgb` from any
+/// `HitFlash` — `damageEntity` calls `flashHit` when amount > 0; no-op
+/// without the component), `ProjectileSystem` (ages/expires
+/// `Projectile`s, same reasoning again), and `AttackSystem` (fires any
+/// entity's `Weapon` on its `"attack"` action or a directly-set
+/// `Weapon.attackRequested` -- harmless with no `Weapon` components in
+/// the world, same reasoning). Damage/death/respawn themselves, and
+/// projectile-vs-target damage (`installProjectileDamage`, needed for
+/// melee and ranged `Weapon`s since both spawn a `Projectile` under the
+/// hood -- see `AttackSystem`'s doc comment), are helpers you call
+/// explicitly (`damageEntity`, `dealDamageOnTouch`, `respawnOnDeath`,
 /// `installProjectileDamage`), not part of this pack, so *when*/*what*
 /// takes damage stays visible in game code.
 ///
@@ -91,6 +93,7 @@ void installPlatformerSystems(
   world.addSystem(HealthSystem());
   world.addSystem(HitstunSystem());
   world.addSystem(HealthHudSystem());
+  world.addSystem(HitFlashSystem());
   world.addSystem(ProjectileSystem());
   world.addSystem(AttackSystem());
   if (includeAnimation) {

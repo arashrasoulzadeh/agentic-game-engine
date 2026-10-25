@@ -112,6 +112,12 @@ class _DayNightGame extends _TestGame {
   Scene createInitialScene() => scene;
 }
 
+class _ViewportConfigGame extends _TestGame {
+  @override
+  ViewportConfig? get viewportConfig =>
+      const ViewportConfig(targetAspectRatio: 9 / 16);
+}
+
 class _PerformanceOverlayGame extends _TestGame {
   @override
   GameConfig get config => const GameConfig(
@@ -184,6 +190,20 @@ void main() {
 
       final engineView = tester.widget<EngineView>(find.byType(EngineView));
       expect(engineView.showPerformanceOverlay, isTrue);
+    },
+  );
+
+  testWidgets(
+    'Game.viewportConfig reaches EngineView through GameRunner',
+    (tester) async {
+      final game = _ViewportConfigGame();
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
+
+      final engineView = tester.widget<EngineView>(find.byType(EngineView));
+      expect(engineView.viewportConfig?.targetAspectRatio, 9 / 16);
+      expect(_DefaultCallbacksGame().viewportConfig, isNull);
     },
   );
 

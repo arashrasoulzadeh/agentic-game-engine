@@ -341,6 +341,41 @@ void main() {
     expect(seen!.source, source);
   });
 
+  test('damageEntity calls flashHit when amount > 0 and HitFlash is present', () {
+    final world = _buildWorld();
+    final id = world.spawn();
+    world.storeOf<Health>().set(id, Health(current: 10, max: 10));
+    world.storeOf<HitFlash>().set(id, HitFlash());
+
+    damageEntity(world, id, 4, invincibilitySeconds: 0);
+
+    expect(
+      world.storeOf<HitFlash>().get(id)!.remaining,
+      kDefaultHitFlashSeconds,
+    );
+  });
+
+  test('damageEntity does not flashHit on a fully blocked (amount 0) hit', () {
+    final world = _buildWorld();
+    final id = world.spawn();
+    world.storeOf<Health>().set(
+      id,
+      Health(
+        current: 10,
+        max: 10,
+        isGuarding: true,
+        guardDamageReduction: 1.0,
+        stability: 100,
+        maxStability: 100,
+      ),
+    );
+    world.storeOf<HitFlash>().set(id, HitFlash());
+
+    damageEntity(world, id, 4, invincibilitySeconds: 0);
+
+    expect(world.storeOf<HitFlash>().get(id)!.remaining, 0);
+  });
+
   test(
     'damageEntity does not emit DamageEvent when the hit is a no-op (invincible)',
     () {

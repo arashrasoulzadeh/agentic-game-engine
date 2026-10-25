@@ -14,6 +14,10 @@ pubspec.yaml.
 ### Added
 - `HitFlash` / `HitFlashSystem` / `flashHit` — per-entity damage flash that
   drives `Sprite.tintArgb` (registered in `registerFlutterComponents`).
+  `damageEntity` calls `flashHit` when amount > 0; `installPlatformerSystems`
+  registers `HitFlashSystem`.
+- `Game.viewportConfig` — optional letterbox / aspect fit forwarded to
+  `EngineView` (e.g. portrait `9/16` in a wide window).
 - `SpriteAtlas.fromStrip` / `fromFullImage` (+ `loadStripFromAssets` /
   `loadFullImageFromAssets`) for single-row `cell`/`gap` sheets and
   full-image backgrounds without a regions manifest.

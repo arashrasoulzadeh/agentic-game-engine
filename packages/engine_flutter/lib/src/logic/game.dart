@@ -12,6 +12,7 @@ import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import '../rendering/camera.dart';
 import '../rendering/engine_view.dart';
 import '../rendering/frame_stats.dart';
+import '../rendering/viewport.dart';
 import 'game_config.dart';
 import '../input/input.dart';
 import '../input/on_screen_controls.dart';
@@ -89,6 +90,13 @@ abstract class Game {
   /// Multiplier for [Camera] shake (`0` off, `1` as authored). Bind from
   /// `PlayerOptions.screenShakeIntensity` the same way as [colorblindMode].
   double get screenShakeIntensity => 1.0;
+
+  /// Optional letterbox / aspect fit for [EngineView]. `null` (default)
+  /// fills the host widget with no bars — the original behavior. Set
+  /// e.g. `ViewportConfig(targetAspectRatio: 9 / 16)` for a portrait
+  /// game hosted in a wide window; pair with a matching [Camera.zoom]
+  /// when the world is authored at a fixed logical size.
+  ViewportConfig? get viewportConfig => null;
 
   /// Shown while the initial scene's `populate`/`loadAssets` are
   /// running, before the first frame can render. A later
@@ -511,6 +519,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
             cameraFollowEntity: loaded.scene.cameraFollowEntity(loaded.world),
             backgroundColor: widget.game.config.backgroundColor,
             colorblindMode: widget.game.colorblindMode,
+            viewportConfig: widget.game.viewportConfig,
             paused: _paused || overlay != null,
             // Forced off in a real release build regardless of what
             // game_config.json says -- these are debugging aids, not

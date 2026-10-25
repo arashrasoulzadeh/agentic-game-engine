@@ -35,6 +35,7 @@ void main() {
         'health',
         'hitstun',
         'healthHud',
+        'hitFlash',
         'projectile',
         'attack',
         'facing',
@@ -62,6 +63,7 @@ void main() {
       'health',
       'hitstun',
       'healthHud',
+      'hitFlash',
       'projectile',
       'attack',
       'facing',
@@ -88,6 +90,7 @@ void main() {
       'health',
       'hitstun',
       'healthHud',
+      'hitFlash',
       'projectile',
       'attack',
     ]);
