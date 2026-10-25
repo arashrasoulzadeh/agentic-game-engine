@@ -11,6 +11,18 @@ pubspec.yaml.
 ### Removed
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
+### Added
+- Idle Material shell: AppBar pause (`showIdlePauseMenu` freezes the economy),
+  credits dialog, volume sliders on `IdleSettingsPanel` via `PlayerOptions`,
+  `IdleSfx` hooks on buy / upgrade / tap / prestige / golden, `PrestigeShop` /
+  `UpgradeList(costResource:)` for gem-cost upgrades, and `schema.idle_game`
+  whole-file JSON Schema for `assets/idle_game.json`.
+
+### Fixed
+- `bestPurchase` / the idle balance simulator treated upgrades that cost only a
+  non-main currency (e.g. prestige gems) as free coin buys when `cost[coins]`
+  was missing — they are priced and gated on their real cost resource now.
+
 ### Changed
 - Game-dev workflow: `project.open` / CLI project discovery accept idle and strategy
   projects (not only `assets/levels`); strategy template loads

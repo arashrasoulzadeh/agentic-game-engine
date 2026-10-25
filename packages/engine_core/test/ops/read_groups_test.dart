@@ -231,6 +231,15 @@ void main() {
       },
     );
 
+    test('schema.idle_game returns the whole-file definition schema', () async {
+      final s = await Scratch.create(open: false);
+      final schema = await s.map('schema.idle_game');
+      expect(schema['title'], 'idle_game');
+      expect(schema['type'], 'object');
+      final props = schema['properties']! as Map;
+      expect(props.keys, containsAll(['resources', 'generators', 'upgrades', 'prestiges', 'offline']));
+    });
+
     test('schema.validate_component agrees with level validation', () async {
       final s = await Scratch.create(open: false);
       expect(

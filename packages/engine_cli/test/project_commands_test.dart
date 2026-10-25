@@ -341,6 +341,9 @@ dependencies:
     expect(main, contains('onDouble'));
     expect(main, contains('LogReturnNotifier'));
     expect(main, contains('resourceIds'));
+    expect(main, contains('showIdlePauseMenu'));
+    expect(main, contains('IdleSfx'));
+    expect(main, contains('PrestigeShop'));
     expect(pubspec, contains('path_provider'));
     final def = File(
       '${tmp.path}/cookie_game/assets/idle_game.json',
@@ -350,6 +353,7 @@ dependencies:
     expect(def, contains('"prestiges"'));
     expect(def, contains('"autoBuyer"'));
     expect(def, contains('"bonusPerOwned"'));
+    expect(def, contains('"gems": "5"'));
     expect(
       File('${tmp.path}/cookie_game/test/widget_test.dart').readAsStringSync(),
       contains('cookie_game'),

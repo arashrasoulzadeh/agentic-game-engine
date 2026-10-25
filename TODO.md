@@ -45,23 +45,21 @@ op, `engine.docs` remote index when no local `docs/`. Still open:
 
 - [ ] Optional: bundle markdown into the package so `engine.docs` returns
       bodies without `--docs-root` / network.
-- [ ] Idle template Material pause/settings shell (economy settings already
-      exist; audio SFX hooks stay under Idle polish).
 
 ## Idle polish
 
 Create path is shippable (`--template idle_game`: durable save, cold-start
 offline dialog, challenges, stats, golden, layered prestiges, auto-buyer,
-synergy upgrades, format persistence, offline double stub, return notifier).
-Guide checklist: [docs/concepts/idle-games.md](docs/concepts/idle-games.md).
+synergy upgrades, format persistence, offline double stub, return notifier,
+Material pause/settings/credits + volumes, `IdleSfx` stubs, prestige shop,
+`schema.idle_game`). Guide checklist:
+[docs/concepts/idle-games.md](docs/concepts/idle-games.md).
 Depth / genre extras still open:
 
 - [ ] Cloud-save walkthrough (Game Center / Play Games / HTTP sample).
-- [ ] Sound / SFX hooks on buy, prestige, golden claim.
 - [ ] Localisation of definition display names (string keys / locale tables).
-- [ ] Whole-file JSON Schema for `idle_game.json` (component schemas exist).
 - [ ] Research-tree definition block + UI (tech `requires` already work).
-- [ ] Prestige-shop UI (filter gem-cost upgrades); time-warp / season pass.
+- [ ] Time-warp / season pass (prestige shop filter shipped).
 
 ## Studio
 

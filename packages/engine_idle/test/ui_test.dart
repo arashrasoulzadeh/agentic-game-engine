@@ -656,6 +656,124 @@ void main() {
         isNull,
       );
     });
+
+    testWidgets('costResource filters to that currency (prestige shop)', (
+      tester,
+    ) async {
+      final c = _controller(coins: '500');
+      c.wallet.amounts['gems'] = n('10');
+      c.world.storeOf<Upgrade>().set(
+        c.world.spawn(),
+        Upgrade(id: 'coin_up', multiplier: n('2'), cost: {'coins': n('10')}),
+      );
+      c.world.storeOf<Upgrade>().set(
+        c.world.spawn(),
+        Upgrade(id: 'gem_up', multiplier: n('2'), cost: {'gems': n('5')}),
+      );
+      await tester.pumpWidget(
+        _app(SizedBox(height: 400, child: PrestigeShop(controller: c))),
+      );
+      expect(find.byKey(const Key('prestige-shop-gems')), findsOneWidget);
+      expect(find.byKey(const Key('upgrade-gem_up')), findsOneWidget);
+      expect(find.byKey(const Key('upgrade-coin_up')), findsNothing);
+    });
+  });
+
+  test('IdleSfx fires on successful buy, tap, upgrade and prestige', () {
+    final heard = <String>[];
+    final w = World(width: 10, height: 10);
+    registerCoreComponents(w);
+    registerIdleComponents(w);
+    w.storeOf<BigTreasury>().set(
+      w.spawn(),
+      BigTreasury(amounts: {'coins': n('100000')}),
+    );
+    w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+    w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
+    w.storeOf<Generator>().set(
+      w.spawn(),
+      Generator(
+        id: 'cursor',
+        cost: GeometricCost(base: n('10'), growth: 1.1),
+        output: {'coins': n('1')},
+      ),
+    );
+    w.storeOf<Upgrade>().set(
+      w.spawn(),
+      Upgrade(
+        id: 'x2',
+        target: 'cursor',
+        multiplier: n('2'),
+        cost: {'coins': n('50')},
+      ),
+    );
+    w.storeOf<PrestigeRule>().set(
+      w.spawn(),
+      PrestigeRule(currency: 'gems', basedOn: 'coins', divisor: n('100')),
+    );
+    w.addSystem(IdleSystem());
+    final c = IdleController(
+      world: w,
+      sfx: IdleSfx(
+        onBuy: () => heard.add('buy'),
+        onUpgrade: () => heard.add('upgrade'),
+        onTap: () => heard.add('tap'),
+        onPrestige: () => heard.add('prestige'),
+      ),
+    );
+    c.buy(c.generatorIds.first);
+    c.tap();
+    c.buyUpgradeById(c.upgradeIds.first);
+    w.storeOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
+    c.prestige();
+    expect(heard, ['buy', 'tap', 'upgrade', 'prestige']);
+    c.dispose();
+  });
+
+  testWidgets('pause menu offers resume, settings and credits', (tester) async {
+    var settings = 0;
+    var credits = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              key: const Key('open-pause'),
+              onPressed: () => showIdlePauseMenu(
+                context,
+                onSettings: () => settings++,
+                onCredits: () => credits++,
+              ),
+              child: const Text('Pause'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('open-pause')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('pause-resume')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('pause-settings')));
+    await tester.pumpAndSettle();
+    expect(settings, 1);
+
+    await tester.tap(find.byKey(const Key('open-pause')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('pause-credits')));
+    await tester.pumpAndSettle();
+    expect(credits, 1);
+  });
+
+  testWidgets('settings panel volume sliders write PlayerOptions', (tester) async {
+    final c = _controller();
+    final options = PlayerOptionsManager(InMemoryPlayerOptionsStorage());
+    await tester.pumpWidget(
+      _app(IdleSettingsPanel(controller: c, options: options)),
+    );
+    expect(find.byKey(const Key('settings-master-volume')), findsOneWidget);
+    await tester.drag(find.byKey(const Key('settings-master-volume')), const Offset(-80, 0));
+    await tester.pumpAndSettle();
+    expect(options.options.masterVolume, lessThan(1.0));
   });
 
   testWidgets('OfflineSummaryDialog lists time away, the cap and each gain', (

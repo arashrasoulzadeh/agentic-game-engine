@@ -36,6 +36,12 @@ void main() {
     await tester.pump();
     expect(tester.takeException(), isNull);
 
+    // Prestige shop filters gem-cost upgrades.
+    await tester.tap(find.text('Shop'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('prestige-shop-gems')), findsOneWidget);
+    expect(find.byKey(const Key('upgrade-gem_boost')), findsOneWidget);
+
     // Progress: both prestige layers, achievements.
     await tester.tap(find.text('Progress'));
     await tester.pumpAndSettle();
@@ -43,11 +49,13 @@ void main() {
     expect(find.byKey(const Key('prestige-button-ascend')), findsOneWidget);
     expect(find.byKey(const Key('achievement-ten_cursors')), findsOneWidget);
 
-    // Settings: number format persists via PlayerOptions.
+    // Settings: number format + volumes persist via PlayerOptions.
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('settings-number-style')), findsOneWidget);
     expect(find.byKey(const Key('settings-decimal-separator')), findsOneWidget);
+    expect(find.byKey(const Key('settings-master-volume')), findsOneWidget);
+    expect(find.byKey(const Key('settings-sfx-volume')), findsOneWidget);
     await tester.tap(find.text('1.5e6'));
     await tester.pump();
     expect(options.getOption('numberStyle'), 'scientific');
@@ -56,6 +64,16 @@ void main() {
     await tester.pump();
     expect(tester.widget<SelectableText>(find.byKey(const Key('save-code'))).data, startsWith('GSAVE1.'));
     expect(tester.takeException(), isNull);
+
+    // Pause freezes the economy and offers settings / credits.
+    await tester.tap(find.byKey(const Key('pause')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('pause-resume')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('pause-credits')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('idle-credits')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('idle-credits-close')));
+    await tester.pumpAndSettle();
 
     // A golden offer, when one is showing, pays out through the same widget.
     await tester.tap(find.text('Generators'));

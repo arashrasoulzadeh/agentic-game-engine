@@ -320,11 +320,14 @@ class GeneratorRow extends StatelessWidget {
 /// A scrolling list of one-time upgrades with a buy button each.
 ///
 /// Rebuilds are throttled like [GeneratorList] (see [rebuildInterval]).
+/// Set [costResource] to show only upgrades that spend that currency
+/// (e.g. `'gems'` for a prestige shop).
 class UpgradeList extends StatelessWidget {
   const UpgradeList({
     super.key,
     required this.controller,
     this.rebuildInterval = const Duration(milliseconds: 250),
+    this.costResource,
   });
 
   final IdleController controller;
@@ -333,6 +336,9 @@ class UpgradeList extends StatelessWidget {
   /// notification.
   final Duration rebuildInterval;
 
+  /// When set, only upgrades whose [Upgrade.cost] includes this resource.
+  final String? costResource;
+
   @override
   Widget build(BuildContext context) {
     return ThrottledListenableBuilder(
@@ -340,7 +346,30 @@ class UpgradeList extends StatelessWidget {
       interval: rebuildInterval,
       urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
-        final ids = controller.upgradeIds;
+        final ids = [
+          for (final e in controller.upgradeIds)
+            if (costResource == null ||
+                controller.world
+                    .storeOf<Upgrade>()
+                    .get(e)!
+                    .cost
+                    .containsKey(costResource))
+              e,
+        ];
+        if (ids.isEmpty) {
+          return Center(
+            key: Key(
+              costResource == null
+                  ? 'upgrades-empty'
+                  : 'upgrades-empty-$costResource',
+            ),
+            child: Text(
+              costResource == null
+                  ? 'No upgrades yet.'
+                  : 'No $costResource upgrades yet.',
+            ),
+          );
+        }
         return ListView.builder(
           itemCount: ids.length,
           itemBuilder: (context, i) {
@@ -379,6 +408,44 @@ class UpgradeList extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// Prestige-currency shop: [UpgradeList] filtered to [currency] (default `gems`).
+class PrestigeShop extends StatelessWidget {
+  const PrestigeShop({
+    super.key,
+    required this.controller,
+    this.currency = 'gems',
+    this.rebuildInterval = const Duration(milliseconds: 250),
+  });
+
+  final IdleController controller;
+  final String currency;
+  final Duration rebuildInterval;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Text(
+            'Spend $currency',
+            key: Key('prestige-shop-$currency'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        Expanded(
+          child: UpgradeList(
+            controller: controller,
+            costResource: currency,
+            rebuildInterval: rebuildInterval,
+          ),
+        ),
+      ],
     );
   }
 }

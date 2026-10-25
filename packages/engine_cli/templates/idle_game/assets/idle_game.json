@@ -11,7 +11,8 @@
     { "id": "oven_mitts", "name": "Oven mitts", "target": "grandma", "multiplier": "2", "cost": { "coins": "1000" } },
     { "id": "fertilizer", "name": "Fertilizer", "target": "farm", "multiplier": "2", "cost": { "coins": "11000" } },
     { "id": "farm_grandma_synergy", "name": "Farming tips", "target": "farm", "bonusPerOwned": "0.01", "synergyOf": "grandma", "cost": { "coins": "50000" } },
-    { "id": "everything", "name": "Everything better", "target": "all", "multiplier": "1.5", "cost": { "coins": "500000" } }
+    { "id": "everything", "name": "Everything better", "target": "all", "multiplier": "1.5", "cost": { "coins": "500000" } },
+    { "id": "gem_boost", "name": "Gem polish", "target": "all", "multiplier": "2", "cost": { "gems": "5" } }
   ],
   "achievements": [
     { "id": "ten_cursors", "name": "Ten cursors", "stat": "owned:cursor", "atLeast": "10", "reward": "1.05" },

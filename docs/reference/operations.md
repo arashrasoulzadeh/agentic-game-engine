@@ -1496,6 +1496,20 @@ game_agent schema components
 
 REST: `POST /v1/schema/components` · MCP tool: `schema.components` · JSON-RPC method: `schema.components`
 
+### `schema.idle_game`
+
+JSON Schema for a whole `assets/idle_game.json` definition file.
+
+Draft 2020-12 schema for the document [validateIdleDefinition] accepts. Component field schemas remain under `schema.component` (generator, upgrade, …).
+
+*read*, idempotent.
+
+```bash
+game_agent schema idle-game
+```
+
+REST: `POST /v1/schema/idle_game` · MCP tool: `schema.idle_game` · JSON-RPC method: `schema.idle_game`
+
 ### `schema.template`
 
 The default JSON of a component (every field at its default).

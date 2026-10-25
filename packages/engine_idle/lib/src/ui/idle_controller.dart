@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 
 import 'package:engine_core/engine_core_idle.dart';
 
+import 'idle_sfx.dart';
+
 /// Runs an idle game's [world] and tells widgets when to redraw.
 ///
 /// It owns the clock: [start] steps the world on a timer (default every 100 ms, with the real elapsed time
@@ -20,6 +22,7 @@ class IdleController extends ChangeNotifier {
     this.tickInterval = const Duration(milliseconds: 100),
     this.team = 'player',
     this.analytics,
+    this.sfx,
     this.decimalSeparator = '.',
   });
 
@@ -52,6 +55,9 @@ class IdleController extends ChangeNotifier {
 
   /// Reports purchases and prestiges; null sends nothing.
   final IdleAnalytics? analytics;
+
+  /// One-shot buy / prestige / golden / tap feedback; null plays nothing.
+  final IdleSfx? sfx;
 
   Timer? _timer;
   final Stopwatch _clock = Stopwatch();
@@ -145,6 +151,7 @@ class IdleController extends ChangeNotifier {
         r.bought,
         r.spent,
       );
+      sfx?.onBuy?.call();
       checkAchievements(world, wallet);
       _notifyUrgent();
     }
@@ -160,6 +167,7 @@ class IdleController extends ChangeNotifier {
         r.bought,
         r.spent,
       );
+      sfx?.onUpgrade?.call();
       checkAchievements(world, wallet);
       _notifyUrgent();
     }
@@ -169,6 +177,7 @@ class IdleController extends ChangeNotifier {
   /// A manual tap. See [tapEarn].
   BigNumber tap({String resource = 'coins', BigNumber? amount}) {
     final earned = tapEarn(world, wallet, resource: resource, amount: amount);
+    sfx?.onTap?.call();
     checkAchievements(world, wallet);
     _notifyUrgent();
     return earned;
@@ -182,6 +191,7 @@ class IdleController extends ChangeNotifier {
         gain,
         world.storeOf<IdleStats>().denseAt(0).prestigeCount,
       );
+      sfx?.onPrestige?.call();
       _notifyUrgent();
     }
     return gain;
@@ -190,7 +200,10 @@ class IdleController extends ChangeNotifier {
   /// Claims the showing golden offer (see [claimGolden]); returns what it gave, or null if none was showing.
   GoldenReward? claimGoldenOffer() {
     final reward = claimGolden(world, wallet);
-    if (reward != null) _notifyUrgent();
+    if (reward != null) {
+      sfx?.onGolden?.call();
+      _notifyUrgent();
+    }
     return reward;
   }
 

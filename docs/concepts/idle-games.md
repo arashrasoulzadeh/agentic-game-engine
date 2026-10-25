@@ -9,7 +9,7 @@ agents can use them without Flutter.
 
 Samples are executed by `packages/engine_core/test/doc_examples_idle_test.dart` and
 `packages/engine_idle/test/doc_examples_test.dart`. Remaining idle work (device bench,
-cloud-save walkthrough, SFX, localisation, research UI, …) lives under Idle polish in
+cloud-save walkthrough, localisation, research UI, …) lives under Idle polish in
 [`TODO.md`](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md).
 
 ## Creating a new idle game
@@ -41,6 +41,10 @@ common path; optional blocks are noted.
 | Return reminder | `ReturnNotifier` | yes (`LogReturnNotifier` stub) |
 | Stats | `StatsPanel` | yes |
 | Number formats | `IdleSettingsPanel` / `PlayerOptions` | yes (persisted) |
+| Pause / credits / volumes | `showIdlePauseMenu`, `showIdleCredits`, volume sliders | yes |
+| SFX hooks | `IdleSfx` on `IdleController` | yes (log stubs; wire `AudioManager`) |
+| Prestige shop | `PrestigeShop` / `UpgradeList(costResource:)` | yes (gem sample) |
+| Definition JSON Schema | `schema.idle_game` / `idleGameDefinitionJsonSchema` | yes |
 | Balance check | `game_agent idle simulate` / `idle.validate` | CLI / agent |
 | Headless agent ops | `idle.*` on MCP/REST/CLI | yes |
 

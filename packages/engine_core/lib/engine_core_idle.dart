@@ -14,6 +14,7 @@ export 'src/idle/auto_buyer.dart';
 export 'src/idle/challenges.dart';
 export 'src/idle/components.dart';
 export 'src/idle/definition.dart';
+export 'src/idle/definition_schema.dart';
 export 'src/idle/economy.dart';
 export 'src/idle/golden_events.dart';
 export 'src/idle/progression.dart';

@@ -1,6 +1,7 @@
 import 'package:engine_schema/engine_schema.dart';
 
 import '../../content/level_document.dart';
+import '../../idle/definition_schema.dart';
 import '../../validation/level_validator.dart';
 import '../json_schema.dart';
 import '../operation.dart';
@@ -154,6 +155,21 @@ List<Operation> schemaOperations() => [
         },
         expect: {'ok': true},
       ),
+    ],
+  ),
+  Operation(
+    name: 'schema.idle_game',
+    summary:
+        'JSON Schema for a whole `assets/idle_game.json` definition file.',
+    description:
+        'Draft 2020-12 schema for the document [validateIdleDefinition] accepts. '
+        'Component field schemas remain under `schema.component` (generator, upgrade, …).',
+    kind: OperationKind.read,
+    scope: OperationScope.pure,
+    idempotent: true,
+    handler: (ctx, a) => OpOutcome.data(idleGameDefinitionJsonSchema()),
+    examples: const [
+      Example('Idle game schema', {}),
     ],
   ),
 ];

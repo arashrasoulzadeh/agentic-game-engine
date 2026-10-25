@@ -128,16 +128,19 @@ class AchievementList extends StatelessWidget {
   }
 }
 
-/// Player-facing settings for an idle game: how big numbers are written, and a plain statement of the
-/// offline-progress rules so the cap is never a surprise.
+/// Player-facing settings for an idle game: number format, optional audio volumes
+/// via [options], and a plain statement of the offline-progress rules so the cap
+/// is never a surprise.
 ///
 /// Persist style / separator across launches by wiring [onStyleChanged] and
-/// [onDecimalSeparatorChanged] (e.g. into `PlayerOptions` custom keys).
+/// [onDecimalSeparatorChanged] (e.g. into `PlayerOptions` custom keys). When
+/// [options] is set, master / SFX volume sliders write through it immediately.
 class IdleSettingsPanel extends StatelessWidget {
   const IdleSettingsPanel({
     super.key,
     required this.controller,
     this.offline = const OfflineConfig(),
+    this.options,
     this.onStyleChanged,
     this.onDecimalSeparatorChanged,
   });
@@ -146,6 +149,9 @@ class IdleSettingsPanel extends StatelessWidget {
 
   /// The offline rules to describe (usually the session's).
   final OfflineConfig offline;
+
+  /// When set, shows master / SFX volume sliders bound to [PlayerOptions].
+  final PlayerOptionsManager? options;
 
   /// Called after the player picks a [NumberStyle] (persist here).
   final void Function(NumberStyle style)? onStyleChanged;
@@ -202,6 +208,10 @@ class IdleSettingsPanel extends StatelessWidget {
               onDecimalSeparatorChanged?.call(sep);
             },
           ),
+          if (options != null) ...[
+            const SizedBox(height: 16),
+            _IdleAudioSettings(options: options!),
+          ],
           const SizedBox(height: 12),
           Text(
             'While you are away you earn ${(offline.efficiency * 100).round()}% '
@@ -212,6 +222,147 @@ class IdleSettingsPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Listens to [PlayerOptionsManager] so volume sliders rebuild after async saves.
+class _IdleAudioSettings extends StatefulWidget {
+  const _IdleAudioSettings({required this.options});
+
+  final PlayerOptionsManager options;
+
+  @override
+  State<_IdleAudioSettings> createState() => _IdleAudioSettingsState();
+}
+
+class _IdleAudioSettingsState extends State<_IdleAudioSettings> {
+  @override
+  void initState() {
+    super.initState();
+    widget.options.addListener(_onOptions);
+  }
+
+  @override
+  void didUpdateWidget(covariant _IdleAudioSettings oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.options != widget.options) {
+      oldWidget.options.removeListener(_onOptions);
+      widget.options.addListener(_onOptions);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.options.removeListener(_onOptions);
+    super.dispose();
+  }
+
+  void _onOptions(PlayerOptions _) {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final o = widget.options.options;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Audio'),
+        Row(
+          children: [
+            const SizedBox(width: 120, child: Text('Master volume')),
+            Expanded(
+              child: Slider(
+                key: const Key('settings-master-volume'),
+                value: o.masterVolume.clamp(0.0, 1.0),
+                onChanged: (v) => widget.options.setOption('masterVolume', v),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            const SizedBox(width: 120, child: Text('SFX volume')),
+            Expanded(
+              child: Slider(
+                key: const Key('settings-sfx-volume'),
+                value: o.sfxVolume.clamp(0.0, 1.0),
+                onChanged: (v) => widget.options.setOption('sfxVolume', v),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Material pause sheet: resume, jump to settings, or open credits.
+///
+/// Call [IdleController.stop] before showing and [IdleController.start] after
+/// it closes so the economy freezes while the menu is up.
+Future<void> showIdlePauseMenu(
+  BuildContext context, {
+  required VoidCallback onSettings,
+  required VoidCallback onCredits,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            key: const Key('pause-resume'),
+            leading: const Icon(Icons.play_arrow),
+            title: const Text('Resume'),
+            onTap: () => Navigator.of(ctx).pop(),
+          ),
+          ListTile(
+            key: const Key('pause-settings'),
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              onSettings();
+            },
+          ),
+          ListTile(
+            key: const Key('pause-credits'),
+            leading: const Icon(Icons.info_outline),
+            title: const Text('Credits'),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              onCredits();
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Simple credits dialog for Material idle shells (platformer uses [CreditsScene]).
+Future<void> showIdleCredits(
+  BuildContext context, {
+  required String gameTitle,
+  String engineCredit = 'Built with agentic-game-engine',
+}) {
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      key: const Key('idle-credits'),
+      title: Text(gameTitle),
+      content: Text(engineCredit),
+      actions: [
+        TextButton(
+          key: const Key('idle-credits-close'),
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Move a game between devices by text: shows the current save code with a copy button, and a field to

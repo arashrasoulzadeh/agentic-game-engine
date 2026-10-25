@@ -76,6 +76,57 @@ void main() {
     );
 
     test(
+      'a gem-cost upgrade is not treated as a free coin buy before prestige',
+      () {
+        final g = game(coins: '1e9');
+        final gemUp = g.world.spawn();
+        g.world.storeOf<Upgrade>().set(
+          gemUp,
+          Upgrade(
+            id: 'gem_boost',
+            target: 'all',
+            multiplier: n('2'),
+            cost: {'gems': n('5')},
+          ),
+        );
+        g.wallet.incomePerSecond['coins'] = n('10');
+        final best = bestPurchase(g.world, g.wallet)!;
+        expect(
+          best.entity,
+          isNot(gemUp),
+          reason: 'gems are not earned yet, so gem upgrades are ineligible',
+        );
+        expect(best.resource, 'coins');
+
+        // Cap generators and buy the coin upgrade so only the gem shop remains.
+        for (final e in [g.cursor, g.farm]) {
+          final gen = g.world.storeOf<Generator>().get(e)!;
+          g.world.storeOf<Generator>().set(
+            e,
+            Generator(
+              id: gen.id,
+              cost: gen.cost,
+              output: gen.output,
+              owned: gen.maxOwned ?? 3,
+              maxOwned: gen.maxOwned ?? 3,
+            ),
+          );
+        }
+        g.world.storeOf<Upgrade>().get(g.up)!.purchased = true;
+        expect(
+          bestPurchase(g.world, g.wallet),
+          isNull,
+          reason: 'still no gems to spend',
+        );
+        g.wallet.amounts['gems'] = n('5');
+        final withGems = bestPurchase(g.world, g.wallet)!;
+        expect(withGems.entity, gemUp);
+        expect(withGems.resource, 'gems');
+        expect(withGems.cost, n('5'));
+      },
+    );
+
+    test(
       'nothing affordable gives null, and so does a game with nothing left to buy',
       () {
         final g = game(coins: '1');

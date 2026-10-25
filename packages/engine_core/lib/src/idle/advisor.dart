@@ -34,6 +34,9 @@ class PurchaseOption {
 /// nothing adds income. One more copy of each generator and each unbought upgrade are considered, skipping
 /// anything locked by technology or capped.
 ///
+/// Upgrade cost uses [mainResource] when present on the upgrade, otherwise the first cost entry — so a
+/// gem-only prestige-shop upgrade is never mistaken for a free coin buy.
+///
 /// With [affordableOnly] only options the wallet can pay for right now count (what an auto-buyer wants);
 /// otherwise an option qualifies if it is affordable now or its resource is being earned (what the balance
 /// simulator wants, since it will wait). It is greedy and not optimal, but it is deterministic, so a "recommended
@@ -85,20 +88,21 @@ PurchaseOption? bestPurchase(
     final u = ups.denseAt(i);
     if (u.purchased ||
         missingTech(world, team, u.requires).isNotEmpty ||
-        challengeBlocks(world, isUpgrade: true)) {
+        challengeBlocks(world, isUpgrade: true) ||
+        u.cost.isEmpty) {
       continue;
     }
+    // Prefer the main-resource price; otherwise the first cost entry (prestige-shop
+    // gem upgrades must not look like a free coin buy when cost[main] is missing).
+    final resource = u.cost.containsKey(mainResource)
+        ? mainResource
+        : u.cost.keys.first;
+    final cost = u.cost[resource]!;
     u.purchased = true;
     final gain = gainOf();
     u.purchased = false;
     consider(
-      PurchaseOption(
-        ups.entityAt(i),
-        true,
-        mainResource,
-        u.cost[mainResource] ?? BigNumber.zero,
-        gain,
-      ),
+      PurchaseOption(ups.entityAt(i), true, resource, cost, gain),
     );
   }
   return best;
