@@ -39,6 +39,14 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
 - [x] **Hit flash + strip atlases** — `HitFlash`/`flashHit` and
       `SpriteAtlas.fromStrip`/`fromFullImage` (promoted from Mobarez preview
       needs).
+- [x] **Animation frame events (runtime)** —
+      `AnimationClip.frameEvents` + `AnimationFrameEvent` (proposal step 1 in
+      `docs/proposals/animation-events-and-ide.md`). Still open from that
+      proposal: `AnimationSfxSystem`, frame-gated melee, visual animation IDE.
+- [ ] **AnimationSfxSystem** — subscribe to `AnimationFrameEvent` `type ==
+      'sfx'` and call `AudioManager` (proposal step 2).
+- [ ] **AISystem FSM/BT real `dt`** — `_RunStateMachineAction` /
+      behavior-tree runners hardcode `1/60` instead of the tick's `dt`.
 
 ## Game-dev workflow
 

@@ -124,4 +124,47 @@ void main() {
     expect(json.containsKey('frameOffsetsX'), isFalse);
     expect(json.containsKey('frameOffsetsY'), isFalse);
   });
+
+  test('AnimationClip round-trips frameEvents through toJson/fromJson', () {
+    final clip = AnimationClip(
+      'attack',
+      ['a', 'b'],
+      frameEvents: [
+        [],
+        [
+          const AnimationEvent('sfx', {'id': 'swing'}),
+          const AnimationEvent('hitbox_off'),
+        ],
+      ],
+    );
+    final restored = AnimationClip.fromJson(clip.toJson());
+    expect(restored.frameEvents, isNotNull);
+    expect(restored.frameEvents![0], isEmpty);
+    expect(restored.frameEvents![1].map((e) => e.type).toList(), [
+      'sfx',
+      'hitbox_off',
+    ]);
+    expect(restored.frameEvents![1][0].data['id'], 'swing');
+  });
+
+  test('AnimationClip.toJson omits frameEvents when unset', () {
+    final json = AnimationClip('idle', ['a']).toJson();
+    expect(json.containsKey('frameEvents'), isFalse);
+  });
+
+  test(
+    'AnimationClip rejects frameEvents that do not match frameRegions length',
+    () {
+      expect(
+        () => AnimationClip(
+          'walk',
+          ['a', 'b', 'c'],
+          frameEvents: [
+            [const AnimationEvent('sfx')],
+          ],
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    },
+  );
 }

@@ -1,8 +1,11 @@
 # Proposal: per-frame animation events + a visual animation IDE
 
-Status: draft, not implemented. Written against the **current** JSON
-schema (`AnimationClip`, atlas manifests, level JSON) rather than a new
-bundled container format — see "Why not a new `.gsp` format" below.
+Status: **runtime step 1 shipped** (`AnimationClip.frameEvents` /
+`AnimationEvent` / `AnimationFrameEvent` + emit in `AnimationSystem`).
+Still draft for `AnimationSfxSystem`, frame-gated melee, and the visual
+IDE. Written against the **current** JSON schema (`AnimationClip`, atlas
+manifests, level JSON) rather than a new bundled container format — see
+"Why not a new `.gsp` format" below.
 
 ## Problem
 

@@ -12,6 +12,9 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `AnimationClip.frameEvents` / `AnimationEvent` / `AnimationFrameEvent` —
+  data-driven per-frame cues; `AnimationSystem` emits on frame enter
+  (opaque `type`/`data` for SFX, hitboxes, etc.).
 - `HitFlash` / `HitFlashSystem` / `flashHit` — per-entity damage flash that
   drives `Sprite.tintArgb` (registered in `registerFlutterComponents`).
   `damageEntity` calls `flashHit` when amount > 0; `installPlatformerSystems`

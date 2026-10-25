@@ -6,9 +6,12 @@ import 'sprite.dart';
 /// Advances each entity's `AnimationState` by `dt` and writes the current
 /// frame's region name — and, when the clip specifies one (see
 /// `AnimationClip.frameOffsetsX`/`frameOffsetsY`), that frame's pivot
-/// offset — onto its `Sprite`. Lives in engine_flutter (not engine_core)
-/// because it operates on Sprite/AnimationState, which are themselves
-/// Flutter-adjacent (atlas-based) components.
+/// offset — onto its `Sprite`. When playback enters a frame that lists
+/// cues in `AnimationClip.frameEvents`, emits one [AnimationFrameEvent]
+/// per cue (opaque `type`/`data` — SFX/hitbox subscribers live elsewhere).
+/// Lives in engine_flutter (not engine_core) because it operates on
+/// Sprite/AnimationState, which are themselves Flutter-adjacent
+/// (atlas-based) components.
 class AnimationSystem implements System {
   @override
   String get name => 'animation';
@@ -34,6 +37,7 @@ class AnimationSystem implements System {
         if (nextIndex >= clip.frameRegions.length) {
           if (clip.loop) {
             state.frameIndex = 0;
+            _emitFrameEvents(world, entity, clip, 0);
           } else {
             state.frameIndex = clip.frameRegions.length - 1;
             state.playing = false;
@@ -41,12 +45,34 @@ class AnimationSystem implements System {
           }
         } else {
           state.frameIndex = nextIndex;
+          _emitFrameEvents(world, entity, clip, nextIndex);
         }
       }
 
       sprite.region = clip.frameRegions[state.frameIndex];
       sprite.offsetX = clip.frameOffsetsX?[state.frameIndex] ?? 0;
       sprite.offsetY = clip.frameOffsetsY?[state.frameIndex] ?? 0;
+    }
+  }
+
+  void _emitFrameEvents(
+    World world,
+    EntityId entity,
+    AnimationClip clip,
+    int frameIndex,
+  ) {
+    final events = clip.frameEvents?[frameIndex];
+    if (events == null || events.isEmpty) return;
+    for (final e in events) {
+      world.events.emit(
+        AnimationFrameEvent(
+          entity,
+          clip.name,
+          e.type,
+          e.data,
+          frameIndex: frameIndex,
+        ),
+      );
     }
   }
 }

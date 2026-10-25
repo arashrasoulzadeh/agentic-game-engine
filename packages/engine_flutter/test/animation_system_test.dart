@@ -133,4 +133,76 @@ void main() {
     world.step(0);
     expect(world.storeOf<Sprite>().get(id)!.offsetY, 0);
   });
+
+  test('emits AnimationFrameEvent when entering a frame with cues', () {
+    final world = buildWorld();
+    final id = world.spawn();
+    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.storeOf<AnimationState>().set(
+      id,
+      AnimationState(
+        AnimationClip(
+          'attack',
+          ['frame0', 'frame1', 'frame2'],
+          frameDurationSeconds: 0.1,
+          loop: false,
+          frameEvents: [
+            [],
+            [const AnimationEvent('hitbox_on')],
+            [
+              const AnimationEvent('sfx', {'id': 'swing'}),
+              const AnimationEvent('hitbox_off'),
+            ],
+          ],
+        ),
+      ),
+    );
+
+    final seen = <AnimationFrameEvent>[];
+    world.events.on<AnimationFrameEvent>(seen.add);
+
+    world.step(0.1);
+    expect(seen, hasLength(1));
+    expect(seen.single.type, 'hitbox_on');
+    expect(seen.single.frameIndex, 1);
+    expect(seen.single.entity, id);
+    expect(seen.single.clipName, 'attack');
+
+    world.step(0.1);
+    expect(seen, hasLength(3));
+    expect(seen[1].type, 'sfx');
+    expect(seen[1].data['id'], 'swing');
+    expect(seen[1].frameIndex, 2);
+    expect(seen[2].type, 'hitbox_off');
+  });
+
+  test('does not re-emit frame events while staying on the last non-loop frame', () {
+    final world = buildWorld();
+    final id = world.spawn();
+    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.storeOf<AnimationState>().set(
+      id,
+      AnimationState(
+        AnimationClip(
+          'hit',
+          ['frame0', 'frame1'],
+          frameDurationSeconds: 0.1,
+          loop: false,
+          frameEvents: [
+            [],
+            [const AnimationEvent('sfx', {'id': 'impact'})],
+          ],
+        ),
+        frameIndex: 0,
+      ),
+    );
+
+    var count = 0;
+    world.events.on<AnimationFrameEvent>((_) => count++);
+
+    world.step(0.1);
+    expect(count, 1);
+    world.step(0.1);
+    expect(count, 1);
+  });
 }
