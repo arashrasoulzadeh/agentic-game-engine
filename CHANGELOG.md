@@ -12,6 +12,8 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `Sprite.tintArgb` — optional modulate tint (hit-flash red, etc.); tinted
+  sprites skip atlas batching so a flash stays cheap for neighbors.
 - Studio distribution packing scripts for Linux AppDir/AppImage
   (`tool/package_linux.sh` / `verify_appimage_pack.sh`) and Windows portable zip
   with optional WiX MSI hook (`tool/package_windows.sh` /

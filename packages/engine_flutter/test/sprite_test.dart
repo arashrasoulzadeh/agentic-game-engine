@@ -39,4 +39,12 @@ void main() {
     expect(decoded.scaleX, 2);
     expect(decoded.scaleY, 3);
   });
+
+  test('Sprite.tintArgb round-trips and defaults to null', () {
+    expect(Sprite('atlas', 'idle').tintArgb, isNull);
+    final decoded = Sprite.fromJson(
+      Sprite('atlas', 'idle', tintArgb: 0xFFFF3333).toJson(),
+    );
+    expect(decoded.tintArgb, 0xFFFF3333);
+  });
 }

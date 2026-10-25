@@ -2200,7 +2200,9 @@ class _EnginePainter extends CustomPainter {
       for (final i in zEntry.value) {
         final entity = sprites.entityAt(i);
         final sprite = sprites.denseAt(i);
-        if (sprite.scaleX != sprite.scaleY || sprite.scaleX <= 0) {
+        if (sprite.scaleX != sprite.scaleY ||
+            sprite.scaleX <= 0 ||
+            sprite.tintArgb != null) {
           fallbackIndices.add(i);
           continue;
         }
@@ -2298,7 +2300,12 @@ class _EnginePainter extends CustomPainter {
       width: srcRect.width,
       height: srcRect.height,
     );
-    canvas.drawImageRect(atlas.image, srcRect, destRect, Paint());
+    final paint = Paint();
+    final tint = sprite.tintArgb;
+    if (tint != null) {
+      paint.colorFilter = ColorFilter.mode(Color(tint), BlendMode.modulate);
+    }
+    canvas.drawImageRect(atlas.image, srcRect, destRect, paint);
     canvas.restore();
   }
 

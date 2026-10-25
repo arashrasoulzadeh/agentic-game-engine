@@ -75,6 +75,14 @@ class Sprite {
   /// names as the diffuse atlas.
   String? normalAtlasId;
 
+  /// Optional ARGB tint applied with `BlendMode.modulate` when drawing.
+  /// `null` (default) is an untinted draw — the original behavior. A
+  /// short-lived red value (e.g. `0xFFFF4444`) is the usual hit-flash
+  /// feedback when something takes damage; clear it back to `null` when
+  /// the flash ends. Tinted sprites skip atlas batching (one paint per
+  /// sprite) so a flash never forces every other sprite onto the slow path.
+  int? tintArgb;
+
   Sprite(
     this.atlasId,
     this.region, {
@@ -86,6 +94,7 @@ class Sprite {
     this.offsetY = 0,
     this.zIndex = 0,
     this.normalAtlasId,
+    this.tintArgb,
   });
 
   Map<String, dynamic> toJson() => {
@@ -99,6 +108,7 @@ class Sprite {
     'offsetY': offsetY,
     'zIndex': zIndex,
     if (normalAtlasId != null) 'normalAtlasId': normalAtlasId,
+    if (tintArgb != null) 'tintArgb': tintArgb,
   };
 
   factory Sprite.fromJson(Map<String, dynamic> json) => Sprite(
@@ -112,5 +122,6 @@ class Sprite {
     offsetY: (json['offsetY'] as num?)?.toDouble() ?? 0,
     zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
     normalAtlasId: json['normalAtlasId'] as String?,
+    tintArgb: (json['tintArgb'] as num?)?.toInt(),
   );
 }
