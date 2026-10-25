@@ -54,7 +54,8 @@ void main() {
         ),
       );
       expect(File('${tmp.path}/out/atlas.png').existsSync(), isFalse);
-      expect(await run(scales: '2'), 0);
+      // scale 2.0 → paths get @2x (Flutter asset-variant convention).
+      expect(await run(scales: '2.0'), 0);
       final doubled =
           jsonDecode(File('${tmp.path}/out/atlas@2x.json').readAsStringSync())
               as Map;

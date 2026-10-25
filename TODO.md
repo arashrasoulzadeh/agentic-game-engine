@@ -137,9 +137,13 @@ What is left:
       write beside the registry operations of the same name (which add undo, locks and structured errors). Make them thin
       adapters that keep the golden output of `studio_golden_test.dart`; behaviour changes (an undo entry per edit) need an
       owner decision first.
-- [ ] **Operations not built yet:** `asset.pack` (`pack_assets_command.dart` has ~500 lines of private logic to extract into core), `i18n.*` (no project convention for locale files yet), `strategy.rules` /
+- [ ] **Operations not built yet:** `i18n.*` (no project convention for locale files yet), `strategy.rules` /
       `strategy.simulate_turns` (the assembly lives in `engine_strategy`), `engine.docs`,
-      `level.lint --render` as an operation (needs an injected image codec).
+      `level.lint --render` as an operation (needs an injected image codec — `ImageCodec` / binary
+      `FileChange` already land with `asset.pack`).
+- [x] **`asset.pack`** — MaxRects packer + `ImageCodec` in core; CLI `pack-assets` is a thin adapter;
+      binary `FileChange` / undo; `engine_api` still returns `unsupported` until it can depend on
+      `package:image` (pub auth blocked adding it here — inject the same wrapper as `engine_cli`).
 - [ ] **Server extras:** SSE streaming and progress notifications, cancellation (`notifications/cancelled`), `Retry-After`
       for the concurrency limit, request-log levels.
 

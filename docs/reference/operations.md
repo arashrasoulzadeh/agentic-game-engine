@@ -30,7 +30,7 @@ REST: `POST /v1/asset/atlas_regions` · MCP tool: `asset.atlas_regions` · JSON-
 
 List the project's atlases, images, audio, data files and prefabs.
 
-Atlases come from `assets/studio_atlases.json` (which gives them an id levels can use as `atlasId`) and from any `X.json` with a `regions` map next to `X.png` (what `game_agent pack-assets` writes). Images already part of an atlas are not listed again under `images`.
+Atlases come from `assets/studio_atlases.json` (which gives them an id levels can use as `atlasId`) and from any `X.json` with a `regions` map next to `X.png` (what `game_agent pack-assets` / `asset.pack` writes). Images already part of an atlas are not listed again under `images`.
 
 *read*, needs an open project, idempotent.
 
@@ -39,6 +39,34 @@ game_agent asset index
 ```
 
 REST: `POST /v1/asset/index` · MCP tool: `asset.index` · JSON-RPC method: `asset.index`
+
+### `asset.pack`
+
+Pack every image under a directory into one sprite sheet + region manifest.
+
+Recursively loads images under `input`, MaxRects-packs them (with optional resolution tiers via `scales`), and proposes the PNG sheet(s) plus JSON manifest(s) that `SpriteAtlas.fromManifest` reads. Needs an [ImageCodec] on the context (`engine_cli` / `engine_api` inject one); without it returns `unsupported`. Same behaviour as `game_agent pack-assets`.
+
+*write*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `input` | path; required | Directory of source images (scanned recursively). |
+| `outputImage` | path; default `"assets/packed/atlas.png"` | |
+| `outputManifest` | path | Defaults to outputImage with a .json extension. |
+| `padding` | integer; default `2`; 0 to 64 | |
+| `maxWidth` | integer; default `2048`; 1 to 16384 | |
+| `scales` | string; default `"1.0"` | Comma-separated tiers, e.g. "1.0,0.5,0.25". |
+| `maxAttempts` | integer; default `20`; 1 to 100 | Grow-and-retry attempts before giving up. |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+Errors: `unsupported`, `not_found`, `validation_failed`, `internal`.
+
+```bash
+game_agent asset pack
+```
+
+REST: `POST /v1/asset/pack` · MCP tool: `asset.pack` · JSON-RPC method: `asset.pack`
 
 ## engine
 

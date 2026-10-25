@@ -4,9 +4,6 @@ import '../param.dart';
 import '../result.dart';
 import '../undo_log.dart';
 
-String? _current(OpContext ctx, String path) =>
-    ctx.files.read(ctx.project!.resolve(path));
-
 OpOutcome _flip(OpContext ctx, Map<String, Object?> a, {required bool undo}) {
   final log = ctx.undoLog();
   UndoEntry? entry;
@@ -39,16 +36,32 @@ OpOutcome _flip(OpContext ctx, Map<String, Object?> a, {required bool undo}) {
   final changes = <FileChange>[];
   final stale = <String>[];
   for (final f in entry.files) {
-    final current = _current(ctx, f.path);
-    final expected = undo ? f.after : f.before;
-    if (!force && sha256Of(current) != sha256Of(expected)) stale.add(f.path);
-    changes.add(
-      FileChange(
-        path: f.path,
-        before: current,
-        after: undo ? f.before : f.after,
-      ),
-    );
+    final abs = ctx.project!.resolve(f.path);
+    if (f.isBinary) {
+      final current = ctx.files.readBytes(abs);
+      final expected = undo ? f.afterBytes : f.beforeBytes;
+      if (!force && sha256OfBytes(current) != sha256OfBytes(expected)) {
+        stale.add(f.path);
+      }
+      changes.add(
+        FileChange(
+          path: f.path,
+          beforeBytes: current,
+          afterBytes: undo ? f.beforeBytes : f.afterBytes,
+        ),
+      );
+    } else {
+      final current = ctx.files.read(abs);
+      final expected = undo ? f.after : f.before;
+      if (!force && sha256Of(current) != sha256Of(expected)) stale.add(f.path);
+      changes.add(
+        FileChange(
+          path: f.path,
+          before: current,
+          after: undo ? f.before : f.after,
+        ),
+      );
+    }
   }
   if (stale.isNotEmpty) {
     throw OpError(

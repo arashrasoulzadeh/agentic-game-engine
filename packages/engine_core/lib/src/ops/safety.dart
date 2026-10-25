@@ -82,7 +82,7 @@ class SafetyPipeline {
     }
     final changes = [
       for (final c in proposal.changes)
-        if (c.before != c.after) c,
+        if (!_unchanged(c)) c,
     ];
 
     for (final c in changes) {
@@ -205,26 +205,51 @@ class SafetyPipeline {
     try {
       for (final c in changes) {
         final abs = project.resolve(c.path);
-        if (c.after == null) {
-          ctx.files.delete(abs);
-        } else {
-          ctx.files.writeAtomic(abs, c.after!);
-        }
+        _applySide(ctx, abs, after: true, change: c);
         done.add(c);
       }
     } on Object catch (e) {
       for (final c in done.reversed) {
         final abs = project.resolve(c.path);
-        if (c.before == null) {
-          ctx.files.delete(abs);
-        } else {
-          ctx.files.writeAtomic(abs, c.before!);
-        }
+        _applySide(ctx, abs, after: false, change: c);
       }
       throw OpError(
         ErrorCode.ioError,
         'Writing failed and the earlier files were restored ($e).',
       );
+    }
+  }
+
+  /// True when a change would write the same content already on disk (skipped).
+  /// Binary changes compare bytes; text compares [FileChange.before]/[after]. A binary
+  /// create used to look like a no-op because both text fields are null.
+  static bool _unchanged(FileChange c) {
+    if (c.isBinary) {
+      final a = c.beforeBytes, b = c.afterBytes;
+      if (identical(a, b)) return true;
+      if (a == null || b == null || a.length != b.length) return false;
+      for (var i = 0; i < a.length; i++) {
+        if (a[i] != b[i]) return false;
+      }
+      return true;
+    }
+    return c.before == c.after;
+  }
+
+  void _applySide(
+    OpContext ctx,
+    String abs, {
+    required bool after,
+    required FileChange change,
+  }) {
+    final text = after ? change.after : change.before;
+    final bytes = after ? change.afterBytes : change.beforeBytes;
+    if (bytes != null) {
+      ctx.files.writeAtomicBytes(abs, bytes);
+    } else if (text != null) {
+      ctx.files.writeAtomic(abs, text);
+    } else {
+      ctx.files.delete(abs);
     }
   }
 
@@ -264,7 +289,9 @@ class SafetyPipeline {
         utf8.encode(
           changes
               .map(
-                (c) => '${c.path}\n${sha256Of(c.before)}\n${sha256Of(c.after)}',
+                (c) =>
+                    '${c.path}\n${sha256Of(c.before)}\n${sha256Of(c.after)}\n'
+                    '${sha256OfBytes(c.beforeBytes)}\n${sha256OfBytes(c.afterBytes)}',
               )
               .join('\n'),
         ),
@@ -351,9 +378,9 @@ class SafetyPipeline {
     return changes
         .map(
           (c) =>
-              '${c.before == null
+              '${c.before == null && c.beforeBytes == null
                   ? 'creates'
-                  : c.after == null
+                  : c.isDelete
                   ? 'deletes'
                   : 'changes'} ${c.path}',
         )
@@ -365,11 +392,12 @@ class SafetyPipeline {
       for (final c in changes)
         {
           'path': c.path,
-          'change': c.before == null
+          'change': c.before == null && c.beforeBytes == null
               ? 'created'
-              : c.after == null
+              : c.isDelete
               ? 'deleted'
               : 'modified',
+          if (c.isBinary) 'binary': true,
           if (_isLevel(c.path)) ...?_levelDiff(c),
         },
     ],

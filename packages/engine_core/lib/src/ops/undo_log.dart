@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
@@ -6,8 +7,8 @@ import 'package:path/path.dart' as p;
 import 'files.dart';
 import 'result.dart';
 
-/// One recorded write: which operation did it and the full before/after text of every file it touched, so it
-/// can be undone and redone without git.
+/// One recorded write: which operation did it and the full before/after text (or base64 bytes) of every
+/// file it touched, so it can be undone and redone without git.
 class UndoEntry {
   UndoEntry({
     required this.id,
@@ -35,7 +36,14 @@ class UndoEntry {
     'undone': undone,
     'files': [
       for (final f in files)
-        {'path': f.path, 'before': f.before, 'after': f.after},
+        {
+          'path': f.path,
+          'before': f.before,
+          'after': f.after,
+          if (f.beforeBytes != null)
+            'beforeBytes': base64Encode(f.beforeBytes!),
+          if (f.afterBytes != null) 'afterBytes': base64Encode(f.afterBytes!),
+        },
     ],
   };
 
@@ -51,6 +59,12 @@ class UndoEntry {
           path: f['path'] as String,
           before: f['before'] as String?,
           after: f['after'] as String?,
+          beforeBytes: f['beforeBytes'] is String
+              ? Uint8List.fromList(base64Decode(f['beforeBytes'] as String))
+              : null,
+          afterBytes: f['afterBytes'] is String
+              ? Uint8List.fromList(base64Decode(f['afterBytes'] as String))
+              : null,
         ),
     ],
   );
@@ -68,6 +82,9 @@ class UndoEntry {
 
 String sha256Of(String? text) =>
     text == null ? 'none' : crypto.sha256.convert(utf8.encode(text)).toString();
+
+String sha256OfBytes(Uint8List? data) =>
+    data == null ? 'none' : crypto.sha256.convert(data).toString();
 
 /// The write journal kept inside the project at `.studio/undo/`: one JSON file per write, the last [keep] kept.
 ///

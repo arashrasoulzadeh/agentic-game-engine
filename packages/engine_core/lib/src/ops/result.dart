@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 /// Stable error codes of the operation API. Strings are never reused or renamed; the numbers map each code onto the
 /// surfaces (HTTP status, JSON-RPC error code, CLI exit code, following `sysexits.h` where a match exists).
 enum ErrorCode {
@@ -59,15 +61,30 @@ class OpError implements Exception {
   String toString() => 'OpError(${code.code}): $message';
 }
 
-/// One file a write operation wants to change. `after == null` deletes the file, `before == null` means it did
-/// not exist. Contents are the full text so a preview, an undo entry and the write itself agree.
+/// One file a write operation wants to change. `after == null` (and no [afterBytes]) deletes the file;
+/// `before == null` (and no [beforeBytes]) means it did not exist. Text ops use [before]/[after]; binary
+/// ops (`asset.pack` PNG sheets) use [beforeBytes]/[afterBytes] — undo journals base64-encode those.
 class FileChange {
-  const FileChange({required this.path, this.before, this.after});
+  const FileChange({
+    required this.path,
+    this.before,
+    this.after,
+    this.beforeBytes,
+    this.afterBytes,
+  });
 
   /// Project-relative path.
   final String path;
   final String? before;
   final String? after;
+  final Uint8List? beforeBytes;
+  final Uint8List? afterBytes;
+
+  /// True when this change carries raw bytes rather than UTF-8 text.
+  bool get isBinary => beforeBytes != null || afterBytes != null;
+
+  /// Whether the after-state is a delete (no text and no bytes).
+  bool get isDelete => after == null && afterBytes == null;
 }
 
 /// The set of file changes a write handler proposes (applied by the safety pipeline, never by the handler).

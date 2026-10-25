@@ -6,6 +6,8 @@ import 'package:args/command_runner.dart';
 import 'package:engine_core/engine_core_ops.dart';
 import 'package:path/path.dart' as p;
 
+import 'image_codec.dart';
+
 /// Where a command writes. Injected so tests read output without capturing the process streams.
 class CliIo {
   CliIo({StringSink? out, StringSink? err, Stream<List<int>>? stdinStream})
@@ -61,6 +63,7 @@ void addOperationCommands(
       project: root == null ? null : ProjectRoot(root),
       policy: Policy(readOnly: global['read-only'] == true),
       actor: 'cli',
+      imageCodec: const PackageImageCodec(),
     );
   }
 

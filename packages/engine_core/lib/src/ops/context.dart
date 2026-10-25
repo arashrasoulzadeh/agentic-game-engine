@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../io/file_lock.dart' as locks;
 import 'files.dart';
+import 'image_codec.dart';
 import 'operation.dart';
 import 'paths.dart';
 import 'world_sandbox.dart';
@@ -63,6 +64,7 @@ class OpContext {
     this.allowProjectOpen = true,
     this.allowProjectSwitch = true,
     this.allowOpen = const [],
+    this.imageCodec,
   }) : lockOwner = lockOwner ?? _defaultOwner(),
        files = files ?? const DiskFiles(),
        clock = clock ?? DateTime.now,
@@ -108,6 +110,9 @@ class OpContext {
   ProjectRoot? project;
   final Policy policy;
   final ProjectFiles files;
+
+  /// Pixel codec for `asset.pack` / render ops; null means those return `unsupported`.
+  final ImageCodec? imageCodec;
 
   /// The only source of time for operations (tests inject a fixed clock).
   final DateTime Function() clock;
