@@ -1,8 +1,108 @@
+import 'dart:async';
+
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 
 import 'package:engine_core/engine_core_idle.dart';
 import 'idle_controller.dart';
+
+/// Rebuilds when [listenable] notifies, but at most once per [interval] for quiet ticks.
+///
+/// When [urgentOf] returns a new value (see [IdleController.urgentGeneration]), the rebuild is
+/// immediate — a purchase must not wait on the throttle. The resource header keeps listening to the
+/// controller's 10 Hz tick directly; heavier panels use this so a long list does not rebuild ten
+/// times a second while income numbers tick up imperceptibly.
+class ThrottledListenableBuilder extends StatefulWidget {
+  const ThrottledListenableBuilder({
+    super.key,
+    required this.listenable,
+    required this.builder,
+    this.interval = const Duration(milliseconds: 250),
+    this.urgentOf,
+    this.child,
+  });
+
+  final Listenable listenable;
+
+  /// Minimum time between rebuilds driven by non-urgent notifies. [Duration.zero] forwards every
+  /// notification (same as [ListenableBuilder]).
+  final Duration interval;
+
+  /// When this returns a value different from the last rebuild, rebuild immediately (player actions).
+  final int Function()? urgentOf;
+  final TransitionBuilder builder;
+  final Widget? child;
+
+  @override
+  State<ThrottledListenableBuilder> createState() =>
+      _ThrottledListenableBuilderState();
+}
+
+class _ThrottledListenableBuilderState extends State<ThrottledListenableBuilder> {
+  Timer? _trailing;
+  final Stopwatch _sinceBuild = Stopwatch();
+  int? _seenUrgent;
+
+  @override
+  void initState() {
+    super.initState();
+    _seenUrgent = widget.urgentOf?.call();
+    widget.listenable.addListener(_onNotify);
+  }
+
+  @override
+  void didUpdateWidget(ThrottledListenableBuilder old) {
+    super.didUpdateWidget(old);
+    if (old.listenable != widget.listenable) {
+      old.listenable.removeListener(_onNotify);
+      widget.listenable.addListener(_onNotify);
+    }
+  }
+
+  @override
+  void dispose() {
+    _trailing?.cancel();
+    widget.listenable.removeListener(_onNotify);
+    super.dispose();
+  }
+
+  void _onNotify() {
+    final urgent = widget.urgentOf?.call();
+    if (urgent != null && urgent != _seenUrgent) {
+      _seenUrgent = urgent;
+      _trailing?.cancel();
+      _trailing = null;
+      _rebuild();
+      return;
+    }
+    if (widget.interval <= Duration.zero) {
+      _rebuild();
+      return;
+    }
+    if (!_sinceBuild.isRunning || _sinceBuild.elapsed >= widget.interval) {
+      _trailing?.cancel();
+      _trailing = null;
+      _rebuild();
+      return;
+    }
+    if (_trailing != null) return;
+    final wait = widget.interval - _sinceBuild.elapsed;
+    _trailing = Timer(wait, () {
+      _trailing = null;
+      _rebuild();
+    });
+  }
+
+  void _rebuild() {
+    _sinceBuild
+      ..reset()
+      ..start();
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, widget.child);
+}
 
 /// The resources the player holds and what they earn per second.
 ///
@@ -58,16 +158,27 @@ class ResourceHeader extends StatelessWidget {
 ///
 /// It is a lazily built list, so hundreds of generators cost only the rows on screen. A button is enabled
 /// only if that many are affordable, and "locked" generators (a missing technology) say so instead of
-/// offering a purchase that would fail.
+/// offering a purchase that would fail. Rebuilds are throttled via [rebuildInterval] (see
+/// [ThrottledListenableBuilder]) so a long list does not follow the controller's 10 Hz tick.
 class GeneratorList extends StatelessWidget {
-  const GeneratorList({super.key, required this.controller});
+  const GeneratorList({
+    super.key,
+    required this.controller,
+    this.rebuildInterval = const Duration(milliseconds: 250),
+  });
 
   final IdleController controller;
 
+  /// How often this list may rebuild while the controller is ticking. [Duration.zero] rebuilds on every
+  /// notification.
+  final Duration rebuildInterval;
+
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    return ThrottledListenableBuilder(
       listenable: controller,
+      interval: rebuildInterval,
+      urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
         final ids = controller.generatorIds;
         return ListView.builder(
@@ -207,15 +318,27 @@ class GeneratorRow extends StatelessWidget {
 }
 
 /// A scrolling list of one-time upgrades with a buy button each.
+///
+/// Rebuilds are throttled like [GeneratorList] (see [rebuildInterval]).
 class UpgradeList extends StatelessWidget {
-  const UpgradeList({super.key, required this.controller});
+  const UpgradeList({
+    super.key,
+    required this.controller,
+    this.rebuildInterval = const Duration(milliseconds: 250),
+  });
 
   final IdleController controller;
 
+  /// How often this list may rebuild while the controller is ticking. [Duration.zero] rebuilds on every
+  /// notification.
+  final Duration rebuildInterval;
+
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    return ThrottledListenableBuilder(
       listenable: controller,
+      interval: rebuildInterval,
+      urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
         final ids = controller.upgradeIds;
         return ListView.builder(

@@ -57,11 +57,23 @@ class IdleController extends ChangeNotifier {
   final Stopwatch _clock = Stopwatch();
   Duration _last = Duration.zero;
 
+  /// Bumped only by player actions (buy, prestige, style change, …), not by [tick].
+  ///
+  /// [ThrottledListenableBuilder] rebuilds immediately when this changes and only
+  /// throttles the 10 Hz tick, so a purchase never waits on the rebuild interval.
+  int get urgentGeneration => _urgent;
+  int _urgent = 0;
+
+  void _notifyUrgent() {
+    _urgent++;
+    notifyListeners();
+  }
+
   /// Changes how big numbers are written and tells every listening widget at once.
   void setStyle(NumberStyle value) {
     if (value == style) return;
     style = value;
-    notifyListeners();
+    _notifyUrgent();
   }
 
   final Map<String, String> _formatted = {};
@@ -109,9 +121,9 @@ class IdleController extends ChangeNotifier {
   }
 
   /// Tells listeners the world changed outside the controller's own methods (a restored save).
-  void refresh() => notifyListeners();
+  void refresh() => _notifyUrgent();
 
-  /// Advances the world by [dt] seconds and notifies listeners.
+  /// Advances the world by [dt] seconds and notifies listeners (tick only — not [urgentGeneration]).
   void tick(double dt) {
     world.step(dt);
     notifyListeners();
@@ -127,7 +139,7 @@ class IdleController extends ChangeNotifier {
         r.spent,
       );
       checkAchievements(world, wallet);
-      notifyListeners();
+      _notifyUrgent();
     }
     return r;
   }
@@ -142,7 +154,7 @@ class IdleController extends ChangeNotifier {
         r.spent,
       );
       checkAchievements(world, wallet);
-      notifyListeners();
+      _notifyUrgent();
     }
     return r;
   }
@@ -151,7 +163,7 @@ class IdleController extends ChangeNotifier {
   BigNumber tap({String resource = 'coins', BigNumber? amount}) {
     final earned = tapEarn(world, wallet, resource: resource, amount: amount);
     checkAchievements(world, wallet);
-    notifyListeners();
+    _notifyUrgent();
     return earned;
   }
 
@@ -163,7 +175,7 @@ class IdleController extends ChangeNotifier {
         gain,
         world.storeOf<IdleStats>().denseAt(0).prestigeCount,
       );
-      notifyListeners();
+      _notifyUrgent();
     }
     return gain;
   }
@@ -171,21 +183,21 @@ class IdleController extends ChangeNotifier {
   /// Claims the showing golden offer (see [claimGolden]); returns what it gave, or null if none was showing.
   GoldenReward? claimGoldenOffer() {
     final reward = claimGolden(world, wallet);
-    if (reward != null) notifyListeners();
+    if (reward != null) _notifyUrgent();
     return reward;
   }
 
   /// Starts challenge [id] (see [startChallenge]); notifies listeners when it started.
   bool startChallengeById(String id) {
     final ok = startChallenge(world, wallet, id);
-    if (ok) notifyListeners();
+    if (ok) _notifyUrgent();
     return ok;
   }
 
   /// Gives up the running challenge without a reward.
   bool abandonRunningChallenge() {
     final ok = abandonChallenge(world, wallet);
-    if (ok) notifyListeners();
+    if (ok) _notifyUrgent();
     return ok;
   }
 

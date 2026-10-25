@@ -360,6 +360,51 @@ void main() {
     },
   );
 
+  testWidgets(
+    'ThrottledListenableBuilder coalesces rapid ticks but actions rebuild immediately',
+    (tester) async {
+      final c = _controller(coins: '100');
+      var builds = 0;
+      await tester.pumpWidget(
+        _app(
+          ThrottledListenableBuilder(
+            listenable: c,
+            interval: const Duration(milliseconds: 200),
+            urgentOf: () => c.urgentGeneration,
+            builder: (context, _) {
+              builds++;
+              return Text(
+                '${c.world.storeOf<Generator>().get(c.generatorIds.first)!.owned}',
+                key: const Key('owned'),
+              );
+            },
+          ),
+        ),
+      );
+      expect(builds, 1);
+      for (var i = 0; i < 5; i++) {
+        c.tick(0.1);
+      }
+      await tester.pump();
+      expect(
+        builds,
+        2,
+        reason: 'first tick rebuilds immediately; the rest wait',
+      );
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(builds, 3, reason: 'trailing flush after the interval');
+      final buildsBeforeBuy = builds;
+      c.buy(c.generatorIds.first);
+      await tester.pump();
+      expect(
+        builds,
+        buildsBeforeBuy + 1,
+        reason: 'urgentGeneration bypasses the throttle',
+      );
+      expect(tester.widget<Text>(find.byKey(const Key('owned'))).data, '1');
+    },
+  );
+
   testWidgets('the number style switches everywhere at once', (tester) async {
     final c = _controller(coins: '1234567');
     await tester.pumpWidget(_app(ResourceHeader(controller: c)));

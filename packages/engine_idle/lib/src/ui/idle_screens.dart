@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:engine_core/engine_core_idle.dart';
 import '../session.dart';
 import 'idle_controller.dart';
+import 'idle_widgets.dart';
 
 /// What prestiging would give right now, the bonus already held, and a button to do it.
 ///
@@ -21,8 +22,9 @@ class PrestigePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    return ThrottledListenableBuilder(
       listenable: controller,
+      urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
         final rule = prestigeRuleOf(controller.world, ruleId);
         if (rule == null) return const SizedBox.shrink();
@@ -92,8 +94,9 @@ class AchievementList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    return ThrottledListenableBuilder(
       listenable: controller,
+      urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
         final store = controller.world.storeOf<Achievement>();
         final ids = [for (var i = 0; i < store.length; i++) store.entityAt(i)]
@@ -148,8 +151,9 @@ class IdleSettingsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    return ThrottledListenableBuilder(
       listenable: controller,
+      urgentOf: () => controller.urgentGeneration,
       builder: (context, _) => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,8 +285,9 @@ class GoldenOffer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    return ThrottledListenableBuilder(
       listenable: controller,
+      urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
         final store = controller.world.storeOf<GoldenEvents>();
         if (store.length == 0) return const SizedBox.shrink();
@@ -326,8 +331,9 @@ class ChallengePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    return ThrottledListenableBuilder(
       listenable: controller,
+      urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
         final store = controller.world.storeOf<Challenge>();
         if (store.length == 0) return const SizedBox.shrink();
