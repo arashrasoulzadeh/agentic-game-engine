@@ -6,6 +6,7 @@ import 'field_schema.dart';
 const generatorSchema = ComponentSchema('generator', [
   FieldSchema('id', FieldType.string, required: true),
   FieldSchema('name', FieldType.string, optional: true),
+  FieldSchema('nameKey', FieldType.string, optional: true),
   FieldSchema('owned', FieldType.int, min: 0),
   FieldSchema('maxOwned', FieldType.int, min: 1, optional: true),
   FieldSchema('costResource', FieldType.string),
@@ -18,6 +19,7 @@ const generatorSchema = ComponentSchema('generator', [
 const upgradeSchema = ComponentSchema('upgrade', [
   FieldSchema('id', FieldType.string, required: true),
   FieldSchema('name', FieldType.string, optional: true),
+  FieldSchema('nameKey', FieldType.string, optional: true),
   FieldSchema('cost', FieldType.object),
   FieldSchema('target', FieldType.string),
   FieldSchema('multiplier', FieldType.string),
@@ -57,10 +59,29 @@ const prestigeRuleSchema = ComponentSchema('prestigeRule', [
 const achievementSchema = ComponentSchema('achievement', [
   FieldSchema('id', FieldType.string, required: true),
   FieldSchema('name', FieldType.string, optional: true),
+  FieldSchema('nameKey', FieldType.string, optional: true),
   FieldSchema('stat', FieldType.string, required: true),
   FieldSchema('atLeast', FieldType.string, required: true),
   FieldSchema('reward', FieldType.string),
   FieldSchema('unlocked', FieldType.bool),
+]);
+
+const researchNodeSchema = ComponentSchema('researchNode', [
+  FieldSchema('id', FieldType.string, required: true),
+  FieldSchema('name', FieldType.string, optional: true),
+  FieldSchema('nameKey', FieldType.string, optional: true),
+  FieldSchema('cost', FieldType.object),
+  FieldSchema('requires', FieldType.list),
+  FieldSchema('unlocks', FieldType.list),
+  FieldSchema('purchased', FieldType.bool),
+]);
+
+const timeWarpOfferSchema = ComponentSchema('timeWarpOffer', [
+  FieldSchema('id', FieldType.string, required: true),
+  FieldSchema('name', FieldType.string, optional: true),
+  FieldSchema('nameKey', FieldType.string, optional: true),
+  FieldSchema('seconds', FieldType.int, min: 1, required: true),
+  FieldSchema('cost', FieldType.object),
 ]);
 
 const boostSchema = ComponentSchema('boost', [

@@ -42,11 +42,13 @@ void main() {
     expect(find.byKey(const Key('prestige-shop-gems')), findsOneWidget);
     expect(find.byKey(const Key('upgrade-gem_boost')), findsOneWidget);
 
-    // Progress: both prestige layers, achievements.
+    // Progress: prestige layers, research, time warp, achievements.
     await tester.tap(find.text('Progress'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('prestige-button')), findsOneWidget);
     expect(find.byKey(const Key('prestige-button-ascend')), findsOneWidget);
+    expect(find.byKey(const Key('research-mining')), findsOneWidget);
+    expect(find.byKey(const Key('timewarp-hour')), findsOneWidget);
     expect(find.byKey(const Key('achievement-ten_cursors')), findsOneWidget);
 
     // Settings: number format + volumes persist via PlayerOptions.

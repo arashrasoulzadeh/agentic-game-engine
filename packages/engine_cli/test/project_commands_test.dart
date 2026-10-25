@@ -344,7 +344,11 @@ dependencies:
     expect(main, contains('showIdlePauseMenu'));
     expect(main, contains('IdleSfx'));
     expect(main, contains('PrestigeShop'));
+    expect(main, contains('ResearchPanel'));
+    expect(main, contains('TimeWarpPanel'));
+    expect(main, contains('StringTable.fromFlatLocale'));
     expect(pubspec, contains('path_provider'));
+    expect(pubspec, contains('assets/i18n/'));
     final def = File(
       '${tmp.path}/cookie_game/assets/idle_game.json',
     ).readAsStringSync();
@@ -354,6 +358,12 @@ dependencies:
     expect(def, contains('"autoBuyer"'));
     expect(def, contains('"bonusPerOwned"'));
     expect(def, contains('"gems": "5"'));
+    expect(def, contains('"research"'));
+    expect(def, contains('"timeWarps"'));
+    expect(
+      File('${tmp.path}/cookie_game/assets/i18n/en.json').existsSync(),
+      isTrue,
+    );
     expect(
       File('${tmp.path}/cookie_game/test/widget_test.dart').readAsStringSync(),
       contains('cookie_game'),

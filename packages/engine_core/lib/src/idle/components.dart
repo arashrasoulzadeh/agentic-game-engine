@@ -28,8 +28,11 @@ class Generator {
   /// Stable identifier that upgrades refer to (`"cursor"`).
   final String id;
 
-  /// Display name; null shows [id].
+  /// Display name; null shows [id] (or [nameKey] via a [StringTable]).
   final String? name;
+
+  /// Optional [StringTable] key for [name]; wins over the literal when resolved.
+  final String? nameKey;
 
   /// How many the player owns.
   int owned;
@@ -56,6 +59,7 @@ class Generator {
     required this.id,
     required this.cost,
     this.name,
+    this.nameKey,
     this.owned = 0,
     this.maxOwned,
     this.costResource = 'coins',
@@ -88,6 +92,7 @@ class Generator {
   Map<String, dynamic> toJson() => {
     'id': id,
     if (name != null) 'name': name,
+    if (nameKey != null) 'nameKey': nameKey,
     'owned': owned,
     if (maxOwned != null) 'maxOwned': maxOwned,
     'costResource': costResource,
@@ -101,6 +106,7 @@ class Generator {
   factory Generator.fromJson(Map<String, dynamic> json) => Generator(
     id: json['id'] as String,
     name: json['name'] as String?,
+    nameKey: json['nameKey'] as String?,
     owned: (json['owned'] as num?)?.toInt() ?? 0,
     maxOwned: (json['maxOwned'] as num?)?.toInt(),
     costResource: json['costResource'] as String? ?? 'coins',
@@ -125,8 +131,11 @@ class Upgrade {
   /// Stable identifier (also the name of its source in the modifier breakdown).
   final String id;
 
-  /// Display name; null shows [id].
+  /// Display name; null shows [id] (or [nameKey] via a [StringTable]).
   final String? name;
+
+  /// Optional [StringTable] key for [name]; wins over the literal when resolved.
+  final String? nameKey;
 
   /// One-time price, by resource.
   final Map<String, BigNumber> cost;
@@ -153,6 +162,7 @@ class Upgrade {
     required this.id,
     this.multiplier = BigNumber.one,
     this.name,
+    this.nameKey,
     Map<String, BigNumber>? cost,
     this.target = 'all',
     this.bonusPerOwned,
@@ -165,6 +175,7 @@ class Upgrade {
   Map<String, dynamic> toJson() => {
     'id': id,
     if (name != null) 'name': name,
+    if (nameKey != null) 'nameKey': nameKey,
     'cost': {for (final e in cost.entries) e.key: e.value.toJson()},
     'target': target,
     'multiplier': multiplier.toJson(),
@@ -177,6 +188,7 @@ class Upgrade {
   factory Upgrade.fromJson(Map<String, dynamic> json) => Upgrade(
     id: json['id'] as String,
     name: json['name'] as String?,
+    nameKey: json['nameKey'] as String?,
     cost: {
       for (final e in ((json['cost'] as Map?) ?? const {}).entries)
         e.key as String: BigNumber.fromJson(e.value as Object),

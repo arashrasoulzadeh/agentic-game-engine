@@ -117,7 +117,9 @@ class AchievementList extends StatelessWidget {
         a.unlocked ? Icons.emoji_events : Icons.lock_outline,
         semanticLabel: a.unlocked ? 'Unlocked' : 'Locked',
       ),
-      title: Text(a.name ?? a.id),
+      title: Text(
+        controller.label(a.id, name: a.name, nameKey: a.nameKey),
+      ),
       subtitle: LinearProgressIndicator(value: progress),
       trailing: Text(
         a.unlocked
@@ -637,6 +639,130 @@ class StatsPanel extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Research tree: buy nodes to [grantTech] unlocks that gate generators / upgrades.
+class ResearchPanel extends StatelessWidget {
+  const ResearchPanel({super.key, required this.controller});
+
+  final IdleController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return ThrottledListenableBuilder(
+      listenable: controller,
+      urgentOf: () => controller.urgentGeneration,
+      builder: (context, _) {
+        final ids = controller.researchIds;
+        if (ids.isEmpty) {
+          return const SizedBox.shrink(key: Key('research-empty'));
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              child: Text(
+                'Research',
+                key: const Key('research-title'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            for (final e in ids) _row(e),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _row(EntityId entity) {
+    final n = controller.world.storeOf<ResearchNode>().get(entity)!;
+    final locked = missingTech(
+      controller.world,
+      controller.team,
+      n.requires,
+    ).isNotEmpty;
+    final cost = n.cost.entries
+        .map((c) => '${controller.format(c.value)} ${c.key}')
+        .join(', ');
+    final can =
+        !n.purchased && !locked && controller.wallet.canAfford(n.cost);
+    return ListTile(
+      key: Key('research-${n.id}'),
+      title: Text(controller.label(n.id, name: n.name, nameKey: n.nameKey)),
+      subtitle: Text(
+        n.purchased
+            ? 'Researched · unlocks ${n.unlocks.join(', ')}'
+            : locked
+            ? 'Locked: needs ${n.requires.join(', ')}'
+            : 'Unlocks ${n.unlocks.join(', ')} · $cost',
+      ),
+      trailing: n.purchased
+          ? const Icon(Icons.check)
+          : FilledButton.tonal(
+              key: Key('buy-research-${n.id}'),
+              onPressed: can ? () => controller.buyResearchById(entity) : null,
+              child: const Text('Research'),
+            ),
+    );
+  }
+}
+
+/// Paid time skips from the definition's `"timeWarps"` block.
+class TimeWarpPanel extends StatelessWidget {
+  const TimeWarpPanel({super.key, required this.controller});
+
+  final IdleController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return ThrottledListenableBuilder(
+      listenable: controller,
+      urgentOf: () => controller.urgentGeneration,
+      builder: (context, _) {
+        final ids = controller.timeWarpIds;
+        if (ids.isEmpty) {
+          return const SizedBox.shrink(key: Key('timewarp-empty'));
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              child: Text(
+                'Time warp',
+                key: const Key('timewarp-title'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            for (final e in ids) _row(e),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _row(EntityId entity) {
+    final o = controller.world.storeOf<TimeWarpOffer>().get(entity)!;
+    final cost = o.cost.entries
+        .map((c) => '${controller.format(c.value)} ${c.key}')
+        .join(', ');
+    final can = controller.wallet.canAfford(o.cost);
+    final hours = o.seconds / 3600;
+    final label = hours >= 1
+        ? '${hours == hours.roundToDouble() ? hours.toInt() : hours.toStringAsFixed(1)}h'
+        : '${o.seconds}s';
+    return ListTile(
+      key: Key('timewarp-${o.id}'),
+      title: Text(controller.label(o.id, name: o.name, nameKey: o.nameKey)),
+      subtitle: Text('Skip $label of income · $cost'),
+      trailing: FilledButton.tonal(
+        key: Key('buy-timewarp-${o.id}'),
+        onPressed: can ? () => controller.buyTimeWarpById(entity) : null,
+        child: const Text('Warp'),
+      ),
     );
   }
 }

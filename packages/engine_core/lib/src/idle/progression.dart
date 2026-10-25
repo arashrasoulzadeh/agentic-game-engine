@@ -283,11 +283,15 @@ class Achievement {
   final BigNumber reward;
   bool unlocked;
 
+  /// Optional [StringTable] key for [name].
+  final String? nameKey;
+
   Achievement({
     required this.id,
     required this.stat,
     required this.atLeast,
     this.name,
+    this.nameKey,
     BigNumber? reward,
     this.unlocked = false,
   }) : reward = reward ?? BigNumber.one;
@@ -295,6 +299,7 @@ class Achievement {
   Map<String, dynamic> toJson() => {
     'id': id,
     if (name != null) 'name': name,
+    if (nameKey != null) 'nameKey': nameKey,
     'stat': stat,
     'atLeast': atLeast.toJson(),
     'reward': reward.toJson(),
@@ -304,6 +309,7 @@ class Achievement {
   factory Achievement.fromJson(Map<String, dynamic> json) => Achievement(
     id: json['id'] as String,
     name: json['name'] as String?,
+    nameKey: json['nameKey'] as String?,
     stat: json['stat'] as String,
     atLeast: BigNumber.fromJson(json['atLeast'] as Object),
     reward: BigNumber.fromJson((json['reward'] ?? '1') as Object),

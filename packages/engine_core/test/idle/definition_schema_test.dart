@@ -23,6 +23,8 @@ void main() {
         'autoBuyer',
         'golden',
         'offline',
+        'research',
+        'timeWarps',
       ]),
     );
   });

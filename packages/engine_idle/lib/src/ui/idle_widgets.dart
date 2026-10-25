@@ -253,7 +253,8 @@ class GeneratorRow extends StatelessWidget {
         .join(', ');
     return Semantics(
       container: true,
-      label: '${g.name ?? g.id}, ${g.owned} owned${locked ? ', locked' : ''}',
+      label:
+          '${controller.label(g.id, name: g.name, nameKey: g.nameKey)}, ${g.owned} owned${locked ? ', locked' : ''}',
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(8),
@@ -264,7 +265,7 @@ class GeneratorRow extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      g.name ?? g.id,
+                      controller.label(g.id, name: g.name, nameKey: g.nameKey),
                       key: Key('name-${g.id}'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
@@ -387,7 +388,9 @@ class UpgradeList extends StatelessWidget {
                 !u.purchased && !locked && controller.wallet.canAfford(u.cost);
             return ListTile(
               key: Key('upgrade-${u.id}'),
-              title: Text(u.name ?? u.id),
+              title: Text(
+                controller.label(u.id, name: u.name, nameKey: u.nameKey),
+              ),
               subtitle: Text(
                 u.purchased
                     ? 'Bought'

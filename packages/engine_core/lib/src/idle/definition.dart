@@ -6,6 +6,8 @@ import 'components.dart';
 import 'golden_events.dart';
 import 'progression.dart';
 import 'register_components.dart';
+import 'research.dart';
+import 'time_warp.dart';
 
 /// A whole idle game described as data: resources, generators, upgrades, achievements, prestige. One JSON
 /// file a designer (or an agent) can edit without touching Dart.
@@ -422,6 +424,75 @@ List<String> validateIdleDefinition(Map<String, dynamic> json) {
     }
   }
 
+  final researchIds = <String>{};
+  final research = list('research');
+  for (var i = 0; i < research.length; i++) {
+    final r = research[i];
+    final p = 'research[$i]';
+    final id = r['id'];
+    if (id is! String || id.isEmpty) {
+      errors.add('$p.id is required');
+    } else if (!researchIds.add(id)) {
+      errors.add('$p.id "$id" is used twice');
+    }
+    final cost = r['cost'];
+    if (cost != null && cost is! Map) {
+      errors.add('$p.cost must be an object');
+    } else if (cost is Map) {
+      for (final e in cost.entries) {
+        number(e.value, '$p.cost.${e.key}', nonNegative: true);
+        if (resources.isNotEmpty && !resources.contains(e.key)) {
+          errors.add('$p.cost.${e.key} is not a declared resource');
+        }
+      }
+    }
+    final unlocks = r['unlocks'];
+    if (unlocks != null && unlocks is! List) {
+      errors.add('$p.unlocks must be a list');
+    } else if (unlocks is List) {
+      for (var j = 0; j < unlocks.length; j++) {
+        if (unlocks[j] is! String || (unlocks[j] as String).isEmpty) {
+          errors.add('$p.unlocks[$j] must be a non-empty string');
+        }
+      }
+    }
+    final req = r['requires'];
+    if (req != null && req is! List) {
+      errors.add('$p.requires must be a list');
+    } else if (req is List) {
+      for (var j = 0; j < req.length; j++) {
+        if (req[j] is! String || (req[j] as String).isEmpty) {
+          errors.add('$p.requires[$j] must be a non-empty string');
+        }
+      }
+    }
+  }
+
+  final warps = list('timeWarps');
+  for (var i = 0; i < warps.length; i++) {
+    final w = warps[i];
+    final p = 'timeWarps[$i]';
+    final id = w['id'];
+    if (id is! String || id.isEmpty) {
+      errors.add('$p.id is required');
+    }
+    final sec = w['seconds'];
+    if (sec is! num || sec <= 0) {
+      errors.add('$p.seconds must be a number greater than 0');
+    }
+    final cost = w['cost'];
+    if (cost != null && cost is! Map) {
+      errors.add('$p.cost must be an object');
+    } else if (cost is Map) {
+      for (final e in cost.entries) {
+        number(e.value, '$p.cost.${e.key}', nonNegative: true);
+        if (resources.isNotEmpty && !resources.contains(e.key)) {
+          errors.add('$p.cost.${e.key} is not a declared resource');
+        }
+      }
+    }
+  }
+
   final offline = json['offline'];
   if (offline != null) {
     if (offline is! Map) {
@@ -524,6 +595,18 @@ IdleGame loadIdleDefinition(World world, Map<String, dynamic> json) {
     world.storeOf<AutoBuyer>().set(
       world.spawn(),
       AutoBuyer.fromJson((json['autoBuyer'] as Map).cast<String, dynamic>()),
+    );
+  }
+  for (final r in (json['research'] as List? ?? const [])) {
+    world.storeOf<ResearchNode>().set(
+      world.spawn(),
+      ResearchNode.fromJson((r as Map).cast<String, dynamic>()),
+    );
+  }
+  for (final w in (json['timeWarps'] as List? ?? const [])) {
+    world.storeOf<TimeWarpOffer>().set(
+      world.spawn(),
+      TimeWarpOffer.fromJson((w as Map).cast<String, dynamic>()),
     );
   }
 

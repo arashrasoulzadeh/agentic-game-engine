@@ -44,6 +44,9 @@ common path; optional blocks are noted.
 | Pause / credits / volumes | `showIdlePauseMenu`, `showIdleCredits`, volume sliders | yes |
 | SFX hooks | `IdleSfx` on `IdleController` | yes (log stubs; wire `AudioManager`) |
 | Prestige shop | `PrestigeShop` / `UpgradeList(costResource:)` | yes (gem sample) |
+| Research tree | `"research"` + `ResearchPanel` / `buyResearch` | yes (gates Mine) |
+| Time warp | `"timeWarps"` + `TimeWarpPanel` / `buyTimeWarp` | yes (1h for 1 gem) |
+| Localised names | `nameKey` + `StringTable` / `assets/i18n/en.json` | yes |
 | Definition JSON Schema | `schema.idle_game` / `idleGameDefinitionJsonSchema` | yes |
 | Balance check | `game_agent idle simulate` / `idle.validate` | CLI / agent |
 | Headless agent ops | `idle.*` on MCP/REST/CLI | yes |
@@ -201,6 +204,34 @@ when unaffordable, lazily built so hundreds of rows stay smooth), `UpgradeList`,
 `IdleSession.syncCloud`: the save from the device that was active later wins, `resolve:` lets you ask the player,
 and a pulled save pays no offline time. `SaveCodePanel` lets players move a game by copying text.
 
+### Cloud-save walkthrough
+
+`CloudSaveStore` is only a contract (`fetch` / `push`). The package ships
+`HttpCloudSaveStore` with injected HTTP so the same class works on IO, web, and
+tests — you supply `getBody` / `putBody`:
+
+```dart
+final cloud = HttpCloudSaveStore(
+  uri: Uri.parse('https://api.example.com/v1/saves/player1'),
+  getBody: (uri) async {
+    final res = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
+    if (res.statusCode == 404) return null;
+    return res.body;
+  },
+  putBody: (uri, body) async {
+    await http.put(uri, headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}, body: body);
+  },
+);
+final result = await session.syncCloud(cloud, resolve: (local, remote) {
+  // Ask the player which save to keep when both have progress.
+  return true; // take remote
+});
+```
+
+Game Center / Play Games: wrap their cloud-blob APIs the same way (read → JSON
+string or null, write → UTF-8 bytes). Keep one authoritative clock when you care
+about cheating (see Trust below); `syncCloud` alone is for convenience, not anti-cheat.
+
 ## More rules, all data
 
 - **Milestones** on a generator (`"milestones": [{"owned": 25, "multiplier": "2"}]`) multiply its output; the row
@@ -227,6 +258,12 @@ and a pulled save pays no offline time. `SaveCodePanel` lets players move a game
   offline catch-up also buys. `bestPurchase(world, wallet)` is the same recommendation as a function (for a "buy this next" hint).
 - **Synergy upgrades:** `"bonusPerOwned": "0.01", "synergyOf": "grandma"` on an upgrade multiplies the target by
   `1 + bonusPerOwned * owned(synergyOf)` once purchased (stacks with a plain `multiplier` when both are set).
+- **Research:** `"research": [{"id": "mining", "cost": {"coins": "5000"}, "unlocks": ["mining"]}]` plus
+  `"requires": ["mining"]` on a generator/upgrade. `ResearchPanel` / `buyResearch` spends and `grantTech`s the unlocks.
+- **Time warp:** `"timeWarps": [{"id": "hour", "seconds": 3600, "cost": {"gems": "1"}}]` — `TimeWarpPanel` /
+  `buyTimeWarp` credits that many seconds of *current* income (not offline efficiency).
+- **Localised names:** put `"nameKey": "gen.cursor"` on entities and load `StringTable.fromFlatLocale` from
+  `assets/i18n/en.json`; pass it as `IdleController(strings:)`. Literal `name` remains the fallback.
 - **Offline double:** pass `onDouble` to `OfflineSummaryDialog` (show a rewarded ad; return `true` if earned), then call
   `IdleSession.doubleOffline(summary)` when the dialog pops `true`. The template stubs `onDouble: () async => true`.
 - **Number format persistence:** `IdleSettingsPanel(onStyleChanged:, onDecimalSeparatorChanged:)` — store the values in

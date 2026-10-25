@@ -52,14 +52,12 @@ Create path is shippable (`--template idle_game`: durable save, cold-start
 offline dialog, challenges, stats, golden, layered prestiges, auto-buyer,
 synergy upgrades, format persistence, offline double stub, return notifier,
 Material pause/settings/credits + volumes, `IdleSfx` stubs, prestige shop,
-`schema.idle_game`). Guide checklist:
+`schema.idle_game`, research tree, time warps, `nameKey` + i18n,
+`HttpCloudSaveStore` walkthrough). Guide checklist:
 [docs/concepts/idle-games.md](docs/concepts/idle-games.md).
 Depth / genre extras still open:
 
-- [ ] Cloud-save walkthrough (Game Center / Play Games / HTTP sample).
-- [ ] Localisation of definition display names (string keys / locale tables).
-- [ ] Research-tree definition block + UI (tech `requires` already work).
-- [ ] Time-warp / season pass (prestige shop filter shipped).
+- [ ] Season pass / battle-pass style track (time-warp shipped).
 
 ## Studio
 

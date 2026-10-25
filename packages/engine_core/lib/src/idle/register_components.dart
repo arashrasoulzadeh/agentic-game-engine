@@ -7,6 +7,8 @@ import 'challenges.dart';
 import 'components.dart';
 import 'golden_events.dart';
 import 'progression.dart';
+import 'research.dart';
+import 'time_warp.dart';
 
 /// Registers the idle-genre components on [world] so they take part in `World.toJson()`,
 /// `applyPatch()` and level loading like any other component. Call it after
@@ -75,5 +77,17 @@ void registerIdleComponents(World world) {
     (c) => c.toJson(),
     Challenge.fromJson,
     schema: challengeSchema,
+  );
+  world.components.register<ResearchNode>(
+    'researchNode',
+    (r) => r.toJson(),
+    ResearchNode.fromJson,
+    schema: researchNodeSchema,
+  );
+  world.components.register<TimeWarpOffer>(
+    'timeWarpOffer',
+    (t) => t.toJson(),
+    TimeWarpOffer.fromJson,
+    schema: timeWarpOfferSchema,
   );
 }

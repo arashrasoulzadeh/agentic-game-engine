@@ -171,6 +171,43 @@ Map<String, Object?> idleGameDefinitionJsonSchema() => {
           },
           'additionalProperties': true,
         },
+        'research': {
+          'type': 'array',
+          'items': {
+            'type': 'object',
+            'required': ['id'],
+            'properties': {
+              'id': {'type': 'string', 'minLength': 1},
+              'name': {'type': 'string'},
+              'nameKey': {'type': 'string'},
+              'cost': {'type': 'object'},
+              'requires': {
+                'type': 'array',
+                'items': {'type': 'string'},
+              },
+              'unlocks': {
+                'type': 'array',
+                'items': {'type': 'string'},
+              },
+            },
+            'additionalProperties': true,
+          },
+        },
+        'timeWarps': {
+          'type': 'array',
+          'items': {
+            'type': 'object',
+            'required': ['id', 'seconds'],
+            'properties': {
+              'id': {'type': 'string', 'minLength': 1},
+              'name': {'type': 'string'},
+              'nameKey': {'type': 'string'},
+              'seconds': {'type': 'integer', 'minimum': 1},
+              'cost': {'type': 'object'},
+            },
+            'additionalProperties': true,
+          },
+        },
       },
     };
 

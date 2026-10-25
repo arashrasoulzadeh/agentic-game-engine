@@ -12,6 +12,11 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Idle research tree (`"research"` / `ResearchNode` / `ResearchPanel` /
+  `buyResearch`), time warps (`"timeWarps"` / `TimeWarpOffer` / `TimeWarpPanel` /
+  `buyTimeWarp` / `timeWarp`), definition `nameKey` + `StringTable.fromFlatLocale`
+  (template `assets/i18n/en.json`), and `HttpCloudSaveStore` plus a cloud-save
+  walkthrough in the idle guide.
 - Idle Material shell: AppBar pause (`showIdlePauseMenu` freezes the economy),
   credits dialog, volume sliders on `IdleSettingsPanel` via `PlayerOptions`,
   `IdleSfx` hooks on buy / upgrade / tap / prestige / golden, `PrestigeShop` /

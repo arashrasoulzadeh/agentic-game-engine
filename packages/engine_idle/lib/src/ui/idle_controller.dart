@@ -23,6 +23,7 @@ class IdleController extends ChangeNotifier {
     this.team = 'player',
     this.analytics,
     this.sfx,
+    this.strings,
     this.decimalSeparator = '.',
   });
 
@@ -59,6 +60,9 @@ class IdleController extends ChangeNotifier {
   /// One-shot buy / prestige / golden / tap feedback; null plays nothing.
   final IdleSfx? sfx;
 
+  /// Optional localisation for [nameKey] fields on generators / upgrades / etc.
+  StringTable? strings;
+
   Timer? _timer;
   final Stopwatch _clock = Stopwatch();
   Duration _last = Duration.zero;
@@ -86,6 +90,21 @@ class IdleController extends ChangeNotifier {
   void setDecimalSeparator(String value) {
     if (value == decimalSeparator) return;
     decimalSeparator = value;
+    _notifyUrgent();
+  }
+
+  /// Resolves a display label: [nameKey] via [strings], else [name], else [id].
+  String label(String id, {String? name, String? nameKey}) {
+    if (nameKey != null && strings != null) {
+      return strings!.resolve(nameKey);
+    }
+    return name ?? id;
+  }
+
+  /// Swaps the string table (or clears it) and refreshes labels.
+  void setStrings(StringTable? value) {
+    if (identical(value, strings)) return;
+    strings = value;
     _notifyUrgent();
   }
 
@@ -221,6 +240,26 @@ class IdleController extends ChangeNotifier {
     return ok;
   }
 
+  /// Buys research [node] once (see [buyResearch]).
+  BuyResult buyResearchById(EntityId node) {
+    final r = buyResearch(world, wallet, node, team: team);
+    if (r.ok) {
+      sfx?.onUpgrade?.call();
+      _notifyUrgent();
+    }
+    return r;
+  }
+
+  /// Buys a [TimeWarpOffer] (see [buyTimeWarp]).
+  BuyResult buyTimeWarpById(EntityId offer) {
+    final r = buyTimeWarp(world, wallet, offer);
+    if (r.ok) {
+      sfx?.onBuy?.call();
+      _notifyUrgent();
+    }
+    return r;
+  }
+
   /// Every generator entity in a stable order.
   List<EntityId> get generatorIds {
     final s = world.storeOf<Generator>();
@@ -240,6 +279,18 @@ class IdleController extends ChangeNotifier {
   List<String> get prestigeRuleIds {
     final s = world.storeOf<PrestigeRule>();
     return [for (var i = 0; i < s.length; i++) s.denseAt(i).id];
+  }
+
+  /// Research node entities in a stable order.
+  List<EntityId> get researchIds {
+    final s = world.storeOf<ResearchNode>();
+    return [for (var i = 0; i < s.length; i++) s.entityAt(i)]..sort();
+  }
+
+  /// Time-warp offer entities in a stable order.
+  List<EntityId> get timeWarpIds {
+    final s = world.storeOf<TimeWarpOffer>();
+    return [for (var i = 0; i < s.length; i++) s.entityAt(i)]..sort();
   }
 
   @override

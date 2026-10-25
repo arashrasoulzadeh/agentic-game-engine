@@ -19,4 +19,6 @@ export 'src/idle/economy.dart';
 export 'src/idle/golden_events.dart';
 export 'src/idle/progression.dart';
 export 'src/idle/register_components.dart';
+export 'src/idle/research.dart';
 export 'src/idle/simulator.dart';
+export 'src/idle/time_warp.dart';

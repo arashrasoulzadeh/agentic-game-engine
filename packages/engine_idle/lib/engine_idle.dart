@@ -11,5 +11,6 @@ export 'src/ui/idle_screens.dart';
 export 'src/ui/idle_sfx.dart';
 export 'src/ui/idle_widgets.dart';
 export 'src/browser_save_store.dart';
+export 'src/http_cloud_save_store.dart';
 export 'src/session.dart';
 export 'src/ui/idle_lifecycle.dart';

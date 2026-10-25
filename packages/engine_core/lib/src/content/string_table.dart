@@ -79,4 +79,16 @@ class StringTable {
       locale: locale,
     );
   }
+
+  /// Builds a table from a flat locale file (`{"menu.resume": "Resume"}`),
+  /// the shape used by `assets/i18n/<locale>.json` in create templates.
+  factory StringTable.fromFlatLocale(
+    Map<String, String> flat, {
+    String locale = 'en',
+    String? defaultLocale,
+  }) => StringTable(
+    {for (final e in flat.entries) e.key: {locale: e.value}},
+    defaultLocale: defaultLocale ?? locale,
+    locale: locale,
+  );
 }
