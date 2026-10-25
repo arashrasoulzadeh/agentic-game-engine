@@ -25,6 +25,10 @@ pubspec.yaml.
   actions. The resource header still follows every tick.
 
 ### Added
+- `strategy.rules` and `strategy.simulate_turns` operations: catalogue of turn-based components/orders/AI, and a
+  headless AI skirmish that returns an event log (pure `engine_core`, no Flutter).
+- MCP `tools/call` emits an `image` content part when operation data includes `pngBase64` (e.g. `level.lint`
+  with `includeRender`).
 - `level.lint` `includeRender`: optional base64 PNG structural preview of the tileMap (needs `ImageCodec`);
   `renderLevelPreview` + drawing helpers on `ImageCodec` (`fill` / `fillRect` / `fillCircle` / `drawString`).
 - `asset.pack` operation: MaxRects atlas packing via an injected `ImageCodec` (no `package:image` in

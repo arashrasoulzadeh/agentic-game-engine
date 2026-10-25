@@ -11,6 +11,7 @@ import 'groups/project_ops.dart';
 import 'groups/release_ops.dart';
 import 'groups/save_ops.dart';
 import 'groups/schema_ops.dart';
+import 'groups/strategy_ops.dart';
 import 'groups/tmx_ops.dart';
 import 'groups/world_ops.dart';
 import 'groups/undo_ops.dart';
@@ -36,6 +37,7 @@ OperationRegistry buildRegistry({ProposalFinisher? finisher}) {
     ...saveOperations(),
     ...schemaOperations(),
     ...idleOperations(),
+    ...strategyOperations(),
     ...releaseOperations(),
     ...undoOperations(),
   ];

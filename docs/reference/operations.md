@@ -1452,6 +1452,45 @@ game_agent schema validate-component <name>
 
 REST: `POST /v1/schema/validate_component` · MCP tool: `schema.validate_component` · JSON-RPC method: `schema.validate_component`
 
+## strategy
+
+### `strategy.rules`
+
+Describe the turn-based components, orders, systems and AI kinds the engine ships.
+
+A static catalogue for agents authoring strategy levels or calling `strategy.simulate_turns`. Nothing is loaded or run.
+
+*read*, idempotent.
+
+```bash
+game_agent strategy rules
+```
+
+REST: `POST /v1/strategy/rules` · MCP tool: `strategy.rules` · JSON-RPC method: `strategy.rules`
+
+### `strategy.simulate_turns`
+
+Run a headless turn-based skirmish for a few team-turns and return the event log.
+
+Loads a level (`path` or inline `json`) with team/grid/AP/unitStats entities, wires `OrderSystem` + `AITurnSystem` + win/combat, and steps until `turns` team-turns have ended (or someone wins). `ai` selects AggressiveAI or TacticalAI for every team. Uses a TileMap navigator when the level has one; otherwise an open grid sized to the units. Deterministic for the same level + args. Nothing is written.
+
+*read*, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | path | |
+| `json` | json | |
+| `turns` | integer; default `1` | How many team-turns (TurnEndedEvent) to run before stopping. |
+| `ai` | enumeration; default `"aggressive"`; one of `aggressive`, `tactical` | |
+
+Errors: `validation_failed`.
+
+```bash
+game_agent strategy simulate-turns <path>
+```
+
+REST: `POST /v1/strategy/simulate_turns` · MCP tool: `strategy.simulate_turns` · JSON-RPC method: `strategy.simulate_turns`
+
 ## undo
 
 ### `undo.list`

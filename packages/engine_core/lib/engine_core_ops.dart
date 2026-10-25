@@ -44,6 +44,7 @@ export 'src/ops/groups/level_ops.dart'
     show levelReadOperations, levelText, parseLevel, knownComponents;
 export 'src/ops/groups/release_ops.dart' show releaseOperations;
 export 'src/ops/groups/schema_ops.dart' show schemaOperations;
+export 'src/ops/groups/strategy_ops.dart' show strategyOperations;
 export 'src/ops/project/asset_index.dart';
 export 'src/ops/project/atlas_catalog.dart';
 export 'src/ops/project/project_symbols.dart';

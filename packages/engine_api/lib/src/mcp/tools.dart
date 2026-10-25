@@ -47,15 +47,28 @@ Map<String, Object?> toolFor(Operation op, {String? name}) => {
 };
 
 /// Wraps an operation result as an MCP `tools/call` result (`isError` mirrors `ok:false`).
+///
+/// When the successful data carries a `pngBase64` field (e.g. `level.lint` with
+/// `includeRender`), also emits an `image` content part so MCP clients can show
+/// the preview without digging into the JSON envelope.
 Map<String, Object?> toolResult(OpResult result) {
   final envelope = result.toJson();
+  final content = <Map<String, Object?>>[
+    {
+      'type': 'text',
+      'text': const JsonEncoder.withIndent('  ').convert(envelope),
+    },
+  ];
+  final data = envelope['data'];
+  if (envelope['ok'] == true && data is Map && data['pngBase64'] is String) {
+    content.add({
+      'type': 'image',
+      'data': data['pngBase64'],
+      'mimeType': 'image/png',
+    });
+  }
   return {
-    'content': [
-      {
-        'type': 'text',
-        'text': const JsonEncoder.withIndent('  ').convert(envelope),
-      },
-    ],
+    'content': content,
     'structuredContent': envelope,
     'isError': envelope['ok'] != true,
   };
