@@ -391,6 +391,48 @@ game_agent graph validate <path>
 
 REST: `POST /v1/graph/validate` · MCP tool: `graph.validate` · JSON-RPC method: `graph.validate`
 
+## i18n
+
+### `i18n.keys`
+
+Report every i18n key, which locales have it, and placeholder mismatches.
+
+Reads `assets/i18n/<locale>.json` files (flat `{ "key": "text" }` maps — the same shape the studio uses for its own catalogs). Without `locale`, compares every file; with `locale`, that file is checked against the union of keys from all locales. `missing` lists keys absent from a locale; `placeholderMismatches` lists keys whose `{name}` placeholders differ across locales. `ok` is true when both are empty.
+
+*read*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `locale` | string | Focus the missing report on this locale (e.g. fa). |
+
+```bash
+game_agent i18n keys
+```
+
+REST: `POST /v1/i18n/keys` · MCP tool: `i18n.keys` · JSON-RPC method: `i18n.keys`
+
+### `i18n.set`
+
+Set one key's text in a locale catalog.
+
+Writes `assets/i18n/<locale>.json` (creates the file when missing). Keys are sorted on write so diffs stay stable. Undoable via `undo.undo`.
+
+*write*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `locale` | string; required | |
+| `key` | string; required | |
+| `text` | string; required | |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+```bash
+game_agent i18n set <locale>
+```
+
+REST: `POST /v1/i18n/set` · MCP tool: `i18n.set` · JSON-RPC method: `i18n.set`
+
 ## idle
 
 ### `idle.best_purchase`

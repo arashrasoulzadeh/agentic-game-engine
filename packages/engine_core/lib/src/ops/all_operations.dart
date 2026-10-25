@@ -1,6 +1,7 @@
 import 'groups/asset_ops.dart';
 import 'groups/engine_ops.dart';
 import 'groups/graph_ops.dart';
+import 'groups/i18n_ops.dart';
 import 'groups/idle_ops.dart';
 import 'groups/level_lint_ops.dart';
 import 'groups/level_ops.dart';
@@ -37,6 +38,7 @@ OperationRegistry buildRegistry({ProposalFinisher? finisher}) {
     ...saveOperations(),
     ...schemaOperations(),
     ...idleOperations(),
+    ...i18nOperations(),
     ...strategyOperations(),
     ...releaseOperations(),
     ...undoOperations(),

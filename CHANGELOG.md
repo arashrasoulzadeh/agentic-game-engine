@@ -25,6 +25,8 @@ pubspec.yaml.
   actions. The resource header still follows every tick.
 
 ### Added
+- `i18n.keys` / `i18n.set` operations: game string catalogs at `assets/i18n/<locale>.json` (flat
+  key → text). `keys` reports missing locales and `{placeholder}` mismatches; `set` is undoable.
 - MCP streamable HTTP: `GET /mcp` with `Accept: text/event-stream` opens an SSE session
   (`Mcp-Session-Id` on `initialize`, `DELETE /mcp` to end); `OpContext.reportProgress` forwards
   `notifications/progress` on that stream (`strategy.simulate_turns` reports turn progress).

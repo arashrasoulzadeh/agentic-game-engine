@@ -121,8 +121,9 @@ Sections: [Performance](#performance) ·
 - [x] Phases 0-7: registry, safety pipeline, CLI binding, MCP/REST/JSON-RPC server, generated docs, e2e test (details in
       `engine_mcp.md`'s progress log).
 - [x] Operations built: `project.*`, `level.*` (reads, writes, lint, TMX, merge, locks), `graph.*`, `prefab.*`, `asset.index` /
-      `asset.atlas_regions` / `asset.pack`, `idle.*`, `strategy.rules` / `strategy.simulate_turns`, `save.*`, `world.*`,
-      `schema.*`, `undo.*`, `release.plan`, `engine.*` (including `engine.docs`).
+      `asset.atlas_regions` / `asset.pack`, `idle.*`, `i18n.keys` / `i18n.set`, `strategy.rules` /
+      `strategy.simulate_turns`, `save.*`, `world.*`, `schema.*`, `undo.*`, `release.plan`, `engine.*`
+      (including `engine.docs`).
 - [x] Server hardening: token, Host check, limits, request log, CORS, idempotency keys, `engine_api.yaml`, project lock and
       `--allow-open`, no writes into `.studio`/`.git`.
 
@@ -138,7 +139,9 @@ What is left:
       write beside the registry operations of the same name (which add undo, locks and structured errors). Make them thin
       adapters that keep the golden output of `studio_golden_test.dart`; behaviour changes (an undo entry per edit) need an
       owner decision first.
-- [ ] **Operations not built yet:** `i18n.*` (no project convention for locale files yet).
+- [x] **`i18n.keys` / `i18n.set`** — convention `assets/i18n/<locale>.json` (flat key → text, same shape as the
+      studio catalogs). `keys` reports missing translations and `{placeholder}` mismatches; `set` writes one
+      key (creates the locale file when needed) via `Proposal`/`FileChange` so undo works.
 - [x] **`engine.docs`** — list/read markdown under `OpContext.docsRoot` (`engine_api --docs-root`, auto-detect
       monorepo `docs/`); drafts under `proposals/` and the studio QA checklist stay excluded. Docs are still
       not bundled inside the published package — without a root the op returns `unsupported`.
