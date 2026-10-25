@@ -283,6 +283,7 @@ void main() {
         body: {'jsonrpc': '2.0', 'id': 1, 'method': 'initialize', 'params': {}},
       );
       expect(init.body['result']['protocolVersion'], mcpProtocolVersion);
+      expect(init.headers.value('mcp-session-id'), isNotEmpty);
       final call = await send(
         'POST',
         '/mcp',
@@ -302,9 +303,42 @@ void main() {
         )).status,
         202,
       );
+      // GET without Accept: text/event-stream is still refused.
       expect((await send('GET', '/mcp')).status, 405);
     },
   );
+
+  test('GET /mcp with text/event-stream opens an SSE session', () async {
+    final init = await send(
+      'POST',
+      '/mcp',
+      body: {'jsonrpc': '2.0', 'id': 1, 'method': 'initialize', 'params': {}},
+    );
+    final sessionId = init.headers.value('mcp-session-id')!;
+    final req = await client.openUrl(
+      'GET',
+      Uri.parse('http://127.0.0.1:${server.port}/mcp'),
+    );
+    req.headers
+      ..set('authorization', 'Bearer $token')
+      ..set('accept', 'text/event-stream')
+      ..set('mcp-session-id', sessionId);
+    final res = await req.close();
+    expect(res.statusCode, 200);
+    expect(res.headers.contentType?.mimeType, 'text/event-stream');
+    expect(res.headers.value('mcp-session-id'), sessionId);
+    // First SSE comment (`: connected`) then tear down.
+    final first = await res.transform(utf8.decoder).first;
+    expect(first, contains(': connected'));
+    expect(
+      (await send(
+        'DELETE',
+        '/mcp',
+        headers: {'mcp-session-id': sessionId},
+      )).status,
+      204,
+    );
+  });
 
   test('oversized bodies are refused with 413', () async {
     await server.close();

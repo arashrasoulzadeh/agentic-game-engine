@@ -6,6 +6,7 @@ import 'package:engine_core/engine_core_ops.dart';
 
 import '../mcp/rpc.dart';
 import '../mcp/session.dart';
+import '../mcp/sse.dart';
 import '../version.dart';
 import 'openapi.dart';
 import 'token.dart';
@@ -37,6 +38,7 @@ class EngineHttpServer {
   final List<DateTime> _recent = [];
   int _inFlight = 0;
   Future<void> _writes = Future.value();
+  final McpSseHub _sse = McpSseHub();
 
   /// How long a client that keeps failing authentication is made to wait (after 5 failures).
   Duration authFailureDelay = const Duration(seconds: 1);
@@ -77,7 +79,10 @@ class EngineHttpServer {
     return s;
   }
 
-  Future<void> close() => _server.close(force: true);
+  Future<void> close() async {
+    await _sse.closeAll();
+    await _server.close(force: true);
+  }
 
   Future<void> _handle(HttpRequest req) async {
     final requestId =
@@ -95,7 +100,7 @@ class EngineHttpServer {
           'access-control-allow-headers',
           'authorization, content-type, idempotency-key, x-request-id',
         )
-        ..set('access-control-allow-methods', 'GET, POST, OPTIONS');
+        ..set('access-control-allow-methods', 'GET, POST, DELETE, OPTIONS');
     }
     try {
       if (req.method == 'OPTIONS') {
@@ -131,7 +136,13 @@ class EngineHttpServer {
       _authFailures.remove(remote);
       final now = _session.ctx.clock();
       _recent.removeWhere((t) => now.difference(t).inSeconds >= 60);
-      if (_recent.length >= _perMinute || _inFlight >= _concurrent) {
+      // SSE holds the socket open; do not count it against the concurrency cap.
+      final isSse =
+          path == '/mcp' &&
+          req.method == 'GET' &&
+          (req.headers.value('accept') ?? '').contains('text/event-stream');
+      if (!isSse &&
+          (_recent.length >= _perMinute || _inFlight >= _concurrent)) {
         req.response.headers.set('retry-after', '1');
         return _send(
           req,
@@ -139,12 +150,14 @@ class EngineHttpServer {
           _fail(ErrorCode.rateLimited, 'Too many requests; retry shortly.'),
         );
       }
-      _recent.add(now);
-      _inFlight++;
+      if (!isSse) {
+        _recent.add(now);
+        _inFlight++;
+      }
       try {
         return await _route(req, path);
       } finally {
-        _inFlight--;
+        if (!isSse) _inFlight--;
       }
     } on _TooLarge {
       await _send(
@@ -361,8 +374,14 @@ class EngineHttpServer {
   }
 
   Future<void> _mcp(HttpRequest req) async {
+    if (req.method == 'GET') return _mcpSse(req);
+    if (req.method == 'DELETE') return _mcpDelete(req);
     if (req.method != 'POST') {
-      return _send(req, 405, _fail(ErrorCode.invalidParams, 'Use POST.'));
+      return _send(
+        req,
+        405,
+        _fail(ErrorCode.invalidParams, 'Use GET, POST or DELETE.'),
+      );
     }
     final body = await _readBody(req);
     final reply = await handleRpc(
@@ -373,7 +392,79 @@ class EngineHttpServer {
       req.response.statusCode = 202;
       return req.response.close();
     }
+    // Mint a session id on initialize so the client can open GET /mcp for SSE.
+    if (body is Map &&
+        body['method'] == 'initialize' &&
+        reply is Map &&
+        reply['result'] is Map) {
+      req.response.headers.set('mcp-session-id', _sse.create());
+    }
     return _send(req, 200, reply);
+  }
+
+  Future<void> _mcpSse(HttpRequest req) async {
+    final accept = req.headers.value('accept') ?? '';
+    if (!accept.contains('text/event-stream')) {
+      return _send(
+        req,
+        405,
+        _fail(
+          ErrorCode.invalidParams,
+          'GET /mcp requires Accept: text/event-stream.',
+        ),
+      );
+    }
+    var sessionId = req.headers.value('mcp-session-id');
+    if (sessionId == null || _sse[sessionId] == null) {
+      // Allow opening the stream before initialize: mint a session for this socket.
+      sessionId = _sse.create();
+    }
+    final session = _sse[sessionId]!;
+    final res = req.response;
+    res.statusCode = 200;
+    res.headers
+      ..set('content-type', 'text/event-stream; charset=utf-8')
+      ..set('cache-control', 'no-cache')
+      ..set('connection', 'keep-alive')
+      ..set('mcp-session-id', sessionId);
+    // Disable buffering so heartbeats flush.
+    res.bufferOutput = false;
+    session.add(res);
+    res.write(': connected\n\n');
+    final done = Completer<void>();
+    req.response.done.then((_) {
+      session.remove(res);
+      if (!done.isCompleted) done.complete();
+    });
+    // Heartbeat every 15s so proxies keep the socket; stop when the client goes away.
+    Timer? beat;
+    beat = Timer.periodic(const Duration(seconds: 15), (_) {
+      try {
+        res.write(': ping\n\n');
+      } catch (_) {
+        beat?.cancel();
+        if (!done.isCompleted) done.complete();
+      }
+    });
+    await done.future;
+    beat.cancel();
+  }
+
+  Future<void> _mcpDelete(HttpRequest req) async {
+    final id = req.headers.value('mcp-session-id');
+    if (id == null) {
+      return _send(
+        req,
+        400,
+        _fail(ErrorCode.invalidParams, 'Mcp-Session-Id is required.'),
+      );
+    }
+    if (_sse[id] == null) {
+      return _send(req, 404, _fail(ErrorCode.notFound, 'Unknown MCP session.'));
+    }
+    await _sse.delete(id);
+    req.response.statusCode = 204;
+    await req.response.close();
   }
 }
 
