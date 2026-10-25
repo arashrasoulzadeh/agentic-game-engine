@@ -156,7 +156,8 @@ What is left:
       `DELETE /mcp`), progress via `OpContext.reportProgress` → `notifications/progress` on the
       session stream (`strategy.simulate_turns` reports turn progress). Cancellation is done
       (`CancellationToken` Zone-scoped; `notifications/cancelled`). `Retry-After` on 429 shipped.
-      Request-log levels / richer progress from more ops can still grow later.
+      Request-log levels (`--log-level` / `log.level` / MCP `logging/setLevel`): `debug` adds
+      redacted args; `info` stays metadata-only. Richer progress from more ops can still grow later.
 
 ## Idle / incremental games
 

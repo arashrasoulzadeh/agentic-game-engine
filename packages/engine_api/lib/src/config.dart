@@ -86,7 +86,13 @@ List<String> configToArgs(String yamlText) {
   final log = doc['log'];
   if (log != null) {
     if (log is! Map) throw ConfigException('"log" must be a mapping.');
+    for (final k in log.keys) {
+      if (k != 'file' && k != 'level') {
+        throw ConfigException('Unknown key "log.$k".');
+      }
+    }
     scalar('log', log['file']);
+    scalar('log-level', log['level']);
   }
   return out;
 }

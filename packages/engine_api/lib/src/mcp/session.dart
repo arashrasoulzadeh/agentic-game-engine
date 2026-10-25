@@ -87,7 +87,8 @@ class McpSession {
         bytes = jsonEncode(result.toJson()).length;
       }
       final op = registry.lookup(name);
-      log?.write({
+      final bytesIn = utf8.encode(jsonEncode(args)).length;
+      final entry = <String, Object?>{
         'ts': ctx.clock().toUtc().toIso8601String(),
         if (requestId != null) 'requestId': requestId,
         if (rpcId != null) 'rpcId': '$rpcId',
@@ -98,10 +99,15 @@ class McpSession {
         'ok': result.ok,
         if (!result.ok) 'code': result.error!.code.code,
         'durationMs': result.durationMs,
+        'bytesIn': bytesIn,
         'bytesOut': bytes,
         'project': ctx.project?.root,
         if (result.undoId != null) 'undoId': result.undoId,
-      });
+      };
+      if (log?.level == RequestLogLevel.debug) {
+        entry['args'] = redactArgs(op, args);
+      }
+      log?.write(entry);
       return result;
     } finally {
       if (rpcId != null) _inFlight.remove(rpcId);
@@ -218,6 +224,17 @@ class McpSession {
       case 'prompts/get':
         return _promptsGet(params);
       case 'logging/setLevel':
+        final level = params['level'];
+        if (level is! String) {
+          throw RpcException(-32602, '"level" must be a string.');
+        }
+        final sink = log;
+        try {
+          final parsed = RequestLogLevel.fromMcp(level);
+          if (sink != null) sink.level = parsed;
+        } on FormatException catch (e) {
+          throw RpcException(-32602, e.message);
+        }
         return <String, Object?>{};
       default:
         throw RpcException(-32601, 'Method not found: $method');

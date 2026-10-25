@@ -41,12 +41,57 @@ void main() {
       expect(lines[0], containsPair('requestId', 'r1'));
       expect(lines[0], containsPair('ok', true));
       expect(lines[0], containsPair('kind', 'read'));
+      expect(lines[0], containsPair('bytesIn', isA<int>()));
       expect(lines[1], containsPair('ok', false));
       expect(lines[1], containsPair('code', 'not_found'));
       expect(jsonEncode(lines), isNot(contains('none.json')));
       expect(jsonEncode(lines), isNot(contains('player')));
+      expect(jsonEncode(lines), isNot(contains('"args"')));
     },
   );
+
+  test('debug level logs redacted args; logging/setLevel switches it', () async {
+    final path = '${project.path}/log.jsonl';
+    final sink = RequestLog(path, level: RequestLogLevel.debug);
+    final s = session(log: sink);
+    await s.invoke('level.read', {'path': 'assets/levels/a.json'});
+    final debugLine =
+        jsonDecode(File(path).readAsLinesSync().single) as Map;
+    expect(debugLine['args'], {'path': 'assets/levels/a.json'});
+
+    await s.dispatch('logging/setLevel', {'level': 'info'});
+    expect(sink.level, RequestLogLevel.info);
+    File(path).writeAsStringSync('');
+    await s.invoke('level.read', {'path': 'assets/levels/a.json'});
+    expect(
+      jsonDecode(File(path).readAsLinesSync().single) as Map,
+      isNot(contains('args')),
+    );
+
+    await s.dispatch('logging/setLevel', {'level': 'debug'});
+    expect(sink.level, RequestLogLevel.debug);
+  });
+
+  test('debug args redact Param.secret values', () {
+    expect(
+      redactArgs(
+        Operation(
+          name: 't.secret',
+          summary: 'x',
+          description: 'x',
+          kind: OperationKind.read,
+          scope: OperationScope.pure,
+          params: const [
+            Param('token', ParamType.string, secret: true),
+            Param('name', ParamType.string),
+          ],
+          handler: (c, a) => OpOutcome.data({}),
+        ),
+        {'token': 'hunter2', 'name': 'Ada'},
+      ),
+      {'token': '***', 'name': 'Ada'},
+    );
+  });
 
   test('a write records its undoId', () async {
     final path = '${project.path}/log.jsonl';

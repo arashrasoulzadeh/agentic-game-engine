@@ -33,6 +33,13 @@ ArgParser buildServerParser() => ArgParser()
     help: 'Request log file (default: <project>/.studio/api-requests.jsonl).',
   )
   ..addOption(
+    'log-level',
+    allowed: ['info', 'debug'],
+    defaultsTo: 'info',
+    help:
+        'Request log detail: info = metadata only; debug = also redacted args.',
+  )
+  ..addOption(
     'max-result-bytes',
     defaultsTo: '8388608',
     help: 'Larger results become a too_large error.',
@@ -139,7 +146,11 @@ Future<int> runServer(
     ctx,
     underscoreNames: r['underscore-tool-names'] as bool,
     maxResultBytes: int.tryParse(r['max-result-bytes'] as String) ?? 8388608,
-    log: _requestLog(r['log'] as String?, project),
+    log: _requestLog(
+      r['log'] as String?,
+      project,
+      level: RequestLogLevel.parse(r['log-level'] as String),
+    ),
   );
   if (!(r['http'] as bool)) {
     await serveStdio(session, input ?? stdin, out);
@@ -217,8 +228,15 @@ OpContext contextFromArgs(
   );
 }
 
-RequestLog? _requestLog(String? explicit, ProjectRoot? project) {
-  if (explicit != null) return RequestLog(explicit);
+RequestLog? _requestLog(
+  String? explicit,
+  ProjectRoot? project, {
+  RequestLogLevel level = RequestLogLevel.info,
+}) {
+  if (explicit != null) return RequestLog(explicit, level: level);
   if (project == null) return null;
-  return RequestLog('${project.root}/.studio/api-requests.jsonl');
+  return RequestLog(
+    '${project.root}/.studio/api-requests.jsonl',
+    level: level,
+  );
 }

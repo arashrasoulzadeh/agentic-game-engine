@@ -25,6 +25,9 @@ pubspec.yaml.
   actions. The resource header still follows every tick.
 
 ### Added
+- Request-log levels: `--log-level` / `engine_api.yaml` `log.level` / MCP `logging/setLevel`.
+  `debug` records redacted args (`Param.secret` → `***`); default `info` stays metadata-only.
+  Every line also carries `bytesIn`.
 - `i18n.keys` / `i18n.set` operations: game string catalogs at `assets/i18n/<locale>.json` (flat
   key → text). `keys` reports missing locales and `{placeholder}` mismatches; `set` is undoable.
 - MCP streamable HTTP: `GET /mcp` with `Accept: text/event-stream` opens an SSE session

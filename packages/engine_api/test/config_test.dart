@@ -20,6 +20,7 @@ limits:
   requestsPerMinute: 30
 log:
   file: .studio/x.jsonl
+  level: debug
 ''');
     expect(args, [
       '--project',
@@ -41,7 +42,16 @@ log:
       '30',
       '--log',
       '.studio/x.jsonl',
+      '--log-level',
+      'debug',
     ]);
+  });
+
+  test('unknown log keys are rejected', () {
+    expect(
+      () => configToArgs('log:\n  path: x.jsonl\n'),
+      throwsA(isA<ConfigException>()),
+    );
   });
 
   test('unknown keys and wrong shapes are errors, empty is fine', () {
