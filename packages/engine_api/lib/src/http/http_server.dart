@@ -318,7 +318,7 @@ class EngineHttpServer {
       return _send(req, 405, _fail(ErrorCode.invalidParams, 'Use POST.'));
     }
     final body = await _readBody(req);
-    final reply = await handleRpc(body, (method, params) async {
+    final reply = await handleRpc(body, (method, params, {id}) async {
       if (method == 'rpc.discover') {
         return [
           for (final o in _session.registry.visibleTo(_session.ctx))
@@ -333,7 +333,7 @@ class EngineHttpServer {
       }
       final r = await _run(
         op,
-        () => _session.registry.call(method, params, _session.ctx),
+        () => _session.invoke(method, params, transport: 'rpc', rpcId: id),
       );
       if (!r.ok) {
         final e = r.error!;
@@ -367,7 +367,7 @@ class EngineHttpServer {
     final body = await _readBody(req);
     final reply = await handleRpc(
       body,
-      (m, p) => _run(null, () => _session.dispatch(m, p)),
+      (m, p, {id}) => _run(null, () => _session.dispatch(m, p, id: id)),
     );
     if (reply == null) {
       req.response.statusCode = 202;

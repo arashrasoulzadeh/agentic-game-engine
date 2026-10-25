@@ -25,6 +25,9 @@ pubspec.yaml.
   actions. The resource header still follows every tick.
 
 ### Added
+- Cooperative cancellation: `CancellationToken` / `ErrorCode.cancelled`, wired through `OpContext` (Zone-scoped)
+  and `notifications/cancelled` on the MCP session so in-flight `tools/call` / JSON-RPC can stop; long
+  `strategy.simulate_turns` runs poll the token between steps.
 - `strategy.rules` and `strategy.simulate_turns` operations: catalogue of turn-based components/orders/AI, and a
   headless AI skirmish that returns an event log (pure `engine_core`, no Flutter).
 - MCP `tools/call` emits an `image` content part when operation data includes `pngBase64` (e.g. `level.lint`

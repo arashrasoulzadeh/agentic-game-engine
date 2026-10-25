@@ -19,6 +19,8 @@ enum ErrorCode {
   rateLimited('rate_limited', 429, -32012, 75),
   unauthorized('unauthorized', 401, -32013, 77),
   ioError('io_error', 500, -32014, 74),
+  /// Client asked to stop an in-flight call (`notifications/cancelled`).
+  cancelled('cancelled', 499, -32015, 75),
   internal('internal', 500, -32603, 70);
 
   const ErrorCode(this.code, this.http, this.rpc, this.exit);

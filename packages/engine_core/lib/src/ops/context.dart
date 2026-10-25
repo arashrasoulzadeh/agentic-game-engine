@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../io/file_lock.dart' as locks;
+import 'cancellation.dart';
 import 'files.dart';
 import 'image_codec.dart';
 import 'operation.dart';
@@ -113,6 +114,14 @@ class OpContext {
 
   /// Pixel codec for `asset.pack` / render ops; null means those return `unsupported`.
   final ImageCodec? imageCodec;
+
+  /// Token for the call currently running on this isolate zone, if any.
+  ///
+  /// Installed by [OperationRegistry.call] so concurrent invokes on one shared
+  /// context each see their own token. Long handlers should poll
+  /// `cancellation?.throwIfCancelled()` between units of work.
+  CancellationToken? get cancellation =>
+      Zone.current[opCancellationZoneKey] as CancellationToken?;
 
   /// The only source of time for operations (tests inject a fixed clock).
   final DateTime Function() clock;

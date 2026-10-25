@@ -147,8 +147,10 @@ What is left:
 - [x] **`level.lint` `includeRender`** — structural PNG via `renderLevelPreview` + injected `ImageCodec`;
       result carries `pngBase64` / `render` meta; CLI `lint --render` is a thin adapter that writes the PNG;
       MCP `tools/call` also emits an `image` content part when `pngBase64` is present.
-- [ ] **Server extras:** SSE streaming and progress notifications, real cancellation
-      (`notifications/cancelled` is currently a no-op ack). `Retry-After` on 429 is already shipped.
+- [ ] **Server extras:** SSE streaming and progress notifications. Cancellation is done
+      (`CancellationToken` on `OpContext` via Zone; `notifications/cancelled` cancels in-flight
+      `tools/call` / RPC by request id; `strategy.simulate_turns` polls it). `Retry-After` on 429
+      is already shipped.
 
 ## Idle / incremental games
 

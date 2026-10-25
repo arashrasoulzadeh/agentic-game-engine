@@ -28,11 +28,18 @@ Map<String, Object?> rpcError(
 
 /// Answers one parsed JSON-RPC message, or a batch of them, with [dispatch] doing the work per method.
 ///
-/// Notifications (no `id`) never get a reply, so a batch of only notifications returns null. Shared by the stdio
-/// and HTTP transports so both behave identically.
+/// [dispatch] receives the JSON-RPC [id] (null for notifications) so long-running
+/// handlers can be cancelled via `notifications/cancelled`. Notifications never
+/// get a reply, so a batch of only notifications returns null. Shared by the
+/// stdio and HTTP transports so both behave identically.
 Future<Object?> handleRpc(
   Object? message,
-  Future<Object?> Function(String method, Map<String, Object?> params) dispatch,
+  Future<Object?> Function(
+    String method,
+    Map<String, Object?> params, {
+    Object? id,
+  })
+  dispatch,
 ) async {
   if (message is List) {
     if (message.isEmpty) return rpcError(null, -32600, 'Empty batch');
@@ -59,6 +66,7 @@ Future<Object?> handleRpc(
     final result = await dispatch(
       message['method'] as String,
       (rawParams as Map?)?.cast<String, Object?>() ?? {},
+      id: id,
     );
     return id == null ? null : {'jsonrpc': '2.0', 'id': id, 'result': result};
   } on RpcException catch (e) {
@@ -71,7 +79,12 @@ Future<Object?> handleRpc(
 /// Parses one line of text as JSON-RPC and answers it; a parse failure is a `-32700` reply.
 Future<String?> handleRpcText(
   String text,
-  Future<Object?> Function(String method, Map<String, Object?> params) dispatch,
+  Future<Object?> Function(
+    String method,
+    Map<String, Object?> params, {
+    Object? id,
+  })
+  dispatch,
 ) async {
   Object? parsed;
   try {

@@ -7,6 +7,7 @@ library;
 
 export 'src/ops/all_operations.dart';
 export 'src/ops/atlas_packer.dart';
+export 'src/ops/cancellation.dart';
 export 'src/ops/context.dart';
 export 'src/ops/files.dart';
 export 'src/ops/image_codec.dart';

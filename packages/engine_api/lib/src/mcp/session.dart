@@ -36,43 +36,65 @@ class McpSession {
   /// Expose `level_add_entity` instead of `level.add_entity` for clients that reject dots in tool names.
   final bool underscoreNames;
 
+  /// In-flight JSON-RPC request ids → tokens, for `notifications/cancelled`.
+  final Map<Object, CancellationToken> _inFlight = {};
+
   /// Runs one operation for any transport: applies the result size limit and records the call in the request log.
+  ///
+  /// When [rpcId] is set the call is cancellable via `notifications/cancelled`
+  /// with that same id (as `requestId`).
   Future<OpResult> invoke(
     String name,
     Map<String, Object?> args, {
     String transport = 'mcp',
     String? requestId,
+    Object? rpcId,
   }) async {
-    var result = await registry.call(name, args, ctx);
-    var bytes = jsonEncode(result.toJson()).length;
-    if (bytes > maxResultBytes) {
-      result = OpResult.failure(
-        OpError(
-          ErrorCode.tooLarge,
-          'The result is $bytes bytes; the limit is $maxResultBytes.',
-          hint: 'Narrow the request (paths, limit, offset).',
-        ),
-        durationMs: result.durationMs,
+    final token = rpcId != null ? CancellationToken() : null;
+    if (rpcId != null && token != null) _inFlight[rpcId] = token;
+    try {
+      var result = await registry.call(
+        name,
+        args,
+        ctx,
+        cancellation: token,
       );
-      bytes = jsonEncode(result.toJson()).length;
+      var bytes = jsonEncode(result.toJson()).length;
+      if (bytes > maxResultBytes) {
+        result = OpResult.failure(
+          OpError(
+            ErrorCode.tooLarge,
+            'The result is $bytes bytes; the limit is $maxResultBytes.',
+            hint: 'Narrow the request (paths, limit, offset).',
+          ),
+          durationMs: result.durationMs,
+        );
+        bytes = jsonEncode(result.toJson()).length;
+      }
+      final op = registry.lookup(name);
+      log?.write({
+        'ts': ctx.clock().toUtc().toIso8601String(),
+        if (requestId != null) 'requestId': requestId,
+        if (rpcId != null) 'rpcId': '$rpcId',
+        'transport': transport,
+        'actor': ctx.actor,
+        'op': name,
+        if (op != null) 'kind': op.kind.name,
+        'ok': result.ok,
+        if (!result.ok) 'code': result.error!.code.code,
+        'durationMs': result.durationMs,
+        'bytesOut': bytes,
+        'project': ctx.project?.root,
+        if (result.undoId != null) 'undoId': result.undoId,
+      });
+      return result;
+    } finally {
+      if (rpcId != null) _inFlight.remove(rpcId);
     }
-    final op = registry.lookup(name);
-    log?.write({
-      'ts': ctx.clock().toUtc().toIso8601String(),
-      if (requestId != null) 'requestId': requestId,
-      'transport': transport,
-      'actor': ctx.actor,
-      'op': name,
-      if (op != null) 'kind': op.kind.name,
-      'ok': result.ok,
-      if (!result.ok) 'code': result.error!.code.code,
-      'durationMs': result.durationMs,
-      'bytesOut': bytes,
-      'project': ctx.project?.root,
-      if (result.undoId != null) 'undoId': result.undoId,
-    });
-    return result;
   }
+
+  /// Marks the in-flight call with JSON-RPC id [requestId] cancelled, if any.
+  void cancel(Object requestId) => _inFlight[requestId]?.cancel();
 
   String _wire(String name) =>
       underscoreNames ? name.replaceAll('.', '_') : name;
@@ -90,7 +112,14 @@ class McpSession {
   }
 
   /// Handles one JSON-RPC [method]; throws [RpcException] for protocol errors.
-  Future<Object?> dispatch(String method, Map<String, Object?> params) async {
+  ///
+  /// [id] is the JSON-RPC request id (null for notifications). Long `tools/call`
+  /// invocations register under that id so `notifications/cancelled` can stop them.
+  Future<Object?> dispatch(
+    String method,
+    Map<String, Object?> params, {
+    Object? id,
+  }) async {
     switch (method) {
       case 'initialize':
         return {
@@ -106,14 +135,18 @@ class McpSession {
               'with undo.undo; destructive operations return a preview and a confirmation token to send back. '
               'engine.operations lists everything.',
         };
-      case 'notifications/initialized' || 'notifications/cancelled':
+      case 'notifications/initialized':
+        return null;
+      case 'notifications/cancelled':
+        final rid = params['requestId'];
+        if (rid != null) cancel(rid);
         return null;
       case 'ping':
         return <String, Object?>{};
       case 'tools/list':
         return _toolsList(params);
       case 'tools/call':
-        return _toolsCall(params);
+        return _toolsCall(params, requestId: id);
       case 'resources/list':
         return {
           'resources': [
@@ -214,7 +247,10 @@ class McpSession {
     };
   }
 
-  Future<Object?> _toolsCall(Map<String, Object?> params) async {
+  Future<Object?> _toolsCall(
+    Map<String, Object?> params, {
+    Object? requestId,
+  }) async {
     final name = params['name'];
     if (name is! String) throw RpcException(-32602, 'name is required');
     final op = _byWire(name);
@@ -228,6 +264,7 @@ class McpSession {
         op.name,
         (args as Map?)?.cast<String, Object?>() ?? {},
         transport: 'mcp',
+        rpcId: requestId,
       ),
     );
   }

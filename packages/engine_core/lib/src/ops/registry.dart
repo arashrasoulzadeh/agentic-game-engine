@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'cancellation.dart';
 import 'context.dart';
 import 'json_schema.dart';
 import 'operation.dart';
@@ -69,67 +70,81 @@ class OperationRegistry {
       );
 
   /// Runs [name] with [rawArgs]. Never throws: every failure is an [OpResult.failure].
+  ///
+  /// When [cancellation] is set it is visible as [OpContext.cancellation] for
+  /// the duration of the call (via a [Zone]), so concurrent invokes stay isolated.
   Future<OpResult> call(
     String name,
     Map<String, Object?> rawArgs,
-    OpContext ctx,
-  ) async {
-    final sw = Stopwatch()..start();
-    try {
-      final op = _byName[name];
-      if (op == null) {
-        throw OpError(
-          ErrorCode.unknownOperation,
-          'No operation named "$name".',
-          hint: 'List them with engine.operations.',
-        );
-      }
-      ctx.policy.check(op);
-      final args = ParamValidator(
-        op.params,
-        implicit: op.implicitParams,
-      ).coerce(rawArgs);
-      if (op.scope == OperationScope.project && ctx.project == null) {
-        throw OpError(
-          ErrorCode.notFound,
-          'No project is open.',
-          hint: 'Call project.open first.',
-        );
-      }
-      final outcome = await ctx.serialize(
-        op.kind,
-        () async => await op.handler(ctx, args),
-      );
-      OpResult result;
-      if (outcome.proposal != null) {
-        final f = finisher;
-        if (f == null) {
+    OpContext ctx, {
+    CancellationToken? cancellation,
+  }) {
+    Future<OpResult> body() async {
+      final sw = Stopwatch()..start();
+      try {
+        cancellation?.throwIfCancelled();
+        final op = _byName[name];
+        if (op == null) {
           throw OpError(
-            ErrorCode.internal,
-            'Write operations are not available (no safety pipeline).',
+            ErrorCode.unknownOperation,
+            'No operation named "$name".',
+            hint: 'List them with engine.operations.',
           );
         }
-        result = await ctx.serialize(op.kind, () => f(op, args, outcome, ctx));
-      } else {
-        result = OpResult.success(
-          outcome.data,
-          warnings: [
-            ...outcome.warnings,
-            if (op.deprecated != null)
-              'deprecated since ${op.deprecated!.since}${op.deprecated!.replacement == null ? '' : '; use ${op.deprecated!.replacement}'}',
-          ],
+        ctx.policy.check(op);
+        final args = ParamValidator(
+          op.params,
+          implicit: op.implicitParams,
+        ).coerce(rawArgs);
+        if (op.scope == OperationScope.project && ctx.project == null) {
+          throw OpError(
+            ErrorCode.notFound,
+            'No project is open.',
+            hint: 'Call project.open first.',
+          );
+        }
+        final outcome = await ctx.serialize(
+          op.kind,
+          () async => await op.handler(ctx, args),
+        );
+        OpResult result;
+        if (outcome.proposal != null) {
+          final f = finisher;
+          if (f == null) {
+            throw OpError(
+              ErrorCode.internal,
+              'Write operations are not available (no safety pipeline).',
+            );
+          }
+          result = await ctx.serialize(op.kind, () => f(op, args, outcome, ctx));
+        } else {
+          result = OpResult.success(
+            outcome.data,
+            warnings: [
+              ...outcome.warnings,
+              if (op.deprecated != null)
+                'deprecated since ${op.deprecated!.since}${op.deprecated!.replacement == null ? '' : '; use ${op.deprecated!.replacement}'}',
+            ],
+          );
+        }
+        cancellation?.throwIfCancelled();
+        return result.withDuration(sw.elapsedMilliseconds);
+      } on OpError catch (e) {
+        return OpResult.failure(e, durationMs: sw.elapsedMilliseconds);
+      } catch (e, st) {
+        ctx.log('internal error in $name: $e\n$st');
+        return OpResult.failure(
+          OpError(ErrorCode.internal, 'Internal error.'),
+          durationMs: sw.elapsedMilliseconds,
         );
       }
-      return result.withDuration(sw.elapsedMilliseconds);
-    } on OpError catch (e) {
-      return OpResult.failure(e, durationMs: sw.elapsedMilliseconds);
-    } catch (e, st) {
-      ctx.log('internal error in $name: $e\n$st');
-      return OpResult.failure(
-        OpError(ErrorCode.internal, 'Internal error.'),
-        durationMs: sw.elapsedMilliseconds,
-      );
     }
+
+    if (cancellation == null) return body();
+    return runZoned(
+      body,
+      zoneValues: {opCancellationZoneKey: cancellation},
+    );
   }
 }
 

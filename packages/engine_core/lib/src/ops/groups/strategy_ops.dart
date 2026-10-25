@@ -183,7 +183,7 @@ List<Operation> strategyOperations() => [
     errors: {
       ErrorCode.validationFailed: 'The level does not load or has no combat units.',
     },
-    handler: (ctx, a) {
+    handler: (ctx, a) async {
       final turns = a['turns']! as int;
       if (turns < 1) {
         throw OpError(ErrorCode.invalidParams, '"turns" must be at least 1.');
@@ -225,6 +225,9 @@ List<Operation> strategyOperations() => [
       // AI plans one step, orders resolve on later steps; bound runaway games.
       final maxSteps = turns * teams.length * 64;
       for (var step = 0; step < maxSteps; step++) {
+        ctx.cancellation?.throwIfCancelled();
+        // Yield so a concurrent notifications/cancelled can mark the token.
+        if (step % 8 == 0) await Future<void>.delayed(Duration.zero);
         final before = events.length;
         world.step(1 / 60);
         for (var i = before; i < events.length; i++) {
