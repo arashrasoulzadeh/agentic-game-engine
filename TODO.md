@@ -37,19 +37,16 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
 
 ## Game-dev workflow
 
-Agent create → edit → verify path. Shipped: `project.open` accepts idle /
-strategy (not only `assets/levels`); strategy map+units in
-`skirmish.level.json`; platformer template has enemy/coin/HUD; `engine.capabilities`
-exposes `docsUrl`. Still open:
+Agent create → edit → verify path is shippable for all three templates:
+`project.open` (idle/strategy too), strategy `skirmish.level.json`, platformer
+enemy/coin/HUD, pause/settings/credits + PlayerOptions (colorblind/shake/
+volume) on platformer & strategy, `assets/i18n/en.json`, `project.manifest`
+op, `engine.docs` remote index when no local `docs/`. Still open:
 
-- [ ] Bundle curated docs (or fetch) so `engine.docs` works without a monorepo
-      `docs/` checkout (`docsAvailable` is already reported).
-- [ ] Shared pause / settings / credits shell in all three templates
-      (`ButtonMenuScene`, `SettingsMenuScene`, `AudioManager` stubs).
-- [ ] `assets/i18n/en.json` stub in platformer + strategy templates.
-- [ ] `project.manifest` as a first-class op (today: studio-only CLI).
-- [ ] Wire template settings to `PlayerOptions` volumes + colorblind /
-      shake (leave engine-auto `reduceMotion` parked under Docs).
+- [ ] Optional: bundle markdown into the package so `engine.docs` returns
+      bodies without `--docs-root` / network.
+- [ ] Idle template Material pause/settings shell (economy settings already
+      exist; audio SFX hooks stay under Idle polish).
 
 ## Idle polish
 

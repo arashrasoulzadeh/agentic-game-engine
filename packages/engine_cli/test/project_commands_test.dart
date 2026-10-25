@@ -115,6 +115,12 @@ void main() {
       expect(main, contains('spawnEnemy'));
       expect(main, contains('spawnHealthHudBar'));
       expect(main, contains('dealPickupOnTouch'));
+      expect(main, contains('PauseMenu'));
+      expect(main, contains('colorblindMode'));
+      expect(
+        File('${tmp.path}/my_game/assets/i18n/en.json').existsSync(),
+        isTrue,
+      );
     },
   );
 
@@ -245,6 +251,11 @@ void main() {
       expect(
         File('${tmp.path}/war_game/pubspec.yaml').readAsStringSync(),
         contains('assets/levels/skirmish.level.json'),
+      );
+      expect(warMain, contains('PauseMenu'));
+      expect(
+        File('${tmp.path}/war_game/assets/i18n/en.json').existsSync(),
+        isTrue,
       );
 
       await expectLater(

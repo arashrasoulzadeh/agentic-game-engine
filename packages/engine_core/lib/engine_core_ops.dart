@@ -12,7 +12,12 @@ export 'src/ops/context.dart';
 export 'src/ops/files.dart';
 export 'src/ops/image_codec.dart';
 export 'src/ops/level_render.dart';
-export 'src/ops/groups/engine_ops.dart' show allInputSchemas, engineOperations;
+export 'src/ops/groups/engine_ops.dart'
+    show
+        allInputSchemas,
+        engineOperations,
+        kEngineDocsUrl,
+        kRemoteDocsPages;
 export 'src/ops/groups/undo_ops.dart' show undoOperations;
 export 'src/ops/json_schema.dart';
 export 'src/ops/operation.dart';
@@ -26,6 +31,7 @@ export 'src/ops/project/find_replace.dart';
 export 'src/ops/project/git_status.dart';
 export 'src/ops/project/project_search.dart';
 export 'src/ops/project/project_tree.dart';
+export 'src/ops/project/project_manifest.dart';
 export 'src/ops/project/studio_project.dart';
 export 'src/ops/release_plan.dart';
 export 'src/ops/level_check.dart';

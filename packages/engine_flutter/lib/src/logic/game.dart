@@ -81,6 +81,15 @@ abstract class Game {
   /// Called when the app returns to the foreground after a pause.
   void onResume() {}
 
+  /// Colorblind simulation mode for [EngineView] (`none`, `protanopia`,
+  /// `deuteranopia`, `tritanopia`). Read each frame from your
+  /// `PlayerOptions` so a settings menu takes effect immediately.
+  String get colorblindMode => 'none';
+
+  /// Multiplier for [Camera] shake (`0` off, `1` as authored). Bind from
+  /// `PlayerOptions.screenShakeIntensity` the same way as [colorblindMode].
+  double get screenShakeIntensity => 1.0;
+
   /// Shown while the initial scene's `populate`/`loadAssets` are
   /// running, before the first frame can render. A later
   /// `SceneController.loadScene` switch keeps rendering the outgoing
@@ -391,7 +400,8 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
 
     final atlasRegistry = await scene.loadAssets();
     await _registerPackedAtlas(atlasRegistry);
-    final camera = scene.createCamera(world);
+    final camera = scene.createCamera(world)
+      ..shakeIntensity = widget.game.screenShakeIntensity;
     final inputController = widget.game.createInputController();
     return _LoadedGame(world, atlasRegistry, camera, inputController, scene);
   }
@@ -496,10 +506,11 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           child: EngineView(
             world: loaded.world,
             atlasRegistry: loaded.atlasRegistry,
-            camera: loaded.camera,
+            camera: loaded.camera..shakeIntensity = widget.game.screenShakeIntensity,
             inputController: loaded.inputController,
             cameraFollowEntity: loaded.scene.cameraFollowEntity(loaded.world),
             backgroundColor: widget.game.config.backgroundColor,
+            colorblindMode: widget.game.colorblindMode,
             paused: _paused || overlay != null,
             // Forced off in a real release build regardless of what
             // game_config.json says -- these are debugging aids, not

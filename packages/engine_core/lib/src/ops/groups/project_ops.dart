@@ -8,6 +8,7 @@ import '../operation.dart';
 import '../param.dart';
 import '../paths.dart';
 import '../project/git_status.dart';
+import '../project/project_manifest.dart';
 import '../project/project_search.dart';
 import '../project/project_tree.dart';
 import '../project/studio_project.dart';
@@ -185,6 +186,35 @@ List<Operation> projectOperations() => [
     scope: OperationScope.project,
     idempotent: true,
     handler: (ctx, a) => OpOutcome.data(_info(ctx.project!)),
+  ),
+  Operation(
+    name: 'project.manifest',
+    summary:
+        'Write or update `project.json` (name, engine version, levels).',
+    description:
+        'Merges into any existing `project.json`, keeping unknown keys (notes). '
+        '`name` and `engineVersion` come from `pubspec.yaml`; `levels` lists every '
+        'JSON under `assets/levels`. Undoable. Same payload as `game_agent studio project-manifest`.',
+    kind: OperationKind.write,
+    scope: OperationScope.project,
+    params: const [],
+    handler: (ctx, a) {
+      final rel = 'project.json';
+      final abs = ctx.project!.resolve(rel);
+      final before = ctx.files.read(abs);
+      final manifest = projectManifestFor(ctx);
+      final after = encodeProjectManifest(manifest);
+      return OpOutcome.proposal(
+        Proposal([FileChange(path: rel, before: before, after: after)]),
+        data: {
+          'path': rel,
+          'name': manifest['name'],
+          'engineVersion': manifest['engineVersion'],
+          'levels': manifest['levels'],
+          'created': before == null,
+        },
+      );
+    },
   ),
   Operation(
     name: 'project.tree',

@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:engine_core/engine_core.dart';
+import 'package:engine_core/engine_core_ops.dart';
 import 'package:engine_schema/engine_schema.dart';
 import 'package:path/path.dart' as p;
-import 'package:yaml/yaml.dart';
 
 import 'studio_asset_commands.dart';
 import 'studio_diff_commands.dart';
@@ -305,11 +305,7 @@ class StudioExportLevelsCommand extends Command<int> {
   }
 }
 
-/// `game_agent studio project-manifest [project]`: writes `project.json`, which
-/// records the project's name, the engine version it targets, and its levels.
-/// The name and engine version come from `pubspec.yaml`. Keys the manifest does
-/// not own are kept, so a human can add notes without losing them on the next
-/// run.
+/// `game_agent studio project-manifest [project]`: thin CLI over `project.manifest`.
 class StudioProjectManifestCommand extends Command<int> {
   @override
   final name = 'project-manifest';
@@ -321,45 +317,22 @@ class StudioProjectManifestCommand extends Command<int> {
   Future<int> run() async {
     final rest = argResults!.rest;
     final projectDir = rest.isEmpty ? '.' : rest.first;
-    final pubspec = File(p.join(projectDir, 'pubspec.yaml'));
-    if (!pubspec.existsSync()) {
-      stderr.writeln(
-        'Error: no pubspec.yaml in $projectDir, so this is not a game project.',
-      );
+    final abs = p.normalize(p.absolute(projectDir));
+    try {
+      StudioProject.open(abs);
+    } on ProjectOpenException catch (e) {
+      stderr.writeln('Error: $e');
       return 1;
     }
-    final spec = loadYaml(pubspec.readAsStringSync()) as YamlMap;
-
-    final manifestFile = File(p.join(projectDir, 'project.json'));
-    final existing = manifestFile.existsSync()
-        ? jsonDecode(manifestFile.readAsStringSync()) as Map<String, dynamic>
-        : <String, dynamic>{};
-
-    final levels = [
-      for (final file in _levelFiles(projectDir))
-        p.relative(file.path, from: projectDir).replaceAll(p.separator, '/'),
-    ];
-
-    final manifest = {
-      ...existing,
-      'name': spec['name'] as String? ?? 'unnamed',
-      'engineVersion': _engineRef(spec),
-      'levels': levels,
-    };
-    manifestFile.writeAsStringSync('${canonicalJson(manifest)}\n');
-    stdout.writeln('Wrote ${manifestFile.path} (${levels.length} level(s)).');
-    return 0;
-  }
-
-  /// The engine ref the project's `engine_core` dependency pins, e.g. `main` or
-  /// `v0.1.0`. "unknown" when the project does not depend on it by git ref.
-  String _engineRef(YamlMap spec) {
-    final deps = spec['dependencies'];
-    if (deps is! YamlMap) return 'unknown';
-    final core = deps['engine_core'];
-    if (core is YamlMap && core['git'] is YamlMap) {
-      return (core['git'] as YamlMap)['ref'] as String? ?? 'unknown';
+    final ctx = OpContext(project: ProjectRoot(abs), actor: 'cli');
+    final result = await buildRegistry().call('project.manifest', {}, ctx);
+    if (!result.ok) {
+      stderr.writeln('Error: ${result.error?.message}');
+      return 1;
     }
-    return 'unknown';
+    final data = result.data as Map;
+    final levels = (data['levels'] as List?)?.length ?? 0;
+    stdout.writeln('Wrote ${p.join(abs, 'project.json')} ($levels level(s)).');
+    return 0;
   }
 }

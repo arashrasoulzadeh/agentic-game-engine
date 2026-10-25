@@ -1,3 +1,4 @@
+import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,7 +7,8 @@ import 'package:{{PROJECT_NAME}}/main.dart';
 
 void main() {
   testWidgets('game boots and renders', (tester) async {
-    final game = MyGame(const GameConfig(worldWidth: 384, worldHeight: 432));
+    final options = PlayerOptionsManager(InMemoryPlayerOptionsStorage());
+    final game = MyGame(const GameConfig(worldWidth: 384, worldHeight: 432), options);
     await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
 
     await tester.pump();
@@ -14,8 +16,6 @@ void main() {
 
     expect(find.byType(EngineView), findsOneWidget);
 
-    // Run the simulation for a moment so fog, vision and the AI systems execute
-    // against the real scene (a wiring mistake shows up as an exception here).
     for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }

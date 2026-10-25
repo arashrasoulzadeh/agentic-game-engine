@@ -1,3 +1,4 @@
+import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,11 +7,10 @@ import 'package:{{PROJECT_NAME}}/main.dart';
 
 void main() {
   testWidgets('game boots and renders', (tester) async {
-    final game = MyGame(const GameConfig(worldWidth: 800, worldHeight: 600));
+    final options = PlayerOptionsManager(InMemoryPlayerOptionsStorage());
+    final game = MyGame(const GameConfig(worldWidth: 800, worldHeight: 600), options);
     await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
 
-    // Let the async asset-loading Future resolve, then let the
-    // FutureBuilder rebuild with the loaded game.
     await tester.pump();
     await tester.pump();
 

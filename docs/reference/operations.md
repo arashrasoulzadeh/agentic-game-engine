@@ -88,7 +88,7 @@ REST: `POST /v1/engine/capabilities` · MCP tool: `engine.capabilities` · JSON-
 
 List documentation pages, or return one page as markdown.
 
-Reads the engine's `docs/` tree pointed at by the server's docs root (`engine_api --docs-root`, or `OpContext.docsRoot`). Without a docs root the call returns `unsupported` — the markdown is not bundled inside the package yet. Omitting `page` lists every readable `.md` (drafts under `proposals/` and the studio QA checklist are excluded, matching the published site). With `page` (e.g. `concepts/ecs.md` or `concepts/ecs`) returns `{page, markdown}`.
+With a docs root (`engine_api --docs-root` / `OpContext.docsRoot`) reads the local `docs/` tree: omit `page` to list readable `.md` files (drafts under `proposals/` and the studio QA checklist excluded); with `page` returns `{page, markdown, source: local}`. Without a docs root, returns a curated remote index (`source: remote`, `docsUrl`) so agents on a created project still know what to open; `page` then returns `{page, url}` (no markdown body).
 
 *read*, idempotent.
 
@@ -96,7 +96,7 @@ Reads the engine's `docs/` tree pointed at by the server's docs root (`engine_ap
 |---|---|---|
 | `page` | string | Docs-relative path (`.md` optional), e.g. concepts/ecs. |
 
-Errors: `unsupported`, `not_found`.
+Errors: `not_found`.
 
 ```bash
 game_agent engine docs <page>
@@ -1183,6 +1183,25 @@ game_agent project info
 ```
 
 REST: `POST /v1/project/info` · MCP tool: `project.info` · JSON-RPC method: `project.info`
+
+### `project.manifest`
+
+Write or update `project.json` (name, engine version, levels).
+
+Merges into any existing `project.json`, keeping unknown keys (notes). `name` and `engineVersion` come from `pubspec.yaml`; `levels` lists every JSON under `assets/levels`. Undoable. Same payload as `game_agent studio project-manifest`.
+
+*write*, needs an open project.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+```bash
+game_agent project manifest
+```
+
+REST: `POST /v1/project/manifest` · MCP tool: `project.manifest` · JSON-RPC method: `project.manifest`
 
 ### `project.open`
 

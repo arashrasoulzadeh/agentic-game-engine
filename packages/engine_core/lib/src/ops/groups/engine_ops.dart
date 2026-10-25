@@ -17,6 +17,28 @@ bool _docsPageAllowed(String rel) {
 String _docsRel(String abs, String root) =>
     p.normalize(p.relative(abs, from: root)).replaceAll('\\', '/');
 
+/// Published site root (agents without a local `docs/` checkout).
+const kEngineDocsUrl = 'https://meetarash.ir/agentic-game-engine/';
+
+/// Curated pages listed when [OpContext.docsRoot] is unset (no markdown body).
+const kRemoteDocsPages = <String>[
+  'getting-started.md',
+  'tutorials/01-hello-world.md',
+  'tutorials/02-turn-based-strategy.md',
+  'tutorials/05-idle-game.md',
+  'tutorials/06-agent-api.md',
+  'concepts/ecs.md',
+  'concepts/idle-games.md',
+  'concepts/settings.md',
+  'reference/operations.md',
+  'reference/cli.md',
+  'reference/transports.md',
+  'reference/cheatsheet.md',
+];
+
+String _docsPageUrl(String rel) =>
+    '$kEngineDocsUrl${rel.replaceFirst(RegExp(r'\.md$'), '/')}';
+
 /// `engine.*`: what the server is, what it can do and what operations exist. The registry is passed in because
 /// these operations describe it.
 List<Operation> engineOperations(OperationRegistry Function() registry) => [
@@ -62,7 +84,7 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
         'registryVersion': registry().version,
         'groups': groups,
         'operationCount': visible.length,
-        'docsUrl': 'https://meetarash.ir/agentic-game-engine/',
+        'docsUrl': kEngineDocsUrl,
         'docsAvailable': ctx.docsRoot != null && ctx.docsRoot!.isNotEmpty,
         'unsupported': [
           for (final o in visible)
@@ -147,11 +169,11 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
     name: 'engine.docs',
     summary: 'List documentation pages, or return one page as markdown.',
     description:
-        'Reads the engine\'s `docs/` tree pointed at by the server\'s docs root (`engine_api --docs-root`, or '
-        '`OpContext.docsRoot`). Without a docs root the call returns `unsupported` — the markdown is not '
-        'bundled inside the package yet. Omitting `page` lists every readable `.md` (drafts under `proposals/` '
-        'and the studio QA checklist are excluded, matching the published site). With `page` (e.g. '
-        '`concepts/ecs.md` or `concepts/ecs`) returns `{page, markdown}`.',
+        'With a docs root (`engine_api --docs-root` / `OpContext.docsRoot`) reads the local `docs/` tree: '
+        'omit `page` to list readable `.md` files (drafts under `proposals/` and the studio QA checklist '
+        'excluded); with `page` returns `{page, markdown, source: local}`. '
+        'Without a docs root, returns a curated remote index (`source: remote`, `docsUrl`) so agents on a '
+        'created project still know what to open; `page` then returns `{page, url}` (no markdown body).',
     kind: OperationKind.read,
     scope: OperationScope.pure,
     idempotent: true,
@@ -164,19 +186,43 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
       ),
     ],
     errors: {
-      ErrorCode.unsupported: 'No docs root is configured on this server.',
       ErrorCode.notFound: 'That page is missing or excluded.',
     },
     handler: (ctx, a) {
       final root = ctx.docsRoot;
-      if (root == null || root.isEmpty) {
-        throw OpError(
-          ErrorCode.unsupported,
-          'No documentation root is configured.',
-          hint: 'Start engine_api with --docs-root pointing at the repo docs/ folder.',
-        );
-      }
       final page = a['page'] as String?;
+      if (root == null || root.isEmpty) {
+        if (page == null || page.isEmpty) {
+          return OpOutcome.data({
+            'source': 'remote',
+            'docsUrl': kEngineDocsUrl,
+            'pages': kRemoteDocsPages,
+            'count': kRemoteDocsPages.length,
+            'hint':
+                'No local docs root. Open docsUrl + page in a browser, or pass --docs-root.',
+          });
+        }
+        var rel = page.replaceAll('\\', '/');
+        if (rel.startsWith('/')) rel = rel.substring(1);
+        if (!rel.endsWith('.md')) rel = '$rel.md';
+        if (!_docsPageAllowed(rel) ||
+            rel.contains('..') ||
+            !kRemoteDocsPages.contains(rel)) {
+          throw OpError(
+            ErrorCode.notFound,
+            'No documentation page "$page".',
+            hint: 'List pages with engine.docs (no page arg).',
+          );
+        }
+        return OpOutcome.data({
+          'source': 'remote',
+          'page': rel,
+          'url': _docsPageUrl(rel),
+          'docsUrl': kEngineDocsUrl,
+          'markdown': null,
+          'hint': 'Fetch url, or start the server with --docs-root for markdown.',
+        });
+      }
       if (page == null || page.isEmpty) {
         final files = ctx.files.list(root, recursive: true);
         final pages = [
@@ -184,7 +230,9 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
             if (_docsPageAllowed(_docsRel(abs, root))) _docsRel(abs, root),
         ]..sort();
         return OpOutcome.data({
+          'source': 'local',
           'root': root,
+          'docsUrl': kEngineDocsUrl,
           'pages': pages,
           'count': pages.length,
         });
@@ -203,10 +251,13 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
       if (text == null) {
         throw OpError(ErrorCode.notFound, 'No documentation page "$page".');
       }
-      return OpOutcome.data({'page': rel, 'markdown': text});
+      return OpOutcome.data({
+        'source': 'local',
+        'page': rel,
+        'markdown': text,
+        'url': _docsPageUrl(rel),
+      });
     },
-    // No registry examples: without a docsRoot the op returns unsupported, and
-    // the dedicated engine_docs_test covers list/read with a fixture tree.
   ),
 ];
 

@@ -17,6 +17,11 @@ pubspec.yaml.
   `assets/levels/skirmish.level.json` so agents can `level.*` / `strategy.simulate_turns`;
   platformer create includes patrol enemy, coin and health HUD; `engine.capabilities`
   reports `docsUrl` / `docsAvailable`. Getting-started points at the agent API loop.
+- Platformer/strategy templates: Escape pause menu with settings (volumes,
+  colorblind, shake via `PlayerOptions` + `Game.colorblindMode` /
+  `screenShakeIntensity`) and credits; `assets/i18n/en.json` stubs.
+  `project.manifest` is a first-class write op (`studio project-manifest` adapts it).
+  `engine.docs` returns a curated remote index when no local docs root is set.
 - Idle template polish: persists number format via `PlayerOptions`, multi-currency
   `resourceIds` header, layered `"prestiges"`, wired `AutoBuySystem` + `whileAway`,
   `onDouble` / `doubleOffline` stub, `LogReturnNotifier`, synergy upgrade sample.

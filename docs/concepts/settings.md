@@ -91,9 +91,10 @@ Be clear about this when you ship an accessibility menu:
   are values for *your* systems to honour (skip your own animations when `reduceMotion` is on, scale your own
   UI text, and so on).
 
-- **`colorblindMode` is stored but not rendered.** `EngineView` has a hook for a colorblind
-  simulation pass, but it is an unimplemented placeholder; choosing a mode currently changes nothing on
-  screen. If you need colorblind support today, offer palettes or shapes your art can switch between.
+- **`colorblindMode`:** override `Game.colorblindMode` (templates read `PlayerOptions`) so
+  `GameRunner` passes it into `EngineView`'s colour-matrix filter each frame.
+- **`screenShakeIntensity`:** override `Game.screenShakeIntensity` the same way; `GameRunner`
+  applies it to the scene camera.
 - `showFpsOverlay` as a `GameConfig` field does work (debug builds); the option is just the player-facing
   switch for you to wire to it.
 

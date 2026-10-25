@@ -28,10 +28,19 @@ void main() {
     docsRoot: docs,
   );
 
-  test('without docsRoot returns unsupported', () async {
+  test('without docsRoot returns a remote curated index', () async {
     final r = await registry.call('engine.docs', {}, ctx());
-    expect(r.ok, isFalse);
-    expect(r.error!.code, ErrorCode.unsupported);
+    expect(r.ok, isTrue, reason: '${r.error}');
+    final data = (r.data! as Map).cast<String, Object?>();
+    expect(data['source'], 'remote');
+    expect(data['docsUrl'], kEngineDocsUrl);
+    expect(data['pages'], kRemoteDocsPages);
+    final page = await registry.call('engine.docs', {
+      'page': 'getting-started',
+    }, ctx());
+    expect(page.ok, isTrue);
+    expect((page.data! as Map)['url'], contains('getting-started'));
+    expect((page.data! as Map)['markdown'], isNull);
   });
 
   test('lists pages excluding drafts and QA checklist', () async {
