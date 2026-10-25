@@ -33,6 +33,10 @@ pubspec.yaml.
   actions. The resource header still follows every tick.
 
 ### Added
+- Generated transports quick start (`docs/reference/transports.md`): same op via CLI,
+  MCP, REST and JSON-RPC (`dart run tool/gen_api_docs.dart --transports`).
+- `world.step` and `idle.simulate` report progress (and poll cancellation); `simulateIdle`
+  takes an optional `onProgress` callback.
 - `asset.pack` reports progress per scale tier and polls cancellation between tiers.
 - Request-log levels: `--log-level` / `engine_api.yaml` `log.level` / MCP `logging/setLevel`.
   `debug` records redacted args (`Param.secret` → `***`); default `info` stays metadata-only.

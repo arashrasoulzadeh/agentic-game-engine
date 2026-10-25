@@ -117,7 +117,16 @@ List<Operation> worldOperations() => [
     handler: (ctx, a) {
       final world = _world(ctx, a);
       final dt = (a['dt']! as num).toDouble();
-      for (var i = 0; i < (a['ticks']! as int); i++) {
+      final ticks = a['ticks']! as int;
+      for (var i = 0; i < ticks; i++) {
+        ctx.cancellation?.throwIfCancelled();
+        if (i == 0 || i == ticks - 1 || i % 60 == 0) {
+          ctx.reportProgress(
+            progress: i,
+            total: ticks,
+            message: 'world.step tick $i/$ticks',
+          );
+        }
         world.step(dt);
       }
       return OpOutcome.data({

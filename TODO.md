@@ -35,19 +35,15 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
 
 ## Agent API
 
-Phases 0–7, the operation catalogue, MCP/HTTP/JSON-RPC, SSE progress,
-cancellation, and request-log levels are shipped (see CHANGELOG /
-`engine_mcp.md`).
+Shipped (see CHANGELOG / `engine_mcp.md`): phases 0–7, full operation
+catalogue, MCP/HTTP/JSON-RPC, SSE progress/cancel, request-log levels,
+`studio` edit → `level.*` adapters, transports quick start.
 
 **Adding an operation:** implement in `engine_core/lib/src/ops/groups/`,
 register in `all_operations.dart` + `engine_core_ops.dart`, test under
-`engine_core/test/ops/`, then
-`cd packages/engine_api && dart run tool/gen_api_docs.dart > ../../docs/reference/operations.md`.
-
-Left:
-
-- [ ] Optional polish: more ops reporting `reportProgress`; generated
-      per-transport quick-start page (phase 7 note in `engine_mcp.md`).
+`engine_core/test/ops/`, then regenerate
+`docs/reference/operations.md` and `docs/reference/transports.md` via
+`packages/engine_api/tool/gen_api_docs.dart`.
 
 ## Studio
 

@@ -66,6 +66,8 @@ SimulationReport simulateIdle(
   bool playChallenges = true,
   String mainResource = 'coins',
   int maxActions = 5000,
+  void Function({required num progress, required num total, String? message})?
+  onProgress,
 }) {
   final milestones = <SimulationMilestone>[];
   var t = 0.0;
@@ -150,7 +152,19 @@ SimulationReport simulateIdle(
     return false;
   }
 
+  var lastProgressAt = -1.0;
   for (var step = 0; step < maxActions && t < limitSeconds; step++) {
+    // ~20 updates across the run (plus every 50 actions) so agents can watch
+    // without a flood of notifications.
+    if (onProgress != null &&
+        (step % 50 == 0 || t - lastProgressAt >= limitSeconds / 20)) {
+      lastProgressAt = t;
+      onProgress(
+        progress: t.clamp(0, limitSeconds),
+        total: limitSeconds,
+        message: 'simulate step $step ($purchases purchases)',
+      );
+    }
     checkMilestones();
 
     if (tryPrestige()) continue;

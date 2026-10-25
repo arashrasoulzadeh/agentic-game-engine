@@ -17,6 +17,18 @@ void main() {
     );
   });
 
+  test('docs/reference/transports.md is up to date with the registry', () {
+    final committed = File(
+      '../../docs/reference/transports.md',
+    ).readAsStringSync();
+    expect(
+      committed,
+      renderTransportsQuickStart(buildRegistry()),
+      reason:
+          'Regenerate it: cd packages/engine_api && dart run tool/gen_api_docs.dart --transports > ../../docs/reference/transports.md',
+    );
+  });
+
   test('every operation has a section and Flutter-only ones say so', () {
     final text = renderOperationsReference(buildRegistry());
     for (final op in buildRegistry().all) {

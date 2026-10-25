@@ -134,6 +134,14 @@ List<Operation> idleOperations() => [
         prestigeAt: (a['prestigeAt'] as num?)?.toDouble(),
         playChallenges: a['playChallenges']! as bool,
         mainResource: a['mainResource']! as String,
+        onProgress: ({required progress, required total, message}) {
+          ctx.cancellation?.throwIfCancelled();
+          ctx.reportProgress(
+            progress: progress,
+            total: total,
+            message: message,
+          );
+        },
       );
       return OpOutcome.data({
         'elapsedSeconds': report.elapsed.inSeconds,

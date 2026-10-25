@@ -27,4 +27,31 @@ void main() {
       {'progress': 1, 'total': 2, 'message': 'halfway'},
     ]);
   });
+
+  test('world.step reports progress across ticks', () async {
+    final seen = <Map<String, Object?>>[];
+    final registry = buildRegistry();
+    final ctx = OpContext(actor: 'test', onProgress: seen.add);
+    final built = await registry.call('world.build', {
+      'json': {
+        'entities': [
+          {
+            'name': 'p',
+            'components': {
+              'position': {'x': 0, 'y': 0},
+            },
+          },
+        ],
+      },
+    }, ctx);
+    expect(built.ok, isTrue, reason: '${built.error}');
+    final id = (built.data! as Map)['worldId'];
+    final stepped = await registry.call('world.step', {
+      'worldId': id,
+      'ticks': 3,
+    }, ctx);
+    expect(stepped.ok, isTrue, reason: '${stepped.error}');
+    expect(seen, isNotEmpty);
+    expect(seen.first['total'], 3);
+  });
 }
