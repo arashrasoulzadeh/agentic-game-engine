@@ -8,11 +8,11 @@ side files.
 Related (not task lists):
 - [docs/studio/design.md](docs/studio/design.md) — studio PRD / design / delivered phases
 - [docs/concepts/turn-based-strategy.md](docs/concepts/turn-based-strategy.md)
-- [engine_mcp.md](engine_mcp.md) — agent-API design (phases 0–7 shipped)
+- [engine_mcp.md](engine_mcp.md) — agent API (phases 0–7 shipped; add ops via
+  `engine_core` groups + `gen_api_docs.dart`)
 
-Sections: [Performance](#performance) · [Engine](#engine) ·
-[Agent API](#agent-api) · [Studio](#studio) · [Docs](#docs) ·
-[Release](#release) · [Parked decisions](#parked-decisions)
+Sections: [Performance](#performance) · [Engine](#engine) · [Studio](#studio) ·
+[Docs](#docs) · [Release](#release) · [Parked decisions](#parked-decisions)
 
 ## Performance
 
@@ -29,42 +29,28 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
 
 ## Engine
 
+- Idle / incremental genre is complete for creating new games
+  (`game_agent create --template idle_game`, full subsystem table in
+  [docs/concepts/idle-games.md](docs/concepts/idle-games.md)). Only the
+  device bench under Performance remains for idle.
 - [ ] **Zahaak gaps** — features that local `zahaak` needs but the engine
       lacks (`zahaak/docs/engine-gap-analysis.md`). Not scoped; revisit once
       its combat/dialogue scope is locked.
 
-## Agent API
-
-Shipped (see CHANGELOG / `engine_mcp.md`): phases 0–7, full operation
-catalogue, MCP/HTTP/JSON-RPC, SSE progress/cancel, request-log levels,
-`studio` edit → `level.*` adapters, transports quick start.
-
-**Adding an operation:** implement in `engine_core/lib/src/ops/groups/`,
-register in `all_operations.dart` + `engine_core_ops.dart`, test under
-`engine_core/test/ops/`, then regenerate
-`docs/reference/operations.md` and `docs/reference/transports.md` via
-`packages/engine_api/tool/gen_api_docs.dart`.
-
 ## Studio
 
 Design and delivered phases: [docs/studio/design.md](docs/studio/design.md).
-M0–M2 and most of the code-editor / stretch work are done.
 
 - [ ] **Distribution (3.22)** — stand-in `.dmg` packing is CI-checked
-      (`tool/verify_dmg_pack.sh`, `diskutil` / `hdiutil` fallback). Still open:
-      real `flutter build macos --release` (FlutterMacOS.framework arch check
-      failed here), `.msi` / `.AppImage`, code signing + notarization, and a
-      release server / signing key (update client exists; nothing to talk to).
-- [ ] **Debugger and terminal** — each its own phase; not in current IDE
-      scope (`pub get` and git status marks are done).
-- [ ] Optional: profile a separate play-test process (no channel yet);
-      live cursor feed; visual three-way merge UI (`studio merge` covers CLI).
+      (`tool/verify_dmg_pack.sh`). Still open: real
+      `flutter build macos --release` (FlutterMacOS.framework arch check failed
+      here), `.msi` / `.AppImage`, code signing + notarization, and a release
+      server / signing key (update client exists; nothing to talk to).
+- [ ] **Debugger and terminal** — each its own phase; not in current IDE scope.
 
 ## Docs
 
-Site: <https://meetarash.ir/agentic-game-engine/>. Conventions in
-[docs/contributing-docs.md](docs/contributing-docs.md). Coverage gaps for
-shipped features are closed.
+Site: <https://meetarash.ir/agentic-game-engine/>.
 
 - [ ] Strategy-template screenshot (needs art) and a studio shot with real
       entity-label text (`UPDATE_SCREENSHOTS=1` regenerates `docs/img/`).
@@ -88,10 +74,11 @@ the stated trigger.
   **Re-open only** if `paint` itself becomes a real over-budget fraction.
 - **No 3D, ever** and **no other game engines** — see CLAUDE.md.
 - **Networking stops at `NetEndpoint`.** WebRTC / NAT traversal need a
-  native plugin or relay; games wire that themselves. WebSocket, UDP,
-  lobby, host auth, and `OnlineStrategyView` are shipped.
+  native plugin or relay; games wire that themselves.
 - **Published samples are the three `game_agent create` templates** (CI
   builds each). No sample app in this repo (`test_game/` stays gitignored).
 - **Docs stay single-version** until the first published release; then
   consider `mike` with the v0.1.0 tag. `proposals/` and
   `studio/qa-level-editor.md` stay unpublished on purpose.
+- **Studio stretch not scheduled:** separate play-test process profiling,
+  live cursor feed, visual three-way merge UI (`studio merge` covers CLI).

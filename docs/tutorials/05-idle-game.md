@@ -1,7 +1,7 @@
 # 5 · An idle game in an afternoon
 
 You will generate a cookie-clicker-style game, change its economy by editing one JSON file, check the pacing
-without playing, and wire in the player-facing extras. No Dart is needed until the last step.
+without playing, and wire in the player-facing extras. No Dart is needed until you opt into automation.
 
 ## 1. Generate it
 
@@ -13,8 +13,8 @@ cd bakery
 flutter run
 ```
 
-You get a tap button, a list of generators and upgrades, a resource header, saving, and a "while you were away"
-summary. The whole game is `assets/idle_game.json`.
+You get a tap button, generators and upgrades, resource header, golden offers, prestige and achievements,
+challenges, saving, and a "while you were away" summary. The whole game is `assets/idle_game.json`.
 
 ## 2. Change the economy
 
@@ -31,29 +31,48 @@ second. Add a new one after `mine`, and reward owning many of them with a milest
 Prices can also be a hand-written table for the first few copies:
 `{ "type": "table", "prices": ["10", "25", "60"], "tailGrowth": 1.2 }`.
 
-Mistakes are reported with the path to them (`generators[4].cost.growth must be a number >= 1`) when the game
-starts.
+Validate without launching the app:
+
+```bash
+game_agent idle validate assets/idle_game.json
+```
+
+Mistakes are reported with the path to them (`generators[4].cost.growth must be a number >= 1`).
 
 ## 3. Check the pacing without playing
 
-From a checkout of the engine, run the greedy balance simulator on your file:
-
 ```bash
-cd packages/engine_idle
-dart run tool/simulate.dart ../../path/to/bakery/assets/idle_game.json --days 2 --prestige-at 2
+game_agent idle simulate assets/idle_game.json --days 2 --prestige-at 2
 ```
 
-It prints when income passes each power of ten, when it prestiges, and whether the design stalls. The same run
-is pinned as a golden file in the engine's tests, so you can do the same for your game: any change in pacing
-becomes a visible diff.
+It prints when income passes each power of ten, when it prestiges or clears challenges, and whether the design
+stalls. The same simulator is pinned as a golden in the engine's tests, so any change in pacing becomes a
+visible diff.
 
-## 4. Add the extras
+## 4. Extras already in the template
 
-- **Offline earnings:** set `"offline": { "capHours": 8, "efficiency": 0.5 }`. Show
-  `OfflineSummaryDialog` on return, with `onDouble:` if you offer a rewarded ad.
-- **Reminder:** give `IdleSession` a `ReturnNotifier` that talks to your notification plugin; it is scheduled
-  for the moment the cap is reached.
-- **Prestige and achievements:** add `PrestigePanel` and `AchievementList` to a tab.
-- **Golden events:** add a `goldenEvents` component and `GoldenEventSystem(DeterministicRandom(seed))`.
+- **Offline earnings:** `"offline": { "capHours": 8, "efficiency": 0.5 }` — `OfflineSummaryDialog` on return.
+- **Prestige and achievements:** Progress tab (`PrestigePanel`, `AchievementList`).
+- **Challenges:** `"challenges"` in the JSON + `ChallengePanel` on Progress.
+- **Golden offers:** `"golden"` block + `GoldenEventSystem` + `GoldenOffer` (tap quickly when it appears).
+- **Save codes:** Settings tab (`SaveCodePanel`) to move a run between devices.
 
-Read the [idle games guide](../concepts/idle-games.md) for how each piece works.
+## 5. Opt-in: auto-buyer
+
+Add to the JSON:
+
+```json
+"autoBuyer": { "intervalSeconds": 5, "maxPerRun": 10 }
+```
+
+In `lib/main.dart`, after `IdleSystem()`:
+
+```dart
+..addSystem(AutoBuySystem())
+```
+
+and pass `whileAway: runAutoBuyer` into `IdleSession` so offline catch-up also buys. Flip `AutoBuyer.enabled`
+when the player unlocks automation.
+
+Read the [idle games guide](../concepts/idle-games.md) for how each piece works (prestige layers, cloud save,
+analytics, trust model).

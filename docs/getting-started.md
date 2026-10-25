@@ -49,10 +49,20 @@ prints a warning).
     an end-turn strip. Continue with
     [Tutorial 2](tutorials/02-turn-based-strategy.md).
 
+=== "Idle / incremental"
+
+    ```bash
+    game_agent create bakery --template idle_game
+    ```
+
+    Generators, upgrades, prestige, challenges, golden offers and offline
+    catch-up — the economy is one JSON file. Continue with
+    [Tutorial 5](tutorials/05-idle-game.md).
+
 Then:
 
 ```bash
-cd my_game          # or my_war
+cd my_game          # or my_war / bakery
 flutter run         # pick a device, or: flutter run -d chrome
 ```
 

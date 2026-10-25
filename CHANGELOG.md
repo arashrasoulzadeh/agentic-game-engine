@@ -12,6 +12,9 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Changed
+- Idle docs and template: genre marked complete for creating new games; guide has a subsystem
+  checklist; tutorial / getting-started cover `idle_game`; template includes a sample challenge
+  + `ChallengePanel` (auto-buyer stays opt-in).
 - `game_agent studio` edit verbs (`add-entity`, `remove-entity`, `set-field`, `move-entity`,
   `set-layer`, `paint-tile`, `fill-region`) are thin adapters over `level.*` (undo journal,
   locks, structured errors). Destructive removes auto-confirm so the one-shot CLI UX is

@@ -1,12 +1,47 @@
 # Idle games
 
-!!! note "Work in progress"
-    The engine can host an idle (incremental) game today, but the genre layer is still being built. This page covers
-    what exists; what is still to come is tracked in [`TODO.md`](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md).
+The idle / incremental genre layer is **shipped**: create a game with
+`game_agent create my_game --template idle_game`, edit `assets/idle_game.json`,
+and tune pacing with `game_agent idle simulate` / `idle validate`. Genre UI and
+session code live in `engine_idle`; numbers, offline catch-up, economy rules and
+the balance simulator live in `engine_core` (`engine_core_idle.dart`) so CLI and
+agents can use them without Flutter.
 
-The genre code is the `engine_idle` package; the number, offline, cost and save maths are in `engine_core`.
 Samples are executed by `packages/engine_core/test/doc_examples_idle_test.dart` and
-`packages/engine_idle/test/doc_examples_test.dart`.
+`packages/engine_idle/test/doc_examples_test.dart`. The only open idle item in
+[`TODO.md`](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md)
+is a real-device performance bench (host baseline already exists).
+
+## Creating a new idle game
+
+```bash
+game_agent create bakery --template idle_game
+cd bakery && flutter run
+```
+
+Everything below is available as data and/or a widget. The template wires the
+common path; optional blocks are noted.
+
+| Subsystem | Where | In template? |
+|---|---|---|
+| Resources + generators + upgrades | `assets/idle_game.json` | yes |
+| Cost curves (`geometric` / `linear` / `table`) | definition | yes (geometric) |
+| Milestones on generators | definition | add when you want |
+| Taps + timed boosts | `IdleController.tap` / `BoostSystem` | yes |
+| Achievements | definition + `AchievementList` | yes |
+| Prestige (single or layered `prestiges`) | definition + `PrestigePanel` | yes (single) |
+| Challenges | definition + `ChallengePanel` | yes |
+| Golden offers | `"golden"` + `GoldenEventSystem` + `GoldenOffer` | yes |
+| Auto-buyer | `"autoBuyer"` + `AutoBuySystem` | opt-in (see below) |
+| Offline catch-up + lifecycle | `IdleSession` + `IdleLifecycleHost` | yes |
+| Save / export code / cloud hook | `BrowserSaveStore` / `FileSaveStore` / `SaveCodePanel` | yes |
+| Number formats | `IdleSettingsPanel` / `formatBigNumber` | yes |
+| Balance check | `game_agent idle simulate` / `idle.validate` | CLI / agent |
+| Headless agent ops | `idle.*` on MCP/REST/CLI | yes |
+
+To enable automation, add `"autoBuyer": { "intervalSeconds": 5, "maxPerRun": 10 }`
+to the JSON and `world.addSystem(AutoBuySystem())` after `IdleSystem()`, then pass
+`whileAway: runAutoBuyer` into `IdleSession` so it also buys offline.
 
 ![The idle game template after fifty minutes of simulated play: resources and income at the top, a row of buy buttons per generator, greyed-out ones unaffordable](../img/idle-game.png)
 
@@ -198,17 +233,20 @@ The engine makes a deliberate, simple choice: **a single-player idle game trusts
 
 ## Tuning without playing
 
-`simulateIdle` plays a definition with a deterministic greedy strategy (buy the best payback, wait just long enough)
-and reports when income reaches each power of ten, when achievements and prestiges happen, and why a design stalls.
-When `prestigeAt` is set it prestiges **every** layer that meets the threshold (higher layers first, so a ready
-ascension is not starved by cheaper first-layer prestiges); while a challenge is running it does not prestige
-(that would wipe the challenge's run). Incomplete challenges are started in definition order as soon as none is
-active (`playChallenges: false` skips them):
+`simulateIdle` (also `game_agent idle simulate` and the MCP/REST `idle.simulate` op) plays a definition with a
+deterministic greedy strategy (buy the best payback, wait just long enough) and reports when income reaches each
+power of ten, when achievements and prestiges happen, and why a design stalls. When `prestigeAt` is set it
+prestiges **every** layer that meets the threshold (higher layers first, so a ready ascension is not starved by
+cheaper first-layer prestiges); while a challenge is running it does not prestige (that would wipe the challenge's
+run). Incomplete challenges are started in definition order as soon as none is active (`playChallenges: false`
+skips them):
 
 ```bash
-cd packages/engine_idle
-dart run tool/simulate.dart example/cookie_clicker.json --days 3 --prestige-at 1.0
+game_agent idle validate path/to/bakery/assets/idle_game.json
+game_agent idle simulate path/to/bakery/assets/idle_game.json --days 3 --prestige-at 1.0
 ```
 
-Use it to check that the early game is not a wall and that prestige pays at a sensible time; it is a fair baseline,
-not an optimal player.
+From an engine checkout you can also run
+`dart run tool/simulate.dart example/cookie_clicker.json --days 3 --prestige-at 1.0` inside
+`packages/engine_idle`. Use it to check that the early game is not a wall and that prestige pays at a sensible
+time; it is a fair baseline, not an optimal player.

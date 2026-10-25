@@ -304,14 +304,16 @@ dependencies:
     ).readAsStringSync();
     expect(pubspec, contains('packages/engine_idle'));
     expect(pubspec, isNot(contains('engine_platformer')));
-    expect(
-      File('${tmp.path}/cookie_game/lib/main.dart').readAsStringSync(),
-      contains('loadIdleDefinition'),
-    );
-    expect(
-      File('${tmp.path}/cookie_game/assets/idle_game.json').existsSync(),
-      isTrue,
-    );
+    final main =
+        File('${tmp.path}/cookie_game/lib/main.dart').readAsStringSync();
+    expect(main, contains('loadIdleDefinition'));
+    expect(main, contains('ChallengePanel'));
+    expect(main, contains('GoldenOffer'));
+    final def = File(
+      '${tmp.path}/cookie_game/assets/idle_game.json',
+    ).readAsStringSync();
+    expect(def, contains('"challenges"'));
+    expect(def, contains('"golden"'));
     expect(
       File('${tmp.path}/cookie_game/test/widget_test.dart').readAsStringSync(),
       contains('cookie_game'),

@@ -1,28 +1,31 @@
 # engine_idle
 
 Idle / incremental games on top of [engine_core](../engine_core/README.md) and
-[engine_flutter](../engine_flutter/README.md): generators, upgrades, prestige, achievements, offline progress and the
-widgets that show them. A whole game is one JSON file (resources, generators, upgrades, achievements, prestige,
-offline rules); you write Dart only for what is yours.
+[engine_flutter](../engine_flutter/README.md). A whole game is one JSON file
+(resources, generators, upgrades, achievements, prestige / layers, challenges,
+golden offers, offline rules, optional auto-buyer); you write Dart only for
+what is yours.
 
-Start from the template (`game_agent create my_game --template idle_game`) or read the
-[idle games guide](../../docs/concepts/idle-games.md) and the
-[tutorial](../../docs/tutorials/05-idle-game.md). Status: [TODO.md](../../TODO.md).
+Start from the template (`game_agent create my_game --template idle_game`) or
+read the [idle games guide](../../docs/concepts/idle-games.md) and
+[tutorial 5](../../docs/tutorials/05-idle-game.md). The genre layer is complete
+for a first release; remaining work is the device-bench item in
+[TODO.md](../../TODO.md).
 
 ## Where things live
 
 The Flutter-free rules are in `engine_core` (`package:engine_core/engine_core_idle.dart`) so command-line tools can use
-them: components, the economy (`computeIncome`, `buyGenerator`, `buyUpgrade`), prestige and achievements, golden
-events, the data loader (`loadIdleDefinition`), the balance simulator (`simulateIdle`, also
-`game_agent idle simulate`), `BigNumber`, offline progress, cost curves and save formats. This package re-exports all of
-that and adds what needs Flutter:
+them: components, the economy (`computeIncome`, `buyGenerator`, `buyUpgrade`), prestige and achievements, challenges,
+golden events, auto-buyer, the data loader (`loadIdleDefinition` / `validateIdleDefinition`), the balance simulator
+(`simulateIdle`, also `game_agent idle simulate` / `idle validate`), `BigNumber`, offline progress, cost curves and
+save formats. This package re-exports all of that and adds what needs Flutter:
 
 | Piece | What it does |
 |---|---|
 | `IdleController` | Steps the world about ten times a second, notifies widgets, number format and locale mark |
 | `IdleSession` | Saving, loading, offline catch-up, app lifecycle, export/import codes, cloud sync, return reminders |
 | `FileSaveStore`, `BrowserSaveStore`, `MemorySaveStore`, `CloudSaveStore` | Where a save lives |
-| Widgets | `ResourceHeader`, `GeneratorList`, `UpgradeList`, `OfflineSummaryDialog`, `PrestigePanel`, `AchievementList`, `IdleSettingsPanel`, `SaveCodePanel`, `IdleLifecycleHost` |
+| Widgets | `ResourceHeader`, `GeneratorList`, `UpgradeList`, `OfflineSummaryDialog`, `PrestigePanel`, `AchievementList`, `ChallengePanel`, `GoldenOffer`, `IdleSettingsPanel`, `SaveCodePanel`, `IdleLifecycleHost` |
 | `IdleAnalytics` | Purchase, prestige and return events through the consent-aware analytics manager |
 
 ```dart

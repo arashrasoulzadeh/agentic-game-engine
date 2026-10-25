@@ -17,6 +17,9 @@
     { "id": "rich", "name": "Rich", "stat": "lifetime:coins", "atLeast": "100000", "reward": "1.1" }
   ],
   "prestige": { "currency": "gems", "basedOn": "coins", "divisor": "1e6", "exponent": 0.5, "bonusPerUnit": 0.05, "startingAmounts": { "coins": "15" } },
+  "challenges": [
+    { "id": "frugal", "name": "Frugal", "rules": ["noUpgrades"], "goalStat": "run:coins", "goalAtLeast": "1000", "reward": "1.05" }
+  ],
   "golden": { "meanInterval": 90, "lifetime": 12, "rewards": [ { "kind": "boost", "multiplier": "7", "seconds": 30, "weight": 2 }, { "kind": "payout", "seconds": 300 } ] },
   "offline": { "capHours": 8, "efficiency": 0.5 }
 }
