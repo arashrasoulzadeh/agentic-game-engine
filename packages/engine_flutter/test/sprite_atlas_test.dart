@@ -28,6 +28,19 @@ void main() {
     expect(atlas.regionFor('walk_0'), const Rect.fromLTWH(16, 0, 16, 16));
   });
 
+  test('fromStrip lays out equal cells with gap along one row', () async {
+    final image = await _tinyImage();
+    final atlas = SpriteAtlas.fromStrip(image, cell: 2, frames: 2, gap: 1);
+    expect(atlas.regionFor('0'), const Rect.fromLTWH(1, 0, 2, 2));
+    expect(atlas.regionFor('1'), const Rect.fromLTWH(4, 0, 2, 2));
+  });
+
+  test('fromFullImage exposes one region covering the image', () async {
+    final image = await _tinyImage();
+    final atlas = SpriteAtlas.fromFullImage(image);
+    expect(atlas.regionFor('full'), const Rect.fromLTWH(0, 0, 4, 4));
+  });
+
   test(
     'fromManifest tolerates a missing "regions" key (empty atlas)',
     () async {

@@ -20,6 +20,7 @@ export 'src/rendering/parallax_layer.dart';
 export 'src/rendering/screen_tint.dart';
 export 'src/rendering/clip_shape.dart';
 export 'src/rendering/sprite.dart';
+export 'src/rendering/hit_flash.dart';
 export 'src/rendering/text.dart';
 export 'src/rendering/colorblind_filter.dart';
 export 'src/rendering/engine_view.dart';

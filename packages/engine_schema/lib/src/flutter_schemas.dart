@@ -14,6 +14,12 @@ const spriteSchema = ComponentSchema('sprite', [
   FieldSchema('offsetY', FieldType.double, defaultValue: 0),
   FieldSchema('zIndex', FieldType.int, defaultValue: 0),
   FieldSchema('normalAtlasId', FieldType.string, optional: true),
+  FieldSchema('tintArgb', FieldType.int, optional: true),
+]);
+
+const hitFlashSchema = ComponentSchema('hitFlash', [
+  FieldSchema('remaining', FieldType.double, min: 0, defaultValue: 0),
+  FieldSchema('tintArgb', FieldType.int, defaultValue: 0xFFFF3333),
 ]);
 
 const animationStateSchema = ComponentSchema('animationState', [

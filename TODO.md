@@ -36,6 +36,9 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
       `zahaak/docs/engine-gap-analysis.md`). Still open: Persian font bundling
       in the game itself, and rewriting GDD §11 from Unity → this ECS once
       zahaak build scope locks.
+- [x] **Hit flash + strip atlases** — `HitFlash`/`flashHit` and
+      `SpriteAtlas.fromStrip`/`fromFullImage` (promoted from Mobarez preview
+      needs).
 
 ## Game-dev workflow
 

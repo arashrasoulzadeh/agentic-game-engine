@@ -62,6 +62,80 @@ class SpriteAtlas {
 
     return SpriteAtlas.fromManifest(frame.image, manifest);
   }
+
+  /// Builds equal-sized regions along one horizontal strip of [image]:
+  /// `0`‥`frames-1` at `x = gap + i * (cell + gap)`, `y = 0`.
+  ///
+  /// The common layout for a Mobarez-style (or any single-row) sheet
+  /// authored with a sidecar `{ "cell", "gap", "frames" }` — avoids
+  /// hand-writing a regions manifest for that case.
+  factory SpriteAtlas.fromStrip(
+    ui.Image image, {
+    required int cell,
+    required int frames,
+    int gap = 0,
+  }) {
+    assert(cell > 0, 'cell must be positive');
+    assert(frames > 0, 'frames must be positive');
+    assert(gap >= 0, 'gap must be non-negative');
+    final regions = <String, ui.Rect>{};
+    for (var i = 0; i < frames; i++) {
+      final x = gap + i * (cell + gap);
+      regions['$i'] = ui.Rect.fromLTWH(
+        x.toDouble(),
+        0,
+        cell.toDouble(),
+        cell.toDouble(),
+      );
+    }
+    return SpriteAtlas(image, regions);
+  }
+
+  /// One region named [region] covering the whole [image] — backgrounds
+  /// and other non-sheet art that still want an atlas id for
+  /// `ParallaxLayer` / `Sprite`.
+  factory SpriteAtlas.fromFullImage(
+    ui.Image image, {
+    String region = 'full',
+  }) {
+    return SpriteAtlas(image, {
+      region: ui.Rect.fromLTWH(
+        0,
+        0,
+        image.width.toDouble(),
+        image.height.toDouble(),
+      ),
+    });
+  }
+
+  /// Decodes [imageAssetPath] and builds a [fromStrip] atlas.
+  static Future<SpriteAtlas> loadStripFromAssets({
+    required String imageAssetPath,
+    required int cell,
+    required int frames,
+    int gap = 0,
+  }) async {
+    final bytes = await rootBundle.load(imageAssetPath);
+    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
+    final frame = await codec.getNextFrame();
+    return SpriteAtlas.fromStrip(
+      frame.image,
+      cell: cell,
+      frames: frames,
+      gap: gap,
+    );
+  }
+
+  /// Decodes [imageAssetPath] into a single-region [fromFullImage] atlas.
+  static Future<SpriteAtlas> loadFullImageFromAssets(
+    String imageAssetPath, {
+    String region = 'full',
+  }) async {
+    final bytes = await rootBundle.load(imageAssetPath);
+    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
+    final frame = await codec.getNextFrame();
+    return SpriteAtlas.fromFullImage(frame.image, region: region);
+  }
 }
 
 /// Sprite/animation components store an atlas *id*, not a `SpriteAtlas`

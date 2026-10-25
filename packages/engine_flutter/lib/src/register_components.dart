@@ -3,6 +3,7 @@ import 'package:engine_core/engine_core.dart';
 import 'rendering/animation.dart';
 import 'rendering/animation_transition.dart';
 import 'rendering/clip_shape.dart';
+import 'rendering/hit_flash.dart';
 import 'rendering/hud_bar.dart';
 import 'rendering/light2d.dart';
 import 'rendering/nine_slice_sprite.dart';
@@ -84,6 +85,12 @@ void registerFlutterComponents(World world) {
     (s) => s.toJson(),
     ScreenTint.fromJson,
     schema: screenTintSchema,
+  );
+  world.components.register<HitFlash>(
+    'hitFlash',
+    (h) => h.toJson(),
+    HitFlash.fromJson,
+    schema: hitFlashSchema,
   );
   world.components.register<ClipShape>(
     'clipShape',

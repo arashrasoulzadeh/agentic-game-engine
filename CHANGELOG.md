@@ -12,6 +12,11 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `HitFlash` / `HitFlashSystem` / `flashHit` — per-entity damage flash that
+  drives `Sprite.tintArgb` (registered in `registerFlutterComponents`).
+- `SpriteAtlas.fromStrip` / `fromFullImage` (+ `loadStripFromAssets` /
+  `loadFullImageFromAssets`) for single-row `cell`/`gap` sheets and
+  full-image backgrounds without a regions manifest.
 - `Sprite.tintArgb` — optional modulate tint (hit-flash red, etc.); tinted
   sprites skip atlas batching so a flash stays cheap for neighbors.
 - Studio distribution packing scripts for Linux AppDir/AppImage

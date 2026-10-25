@@ -81,6 +81,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'animationTransition': animationTransitionSchema,
   'light2d': light2dSchema,
   'screenTint': screenTintSchema,
+  'hitFlash': hitFlashSchema,
   'clipShape': clipShapeSchema,
   'playerOptions': playerOptionsSchema,
   'sceneTransition': sceneTransitionSchema,
