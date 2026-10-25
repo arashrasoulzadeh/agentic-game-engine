@@ -31,9 +31,11 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
 
 ## Engine
 
-- [ ] **Zahaak gaps** — features that local `zahaak` needs but the engine
-      lacks (`zahaak/docs/engine-gap-analysis.md`). Not scoped; revisit once
-      its combat/dialogue scope is locked.
+- [ ] **Zahaak remainder** — combat/dialogue/boss/combo/parry/guard FSM
+      already ship in `engine_platformer` / `engine_flutter` (see refreshed
+      `zahaak/docs/engine-gap-analysis.md`). Still open: Persian font bundling
+      in the game itself, and rewriting GDD §11 from Unity → this ECS once
+      zahaak build scope locks.
 
 ## Game-dev workflow
 
@@ -58,11 +60,14 @@ Material pause/settings/credits + volumes, `IdleSfx` stubs, prestige shop,
 
 Design and delivered phases: [docs/studio/design.md](docs/studio/design.md).
 
-- [ ] **Distribution (3.22)** — stand-in `.dmg` packing is CI-checked
-      (`tool/verify_dmg_pack.sh`). Still open: real
+- [ ] **Distribution (3.22)** — stand-in packing is CI-checked for macOS
+      `.dmg` (`tool/verify_dmg_pack.sh`), Linux AppDir/AppImage
+      (`tool/verify_appimage_pack.sh`), and Windows zip/MSI hook
+      (`tool/verify_windows_pack.sh`). Still open: real
       `flutter build macos --release` (FlutterMacOS.framework arch check failed
-      here), `.msi` / `.AppImage`, code signing + notarization, and a release
-      server / signing key (update client exists; nothing to talk to).
+      here), WiX `.msi` authoring, `appimagetool` on release hosts, code
+      signing + notarization, and a release server / signing key (update
+      client exists; nothing to talk to).
 - [ ] **Debugger and terminal** — each its own phase; not in current IDE scope.
 
 ## Docs

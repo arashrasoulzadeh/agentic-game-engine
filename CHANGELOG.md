@@ -12,6 +12,11 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Studio distribution packing scripts for Linux AppDir/AppImage
+  (`tool/package_linux.sh` / `verify_appimage_pack.sh`) and Windows portable zip
+  with optional WiX MSI hook (`tool/package_windows.sh` /
+  `verify_windows_pack.sh`); ubuntu CI runs both verify scripts.
+- `fa` in `LocalizationFlutter.initialize`'s default locale list.
 - `engine.docs` serves curated markdown from an in-package bundle
   (`kBundledDocs`, regenerate with `dart run tool/gen_bundled_docs.dart`) when
   no `--docs-root` is set (`source: bundled`).
@@ -29,6 +34,9 @@ pubspec.yaml.
   whole-file JSON Schema for `assets/idle_game.json`.
 
 ### Fixed
+- `EngineView` world/HUD `Text` and `buildMenuButtonAtlas` hard-coded
+  `TextDirection.ltr`, so Persian/Arabic never shaped correctly even when the
+  locale was RTL — they now follow `LocalizationFlutter.textDirection`.
 - `bestPurchase` / the idle balance simulator treated upgrades that cost only a
   non-main currency (e.g. prestige gems) as free coin buys when `cost[coins]`
   was missing — they are priced and gated on their real cost resource now.

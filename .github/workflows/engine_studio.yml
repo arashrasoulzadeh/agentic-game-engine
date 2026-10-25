@@ -33,6 +33,10 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze --fatal-infos
       - run: flutter test
+      # Packing smoke (stand-in trees): AppDir archive + Windows zip — no
+      # flutter desktop build or WiX/appimagetool required on ubuntu CI.
+      - run: bash tool/verify_appimage_pack.sh
+      - run: bash tool/verify_windows_pack.sh
 
   # The desktop target; the LSP-backed IDE (Phase 3B) and play-test both
   # launch real subprocesses (the Dart language server, `flutter run`), so

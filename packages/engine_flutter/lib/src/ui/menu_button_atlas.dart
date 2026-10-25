@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:engine_core/engine_core.dart';
 import 'package:flutter/painting.dart';
 
+import '../logic/localization_flutter.dart';
 import '../rendering/sprite.dart';
 import '../rendering/sprite_atlas.dart';
 import '../rendering/text.dart' as txt;
@@ -54,7 +55,7 @@ Future<SpriteAtlas> buildMenuButtonAtlas(
           fontWeight: FontWeight.bold,
         ),
       ),
-      textDirection: TextDirection.ltr,
+      textDirection: LocalizationFlutter.textDirection,
     )..layout();
     painter.paint(
       canvas,

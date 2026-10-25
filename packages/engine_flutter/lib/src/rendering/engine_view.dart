@@ -31,6 +31,7 @@ import 'colorblind_filter.dart';
 import 'debug_memory.dart';
 import '../input/input.dart';
 import 'sprite_atlas.dart';
+import '../logic/localization_flutter.dart';
 
 /// The Flutter shell: owns the game loop (Ticker -> `world.step(dt)`),
 /// forwards keyboard input, and paints sprites. Contains zero gameplay
@@ -3236,7 +3237,9 @@ class _EnginePainter extends CustomPainter {
                     fontFamily: 'packages/engine_flutter/EngineDefault',
                   ),
                 ),
-                textDirection: TextDirection.ltr,
+                // Locale-aware direction so Persian/Arabic shape correctly;
+                // bitmask debug glyphs stay LTR on purpose (ASCII digits).
+                textDirection: LocalizationFlutter.textDirection,
               )..layout(
                 maxWidth: text.maxWidth == null
                     ? double.infinity

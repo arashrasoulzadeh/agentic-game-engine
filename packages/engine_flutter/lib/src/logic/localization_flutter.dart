@@ -18,6 +18,7 @@ class LocalizationFlutter {
       'de',
       'ja',
       'ar',
+      'fa',
       'zh',
     ],
     String? initialLocale,
