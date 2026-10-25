@@ -157,7 +157,8 @@ What is left:
       session stream (`strategy.simulate_turns` reports turn progress). Cancellation is done
       (`CancellationToken` Zone-scoped; `notifications/cancelled`). `Retry-After` on 429 shipped.
       Request-log levels (`--log-level` / `log.level` / MCP `logging/setLevel`): `debug` adds
-      redacted args; `info` stays metadata-only. Richer progress from more ops can still grow later.
+      redacted args; `info` stays metadata-only. `asset.pack` reports per-scale-tier progress
+      (and polls cancellation). Richer progress from more ops can still grow later.
 
 ## Idle / incremental games
 
@@ -200,12 +201,12 @@ code-editor phase is nearly done; the rest below is M2 distribution, M3–M5.
 
 ### Distribution (phase 3)
 
-- [ ] **3.22 (remaining)** The `.dmg` script's packing step is verified (with a stand-in app), but a
-      real `flutter build macos --release` failed here with Flutter's "does not contain
+- [ ] **3.22 (remaining)** Packing uses `diskutil image create` (UDZO; `hdiutil` fallback) and is
+      CI-checked via `tool/verify_dmg_pack.sh` with a stand-in `.app`. A real
+      `flutter build macos --release` still failed here with Flutter's "does not contain
       architectures arm64 x86_64" check on `FlutterMacOS.framework` (it lists `x86_64 arm64`), so
-      end-to-end packaging is unverified; `hdiutil create` is also deprecated in favour of
-      `diskutil image create`. Also: `.msi` and `.AppImage` packaging, code signing and notarization for the
-      `.dmg` (`engine_studio/tool/package_macos.sh` builds an unsigned one), and an actual release
+      end-to-end packaging is unverified. Also still open: `.msi` and `.AppImage` packaging,
+      code signing and notarization for the `.dmg` (unsigned today), and an actual release
       server / signing key: the client (bootstrap window, offline mode, update decisions) is done
       but has nothing to talk to yet.
 

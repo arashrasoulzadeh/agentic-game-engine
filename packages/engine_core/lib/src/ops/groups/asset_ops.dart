@@ -208,7 +208,14 @@ OpOutcome _packAssets(OpContext ctx, Map<String, Object?> a) {
 
   final changes = <FileChange>[];
   final written = <Map<String, Object?>>[];
-  for (final scale in scales) {
+  for (var i = 0; i < scales.length; i++) {
+    final scale = scales[i];
+    ctx.cancellation?.throwIfCancelled();
+    ctx.reportProgress(
+      progress: i,
+      total: scales.length,
+      message: 'Packing scale $scale (${i + 1}/${scales.length})',
+    );
     final scaled = scale == 1.0
         ? items
         : [
@@ -261,6 +268,11 @@ OpOutcome _packAssets(OpContext ctx, Map<String, Object?> a) {
       'regions': packed.regions.length,
     });
   }
+  ctx.reportProgress(
+    progress: scales.length,
+    total: scales.length,
+    message: 'Packed ${items.length} images into ${written.length} tier(s)',
+  );
 
   return OpOutcome.proposal(
     Proposal(

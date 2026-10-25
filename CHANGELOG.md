@@ -12,6 +12,9 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Changed
+- `engine_studio/tool/package_macos.sh` packs with `diskutil image create` (UDZO; falls back to
+  `hdiutil`). `SKIP_FLUTTER_BUILD=1 APP_BUNDLE=…` packs a stand-in; `tool/verify_dmg_pack.sh`
+  covers that path in the macOS CI job.
 - `game_agent lint --render` is now a thin adapter over `level.lint` with `includeRender` (preview raster
   lives in `engine_core` via injected `ImageCodec`); the API returns `pngBase64` instead of writing a file.
 - `game_agent pack-assets` is now a thin adapter over the `asset.pack` operation (packing algorithm and
@@ -25,6 +28,7 @@ pubspec.yaml.
   actions. The resource header still follows every tick.
 
 ### Added
+- `asset.pack` reports progress per scale tier and polls cancellation between tiers.
 - Request-log levels: `--log-level` / `engine_api.yaml` `log.level` / MCP `logging/setLevel`.
   `debug` records redacted args (`Param.secret` → `***`); default `info` stays metadata-only.
   Every line also carries `bytesIn`.

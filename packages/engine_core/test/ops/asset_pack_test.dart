@@ -193,4 +193,26 @@ void main() {
     expect(tieredAtlasPath('assets/atlas.png', 0.5), 'assets/atlas@0.5x.png');
     expect(defaultManifestPath('assets/packed/atlas.png'), 'assets/packed/atlas.json');
   });
+
+  test('reports progress once per scale tier', () async {
+    File(p.join(tmp.path, 'src', 'a.png'))
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(_fakeBytes(8, 8, 1, 2, 3));
+    final seen = <Map<String, Object?>>[];
+    final r = await registry.call(
+      'asset.pack',
+      {
+        'input': 'src',
+        'outputImage': 'out/atlas.png',
+        'scales': '1.0,0.5',
+        'apply': true,
+      },
+      ctx(codec: _FakeCodec()),
+      onProgress: seen.add,
+    );
+    expect(r.ok, isTrue, reason: '${r.error?.toJson()}');
+    expect(seen.length, greaterThanOrEqualTo(2));
+    expect(seen.first['total'], 2);
+    expect(seen.last['progress'], 2);
+  });
 }

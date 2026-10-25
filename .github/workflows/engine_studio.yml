@@ -50,3 +50,6 @@ jobs:
       - run: flutter config --enable-macos-desktop
       - run: flutter pub get
       - run: flutter build macos --debug
+      # Packing step only (stand-in .app): catches diskutil/hdiutil regressions
+      # without needing a release build or signing.
+      - run: bash tool/verify_dmg_pack.sh
