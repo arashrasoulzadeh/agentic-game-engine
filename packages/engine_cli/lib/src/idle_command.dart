@@ -31,8 +31,14 @@ class SimulateCommand extends Command<int> {
       ..addOption(
         'prestige-at',
         help:
-            'Prestige as soon as it would give this many times what is held (for example 2). '
-            'Omit to never prestige.',
+            'Prestige any layer as soon as it would give this many times what is held of that '
+            'layer\'s currency (for example 2). Omit to never prestige.',
+      )
+      ..addFlag(
+        'play-challenges',
+        defaultsTo: true,
+        help:
+            'Start and complete incomplete challenges in definition order (default: on).',
       );
   }
 
@@ -45,7 +51,7 @@ class SimulateCommand extends Command<int> {
       'Simulate an idle game definition (JSON) and report its pacing.';
   @override
   final invocation =
-      'game_agent idle simulate <game.json> [--days N] [--prestige-at X]';
+      'game_agent idle simulate <game.json> [--days N] [--prestige-at X] [--no-play-challenges]';
 
   @override
   Future<int> run() async {
@@ -92,6 +98,7 @@ class SimulateCommand extends Command<int> {
       game.wallet,
       limit: Duration(hours: (days * 24).round()),
       prestigeAt: prestigeAt,
+      playChallenges: args['play-challenges'] as bool,
     );
     (_out ?? stdout).write(describeSimulation(report));
     return 0;

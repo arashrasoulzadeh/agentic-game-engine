@@ -1,6 +1,7 @@
 import '../../engine_core.dart';
 
 import 'advisor.dart';
+import 'challenges.dart';
 import 'economy.dart';
 import 'progression.dart';
 
@@ -47,18 +48,22 @@ class SimulationReport {
 /// it reaches milestones, so cost curves can be tuned without playing.
 ///
 /// The strategy: always buy the single generator copy or upgrade with the best **payback** (cost divided by
-/// the income it adds), waiting just long enough to afford it; prestige as soon as it would give at least
-/// [prestigeAt] times what the player already holds (never, if there is no prestige rule or
-/// [prestigeAt] is null). It is greedy and not optimal, but it is fair and repeatable: a design that
-/// cannot progress under it is worth a second look.
+/// the income it adds), waiting just long enough to afford it; prestige as soon as any layer would give at
+/// least [prestigeAt] times what the player already holds of that layer's currency (never, if there is no
+/// prestige rule or [prestigeAt] is null) — higher layers first so an ascension that is ready is not skipped
+/// while cheaper first-layer prestiges keep firing; skip prestige while a challenge is running (a prestige
+/// would wipe the challenge's run stats). When [playChallenges] is true (the default), start each incomplete
+/// challenge in definition order as soon as none is active, play under its restrictions until the goal is
+/// met, then move on — so a definition's challenges are exercised, not ignored.
 ///
-/// Reports a milestone each time income of the main resource passes a power of ten, on each prestige, and
-/// on each achievement.
+/// Reports a milestone each time income of the main resource passes a power of ten, on each prestige, on
+/// each challenge start/completion, and on each achievement.
 SimulationReport simulateIdle(
   World world,
   BigTreasury wallet, {
   Duration limit = const Duration(days: 7),
   double? prestigeAt,
+  bool playChallenges = true,
   String mainResource = 'coins',
   int maxActions = 5000,
 }) {
@@ -100,33 +105,63 @@ SimulationReport simulateIdle(
         nextDecade++;
       }
     }
+    final challengeId = checkChallenges(world, wallet);
+    if (challengeId != null) note('challenge completed: $challengeId');
     for (final id in checkAchievements(world, wallet)) {
       note('achievement: $id');
     }
   }
 
+  /// Starts the next incomplete challenge; returns true when one began (the run was reset).
+  bool tryStartNextChallenge() {
+    if (!playChallenges || activeChallenge(world) != null) return false;
+    final store = world.storeOf<Challenge>();
+    for (var i = 0; i < store.length; i++) {
+      final c = store.denseAt(i);
+      if (c.completed) continue;
+      if (!startChallenge(world, wallet, c.id)) continue;
+      note('challenge start: ${c.id}');
+      nextDecade = 0;
+      return true;
+    }
+    return false;
+  }
+
+  /// Prestiges the highest-index layer that meets [prestigeAt]; returns true when one fired.
+  bool tryPrestige() {
+    if (prestigeAt == null || activeChallenge(world) != null) return false;
+    final rules = world.storeOf<PrestigeRule>();
+    // Highest layer first: otherwise a ready ascension waits forever behind repeated first-layer prestiges.
+    for (var i = rules.length - 1; i >= 0; i--) {
+      final rule = rules.denseAt(i);
+      final gain = prestigeGainNow(world, rule.id);
+      if (gain < BigNumber.one) continue;
+      final held = wallet.of(rule.currency);
+      if (held.isZero || gain >= held * BigNumber.from(prestigeAt)) {
+        performPrestige(world, wallet, rule.id);
+        final label = rule.id == 'prestige' ? 'prestige' : 'prestige ${rule.id}';
+        note(
+          '$label #${world.storeOf<IdleStats>().denseAt(0).prestigeCount} (+${gain.toString()})',
+        );
+        nextDecade = 0;
+        return true;
+      }
+    }
+    return false;
+  }
+
   for (var step = 0; step < maxActions && t < limitSeconds; step++) {
     checkMilestones();
 
-    if (prestigeAt != null) {
-      final gain = prestigeGainNow(world);
-      final rules = world.storeOf<PrestigeRule>();
-      if (rules.length > 0 && gain >= BigNumber.one) {
-        final held = wallet.of(rules.denseAt(0).currency);
-        if (held.isZero || gain >= held * BigNumber.from(prestigeAt)) {
-          performPrestige(world, wallet);
-          note(
-            'prestige #${world.storeOf<IdleStats>().denseAt(0).prestigeCount} (+${gain.toString()})',
-          );
-          nextDecade = 0;
-          continue;
-        }
-      }
-    }
+    if (tryPrestige()) continue;
+
+    if (tryStartNextChallenge()) continue;
 
     final best = bestPurchase(world, wallet, mainResource: mainResource);
 
     if (best == null || best.gain <= BigNumber.zero) {
+      // A challenge start resets the run; try that before calling the design a dead end.
+      if (tryStartNextChallenge()) continue;
       stalled = true;
       stallReason = 'nothing left to buy that adds income';
       break;
@@ -136,6 +171,7 @@ SimulationReport simulateIdle(
     final missing = best.cost - wallet.of(best.resource);
     if (missing > BigNumber.zero) {
       if (rate <= BigNumber.zero) {
+        if (tryStartNextChallenge()) continue;
         stalled = true;
         stallReason = 'the next purchase costs a resource nothing earns';
         break;

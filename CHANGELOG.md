@@ -11,6 +11,15 @@ pubspec.yaml.
 ### Removed
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
+### Changed
+- Idle balance simulator (`simulateIdle` / `idle.simulate`): prestiges **every** layer that meets `prestigeAt`
+  (higher layers first), skips prestige while a challenge is running, and plays incomplete challenges in
+  definition order (`playChallenges`, default true; `idle.simulate` exposes the flag).
+- Idle UI: generator / upgrade lists and the prestige / achievement / settings / challenge / golden panels
+  rebuild through `ThrottledListenableBuilder` (default 250 ms) so tick-driven updates sit below the
+  controller's 10 Hz rate; `IdleController.urgentGeneration` bypasses the throttle for buys and other
+  actions. The resource header still follows every tick.
+
 ### Added
 - `engine_api` MCP server over stdio (phase 6, part 1 of `engine_mcp.md`): one tool per non-Flutter operation with JSON Schema, annotations and a detailed description, `tools/call` returning the result envelope, resources for the catalogue and schemas, `--project`, `--read-only`, `--allow/--deny`, `--underscore-tool-names`.
 - `engine_api --http`: REST (`/v1/<group>/<verb>`), JSON-RPC (`/rpc`), MCP (`/mcp`) and a generated OpenAPI document on one localhost port, behind a bearer token (`.studio/api-token`), with a Host-header check and request size limit.

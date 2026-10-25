@@ -1,7 +1,7 @@
 // Balance simulator: plays an idle game definition with a greedy strategy and prints when it reaches
 // milestones. The same thing as `game_agent idle simulate`, without installing the CLI.
 //
-//   dart run tool/simulate.dart path/to/game.json [--days 3] [--prestige-at 2.0]
+//   dart run tool/simulate.dart path/to/game.json [--days 3] [--prestige-at 2.0] [--no-play-challenges]
 //
 // Deterministic: the same definition and options always print the same report.
 import 'dart:convert';
@@ -14,7 +14,7 @@ int main(List<String> args) {
   final path = args.where((a) => !a.startsWith('--')).firstOrNull;
   if (path == null) {
     stderr.writeln(
-      'usage: dart run tool/simulate.dart <game.json> [--days N] [--prestige-at X]',
+      'usage: dart run tool/simulate.dart <game.json> [--days N] [--prestige-at X] [--no-play-challenges]',
     );
     return 64;
   }
@@ -46,6 +46,7 @@ int main(List<String> args) {
     game.wallet,
     limit: Duration(hours: ((option('--days') ?? 3) * 24).round()),
     prestigeAt: option('--prestige-at'),
+    playChallenges: !args.contains('--no-play-challenges'),
   );
   stdout.write(describeSimulation(report));
   return 0;

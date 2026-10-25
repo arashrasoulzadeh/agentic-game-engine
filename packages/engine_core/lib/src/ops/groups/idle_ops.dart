@@ -83,8 +83,10 @@ List<Operation> idleOperations() => [
     summary:
         'Play an idle game with a deterministic greedy strategy and report its pacing.',
     description:
-        'Always buys the best-payback purchase, waiting just long enough to afford it, and prestiges when it would '
-        'give `prestigeAt` times what is held. Same input, same report. Use it to tune cost curves without playing.',
+        'Always buys the best-payback purchase, waiting just long enough to afford it, and prestiges any layer when '
+        'it would give `prestigeAt` times what is held of that layer\'s currency (higher layers first). Incomplete '
+        'challenges are played in order unless `playChallenges` is false. Same input, same report. Use it to tune '
+        'cost curves without playing.',
     kind: OperationKind.read,
     scope: OperationScope.pure,
     idempotent: true,
@@ -96,7 +98,15 @@ List<Operation> idleOperations() => [
         'prestigeAt',
         ParamType.number,
         min: 0.01,
-        description: 'Prestige once the gain is this many times what is held.',
+        description:
+            'Prestige a layer once its gain is this many times what is held of that layer\'s currency.',
+      ),
+      Param(
+        'playChallenges',
+        ParamType.boolean,
+        defaultValue: true,
+        description:
+            'Start and complete incomplete challenges in definition order.',
       ),
       Param('mainResource', ParamType.string, defaultValue: 'coins'),
     ],
@@ -122,6 +132,7 @@ List<Operation> idleOperations() => [
         game.wallet,
         limit: Duration(hours: ((a['days']! as num) * 24).round()),
         prestigeAt: (a['prestigeAt'] as num?)?.toDouble(),
+        playChallenges: a['playChallenges']! as bool,
         mainResource: a['mainResource']! as String,
       );
       return OpOutcome.data({

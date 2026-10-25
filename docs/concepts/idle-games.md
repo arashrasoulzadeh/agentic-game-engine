@@ -199,7 +199,11 @@ The engine makes a deliberate, simple choice: **a single-player idle game trusts
 ## Tuning without playing
 
 `simulateIdle` plays a definition with a deterministic greedy strategy (buy the best payback, wait just long enough)
-and reports when income reaches each power of ten, when achievements and prestiges happen, and why a design stalls:
+and reports when income reaches each power of ten, when achievements and prestiges happen, and why a design stalls.
+When `prestigeAt` is set it prestiges **every** layer that meets the threshold (higher layers first, so a ready
+ascension is not starved by cheaper first-layer prestiges); while a challenge is running it does not prestige
+(that would wipe the challenge's run). Incomplete challenges are started in definition order as soon as none is
+active (`playChallenges: false` skips them):
 
 ```bash
 cd packages/engine_idle

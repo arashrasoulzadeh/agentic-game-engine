@@ -19,6 +19,7 @@ SimulationReport run(
   Map<String, dynamic> json, {
   Duration limit = const Duration(days: 1),
   double? prestigeAt,
+  bool playChallenges = true,
 }) {
   final g = load(json);
   return simulateIdle(
@@ -26,6 +27,7 @@ SimulationReport run(
     g.game.wallet,
     limit: limit,
     prestigeAt: prestigeAt,
+    playChallenges: playChallenges,
   );
 }
 
@@ -82,6 +84,90 @@ void main() {
     final r = run(cookie(), limit: const Duration(days: 3), prestigeAt: 1.0);
     expect(r.milestones.any((m) => m.label.startsWith('prestige #')), isTrue);
   });
+
+  test(
+    'prestige-at considers every layer: a ready higher layer fires instead of only the first',
+    () {
+      final layered = cookie()
+        ..['resources'] = {
+          'coins': {'start': '15'},
+          'gems': <String, dynamic>{},
+          'stars': <String, dynamic>{},
+        }
+        ..remove('prestige')
+        ..['prestiges'] = [
+          {
+            'id': 'prestige',
+            'currency': 'gems',
+            'basedOn': 'coins',
+            'divisor': '1e6',
+            'exponent': 0.5,
+            'bonusPerUnit': 0.05,
+            'startingAmounts': {'coins': '15'},
+          },
+          {
+            'id': 'ascend',
+            'currency': 'stars',
+            'basedOn': 'gems',
+            'divisor': '10',
+            'exponent': 1,
+            'bonusPerUnit': 0.5,
+            'resetsCurrencies': ['gems'],
+            'startingAmounts': {'coins': '15'},
+          },
+        ];
+      final r = run(
+        layered,
+        limit: const Duration(days: 14),
+        prestigeAt: 1.0,
+      );
+      expect(
+        r.milestones.any((m) => m.label.startsWith('prestige #')),
+        isTrue,
+        reason: 'first layer still prestiges',
+      );
+      expect(
+        r.milestones.any((m) => m.label.startsWith('prestige ascend #')),
+        isTrue,
+        reason: 'higher layer is not ignored',
+      );
+    },
+  );
+
+  test(
+    'it starts and completes challenges, and playChallenges: false skips them',
+    () {
+      final withChallenge = cookie()
+        ..['challenges'] = [
+          {
+            'id': 'frugal',
+            'rules': ['noUpgrades'],
+            'goalStat': 'run:coins',
+            'goalAtLeast': '50',
+            'reward': '2',
+          },
+        ];
+      final played = run(
+        withChallenge,
+        limit: const Duration(hours: 6),
+        playChallenges: true,
+      );
+      expect(
+        played.milestones.map((m) => m.label),
+        containsAll(['challenge start: frugal', 'challenge completed: frugal']),
+      );
+
+      final skipped = run(
+        withChallenge,
+        limit: const Duration(hours: 6),
+        playChallenges: false,
+      );
+      expect(
+        skipped.milestones.any((m) => m.label.contains('challenge')),
+        isFalse,
+      );
+    },
+  );
 
   test(
     'a design with nothing that earns anything stalls instead of looping forever',

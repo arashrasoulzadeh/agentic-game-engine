@@ -392,7 +392,7 @@ REST: `POST /v1/idle/format_number` · MCP tool: `idle.format_number` · JSON-RP
 
 Play an idle game with a deterministic greedy strategy and report its pacing.
 
-Always buys the best-payback purchase, waiting just long enough to afford it, and prestiges when it would give `prestigeAt` times what is held. Same input, same report. Use it to tune cost curves without playing.
+Always buys the best-payback purchase, waiting just long enough to afford it, and prestiges any layer when it would give `prestigeAt` times what is held of that layer's currency (higher layers first). Incomplete challenges are played in order unless `playChallenges` is false. Same input, same report. Use it to tune cost curves without playing.
 
 *read*, idempotent.
 
@@ -401,7 +401,8 @@ Always buys the best-payback purchase, waiting just long enough to afford it, an
 | `path` | path | |
 | `json` | json | |
 | `days` | number; default `3`; 0.01 to 3650 | |
-| `prestigeAt` | number; 0.01 to ∞ | Prestige once the gain is this many times what is held. |
+| `prestigeAt` | number; 0.01 to ∞ | Prestige a layer once its gain is this many times what is held of that layer's currency. |
+| `playChallenges` | boolean; default `true` | Start and complete incomplete challenges in definition order. |
 | `mainResource` | string; default `"coins"` | |
 
 Errors: `validation_failed`.

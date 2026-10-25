@@ -123,15 +123,17 @@ CI, or from an agent.
 game_agent idle simulate assets/idle_game.json --days 2 --prestige-at 2
 ```
 
-Plays an idle game definition with a deterministic greedy strategy (always buy the best payback, prestige when it
-pays `--prestige-at` times what you hold) and prints when income passes each power of ten, each prestige, each
+Plays an idle game definition with a deterministic greedy strategy (always buy the best payback, prestige any
+layer when it pays `--prestige-at` times what you hold of that layer's currency, play incomplete challenges in
+order) and prints when income passes each power of ten, each prestige, each challenge start/completion, each
 achievement and the final income. Exits 1 on an invalid definition, printing every problem with its path. The
 same input always prints the same report.
 
 | Option | Default | Meaning |
 |---|---|---|
 | `--days` | `3` | Game time to simulate. |
-| `--prestige-at` | never | Prestige once the gain is at least this multiple of what is held. |
+| `--prestige-at` | never | Prestige a layer once its gain is at least this multiple of what is held. |
+| `--play-challenges` / `--no-play-challenges` | on | Start and complete incomplete challenges. |
 
 ## studio
 
