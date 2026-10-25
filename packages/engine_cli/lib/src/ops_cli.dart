@@ -34,15 +34,14 @@ class CliIo {
   final Stream<List<int>> stdinStream;
 }
 
-/// The project folder for a run: `--project`, or the nearest ancestor of the working directory with a
-/// `pubspec.yaml`, or null (pure operations still work).
+/// The project folder for a run: `--project`, or the nearest ancestor of the
+/// working directory that looks like a `game_agent create` project (pubspec +
+/// assets/levels, idle_game.json, or game_config.json), or null.
 String? findProjectRoot(String? flag, {String? from}) {
   if (flag != null) return p.normalize(p.absolute(flag));
   var dir = p.normalize(p.absolute(from ?? Directory.current.path));
   while (true) {
-    if (File(p.join(dir, 'pubspec.yaml')).existsSync() &&
-        Directory(p.join(dir, 'assets', 'levels')).existsSync())
-      return dir;
+    if (isGameProjectRoot(dir)) return dir;
     final parent = p.dirname(dir);
     if (parent == dir) return null;
     dir = parent;
@@ -62,7 +61,7 @@ void addOperationCommands(
     ..addOption(
       'project',
       help:
-          'The game project folder (default: the nearest folder with pubspec.yaml and assets/levels).',
+          'The game project folder (default: nearest create template: pubspec + assets/levels, idle_game.json, or game_config.json).',
     )
     ..addFlag(
       'read-only',

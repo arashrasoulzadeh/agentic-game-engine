@@ -9,9 +9,10 @@ Background reading, if you want it:
 [Turn-based strategy concepts](../concepts/turn-based-strategy.md).
 
 !!! tip "Skip the typing"
-    `game_agent create my_war --template strategy_game` generates steps 1–5
-    and 7 already assembled. This tutorial shows what's inside so you can
-    change it.
+    `game_agent create my_war --template strategy_game` generates the skirmish
+    already assembled: map and units in `assets/levels/skirmish.level.json`
+    (edit with `level.*` or `strategy.simulate_turns`), systems and AI in
+    `lib/main.dart`. This tutorial shows the same pieces so you can change them.
 
 Every code block below is executed by
 `packages/engine_strategy/test/doc_examples_test.dart`, so what you read is

@@ -11,7 +11,8 @@ Related (not task lists):
 - [engine_mcp.md](engine_mcp.md) — agent API (phases 0–7 shipped; add ops via
   `engine_core` groups + `gen_api_docs.dart`)
 
-Sections: [Performance](#performance) · [Engine](#engine) · [Idle polish](#idle-polish) ·
+Sections: [Performance](#performance) · [Engine](#engine) ·
+[Game-dev workflow](#game-dev-workflow) · [Idle polish](#idle-polish) ·
 [Studio](#studio) · [Docs](#docs) · [Release](#release) ·
 [Parked decisions](#parked-decisions)
 
@@ -33,6 +34,22 @@ Sections: [Performance](#performance) · [Engine](#engine) · [Idle polish](#idl
 - [ ] **Zahaak gaps** — features that local `zahaak` needs but the engine
       lacks (`zahaak/docs/engine-gap-analysis.md`). Not scoped; revisit once
       its combat/dialogue scope is locked.
+
+## Game-dev workflow
+
+Agent create → edit → verify path. Shipped: `project.open` accepts idle /
+strategy (not only `assets/levels`); strategy map+units in
+`skirmish.level.json`; platformer template has enemy/coin/HUD; `engine.capabilities`
+exposes `docsUrl`. Still open:
+
+- [ ] Bundle curated docs (or fetch) so `engine.docs` works without a monorepo
+      `docs/` checkout (`docsAvailable` is already reported).
+- [ ] Shared pause / settings / credits shell in all three templates
+      (`ButtonMenuScene`, `SettingsMenuScene`, `AudioManager` stubs).
+- [ ] `assets/i18n/en.json` stub in platformer + strategy templates.
+- [ ] `project.manifest` as a first-class op (today: studio-only CLI).
+- [ ] Wire template settings to `PlayerOptions` volumes + colorblind /
+      shake (leave engine-auto `reduceMotion` parked under Docs).
 
 ## Idle polish
 

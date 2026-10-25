@@ -12,15 +12,28 @@ class ProjectOpenException implements Exception {
   String toString() => message;
 }
 
+/// True when [root] looks like a `game_agent create` project an agent can open.
+///
+/// Accepts platformer (`assets/levels`), idle (`assets/idle_game.json`), or
+/// strategy (`assets/game_config.json`) layouts — not only levels folders.
+bool isGameProjectRoot(String root) {
+  if (!File(p.join(root, 'pubspec.yaml')).existsSync()) return false;
+  if (Directory(p.join(root, 'assets', 'levels')).existsSync()) return true;
+  if (File(p.join(root, 'assets', 'idle_game.json')).existsSync()) return true;
+  if (File(p.join(root, 'assets', 'game_config.json')).existsSync()) return true;
+  return Directory(p.join(root, 'assets')).existsSync();
+}
+
 /// A game project on disk: the folder `game_agent create` made, which holds a
-/// `pubspec.yaml` and an `assets/levels` folder.
+/// `pubspec.yaml` and game content under `assets/` (levels, idle definition,
+/// and/or `game_config.json`).
 class StudioProject {
   final String root;
 
   const StudioProject._(this.root);
 
   /// Opens [path] as a project. Throws [ProjectOpenException] when the folder is
-  /// missing, is not a game project, or has no levels folder.
+  /// missing or is not a recognisable game project.
   factory StudioProject.open(String path) {
     final dir = Directory(path);
     if (!dir.existsSync()) {
@@ -31,17 +44,20 @@ class StudioProject {
         '"$path" is not a game project: no pubspec.yaml.',
       );
     }
-    if (!Directory(p.join(path, 'assets', 'levels')).existsSync()) {
+    if (!isGameProjectRoot(path)) {
       throw ProjectOpenException(
-        '"$path" has no assets/levels folder to edit.',
+        '"$path" has no game assets (need assets/levels, '
+        'assets/idle_game.json, or assets/game_config.json).',
       );
     }
     return StudioProject._(p.normalize(p.absolute(path)));
   }
 
   /// The level files in this project, sorted by path, relative to [root].
+  /// Empty when the project has no `assets/levels` folder (idle / strategy).
   List<String> levelPaths() {
     final dir = Directory(p.join(root, 'assets', 'levels'));
+    if (!dir.existsSync()) return [];
     return [
       for (final file in dir.listSync(recursive: true).whereType<File>())
         if (file.path.endsWith('.json') &&

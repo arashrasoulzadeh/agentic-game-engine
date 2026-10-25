@@ -12,6 +12,11 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Changed
+- Game-dev workflow: `project.open` / CLI project discovery accept idle and strategy
+  projects (not only `assets/levels`); strategy template loads
+  `assets/levels/skirmish.level.json` so agents can `level.*` / `strategy.simulate_turns`;
+  platformer create includes patrol enemy, coin and health HUD; `engine.capabilities`
+  reports `docsUrl` / `docsAvailable`. Getting-started points at the agent API loop.
 - Idle template polish: persists number format via `PlayerOptions`, multi-currency
   `resourceIds` header, layered `"prestiges"`, wired `AutoBuySystem` + `whileAway`,
   `onDouble` / `doubleOffline` stub, `LogReturnNotifier`, synergy upgrade sample.

@@ -23,13 +23,10 @@ const _assetDir = String.fromEnvironment('ASSET_DIR');
 //   `TileMap` — a "legend" + ASCII `rows` shape is the human-readable
 //   way to write a tile grid by hand) rather than hand-spawned in Dart.
 // - MyGame.createInitialScene returns the first Scene GameRunner loads.
-// - MainScene.populate loads that level, attaches the live InputState the
-//   player needs to read keyboard input, and wires up the systems a
-//   platformer needs (installPlatformerSystems). A game with more than
-//   one level/room adds more Scene subclasses and switches between them
-//   via the SceneController handed to `populate` — see
-//   `installRoomExitTrigger`/`RoomExit` for door-driven transitions.
-// - MainScene.loadAssets loads sprite atlases before the first frame.
+// - MainScene.populate loads that level, attaches InputState, installs
+//   platformer systems, then adds a patrol enemy, coin pickup and health
+//   HUD (tutorial 1 loop) so create is playable out of the box.
+// - More rooms: Scene subclasses + installRoomExitTrigger / RoomExit.
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,12 +86,30 @@ class MainScene extends Scene {
     // game's InputController.
     _player = named['player']!;
     world.storeOf<InputState>().set(_player, _inputController.state);
+    world.storeOf<Health>().set(_player, Health(current: 100, max: 100));
+    world.storeOf<Inventory>().set(_player, Inventory({'coin': 0}));
 
-    // installPlatformerSystems registers every system a platformer needs
-    // in the one order that's actually correct (gravity -> movement ->
-    // tile collision -> jump -> ...) — add your own systems/behaviors on
-    // top of it, not in place of it.
-    installPlatformerSystems(world, player: _player, behaviors: BehaviorRegistry());
+    final behaviors = BehaviorRegistry()
+      ..register('patrol', PatrolBehavior(minX: 280, maxX: 480, speed: 60));
+    installPlatformerSystems(world, player: _player, behaviors: behaviors);
+
+    spawnEnemy(
+      world,
+      x: 400,
+      y: 400,
+      behaviorId: 'patrol',
+      affectedByGravity: true,
+      maxHealth: 20,
+      atlasId: 'default',
+      spriteRegion: 'enemy',
+    );
+    spawnHealthHudBar(world, source: _player, x: 20, y: 20, width: 200, height: 20);
+
+    final coin = world.spawn();
+    world.storeOf<Position>().set(coin, Position(450, 380));
+    world.storeOf<Collider>().set(coin, Collider(8));
+    world.storeOf<Sprite>().set(coin, Sprite('default', 'coin'));
+    dealPickupOnTouch(world, {coin}, 'coin');
 
     // Entity ids change on a level reload and the systems above hold the
     // player's, so a saved level restarts the scene (which re-reads the file)
@@ -117,21 +132,19 @@ class MainScene extends Scene {
     return atlasRegistry;
   }
 
-  /// A generated placeholder sprite so the template works out of the box
-  /// with no bundled image files. Replace with a real sprite sheet loaded
-  /// via `SpriteAtlas.loadFromAssets` for an actual game.
+  /// Placeholder sprites so the template runs with no image files.
   Future<SpriteAtlas> _placeholderAtlas() async {
     const size = 32.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    canvas.drawRect(
-      const Rect.fromLTWH(0, 0, size, size),
-      Paint()..color = Colors.cyanAccent,
-    );
-    final image =
-        await recorder.endRecording().toImage(size.toInt(), size.toInt());
+    canvas.drawRect(const Rect.fromLTWH(0, 0, size, size), Paint()..color = Colors.cyanAccent);
+    canvas.drawRect(const Rect.fromLTWH(size, 0, size, size), Paint()..color = Colors.orangeAccent);
+    canvas.drawCircle(const Offset(size * 2.5, size / 2), 8, Paint()..color = Colors.amber);
+    final image = await recorder.endRecording().toImage(size.toInt() * 3, size.toInt());
     return SpriteAtlas(image, {
       'player': const Rect.fromLTWH(0, 0, size, size),
+      'enemy': const Rect.fromLTWH(size, 0, size, size),
+      'coin': const Rect.fromLTWH(size * 2, 0, size, size),
     });
   }
 }

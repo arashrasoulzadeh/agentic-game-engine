@@ -19,7 +19,11 @@ an LLM to play or test your game.
 flowchart LR
     GS[Getting started] --> T1[1 · Platformer]
     GS --> T2[2 · Strategy]
+    GS --> T5[5 · Idle]
+    GS --> T6[6 · Agent API]
     T2 --> T3[3 · Agent-driven]
     T2 --> T4[4 · Multiplayer]
     T1 -.-> T3
+    T6 -.-> T1
+    T6 -.-> T5
 ```

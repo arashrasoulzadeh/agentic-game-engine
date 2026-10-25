@@ -62,6 +62,8 @@ List<Operation> engineOperations(OperationRegistry Function() registry) => [
         'registryVersion': registry().version,
         'groups': groups,
         'operationCount': visible.length,
+        'docsUrl': 'https://meetarash.ir/agentic-game-engine/',
+        'docsAvailable': ctx.docsRoot != null && ctx.docsRoot!.isNotEmpty,
         'unsupported': [
           for (final o in visible)
             if (o.requiresFlutter)

@@ -105,7 +105,8 @@ List<Operation> projectOperations() => [
     summary:
         'Open a game project folder; every project operation then works inside it.',
     description:
-        'Sets the one open project of this session. The folder must contain `pubspec.yaml` and `assets/levels`. '
+        'Sets the one open project of this session. The folder must contain `pubspec.yaml` and game assets '
+        '(`assets/levels`, `assets/idle_game.json`, and/or `assets/game_config.json`). '
         'This is the only operation that takes an absolute path. Servers started with a fixed `--project` refuse it.',
     kind: OperationKind.read,
     scope: OperationScope.pure,
@@ -120,7 +121,7 @@ List<Operation> projectOperations() => [
     ],
     errors: {
       ErrorCode.notFound:
-          'The folder, its pubspec.yaml or assets/levels is missing.',
+          'The folder, its pubspec.yaml, or recognisable game assets are missing.',
       ErrorCode.forbidden: 'This server is fixed to one project.',
     },
     handler: (ctx, a) {

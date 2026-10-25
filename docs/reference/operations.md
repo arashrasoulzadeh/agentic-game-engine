@@ -1188,7 +1188,7 @@ REST: `POST /v1/project/info` · MCP tool: `project.info` · JSON-RPC method: `p
 
 Open a game project folder; every project operation then works inside it.
 
-Sets the one open project of this session. The folder must contain `pubspec.yaml` and `assets/levels`. This is the only operation that takes an absolute path. Servers started with a fixed `--project` refuse it.
+Sets the one open project of this session. The folder must contain `pubspec.yaml` and game assets (`assets/levels`, `assets/idle_game.json`, and/or `assets/game_config.json`). This is the only operation that takes an absolute path. Servers started with a fixed `--project` refuse it.
 
 *read*.
 

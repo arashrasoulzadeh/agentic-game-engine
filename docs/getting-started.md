@@ -4,7 +4,8 @@ From nothing to a running game in about five minutes.
 
 ```mermaid
 flowchart LR
-    A[Install CLI] --> B[game_agent create] --> C[flutter run] --> D[Edit lib/main.dart]
+    A[Install CLI] --> B[game_agent create] --> C[flutter run] --> D[Edit data / Dart]
+    D --> E[MCP / CLI ops: lint · validate · simulate]
 ```
 
 ## Prerequisites
@@ -36,8 +37,8 @@ prints a warning).
     game_agent create my_game
     ```
 
-    A player, solid ground, keyboard and on-screen controls. Continue with
-    [Tutorial 1](tutorials/01-hello-world.md).
+    A player, solid ground, patrol enemy, coin, health bar, keyboard and
+    on-screen controls. Continue with [Tutorial 1](tutorials/01-hello-world.md).
 
 === "Turn-based strategy"
 
@@ -45,8 +46,9 @@ prints a warning).
     game_agent create my_war --template strategy_game
     ```
 
-    An 8×8 skirmish against an AI with tap-to-select, tap-to-move/attack and
-    an end-turn strip. Continue with
+    An 8×8 skirmish against an AI; map and units in
+    `assets/levels/skirmish.level.json` (editable via `level.*` /
+    `strategy.simulate_turns`). Continue with
     [Tutorial 2](tutorials/02-turn-based-strategy.md).
 
 === "Idle / incremental"
@@ -119,18 +121,26 @@ New to `World`, `spawn` and `storeOf`? Read the [ECS guide](concepts/ecs.md).
 | Next | Why |
 |---|---|
 | [Tutorials](tutorials/README.md) | Build a platformer, a strategy game, or an agent-driven game. |
+| [Tutorial 6 · Agent API](tutorials/06-agent-api.md) | MCP / REST / CLI: create → open → edit → validate → undo. |
+| [Operations reference](reference/operations.md) | Every op (same on MCP, REST, JSON-RPC, CLI). |
 | [Cheat sheet](reference/cheatsheet.md) | The calls you'll use most, on one page. |
 | [FAQ](faq.md) | If something doesn't work. |
 
 ## Everyday commands
 
 ```bash
-game_agent upgrade --ref main                # move the engine pin forward
-game_agent lint assets/levels/main.level.json   # validate a level (add --playable)
+game_agent upgrade --ref main                     # move the engine pin forward
+game_agent lint assets/levels/main.level.json     # validate a level (add --playable)
+game_agent idle validate assets/idle_game.json    # idle definition check
+game_agent strategy simulate-turns assets/levels/skirmish.level.json --turns 4
+game_agent project open .                         # then project.problems / level.* / idle.*
 game_agent pack-assets --input art --output-image assets/packed/atlas.png
 ```
 
-See the [CLI reference](reference/cli.md) for every option.
+See the [CLI reference](reference/cli.md) and [transports](reference/transports.md) for MCP/REST.
+
+Published docs (when `engine.docs` has no local `docs/`):
+<https://meetarash.ir/agentic-game-engine/> (`engine.capabilities` → `docsUrl`).
 
 ## Why a git dependency?
 

@@ -111,7 +111,10 @@ void main() {
       expect(pubspec, contains('https://example.com/engine.git'));
       expect('ref: test-ref'.allMatches(pubspec).length, 3);
       expect(pubspec, isNot(contains('{{')));
-      expect(File('${tmp.path}/my_game/lib/main.dart').existsSync(), isTrue);
+      final main = File('${tmp.path}/my_game/lib/main.dart').readAsStringSync();
+      expect(main, contains('spawnEnemy'));
+      expect(main, contains('spawnHealthHudBar'));
+      expect(main, contains('dealPickupOnTouch'));
     },
   );
 
@@ -228,9 +231,20 @@ void main() {
       ).readAsStringSync();
       expect(pubspec, contains('packages/engine_strategy'));
       expect(pubspec, isNot(contains('engine_platformer')));
+      final warMain = File(
+        '${tmp.path}/war_game/lib/main.dart',
+      ).readAsStringSync();
+      expect(warMain, contains('installStrategySystems'));
+      expect(warMain, contains('skirmish.level.json'));
       expect(
-        File('${tmp.path}/war_game/lib/main.dart').readAsStringSync(),
-        contains('installStrategySystems'),
+        File(
+          '${tmp.path}/war_game/assets/levels/skirmish.level.json',
+        ).existsSync(),
+        isTrue,
+      );
+      expect(
+        File('${tmp.path}/war_game/pubspec.yaml').readAsStringSync(),
+        contains('assets/levels/skirmish.level.json'),
       );
 
       await expectLater(

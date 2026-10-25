@@ -1,0 +1,78 @@
+{
+  "entities": [
+    {
+      "name": "tileMap",
+      "components": {
+        "position": { "x": 0, "y": 0 },
+        "tileMap": {
+          "cols": 8,
+          "rows": 8,
+          "tileWidth": 48,
+          "tileHeight": 48,
+          "tiles": [
+            1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 2, 2, 1, 1, 1, 1,
+            1, 1, 2, 3, 1, 1, 2, 1,
+            1, 1, 1, 3, 1, 2, 2, 1,
+            1, 2, 1, 1, 1, 1, 1, 1,
+            1, 2, 2, 1, 1, 3, 1, 1,
+            1, 1, 1, 1, 1, 3, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1
+          ],
+          "solidTileIds": [3],
+          "atlasId": "terrain",
+          "regionByTileId": { "1": "grass", "2": "forest", "3": "mountain" },
+          "zIndex": -10
+        }
+      }
+    },
+    {
+      "name": "red_1",
+      "components": {
+        "team": { "id": "red" },
+        "gridPosition": { "col": 1, "row": 6 },
+        "position": { "x": 72, "y": 312 },
+        "actionPoints": { "max": 3, "current": 0 },
+        "unitStats": { "maxHp": 10, "hp": 10, "attack": 3, "defense": 0 },
+        "vision": { "range": 4 },
+        "sprite": { "atlasId": "units", "region": "red" }
+      }
+    },
+    {
+      "name": "red_2",
+      "components": {
+        "team": { "id": "red" },
+        "gridPosition": { "col": 2, "row": 6 },
+        "position": { "x": 120, "y": 312 },
+        "actionPoints": { "max": 3, "current": 0 },
+        "unitStats": { "maxHp": 10, "hp": 10, "attack": 3, "defense": 0 },
+        "vision": { "range": 4 },
+        "sprite": { "atlasId": "units", "region": "red" }
+      }
+    },
+    {
+      "name": "blue_1",
+      "components": {
+        "team": { "id": "blue" },
+        "gridPosition": { "col": 5, "row": 1 },
+        "position": { "x": 264, "y": 72 },
+        "actionPoints": { "max": 3, "current": 0 },
+        "unitStats": { "maxHp": 10, "hp": 10, "attack": 3, "defense": 0 },
+        "vision": { "range": 4 },
+        "sprite": { "atlasId": "units", "region": "blue" }
+      }
+    },
+    {
+      "name": "blue_2",
+      "components": {
+        "team": { "id": "blue" },
+        "gridPosition": { "col": 6, "row": 1 },
+        "position": { "x": 312, "y": 72 },
+        "actionPoints": { "max": 3, "current": 0 },
+        "unitStats": { "maxHp": 10, "hp": 10, "attack": 3, "defense": 0 },
+        "vision": { "range": 4 },
+        "sprite": { "atlasId": "units", "region": "blue" }
+      }
+    }
+  ]
+}
