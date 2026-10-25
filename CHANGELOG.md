@@ -26,7 +26,8 @@ pubspec.yaml.
 
 ### Added
 - MCP streamable HTTP: `GET /mcp` with `Accept: text/event-stream` opens an SSE session
-  (`Mcp-Session-Id` on `initialize`, `DELETE /mcp` to end); progress events are not emitted yet.
+  (`Mcp-Session-Id` on `initialize`, `DELETE /mcp` to end); `OpContext.reportProgress` forwards
+  `notifications/progress` on that stream (`strategy.simulate_turns` reports turn progress).
 - `engine.docs` operation: list or read markdown under a configured docs root (`engine_api --docs-root`,
   auto-detects the monorepo `docs/` tree; returns `unsupported` when none is set).
 - Cooperative cancellation: `CancellationToken` / `ErrorCode.cancelled`, wired through `OpContext` (Zone-scoped)

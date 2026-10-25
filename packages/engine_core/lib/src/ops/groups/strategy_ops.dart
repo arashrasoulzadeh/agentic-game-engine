@@ -222,6 +222,7 @@ List<Operation> strategyOperations() => [
       }
 
       var ended = 0;
+      var lastReported = -1;
       // AI plans one step, orders resolve on later steps; bound runaway games.
       final maxSteps = turns * teams.length * 64;
       for (var step = 0; step < maxSteps; step++) {
@@ -234,6 +235,16 @@ List<Operation> strategyOperations() => [
           if (events[i]['type'] == 'turnEnded') ended++;
         }
         final state = turnStateOf(world);
+        if (ended != lastReported) {
+          lastReported = ended;
+          ctx.reportProgress(
+            progress: ended,
+            total: turns,
+            message: state?.winner != null
+                ? 'winner: ${state!.winner}'
+                : 'round ${state?.round ?? 0}, ${state?.activeTeam ?? '?'} to move',
+          );
+        }
         if (state?.winner != null || ended >= turns) break;
       }
 

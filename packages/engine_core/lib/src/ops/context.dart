@@ -67,6 +67,7 @@ class OpContext {
     this.allowOpen = const [],
     this.imageCodec,
     this.docsRoot,
+    this.onProgress,
   }) : lockOwner = lockOwner ?? _defaultOwner(),
        files = files ?? const DiskFiles(),
        clock = clock ?? DateTime.now,
@@ -119,6 +120,28 @@ class OpContext {
   /// Absolute path to the engine's `docs/` tree for `engine.docs`. Null means that
   /// operation returns [ErrorCode.unsupported] (docs are not bundled in the package yet).
   final String? docsRoot;
+
+  /// Default progress sink (tests). Prefer the Zone-scoped sink installed by
+  /// [OperationRegistry.call] so concurrent HTTP calls stay isolated.
+  final void Function(Map<String, Object?> progress)? onProgress;
+
+  /// Reports progress to the Zone-scoped sink, or [onProgress] as a fallback.
+  void reportProgress({
+    required num progress,
+    num? total,
+    String? message,
+  }) {
+    final sink =
+        Zone.current[opProgressZoneKey]
+            as void Function(Map<String, Object?>)? ??
+        onProgress;
+    if (sink == null) return;
+    sink({
+      'progress': progress,
+      if (total != null) 'total': total,
+      if (message != null) 'message': message,
+    });
+  }
 
   /// Token for the call currently running on this isolate zone, if any.
   ///

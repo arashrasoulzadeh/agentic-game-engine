@@ -75,6 +75,7 @@ class EngineHttpServer {
       concurrent,
       allowedOrigins.toSet(),
     );
+    session.progressSend = s._sse.send;
     unawaited(server.forEach(s._handle));
     return s;
   }
@@ -384,9 +385,13 @@ class EngineHttpServer {
       );
     }
     final body = await _readBody(req);
+    final sseId = req.headers.value('mcp-session-id');
     final reply = await handleRpc(
       body,
-      (m, p, {id}) => _run(null, () => _session.dispatch(m, p, id: id)),
+      (m, p, {id}) => _run(
+        null,
+        () => _session.dispatch(m, p, id: id, sseSessionId: sseId),
+      ),
     );
     if (reply == null) {
       req.response.statusCode = 202;

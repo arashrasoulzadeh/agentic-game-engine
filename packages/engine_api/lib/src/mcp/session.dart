@@ -43,21 +43,36 @@ class McpSession {
   ///
   /// When [rpcId] is set the call is cancellable via `notifications/cancelled`
   /// with that same id (as `requestId`).
+  /// Forwards progress into an SSE session when the HTTP layer sets this.
+  void Function(String sessionId, Object payload)? progressSend;
+
   Future<OpResult> invoke(
     String name,
     Map<String, Object?> args, {
     String transport = 'mcp',
     String? requestId,
     Object? rpcId,
+    String? sseSessionId,
   }) async {
     final token = rpcId != null ? CancellationToken() : null;
     if (rpcId != null && token != null) _inFlight[rpcId] = token;
+    final send = progressSend;
     try {
       var result = await registry.call(
         name,
         args,
         ctx,
         cancellation: token,
+        onProgress: sseSessionId == null || send == null
+            ? null
+            : (p) => send(sseSessionId, {
+                'jsonrpc': '2.0',
+                'method': 'notifications/progress',
+                'params': {
+                  if (rpcId != null) 'progressToken': rpcId,
+                  ...p,
+                },
+              }),
       );
       var bytes = jsonEncode(result.toJson()).length;
       if (bytes > maxResultBytes) {
@@ -119,6 +134,7 @@ class McpSession {
     String method,
     Map<String, Object?> params, {
     Object? id,
+    String? sseSessionId,
   }) async {
     switch (method) {
       case 'initialize':
@@ -146,7 +162,7 @@ class McpSession {
       case 'tools/list':
         return _toolsList(params);
       case 'tools/call':
-        return _toolsCall(params, requestId: id);
+        return _toolsCall(params, requestId: id, sseSessionId: sseSessionId);
       case 'resources/list':
         return {
           'resources': [
@@ -250,6 +266,7 @@ class McpSession {
   Future<Object?> _toolsCall(
     Map<String, Object?> params, {
     Object? requestId,
+    String? sseSessionId,
   }) async {
     final name = params['name'];
     if (name is! String) throw RpcException(-32602, 'name is required');
@@ -265,6 +282,7 @@ class McpSession {
         (args as Map?)?.cast<String, Object?>() ?? {},
         transport: 'mcp',
         rpcId: requestId,
+        sseSessionId: sseSessionId,
       ),
     );
   }

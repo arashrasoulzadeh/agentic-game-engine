@@ -71,13 +71,14 @@ class OperationRegistry {
 
   /// Runs [name] with [rawArgs]. Never throws: every failure is an [OpResult.failure].
   ///
-  /// When [cancellation] is set it is visible as [OpContext.cancellation] for
-  /// the duration of the call (via a [Zone]), so concurrent invokes stay isolated.
+  /// When [cancellation] / [onProgress] are set they are visible via Zone for
+  /// the duration of the call, so concurrent invokes on one [OpContext] stay isolated.
   Future<OpResult> call(
     String name,
     Map<String, Object?> rawArgs,
     OpContext ctx, {
     CancellationToken? cancellation,
+    void Function(Map<String, Object?> progress)? onProgress,
   }) {
     Future<OpResult> body() async {
       final sw = Stopwatch()..start();
@@ -140,10 +141,13 @@ class OperationRegistry {
       }
     }
 
-    if (cancellation == null) return body();
+    if (cancellation == null && onProgress == null) return body();
     return runZoned(
       body,
-      zoneValues: {opCancellationZoneKey: cancellation},
+      zoneValues: {
+        if (cancellation != null) opCancellationZoneKey: cancellation,
+        if (onProgress != null) opProgressZoneKey: onProgress,
+      },
     );
   }
 }

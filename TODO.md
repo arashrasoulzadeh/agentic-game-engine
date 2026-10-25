@@ -149,11 +149,11 @@ What is left:
 - [x] **`level.lint` `includeRender`** — structural PNG via `renderLevelPreview` + injected `ImageCodec`;
       result carries `pngBase64` / `render` meta; CLI `lint --render` is a thin adapter that writes the PNG;
       MCP `tools/call` also emits an `image` content part when `pngBase64` is present.
-- [ ] **Server extras:** progress notifications over SSE (hub + `GET /mcp` stream and
-      `Mcp-Session-Id` on initialize / `DELETE /mcp` are shipped; ops do not emit progress yet).
-      Cancellation is done (`CancellationToken` on `OpContext` via Zone; `notifications/cancelled`
-      cancels in-flight `tools/call` / RPC by request id; `strategy.simulate_turns` polls it).
-      `Retry-After` on 429 is already shipped.
+- [x] **Server extras (streamable HTTP):** SSE hub (`GET /mcp` + `Mcp-Session-Id` /
+      `DELETE /mcp`), progress via `OpContext.reportProgress` → `notifications/progress` on the
+      session stream (`strategy.simulate_turns` reports turn progress). Cancellation is done
+      (`CancellationToken` Zone-scoped; `notifications/cancelled`). `Retry-After` on 429 shipped.
+      Request-log levels / richer progress from more ops can still grow later.
 
 ## Idle / incremental games
 

@@ -4,6 +4,9 @@ import 'result.dart';
 /// into the current [Zone] (so concurrent calls on one [OpContext] do not share a token).
 const Symbol opCancellationZoneKey = #engineOpCancellation;
 
+/// Symbol key for a per-call progress sink installed alongside [opCancellationZoneKey].
+const Symbol opProgressZoneKey = #engineOpProgress;
+
 /// Cooperative cancel for long-running operations. Callers cancel; handlers
 /// poll [throwIfCancelled] (or [isCancelled]) between units of work.
 class CancellationToken {
