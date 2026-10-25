@@ -532,11 +532,16 @@ List<Operation> levelWriteOperations() => [
 
 LevelEntity _tileEntity(LevelDocument doc, Map<String, Object?> a) {
   final e = _entity(doc, a['entity']! as String);
-  if (e.components['tileMap'] == null) {
+  final map = e.components['tileMap'];
+  if (map == null) {
     throw OpError(
       ErrorCode.invalidParams,
       '"${a['entity']}" has no tileMap component.',
     );
+  }
+  // Same as the studio CLI: legend+rows becomes flat tiles on first paint/fill.
+  if (map.containsKey('legend')) {
+    FlattenTileMapCommand(e).apply(doc);
   }
   return e;
 }

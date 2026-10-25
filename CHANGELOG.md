@@ -12,6 +12,11 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Changed
+- `game_agent studio` edit verbs (`add-entity`, `remove-entity`, `set-field`, `move-entity`,
+  `set-layer`, `paint-tile`, `fill-region`) are thin adapters over `level.*` (undo journal,
+  locks, structured errors). Destructive removes auto-confirm so the one-shot CLI UX is
+  unchanged; golden stdout/stderr stays the same. `level.paint_tile` /
+  `level.fill_region` flatten legend-authored tileMaps first (same as the old studio path).
 - `engine_studio/tool/package_macos.sh` packs with `diskutil image create` (UDZO; falls back to
   `hdiutil`). `SKIP_FLUTTER_BUILD=1 APP_BUNDLE=…` packs a stand-in; `tool/verify_dmg_pack.sh`
   covers that path in the macOS CI job.

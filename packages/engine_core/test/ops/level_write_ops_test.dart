@@ -10,8 +10,8 @@ const lv = 'assets/levels/level1.json';
 Map<String, dynamic> level(Scratch s, [String path = lv]) =>
     jsonDecode(s.read(path)) as Map<String, dynamic>;
 
-Map<String, dynamic> entity(Scratch s, String name) =>
-    (level(s)['entities'] as List).cast<Map<String, dynamic>>().firstWhere(
+Map<String, dynamic> entity(Scratch s, String name, {String path = lv}) =>
+    (level(s, path)['entities'] as List).cast<Map<String, dynamic>>().firstWhere(
       (e) => e['name'] == name,
     );
 
@@ -207,6 +207,40 @@ void main() {
       }),
       ErrorCode.invalidParams,
     );
+  });
+
+  test('paint_tile flattens a legend-authored tileMap first', () async {
+    final s = await Scratch.create();
+    s.write(
+      'assets/levels/legend.json',
+      jsonEncode({
+        'entities': [
+          {
+            'name': 'map',
+            'components': {
+              'position': {'x': 0, 'y': 0},
+              'tileMap': {
+                'tileWidth': 10,
+                'tileHeight': 10,
+                'legend': {'.': 0, '#': 1},
+                'rows': ['..', '..'],
+              },
+            },
+          },
+        ],
+      }),
+    );
+    await s.data('level.paint_tile', {
+      'path': 'assets/levels/legend.json',
+      'entity': 'map',
+      'col': 0,
+      'row': 0,
+      'tileId': 1,
+    });
+    final map = entity(s, 'map', path: 'assets/levels/legend.json')['components']
+        ['tileMap'] as Map;
+    expect(map.containsKey('legend'), isFalse);
+    expect(map['tiles'], [1, 0, 0, 0]);
   });
 
   test('every write is undoable', () async {

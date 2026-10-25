@@ -4,19 +4,15 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
 import 'package:engine_core/engine_core.dart';
+import 'package:engine_core/engine_core_ops.dart';
 import 'package:engine_schema/engine_schema.dart';
+import 'package:path/path.dart' as p;
 
 import 'studio_command.dart' show canonicalJson;
 
-/// `game_agent studio ...`: the mutating half of the studio's command model,
-/// exposed headlessly so an agent or a script can do everything the GUI's
-/// level editor can — add/remove/move an entity, set a field, set a layer,
-/// paint a tile, fill a region — without a UI, using the exact same
-/// `EditCommand` classes the studio applies (`engine_core/lib/src/command/`).
-/// Every edit is validated before it is written, the same way
-/// `import-tmx`/`export-levels` already are, so a command that would make
-/// the level invalid never reaches disk; the file is left untouched and the
-/// run exits non-zero instead.
+/// `game_agent studio ...` edit verbs: thin adapters over the matching
+/// `level.*` operations (undo, locks, structured errors). Historical stdout /
+/// stderr wording is kept so `studio_golden_test.dart` stays green.
 void addStudioEditCommands(Command<int> studio) {
   studio
     ..addSubcommand(StudioAddEntityCommand())
@@ -49,6 +45,9 @@ LevelDocument? loadLevelOrNull(String path) {
 /// Validates [document]; an error blocks the write (the file at [path] is
 /// left exactly as it was) and this returns false. Otherwise [document] is
 /// written back to [path] in canonical form and this returns true.
+///
+/// Kept for non-registry studio commands (e.g. asset helpers) that still
+/// edit a document in memory.
 bool validateAndWrite(String path, LevelDocument document) {
   final errors = LevelValidator.forSchemas(allComponentSchemas)
       .validate(document)
@@ -66,7 +65,7 @@ bool validateAndWrite(String path, LevelDocument document) {
 }
 
 /// The entity named [name] in [document], or null after printing why there
-/// is none (missing, or more than one other command already reported it).
+/// is none.
 LevelEntity? entityNamedOrNull(LevelDocument document, String name) {
   final entity = document.entityNamed(name);
   if (entity == null) {
@@ -104,9 +103,7 @@ double? parseDoubleOption(String option, String? text) {
 }
 
 /// The JSON value [text] denotes for a component field: parsed as JSON when
-/// it is valid JSON (`3`, `3.5`, `true`, `"quoted"`, `[1,2]`, `{"a":1}`), or
-/// else kept as the literal string, so `--value hello` doesn't require
-/// `--value '"hello"'` for the common case of setting a plain string field.
+/// it is valid JSON, otherwise the literal string.
 Object? parseFieldValue(String text) {
   try {
     return jsonDecode(text);
@@ -115,8 +112,7 @@ Object? parseFieldValue(String text) {
   }
 }
 
-/// The level file argument every edit command takes, or null (with an error
-/// already printed) when it is missing.
+/// The level file argument every edit command takes, or null when missing.
 String? levelPathOrNull(ArgResults results) {
   final rest = results.rest;
   if (rest.isEmpty) {
@@ -126,10 +122,94 @@ String? levelPathOrNull(ArgResults results) {
   return rest.first;
 }
 
-/// `game_agent studio add-entity <level> [--name x] [--component c ...] [--index n]`:
-/// adds an entity whose named components start at their schema's `template`
-/// values — the same starting values `EntityPalette` gives a component placed
-/// in the studio GUI.
+/// Project root + relative path for a level file (walks up for `pubspec.yaml`,
+/// otherwise the file's parent is an ephemeral project root).
+({String root, String rel}) _levelProject(String levelPath) {
+  final abs = p.normalize(p.absolute(levelPath));
+  var dir = p.dirname(abs);
+  while (true) {
+    if (File(p.join(dir, 'pubspec.yaml')).existsSync()) {
+      return (
+        root: dir,
+        rel: p.relative(abs, from: dir).replaceAll('\\', '/'),
+      );
+    }
+    final parent = p.dirname(dir);
+    if (parent == dir) break;
+    dir = parent;
+  }
+  return (root: p.dirname(abs), rel: p.basename(abs));
+}
+
+void _printStudioOpError(OpError e, {required String displayPath}) {
+  final details = e.details;
+  final errors = details == null ? null : details['errors'];
+  if (e.code == ErrorCode.validationFailed && errors is List) {
+    stderr.writeln('Error: this would make $displayPath invalid:');
+    for (final issue in errors) {
+      stderr.writeln('  $issue');
+    }
+    return;
+  }
+  final msg = e.message;
+  final body = msg.isEmpty ? msg : '${msg[0].toLowerCase()}${msg.substring(1)}';
+  stderr.writeln('Error: $body');
+  if (e.hint != null) stderr.writeln(e.hint);
+}
+
+/// Calls [op] with [apply] (and auto-confirms destructive previews so the
+/// historical one-shot `studio` verbs keep working).
+Future<OpResult?> _callLevelOp(
+  String op,
+  String levelPath,
+  Map<String, Object?> args,
+) async {
+  if (!File(levelPath).existsSync()) {
+    stderr.writeln('Error: $levelPath does not exist.');
+    return null;
+  }
+  final located = _levelProject(levelPath);
+  final ctx = OpContext(
+    project: ProjectRoot(located.root),
+    actor: 'cli',
+  );
+  final registry = buildRegistry();
+  final callArgs = {...args, 'path': located.rel, 'apply': true};
+  var result = await registry.call(op, callArgs, ctx);
+  // Destructive ops refuse apply without a token; pull it from the error
+  // preview (or a dry-run success) and re-call so one-shot studio verbs
+  // still complete without a second CLI invocation.
+  final token = _confirmationToken(result);
+  if (token != null) {
+    result = await registry.call(op, {
+      ...callArgs,
+      'confirmation': token,
+    }, ctx);
+  }
+  if (!result.ok) {
+    _printStudioOpError(result.error!, displayPath: levelPath);
+  }
+  return result;
+}
+
+String? _confirmationToken(OpResult result) {
+  if (result.ok && result.data is Map) {
+    final data = result.data! as Map;
+    if (data['preview'] == true && data['confirmation'] is String) {
+      return data['confirmation'] as String;
+    }
+  }
+  if (!result.ok &&
+      result.error!.code == ErrorCode.confirmationRequired) {
+    final preview = result.error!.details?['preview'];
+    if (preview is Map && preview['confirmation'] is String) {
+      return preview['confirmation'] as String;
+    }
+  }
+  return null;
+}
+
+/// `game_agent studio add-entity <level> [--name x] [--component c ...] [--index n]`.
 class StudioAddEntityCommand extends Command<int> {
   @override
   final name = 'add-entity';
@@ -152,18 +232,6 @@ class StudioAddEntityCommand extends Command<int> {
   Future<int> run() async {
     final path = levelPathOrNull(argResults!);
     if (path == null) return 1;
-    final document = loadLevelOrNull(path);
-    if (document == null) return 1;
-
-    final components = <String, Map<String, dynamic>>{};
-    for (final componentName in argResults!['component'] as List<String>) {
-      final schema = allComponentSchemas[componentName];
-      if (schema == null) {
-        stderr.writeln('Error: unknown component "$componentName".');
-        return 1;
-      }
-      components[componentName] = Map<String, dynamic>.of(schema.template);
-    }
 
     final indexText = argResults!['index'] as String?;
     int? index;
@@ -175,21 +243,21 @@ class StudioAddEntityCommand extends Command<int> {
       }
     }
 
-    final entity = LevelEntity(
-      name: argResults!['name'] as String?,
-      components: components,
-    );
-    AddEntityCommand(entity, index: index).apply(document);
-    if (!validateAndWrite(path, document)) return 1;
+    final name = argResults!['name'] as String?;
+    final result = await _callLevelOp('level.add_entity', path, {
+      if (name != null) 'name': name,
+      'components': argResults!['component'] as List<String>,
+      if (index != null) 'index': index,
+    });
+    if (result == null || !result.ok) return 1;
     stdout.writeln(
-      'Added entity${entity.name == null ? '' : ' ${entity.name}'} to $path.',
+      'Added entity${name == null ? '' : ' $name'} to $path.',
     );
     return 0;
   }
 }
 
-/// `game_agent studio remove-entity <level> --entity name`: removes the named
-/// entity.
+/// `game_agent studio remove-entity <level> --entity name`.
 class StudioRemoveEntityCommand extends Command<int> {
   @override
   final name = 'remove-entity';
@@ -204,27 +272,21 @@ class StudioRemoveEntityCommand extends Command<int> {
   Future<int> run() async {
     final path = levelPathOrNull(argResults!);
     if (path == null) return 1;
-    final document = loadLevelOrNull(path);
-    if (document == null) return 1;
-
     final entityName = argResults!['entity'] as String?;
     if (entityName == null) {
       stderr.writeln('Error: --entity is required.');
       return 1;
     }
-    final entity = entityNamedOrNull(document, entityName);
-    if (entity == null) return 1;
-
-    RemoveEntityCommand(entity).apply(document);
-    if (!validateAndWrite(path, document)) return 1;
+    final result = await _callLevelOp('level.remove_entity', path, {
+      'name': entityName,
+    });
+    if (result == null || !result.ok) return 1;
     stdout.writeln('Removed entity $entityName from $path.');
     return 0;
   }
 }
 
-/// `game_agent studio set-field <level> --entity name --component c --field f --value v`:
-/// sets one field of one component on an entity, creating the component if it
-/// is absent (see `SetComponentFieldCommand`).
+/// `game_agent studio set-field <level> --entity name --component c --field f --value v`.
 class StudioSetFieldCommand extends Command<int> {
   @override
   final name = 'set-field';
@@ -249,9 +311,6 @@ class StudioSetFieldCommand extends Command<int> {
   Future<int> run() async {
     final path = levelPathOrNull(argResults!);
     if (path == null) return 1;
-    final document = loadLevelOrNull(path);
-    if (document == null) return 1;
-
     final entityName = argResults!['entity'] as String?;
     final component = argResults!['component'] as String?;
     final field = argResults!['field'] as String?;
@@ -265,23 +324,19 @@ class StudioSetFieldCommand extends Command<int> {
       );
       return 1;
     }
-    final entity = entityNamedOrNull(document, entityName);
-    if (entity == null) return 1;
-
-    SetComponentFieldCommand(
-      entity: entity,
-      component: component,
-      field: field,
-      value: parseFieldValue(valueText),
-    ).apply(document);
-    if (!validateAndWrite(path, document)) return 1;
+    final result = await _callLevelOp('level.set_field', path, {
+      'entity': entityName,
+      'component': component,
+      'field': field,
+      'value': parseFieldValue(valueText),
+    });
+    if (result == null || !result.ok) return 1;
     stdout.writeln('Set $entityName.$component.$field in $path.');
     return 0;
   }
 }
 
-/// `game_agent studio move-entity <level> --entity name --x X --y Y`: sets an
-/// entity's `position` component.
+/// `game_agent studio move-entity <level> --entity name --x X --y Y`.
 class StudioMoveEntityCommand extends Command<int> {
   @override
   final name = 'move-entity';
@@ -299,30 +354,26 @@ class StudioMoveEntityCommand extends Command<int> {
   Future<int> run() async {
     final path = levelPathOrNull(argResults!);
     if (path == null) return 1;
-    final document = loadLevelOrNull(path);
-    if (document == null) return 1;
-
     final entityName = argResults!['entity'] as String?;
     if (entityName == null) {
       stderr.writeln('Error: --entity is required.');
       return 1;
     }
-    final entity = entityNamedOrNull(document, entityName);
-    if (entity == null) return 1;
-
     final x = parseDoubleOption('x', argResults!['x'] as String?);
     final y = parseDoubleOption('y', argResults!['y'] as String?);
     if (x == null || y == null) return 1;
-
-    MoveEntityCommand(entity: entity, x: x, y: y).apply(document);
-    if (!validateAndWrite(path, document)) return 1;
+    final result = await _callLevelOp('level.move_entity', path, {
+      'name': entityName,
+      'x': x,
+      'y': y,
+    });
+    if (result == null || !result.ok) return 1;
     stdout.writeln('Moved $entityName to ($x, $y) in $path.');
     return 0;
   }
 }
 
-/// `game_agent studio set-layer <level> --entity name --component c --z-index n`:
-/// sets a component's draw-order `zIndex`.
+/// `game_agent studio set-layer <level> --entity name --component c --z-index n`.
 class StudioSetLayerCommand extends Command<int> {
   @override
   final name = 'set-layer';
@@ -343,51 +394,26 @@ class StudioSetLayerCommand extends Command<int> {
   Future<int> run() async {
     final path = levelPathOrNull(argResults!);
     if (path == null) return 1;
-    final document = loadLevelOrNull(path);
-    if (document == null) return 1;
-
     final entityName = argResults!['entity'] as String?;
     final component = argResults!['component'] as String?;
     if (entityName == null || component == null) {
       stderr.writeln('Error: --entity and --component are required.');
       return 1;
     }
-    final entity = entityNamedOrNull(document, entityName);
-    if (entity == null) return 1;
-    if (!entity.components.containsKey(component)) {
-      stderr.writeln(
-        'Error: $entityName has no "$component" component to set a layer on.',
-      );
-      return 1;
-    }
-
     final zIndex = parseIntOption('z-index', argResults!['z-index'] as String?);
     if (zIndex == null) return 1;
-
-    SetLayerCommand(
-      entity: entity,
-      component: component,
-      zIndex: zIndex,
-    ).apply(document);
-    if (!validateAndWrite(path, document)) return 1;
+    final result = await _callLevelOp('level.set_layer', path, {
+      'entity': entityName,
+      'component': component,
+      'z': zIndex,
+    });
+    if (result == null || !result.ok) return 1;
     stdout.writeln('Set $entityName.$component.zIndex to $zIndex in $path.');
     return 0;
   }
 }
 
-/// Flattens [entity]'s `tileMap` from its legend-authored form to the flat
-/// `tiles` form that [SetTileCommand]/[FillRegionCommand] require, if it
-/// isn't already — the same thing the studio GUI does on a tile edit's first
-/// stroke.
-void _ensureFlatTileMap(LevelDocument document, LevelEntity entity) {
-  final map = entity.components['tileMap'];
-  if (map != null && map.containsKey('legend')) {
-    FlattenTileMapCommand(entity).apply(document);
-  }
-}
-
-/// `game_agent studio paint-tile <level> --entity name --col c --row r --tile-id id`:
-/// sets one tile. Id 0 erases.
+/// `game_agent studio paint-tile <level> --entity name --col c --row r --tile-id id`.
 class StudioPaintTileCommand extends Command<int> {
   @override
   final name = 'paint-tile';
@@ -406,41 +432,28 @@ class StudioPaintTileCommand extends Command<int> {
   Future<int> run() async {
     final path = levelPathOrNull(argResults!);
     if (path == null) return 1;
-    final document = loadLevelOrNull(path);
-    if (document == null) return 1;
-
     final entityName = argResults!['entity'] as String?;
     if (entityName == null) {
       stderr.writeln('Error: --entity is required.');
       return 1;
     }
-    final entity = entityNamedOrNull(document, entityName);
-    if (entity == null) return 1;
-    if (!entity.components.containsKey('tileMap')) {
-      stderr.writeln('Error: $entityName has no tileMap component.');
-      return 1;
-    }
-
     final col = parseIntOption('col', argResults!['col'] as String?);
     final row = parseIntOption('row', argResults!['row'] as String?);
     final tileId = parseIntOption('tile-id', argResults!['tile-id'] as String?);
     if (col == null || row == null || tileId == null) return 1;
-
-    _ensureFlatTileMap(document, entity);
-    SetTileCommand(
-      entity: entity,
-      col: col,
-      row: row,
-      tileId: tileId,
-    ).apply(document);
-    if (!validateAndWrite(path, document)) return 1;
+    final result = await _callLevelOp('level.paint_tile', path, {
+      'entity': entityName,
+      'col': col,
+      'row': row,
+      'tileId': tileId,
+    });
+    if (result == null || !result.ok) return 1;
     stdout.writeln('Set tile ($col, $row) to $tileId on $entityName in $path.');
     return 0;
   }
 }
 
-/// `game_agent studio fill-region <level> --entity name --col c --row r --tile-id id`:
-/// flood-fills the four-connected region at (col, row) with tile-id.
+/// `game_agent studio fill-region <level> --entity name --col c --row r --tile-id id`.
 class StudioFillRegionCommand extends Command<int> {
   @override
   final name = 'fill-region';
@@ -460,34 +473,22 @@ class StudioFillRegionCommand extends Command<int> {
   Future<int> run() async {
     final path = levelPathOrNull(argResults!);
     if (path == null) return 1;
-    final document = loadLevelOrNull(path);
-    if (document == null) return 1;
-
     final entityName = argResults!['entity'] as String?;
     if (entityName == null) {
       stderr.writeln('Error: --entity is required.');
       return 1;
     }
-    final entity = entityNamedOrNull(document, entityName);
-    if (entity == null) return 1;
-    if (!entity.components.containsKey('tileMap')) {
-      stderr.writeln('Error: $entityName has no tileMap component.');
-      return 1;
-    }
-
     final col = parseIntOption('col', argResults!['col'] as String?);
     final row = parseIntOption('row', argResults!['row'] as String?);
     final tileId = parseIntOption('tile-id', argResults!['tile-id'] as String?);
     if (col == null || row == null || tileId == null) return 1;
-
-    _ensureFlatTileMap(document, entity);
-    FillRegionCommand(
-      entity: entity,
-      col: col,
-      row: row,
-      tileId: tileId,
-    ).apply(document);
-    if (!validateAndWrite(path, document)) return 1;
+    final result = await _callLevelOp('level.fill_region', path, {
+      'entity': entityName,
+      'col': col,
+      'row': row,
+      'tileId': tileId,
+    });
+    if (result == null || !result.ok) return 1;
     stdout.writeln(
       'Filled region at ($col, $row) with $tileId on $entityName in $path.',
     );
