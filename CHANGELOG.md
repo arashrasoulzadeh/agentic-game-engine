@@ -12,6 +12,11 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `animation.read` / `validate` / `set_event` / `set_pivot` /
+  `clear_events` ops plus pure-Dart `animation_clip_json` helpers — agent/
+  CLI foundation for the visual animation IDE (clip JSON on disk).
+- `installAnimationCueSystems` — one-call attach for SFX / shake /
+  particle / dialogue sound bridges.
 - `PlaySoundEvent` — shared one-shot cue for dialogue VO/choice SFX and
   cinematic `PlaySoundStep` (replaces the private cinematic event and the
   short-lived `DialoguePlaySoundEvent` name).

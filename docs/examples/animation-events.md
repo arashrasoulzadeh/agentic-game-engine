@@ -27,15 +27,13 @@ world.storeOf<AnimationState>().set(player, AnimationState(attack));
 world.storeOf<ParticleEmitter>().set(player, ParticleEmitter()); // for particle cues
 world.addSystem(AnimationSystem());
 
-final sfx = AnimationSfxSystem(audio, soundIds: {'swing': 'sfx/sword.wav'});
-sfx.attach(world);
-world.addSystem(sfx);
-
-final shake = AnimationShakeSystem(camera)..attach(world);
-world.addSystem(shake);
-
-final particles = AnimationParticleSystem()..attach(world);
-world.addSystem(particles);
+// Or wire each bridge yourself — installAnimationCueSystems does both:
+installAnimationCueSystems(
+  world,
+  audio: audio,
+  camera: camera,
+  soundIds: {'swing': 'sfx/sword.wav'},
+);
 
 // Melee that opens only during hitbox_on … hitbox_off:
 world.storeOf<Weapon>().set(
@@ -68,6 +66,12 @@ final dialogueSfx = DialogueSfxSystem(audio, soundIds: {
 dialogueSfx.attach(world);
 ```
 
-See `packages/engine_flutter/lib/src/audio/animation_sfx_system.dart`
-and the proposal at
+Agents/CLI can edit the same clip JSON without Flutter:
+
+```bash
+game_agent animation set_event assets/anims/attack.json --frame 2 --type sfx --data '{"id":"swing"}' --apply
+game_agent animation set_pivot assets/anims/attack.json --frame 1 --offsetY -4 --apply
+```
+
+See the proposal at
 [docs/proposals/animation-events-and-ide.md](../proposals/animation-events-and-ide.md).

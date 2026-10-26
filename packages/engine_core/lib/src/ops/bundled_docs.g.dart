@@ -1261,6 +1261,124 @@ expose and leave the others out of your menu.
 
 Every operation is a CLI command, an MCP tool, a REST route and a JSON-RPC method. Reads change nothing; writes apply immediately and can be undone with `undo.undo`; destructive writes return a preview and a confirmation token first. Results are `{ok, data, warnings, diff?, undoId?, durationMs}` or `{ok:false, error:{code, message, hint?}}`.
 
+## animation
+
+### `animation.clear_events`
+
+Clear frameEvents cues on one frame of a clip JSON file.
+
+Without `type`, clears every cue on the frame. With `type`, removes only matching cues. Undoable.
+
+*write*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | string; required | |
+| `frame` | integer; required | |
+| `clip` | string | |
+| `type` | string | |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+```bash
+game_agent animation clear-events <path>
+```
+
+REST: `POST /v1/animation/clear_events` · MCP tool: `animation.clear_events` · JSON-RPC method: `animation.clear_events`
+
+### `animation.read`
+
+Load AnimationClip JSON from a project path.
+
+Accepts a single clip object, a name→clip map, or `{ "clips": [ … ] }`. Returns `{ form, clips, names }` where `clips` is name→clip.
+
+*read*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | string; required | |
+
+Errors: `not_found`, `validation_failed`.
+
+```bash
+game_agent animation read <path>
+```
+
+REST: `POST /v1/animation/read` · MCP tool: `animation.read` · JSON-RPC method: `animation.read`
+
+### `animation.set_event`
+
+Attach a frameEvents cue to a clip JSON file.
+
+Ensures `frameEvents` exists, then appends `{type, data}` on `frame` (0-based). With `replaceType: true`, removes existing cues of that type on the frame first. Undoable.
+
+*write*, needs an open project.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | string; required | |
+| `frame` | integer; required | |
+| `type` | string; required | |
+| `clip` | string | Clip name when the file holds more than one clip. |
+| `data` | object | Optional cue payload (e.g. {"id":"swing"}). |
+| `replaceType` | boolean | Replace existing cues of this type on the frame. |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+Errors: `not_found`, `validation_failed`, `invalid_params`.
+
+```bash
+game_agent animation set-event <path>
+```
+
+REST: `POST /v1/animation/set_event` · MCP tool: `animation.set_event` · JSON-RPC method: `animation.set_event`
+
+### `animation.set_pivot`
+
+Set frameOffsetsX/Y for one frame of a clip JSON file.
+
+Writes per-frame pivot offsets (atlas-pixel space). Pass `offsetX` and/or `offsetY`. Undoable.
+
+*write*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | string; required | |
+| `frame` | integer; required | |
+| `clip` | string | Clip name when the file holds more than one clip. |
+| `offsetX` | number | |
+| `offsetY` | number | |
+| `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
+| `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
+
+Errors: `not_found`, `invalid_params`.
+
+```bash
+game_agent animation set-pivot <path>
+```
+
+REST: `POST /v1/animation/set_pivot` · MCP tool: `animation.set_pivot` · JSON-RPC method: `animation.set_pivot`
+
+### `animation.validate`
+
+Validate AnimationClip JSON on disk.
+
+Reports per-clip problems. `ok` is true when every clip passes.
+
+*read*, needs an open project, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `path` | string; required | |
+
+Errors: `not_found`.
+
+```bash
+game_agent animation validate <path>
+```
+
+REST: `POST /v1/animation/validate` · MCP tool: `animation.validate` · JSON-RPC method: `animation.validate`
+
 ## asset
 
 ### `asset.atlas_regions`
@@ -3253,7 +3371,7 @@ curl -H "Authorization: Bearer \$TOKEN" -H \'Content-Type: application/json\' -d
 
 ## Catalogue size
 
-This registry has **86** operations (83 served over MCP/HTTP; Flutter-only ones stay CLI-only).
+This registry has **91** operations (88 served over MCP/HTTP; Flutter-only ones stay CLI-only).
 
 ''',
 

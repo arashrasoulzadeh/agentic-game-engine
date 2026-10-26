@@ -40,6 +40,7 @@ export 'src/ops/groups/project_ops.dart' show projectOperations;
 export 'src/ops/groups/idle_ops.dart' show idleOperations;
 export 'src/ops/groups/i18n_ops.dart' show i18nOperations;
 export 'src/ops/groups/asset_ops.dart' show assetOperations;
+export 'src/ops/groups/animation_ops.dart' show animationOperations;
 export 'src/ops/groups/graph_ops.dart' show graphOperations, checkGraphText;
 export 'src/ops/groups/problems_ops.dart' show problemOperations;
 export 'src/ops/groups/level_lint_ops.dart' show levelLintOperations;

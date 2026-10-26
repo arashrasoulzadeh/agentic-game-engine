@@ -1,3 +1,4 @@
+import 'groups/animation_ops.dart';
 import 'groups/asset_ops.dart';
 import 'groups/engine_ops.dart';
 import 'groups/graph_ops.dart';
@@ -28,6 +29,7 @@ OperationRegistry buildRegistry({ProposalFinisher? finisher}) {
     ...projectOperations(),
     ...levelReadOperations(),
     ...assetOperations(),
+    ...animationOperations(),
     ...graphOperations(),
     ...problemOperations(),
     ...levelLintOperations(),
