@@ -5,7 +5,10 @@ import 'package:engine_core/engine_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../assets/asset_index.dart';
+import '../assets/atlas_view.dart';
 import '../prefs/strings.dart';
+import 'clip_preview.dart';
 
 /// Whether [path] holds AnimationClip-shaped JSON the clip editor can open.
 bool looksLikeAnimationClipFile(String path) {
@@ -23,11 +26,20 @@ bool looksLikeAnimationClipFile(String path) {
 /// Edits `AnimationClip` JSON on disk: frames, pivots, frameEvents, duration.
 ///
 /// Same JSON the runtime/`animation.*` ops use — save writes the file in place
-/// preserving single / map / `{clips:[…]}` form.
+/// preserving single / map / `{clips:[…]}` form. When [projectRoot] is set,
+/// the editor also offers an atlas region picker and a live onion-skin preview.
 class ClipEditorScreen extends StatefulWidget {
   final String filePath;
 
-  const ClipEditorScreen({super.key, required this.filePath});
+  /// Project root used to resolve declared atlases for preview / region pick.
+  /// Null keeps the JSON-only editor (tests / no project context).
+  final String? projectRoot;
+
+  const ClipEditorScreen({
+    super.key,
+    required this.filePath,
+    this.projectRoot,
+  });
 
   @override
   State<ClipEditorScreen> createState() => _ClipEditorScreenState();
@@ -40,6 +52,11 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
   int _selectedFrame = 0;
   String? _error;
   bool _dirty = false;
+
+  /// Session-only atlas for preview / picker (clips don't store atlasId).
+  String? _atlasId;
+  bool _playing = false;
+  bool _onionSkin = true;
 
   final _durationController = TextEditingController();
   final _regionController = TextEditingController();
@@ -80,6 +97,7 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
       _selectedFrame = 0;
       _error = null;
       _dirty = false;
+      _playing = false;
       _syncControllers();
       setState(() {});
     } on Object catch (e) {
@@ -136,6 +154,7 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
     setState(() {
       _selectedClip = name;
       _selectedFrame = 0;
+      _playing = false;
       _syncControllers();
     });
   }
@@ -143,6 +162,7 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
   void _selectFrame(int index) {
     setState(() {
       _selectedFrame = index;
+      _playing = false;
       _syncControllers();
     });
   }
@@ -162,6 +182,50 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
     _selectedFrame = regions.length - 1;
     _markDirty();
     _syncControllers();
+  }
+
+  Future<void> _pickRegion({bool replaceSelected = false}) async {
+    final root = widget.projectRoot;
+    if (root == null || !mounted) return;
+    final regions =
+        (_clip?['frameRegions'] as List?)?.cast<String>() ?? const <String>[];
+    final currentRegion = replaceSelected
+        ? (regions.isEmpty
+            ? null
+            : regions[_selectedFrame.clamp(0, regions.length - 1)])
+        : (_regionController.text.trim().isEmpty
+            ? null
+            : _regionController.text.trim());
+    final picked = await showSpritePicker(
+      context,
+      projectRoot: root,
+      index: AssetIndex.scan(root),
+      currentAtlas: _atlasId,
+      currentRegion: currentRegion,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _atlasId = picked.$1);
+    if (replaceSelected) {
+      final clip = _clip;
+      if (clip == null) return;
+      final regions = List<String>.from(clip['frameRegions'] as List? ?? []);
+      if (regions.isEmpty) {
+        regions.add(picked.$2);
+        clip['frameRegions'] = regions;
+        ensureFrameOffsets(clip, 'frameOffsetsX');
+        ensureFrameOffsets(clip, 'frameOffsetsY');
+        ensureFrameEvents(clip);
+        _selectedFrame = 0;
+      } else {
+        regions[_selectedFrame.clamp(0, regions.length - 1)] = picked.$2;
+        clip['frameRegions'] = regions;
+      }
+      _markDirty();
+      _syncControllers();
+    } else {
+      _regionController.text = picked.$2;
+      setState(() {});
+    }
   }
 
   void _removeFrame() {
@@ -363,191 +427,292 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
     List<String> regions,
     List<Map<String, dynamic>> events,
   ) {
+    final root = widget.projectRoot;
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 120,
-                child: TextField(
-                  key: const Key('clip-duration'),
-                  controller: _durationController,
-                  decoration: InputDecoration(
-                    labelText: StudioStrings.t('clip.duration'),
-                    isDense: true,
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  onChanged: (_) => _markDirty(),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Checkbox(
-                key: const Key('clip-loop'),
-                value: clip['loop'] as bool? ?? true,
-                onChanged: _toggleLoop,
-              ),
-              Text(StudioStrings.t('clip.loop')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(StudioStrings.t('clip.frames'), style: Theme.of(context).textTheme.titleSmall),
-          SizedBox(
-            height: 56,
-            child: ListView.builder(
-              key: const Key('clip-frames'),
-              scrollDirection: Axis.horizontal,
-              itemCount: regions.length,
-              itemBuilder: (context, i) {
-                final selected = i == _selectedFrame;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    key: Key('clip-frame-$i'),
-                    label: Text('$i:${regions[i]}'),
-                    selected: selected,
-                    onSelected: (_) => _selectFrame(i),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  key: const Key('clip-region-input'),
-                  controller: _regionController,
-                  decoration: InputDecoration(
-                    labelText: StudioStrings.t('clip.regionName'),
-                    isDense: true,
-                  ),
-                  onSubmitted: (_) => _addFrame(),
-                ),
-              ),
-              IconButton(
-                key: const Key('clip-add-frame'),
-                tooltip: StudioStrings.t('clip.addFrame'),
-                onPressed: _addFrame,
-                icon: const Icon(Icons.add),
-              ),
-              IconButton(
-                key: const Key('clip-remove-frame'),
-                tooltip: StudioStrings.t('clip.removeFrame'),
-                onPressed: regions.isEmpty ? null : _removeFrame,
-                icon: const Icon(Icons.remove),
-              ),
-            ],
-          ),
-          if (regions.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              StudioStrings.t('clip.pivot'),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            Row(
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      child: TextField(
+                        key: const Key('clip-duration'),
+                        controller: _durationController,
+                        decoration: InputDecoration(
+                          labelText: StudioStrings.t('clip.duration'),
+                          isDense: true,
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (_) => _markDirty(),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Checkbox(
+                      key: const Key('clip-loop'),
+                      value: clip['loop'] as bool? ?? true,
+                      onChanged: _toggleLoop,
+                    ),
+                    Text(StudioStrings.t('clip.loop')),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  StudioStrings.t('clip.frames'),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
                 SizedBox(
-                  width: 100,
-                  child: TextField(
-                    key: const Key('clip-offset-x'),
-                    controller: _offsetXController,
-                    decoration: const InputDecoration(
-                      labelText: 'X',
-                      isDense: true,
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                      signed: true,
-                    ),
+                  height: 56,
+                  child: ListView.builder(
+                    key: const Key('clip-frames'),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: regions.length,
+                    itemBuilder: (context, i) {
+                      final selected = i == _selectedFrame;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          key: Key('clip-frame-$i'),
+                          label: Text('$i:${regions[i]}'),
+                          selected: selected,
+                          onSelected: (_) => _selectFrame(i),
+                        ),
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 100,
-                  child: TextField(
-                    key: const Key('clip-offset-y'),
-                    controller: _offsetYController,
-                    decoration: const InputDecoration(
-                      labelText: 'Y',
-                      isDense: true,
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        key: const Key('clip-region-input'),
+                        controller: _regionController,
+                        decoration: InputDecoration(
+                          labelText: StudioStrings.t('clip.regionName'),
+                          isDense: true,
+                        ),
+                        onSubmitted: (_) => _addFrame(),
+                      ),
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                      signed: true,
+                    if (root != null)
+                      IconButton(
+                        key: const Key('clip-pick-region'),
+                        tooltip: StudioStrings.t('clip.pickRegion'),
+                        onPressed: () => _pickRegion(),
+                        icon: const Icon(Icons.grid_on_outlined),
+                      ),
+                    IconButton(
+                      key: const Key('clip-add-frame'),
+                      tooltip: StudioStrings.t('clip.addFrame'),
+                      onPressed: _addFrame,
+                      icon: const Icon(Icons.add),
+                    ),
+                    if (root != null)
+                      IconButton(
+                        key: const Key('clip-replace-region'),
+                        tooltip: StudioStrings.t('clip.replaceRegion'),
+                        onPressed: () => _pickRegion(replaceSelected: true),
+                        icon: const Icon(Icons.image_search_outlined),
+                      ),
+                    IconButton(
+                      key: const Key('clip-remove-frame'),
+                      tooltip: StudioStrings.t('clip.removeFrame'),
+                      onPressed: regions.isEmpty ? null : _removeFrame,
+                      icon: const Icon(Icons.remove),
+                    ),
+                  ],
+                ),
+                if (regions.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    StudioStrings.t('clip.pivot'),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 100,
+                        child: TextField(
+                          key: const Key('clip-offset-x'),
+                          controller: _offsetXController,
+                          decoration: const InputDecoration(
+                            labelText: 'X',
+                            isDense: true,
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                            signed: true,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 100,
+                        child: TextField(
+                          key: const Key('clip-offset-y'),
+                          controller: _offsetYController,
+                          decoration: const InputDecoration(
+                            labelText: 'Y',
+                            isDense: true,
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                            signed: true,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        key: const Key('clip-apply-pivot'),
+                        onPressed: _applyPivot,
+                        child: Text(StudioStrings.t('clip.applyPivot')),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    StudioStrings.t('clip.events'),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      key: const Key('clip-events'),
+                      itemCount: events.length,
+                      itemBuilder: (context, i) {
+                        final e = events[i];
+                        final data = e['data'];
+                        return ListTile(
+                          key: Key('clip-event-$i'),
+                          dense: true,
+                          title: Text('${e['type']}'),
+                          subtitle: data == null ? null : Text('$data'),
+                          trailing: IconButton(
+                            key: Key('clip-event-remove-$i'),
+                            icon: const Icon(Icons.close),
+                            onPressed: () => _removeEvent(i),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                ),
-                TextButton(
-                  key: const Key('clip-apply-pivot'),
-                  onPressed: _applyPivot,
-                  child: Text(StudioStrings.t('clip.applyPivot')),
-                ),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 100,
+                        child: TextField(
+                          key: const Key('clip-event-type'),
+                          controller: _eventTypeController,
+                          decoration: InputDecoration(
+                            labelText: StudioStrings.t('clip.eventType'),
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          key: const Key('clip-event-data'),
+                          controller: _eventDataController,
+                          decoration: InputDecoration(
+                            labelText: StudioStrings.t('clip.eventData'),
+                            isDense: true,
+                            hintText: '{"id":"swing"}',
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        key: const Key('clip-add-event'),
+                        tooltip: StudioStrings.t('clip.addEvent'),
+                        onPressed: _addEvent,
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              StudioStrings.t('clip.events'),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
+          ),
+          if (root != null) ...[
+            const SizedBox(width: 12),
             Expanded(
-              child: ListView.builder(
-                key: const Key('clip-events'),
-                itemCount: events.length,
-                itemBuilder: (context, i) {
-                  final e = events[i];
-                  final data = e['data'];
-                  return ListTile(
-                    key: Key('clip-event-$i'),
-                    dense: true,
-                    title: Text('${e['type']}'),
-                    subtitle: data == null ? null : Text('$data'),
-                    trailing: IconButton(
-                      key: Key('clip-event-remove-$i'),
-                      icon: const Icon(Icons.close),
-                      onPressed: () => _removeEvent(i),
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        StudioStrings.t('clip.preview'),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        key: const Key('clip-pick-atlas'),
+                        tooltip: StudioStrings.t('clip.pickAtlas'),
+                        onPressed: () => _pickRegion(),
+                        icon: const Icon(Icons.collections_outlined),
+                      ),
+                      IconButton(
+                        key: const Key('clip-onion'),
+                        tooltip: StudioStrings.t('clip.onionSkin'),
+                        onPressed: () =>
+                            setState(() => _onionSkin = !_onionSkin),
+                        icon: Icon(
+                          _onionSkin
+                              ? Icons.filter_none
+                              : Icons.filter_none_outlined,
+                        ),
+                        color: _onionSkin
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
+                      IconButton(
+                        key: const Key('clip-play'),
+                        tooltip: _playing
+                            ? StudioStrings.t('clip.pause')
+                            : StudioStrings.t('clip.play'),
+                        onPressed: regions.isEmpty
+                            ? null
+                            : () => setState(() => _playing = !_playing),
+                        icon: Icon(
+                          _playing ? Icons.pause : Icons.play_arrow,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_atlasId != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        StudioStrings.t(
+                          'clip.atlasLabel',
+                          {'id': _atlasId!},
+                        ),
+                        key: const Key('clip-atlas-label'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ),
-                  );
-                },
+                  Expanded(
+                    child: ClipPreview(
+                      key: const Key('clip-preview-widget'),
+                      projectRoot: root,
+                      clip: clip,
+                      atlasId: _atlasId,
+                      selectedFrame: _selectedFrame,
+                      playing: _playing,
+                      onionSkin: _onionSkin,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            Row(
-              children: [
-                SizedBox(
-                  width: 100,
-                  child: TextField(
-                    key: const Key('clip-event-type'),
-                    controller: _eventTypeController,
-                    decoration: InputDecoration(
-                      labelText: StudioStrings.t('clip.eventType'),
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    key: const Key('clip-event-data'),
-                    controller: _eventDataController,
-                    decoration: InputDecoration(
-                      labelText: StudioStrings.t('clip.eventData'),
-                      isDense: true,
-                      hintText: '{"id":"swing"}',
-                    ),
-                  ),
-                ),
-                IconButton(
-                  key: const Key('clip-add-event'),
-                  tooltip: StudioStrings.t('clip.addEvent'),
-                  onPressed: _addEvent,
-                  icon: const Icon(Icons.add),
-                ),
-              ],
             ),
           ],
         ],

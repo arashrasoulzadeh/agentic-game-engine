@@ -12,6 +12,9 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Studio clip preview + atlas region picker — `ClipPreview` (play /
+  onion-skin) and `showSpritePicker` wiring on `ClipEditorScreen` when
+  opened with a project root.
 - Studio `ClipEditorScreen` — opens AnimationClip JSON from the project
   tree (frames, pivots, frameEvents, save); detected via clip-shaped JSON.
 - `animation.read` / `validate` / `set_event` / `set_pivot` /

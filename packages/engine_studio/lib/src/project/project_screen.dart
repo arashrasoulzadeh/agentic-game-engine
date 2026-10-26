@@ -577,6 +577,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
       return ClipEditorScreen(
         key: ValueKey('clip-$fullPath'),
         filePath: fullPath,
+        projectRoot: widget.project.root,
       );
     }
     if (File(fullPath).existsSync()) {

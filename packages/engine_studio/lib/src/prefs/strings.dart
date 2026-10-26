@@ -140,6 +140,19 @@ class StudioStrings {
     'clip.badDuration': 'Frame duration must be a positive number.',
     'clip.badPivot': 'Pivot X/Y must be numbers.',
     'clip.badEventData': 'Event data must be a JSON object.',
+    'clip.preview': 'Preview',
+    'clip.previewPickAtlas':
+        'Pick an atlas region to preview this clip against a sheet.',
+    'clip.previewEmpty': 'Add frames to preview the clip.',
+    'clip.previewMissingAtlas':
+        'Atlas "{id}" is not in studio_atlases.json or failed to load.',
+    'clip.pickRegion': 'Pick region from atlas',
+    'clip.replaceRegion': 'Replace selected frame region',
+    'clip.pickAtlas': 'Choose atlas for preview',
+    'clip.onionSkin': 'Onion-skin neighbors',
+    'clip.play': 'Play',
+    'clip.pause': 'Pause',
+    'clip.atlasLabel': 'Atlas: {id}',
   };
 
   static bool _registered = false;
