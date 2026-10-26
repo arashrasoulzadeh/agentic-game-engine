@@ -12,6 +12,10 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `AnimationShakeSystem` / `AnimationParticleSystem` — frame cues `shake`
+  and `particle` (camera shake; bumps `ParticleEmitter.burstCount`).
+- `DialogueSfxSystem` — plays `DialoguePlaySoundEvent` via `AudioManager`.
+- Recipe [docs/examples/animation-events.md](docs/examples/animation-events.md).
 - `Weapon.meleeHitboxFromAnimation` — opt-in frame-accurate melee: spawn on
   `AnimationFrameEvent` `hitbox_on`, despawn on `hitbox_off` (default keeps
   wall-clock `meleeDurationSeconds`).

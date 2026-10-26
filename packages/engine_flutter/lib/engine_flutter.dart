@@ -1,5 +1,6 @@
 export 'src/audio/audio_manager.dart';
 export 'src/audio/animation_sfx_system.dart';
+export 'src/audio/dialogue_sfx_system.dart';
 export 'src/audio/reverb_zone.dart';
 export 'src/input/gamepad_controller.dart';
 export 'src/input/gamepad_manager.dart';
@@ -50,6 +51,8 @@ export 'src/logic/analytics_flutter.dart';
 export 'src/logic/localization_flutter.dart';
 export 'src/rendering/sprite_atlas.dart';
 export 'src/rendering/animation_system.dart';
+export 'src/rendering/animation_shake_system.dart';
+export 'src/rendering/animation_particle_system.dart';
 export 'src/rendering/animation_transition_system.dart';
 export 'src/rendering/light_flicker_system.dart';
 export 'src/ui/button_menu_scene.dart';

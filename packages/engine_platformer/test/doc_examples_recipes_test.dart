@@ -178,6 +178,86 @@ void main() {
     });
   });
 
+  group('animation-events recipe', () {
+    test('frameEvents drive sfx / shake / particle / gated melee bridges', () {
+      final plays = <String>[];
+      final camera = Camera();
+      world.addSystem(AnimationSystem());
+      world.addSystem(AttackSystem());
+      AnimationSfxSystem.custom(
+        soundIds: {'swing': 'sfx/sword.wav'},
+        playSound: (path, {double volume = 1.0}) async {
+          plays.add(path);
+        },
+      ).attach(world);
+      AnimationShakeSystem(camera).attach(world);
+      AnimationParticleSystem().attach(world);
+
+      final player = world.spawn();
+      world.storeOf<Position>().set(player, Position(100, 100));
+      world.storeOf<PlatformerController>().set(
+        player,
+        PlatformerController(facingSign: 1),
+      );
+      world.storeOf<Sprite>().set(player, Sprite('atlas', 'atk_0'));
+      world.storeOf<ParticleEmitter>().set(player, ParticleEmitter());
+      world.storeOf<Weapon>().set(
+        player,
+        Weapon(
+          kind: WeaponKind.melee,
+          meleeHitboxFromAnimation: true,
+          meleeRange: 30,
+          meleeDurationSeconds: 5,
+          cooldownSeconds: 1,
+        ),
+      );
+      world.storeOf<AnimationState>().set(
+        player,
+        AnimationState(
+          AnimationClip(
+            'attack',
+            ['atk_0', 'atk_1', 'atk_2', 'atk_3'],
+            frameDurationSeconds: 0.06,
+            loop: false,
+            frameEvents: [
+              [],
+              [const AnimationEvent('sfx', {'id': 'swing'})],
+              [
+                const AnimationEvent('hitbox_on'),
+                const AnimationEvent('shake', {
+                  'magnitude': 3,
+                  'duration': 0.12,
+                  'impulse': true,
+                }),
+                const AnimationEvent('particle', {'count': 10}),
+              ],
+              [const AnimationEvent('hitbox_off')],
+            ],
+          ),
+        ),
+      );
+
+      world.storeOf<Weapon>().get(player)!.attackRequested = true;
+      world.step(0.016);
+      expect(world.storeOf<Projectile>().length, 0);
+
+      world.step(0.06); // frame 1 — sfx
+      expect(plays, ['sfx/sword.wav']);
+
+      world.step(0.06); // frame 2 — hitbox_on + shake + particle
+      expect(world.storeOf<Projectile>().length, 1);
+      expect(world.storeOf<ParticleEmitter>().get(player)!.burstCount, 10);
+      camera.update(0);
+      expect(
+        camera.shakeOffset.dx != 0 || camera.shakeOffset.dy != 0,
+        isTrue,
+      );
+
+      world.step(0.06); // frame 3 — hitbox_off
+      expect(world.storeOf<Projectile>().length, 0);
+    });
+  });
+
   group('docs/concepts/platformer.md', () {
     test(
       'spawnPlayer attaches health, inventory and a checkpoint; the systems install',

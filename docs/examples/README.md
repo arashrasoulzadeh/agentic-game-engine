@@ -25,6 +25,7 @@ drop snippets into a `Scene.populate` in a project made by `game_agent create`.
 | [Spawn an enemy with patrol AI](spawn-enemy-with-patrol-ai.md) | `spawnEnemy`, `PatrolBehavior` |
 | [Add a health bar](health-bar.md) | `spawnHealthHudBar`, world- vs screen-space |
 | [Custom Behavior](custom-behavior.md) | The `WorldView` → `Action` contract |
+| [Animation frame events](animation-events.md) | `frameEvents`, SFX / hitbox / shake / particles |
 
 ## Any genre
 

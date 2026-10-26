@@ -200,13 +200,8 @@ exists.
 
 ## Suggested implementation order
 
-1. `AnimationEvent`/`AnimationClip.frameEvents` + `AnimationFrameEvent`
-   on `world.events`, emitted from `AnimationSystem` — engine_core/
-   engine_flutter, fully tested, no IDE dependency.
-2. `AnimationSfxSystem` in `engine_flutter` (or `engine_platformer` if
-   it needs combat context) subscribing to `sfx` events.
-3. Docs + example recipe (`docs/examples/animation-events.md`) showing
-   the JSON shape and the subscribe pattern, same treatment as the
-   other example recipes.
+1. ~~`AnimationEvent`/`AnimationClip.frameEvents` + `AnimationFrameEvent`~~
+2. ~~`AnimationSfxSystem` (+ shake / particle bridges, frame-gated melee)~~
+3. ~~Docs + example recipe (`docs/examples/animation-events.md`)~~
 4. IDE, starting from the existing cutter Artifact as the seed for
    panel 1.

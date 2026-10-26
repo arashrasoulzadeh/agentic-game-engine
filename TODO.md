@@ -40,10 +40,9 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
       `SpriteAtlas.fromStrip`/`fromFullImage` (promoted from Mobarez preview
       needs).
 - [x] **Animation frame events (runtime)** —
-      `AnimationClip.frameEvents` + `AnimationFrameEvent` + `AnimationSfxSystem`
-      + frame-gated melee (proposal steps 1–3 in
-      `docs/proposals/animation-events-and-ide.md`). Still open: visual
-      animation IDE.
+      `frameEvents` + SFX/shake/particle bridges + frame-gated melee +
+      recipe `docs/examples/animation-events.md` (proposal steps 1–3).
+      Still open: visual animation IDE (proposal step 4).
 - [x] **Frame-gated melee** — `Weapon.meleeHitboxFromAnimation` gates
       `AttackSystem` melee on `hitbox_on`/`hitbox_off` animation cues
       (proposal step 3); default false keeps wall-clock duration.

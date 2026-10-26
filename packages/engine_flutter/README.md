@@ -490,18 +490,17 @@ final audio = AudioManager();
 await audio.playSound('sfx/jump.wav');
 await audio.playMusic('music/theme.mp3', loop: true);
 
-// Data-driven SFX from AnimationClip.frameEvents (type: 'sfx'):
-final sfx = AnimationSfxSystem(
-  audio,
-  soundIds: {'swing': 'sfx/sword.wav'},
-);
-sfx.attach(world);
-world.addSystem(sfx);
+// Data-driven cues from AnimationClip.frameEvents:
+AnimationSfxSystem(audio, soundIds: {'swing': 'sfx/sword.wav'})
+  ..attach(world);
+AnimationShakeSystem(camera)..attach(world);
+AnimationParticleSystem()..attach(world);
+DialogueSfxSystem(audio)..attach(world); // DialoguePlaySoundEvent
 ```
 
-Recommended pattern for bespoke cues: listen on `world.events` and call
-`playSound` from there. For animation-frame SFX, prefer
-`AnimationSfxSystem` so clips stay data-driven.
+See [docs/examples/animation-events.md](../../docs/examples/animation-events.md).
+For bespoke cues, subscribe to `AnimationFrameEvent` / `DialoguePlaySoundEvent`
+directly.
 
 ## Save/load
 
