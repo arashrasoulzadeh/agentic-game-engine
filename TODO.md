@@ -87,7 +87,9 @@ Design and delivered phases: [docs/studio/design.md](docs/studio/design.md).
       here), WiX `.msi` authoring, `appimagetool` on release hosts, code
       signing + notarization, and a release server / signing key (update
       client exists; nothing to talk to).
-- [ ] **Debugger and terminal** — each its own phase; not in current IDE scope.
+- [ ] **Debugger** — own phase; not in current IDE scope.
+- [x] **Studio terminal** — bottom drawer on `ProjectScreen` runs `/bin/sh
+      -c` in the project root (kill + streaming output).
 
 ## Docs
 

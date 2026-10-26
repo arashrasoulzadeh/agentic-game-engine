@@ -29,6 +29,11 @@ class StudioStrings {
     'project.pubGet': 'Get packages (flutter pub get)',
     'project.pubGetDone': 'Packages are up to date',
     'project.pubGetFailed': 'flutter pub get failed',
+    'terminal.title': 'Terminal',
+    'terminal.hint': 'Command (runs in the project folder)',
+    'terminal.run': 'Run',
+    'terminal.kill': 'Stop command',
+    'terminal.empty': 'Type a command and press Enter.',
     'project.noFile': 'Pick a file on the left to open it.',
     'project.fileGone': 'That file no longer exists.',
     'validation_panel.this_level_has_no_problems':

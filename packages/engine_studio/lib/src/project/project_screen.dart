@@ -19,6 +19,7 @@ import 'project_problems.dart';
 import 'project_search.dart';
 import 'project_tree.dart';
 import 'studio_project.dart';
+import 'studio_terminal.dart';
 import 'pub_get.dart';
 import 'git_status.dart';
 
@@ -38,12 +39,16 @@ class ProjectScreen extends StatefulWidget {
   /// what keeps most widget tests from spawning a real process.
   final GitRunner? gitRunner;
 
+  /// Starts terminal commands. Tests inject a fake; null uses `/bin/sh -c`.
+  final TerminalProcessStarter? terminalStarter;
+
   const ProjectScreen({
     super.key,
     required this.project,
     this.useLanguageServer = true,
     this.pubGetStarter,
     this.gitRunner,
+    this.terminalStarter,
   });
 
   @override
@@ -66,6 +71,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
   AtlasInfo? _atlasOpen;
   bool _problemsOpen = false;
   bool _searchOpen = false;
+  bool _terminalOpen = false;
   final TextEditingController _searchController = TextEditingController();
   List<ProjectMatch> _searchResults = const [];
 
@@ -258,6 +264,16 @@ class _ProjectScreenState extends State<ProjectScreen> {
               icon: const Icon(Icons.download_for_offline_outlined),
             ),
             IconButton(
+              key: const Key('project-terminal'),
+              tooltip: StudioStrings.t('terminal.title'),
+              onPressed: () => setState(() => _terminalOpen = !_terminalOpen),
+              icon: Icon(
+                _terminalOpen
+                    ? Icons.terminal
+                    : Icons.terminal_outlined,
+              ),
+            ),
+            IconButton(
               key: const Key('project-problems'),
               tooltip: StudioStrings.t('project.problems'),
               onPressed: _toggleProblems,
@@ -275,31 +291,46 @@ class _ProjectScreenState extends State<ProjectScreen> {
           // Claims focus for the window itself, so Cmd/Ctrl+Shift+F reaches the
           // CallbackShortcuts above even before anything else has been clicked.
           autofocus: true,
-          child: Row(
+          child: Column(
             children: [
-              SizedBox(
-                width: 260,
-                child: _assetsOpen
-                    ? AssetBrowserPanel(
-                        index: AssetIndex.scan(widget.project.root),
-                        onClose: _toggleAssets,
-                        onOpenAtlas: (atlas) => setState(() {
-                          _atlasOpen = atlas;
-                          _open = null;
-                        }),
-                        onOpenFile: (path) => setState(() {
-                          _open = path;
-                          _atlasOpen = null;
-                          _jumpLine = 0;
-                          _jumpCharacter = 0;
-                        }),
-                      )
-                    : _problemsOpen
-                    ? _problemsPanel()
-                    : (_searchOpen ? _searchPanel() : _treePanel(shown)),
+              Expanded(
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 260,
+                      child: _assetsOpen
+                          ? AssetBrowserPanel(
+                              index: AssetIndex.scan(widget.project.root),
+                              onClose: _toggleAssets,
+                              onOpenAtlas: (atlas) => setState(() {
+                                _atlasOpen = atlas;
+                                _open = null;
+                              }),
+                              onOpenFile: (path) => setState(() {
+                                _open = path;
+                                _atlasOpen = null;
+                                _jumpLine = 0;
+                                _jumpCharacter = 0;
+                              }),
+                            )
+                          : _problemsOpen
+                          ? _problemsPanel()
+                          : (_searchOpen ? _searchPanel() : _treePanel(shown)),
+                    ),
+                    VerticalDivider(
+                      width: 1,
+                      color: Theme.of(context).dividerColor,
+                    ),
+                    Expanded(child: _content()),
+                  ],
+                ),
               ),
-              VerticalDivider(width: 1, color: Theme.of(context).dividerColor),
-              Expanded(child: _content()),
+              if (_terminalOpen)
+                StudioTerminalPanel(
+                  projectRoot: widget.project.root,
+                  processStarter: widget.terminalStarter,
+                  onClose: () => setState(() => _terminalOpen = false),
+                ),
             ],
           ),
         ),

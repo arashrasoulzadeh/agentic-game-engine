@@ -547,8 +547,8 @@ Analyze, SDK discovery, project file manager.
   shown in ProjectScreen's own content pane is a different, in-place
   content-swap and was not in scope here) Unsaved-work safety: closing a dirty file asks before discarding it.
 
-Not in this phase (own phases): a debugger, a terminal, git integration, and
-running `pub get` from the studio.
+Not in this phase (own phase): a debugger. Shipped later in the IDE track:
+git status marks, `flutter pub get`, and a project-root terminal drawer.
 
 ### Phase 4 — Visual scripting and dialogue/cutscene graphs
 

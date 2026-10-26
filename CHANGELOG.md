@@ -20,6 +20,8 @@ pubspec.yaml.
   "no pubspec.yaml".
 
 ### Added
+- Studio terminal panel — project-root shell (`/bin/sh -c`) with streaming
+  output, kill, and injected process starter for tests.
 - Studio `ClipPlaytest` — embedded `EngineView` playtest for a clip
   (`AnimationSystem` + atlas) toggled from `ClipEditorScreen`.
 - Studio clip event-track timeline — `ClipEventTimeline` shows per-frame
