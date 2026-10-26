@@ -24,6 +24,62 @@ bool isGameProjectRoot(String root) {
   return Directory(p.join(root, 'assets')).existsSync();
 }
 
+/// Immediate child folders of [path] that themselves look like game projects.
+///
+/// Used when the designer (or agent) picks a repo root that wraps the Flutter
+/// app in a `game/` subdirectory — Mobarez-style layouts — instead of the
+/// `pubspec.yaml` folder itself.
+List<String> nestedGameProjectRoots(String path) {
+  final dir = Directory(path);
+  if (!dir.existsSync()) return const [];
+  final found = <String>[];
+  for (final entity in dir.listSync(followLinks: false)) {
+    if (entity is! Directory) continue;
+    final name = p.basename(entity.path);
+    if (name.startsWith('.')) continue;
+    if (isGameProjectRoot(entity.path)) found.add(entity.path);
+  }
+  found.sort((a, b) {
+    // Prefer the conventional `game/` wrapper used by monorepo-style titles.
+    final aGame = p.basename(a) == 'game';
+    final bGame = p.basename(b) == 'game';
+    if (aGame != bGame) return aGame ? -1 : 1;
+    return a.compareTo(b);
+  });
+  return found;
+}
+
+/// Resolves [path] to the folder that actually holds `pubspec.yaml` + assets.
+///
+/// Returns [path] when it is already a game root; otherwise the best nested
+/// candidate (preferring `game/`). Throws [ProjectOpenException] when nothing
+/// usable is found (or several siblings look equally valid).
+String resolveGameProjectRoot(String path) {
+  if (isGameProjectRoot(path)) return path;
+  final nested = nestedGameProjectRoots(path);
+  if (nested.length == 1) return nested.first;
+  if (nested.length > 1) {
+    // Prefer `game/` when present among several; otherwise ask the user.
+    final game = nested.where((c) => p.basename(c) == 'game').toList();
+    if (game.length == 1) return game.first;
+    final names = nested.map(p.basename).join(', ');
+    throw ProjectOpenException(
+      '"$path" is not a game project itself, but several child folders '
+      'look like ones ($names). Open one of those folders instead.',
+    );
+  }
+  if (!File(p.join(path, 'pubspec.yaml')).existsSync()) {
+    throw ProjectOpenException(
+      '"$path" is not a game project: no pubspec.yaml '
+      '(and no child like game/ with one either).',
+    );
+  }
+  throw ProjectOpenException(
+    '"$path" has no game assets (need assets/levels, '
+    'assets/idle_game.json, or assets/game_config.json).',
+  );
+}
+
 /// A game project on disk: the folder `game_agent create` made, which holds a
 /// `pubspec.yaml` and game content under `assets/` (levels, idle definition,
 /// and/or `game_config.json`).
@@ -34,23 +90,16 @@ class StudioProject {
 
   /// Opens [path] as a project. Throws [ProjectOpenException] when the folder is
   /// missing or is not a recognisable game project.
+  ///
+  /// When [path] is a wrapper repo (pubspec lives in a child such as `game/`),
+  /// opens that child so Mobarez-style layouts work from the folder picker.
   factory StudioProject.open(String path) {
     final dir = Directory(path);
     if (!dir.existsSync()) {
       throw ProjectOpenException('"$path" does not exist.');
     }
-    if (!File(p.join(path, 'pubspec.yaml')).existsSync()) {
-      throw ProjectOpenException(
-        '"$path" is not a game project: no pubspec.yaml.',
-      );
-    }
-    if (!isGameProjectRoot(path)) {
-      throw ProjectOpenException(
-        '"$path" has no game assets (need assets/levels, '
-        'assets/idle_game.json, or assets/game_config.json).',
-      );
-    }
-    return StudioProject._(p.normalize(p.absolute(path)));
+    final resolved = resolveGameProjectRoot(path);
+    return StudioProject._(p.normalize(p.absolute(resolved)));
   }
 
   /// The level files in this project, sorted by path, relative to [root].

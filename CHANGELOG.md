@@ -11,6 +11,11 @@ pubspec.yaml.
 ### Removed
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
+### Fixed
+- Studio / `project.open` — opening a wrapper folder (e.g. Mobarez repo
+  root) resolves a nested `game/` project instead of failing with
+  "no pubspec.yaml".
+
 ### Added
 - Studio `ClipPlaytest` — embedded `EngineView` playtest for a clip
   (`AnimationSystem` + atlas) toggled from `ClipEditorScreen`.

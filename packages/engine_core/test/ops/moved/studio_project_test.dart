@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:engine_core/engine_core_ops.dart';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 void main() {
@@ -80,6 +81,26 @@ void main() {
           contains('no pubspec.yaml'),
         ),
       ),
+    );
+  });
+
+  test('opens a wrapper folder by resolving a nested game/ project', () {
+    final game = Directory('${root.path}/game')..createSync();
+    File('${game.path}/pubspec.yaml').writeAsStringSync('name: nested\n');
+    Directory('${game.path}/assets/levels').createSync(recursive: true);
+    final project = StudioProject.open(root.path);
+    expect(project.root, p.normalize(game.absolute.path));
+  });
+
+  test('prefers game/ when several nested projects exist', () {
+    for (final name in ['other', 'game']) {
+      final child = Directory('${root.path}/$name')..createSync();
+      File('${child.path}/pubspec.yaml').writeAsStringSync('name: $name\n');
+      Directory('${child.path}/assets/levels').createSync(recursive: true);
+    }
+    expect(
+      p.basename(StudioProject.open(root.path).root),
+      'game',
     );
   });
 
