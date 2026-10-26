@@ -1,9 +1,10 @@
-import '../rendering/tween.dart';
+import '../ecs/entity.dart';
 import '../ecs/system.dart';
 import '../ecs/world.dart';
 import '../physics/position.dart';
-import '../ecs/entity.dart';
-import '../content/game_state.dart';
+import '../rendering/tween.dart';
+import 'game_state.dart';
+import 'play_sound_event.dart';
 
 /// One step of a scripted, non-interactive sequence — see
 /// `CinematicSystem`. [start] runs once when the step becomes active;
@@ -256,9 +257,7 @@ class PlaySoundStep extends CinematicStep {
 
   @override
   void start(World world) {
-    // Sound playback would be triggered via engine_flutter's audio system
-    // For engine_core, just emit an event the game can listen to
-    world.events.emit(_PlaySoundEvent(soundId, volume));
+    world.events.emit(PlaySoundEvent(soundId, volume: volume));
   }
 
   @override
@@ -273,13 +272,6 @@ class PlaySoundStep extends CinematicStep {
   void skip(World world) {
     // Sound is already playing, just complete
   }
-}
-
-/// Emitted by [PlaySoundStep] for the game's audio system to handle.
-class _PlaySoundEvent {
-  final String soundId;
-  final double volume;
-  _PlaySoundEvent(this.soundId, this.volume);
 }
 
 /// Sets a flag in [GameState.data] (e.g. "boss_defeated" = true).

@@ -399,7 +399,7 @@ void main() {
       expect(runner.getCurrentAudioKey(), 'fallback.wav');
     });
 
-    test('advance emits DialoguePlaySoundEvent for choice and next-node VO', () {
+    test('advance emits PlaySoundEvent for choice and next-node VO', () {
       final strings = StringTable({
         'a': {'en': 'A'},
         'b': {'en': 'B'},
@@ -434,7 +434,7 @@ void main() {
       world.storeOf<GameState>().set(world.spawn(), GameState({}));
 
       final sounds = <String>[];
-      world.events.on<DialoguePlaySoundEvent>((e) => sounds.add(e.audioKey));
+      world.events.on<PlaySoundEvent>((e) => sounds.add(e.audioKey));
 
       expect(runner.advance(world, 0), isTrue);
       world.events.flush();

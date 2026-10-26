@@ -73,4 +73,18 @@ void main() {
     expect(ran, ['a', 'b']);
     expect(cinematic.isPlaying, isFalse);
   });
+
+  test('PlaySoundStep emits PlaySoundEvent with volume', () {
+    final heard = <PlaySoundEvent>[];
+    world.events.on<PlaySoundEvent>(heard.add);
+    final cinematic = CinematicSystem([
+      PlaySoundStep(soundId: 'boom', volume: 0.4),
+    ]);
+    world.addSystem(cinematic);
+    world.step(0.016);
+    world.events.flush();
+    expect(heard, hasLength(1));
+    expect(heard.single.audioKey, 'boom');
+    expect(heard.single.volume, 0.4);
+  });
 }

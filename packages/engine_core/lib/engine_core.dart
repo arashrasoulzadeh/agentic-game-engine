@@ -14,6 +14,7 @@ export 'src/ui/button_hit_test.dart';
 export 'src/content/cinematic.dart';
 export 'src/content/inventory.dart';
 export 'src/content/dialogue.dart';
+export 'src/content/play_sound_event.dart';
 export 'src/ecs/component_registry.dart';
 export 'package:engine_schema/engine_schema.dart'
     show FieldSchema, FieldType, ComponentSchema;

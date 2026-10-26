@@ -1,8 +1,9 @@
 import '../ecs/world.dart';
 import '../ecs/world_view.dart';
 import 'game_state.dart';
-import 'string_table.dart';
 import 'inventory.dart';
+import 'play_sound_event.dart';
+import 'string_table.dart';
 
 /// A single choice within a dialogue node.
 class DialogueChoice {
@@ -220,16 +221,6 @@ class DialogueGraph {
 
   /// Gets a node by ID, or null if not found.
   DialogueNode? getNode(String id) => nodes[id];
-}
-
-/// Emitted when dialogue wants a one-shot played (choice SFX or node VO).
-///
-/// Lives in engine_core so runners stay Flutter-free — games listen and
-/// call `AudioManager.playSound` (or resolve [audioKey] through a bank).
-class DialoguePlaySoundEvent {
-  final String audioKey;
-
-  DialoguePlaySoundEvent(this.audioKey);
 }
 
 /// Drives a dialogue graph at runtime — not a System (runs on demand,
@@ -474,7 +465,7 @@ class DialogueRunner {
     world.events.emit(choice.onSelectEvent);
 
     if (choice.onSelectAudioKey != null) {
-      world.events.emit(DialoguePlaySoundEvent(choice.onSelectAudioKey!));
+      world.events.emit(PlaySoundEvent(choice.onSelectAudioKey!));
     }
 
     if (choice.nextNodeId != null) {
@@ -486,7 +477,7 @@ class DialogueRunner {
       onNodeShown?.call(newNode);
       final voice = getCurrentAudioKey();
       if (voice != null) {
-        world.events.emit(DialoguePlaySoundEvent(voice));
+        world.events.emit(PlaySoundEvent(voice));
       }
       return true;
     } else {

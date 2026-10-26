@@ -56,10 +56,10 @@ world.storeOf<Weapon>().set(
 Anything else is fair game — subscribe with
 `world.events.on<AnimationFrameEvent>(...)` in game code.
 
-## Dialogue audio (related)
+## Dialogue / cinematic audio (related)
 
-`DialogueRunner.advance` emits `DialoguePlaySoundEvent` for choice SFX
-and next-node VO. Wire the same way:
+`DialogueRunner.advance` and cinematic `PlaySoundStep` emit
+`PlaySoundEvent`. Wire once:
 
 ```dart
 final dialogueSfx = DialogueSfxSystem(audio, soundIds: {

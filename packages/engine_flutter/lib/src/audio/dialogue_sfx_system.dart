@@ -2,12 +2,13 @@ import 'package:engine_core/engine_core.dart';
 
 import 'audio_manager.dart';
 
-/// Plays one-shots for [DialoguePlaySoundEvent] (choice SFX / node VO).
+/// Plays one-shots for [PlaySoundEvent] (dialogue VO/choice SFX, cinematic
+/// [PlaySoundStep], or anything else that emits the event).
 ///
-/// Call [attach] once on the world the [DialogueRunner] advances against.
+/// Call [attach] once on the world those systems advance against.
 /// [update] is a no-op — playback is event-driven.
 ///
-/// [soundIds] maps event [DialoguePlaySoundEvent.audioKey] → asset path;
+/// [soundIds] maps event [PlaySoundEvent.audioKey] → asset path;
 /// unmapped keys are treated as asset paths directly.
 class DialogueSfxSystem implements System {
   /// Maps audio keys → asset paths. Unmapped keys are used as paths.
@@ -37,10 +38,10 @@ class DialogueSfxSystem implements System {
   void attach(World world) {
     if (_attached) return;
     _attached = true;
-    world.events.on<DialoguePlaySoundEvent>((event) {
+    world.events.on<PlaySoundEvent>((event) {
       final path = soundIds[event.audioKey] ?? event.audioKey;
       if (path.isEmpty) return;
-      _playSound(path);
+      _playSound(path, volume: event.volume);
     });
   }
 

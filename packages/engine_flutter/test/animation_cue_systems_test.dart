@@ -74,21 +74,21 @@ void main() {
     expect(world.storeOf<ParticleEmitter>().get(id)!.burstCount, 12);
   });
 
-  test('DialogueSfxSystem plays mapped keys from DialoguePlaySoundEvent', () {
+  test('DialogueSfxSystem plays mapped keys from PlaySoundEvent', () {
     final world = World(width: 10, height: 10);
     registerCoreComponents(world);
-    final plays = <String>[];
+    final plays = <(String, double)>[];
     DialogueSfxSystem.custom(
       soundIds: {'click': 'ui/click.wav'},
       playSound: (path, {double volume = 1.0}) async {
-        plays.add(path);
+        plays.add((path, volume));
       },
     ).attach(world);
 
-    world.events.emit(DialoguePlaySoundEvent('click'));
-    world.events.emit(DialoguePlaySoundEvent('vo/line.wav'));
+    world.events.emit(PlaySoundEvent('click'));
+    world.events.emit(PlaySoundEvent('vo/line.wav', volume: 0.5));
     world.events.flush();
 
-    expect(plays, ['ui/click.wav', 'vo/line.wav']);
+    expect(plays, [('ui/click.wav', 1.0), ('vo/line.wav', 0.5)]);
   });
 }

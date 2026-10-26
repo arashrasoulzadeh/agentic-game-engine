@@ -495,11 +495,11 @@ AnimationSfxSystem(audio, soundIds: {'swing': 'sfx/sword.wav'})
   ..attach(world);
 AnimationShakeSystem(camera)..attach(world);
 AnimationParticleSystem()..attach(world);
-DialogueSfxSystem(audio)..attach(world); // DialoguePlaySoundEvent
+DialogueSfxSystem(audio)..attach(world); // PlaySoundEvent (dialogue + cinematic)
 ```
 
 See [docs/examples/animation-events.md](../../docs/examples/animation-events.md).
-For bespoke cues, subscribe to `AnimationFrameEvent` / `DialoguePlaySoundEvent`
+For bespoke cues, subscribe to `AnimationFrameEvent` / `PlaySoundEvent`
 directly.
 
 ## Save/load
