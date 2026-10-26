@@ -222,6 +222,16 @@ class DialogueGraph {
   DialogueNode? getNode(String id) => nodes[id];
 }
 
+/// Emitted when dialogue wants a one-shot played (choice SFX or node VO).
+///
+/// Lives in engine_core so runners stay Flutter-free — games listen and
+/// call `AudioManager.playSound` (or resolve [audioKey] through a bank).
+class DialoguePlaySoundEvent {
+  final String audioKey;
+
+  DialoguePlaySoundEvent(this.audioKey);
+}
+
 /// Drives a dialogue graph at runtime — not a System (runs on demand,
 /// not every tick). Holds the current position in the graph and exposes
 /// actions to advance through it.
@@ -268,34 +278,23 @@ class DialogueRunner {
   }
 
   /// Gets the audio key for the current node, considering localization.
+  ///
+  /// Prefers [DialogueNode.localizedAudioKeys] for [StringTable.locale]
+  /// (exact match, then language prefix before `_`/`-`), then falls back
+  /// to [DialogueNode.audioKey].
   String? getCurrentAudioKey() {
     final node = currentNode;
     if (node == null) return null;
 
-    // Try localized audio key first
-    if (node.localizedAudioKeys != null &&
-        node.localizedAudioKeys!.isNotEmpty) {
-      // TODO: Get current locale from somewhere (GameState, StringTable, etc.)
-      // For now, try common locales
-      for (final locale in [
-        'en',
-        'en_US',
-        'en_GB',
-        'ja',
-        'ja_JP',
-        'es',
-        'es_ES',
-        'fr',
-        'fr_FR',
-        'de',
-        'de_DE',
-        'zh',
-        'zh_CN',
-        'zh_TW',
-      ]) {
-        if (node.localizedAudioKeys!.containsKey(locale)) {
-          return node.localizedAudioKeys![locale];
-        }
+    final localized = node.localizedAudioKeys;
+    if (localized != null && localized.isNotEmpty) {
+      final locale = stringTable.locale;
+      final exact = localized[locale];
+      if (exact != null) return exact;
+      final sep = locale.indexOf(RegExp(r'[_-]'));
+      if (sep > 0) {
+        final byLang = localized[locale.substring(0, sep)];
+        if (byLang != null) return byLang;
       }
     }
     return node.audioKey;
@@ -474,9 +473,8 @@ class DialogueRunner {
     onChoiceSelected?.call(choice);
     world.events.emit(choice.onSelectEvent);
 
-    // Play choice selection audio if specified
     if (choice.onSelectAudioKey != null) {
-      // TODO: Play audio via AudioManager
+      world.events.emit(DialoguePlaySoundEvent(choice.onSelectAudioKey!));
     }
 
     if (choice.nextNodeId != null) {
@@ -486,6 +484,10 @@ class DialogueRunner {
       _typewriterTimer = 0;
       final newNode = graph.getNode(choice.nextNodeId!)!;
       onNodeShown?.call(newNode);
+      final voice = getCurrentAudioKey();
+      if (voice != null) {
+        world.events.emit(DialoguePlaySoundEvent(voice));
+      }
       return true;
     } else {
       _currentNodeId = null;

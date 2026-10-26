@@ -55,6 +55,9 @@ pubspec.yaml.
   whole-file JSON Schema for `assets/idle_game.json`.
 
 ### Fixed
+- `DialogueRunner.getCurrentAudioKey` uses `StringTable.locale` (with
+  language-prefix fallback) instead of scanning a hard-coded locale list;
+  choice/node VO emit `DialoguePlaySoundEvent` for games to wire to audio.
 - `AnimationSystem` now emits `frameEvents` for the starting frame of a
   freshly attached `AnimationState` (previously only advances after the
   first duration fired cues, so frame-0 SFX/hitbox never ran).

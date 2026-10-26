@@ -366,5 +366,79 @@ void main() {
         expect(choices.length, 0); // choice filtered out because flag is false
       },
     );
+
+    test('getCurrentAudioKey prefers StringTable.locale over a fixed list', () {
+      final strings = StringTable(
+        {
+          'line': {'en': 'Hello', 'ja': 'こんにちは'},
+        },
+        locale: 'ja_JP',
+      );
+      final g = DialogueGraph(
+        nodes: {
+          'start': DialogueNode(
+            id: 'start',
+            textKey: 'line',
+            audioKey: 'fallback.wav',
+            localizedAudioKeys: {
+              'en': 'en/line.wav',
+              'ja': 'ja/line.wav',
+            },
+            choices: [],
+          ),
+        },
+        startNodeId: 'start',
+      );
+      final runner = DialogueRunner(graph: g, stringTable: strings);
+      expect(runner.getCurrentAudioKey(), 'ja/line.wav');
+
+      strings.locale = 'en';
+      expect(runner.getCurrentAudioKey(), 'en/line.wav');
+
+      strings.locale = 'fr';
+      expect(runner.getCurrentAudioKey(), 'fallback.wav');
+    });
+
+    test('advance emits DialoguePlaySoundEvent for choice and next-node VO', () {
+      final strings = StringTable({
+        'a': {'en': 'A'},
+        'b': {'en': 'B'},
+        'go': {'en': 'Go'},
+      }, locale: 'en');
+      final g = DialogueGraph(
+        nodes: {
+          'start': DialogueNode(
+            id: 'start',
+            textKey: 'a',
+            choices: [
+              DialogueChoice(
+                textKey: 'go',
+                onSelectEvent: 'picked',
+                onSelectAudioKey: 'ui/click.wav',
+                nextNodeId: 'next',
+              ),
+            ],
+          ),
+          'next': DialogueNode(
+            id: 'next',
+            textKey: 'b',
+            audioKey: 'vo/next.wav',
+            choices: [],
+          ),
+        },
+        startNodeId: 'start',
+      );
+      final runner = DialogueRunner(graph: g, stringTable: strings);
+      final world = World(width: 100, height: 100);
+      registerCoreComponents(world);
+      world.storeOf<GameState>().set(world.spawn(), GameState({}));
+
+      final sounds = <String>[];
+      world.events.on<DialoguePlaySoundEvent>((e) => sounds.add(e.audioKey));
+
+      expect(runner.advance(world, 0), isTrue);
+      world.events.flush();
+      expect(sounds, ['ui/click.wav', 'vo/next.wav']);
+    });
   });
 }
