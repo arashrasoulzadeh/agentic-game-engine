@@ -41,11 +41,12 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
       needs).
 - [x] **Animation frame events (runtime)** —
       `AnimationClip.frameEvents` + `AnimationFrameEvent` + `AnimationSfxSystem`
-      (proposal steps 1–2 in `docs/proposals/animation-events-and-ide.md`).
-      Still open from that proposal: frame-gated melee, visual animation IDE.
-- [ ] **Frame-gated melee** — subscribe to `hitbox_on`/`hitbox_off` animation
-      cues to gate `AttackSystem` melee instead of a wall-clock
-      `meleeDurationSeconds` window (proposal step 3).
+      + frame-gated melee (proposal steps 1–3 in
+      `docs/proposals/animation-events-and-ide.md`). Still open: visual
+      animation IDE.
+- [x] **Frame-gated melee** — `Weapon.meleeHitboxFromAnimation` gates
+      `AttackSystem` melee on `hitbox_on`/`hitbox_off` animation cues
+      (proposal step 3); default false keeps wall-clock duration.
 - [x] **AnimationSfxSystem** — subscribe to `AnimationFrameEvent` `type ==
       'sfx'` and call `AudioManager` (proposal step 2).
 - [x] **AISystem FSM/BT real `dt`** — `_RunStateMachineAction` /

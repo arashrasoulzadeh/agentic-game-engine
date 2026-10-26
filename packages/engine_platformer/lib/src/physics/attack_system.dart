@@ -1,6 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart';
 
+import '../logic/projectile.dart';
 import '../logic/projectile_helpers.dart';
 import '../logic/weapon.dart';
 import 'platformer_controller.dart';
@@ -29,7 +30,10 @@ import 'platformer_controller.dart';
 ///   attacker, alive for the short `Weapon.meleeDurationSeconds` — a
 ///   projectile that doesn't move and expires almost immediately reads
 ///   as an instantaneous swing hitbox, with zero new collision/damage
-///   code needed.
+///   code needed. When [Weapon.meleeHitboxFromAnimation] is true, that
+///   spawn waits for this entity's [AnimationFrameEvent] `hitbox_on`
+///   instead, and `hitbox_off` destroys it early (duration becomes a
+///   failsafe only).
 ///
 /// For melee weapons with [Weapon.comboCount] > 1, a successful hit
 /// starts a [Weapon.comboWindowSeconds] timer. If the attack action is
@@ -64,20 +68,7 @@ class AttackSystem implements System {
     // Create WorldView once for line-of-sight checks
     final view = requireLineOfSight ? WorldView(world) : null;
 
-    // Register melee hit listener once (for combo windows)
-    if (!_listenersRegistered) {
-      world.events.on<MeleeHitEvent>((event) {
-        final weapon = weapons.get(event.attacker);
-        if (weapon != null &&
-            weapon.kind == WeaponKind.melee &&
-            weapon.comboCount > 1) {
-          // Start combo window for next hit
-          weapon.comboTimer = weapon.comboWindowSeconds;
-          weapon.advanceCombo();
-        }
-      });
-      _listenersRegistered = true;
-    }
+    _ensureListeners(world, weapons, positions, controllers);
 
     for (var i = 0; i < weapons.length; i++) {
       final entity = weapons.entityAt(i);
@@ -85,6 +76,13 @@ class AttackSystem implements System {
 
       // Count down cooldown
       if (weapon.cooldownRemaining > 0) weapon.cooldownRemaining -= dt;
+
+      // Drop a stale animation-gated pending swing once the cooldown
+      // has elapsed without ever seeing hitbox_on (clip cancelled /
+      // never had the cue).
+      if (weapon.meleePendingHitbox && weapon.cooldownRemaining <= 0) {
+        weapon.meleePendingHitbox = false;
+      }
 
       // Count down combo window
       if (weapon.comboTimer > 0) {
@@ -126,6 +124,57 @@ class AttackSystem implements System {
         }
       }
     }
+  }
+
+  void _ensureListeners(
+    World world,
+    ComponentStore<Weapon> weapons,
+    ComponentStore<Position> positions,
+    ComponentStore<PlatformerController> controllers,
+  ) {
+    if (_listenersRegistered) return;
+    _listenersRegistered = true;
+
+    world.events.on<MeleeHitEvent>((event) {
+      final weapon = weapons.get(event.attacker);
+      if (weapon != null &&
+          weapon.kind == WeaponKind.melee &&
+          weapon.comboCount > 1) {
+        // Start combo window for next hit
+        weapon.comboTimer = weapon.comboWindowSeconds;
+        weapon.advanceCombo();
+      }
+    });
+
+    world.events.on<AnimationFrameEvent>((event) {
+      if (event.type != 'hitbox_on' && event.type != 'hitbox_off') return;
+      final weapon = weapons.get(event.entity);
+      if (weapon == null ||
+          weapon.kind != WeaponKind.melee ||
+          !weapon.meleeHitboxFromAnimation) {
+        return;
+      }
+
+      if (event.type == 'hitbox_on') {
+        if (!weapon.meleePendingHitbox) return;
+        final pos = positions.get(event.entity);
+        if (pos == null) return;
+        final facing = controllers.get(event.entity)?.facingSign ?? 1.0;
+        _destroyActiveMeleeHitbox(world, weapon);
+        weapon.meleeActiveHitbox = _spawnMeleeHitbox(
+          world,
+          event.entity,
+          weapon,
+          pos,
+          facing,
+        );
+        weapon.meleePendingHitbox = false;
+        return;
+      }
+
+      // hitbox_off
+      _destroyActiveMeleeHitbox(world, weapon);
+    });
   }
 
   /// Checks if there's a clear line of sight from [pos] to the attack's
@@ -173,17 +222,41 @@ class AttackSystem implements System {
           spriteRegion: weapon.spriteRegion,
         );
       case WeaponKind.melee:
-        spawnProjectile(
-          world,
-          x: pos.x + weapon.currentMeleeRange * facing,
-          y: pos.y,
-          vx: 0,
-          vy: 0,
-          damage: weapon.currentDamage,
-          radius: weapon.currentMeleeRadius,
-          lifetimeSeconds: weapon.currentMeleeDuration,
-          owner: entity,
-        );
+        if (weapon.meleeHitboxFromAnimation) {
+          _destroyActiveMeleeHitbox(world, weapon);
+          weapon.meleePendingHitbox = true;
+          return;
+        }
+        _spawnMeleeHitbox(world, entity, weapon, pos, facing);
+    }
+  }
+
+  EntityId _spawnMeleeHitbox(
+    World world,
+    EntityId entity,
+    Weapon weapon,
+    Position pos,
+    double facing,
+  ) {
+    return spawnProjectile(
+      world,
+      x: pos.x + weapon.currentMeleeRange * facing,
+      y: pos.y,
+      vx: 0,
+      vy: 0,
+      damage: weapon.currentDamage,
+      radius: weapon.currentMeleeRadius,
+      lifetimeSeconds: weapon.currentMeleeDuration,
+      owner: entity,
+    );
+  }
+
+  void _destroyActiveMeleeHitbox(World world, Weapon weapon) {
+    final id = weapon.meleeActiveHitbox;
+    if (id == null) return;
+    weapon.meleeActiveHitbox = null;
+    if (world.storeOf<Projectile>().get(id) != null) {
+      world.destroy(id);
     }
   }
 }

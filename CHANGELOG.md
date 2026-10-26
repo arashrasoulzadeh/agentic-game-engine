@@ -12,6 +12,9 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `Weapon.meleeHitboxFromAnimation` — opt-in frame-accurate melee: spawn on
+  `AnimationFrameEvent` `hitbox_on`, despawn on `hitbox_off` (default keeps
+  wall-clock `meleeDurationSeconds`).
 - `AnimationSfxSystem` — attaches to `AnimationFrameEvent` `type == 'sfx'`
   and plays via `AudioManager` (`soundIds` map, optional positional).
 - `World.deltaTime` — current/last `step` dt for `Action`s that need tick

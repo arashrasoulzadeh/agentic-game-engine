@@ -1,3 +1,5 @@
+import 'package:engine_core/engine_core.dart';
+
 /// `Weapon.kind`: whether an attack spawns a short-lived stationary
 /// hitbox at melee range, or a moving projectile — see `AttackSystem`
 /// for what each actually does.
@@ -47,7 +49,24 @@ class Weapon {
   /// disappearing (`Projectile.lifetimeSeconds` under the hood) — short
   /// enough to read as an instantaneous swing rather than a lingering
   /// hazard.
+  ///
+  /// When [meleeHitboxFromAnimation] is true this is only a failsafe
+  /// lifetime after `hitbox_on` (in case `hitbox_off` never fires), not
+  /// the primary open window.
   double meleeDurationSeconds;
+
+  /// When true, [AttackSystem] does not spawn the melee hitbox on press;
+  /// it waits for this entity's [AnimationFrameEvent] `hitbox_on` cue and
+  /// destroys the hitbox on `hitbox_off`. Default `false` keeps the
+  /// wall-clock [meleeDurationSeconds] spawn-on-press behavior.
+  bool meleeHitboxFromAnimation;
+
+  /// Runtime: attack fired, waiting for `hitbox_on`. Not serialized.
+  bool meleePendingHitbox;
+
+  /// Runtime: entity id of the animation-gated melee hitbox, if any.
+  /// Not serialized.
+  EntityId? meleeActiveHitbox;
 
   /// [WeaponKind.ranged] only: the spawned projectile's speed, in the
   /// direction the attacker is facing.
@@ -113,6 +132,9 @@ class Weapon {
     this.meleeRange = 24,
     this.meleeRadius = 12,
     this.meleeDurationSeconds = 0.12,
+    this.meleeHitboxFromAnimation = false,
+    this.meleePendingHitbox = false,
+    this.meleeActiveHitbox,
     this.projectileSpeed = 400,
     this.projectileRadius = 4,
     this.projectileLifetimeSeconds = 2,
@@ -197,6 +219,7 @@ class Weapon {
     'meleeRange': meleeRange,
     'meleeRadius': meleeRadius,
     'meleeDurationSeconds': meleeDurationSeconds,
+    'meleeHitboxFromAnimation': meleeHitboxFromAnimation,
     'projectileSpeed': projectileSpeed,
     'projectileRadius': projectileRadius,
     'projectileLifetimeSeconds': projectileLifetimeSeconds,
@@ -226,6 +249,7 @@ class Weapon {
     meleeRadius: (json['meleeRadius'] as num?)?.toDouble() ?? 12,
     meleeDurationSeconds:
         (json['meleeDurationSeconds'] as num?)?.toDouble() ?? 0.12,
+    meleeHitboxFromAnimation: json['meleeHitboxFromAnimation'] as bool? ?? false,
     projectileSpeed: (json['projectileSpeed'] as num?)?.toDouble() ?? 400,
     projectileRadius: (json['projectileRadius'] as num?)?.toDouble() ?? 4,
     projectileLifetimeSeconds:

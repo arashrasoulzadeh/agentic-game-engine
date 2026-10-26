@@ -417,7 +417,9 @@ in the entity's facing direction (`PlatformerController.facingSign`,
 - **`WeaponKind.melee`** — spawns a *stationary* hitbox
   (`Weapon.meleeRange` ahead of the attacker, `meleeRadius` wide) alive
   for the short `meleeDurationSeconds` before disappearing — reads as
-  an instant swing.
+  an instant swing. Set `meleeHitboxFromAnimation: true` to defer spawn
+  until this entity's `AnimationFrameEvent` `hitbox_on` and despawn on
+  `hitbox_off` (duration becomes a failsafe only).
 - **`WeaponKind.ranged`** — spawns a projectile moving at
   `Weapon.projectileSpeed`, alive for `projectileLifetimeSeconds`.
 

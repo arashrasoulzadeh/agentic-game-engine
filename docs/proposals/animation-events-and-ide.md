@@ -1,11 +1,12 @@
 # Proposal: per-frame animation events + a visual animation IDE
 
-Status: **runtime steps 1–2 shipped** (`AnimationClip.frameEvents` /
+Status: **runtime steps 1–3 shipped** (`AnimationClip.frameEvents` /
 `AnimationEvent` / `AnimationFrameEvent` + emit in `AnimationSystem`;
-`AnimationSfxSystem` for `type == 'sfx'`). Still draft for frame-gated
-melee and the visual IDE. Written against the **current** JSON schema
-(`AnimationClip`, atlas manifests, level JSON) rather than a new bundled
-container format — see "Why not a new `.gsp` format" below.
+`AnimationSfxSystem` for `type == 'sfx'`; `Weapon.meleeHitboxFromAnimation`
+for `hitbox_on`/`hitbox_off`). Still draft for the visual IDE. Written
+against the **current** JSON schema (`AnimationClip`, atlas manifests,
+level JSON) rather than a new bundled container format — see "Why not a
+new `.gsp` format" below.
 
 ## Problem
 

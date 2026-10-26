@@ -22,6 +22,7 @@ void main() {
       meleeRange: 30,
       meleeRadius: 14,
       meleeDurationSeconds: 0.2,
+      meleeHitboxFromAnimation: true,
       projectileSpeed: 500,
       projectileRadius: 6,
       projectileLifetimeSeconds: 4,
@@ -38,6 +39,7 @@ void main() {
     expect(restored.meleeRange, 30);
     expect(restored.meleeRadius, 14);
     expect(restored.meleeDurationSeconds, 0.2);
+    expect(restored.meleeHitboxFromAnimation, isTrue);
     expect(restored.projectileSpeed, 500);
     expect(restored.projectileRadius, 6);
     expect(restored.projectileLifetimeSeconds, 4);

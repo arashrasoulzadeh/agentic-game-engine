@@ -497,4 +497,91 @@ void main() {
       expect(world.storeOf<Projectile>().length, 1);
     });
   });
+
+  group('animation-gated melee', () {
+    World buildAnimWorld() {
+      final world = _buildWorld();
+      world.addSystem(AnimationSystem());
+      return world;
+    }
+
+    void attachAttackClip(World world, EntityId attacker) {
+      world.storeOf<Sprite>().set(attacker, Sprite('atlas', 'a0'));
+      world.storeOf<AnimationState>().set(
+        attacker,
+        AnimationState(
+          AnimationClip(
+            'attack',
+            ['a0', 'a1', 'a2'],
+            frameDurationSeconds: 0.1,
+            loop: false,
+            frameEvents: [
+              [],
+              [const AnimationEvent('hitbox_on')],
+              [const AnimationEvent('hitbox_off')],
+            ],
+          ),
+        ),
+      );
+    }
+
+    test('does not spawn on press when meleeHitboxFromAnimation is true', () {
+      final world = buildAnimWorld();
+      final weapon = Weapon(
+        kind: WeaponKind.melee,
+        meleeHitboxFromAnimation: true,
+        meleeRange: 30,
+      );
+      final attacker = _spawnAttacker(world, weapon);
+      attachAttackClip(world, attacker);
+
+      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.step(0.016);
+
+      expect(world.storeOf<Projectile>().length, 0);
+      expect(world.storeOf<Weapon>().get(attacker)!.meleePendingHitbox, isTrue);
+    });
+
+    test('spawns on hitbox_on and destroys on hitbox_off', () {
+      final world = buildAnimWorld();
+      final weapon = Weapon(
+        kind: WeaponKind.melee,
+        meleeHitboxFromAnimation: true,
+        meleeRange: 30,
+        meleeDurationSeconds: 5.0, // failsafe longer than the clip window
+        cooldownSeconds: 1.0,
+      );
+      final attacker = _spawnAttacker(world, weapon);
+      attachAttackClip(world, attacker);
+
+      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.step(0.016);
+      expect(world.storeOf<Projectile>().length, 0);
+
+      world.step(0.1); // enter frame 1 → hitbox_on
+      expect(world.storeOf<Projectile>().length, 1);
+      final hitboxId = world.storeOf<Projectile>().entityAt(0);
+      expect(world.storeOf<Position>().get(hitboxId)!.x, 130);
+      expect(world.storeOf<Weapon>().get(attacker)!.meleePendingHitbox, isFalse);
+      expect(world.storeOf<Weapon>().get(attacker)!.meleeActiveHitbox, hitboxId);
+
+      world.step(0.1); // enter frame 2 → hitbox_off
+      expect(world.storeOf<Projectile>().length, 0);
+      expect(world.storeOf<Weapon>().get(attacker)!.meleeActiveHitbox, isNull);
+    });
+
+    test('ignores hitbox_on when no pending animation-gated swing', () {
+      final world = buildAnimWorld();
+      final weapon = Weapon(
+        kind: WeaponKind.melee,
+        meleeHitboxFromAnimation: true,
+      );
+      final attacker = _spawnAttacker(world, weapon);
+      attachAttackClip(world, attacker);
+
+      // Advance into hitbox_on without ever requesting an attack.
+      world.step(0.1);
+      expect(world.storeOf<Projectile>().length, 0);
+    });
+  });
 }
