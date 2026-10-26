@@ -205,4 +205,37 @@ void main() {
     world.step(0.1);
     expect(count, 1);
   });
+
+  test('emits cues on the starting frame of a freshly attached clip', () {
+    final world = buildWorld();
+    final id = world.spawn();
+    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.storeOf<AnimationState>().set(
+      id,
+      AnimationState(
+        AnimationClip(
+          'draw',
+          ['frame0', 'frame1'],
+          frameDurationSeconds: 0.1,
+          loop: false,
+          frameEvents: [
+            [const AnimationEvent('sfx', {'id': 'unsheathe'})],
+            [],
+          ],
+        ),
+      ),
+    );
+
+    final seen = <AnimationFrameEvent>[];
+    world.events.on<AnimationFrameEvent>(seen.add);
+
+    world.step(0.01); // not enough to leave frame 0
+    expect(seen, hasLength(1));
+    expect(seen.single.type, 'sfx');
+    expect(seen.single.data['id'], 'unsheathe');
+    expect(seen.single.frameIndex, 0);
+
+    world.step(0.01); // still on frame 0 — no re-emit
+    expect(seen, hasLength(1));
+  });
 }

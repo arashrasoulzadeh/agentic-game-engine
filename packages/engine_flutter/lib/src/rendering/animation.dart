@@ -179,7 +179,8 @@ class AnimationEvent {
 }
 
 /// Fired by `AnimationSystem` the tick playback enters a frame that
-/// lists cues in [AnimationClip.frameEvents]. Subscribe with
+/// lists cues in [AnimationClip.frameEvents] — including the starting
+/// frame of a freshly attached [AnimationState]. Subscribe with
 /// `world.events.on<AnimationFrameEvent>(...)` for SFX, hitboxes, etc.
 class AnimationFrameEvent {
   final EntityId entity;
@@ -214,12 +215,20 @@ class AnimationState {
   bool playing;
   double crossfadeSeconds;
 
+  /// Frame index whose [AnimationClip.frameEvents] were already emitted
+  /// for the current clip visit. `-1` means none yet — so attaching a
+  /// fresh state (or swapping to a new [AnimationState]) fires cues on
+  /// the starting frame, not only after the first advance. Runtime only;
+  /// not serialized.
+  int lastEmittedFrameIndex;
+
   AnimationState(
     this.clip, {
     this.frameIndex = 0,
     this.elapsed = 0,
     this.playing = true,
     this.crossfadeSeconds = 0,
+    this.lastEmittedFrameIndex = -1,
   });
 
   Map<String, dynamic> toJson() => {

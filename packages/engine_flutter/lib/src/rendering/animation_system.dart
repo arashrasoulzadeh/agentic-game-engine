@@ -12,6 +12,10 @@ import 'sprite.dart';
 /// Lives in engine_flutter (not engine_core) because it operates on
 /// Sprite/AnimationState, which are themselves Flutter-adjacent
 /// (atlas-based) components.
+///
+/// "Enter" includes the first visit to a freshly attached
+/// [AnimationState]'s starting [AnimationState.frameIndex] (so frame-0
+/// cues fire without waiting for a loop), not only later advances.
 class AnimationSystem implements System {
   @override
   String get name => 'animation';
@@ -30,6 +34,11 @@ class AnimationSystem implements System {
       final clip = state.clip;
       if (clip.frameRegions.isEmpty) continue;
 
+      if (state.lastEmittedFrameIndex != state.frameIndex) {
+        _emitFrameEvents(world, entity, clip, state.frameIndex);
+        state.lastEmittedFrameIndex = state.frameIndex;
+      }
+
       state.elapsed += dt;
       while (state.elapsed >= clip.frameDurationSeconds) {
         state.elapsed -= clip.frameDurationSeconds;
@@ -38,6 +47,7 @@ class AnimationSystem implements System {
           if (clip.loop) {
             state.frameIndex = 0;
             _emitFrameEvents(world, entity, clip, 0);
+            state.lastEmittedFrameIndex = 0;
           } else {
             state.frameIndex = clip.frameRegions.length - 1;
             state.playing = false;
@@ -46,6 +56,7 @@ class AnimationSystem implements System {
         } else {
           state.frameIndex = nextIndex;
           _emitFrameEvents(world, entity, clip, nextIndex);
+          state.lastEmittedFrameIndex = nextIndex;
         }
       }
 

@@ -55,6 +55,9 @@ pubspec.yaml.
   whole-file JSON Schema for `assets/idle_game.json`.
 
 ### Fixed
+- `AnimationSystem` now emits `frameEvents` for the starting frame of a
+  freshly attached `AnimationState` (previously only advances after the
+  first duration fired cues, so frame-0 SFX/hitbox never ran).
 - FSM/BT runners (`StateMachineBehavior`, `BehaviorTreeBehavior`,
   `BehaviorTreeSystem`) now pass the tick's real `dt` into `_dt` instead of
   hardcoding `1/60` (so `BTWait` / `BTCooldown` / `BTTimer` keep correct time
