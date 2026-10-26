@@ -42,11 +42,11 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
 - [x] **Animation frame events (runtime)** —
       `frameEvents` + SFX/shake/particle bridges + frame-gated melee +
       recipe `docs/examples/animation-events.md` (proposal steps 1–3).
-- [ ] **Visual animation IDE** — studio `ClipEditorScreen` opens clip JSON
-      (frames / pivots / frameEvents / save) with atlas region picker,
-      onion-skin live preview, and event-track timeline markers. Still
-      open: embedded EngineView playtest preview (proposal step 4
-      remainder).
+- [x] **Visual animation IDE** — studio `ClipEditorScreen` (frames /
+      pivots / frameEvents / save) + atlas region picker + onion-skin
+      preview + event-track timeline + embedded `EngineView` playtest
+      (`ClipPlaytest`). Sheet cutter already exists as a studio Atlas
+      view / Artifact.
 - [x] **Frame-gated melee** — `Weapon.meleeHitboxFromAnimation` gates
       `AttackSystem` melee on `hitbox_on`/`hitbox_off` animation cues
       (proposal step 3); default false keeps wall-clock duration.

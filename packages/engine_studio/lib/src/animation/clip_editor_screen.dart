@@ -9,6 +9,7 @@ import '../assets/asset_index.dart';
 import '../assets/atlas_view.dart';
 import '../prefs/strings.dart';
 import 'clip_event_timeline.dart';
+import 'clip_playtest.dart';
 import 'clip_preview.dart';
 
 /// Whether [path] holds AnimationClip-shaped JSON the clip editor can open.
@@ -58,6 +59,8 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
   String? _atlasId;
   bool _playing = false;
   bool _onionSkin = true;
+  bool _enginePlaytest = false;
+  int _playtestRevision = 0;
 
   final _durationController = TextEditingController();
   final _regionController = TextEditingController();
@@ -656,31 +659,62 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
                         icon: const Icon(Icons.collections_outlined),
                       ),
                       IconButton(
-                        key: const Key('clip-onion'),
-                        tooltip: StudioStrings.t('clip.onionSkin'),
-                        onPressed: () =>
-                            setState(() => _onionSkin = !_onionSkin),
+                        key: const Key('clip-engine-playtest'),
+                        tooltip: StudioStrings.t('clip.enginePlaytest'),
+                        onPressed: _atlasId == null || regions.isEmpty
+                            ? null
+                            : () => setState(() {
+                                  _enginePlaytest = !_enginePlaytest;
+                                  if (_enginePlaytest) {
+                                    _playing = false;
+                                    _playtestRevision++;
+                                  }
+                                }),
                         icon: Icon(
-                          _onionSkin
-                              ? Icons.filter_none
-                              : Icons.filter_none_outlined,
+                          _enginePlaytest
+                              ? Icons.videogame_asset
+                              : Icons.videogame_asset_outlined,
                         ),
-                        color: _onionSkin
+                        color: _enginePlaytest
                             ? Theme.of(context).colorScheme.primary
                             : null,
                       ),
-                      IconButton(
-                        key: const Key('clip-play'),
-                        tooltip: _playing
-                            ? StudioStrings.t('clip.pause')
-                            : StudioStrings.t('clip.play'),
-                        onPressed: regions.isEmpty
-                            ? null
-                            : () => setState(() => _playing = !_playing),
-                        icon: Icon(
-                          _playing ? Icons.pause : Icons.play_arrow,
+                      if (_enginePlaytest)
+                        IconButton(
+                          key: const Key('clip-playtest-restart'),
+                          tooltip: StudioStrings.t('clip.playtestRestart'),
+                          onPressed: () =>
+                              setState(() => _playtestRevision++),
+                          icon: const Icon(Icons.refresh),
+                        )
+                      else ...[
+                        IconButton(
+                          key: const Key('clip-onion'),
+                          tooltip: StudioStrings.t('clip.onionSkin'),
+                          onPressed: () =>
+                              setState(() => _onionSkin = !_onionSkin),
+                          icon: Icon(
+                            _onionSkin
+                                ? Icons.filter_none
+                                : Icons.filter_none_outlined,
+                          ),
+                          color: _onionSkin
+                              ? Theme.of(context).colorScheme.primary
+                              : null,
                         ),
-                      ),
+                        IconButton(
+                          key: const Key('clip-play'),
+                          tooltip: _playing
+                              ? StudioStrings.t('clip.pause')
+                              : StudioStrings.t('clip.play'),
+                          onPressed: regions.isEmpty
+                              ? null
+                              : () => setState(() => _playing = !_playing),
+                          icon: Icon(
+                            _playing ? Icons.pause : Icons.play_arrow,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   if (_atlasId != null)
@@ -696,15 +730,23 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
                       ),
                     ),
                   Expanded(
-                    child: ClipPreview(
-                      key: const Key('clip-preview-widget'),
-                      projectRoot: root,
-                      clip: clip,
-                      atlasId: _atlasId,
-                      selectedFrame: _selectedFrame,
-                      playing: _playing,
-                      onionSkin: _onionSkin,
-                    ),
+                    child: _enginePlaytest && _atlasId != null
+                        ? ClipPlaytest(
+                            key: const Key('clip-playtest-widget'),
+                            projectRoot: root,
+                            clip: clip,
+                            atlasId: _atlasId!,
+                            revision: _playtestRevision,
+                          )
+                        : ClipPreview(
+                            key: const Key('clip-preview-widget'),
+                            projectRoot: root,
+                            clip: clip,
+                            atlasId: _atlasId,
+                            selectedFrame: _selectedFrame,
+                            playing: _playing,
+                            onionSkin: _onionSkin,
+                          ),
                   ),
                 ],
               ),

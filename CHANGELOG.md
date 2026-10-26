@@ -12,6 +12,8 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Studio `ClipPlaytest` — embedded `EngineView` playtest for a clip
+  (`AnimationSystem` + atlas) toggled from `ClipEditorScreen`.
 - Studio clip event-track timeline — `ClipEventTimeline` shows per-frame
   cue markers (sfx / hitbox / shake / particle) and tap-to-add from the
   draft event fields.

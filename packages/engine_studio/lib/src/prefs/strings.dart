@@ -156,6 +156,9 @@ class StudioStrings {
     'clip.timeline': 'Timeline',
     'clip.timelineAddHint':
         'Tap to add the draft event type/data to this frame',
+    'clip.enginePlaytest':
+        'EngineView playtest (AnimationSystem + real pivots/events)',
+    'clip.playtestRestart': 'Restart playtest from frame 0',
   };
 
   static bool _registered = false;
