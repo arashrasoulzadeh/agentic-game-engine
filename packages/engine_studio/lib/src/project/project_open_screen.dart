@@ -1,13 +1,17 @@
+import 'dart:io';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 
 import '../bootstrap/bootstrap_screen.dart';
 import '../bootstrap/update_config.dart';
+import '../prefs/recent_projects.dart';
 import '../prefs/shortcuts.dart' show studioPrefsFile;
-import 'project_screen.dart';
-import 'git_status.dart';
-import 'studio_project.dart';
 import '../prefs/strings.dart';
+import 'git_status.dart';
+import 'project_screen.dart';
+import 'studio_project.dart';
 
 /// Asks for a game project folder and opens it. Takes a typed path for now: a
 /// native folder picker needs a plugin, which is added once package access is
@@ -21,10 +25,14 @@ class ProjectOpenScreen extends StatefulWidget {
   /// pass their own so no real file or network is involved.
   final UpdateConfig? Function()? updateConfig;
 
+  /// Prefs file for the recent-projects list. Null uses `~/.game_agent/studio_prefs.json`.
+  final File? prefsFile;
+
   const ProjectOpenScreen({
     super.key,
     required this.onOpened,
     this.updateConfig,
+    this.prefsFile,
   });
 
   /// Opens the project's level list. Shared by the app and tests that don't
@@ -44,6 +52,15 @@ class ProjectOpenScreen extends StatefulWidget {
 class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
   final _path = TextEditingController();
   String? _error;
+  late List<String> _recent;
+
+  File get _prefs => widget.prefsFile ?? studioPrefsFile();
+
+  @override
+  void initState() {
+    super.initState();
+    _recent = loadRecentProjects(_prefs);
+  }
 
   @override
   void dispose() {
@@ -99,9 +116,16 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
     );
   }
 
-  void _open() {
+  void _open([String? path]) {
+    final target = (path ?? _path.text).trim();
+    if (path != null) _path.text = target;
     try {
-      final project = StudioProject.open(_path.text.trim());
+      final project = StudioProject.open(target);
+      rememberRecentProject(project.root, _prefs);
+      setState(() {
+        _recent = loadRecentProjects(_prefs);
+        _error = null;
+      });
       widget.onOpened(context, project);
     } on ProjectOpenException catch (e) {
       setState(() => _error = e.message);
@@ -139,7 +163,7 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
                       'project_open_screen.game_project_folder',
                     ),
                     hintText: '/path/to/my_game',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                   onSubmitted: (_) => _open(),
                 ),
@@ -157,7 +181,7 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
                     Expanded(
                       child: FilledButton(
                         key: const Key('open-project'),
-                        onPressed: _open,
+                        onPressed: () => _open(),
                         child: Text(
                           StudioStrings.t('project_open_screen.open'),
                         ),
@@ -172,6 +196,37 @@ class _ProjectOpenScreenState extends State<ProjectOpenScreen> {
                     key: const Key('open-error'),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+                if (_recent.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  Text(
+                    StudioStrings.t('project_open_screen.recent'),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 200),
+                    child: ListView.builder(
+                      key: const Key('recent-projects'),
+                      shrinkWrap: true,
+                      itemCount: _recent.length,
+                      itemBuilder: (context, i) {
+                        final path = _recent[i];
+                        return ListTile(
+                          key: Key('recent-$i'),
+                          dense: true,
+                          leading: const Icon(Icons.folder_open, size: 18),
+                          title: Text(p.basename(path)),
+                          subtitle: Text(
+                            path,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () => _open(path),
+                        );
+                      },
                     ),
                   ),
                 ],

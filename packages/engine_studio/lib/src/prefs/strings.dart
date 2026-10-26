@@ -43,6 +43,7 @@ class StudioStrings {
     'project_open_screen.browse': 'Browse…',
     'project_open_screen.game_project_folder': 'Game project folder',
     'project_open_screen.open_project': 'Open project',
+    'project_open_screen.recent': 'Recent projects',
     'project_open_screen.no_update_server_configured':
         'No update server configured',
     'image_view.that_image_no_longer_exists': 'That image no longer exists.',

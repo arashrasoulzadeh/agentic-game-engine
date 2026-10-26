@@ -20,6 +20,7 @@ pubspec.yaml.
   "no pubspec.yaml".
 
 ### Added
+- Studio recent-projects list on the open screen (`studio_prefs.json`).
 - Studio terminal panel — project-root shell (`/bin/sh -c`) with streaming
   output, kill, and injected process starter for tests.
 - Studio `ClipPlaytest` — embedded `EngineView` playtest for a clip
