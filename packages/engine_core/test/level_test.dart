@@ -85,6 +85,14 @@ void main() {
     expect(world.storeOf<Position>().length, 0);
   });
 
+  test('looksLikeDocument is true only when entities is a list', () {
+    expect(Level.looksLikeDocument({'entities': []}), isTrue);
+    expect(Level.looksLikeDocument({'entities': <Object?>[]}), isTrue);
+    expect(Level.looksLikeDocument({'wave': ['wolf'], 'boss': 'kakuy'}), isFalse);
+    expect(Level.looksLikeDocument({'entities': 'nope'}), isFalse);
+    expect(Level.looksLikeDocument('x'), isFalse);
+  });
+
   test('throws LevelLoadException when "entities" key is missing', () {
     final world = _buildWorld();
     expect(

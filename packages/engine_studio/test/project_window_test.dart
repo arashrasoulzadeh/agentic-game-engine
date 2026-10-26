@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:engine_studio/src/code/analysis.dart';
 import 'package:engine_studio/src/code/code_editor_screen.dart';
+import 'package:engine_studio/src/level/level_screen.dart';
 import 'package:engine_studio/src/project/project_screen.dart';
 import 'package:engine_studio/src/project/studio_project.dart';
 import 'package:flutter/material.dart';
@@ -98,6 +99,35 @@ void main() {
         'void main() {\n'.length,
         reason: 'the cursor is at the start of line 2',
       );
+    },
+  );
+
+  testWidgets(
+    'custom assets/levels JSON without entities opens in the code editor',
+    (tester) async {
+      File('${root.path}/assets/levels/wave.json').writeAsStringSync(
+        jsonEncode({
+          'id': 'a1',
+          'wave': ['wolf'],
+          'boss': 'kakuy',
+        }),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ProjectScreen(
+            project: StudioProject.open(root.path),
+            useLanguageServer: false,
+          ),
+        ),
+      );
+      await tester.tap(find.byKey(const Key('file-assets')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('file-assets/levels')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('file-assets/levels/wave.json')));
+      await tester.pump();
+      expect(find.byKey(const Key('code-text')), findsOneWidget);
+      expect(find.byType(LevelScreen), findsNothing);
     },
   );
 

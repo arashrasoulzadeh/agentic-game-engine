@@ -62,6 +62,10 @@ List<ProjectProblem> collectProjectProblems(StudioProject project) {
       );
       continue;
     }
+    // Custom game JSON under assets/levels/ (no entities list) is not an
+    // engine LevelDocument — skip rather than reporting a false "missing
+    // entities" error for every Mobarez-style wave file.
+    if (!Level.looksLikeDocument(decoded)) continue;
     try {
       for (final issue in validator.validate(
         LevelDocument.fromJson(decoded as Map<String, dynamic>),

@@ -48,6 +48,17 @@ class Level {
     return named;
   }
 
+  /// True when [json] looks like an engine [Level] / [LevelDocument]
+  /// (`entities` list present) rather than a game-specific sidecar
+  /// (e.g. Mobarez wave/boss JSON under `assets/levels/`).
+  ///
+  /// Studio uses this to open custom formats in the text editor instead of
+  /// failing inside the tile level editor.
+  static bool looksLikeDocument(Object? json) {
+    if (json is! Map) return false;
+    return json['entities'] is List;
+  }
+
   /// Validates [json] and returns its `entities` list, cast, on success.
   /// Exposed separately so tools (e.g. a CLI lint command) can validate
   /// a level file without loading it into a live World.

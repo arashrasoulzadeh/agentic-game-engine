@@ -1,8 +1,9 @@
 import '../prefs/shortcuts.dart';
 import '../prefs/strings.dart';
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:engine_core/engine_core.dart' show GraphType;
+import 'package:engine_core/engine_core.dart' show GraphType, Level;
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
@@ -555,7 +556,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
       );
     }
     final fullPath = p.join(widget.project.root, open);
-    if (open.startsWith('assets/levels/') && open.endsWith('.json')) {
+    // Only engine LevelDocument JSON (`entities` list) opens in the tile
+    // editor. Game-specific sidecars under assets/levels/ (Mobarez wave
+    // defs, etc.) fall through to the code editor instead of failing load.
+    if (open.startsWith('assets/levels/') &&
+        open.endsWith('.json') &&
+        _looksLikeEngineLevel(fullPath)) {
       return LevelScreen(
         key: ValueKey(fullPath),
         levelPath: fullPath,
@@ -594,6 +600,17 @@ class _ProjectScreenState extends State<ProjectScreen> {
       );
     }
     return Center(child: Text(StudioStrings.t('project.fileGone')));
+  }
+
+  /// True when [path] is engine LevelDocument JSON (has an `entities` list).
+  static bool _looksLikeEngineLevel(String path) {
+    try {
+      return Level.looksLikeDocument(
+        jsonDecode(File(path).readAsStringSync()),
+      );
+    } on Object {
+      return false;
+    }
   }
 
   IconData _iconFor(String name) {

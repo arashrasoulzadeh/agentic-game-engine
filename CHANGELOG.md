@@ -12,6 +12,9 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Fixed
+- Studio opens custom `assets/levels/*.json` (no `entities` list, e.g.
+  Mobarez wave defs) in the code editor instead of failing LevelDocument
+  load with "missing entities".
 - Studio / `project.open` — opening a wrapper folder (e.g. Mobarez repo
   root) resolves a nested `game/` project instead of failing with
   "no pubspec.yaml".
