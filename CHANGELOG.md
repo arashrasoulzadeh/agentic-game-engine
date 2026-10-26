@@ -12,6 +12,9 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Studio clip event-track timeline — `ClipEventTimeline` shows per-frame
+  cue markers (sfx / hitbox / shake / particle) and tap-to-add from the
+  draft event fields.
 - Studio clip preview + atlas region picker — `ClipPreview` (play /
   onion-skin) and `showSpritePicker` wiring on `ClipEditorScreen` when
   opened with a project root.

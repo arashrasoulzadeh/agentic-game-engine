@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../assets/asset_index.dart';
 import '../assets/atlas_view.dart';
 import '../prefs/strings.dart';
+import 'clip_event_timeline.dart';
 import 'clip_preview.dart';
 
 /// Whether [path] holds AnimationClip-shaped JSON the clip editor can open.
@@ -278,9 +279,13 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
     _markDirty();
   }
 
-  void _addEvent() {
+  void _addEvent([int? frameIndex]) {
     final clip = _clip;
     if (clip == null) return;
+    if (frameIndex != null) {
+      _selectedFrame = frameIndex;
+      _syncControllers();
+    }
     final type = _eventTypeController.text.trim();
     if (type.isEmpty) return;
     Map<String, dynamic> data = const {};
@@ -465,30 +470,20 @@ class _ClipEditorScreenState extends State<ClipEditorScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  StudioStrings.t('clip.frames'),
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                SizedBox(
-                  height: 56,
-                  child: ListView.builder(
-                    key: const Key('clip-frames'),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: regions.length,
-                    itemBuilder: (context, i) {
-                      final selected = i == _selectedFrame;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: ChoiceChip(
-                          key: Key('clip-frame-$i'),
-                          label: Text('$i:${regions[i]}'),
-                          selected: selected,
-                          onSelected: (_) => _selectFrame(i),
-                        ),
-                      );
-                    },
+                if (regions.isNotEmpty)
+                  ClipEventTimeline(
+                    key: const Key('clip-timeline'),
+                    regions: regions,
+                    frameEvents: ensureFrameEvents(clip),
+                    selectedFrame: _selectedFrame,
+                    onSelectFrame: _selectFrame,
+                    onAddEventAt: (i) => _addEvent(i),
+                  )
+                else
+                  Text(
+                    StudioStrings.t('clip.frames'),
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
-                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [

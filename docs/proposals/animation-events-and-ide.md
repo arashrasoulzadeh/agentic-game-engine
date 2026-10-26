@@ -1,10 +1,10 @@
 # Proposal: per-frame animation events + a visual animation IDE
 
 Status: **runtime steps 1–3 shipped**; IDE step 4 partial (clip editor +
-atlas picker + onion-skin preview). Still open: EngineView live preview
-and event-track timeline. Written against the **current** JSON schema
-(`AnimationClip`, atlas manifests, level JSON) rather than a new bundled
-container format — see "Why not a new `.gsp` format" below.
+atlas picker + onion-skin preview + event-track timeline). Still open:
+embedded EngineView playtest preview. Written against the **current**
+JSON schema (`AnimationClip`, atlas manifests, level JSON) rather than a
+new bundled container format — see "Why not a new `.gsp` format" below.
 
 ## Problem
 
@@ -203,5 +203,5 @@ exists.
 3. ~~Docs + example recipe (`docs/examples/animation-events.md`)~~
 4. IDE UI (studio panels). **Shipped so far:** `animation.*` ops +
    `animation_clip_json` helpers + studio `ClipEditorScreen` (frames /
-   pivots / frameEvents, atlas region picker, onion-skin live preview).
-   **Next:** embedded EngineView preview, richer event-track timeline.
+   pivots / frameEvents, atlas region picker, onion-skin live preview,
+   event-track timeline). **Next:** embedded EngineView playtest preview.

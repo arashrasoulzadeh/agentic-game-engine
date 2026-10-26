@@ -153,6 +153,9 @@ class StudioStrings {
     'clip.play': 'Play',
     'clip.pause': 'Pause',
     'clip.atlasLabel': 'Atlas: {id}',
+    'clip.timeline': 'Timeline',
+    'clip.timelineAddHint':
+        'Tap to add the draft event type/data to this frame',
   };
 
   static bool _registered = false;
