@@ -6,6 +6,7 @@ import 'package:engine_core/engine_core.dart' show GraphType;
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
+import '../animation/clip_editor_screen.dart';
 import '../assets/asset_browser.dart';
 import '../assets/asset_index.dart';
 import '../assets/atlas_view.dart';
@@ -571,6 +572,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
     }
     if (kindOf(ProjectEntry(open, isDirectory: false)) == FileKind.image) {
       return ImageView(key: ValueKey(fullPath), filePath: fullPath);
+    }
+    if (File(fullPath).existsSync() && looksLikeAnimationClipFile(fullPath)) {
+      return ClipEditorScreen(
+        key: ValueKey('clip-$fullPath'),
+        filePath: fullPath,
+      );
     }
     if (File(fullPath).existsSync()) {
       return CodeEditorScreen(

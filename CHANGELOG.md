@@ -12,6 +12,8 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- Studio `ClipEditorScreen` — opens AnimationClip JSON from the project
+  tree (frames, pivots, frameEvents, save); detected via clip-shaped JSON.
 - `animation.read` / `validate` / `set_event` / `set_pivot` /
   `clear_events` ops plus pure-Dart `animation_clip_json` helpers — agent/
   CLI foundation for the visual animation IDE (clip JSON on disk).

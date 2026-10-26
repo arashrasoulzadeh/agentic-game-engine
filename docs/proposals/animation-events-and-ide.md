@@ -203,7 +203,8 @@ exists.
 1. ~~`AnimationEvent`/`AnimationClip.frameEvents` + `AnimationFrameEvent`~~
 2. ~~`AnimationSfxSystem` (+ shake / particle bridges, frame-gated melee)~~
 3. ~~Docs + example recipe (`docs/examples/animation-events.md`)~~
-4. IDE UI (studio panels). **Data/agent foundation shipped:**
-   `animation.*` ops + `animation_clip_json` helpers so CLI/MCP can edit
-   clip JSON before the visual panels exist. Next: clip editor panel in
-   `engine_studio` (regions → clip → pivot → event track).
+4. IDE UI (studio panels). **Shipped so far:** `animation.*` ops +
+   `animation_clip_json` helpers + studio `ClipEditorScreen` (frames /
+   pivots / frameEvents, opens from the project tree). **Next:** live
+   EngineView preview, atlas region picker, onion-skin pivot tool,
+   richer event-track timeline.

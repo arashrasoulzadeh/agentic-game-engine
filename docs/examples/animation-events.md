@@ -66,7 +66,8 @@ final dialogueSfx = DialogueSfxSystem(audio, soundIds: {
 dialogueSfx.attach(world);
 ```
 
-Agents/CLI can edit the same clip JSON without Flutter:
+Agents/CLI can edit the same clip JSON without Flutter, and studio opens
+clip-shaped JSON in `ClipEditorScreen` automatically:
 
 ```bash
 game_agent animation set_event assets/anims/attack.json --frame 2 --type sfx --data '{"id":"swing"}' --apply

@@ -42,9 +42,10 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
 - [x] **Animation frame events (runtime)** —
       `frameEvents` + SFX/shake/particle bridges + frame-gated melee +
       recipe `docs/examples/animation-events.md` (proposal steps 1–3).
-- [ ] **Visual animation IDE** — studio UI for clips/pivots/events
-      (proposal step 4). Foundation shipped: `animation.*` ops +
-      `animation_clip_json` helpers + `installAnimationCueSystems`.
+- [ ] **Visual animation IDE** — studio `ClipEditorScreen` opens clip JSON
+      (frames / pivots / frameEvents / save). Still open: live EngineView
+      preview, atlas region picker, onion-skin pivot tool, event-track
+      timeline UI (proposal step 4 remainder).
 - [x] **Frame-gated melee** — `Weapon.meleeHitboxFromAnimation` gates
       `AttackSystem` melee on `hitbox_on`/`hitbox_off` animation cues
       (proposal step 3); default false keeps wall-clock duration.
