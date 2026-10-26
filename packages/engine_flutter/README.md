@@ -489,11 +489,19 @@ per-ray work.
 final audio = AudioManager();
 await audio.playSound('sfx/jump.wav');
 await audio.playMusic('music/theme.mp3', loop: true);
+
+// Data-driven SFX from AnimationClip.frameEvents (type: 'sfx'):
+final sfx = AnimationSfxSystem(
+  audio,
+  soundIds: {'swing': 'sfx/sword.wav'},
+);
+sfx.attach(world);
+world.addSystem(sfx);
 ```
 
-Recommended pattern: listen on `world.events` and call `playSound` from
-there, not from inside a `System` — keeps simulation logic decoupled
-from playback.
+Recommended pattern for bespoke cues: listen on `world.events` and call
+`playSound` from there. For animation-frame SFX, prefer
+`AnimationSfxSystem` so clips stay data-driven.
 
 ## Save/load
 

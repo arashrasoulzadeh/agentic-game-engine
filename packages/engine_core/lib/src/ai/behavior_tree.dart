@@ -786,7 +786,9 @@ class BehaviorTreeSystem implements System {
 
       final view = WorldView(world);
       final context = BTContext(view, entity, blackboard: blackboard)
-        ..set('_bt_registry', registry);
+        ..set('_bt_registry', registry)
+        ..set('_time', world.tick.toDouble())
+        ..set('_dt', dt);
 
       root.tick(context);
     }
@@ -815,7 +817,9 @@ class _RunTreeAction implements Action {
     aiState.memory['_bt_blackboard'] = blackboard;
 
     final context = BTContext(view, entity, blackboard: blackboard)
-      ..set('_bt_registry', registry);
+      ..set('_bt_registry', registry)
+      ..set('_time', world.tick.toDouble())
+      ..set('_dt', world.deltaTime);
 
     root.tick(context);
   }

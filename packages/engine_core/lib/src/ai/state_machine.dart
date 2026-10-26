@@ -216,7 +216,7 @@ class _RunStateMachineAction implements Action {
     final context = BTContext(view, entity, blackboard: blackboard)
       ..set('_bt_registry', registry)
       ..set('_time', world.tick.toDouble())
-      ..set('_dt', 1.0 / 60.0); // TODO: get actual dt
+      ..set('_dt', world.deltaTime);
 
     // Try to transition
     stateMachine.tryTransition(context);

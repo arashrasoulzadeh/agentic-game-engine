@@ -53,6 +53,15 @@ class World {
   /// sync), where the world must resume at the tick it was captured at.
   void setTick(int tick) => _tick = tick;
 
+  /// `dt` of the [step] currently running (or the last completed step).
+  ///
+  /// Set at the start of every [step] so `Action.apply` (and anything else
+  /// that only sees a [World], not the system's `dt` argument) can read the
+  /// real tick length — e.g. FSM/BT runners that stash `_dt` on a
+  /// blackboard. `0` before the first `step`.
+  double _deltaTime = 0;
+  double get deltaTime => _deltaTime;
+
   World({required this.width, required this.height});
 
   /// Returns the archetype manager for optimized queries.
@@ -78,6 +87,7 @@ class World {
   /// flushes events emitted during this tick. Fixed timestep is enforced
   /// by the caller (engine_flutter's ticker) — World just executes dt.
   void step(double dt) {
+    _deltaTime = dt;
     final profiler = this.profiler;
     if (profiler == null) {
       for (final system in _systems) {

@@ -12,6 +12,10 @@ pubspec.yaml.
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Added
+- `AnimationSfxSystem` — attaches to `AnimationFrameEvent` `type == 'sfx'`
+  and plays via `AudioManager` (`soundIds` map, optional positional).
+- `World.deltaTime` — current/last `step` dt for `Action`s that need tick
+  length (FSM/BT `_dt` blackboard).
 - `AnimationClip.frameEvents` / `AnimationEvent` / `AnimationFrameEvent` —
   data-driven per-frame cues; `AnimationSystem` emits on frame enter
   (opaque `type`/`data` for SFX, hitboxes, etc.).
@@ -48,6 +52,10 @@ pubspec.yaml.
   whole-file JSON Schema for `assets/idle_game.json`.
 
 ### Fixed
+- FSM/BT runners (`StateMachineBehavior`, `BehaviorTreeBehavior`,
+  `BehaviorTreeSystem`) now pass the tick's real `dt` into `_dt` instead of
+  hardcoding `1/60` (so `BTWait` / `BTCooldown` / `BTTimer` keep correct time
+  at non-60Hz fixed steps).
 - `EngineView` world/HUD `Text` and `buildMenuButtonAtlas` hard-coded
   `TextDirection.ltr`, so Persian/Arabic never shaped correctly even when the
   locale was RTL — they now follow `LocalizationFlutter.textDirection`.

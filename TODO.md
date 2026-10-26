@@ -40,13 +40,17 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
       `SpriteAtlas.fromStrip`/`fromFullImage` (promoted from Mobarez preview
       needs).
 - [x] **Animation frame events (runtime)** —
-      `AnimationClip.frameEvents` + `AnimationFrameEvent` (proposal step 1 in
-      `docs/proposals/animation-events-and-ide.md`). Still open from that
-      proposal: `AnimationSfxSystem`, frame-gated melee, visual animation IDE.
-- [ ] **AnimationSfxSystem** — subscribe to `AnimationFrameEvent` `type ==
+      `AnimationClip.frameEvents` + `AnimationFrameEvent` + `AnimationSfxSystem`
+      (proposal steps 1–2 in `docs/proposals/animation-events-and-ide.md`).
+      Still open from that proposal: frame-gated melee, visual animation IDE.
+- [ ] **Frame-gated melee** — subscribe to `hitbox_on`/`hitbox_off` animation
+      cues to gate `AttackSystem` melee instead of a wall-clock
+      `meleeDurationSeconds` window (proposal step 3).
+- [x] **AnimationSfxSystem** — subscribe to `AnimationFrameEvent` `type ==
       'sfx'` and call `AudioManager` (proposal step 2).
-- [ ] **AISystem FSM/BT real `dt`** — `_RunStateMachineAction` /
-      behavior-tree runners hardcode `1/60` instead of the tick's `dt`.
+- [x] **AISystem FSM/BT real `dt`** — `_RunStateMachineAction` /
+      behavior-tree runners hardcode `1/60` instead of the tick's `dt`
+      (`World.deltaTime` + runners/`BehaviorTreeSystem` set `_dt`).
 
 ## Game-dev workflow
 
