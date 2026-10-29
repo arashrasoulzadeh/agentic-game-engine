@@ -5,24 +5,35 @@ import 'sprite.dart';
 
 /// One named state of a [SpriteStates] entity: the sheet it lives in and how
 /// it plays. Regions are the strip convention `'0'..'frames-1'`.
+///
+/// [frameEvents] (one list per frame, or null) are passed to the playing
+/// [AnimationClip], so the engine's cue systems (`installAnimationCueSystems`:
+/// shake, particles, sfx) fire on that frame — e.g. a camera shake on the
+/// frame a sword lands.
 class SpriteClip {
   const SpriteClip({
     required this.atlasId,
     required this.frames,
     this.loop = false,
     this.frameSeconds = 0.1,
+    this.frameEvents,
   });
 
   final String atlasId;
   final int frames;
   final bool loop;
   final double frameSeconds;
+  final List<List<AnimationEvent>>? frameEvents;
 
   Map<String, dynamic> toJson() => {
     'atlasId': atlasId,
     'frames': frames,
     'loop': loop,
     'frameSeconds': frameSeconds,
+    if (frameEvents != null)
+      'frameEvents': [
+        for (final frame in frameEvents!) [for (final e in frame) e.toJson()],
+      ],
   };
 
   factory SpriteClip.fromJson(Map<String, dynamic> json) => SpriteClip(
@@ -30,6 +41,17 @@ class SpriteClip {
     frames: (json['frames'] as num).toInt(),
     loop: json['loop'] as bool? ?? false,
     frameSeconds: (json['frameSeconds'] as num?)?.toDouble() ?? 0.1,
+    frameEvents: (json['frameEvents'] as List?)
+        ?.map(
+          (frame) => (frame as List)
+              .map(
+                (e) => AnimationEvent.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
+              .toList(),
+        )
+        .toList(),
   );
 }
 
@@ -140,6 +162,7 @@ class SpriteStateSystem extends System {
           [for (var i = 0; i < clip.frames; i++) '$i'],
           frameDurationSeconds: clip.frameSeconds,
           loop: clip.loop,
+          frameEvents: clip.frameEvents,
         ),
       ),
     );

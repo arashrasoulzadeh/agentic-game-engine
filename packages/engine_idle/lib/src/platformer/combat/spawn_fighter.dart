@@ -8,6 +8,8 @@ import 'combat_components.dart';
 ///
 /// [extraClips] (`attack`, `death`, …) add states beyond the looping `idle`
 /// built from [atlasId]/[frameCount]; see [SpriteStateSystem].
+/// [impactParticles] gives the fighter an emitter that hits and `particle`
+/// animation cues burst from (needs `ParticleSystem` in the world).
 EntityId spawnFighter(
   World world, {
   required String side,
@@ -20,6 +22,7 @@ EntityId spawnFighter(
   required String atlasId,
   required int frameCount,
   Map<String, SpriteClip> extraClips = const {},
+  ParticleEmitter? impactParticles,
   double scaleX = 1,
   double scaleY = 1,
   int zIndex = 10,
@@ -55,6 +58,9 @@ EntityId spawnFighter(
       ...extraClips,
     }),
   );
+  if (impactParticles != null) {
+    world.storeOf<ParticleEmitter>().set(id, impactParticles);
+  }
   world.storeOf<CombatRole>().set(id, CombatRole(side));
   world.storeOf<CombatStats>().set(
     id,

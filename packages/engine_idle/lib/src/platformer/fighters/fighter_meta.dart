@@ -4,6 +4,8 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:engine_flutter/engine_flutter.dart';
 
+import '../level/level_data.dart' show StateCues;
+
 /// Stats block shared by hero / enemy Mobarez sidecars.
 class MobarezStats {
   MobarezStats({
@@ -71,14 +73,18 @@ class FighterMeta {
   /// Atlas id under which [state]'s sheet is registered.
   String atlasId(String state) => '${id}_$state';
 
-  /// Non-idle states as [SpriteClip]s for [spawnFighter]'s `extraClips`.
-  Map<String, SpriteClip> get extraClips => {
+  /// Non-idle states as [SpriteClip]s for [spawnFighter]'s `extraClips`,
+  /// with each state's [cues] attached to the frames they name.
+  Map<String, SpriteClip> extraClips({StateCues cues = const {}}) => {
     for (final e in frames.entries)
       if (e.key != 'idle')
         e.key: SpriteClip(
           atlasId: atlasId(e.key),
           frames: e.value,
           frameSeconds: e.key == 'death' ? 0.18 : 0.1,
+          frameEvents: cues[e.key] == null
+              ? null
+              : [for (var i = 0; i < e.value; i++) cues[e.key]![i] ?? const []],
         ),
   };
 

@@ -1,4 +1,10 @@
-import 'package:engine_flutter/engine_flutter.dart' show ParallaxSpec;
+import 'package:engine_flutter/engine_flutter.dart'
+    show AnimationEvent, ParallaxSpec;
+
+/// Animation cues per state and frame: `{'attack': {2: [AnimationEvent(...)]}}`.
+/// Handed to the engine's cue systems (shake, particles, sfx) when that frame
+/// of that state plays.
+typedef StateCues = Map<String, Map<int, List<AnimationEvent>>>;
 
 /// Top-left pixel anchor for a fighter's sprite cell.
 class Anchor {
@@ -25,6 +31,7 @@ class LevelData {
     this.previewScale = const {},
     this.previewBossScale = const {},
     this.parallax = const [],
+    this.cues = const {},
   });
 
   final String name;
@@ -45,6 +52,11 @@ class LevelData {
   /// Scrolling background layers, far to near; empty = none.
   final List<ParallaxSpec> parallax;
 
+  /// Cue events fired on given frames of fighter states, e.g. a camera shake
+  /// on the frame an attack lands. Authored as data in the level JSON:
+  /// `"cues": {"attack": {"2": [{"type": "shake", "data": {...}}]}}`.
+  final StateCues cues;
+
   factory LevelData.fromJson(Map<String, dynamic> json) => LevelData(
     name: json['name'] as String? ?? '',
     gdd: json['gdd'] as String? ?? '',
@@ -57,11 +69,23 @@ class LevelData {
     ),
     previewScale: _scales(json['preview_hero_scale']),
     previewBossScale: _scales(json['preview_boss_scale']),
+    cues: _cues(json['cues']),
     parallax: [
       for (final l in (json['parallax'] as List?) ?? const [])
         ParallaxSpec.fromJson((l as Map).cast<String, dynamic>()),
     ],
   );
+
+  static StateCues _cues(Object? raw) => {
+    for (final state in ((raw as Map?) ?? const {}).entries)
+      state.key as String: {
+        for (final frame in (state.value as Map).entries)
+          int.parse(frame.key as String): [
+            for (final e in frame.value as List)
+              AnimationEvent.fromJson(Map<String, dynamic>.from(e as Map)),
+          ],
+      },
+  };
 
   static Map<String, double> _scales(Object? raw) => {
     for (final e in ((raw as Map?) ?? const {}).entries)

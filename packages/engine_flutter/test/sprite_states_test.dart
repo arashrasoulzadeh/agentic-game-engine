@@ -67,4 +67,32 @@ void main() {
     expect(back.clips['attack']!.atlasId, 'a_attack');
     expect(back.holdStates, {'death'});
   });
+
+  test('clip frame events reach the AnimationSystem as cue events', () {
+    final cues = <AnimationFrameEvent>[];
+    world.events.on<AnimationFrameEvent>(cues.add);
+    world.storeOf<SpriteStates>().get(e)!.clips['attack'] = const SpriteClip(
+      atlasId: 'a_attack',
+      frames: 3,
+      frameEvents: [
+        [],
+        [
+          AnimationEvent('shake', {'magnitude': 1.0}),
+        ],
+        [],
+      ],
+    );
+    playSpriteState(world, e, 'attack');
+    for (var i = 0; i < 6; i++) {
+      world.step(0.1);
+    }
+    expect(cues.map((c) => (c.clipName, c.type, c.frameIndex)), [
+      ('attack', 'shake', 1),
+    ]);
+
+    final back = SpriteClip.fromJson(
+      world.storeOf<SpriteStates>().get(e)!.clips['attack']!.toJson(),
+    );
+    expect(back.frameEvents![1].single.data['magnitude'], 1.0);
+  });
 }

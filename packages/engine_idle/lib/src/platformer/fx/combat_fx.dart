@@ -5,7 +5,7 @@ import '../combat/combat_components.dart';
 
 /// Which effect plays for which combat moment. Any may be omitted.
 class CombatFx {
-  const CombatFx({this.hit, this.slash, this.death});
+  const CombatFx({this.hit, this.slash, this.death, this.hitBurst = 0});
 
   /// Spark on the defender for every hit.
   final FxClip? hit;
@@ -15,6 +15,9 @@ class CombatFx {
 
   /// Smoke at the feet of a fighter that just fell.
   final FxClip? death;
+
+  /// Particles the defender's own `ParticleEmitter` bursts per hit (0 off).
+  final int hitBurst;
 }
 
 /// Opaque pixels of an effect sheet's art, so a scale of 1 reads as "one
@@ -34,6 +37,10 @@ void installCombatFx(World world, CombatFx fx, {PivotTable? pivots}) {
     final sprite = world.storeOf<Sprite>().get(hit.defender);
     final states = world.storeOf<SpriteStates>().get(hit.defender);
     if (p == null || sprite == null) return;
+    if (fx.hitBurst > 0) {
+      world.storeOf<ParticleEmitter>().get(hit.defender)?.burstCount +=
+          fx.hitBurst;
+    }
 
     final body = states == null
         ? null

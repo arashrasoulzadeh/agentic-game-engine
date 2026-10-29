@@ -76,4 +76,35 @@ void main() {
     }
     expect(found, isTrue);
   });
+
+  test('a hit bursts the defender emitter by CombatFx.hitBurst', () {
+    final world = buildWorld();
+    installCombatFx(world, const CombatFx(hitBurst: 7));
+    final hero = spawn(world, 'hero', 10);
+    final enemy = spawn(world, 'enemy', 100);
+    world.storeOf<ParticleEmitter>()
+      ..set(hero, ParticleEmitter())
+      ..set(enemy, ParticleEmitter());
+    world.step(0.01);
+    expect(world.storeOf<ParticleEmitter>().get(hero)!.burstCount, 7);
+    expect(world.storeOf<ParticleEmitter>().get(enemy)!.burstCount, 7);
+  });
+
+  test('spawnFighter attaches the impact emitter it is given', () {
+    final world = buildWorld();
+    final e = spawnFighter(
+      world,
+      side: 'hero',
+      x: 0,
+      y: 0,
+      hp: 1,
+      attack: 1,
+      attackSpeed: 1,
+      armor: 0,
+      atlasId: 'h',
+      frameCount: 1,
+      impactParticles: ParticleEmitter(colorArgb: 0xFFFFD27A),
+    );
+    expect(world.storeOf<ParticleEmitter>().get(e)!.colorArgb, 0xFFFFD27A);
+  });
 }
