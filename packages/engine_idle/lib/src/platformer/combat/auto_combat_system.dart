@@ -7,11 +7,16 @@ import 'fighter_anims.dart';
 
 /// Auto-attacks; on damage calls engine [flashHit] for red tint feedback.
 class AutoCombatSystem extends System {
+  /// While false fighters stand down — e.g. the hero is still walking to the
+  /// next enemy.
+  bool enabled = true;
+
   @override
   String get name => 'autoCombat';
 
   @override
   void update(World world, double dt) {
+    if (!enabled) return;
     final roles = world.storeOf<CombatRole>();
     final health = world.storeOf<Health>();
 

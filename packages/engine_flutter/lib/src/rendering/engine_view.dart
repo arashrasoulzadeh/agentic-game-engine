@@ -2936,7 +2936,9 @@ class _EnginePainter extends CustomPainter {
               canvas.drawImageRect(
                 atlas.image,
                 srcRect,
-                Rect.fromLTWH(x, y, tileWidth, tileHeight),
+                // +1px so fractional tile widths (non-integer zoom) don't leave
+                // a hairline gap between adjacent tiles while scrolling.
+                Rect.fromLTWH(x, y, tileWidth + 1, tileHeight),
                 paint,
               );
             }

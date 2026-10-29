@@ -13,5 +13,6 @@ export 'fighters/pivots.dart';
 export 'fx/fx.dart';
 export 'hud/scene_hud.dart';
 export 'level/level_data.dart';
+export 'level/parallax.dart';
 export 'level/wave_progress.dart';
 export 'sheet_atlas.dart';

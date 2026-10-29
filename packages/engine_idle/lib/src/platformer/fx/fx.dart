@@ -138,7 +138,7 @@ void installCombatFx(World world, CombatFx fx, {PivotTable? pivots}) {
         spark,
         x: feetX + side * height * 0.12,
         y: feetY - height * 0.6,
-        scale: scaleFor(0.42),
+        scale: scaleFor(0.3),
       );
     }
     final slash = fx.slash;

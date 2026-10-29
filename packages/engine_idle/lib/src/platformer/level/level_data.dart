@@ -1,3 +1,5 @@
+import 'parallax.dart';
+
 /// Top-left pixel anchor for a fighter's sprite cell.
 class Anchor {
   const Anchor(this.x, this.y);
@@ -22,6 +24,7 @@ class LevelData {
     required this.enemyAnchor,
     this.previewScale = const {},
     this.previewBossScale = const {},
+    this.parallax = const [],
   });
 
   final String name;
@@ -39,6 +42,9 @@ class LevelData {
   /// hero, so a preview with an unlevelled one tones the boss down here.
   final Map<String, double> previewBossScale;
 
+  /// Scrolling background layers, far to near; empty = none.
+  final List<ParallaxSpec> parallax;
+
   factory LevelData.fromJson(Map<String, dynamic> json) => LevelData(
     name: json['name'] as String? ?? '',
     gdd: json['gdd'] as String? ?? '',
@@ -51,6 +57,10 @@ class LevelData {
     ),
     previewScale: _scales(json['preview_hero_scale']),
     previewBossScale: _scales(json['preview_boss_scale']),
+    parallax: [
+      for (final l in (json['parallax'] as List?) ?? const [])
+        ParallaxSpec.fromJson((l as Map).cast<String, dynamic>()),
+    ],
   );
 
   static Map<String, double> _scales(Object? raw) => {
