@@ -149,8 +149,7 @@ void main() {
     test(
       'prestige layers: a prestiges list loads, ids must be unique, resets must be names',
       () {
-        final layered = valid()
-          ..remove('prestige');
+        final layered = valid()..remove('prestige');
         (layered['resources'] as Map)['stars'] = <String, dynamic>{};
         layered['prestiges'] = [
           {'currency': 'gems', 'basedOn': 'coins', 'divisor': '1e6'},
@@ -443,9 +442,7 @@ void main() {
         ),
       );
       expect(
-        problems(
-          (j) => (j['upgrades'] as List)[0]['cost'] = {'mana': '10'},
-        ),
+        problems((j) => (j['upgrades'] as List)[0]['cost'] = {'mana': '10'}),
         contains('upgrades[0].cost.mana is not a declared resource'),
       );
       expect(

@@ -38,7 +38,8 @@ class ThrottledListenableBuilder extends StatefulWidget {
       _ThrottledListenableBuilderState();
 }
 
-class _ThrottledListenableBuilderState extends State<ThrottledListenableBuilder> {
+class _ThrottledListenableBuilderState
+    extends State<ThrottledListenableBuilder> {
   Timer? _trailing;
   final Stopwatch _sinceBuild = Stopwatch();
   int? _seenUrgent;

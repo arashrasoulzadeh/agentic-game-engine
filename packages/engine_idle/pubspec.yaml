@@ -35,6 +35,11 @@ dependencies:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
       path: packages/engine_flutter
       ref: main
+  engine_platformer:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/engine_platformer
+      ref: main
 
 dev_dependencies:
   flutter_test:

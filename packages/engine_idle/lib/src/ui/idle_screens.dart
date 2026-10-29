@@ -117,9 +117,7 @@ class AchievementList extends StatelessWidget {
         a.unlocked ? Icons.emoji_events : Icons.lock_outline,
         semanticLabel: a.unlocked ? 'Unlocked' : 'Locked',
       ),
-      title: Text(
-        controller.label(a.id, name: a.name, nameKey: a.nameKey),
-      ),
+      title: Text(controller.label(a.id, name: a.name, nameKey: a.nameKey)),
       subtitle: LinearProgressIndicator(value: progress),
       trailing: Text(
         a.unlocked
@@ -687,8 +685,7 @@ class ResearchPanel extends StatelessWidget {
     final cost = n.cost.entries
         .map((c) => '${controller.format(c.value)} ${c.key}')
         .join(', ');
-    final can =
-        !n.purchased && !locked && controller.wallet.canAfford(n.cost);
+    final can = !n.purchased && !locked && controller.wallet.canAfford(n.cost);
     return ListTile(
       key: Key('research-${n.id}'),
       title: Text(controller.label(n.id, name: n.name, nameKey: n.nameKey)),
@@ -737,7 +734,11 @@ class SeasonPassPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  controller.label(pass.id, name: pass.name, nameKey: pass.nameKey),
+                  controller.label(
+                    pass.id,
+                    name: pass.name,
+                    nameKey: pass.nameKey,
+                  ),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Text(
@@ -745,8 +746,7 @@ class SeasonPassPanel extends StatelessWidget {
                   key: const Key('season-pass-xp'),
                 ),
                 const SizedBox(height: 8),
-                for (var i = 0; i < pass.tiers.length; i++)
-                  _tier(pass, i, xp),
+                for (var i = 0; i < pass.tiers.length; i++) _tier(pass, i, xp),
                 if (pass.claimed < pass.tiers.length)
                   FilledButton(
                     key: const Key('season-pass-claim'),

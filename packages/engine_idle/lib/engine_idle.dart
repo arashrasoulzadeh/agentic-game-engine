@@ -14,3 +14,4 @@ export 'src/browser_save_store.dart';
 export 'src/http_cloud_save_store.dart';
 export 'src/session.dart';
 export 'src/ui/idle_lifecycle.dart';
+export 'src/platformer/platformer.dart';

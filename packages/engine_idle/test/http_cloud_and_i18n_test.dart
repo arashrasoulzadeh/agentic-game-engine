@@ -22,7 +22,9 @@ void main() {
     expect(fetched!['lastActiveAt'], '2026-01-01T00:00:00.000Z');
   });
 
-  testWidgets('nameKey resolves through IdleController.strings', (tester) async {
+  testWidgets('nameKey resolves through IdleController.strings', (
+    tester,
+  ) async {
     final w = World(width: 10, height: 10);
     registerCoreComponents(w);
     registerIdleComponents(w);
@@ -47,7 +49,9 @@ void main() {
       strings: StringTable.fromFlatLocale({'gen.cursor': 'Zeiger'}),
     );
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: GeneratorList(controller: c))),
+      MaterialApp(
+        home: Scaffold(body: GeneratorList(controller: c)),
+      ),
     );
     expect(find.text('Zeiger'), findsOneWidget);
     expect(find.text('Cursor'), findsNothing);
@@ -70,7 +74,9 @@ void main() {
     );
     final c = IdleController(world: w);
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: ResearchPanel(controller: c))),
+      MaterialApp(
+        home: Scaffold(body: ResearchPanel(controller: c)),
+      ),
     );
     await tester.tap(find.byKey(const Key('buy-research-mining')));
     await tester.pump();

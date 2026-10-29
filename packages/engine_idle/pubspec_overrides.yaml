@@ -8,3 +8,5 @@ dependency_overrides:
     path: ../engine_core
   engine_flutter:
     path: ../engine_flutter
+  engine_platformer:
+    path: ../engine_platformer

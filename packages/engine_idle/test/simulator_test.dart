@@ -116,11 +116,7 @@ void main() {
             'startingAmounts': {'coins': '15'},
           },
         ];
-      final r = run(
-        layered,
-        limit: const Duration(days: 14),
-        prestigeAt: 1.0,
-      );
+      final r = run(layered, limit: const Duration(days: 14), prestigeAt: 1.0);
       expect(
         r.milestones.any((m) => m.label.startsWith('prestige #')),
         isTrue,

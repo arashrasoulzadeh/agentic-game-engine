@@ -56,7 +56,10 @@ void main() {
         find.textContaining('50% of your income, for up to 6 hours'),
         findsOneWidget,
       );
-      expect(find.byKey(const Key('settings-decimal-separator')), findsOneWidget);
+      expect(
+        find.byKey(const Key('settings-decimal-separator')),
+        findsOneWidget,
+      );
       NumberStyle? persisted;
       String? sepPersisted;
       await tester.pumpWidget(
@@ -764,14 +767,19 @@ void main() {
     expect(credits, 1);
   });
 
-  testWidgets('settings panel volume sliders write PlayerOptions', (tester) async {
+  testWidgets('settings panel volume sliders write PlayerOptions', (
+    tester,
+  ) async {
     final c = _controller();
     final options = PlayerOptionsManager(InMemoryPlayerOptionsStorage());
     await tester.pumpWidget(
       _app(IdleSettingsPanel(controller: c, options: options)),
     );
     expect(find.byKey(const Key('settings-master-volume')), findsOneWidget);
-    await tester.drag(find.byKey(const Key('settings-master-volume')), const Offset(-80, 0));
+    await tester.drag(
+      find.byKey(const Key('settings-master-volume')),
+      const Offset(-80, 0),
+    );
     await tester.pumpAndSettle();
     expect(options.options.masterVolume, lessThan(1.0));
   });
