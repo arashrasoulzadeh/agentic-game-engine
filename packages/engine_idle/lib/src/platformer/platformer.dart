@@ -13,4 +13,5 @@ export 'fx/combat_fx.dart';
 export 'hud/scene_hud.dart';
 export 'level/level_data.dart';
 export 'level/wave_progress.dart';
-export 'sheet_atlas.dart';
+export 'scene/walk_phase.dart';
+export 'scene/wave_combat_scene.dart';
