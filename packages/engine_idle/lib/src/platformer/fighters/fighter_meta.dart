@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
 
-import '../combat/fighter_anims.dart';
+import 'package:engine_flutter/engine_flutter.dart';
 
 /// Stats block shared by hero / enemy Mobarez sidecars.
 class MobarezStats {
@@ -48,6 +48,7 @@ class FighterMeta {
     required this.stats,
     required this.stemPrefix,
     required this.frames,
+    this.descriptionFa = '',
   });
 
   /// States every fighter is expected to ship a sheet for.
@@ -58,6 +59,9 @@ class FighterMeta {
   final MobarezStats stats;
   final String stemPrefix;
 
+  /// Persian lore line from the sidecar (`history_fa`), empty if absent.
+  final String descriptionFa;
+
   /// Frame count per state, from each sheet's own sidecar.
   final Map<String, int> frames;
 
@@ -67,11 +71,11 @@ class FighterMeta {
   /// Atlas id under which [state]'s sheet is registered.
   String atlasId(String state) => '${id}_$state';
 
-  /// Non-idle states as [FighterClip]s for [spawnFighter]'s `extraClips`.
-  Map<String, FighterClip> get extraClips => {
+  /// Non-idle states as [SpriteClip]s for [spawnFighter]'s `extraClips`.
+  Map<String, SpriteClip> get extraClips => {
     for (final e in frames.entries)
       if (e.key != 'idle')
-        e.key: FighterClip(
+        e.key: SpriteClip(
           atlasId: atlasId(e.key),
           frames: e.value,
           frameSeconds: e.key == 'death' ? 0.18 : 0.1,
@@ -96,6 +100,7 @@ class FighterMeta {
       stats: MobarezStats.fromJson(idle),
       stemPrefix: stemPrefix,
       frames: frames,
+      descriptionFa: idle['history_fa'] as String? ?? '',
     );
   }
 }

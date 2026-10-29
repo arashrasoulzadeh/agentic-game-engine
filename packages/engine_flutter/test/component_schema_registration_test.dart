@@ -20,7 +20,22 @@ final _samples = <String, Map<String, dynamic>>{
     'offsetY': 0.0,
     'zIndex': 0,
     'normalAtlasId': 'hero_normal',
+    'tintArgb': 4294901760,
   },
+  'spriteStates': {
+    'clips': {
+      'idle': {
+        'atlasId': 'hero_idle',
+        'frames': 4,
+        'loop': true,
+        'frameSeconds': 0.15,
+      },
+    },
+    'current': 'idle',
+    'restState': 'idle',
+    'holdStates': ['death'],
+  },
+  'oneShotFx': <String, dynamic>{},
   'animationState': {
     'clip': {
       'name': 'idle',
@@ -56,6 +71,7 @@ final _samples = <String, Map<String, dynamic>>{
     'zIndex': 0,
     'maxWidth': 200.0,
     'textScale': 1.0,
+    'rtl': true,
   },
   'hudBar': {
     'value': 50.0,

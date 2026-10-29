@@ -3,9 +3,6 @@ import 'dart:convert';
 import 'package:engine_flutter/engine_flutter.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
-import 'fighters/pivots.dart';
-import 'fx/fx.dart';
-
 /// Loads a Mobarez sheet sidecar (`cell` / `gap` / `frames`) via the
 /// engine's [SpriteAtlas.fromStrip] / [SpriteAtlas.loadStripFromAssets].
 Future<SpriteAtlas> loadMobarezSheet(String assetStem) async {
@@ -24,7 +21,7 @@ Future<SpriteAtlas> loadMobarezSheet(String assetStem) async {
 Future<SpriteAtlas> loadFullImageAtlas(String imageAssetPath) =>
     SpriteAtlas.loadFullImageFromAssets(imageAssetPath);
 
-/// [loadMobarezSheet] plus each frame's feet [Pivot], for [FighterPivotSystem].
+/// [loadMobarezSheet] plus each frame's feet [Pivot], for [SpritePivotSystem].
 Future<({SpriteAtlas atlas, List<Pivot> pivots, double cell})>
 loadMobarezSheetWithPivots(String assetStem) async {
   final meta =

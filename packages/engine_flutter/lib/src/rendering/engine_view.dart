@@ -569,6 +569,9 @@ class _EngineViewState extends State<EngineView>
             safeAreaRRect,
           );
           _viewportLayout = layout;
+          if (widget.viewportConfig!.fitWorld && widget.world.width > 0) {
+            widget.camera.zoom = layout.contentRect.width / widget.world.width;
+          }
 
           // Build the game content with letterboxing
           return Stack(
@@ -3246,9 +3249,21 @@ class _EnginePainter extends CustomPainter {
                     fontFamily: 'packages/engine_flutter/EngineDefault',
                   ),
                 ),
-                // Locale-aware direction so Persian/Arabic shape correctly;
-                // bitmask debug glyphs stay LTR on purpose (ASCII digits).
-                textDirection: LocalizationFlutter.textDirection,
+                // Per-text override first, else locale-aware direction so
+                // Persian/Arabic shape correctly; bitmask debug glyphs stay
+                // LTR on purpose (ASCII digits).
+                textDirection: switch (text.rtl) {
+                  true => TextDirection.rtl,
+                  false => TextDirection.ltr,
+                  null => LocalizationFlutter.textDirection,
+                },
+                // Wrapped lines follow the component's alignment inside its
+                // box, not just the box itself.
+                textAlign: switch (text.align) {
+                  txt.TextAlignment.left => TextAlign.left,
+                  txt.TextAlignment.center => TextAlign.center,
+                  txt.TextAlignment.right => TextAlign.right,
+                },
               )..layout(
                 maxWidth: text.maxWidth == null
                     ? double.infinity

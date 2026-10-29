@@ -22,10 +22,10 @@ enum ViewportFit {
 
 /// Where the game is drawn on screens of any shape.
 ///
-/// This decides only the **rectangle** the game occupies (its aspect ratio, the bars around it, the
-/// system safe area). It does not scale the world: one world unit is still `Camera.zoom` pixels,
-/// so on a larger screen you see more of the world, not a bigger picture. Give the camera a `zoom`
-/// chosen for the screen if you need a fixed field of view.
+/// This decides the **rectangle** the game occupies (its aspect ratio, the bars around it, the
+/// system safe area). By itself it does not scale the world: one world unit is still `Camera.zoom`
+/// pixels, so on a larger screen you see more of the world, not a bigger picture. Set
+/// [ViewportConfig.fitWorld] for a fixed field of view instead.
 class ViewportConfig {
   /// Width divided by height of the game's drawing area.
   final double targetAspectRatio;
@@ -41,12 +41,19 @@ class ViewportConfig {
   /// Centre the area in the available space (true), or pin it to the top left.
   final bool centerViewport;
 
+  /// Scale the picture to the rectangle: every frame the engine sets `Camera.zoom` so the whole
+  /// world width fills it. For a world authored at a fixed logical size (a 180x320 portrait game)
+  /// this replaces computing a zoom per screen by hand. Pair it with a [targetAspectRatio] equal
+  /// to the world's width / height so nothing is cropped.
+  final bool fitWorld;
+
   const ViewportConfig({
     this.targetAspectRatio = 16 / 9,
     this.fit = ViewportFit.contain,
     this.avoidSystemUi = true,
     this.letterboxColorArgb = 0xFF000000,
     this.centerViewport = true,
+    this.fitWorld = false,
   }) : assert(targetAspectRatio > 0, 'targetAspectRatio must be positive');
 }
 

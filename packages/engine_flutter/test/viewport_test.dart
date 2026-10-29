@@ -158,4 +158,37 @@ void main() {
       expect(tapped!.dy, closeTo(50, 0.5));
     },
   );
+
+  testWidgets(
+    'ViewportConfig.fitWorld zooms the camera so the world fills the drawn area',
+    (tester) async {
+      tester.view.physicalSize = const Size(540, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final world = World(width: 180, height: 320);
+      registerCoreComponents(world);
+      registerFlutterComponents(world);
+      final camera = Camera(x: 90, y: 160, zoom: 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: EngineView(
+            world: world,
+            atlasRegistry: AtlasRegistry(),
+            camera: camera,
+            viewportConfig: const ViewportConfig(
+              targetAspectRatio: 180 / 320,
+              avoidSystemUi: false,
+              fitWorld: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // 540x1200 letterboxes to 540x960, so 540px / 180 world units = 3.
+      expect(camera.zoom, closeTo(3, 1e-9));
+    },
+  );
 }

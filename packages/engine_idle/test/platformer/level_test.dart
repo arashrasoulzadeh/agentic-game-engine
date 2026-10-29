@@ -1,5 +1,3 @@
-import 'package:engine_core/engine_core.dart';
-import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import 'package:engine_idle/engine_idle.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -39,24 +37,5 @@ void main() {
     expect(w.currentId, 'b');
     w.advance();
     expect((w.currentId, w.isBoss), ('k', true));
-  });
-
-  test('ParallaxScroller moves each layer by its own speed', () {
-    final world = World(width: 180, height: 320);
-    registerCoreComponents(world);
-    registerFlutterComponents(world);
-    final scroller = ParallaxScroller.spawn(world, 'bg', const [
-      ParallaxSpec('far', 0.5),
-      ParallaxSpec('near', 1.5),
-    ]);
-    scroller.scroll(world, 10);
-    scroller.scroll(world, 10);
-    final layers = world.storeOf<ParallaxLayer>();
-    final pos = world.storeOf<Position>();
-    final xs = {
-      for (var i = 0; i < layers.length; i++)
-        layers.denseAt(i).atlasId: pos.get(layers.entityAt(i))!.x,
-    };
-    expect(xs, {'bg_far': -10, 'bg_near': -30});
   });
 }

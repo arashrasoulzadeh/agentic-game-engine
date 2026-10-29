@@ -36,6 +36,13 @@ class Text {
   bool screenSpace;
   double? maxWidth;
 
+  /// Forces right-to-left (`true`) or left-to-right (`false`) layout for this
+  /// text alone; `null` (default) follows the active locale. For a Persian or
+  /// Arabic line inside an otherwise English UI, where the global locale is
+  /// LTR and the text would otherwise hug the wrong edge with its
+  /// punctuation on the wrong side.
+  bool? rtl;
+
   /// Draw order relative to every other renderable — see
   /// `engine_flutter`'s `Sprite.zIndex` for the full tie-break rule.
   /// Screen-space HUD text typically wants a high `zIndex` so it draws
@@ -55,6 +62,7 @@ class Text {
     this.zIndex = 0,
     this.maxWidth,
     this.textScale = 1.0,
+    this.rtl,
   });
 
   Map<String, dynamic> toJson() => {
@@ -66,6 +74,7 @@ class Text {
     'zIndex': zIndex,
     'textScale': textScale,
     if (maxWidth != null) 'maxWidth': maxWidth,
+    if (rtl != null) 'rtl': rtl,
   };
 
   factory Text.fromJson(Map<String, dynamic> json) => Text(
@@ -80,5 +89,6 @@ class Text {
     zIndex: (json['zIndex'] as num?)?.toInt() ?? 0,
     maxWidth: (json['maxWidth'] as num?)?.toDouble(),
     textScale: (json['textScale'] as num?)?.toDouble() ?? 1.0,
+    rtl: json['rtl'] as bool?,
   );
 }

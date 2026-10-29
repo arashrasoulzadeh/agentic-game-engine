@@ -1,8 +1,9 @@
 import 'package:engine_core/engine_core.dart';
-import 'package:engine_flutter/engine_flutter.dart' hide Text;
 
-/// One scrolling background layer: sheet `<dir>/<name>.png`, drawn
-/// [speed] times as fast as the ground (far scenery < 1, foreground > 1).
+import 'parallax_layer.dart';
+
+/// One scrolling background layer: atlas `<prefix>_<name>`, moved [speed]
+/// times as fast as the ground (far scenery < 1, foreground > 1).
 class ParallaxSpec {
   const ParallaxSpec(this.name, this.speed, {this.zIndex = -100});
 
@@ -20,8 +21,12 @@ class ParallaxSpec {
   String atlasId(String prefix) => '${prefix}_$name';
 }
 
-/// Spawns tiled layers for [specs] and scrolls them together: call [scroll]
-/// with the distance the hero walked and each layer moves by its own speed.
+/// Spawns tiled [ParallaxLayer]s for a list of [ParallaxSpec]s and scrolls
+/// them together: call [scroll] with the distance travelled and each layer
+/// moves by its own speed.
+///
+/// Layers move through `Position`, not the camera, so a scene whose hero
+/// stays put on screen (idle/auto-walk games) keeps its camera and HUD fixed.
 class ParallaxScroller {
   ParallaxScroller._(this._layers);
 
@@ -41,7 +46,6 @@ class ParallaxScroller {
         ParallaxLayer(
           spec.atlasId(atlasPrefix),
           'full',
-          // Moved by [scroll] through Position, so the camera stays put.
           scrollFactorX: 0,
           scrollFactorY: 0,
           tileX: true,

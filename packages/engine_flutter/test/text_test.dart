@@ -54,4 +54,13 @@ void main() {
       expect(decoded.maxWidth, 120);
     },
   );
+
+  test('rtl is optional, defaults to the locale (null) and round-trips', () {
+    expect(Text('x').rtl, isNull);
+    expect(Text('x').toJson().containsKey('rtl'), isFalse);
+
+    final back = Text.fromJson(Text('سلام', rtl: true).toJson());
+    expect(back.rtl, isTrue);
+    expect(Text.fromJson({'text': 'x'}).rtl, isNull);
+  });
 }

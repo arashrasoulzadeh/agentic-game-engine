@@ -30,6 +30,15 @@ const animationStateSchema = ComponentSchema('animationState', [
   FieldSchema('crossfadeSeconds', FieldType.double, min: 0, defaultValue: 0),
 ]);
 
+const spriteStatesSchema = ComponentSchema('spriteStates', [
+  FieldSchema('clips', FieldType.object, required: true),
+  FieldSchema('current', FieldType.string, defaultValue: 'idle'),
+  FieldSchema('restState', FieldType.string, defaultValue: 'idle'),
+  FieldSchema('holdStates', FieldType.list),
+]);
+
+const oneShotFxSchema = ComponentSchema('oneShotFx', []);
+
 const inputStateSchema = ComponentSchema('inputState', [
   FieldSchema('pressed', FieldType.list),
   FieldSchema('axes', FieldType.object),
@@ -60,6 +69,7 @@ const textSchema = ComponentSchema('text', [
   FieldSchema('zIndex', FieldType.int, defaultValue: 0),
   FieldSchema('maxWidth', FieldType.double, min: 0, optional: true),
   FieldSchema('textScale', FieldType.double, min: 0, defaultValue: 1),
+  FieldSchema('rtl', FieldType.bool, optional: true),
 ]);
 
 const hudBarSchema = ComponentSchema('hudBar', [

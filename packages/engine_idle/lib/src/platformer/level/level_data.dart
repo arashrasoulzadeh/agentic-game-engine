@@ -1,4 +1,4 @@
-import 'parallax.dart';
+import 'package:engine_flutter/engine_flutter.dart' show ParallaxSpec;
 
 /// Top-left pixel anchor for a fighter's sprite cell.
 class Anchor {

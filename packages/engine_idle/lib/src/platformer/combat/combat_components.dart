@@ -1,7 +1,5 @@
 import 'package:engine_core/engine_core.dart';
 
-import 'fighter_anims.dart';
-
 /// Who is fighting (hero lane vs enemy lane).
 class CombatRole {
   CombatRole(this.side);
@@ -47,11 +45,6 @@ class CombatStats {
 
 void registerCombatComponents(World world) {
   if (world.components.isRegistered('combatRole')) return;
-  world.components.register<FighterAnims>(
-    'fighterAnims',
-    (c) => c.toJson(),
-    FighterAnims.fromJson,
-  );
   world.components.register<CombatRole>(
     'combatRole',
     (c) => c.toJson(),

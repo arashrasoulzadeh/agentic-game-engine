@@ -72,6 +72,8 @@ const allComponentSchemas = <String, ComponentSchema>{
   'fogOfWar': fogOfWarSchema,
   'sprite': spriteSchema,
   'animationState': animationStateSchema,
+  'spriteStates': spriteStatesSchema,
+  'oneShotFx': oneShotFxSchema,
   'inputState': inputStateSchema,
   'parallaxLayer': parallaxLayerSchema,
   'text': textSchema,

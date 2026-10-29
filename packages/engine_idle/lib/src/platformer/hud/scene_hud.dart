@@ -4,28 +4,31 @@ import 'package:engine_flutter/engine_flutter.dart'
     show Text, TextAlignment;
 
 /// Screen-space labels for a portrait idle-combat scene: a status line, the
-/// current enemy's name, and a footer blurb. Positions assume the 180×320
+/// current enemy's name, and a short description of it. Positions assume the 180×320
 /// logical canvas the idle-combat games use.
 class SceneHud {
-  SceneHud._(this._status, this._enemy);
+  SceneHud._(this._status, this._enemy, this._description);
 
   final EntityId _status;
   final EntityId _enemy;
+  final EntityId _description;
 
-  factory SceneHud.spawn(
-    World world, {
-    required String status,
-    String blurb = '',
-  }) {
+  factory SceneHud.spawn(World world, {required String status}) {
     final s = _text(world, 90, 14, status, 11, 0xFFFFE7A0, 170);
-    _text(world, 90, 300, blurb, 7, 0xFFC8C0A8, 168);
     final e = _text(world, 90, 44, '', 9, 0xFFFFCCBC, 170);
-    return SceneHud._(s, e);
+    final d = _text(world, 90, 74, '', 8, 0xFFFFF3D0, 160, rtl: true);
+    return SceneHud._(s, e, d);
   }
 
-  void sync(World world, {required String status, required String enemy}) {
+  void sync(
+    World world, {
+    required String status,
+    required String enemy,
+    String description = '',
+  }) {
     world.storeOf<eng.Text>().get(_status)?.text = status;
     world.storeOf<eng.Text>().get(_enemy)?.text = enemy;
+    world.storeOf<eng.Text>().get(_description)?.text = description;
   }
 
   static EntityId _text(
@@ -35,8 +38,9 @@ class SceneHud {
     String text,
     double size,
     int color,
-    double maxWidth,
-  ) {
+    double maxWidth, {
+    bool? rtl,
+  }) {
     final id = world.spawn();
     world.storeOf<Position>().set(id, Position(x, y));
     world.storeOf<eng.Text>().set(
@@ -49,6 +53,7 @@ class SceneHud {
         screenSpace: true,
         zIndex: 110,
         maxWidth: maxWidth,
+        rtl: rtl,
       ),
     );
     return id;

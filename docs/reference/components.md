@@ -4,7 +4,7 @@
 
 Every built-in component and the exact JSON shape it serializes to — what you see in `World.toJson()` and what `applyPatch` / `Level.loadInto` accept. This page is generated from `engine_schema`, the same schemas the studio and `game_agent lint` validate against, so it is always current.
 
-**90 components** across 4 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer) · [engine_idle](#engine_idle)
+**93 components** across 4 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer) · [engine_idle](#engine_idle)
 
 ## engine_core
 
@@ -439,6 +439,14 @@ Rendering and input data. Registered by `registerFlutterComponents` (called for 
 | `offsetY` | `double` | default `0` |
 | `zIndex` | `int` | default `0` |
 | `normalAtlasId` | `string` | may be null |
+| `tintArgb` | `int` | may be null |
+
+### `hitFlash`
+
+| Field | Type | Notes |
+|---|---|---|
+| `remaining` | `double` | 0 to ∞; default `0` |
+| `tintArgb` | `int` | default `4294914867` |
 
 ### `animationState`
 
@@ -449,6 +457,19 @@ Rendering and input data. Registered by `registerFlutterComponents` (called for 
 | `elapsed` | `double` | 0 to ∞; default `0` |
 | `playing` | `bool` | default `true` |
 | `crossfadeSeconds` | `double` | 0 to ∞; default `0` |
+
+### `spriteStates`
+
+| Field | Type | Notes |
+|---|---|---|
+| `clips` | `object` | required |
+| `current` | `string` | default `idle` |
+| `restState` | `string` | default `idle` |
+| `holdStates` | `list` |  |
+
+### `oneShotFx`
+
+A marker: present or absent, no fields.
 
 ### `inputState`
 
@@ -482,6 +503,7 @@ Rendering and input data. Registered by `registerFlutterComponents` (called for 
 | `zIndex` | `int` | default `0` |
 | `maxWidth` | `double` | may be null; 0 to ∞ |
 | `textScale` | `double` | 0 to ∞; default `1` |
+| `rtl` | `bool` | may be null |
 
 ### `hudBar`
 

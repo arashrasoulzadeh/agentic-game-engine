@@ -3,12 +3,11 @@ import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import 'package:engine_platformer/engine_platformer.dart';
 
 import 'combat_components.dart';
-import 'fighter_anims.dart';
 
 /// Spawns a fighter: [Sprite] + [AnimationState] + [Health] + [HitFlash].
 ///
 /// [extraClips] (`attack`, `death`, …) add states beyond the looping `idle`
-/// built from [atlasId]/[frameCount]; see [FighterAnimationSystem].
+/// built from [atlasId]/[frameCount]; see [SpriteStateSystem].
 EntityId spawnFighter(
   World world, {
   required String side,
@@ -20,7 +19,7 @@ EntityId spawnFighter(
   required double armor,
   required String atlasId,
   required int frameCount,
-  Map<String, FighterClip> extraClips = const {},
+  Map<String, SpriteClip> extraClips = const {},
   double scaleX = 1,
   double scaleY = 1,
   int zIndex = 10,
@@ -44,10 +43,10 @@ EntityId spawnFighter(
       AnimationClip('idle', regions, frameDurationSeconds: 0.15, loop: true),
     ),
   );
-  world.storeOf<FighterAnims>().set(
+  world.storeOf<SpriteStates>().set(
     id,
-    FighterAnims({
-      'idle': FighterClip(
+    SpriteStates({
+      'idle': SpriteClip(
         atlasId: atlasId,
         frames: frameCount,
         loop: true,

@@ -1,9 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:engine_core/engine_core.dart';
-import 'package:engine_flutter/engine_flutter.dart' hide Text;
 
-import '../combat/fighter_anims.dart';
+import 'sprite.dart';
+import 'sprite_atlas.dart';
+import 'sprite_states.dart';
 
 /// Where a frame's character stands inside its cell: [x] is the centre of
 /// the feet, [y] the lowest opaque row, [top] the highest. Pixel units of the
@@ -18,10 +19,11 @@ class Pivot {
 /// Finds each frame's [Pivot] in an RGBA strip (`gap + i*(cell+gap)` layout).
 ///
 /// Sheets are cropped per pose (a thrust reaches far, a collapse is low), so
-/// the character's feet land in a different spot of every cell and drawing
-/// cell-centred makes it slide and bob. The feet are the stable part: X is the
+/// the feet land in a different spot of every cell and drawing cell-centred
+/// makes a character slide and bob. The feet are the stable part: X is the
 /// mean of opaque pixels in the bottom [footFraction] of the frame's bounding
-/// box (not its bbox centre, which a spear would drag sideways).
+/// box (not its bbox centre, which a spear would drag sideways). Measuring
+/// this from pixels spares authoring per-frame `AnimationClip.frameOffsets`.
 List<Pivot> sheetPivots(
   Uint8List rgba,
   int width,
@@ -84,7 +86,7 @@ Future<List<Pivot>> atlasPivots(
   );
 }
 
-/// A fighter's standing silhouette in its sheet's pixels, from idle frame 0.
+/// A character's standing silhouette in its sheet's pixels (idle frame 0).
 typedef Body = ({double x, double bottom, double top, double cell});
 
 /// Pivots per atlas id, filled as sheets load.
@@ -122,26 +124,27 @@ class PivotTable {
   }
 }
 
-/// Pins each fighter's feet to one spot across frames and states using
-/// [table]. Register right after `AnimationSystem`, which resets the offsets
-/// it writes each tick.
-class FighterPivotSystem extends System {
-  FighterPivotSystem(this.table);
+/// Pins each [SpriteStates] entity's feet to where its [referenceState] clip
+/// stands, across frames and states, using [table]. Register right after
+/// `AnimationSystem`, which resets the offsets it writes each tick.
+class SpritePivotSystem extends System {
+  SpritePivotSystem(this.table, {this.referenceState = 'idle'});
 
   final PivotTable table;
+  final String referenceState;
 
   @override
-  String get name => 'fighterPivot';
+  String get name => 'spritePivot';
 
   @override
   void update(World world, double dt) {
-    final anims = world.storeOf<FighterAnims>();
+    final states = world.storeOf<SpriteStates>();
     final sprites = world.storeOf<Sprite>();
-    for (var i = 0; i < anims.length; i++) {
-      final sprite = sprites.get(anims.entityAt(i));
-      final idle = anims.denseAt(i).clips['idle'];
-      if (sprite == null || idle == null) continue;
-      final o = table.offsetFor(sprite.atlasId, sprite.region, idle.atlasId);
+    for (var i = 0; i < states.length; i++) {
+      final sprite = sprites.get(states.entityAt(i));
+      final ref = states.denseAt(i).clips[referenceState];
+      if (sprite == null || ref == null) continue;
+      final o = table.offsetFor(sprite.atlasId, sprite.region, ref.atlasId);
       if (o == null) continue;
       sprite.offsetX = o.x;
       sprite.offsetY = o.y;

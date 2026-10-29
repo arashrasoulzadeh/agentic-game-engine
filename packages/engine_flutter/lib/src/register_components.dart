@@ -7,7 +7,9 @@ import 'rendering/hit_flash.dart';
 import 'rendering/hud_bar.dart';
 import 'rendering/light2d.dart';
 import 'rendering/nine_slice_sprite.dart';
+import 'rendering/one_shot_fx.dart';
 import 'rendering/parallax_layer.dart';
+import 'rendering/sprite_states.dart';
 import 'rendering/screen_tint.dart';
 import 'rendering/sprite.dart';
 import 'rendering/text.dart';
@@ -31,6 +33,18 @@ void registerFlutterComponents(World world) {
     (a) => a.toJson(),
     AnimationState.fromJson,
     schema: animationStateSchema,
+  );
+  world.components.register<SpriteStates>(
+    'spriteStates',
+    (s) => s.toJson(),
+    SpriteStates.fromJson,
+    schema: spriteStatesSchema,
+  );
+  world.components.register<OneShotFx>(
+    'oneShotFx',
+    (f) => f.toJson(),
+    OneShotFx.fromJson,
+    schema: oneShotFxSchema,
   );
   world.components.register<InputState>(
     'inputState',
