@@ -63,3 +63,23 @@ void registerCombatComponents(World world) {
     CombatStats.fromJson,
   );
 }
+
+/// Emitted by `AutoCombatSystem` for every landed hit, so presentation
+/// (effects, sound, damage numbers) can react without touching combat.
+class FighterHit {
+  FighterHit({
+    required this.attacker,
+    required this.defender,
+    required this.attackerSide,
+    required this.damage,
+    required this.fatal,
+  });
+
+  final EntityId attacker;
+  final EntityId defender;
+  final String attackerSide;
+  final double damage;
+
+  /// The hit took the defender's health to zero.
+  final bool fatal;
+}

@@ -38,8 +38,18 @@ class AutoCombatSystem extends System {
     s.cooldown = 1.0 / s.attackSpeed.clamp(0.05, 10);
     final raw = s.attack - stats.get(defender)!.armor;
     final hp = world.storeOf<Health>().get(defender)!;
-    hp.current = (hp.current - (raw < 1 ? 1.0 : raw)).clamp(0, hp.max);
+    final dmg = raw < 1 ? 1.0 : raw;
+    hp.current = (hp.current - dmg).clamp(0, hp.max);
     playFighterAnim(world, attacker, 'attack');
     flashHit(world, defender);
+    world.events.emit(
+      FighterHit(
+        attacker: attacker,
+        defender: defender,
+        attackerSide: world.storeOf<CombatRole>().get(attacker)!.side,
+        damage: dmg,
+        fatal: hp.current <= 0,
+      ),
+    );
   }
 }
