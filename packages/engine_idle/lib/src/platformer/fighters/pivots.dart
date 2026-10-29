@@ -6,11 +6,13 @@ import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import '../combat/fighter_anims.dart';
 
 /// Where a frame's character stands inside its cell: [x] is the centre of
-/// the feet, [y] the lowest opaque row. Pixel units of the unscaled sheet.
+/// the feet, [y] the lowest opaque row, [top] the highest. Pixel units of the
+/// unscaled sheet.
 class Pivot {
-  const Pivot(this.x, this.y);
+  const Pivot(this.x, this.y, [this.top = 0]);
   final double x;
   final double y;
+  final double top;
 }
 
 /// Finds each frame's [Pivot] in an RGBA strip (`gap + i*(cell+gap)` layout).
@@ -59,7 +61,7 @@ List<Pivot> sheetPivots(
         }
       }
     }
-    out.add(Pivot(sum / n, bottom + 1.0));
+    out.add(Pivot(sum / n, bottom + 1.0, top.toDouble()));
   }
   return out;
 }
@@ -82,12 +84,26 @@ Future<List<Pivot>> atlasPivots(
   );
 }
 
+/// A fighter's standing silhouette in its sheet's pixels, from idle frame 0.
+typedef Body = ({double x, double bottom, double top, double cell});
+
 /// Pivots per atlas id, filled as sheets load.
 class PivotTable {
   final Map<String, List<Pivot>> _byAtlas = {};
+  final Map<String, double> _cells = {};
 
-  void register(String atlasId, List<Pivot> pivots) =>
-      _byAtlas[atlasId] = pivots;
+  void register(String atlasId, List<Pivot> pivots, {double cell = 64}) {
+    _byAtlas[atlasId] = pivots;
+    _cells[atlasId] = cell;
+  }
+
+  /// The standing silhouette of [atlasId]'s first frame, if loaded.
+  Body? bodyOf(String atlasId) {
+    final p = _byAtlas[atlasId]?.first;
+    final cell = _cells[atlasId];
+    if (p == null || cell == null) return null;
+    return (x: p.x, bottom: p.y, top: p.top, cell: cell);
+  }
 
   /// Sprite offset that keeps [region] of [atlasId] standing where
   /// [referenceAtlasId]'s first frame stands, or null if either is unknown.

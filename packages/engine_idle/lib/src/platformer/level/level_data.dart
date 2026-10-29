@@ -21,6 +21,7 @@ class LevelData {
     required this.hero,
     required this.enemyAnchor,
     this.previewScale = const {},
+    this.previewBossScale = const {},
   });
 
   final String name;
@@ -34,6 +35,10 @@ class LevelData {
   /// Per-stat multipliers applied to the hero for preview balancing.
   final Map<String, double> previewScale;
 
+  /// Per-stat multipliers on the boss. Roster boss stats assume a levelled
+  /// hero, so a preview with an unlevelled one tones the boss down here.
+  final Map<String, double> previewBossScale;
+
   factory LevelData.fromJson(Map<String, dynamic> json) => LevelData(
     name: json['name'] as String? ?? '',
     gdd: json['gdd'] as String? ?? '',
@@ -44,16 +49,22 @@ class LevelData {
     enemyAnchor: Anchor.fromJson(
       (json['enemy_anchor'] as Map).cast<String, dynamic>(),
     ),
-    previewScale: {
-      for (final e
-          in ((json['preview_hero_scale'] as Map?) ?? const {}).entries)
-        e.key as String: (e.value as num).toDouble(),
-    },
+    previewScale: _scales(json['preview_hero_scale']),
+    previewBossScale: _scales(json['preview_boss_scale']),
   );
+
+  static Map<String, double> _scales(Object? raw) => {
+    for (final e in ((raw as Map?) ?? const {}).entries)
+      e.key as String: (e.value as num).toDouble(),
+  };
 
   /// Every enemy id whose sheet must be loaded (wave + boss).
   List<String> get enemyIds => [...wave, boss];
 
   /// [base] times this level's preview multiplier for [stat] (1 if unset).
   double scaled(String stat, double base) => base * (previewScale[stat] ?? 1);
+
+  /// [base] times the boss multiplier for [stat] (1 if unset).
+  double bossScaled(String stat, double base) =>
+      base * (previewBossScale[stat] ?? 1);
 }

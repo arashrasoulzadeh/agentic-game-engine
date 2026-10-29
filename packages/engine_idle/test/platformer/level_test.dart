@@ -11,12 +11,15 @@ void main() {
       'hero': {'x': 8, 'y': 200},
       'enemy_anchor': {'x': 100.5, 'y': 190},
       'preview_hero_scale': {'hp': 2},
+      'preview_boss_scale': {'attack': 0.5},
     });
     expect(level.enemyIds, ['wolf', 'bat', 'kakuy']);
     expect(level.enemyAnchor.x, 100.5);
     expect(level.scaled('hp', 10), 20);
     expect(level.scaled('attack', 10), 10);
     expect(level.gdd, '');
+    expect(level.bossScaled('attack', 20), 10);
+    expect(level.bossScaled('hp', 20), 20);
   });
 
   test('WaveProgress walks the wave then the boss', () {

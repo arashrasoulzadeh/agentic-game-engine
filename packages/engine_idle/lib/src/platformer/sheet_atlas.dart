@@ -25,14 +25,14 @@ Future<SpriteAtlas> loadFullImageAtlas(String imageAssetPath) =>
     SpriteAtlas.loadFullImageFromAssets(imageAssetPath);
 
 /// [loadMobarezSheet] plus each frame's feet [Pivot], for [FighterPivotSystem].
-Future<({SpriteAtlas atlas, List<Pivot> pivots})> loadMobarezSheetWithPivots(
-  String assetStem,
-) async {
+Future<({SpriteAtlas atlas, List<Pivot> pivots, double cell})>
+loadMobarezSheetWithPivots(String assetStem) async {
   final meta =
       jsonDecode(await rootBundle.loadString('$assetStem.json'))
           as Map<String, dynamic>;
   final atlas = await loadMobarezSheet(assetStem);
   return (
+    cell: (meta['cell'] as num).toDouble(),
     atlas: atlas,
     pivots: await atlasPivots(
       atlas,

@@ -44,11 +44,13 @@ void main() {
 
   test('PivotTable offsets keep feet where the idle reference stands', () {
     final t = PivotTable()
-      ..register('idle', [const Pivot(10, 30)])
+      ..register('idle', [const Pivot(10, 30, 4)])
       ..register('atk', [const Pivot(14, 26)]);
     final o = t.offsetFor('atk', '0', 'idle')!;
     expect((o.x, o.y), (-4, 4));
     expect(t.offsetFor('atk', '3', 'idle'), isNull);
+    final b = t.bodyOf('idle')!;
+    expect((b.bottom, b.top, b.cell), (30, 4, 64));
   });
 
   test('FighterPivotSystem writes the offset onto the sprite', () {
@@ -115,5 +117,61 @@ void main() {
       world.step(0.1);
     }
     expect(fx.length, 0);
+  });
+
+  test('fx are placed on the defender silhouette, on the attacker side', () {
+    final world = World(width: 180, height: 320);
+    registerCoreComponents(world);
+    registerFlutterComponents(world);
+    registerPlatformerComponents(world);
+    registerCombatComponents(world);
+    world.addSystem(AutoCombatSystem());
+    final table = PivotTable()
+      // 64px cell, 40px tall figure standing on row 60, feet centred at x=32
+      ..register('enemy_idle', [const Pivot(32, 60, 20)], cell: 64);
+    installCombatFx(
+      world,
+      const CombatFx(hit: FxClip('spark', 2)),
+      pivots: table,
+    );
+    final hero = spawnFighter(
+      world,
+      side: 'hero',
+      x: 20,
+      y: 100,
+      hp: 1000,
+      attack: 1,
+      attackSpeed: 0.05,
+      armor: 0,
+      atlasId: 'hero_idle',
+      frameCount: 1,
+    );
+    final enemy = spawnFighter(
+      world,
+      side: 'enemy',
+      x: 120,
+      y: 100,
+      hp: 1000,
+      attack: 1,
+      attackSpeed: 0.05,
+      armor: 0,
+      atlasId: 'enemy_idle',
+      frameCount: 1,
+    );
+    world.step(0.01);
+    final pos = world.storeOf<Position>();
+    final sparks = world.storeOf<FxLife>();
+    // the hero's blow on the enemy: left of the enemy's feet, above them
+    var found = false;
+    for (var i = 0; i < sparks.length; i++) {
+      final p = pos.get(sparks.entityAt(i))!;
+      if (p.x > 100 && p.x < 120) {
+        found = true;
+        expect(p.y, lessThan(100 + (60 - 32.0)));
+        expect(p.y, greaterThan(100 + (20 - 32.0)));
+      }
+    }
+    expect(found, isTrue);
+    expect(hero, isNot(enemy));
   });
 }
