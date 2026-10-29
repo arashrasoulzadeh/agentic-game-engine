@@ -3,6 +3,7 @@ import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import 'package:engine_platformer/engine_platformer.dart';
 
 import 'combat_components.dart';
+import 'fighter_anims.dart';
 
 /// Auto-attacks; on damage calls engine [flashHit] for red tint feedback.
 class AutoCombatSystem extends System {
@@ -38,6 +39,7 @@ class AutoCombatSystem extends System {
     final raw = s.attack - stats.get(defender)!.armor;
     final hp = world.storeOf<Health>().get(defender)!;
     hp.current = (hp.current - (raw < 1 ? 1.0 : raw)).clamp(0, hp.max);
+    playFighterAnim(world, attacker, 'attack');
     flashHit(world, defender);
   }
 }

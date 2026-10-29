@@ -6,6 +6,7 @@ library;
 
 export 'combat/auto_combat_system.dart';
 export 'combat/combat_components.dart';
+export 'combat/fighter_anims.dart';
 export 'combat/spawn_fighter.dart';
 export 'fighters/fighter_meta.dart';
 export 'hud/scene_hud.dart';

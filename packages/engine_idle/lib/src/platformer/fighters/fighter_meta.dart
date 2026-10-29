@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../combat/fighter_anims.dart';
+
 /// Stats block shared by hero / enemy Mobarez sidecars.
 class MobarezStats {
   MobarezStats({
@@ -36,30 +38,64 @@ class MobarezStats {
   }
 }
 
-/// A fighter sidecar: display [name] plus [stats], parsed once so callers
-/// don't re-read the same JSON asset.
+/// A fighter's display [name], [stats] and one sheet per animation state
+/// (`idle`, `attack`, `death`), parsed once so callers don't re-read the
+/// same JSON assets. Sheets are `<stemPrefix>_<state>.png/.json`.
 class FighterMeta {
   const FighterMeta({
     required this.id,
     required this.name,
     required this.stats,
+    required this.stemPrefix,
+    required this.frames,
   });
+
+  /// States every fighter is expected to ship a sheet for.
+  static const states = ['idle', 'attack', 'death'];
 
   final String id;
   final String name;
   final MobarezStats stats;
+  final String stemPrefix;
 
-  factory FighterMeta.fromJson(String id, Map<String, dynamic> json) =>
-      FighterMeta(
-        id: id,
-        name: json['name'] as String? ?? id,
-        stats: MobarezStats.fromJson(json),
-      );
+  /// Frame count per state, from each sheet's own sidecar.
+  final Map<String, int> frames;
 
-  static Future<FighterMeta> load(String id, String assetStem) async =>
-      FighterMeta.fromJson(
-        id,
-        jsonDecode(await rootBundle.loadString('$assetStem.json'))
-            as Map<String, dynamic>,
-      );
+  /// Asset stem (no extension) of [state]'s sheet.
+  String stem(String state) => '${stemPrefix}_$state';
+
+  /// Atlas id under which [state]'s sheet is registered.
+  String atlasId(String state) => '${id}_$state';
+
+  /// Non-idle states as [FighterClip]s for [spawnFighter]'s `extraClips`.
+  Map<String, FighterClip> get extraClips => {
+    for (final e in frames.entries)
+      if (e.key != 'idle')
+        e.key: FighterClip(
+          atlasId: atlasId(e.key),
+          frames: e.value,
+          frameSeconds: e.key == 'death' ? 0.18 : 0.1,
+        ),
+  };
+
+  static Future<FighterMeta> load(String id, String stemPrefix) async {
+    Future<Map<String, dynamic>> read(String state) async =>
+        jsonDecode(await rootBundle.loadString('${stemPrefix}_$state.json'))
+            as Map<String, dynamic>;
+
+    final idle = await read('idle');
+    final frames = <String, int>{
+      'idle': (idle['frames'] as num?)?.toInt() ?? 4,
+    };
+    for (final state in states.skip(1)) {
+      frames[state] = ((await read(state))['frames'] as num?)?.toInt() ?? 1;
+    }
+    return FighterMeta(
+      id: id,
+      name: idle['name'] as String? ?? id,
+      stats: MobarezStats.fromJson(idle),
+      stemPrefix: stemPrefix,
+      frames: frames,
+    );
+  }
 }
