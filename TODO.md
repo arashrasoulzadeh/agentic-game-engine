@@ -75,6 +75,18 @@ Material pause/settings/credits + volumes, `IdleSfx` stubs, prestige shop,
 `HttpCloudSaveStore` walkthrough). Guide checklist:
 [docs/concepts/idle-games.md](docs/concepts/idle-games.md).
 
+## Mobarez sample follow-ups
+
+The sample is now a config plus a JSON level on `WaveCombatScene`. Open:
+
+- [ ] Express the level as an engine `LevelDocument` (`Level.loadInto`) instead
+      of the custom `LevelData` JSON, so it is editable in Studio and by agents.
+- [ ] Wire audio: `AudioManager` plus `installAnimationCueSystems(audio:)` sfx cues
+      on attack/hit/death frames.
+- [ ] Menus, settings and save slots from the engine's menu scenes.
+- [ ] Use `ParticleEmitter`/cue bursts for the walk dust; hero `special` sheet
+      (needs a larger cell than 128).
+
 ## Studio
 
 Design and delivered phases: [docs/studio/design.md](docs/studio/design.md).

@@ -289,6 +289,25 @@ The engine makes a deliberate, simple choice: **a single-player idle game trusts
   authority (server time, server-side validation of purchases and scores). That is outside the engine; keep
   the economy deterministic (it is) so a server can replay a claimed history and check it.
 
+## Wave combat (portrait auto-fighter)
+
+`engine_idle` also carries the genre's combat layer, which sits on `engine_platformer` and needs no Flutter code in
+the game. `WaveCombatScene(level: ..., config: ...)` is a whole portrait run: the hero walks (scenery scrolling in
+parallax), meets the next enemy of a wave, auto-fights it, walks on, and ends with a boss; tapping after a win or loss
+replays. A game supplies two things:
+
+- `WaveCombatConfig` (code): where the art lives (`heroStem`, `enemyRoot`, `backgroundDir`, effect sheets), the
+  fighter draw size, walk speed, messages.
+- `LevelData` (JSON): `wave` and `boss` ids, hero/enemy anchors, balance (`preview_hero_scale`,
+  `preview_boss_scale`), `parallax` layers with speeds, and `cues` (animation cues per state and frame, e.g. camera
+  shake on the frame an attack lands).
+
+Fighters have one sheet per state (`<id>_idle`, `_attack`, `_death`, each with a `.json` sidecar) and an optional
+`history_fa`/`name` for the HUD. Pieces you can use on their own: `AutoCombatSystem` (with `enabled` to hold fire),
+`FighterDeathSystem`, `spawnFighter`, `FighterHit` events with `installCombatFx` (sparks, slash and death smoke placed
+on the defender's silhouette, particle bursts), `WalkPhase`, `WaveProgress`, `SceneHud`. Generic sprite, pivot,
+effect and parallax machinery lives in [rendering](rendering.md#animation).
+
 ## Tuning without playing
 
 `simulateIdle` (also `game_agent idle simulate` and the MCP/REST `idle.simulate` op) plays a definition with a

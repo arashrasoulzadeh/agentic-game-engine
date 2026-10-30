@@ -8,10 +8,37 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added (sprites, effects, idle combat)
+- `SpriteStates` / `SpriteStateSystem` / `playSpriteState` — per-state sprite
+  sheets (idle/attack/death) with one-shot return-to-rest, hold states and
+  per-frame `frameEvents` cues; registered component `spriteStates` with a schema.
+- `sheetPivots` / `PivotTable` / `SpritePivotSystem` — feet pivots measured from
+  sheet pixels so characters stop sliding between frames.
+- `loadSpriteSheet` / `loadSheetSidecar` / `loadFxClip` — strip sheets laid out
+  by a `.json` sidecar (cell/gap/frames).
+- `spawnFx` / `FxClip` / `OneShotFxSystem` — fire-and-forget effect sprites
+  (component `oneShotFx`).
+- `ParallaxScroller` / `ParallaxSpec` — data-driven scrolling layers.
+- `ViewportConfig.fitWorld` — the engine sets `Camera.zoom` so the world fills
+  the letterboxed rectangle.
+- `Text.rtl` — per-text right-to-left override for Persian/Arabic lines.
+- `engine_idle`: `WaveCombatScene` / `WaveCombatConfig`, `WalkPhase`,
+  `AutoCombatSystem`, `FighterDeathSystem`, `spawnFighter`, `installCombatFx`,
+  `LevelData` (waves, balance, parallax, cues) — a portrait walk-and-fight run
+  from data; the Mobarez sample is now a config plus a JSON level.
+
+### Changed
+- `Text` wrapped lines follow the component's `align` inside their box
+  (previously only the box was aligned).
+
 ### Removed
 - The unused `ColorblindShader` and `shaders/colorblind.frag` (colour-vision simulation is a colour matrix now).
 
 ### Fixed
+- Tiled `ParallaxLayer`s no longer show a hairline gap between tiles at
+  non-integer zoom (tiles overlap by 1px).
+- `component_schema_registration_test` drift: the `sprite` sample was missing
+  `tintArgb`.
 - Studio opens custom `assets/levels/*.json` (no `entities` list, e.g.
   Mobarez wave defs) in the code editor instead of failing LevelDocument
   load with "missing entities".

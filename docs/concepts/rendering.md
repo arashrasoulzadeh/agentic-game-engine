@@ -73,6 +73,10 @@ number lives (e.g. `engine_platformer`'s `Health` via
 `HealthHudSystem`/`HealthHudLink`, see
 [platformer.md](platformer.md)).
 
+Right-to-left text (Persian, Arabic): `Text` follows the active locale's direction; set `Text.rtl` (`true` /
+`false`, default `null` = locale) to force it for one line, e.g. a Persian lore line inside an English UI.
+Wrapped lines (`maxWidth`) follow the component's `align` inside their box.
+
 ## Lighting: `Light2D`
 
 2D lighting with soft falloff, color tint, real shadow casting (CPU
@@ -87,7 +91,7 @@ darkens the whole scene, revealed again through each `Light2D` entity.
 ## Aspect ratio and safe areas
 
 `EngineView(viewportConfig: ViewportConfig(...))` decides the **rectangle** the game is drawn in on screens of
-any shape; it does not scale the world (one world unit is still `Camera.zoom` pixels).
+any shape; by default it does not scale the world (one world unit is still `Camera.zoom` pixels).
 
 ```dart
 EngineView(
@@ -110,7 +114,10 @@ With `avoidSystemUi` (default) the area stays inside the system safe area (notch
 bars). A screen that already has the target ratio gets exactly the whole screen and no bars. Taps
 (`onWorldTap`) and camera-follow clamping use the drawn area's own size and origin, so a tap in a bar is
 simply outside the game. To keep a fixed field of view on every screen, choose `Camera.zoom` from the
-screen size yourself. Tested in `packages/engine_flutter/test/viewport_test.dart`.
+screen size yourself, or set `fitWorld: true` and the engine does it: every frame it sets `Camera.zoom` so the
+whole world width fills the drawn area. A 180x320 portrait game is
+`ViewportConfig(targetAspectRatio: 180 / 320, fitWorld: true)` (what `Game.viewportConfig` returns) and needs no
+zoom maths of its own. Tested in `packages/engine_flutter/test/viewport_test.dart`.
 
 ## Animation
 
@@ -120,6 +127,42 @@ between clips. `engine_platformer`'s `MovementAnimationSet`/
 `JumpAnimationSet` (see [platformer.md](platformer.md)) are the
 platformer-specific layer that decides *which* clip should be playing
 from movement state — this package only plays whatever clip it's told.
+
+### Sheets with a sidecar
+
+`loadSpriteSheet('assets/hero/hero_idle')` loads `hero_idle.png` as a strip atlas laid out by its sidecar
+`hero_idle.json` (`cell`, `gap`, `frames`; frame `i` is the `cell`-sized square at `x = gap + i * (cell + gap)`,
+regions `'0'..'frames-1'`) and measures each frame's feet (below). `loadFxClip` reads an effect sheet's frame count the
+same way. Art plus a tiny JSON, no cell sizes in code.
+
+### Sprite states
+
+Hand-painted characters usually ship one sheet per state. `SpriteStates` holds a clip per state (`idle`, `attack`,
+`death`, ...), each with its own `atlasId`, frame count, pace and optional `frameEvents`. Ask for a state with
+`playSpriteState(world, entity, 'attack')`; `SpriteStateSystem` (register before `AnimationSystem`) swaps the sprite's
+atlas and clip, sends a finished one-shot back to `restState` (`idle`) and freezes `holdStates` (default `death`) on
+their last frame. `spriteStateFinished(world, entity, 'death')` says when a clip has played out. A clip's
+`frameEvents` ride on the playing `AnimationClip`, so `installAnimationCueSystems` fires camera shake, particle bursts
+and sfx on that frame.
+
+### Feet pivots
+
+Sheets are cropped per pose, so drawing each frame centred makes a character slide and bob. `sheetPivots` measures
+each frame's feet from the pixels (lowest opaque row; X from the bottom of the silhouette, not the bounding box a
+spear would skew); `loadSpriteSheet` does it for you into a `PivotTable`. `SpritePivotSystem(table)` (register right
+after `AnimationSystem`) offsets every `SpriteStates` sprite so its feet stay where its `idle` frame 0 stands, across
+frames and states. This replaces hand-authoring `AnimationClip.frameOffsets`.
+
+### One-shot effects
+
+`spawnFx(world, FxClip('fx_spark', 5), x: ..., y: ..., scale: ...)` plays an effect sheet once, centred at a point;
+`OneShotFxSystem` (after `AnimationSystem`) removes it when the clip ends.
+
+### Parallax scrolling
+
+`ParallaxScroller.spawn(world, 'bg', [ParallaxSpec('far', 0.3), ParallaxSpec('ground', 1.0), ...])` creates tiled
+`ParallaxLayer`s (atlas `bg_<name>`); `scroller.scroll(world, distance)` moves each by `distance x speed` through
+`Position`. For a hero who stays put on screen (idle and auto-walk games) the camera and HUD never move.
 
 ## Debug overlays
 

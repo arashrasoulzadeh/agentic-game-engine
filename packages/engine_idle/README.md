@@ -30,6 +30,12 @@ save formats. This package re-exports all of that and adds what needs Flutter:
 | `HttpCloudSaveStore` | HTTP(S) cloud save with injected get/put (IO / web / tests) |
 | `IdleAnalytics` | Purchase, prestige and return events through the consent-aware analytics manager |
 
+Also here is the portrait **wave-combat** layer on top of `engine_platformer`: `WaveCombatScene` +
+`WaveCombatConfig` + `LevelData` (a whole walk-and-fight run from data), `AutoCombatSystem`, `FighterDeathSystem`,
+`spawnFighter`, `installCombatFx`, `WalkPhase`, `WaveProgress`. See the "Wave combat" section of the
+[idle games guide](../../docs/concepts/idle-games.md); the sprite-state, pivot, effect and parallax systems it uses live
+in `engine_flutter` ([rendering](../../docs/concepts/rendering.md)).
+
 ```dart
 final world = World(width: 10, height: 10);
 registerCoreComponents(world);
