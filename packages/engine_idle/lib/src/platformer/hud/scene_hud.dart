@@ -5,7 +5,7 @@ import 'package:engine_flutter/engine_flutter.dart'
 
 import 'hud_layout.dart';
 
-/// Screen-space labels for a portrait idle-combat scene: a status line, the
+/// Labels for a portrait idle-combat scene: a status line, the
 /// current enemy's name. Where they sit comes from a [HudLayout]; the enemy's
 /// description is a `DialogueCaption`.
 class SceneHud {
@@ -38,7 +38,7 @@ class SceneHud {
         fontSize: style.fontSize,
         colorArgb: style.colorArgb,
         align: eng.TextAlignment.center,
-        screenSpace: true,
+        screenSpace: false,
         zIndex: 110,
         maxWidth: style.maxWidth,
         rtl: style.rtl,

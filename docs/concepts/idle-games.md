@@ -300,14 +300,17 @@ replays. A game supplies two things:
 
 - `WaveCombatConfig` (code): where the art lives (`heroStem`, `enemyRoot`, `backgroundDir`, effect sheets), the
   fighter draw size, walk speed, messages, and the `HudLayout` (positions, sizes and colours of the labels and
-  health bars; the defaults suit a 180x320 portrait world).
+  health bars; all world units, the defaults suit a 180x320 portrait world) and a `WaveUiArt` (generated UI art, each
+  part optional: ornate `SpriteHealthBar`s from `ui_bars`, a `WavePath` of `ui_level_node` nodes with a divider line
+  showing progress through the waves to the boss, and a parchment `ui_dialog_scroll` that opens behind the caption).
 - `LevelData` (JSON): `wave` and `boss` ids, hero/enemy anchors, balance (`preview_hero_scale`,
   `preview_boss_scale`), `parallax` layers with speeds, and `cues` (animation cues per state and frame, e.g. camera
   shake on the frame an attack lands).
 
 Fighters have one sheet per state (`<id>_idle`, `_attack`, `_death`, each with a `.json` sidecar) and an optional
 `history_fa`/`name` for the HUD. Pieces you can use on their own: `AutoCombatSystem` (with `enabled` to hold fire),
-`FighterDeathSystem`, `spawnFighter`, `FighterHit` events with `installCombatFx` (sparks, slash and death smoke placed
+`FighterDeathSystem`, `spawnFighter`, `DialogueCaption` (a line typed in by the engine's `DialogueRunner`, with an
+optional backdrop that opens and closes with it), `FighterHit` events with `installCombatFx` (sparks, slash and death smoke placed
 on the defender's silhouette, particle bursts), `WalkPhase`, `WaveProgress`, `SceneHud`. Generic sprite, pivot,
 effect and parallax machinery lives in [rendering](rendering.md#animation).
 

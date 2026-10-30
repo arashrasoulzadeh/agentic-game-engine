@@ -53,10 +53,11 @@ void main() {
   });
 
   test(
-    'HudLayout defaults match the 180x320 portrait layout and are replaceable',
+    'HudLayout defaults suit the 180x320 portrait world and are replaceable',
     () {
       const d = HudLayout();
-      expect((d.heroBar.y, d.enemyBar.y), (28, 52));
+      expect((d.heroBar.x, d.enemyBar.x), (5, 95)); // side by side at the top
+      expect(d.description.y, 160); // world centre
       expect(d.description.rtl, isTrue);
       const custom = WaveCombatConfig(
         heroStem: 'h',
@@ -68,7 +69,7 @@ void main() {
         ),
       );
       expect(custom.hud.heroBar.y, 300);
-      expect(custom.hud.enemyBar.y, 52);
+      expect(custom.hud.enemyBar.y, 3);
     },
   );
 }

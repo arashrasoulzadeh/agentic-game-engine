@@ -23,6 +23,8 @@ pubspec.yaml.
   the letterboxed rectangle.
 - `Text.rtl` — per-text right-to-left override for Persian/Arabic lines.
 - `ViewportConfig.fittingWorld(w, h)` — the config for a fixed-size world.
+- `engine_idle`: `WaveUiArt`, `SpriteHealthBar`, `WavePath` (generated UI art for bars, a wave progress path and a
+  caption backdrop) and `DialogueCaption` (typewriter caption on `DialogueRunner`). `HudLayout` is now world units.
 - `engine_idle`: `WaveCombatGame.load` (config + level -> `Game`), `HudLayout`
   (configurable HUD positions/colours), `WaveCombatScene` / `WaveCombatConfig`, `WalkPhase`,
   `AutoCombatSystem`, `FighterDeathSystem`, `spawnFighter`, `installCombatFx`,

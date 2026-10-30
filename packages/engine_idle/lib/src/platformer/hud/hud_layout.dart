@@ -1,15 +1,16 @@
-/// One screen-space label of the wave-combat HUD.
+/// One label of the wave-combat HUD. All positions and sizes are world units
+/// (the text scales with the window like the rest of the scene).
 class HudTextStyle {
   const HudTextStyle({
     required this.x,
     required this.y,
-    this.fontSize = 9,
+    this.fontSize = 5,
     this.colorArgb = 0xFFFFFFFF,
-    this.maxWidth = 170,
+    this.maxWidth = 80,
     this.rtl,
   });
 
-  /// Centre of the label, in screen-space world units.
+  /// Centre of the label.
   final double x;
   final double y;
   final double fontSize;
@@ -20,17 +21,19 @@ class HudTextStyle {
   final bool? rtl;
 }
 
-/// One health bar of the wave-combat HUD.
+/// One health bar of the wave-combat HUD (world units). With generated bar
+/// art ([WaveUiArt.barsStem]) only [x], [y] and [width] matter; [height] and
+/// [fillColorArgb] are for the plain-rectangle fallback.
 class HudBarStyle {
   const HudBarStyle({
     required this.x,
     required this.y,
-    this.width = 148,
-    this.height = 10,
+    this.width = 80,
+    this.height = 6,
     required this.fillColorArgb,
   });
 
-  /// Top-left corner, in screen-space world units.
+  /// Top-left corner.
   final double x;
   final double y;
   final double width;
@@ -38,28 +41,34 @@ class HudBarStyle {
   final int fillColorArgb;
 }
 
-/// Where the wave-combat HUD sits and how it looks: the defaults suit a
-/// 180x320 portrait world with the hero's bar on top and the enemy's below
-/// it. Replace any part for another layout, size or palette.
+/// Where the wave-combat HUD sits (a 180x320 portrait world): the hero's bar
+/// top-left, the enemy's top-right, a status label under the first and the
+/// enemy's name under the second, and the enemy description centred. Replace
+/// any part for another layout, size or palette.
 class HudLayout {
   const HudLayout({
     this.status = const HudTextStyle(
-      x: 90,
-      y: 14,
-      fontSize: 11,
+      x: 45,
+      y: 26.5,
+      fontSize: 4.6,
       colorArgb: 0xFFFFE7A0,
     ),
-    this.enemy = const HudTextStyle(x: 90, y: 44, colorArgb: 0xFFFFCCBC),
+    this.enemy = const HudTextStyle(
+      x: 135,
+      y: 26.5,
+      fontSize: 4.6,
+      colorArgb: 0xFFFFCCBC,
+    ),
     this.description = const HudTextStyle(
       x: 90,
       y: 160,
       fontSize: 7.5,
       colorArgb: 0xFFFFF3D0,
-      maxWidth: 150,
+      maxWidth: 124,
       rtl: true,
     ),
-    this.heroBar = const HudBarStyle(x: 16, y: 28, fillColorArgb: 0xFF2AA198),
-    this.enemyBar = const HudBarStyle(x: 16, y: 52, fillColorArgb: 0xFFE0304C),
+    this.heroBar = const HudBarStyle(x: 5, y: 3, fillColorArgb: 0xFF2AA198),
+    this.enemyBar = const HudBarStyle(x: 95, y: 3, fillColorArgb: 0xFFE0304C),
     this.bossBarColorArgb = 0xFFE65100,
   });
 
@@ -67,13 +76,11 @@ class HudLayout {
   final HudTextStyle enemy;
 
   /// The enemy's description, typed in at the centre of the world by a
-  /// `DialogueCaption` while the enemy approaches. Unlike the other labels,
-  /// which are in screen pixels, its `x`, `y`, `fontSize` and `maxWidth` are
-  /// world units (so it scales with the window).
+  /// `DialogueCaption` for as long as the enemy lives.
   final HudTextStyle description;
   final HudBarStyle heroBar;
   final HudBarStyle enemyBar;
 
-  /// Fill of the enemy bar during the boss encounter.
+  /// Fill of the enemy bar during the boss encounter (plain-bar fallback).
   final int bossBarColorArgb;
 }

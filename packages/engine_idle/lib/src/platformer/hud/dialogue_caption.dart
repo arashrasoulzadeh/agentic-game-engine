@@ -1,7 +1,7 @@
 import 'package:engine_core/engine_core.dart';
 import 'package:engine_flutter/engine_flutter.dart'
     as eng
-    show Text, TextAlignment;
+    show Sprite, Text, TextAlignment;
 
 import 'hud_layout.dart';
 
@@ -15,7 +15,26 @@ import 'hud_layout.dart';
 /// the position and style of a [HudTextStyle] — in world units, so a layout
 /// can centre it on the world whatever the window size.
 class DialogueCaption {
-  DialogueCaption.spawn(World world, {required this.style}) {
+  /// With [backdropAtlasId], a panel of [backdropWidth] x [backdropHeight]
+  /// world units opens behind the text as it appears and closes as it goes.
+  DialogueCaption.spawn(
+    World world, {
+    required this.style,
+    String? backdropAtlasId,
+    double backdropWidth = 0,
+    double backdropHeight = 0,
+    double backdropSourceWidth = 128,
+    double backdropSourceHeight = 78,
+  }) : _backdropW = backdropWidth / backdropSourceWidth,
+       _backdropH = backdropHeight / backdropSourceHeight {
+    if (backdropAtlasId != null) {
+      _backdrop = world.spawn();
+      world.storeOf<Position>().set(_backdrop!, Position(style.x, style.y));
+      world.storeOf<eng.Sprite>().set(
+        _backdrop!,
+        eng.Sprite(backdropAtlasId, 'full', scaleX: 0, scaleY: 0, zIndex: 119),
+      );
+    }
     _entity = world.spawn();
     world.storeOf<Position>().set(_entity, Position(style.x, style.y));
     world.storeOf<eng.Text>().set(
@@ -45,6 +64,10 @@ class DialogueCaption {
   static const eraseSpeedUp = 3.0;
 
   late final EntityId _entity;
+  EntityId? _backdrop;
+  final double _backdropW;
+  final double _backdropH;
+  double _open = 0;
   DialogueRunner? _runner;
   String _full = '';
   bool _erasing = false;
@@ -98,6 +121,7 @@ class DialogueCaption {
   }
 
   void update(World world, double dt) {
+    _animateBackdrop(world, dt);
     if (_full.isEmpty) return;
     if (_erasing) {
       _eraseProgress += dt * typeCharsPerSecond * eraseSpeedUp;
@@ -115,6 +139,19 @@ class DialogueCaption {
     final view = WorldView(world);
     runner.updateTypewriter(dt, view);
     _set(world, runner.visibleText(view) ?? _full);
+  }
+
+  /// Opens the panel while text is up, closes it when it is gone.
+  void _animateBackdrop(World world, double dt) {
+    final id = _backdrop;
+    if (id == null) return;
+    final wantOpen = _full.isNotEmpty && !_erasing;
+    _open = (_open + (wantOpen ? 1 : -1) * dt * 5).clamp(0.0, 1.0);
+    // Ease-out so it snaps open and settles.
+    final k = 1 - (1 - _open) * (1 - _open);
+    world.storeOf<eng.Sprite>().get(id)
+      ?..scaleX = _backdropW * k
+      ..scaleY = _backdropH * k;
   }
 
   void _set(World world, String text) {

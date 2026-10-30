@@ -13,6 +13,9 @@ import '../fx/combat_fx.dart';
 import '../hud/dialogue_caption.dart';
 import '../hud/hud_layout.dart';
 import '../hud/scene_hud.dart';
+import '../hud/sprite_health_bar.dart';
+import '../hud/wave_path.dart';
+import '../hud/wave_ui_art.dart';
 import '../level/level_data.dart';
 import '../level/wave_progress.dart';
 import 'walk_phase.dart';
@@ -39,6 +42,7 @@ class WaveCombatConfig {
     this.bossLabel = 'Boss',
     this.impactParticles = defaultImpactParticles,
     this.hud = const HudLayout(),
+    this.ui = const WaveUiArt(),
   });
 
   /// Asset stem of the hero sheets (`<stem>_idle.png`, `_attack`, `_death`).
@@ -80,6 +84,9 @@ class WaveCombatConfig {
   /// Where the HUD's labels and health bars sit and their colours.
   final HudLayout hud;
 
+  /// Generated UI art for the bars, path and caption (each optional).
+  final WaveUiArt ui;
+
   /// Builds the spark emitter each fighter gets.
   final ParticleEmitter Function() impactParticles;
 
@@ -111,6 +118,10 @@ class WaveCombatScene extends Scene {
   static const _hitFx = 'fx_hit';
   static const _slashFx = 'fx_slash';
   static const _deathFx = 'fx_death';
+  static const _uiBars = 'ui_bars';
+  static const _uiNodes = 'ui_path_nodes';
+  static const _uiLine = 'ui_path_line';
+  static const _uiScroll = 'ui_caption_scroll';
 
   late final WaveProgress waves = WaveProgress(
     wave: level.wave,
@@ -131,6 +142,9 @@ class WaveCombatScene extends Scene {
   EntityId? heroId;
   EntityId? enemyId;
   EntityId? _enemyHudId;
+  SpriteHealthBar? _heroBar;
+  SpriteHealthBar? _enemyBar;
+  WavePath? _path;
   EntityId? _corpse;
   SceneController? _scenes;
 
@@ -209,7 +223,26 @@ class WaveCombatScene extends Scene {
 
     _spawnHero(world);
     _hud = SceneHud.spawn(world, status: status, layout: config.hud);
-    _caption = DialogueCaption.spawn(world, style: config.hud.description);
+    final ui = config.ui;
+    _caption = DialogueCaption.spawn(
+      world,
+      style: config.hud.description,
+      backdropAtlasId: ui.captionBackdropImage == null ? null : _uiScroll,
+      backdropWidth: ui.captionBackdropWidth,
+      backdropHeight: ui.captionBackdropHeight,
+    );
+    if (ui.pathNodesStem != null) {
+      _path = WavePath.spawn(
+        world,
+        nodesAtlasId: _uiNodes,
+        lineAtlasId: ui.pathLineImage == null ? null : _uiLine,
+        count: level.wave.length + 1,
+        y: ui.pathY,
+        left: ui.pathInset,
+        right: world.width - ui.pathInset,
+        nodeSize: ui.pathNodeSize,
+      );
+    }
     _spawnEnemy(world);
   }
 
@@ -239,6 +272,28 @@ class WaveCombatScene extends Scene {
       registry.register(
         e.key,
         (await loadSpriteSheet(e.value, measurePivots: false)).atlas,
+      );
+    }
+    final ui = config.ui;
+    if (ui.barsStem != null) {
+      registry.register(_uiBars, await BarsArt.load(ui.barsStem!));
+    }
+    if (ui.pathNodesStem != null) {
+      registry.register(
+        _uiNodes,
+        (await loadSpriteSheet(ui.pathNodesStem!, measurePivots: false)).atlas,
+      );
+    }
+    if (ui.pathLineImage != null) {
+      registry.register(
+        _uiLine,
+        await SpriteAtlas.loadFullImageFromAssets(ui.pathLineImage!),
+      );
+    }
+    if (ui.captionBackdropImage != null) {
+      registry.register(
+        _uiScroll,
+        await SpriteAtlas.loadFullImageFromAssets(ui.captionBackdropImage!),
       );
     }
     return registry;
@@ -271,16 +326,29 @@ class WaveCombatScene extends Scene {
       zIndex: 25,
     );
     final bar = config.hud.heroBar;
-    spawnHealthHudBar(
-      world,
-      source: heroId!,
-      x: bar.x,
-      y: bar.y,
-      width: bar.width,
-      height: bar.height,
-      fillColorArgb: bar.fillColorArgb,
-      zIndex: 100,
-    );
+    if (config.ui.barsStem != null) {
+      _heroBar = SpriteHealthBar.spawn(
+        world,
+        atlasId: _uiBars,
+        source: heroId!,
+        left: bar.x,
+        top: bar.y,
+        width: bar.width,
+        fill: 'xp',
+      );
+    } else {
+      spawnHealthHudBar(
+        world,
+        source: heroId!,
+        x: bar.x,
+        y: bar.y,
+        width: bar.width,
+        height: bar.height,
+        fillColorArgb: bar.fillColorArgb,
+        screenSpace: false,
+        zIndex: 100,
+      );
+    }
   }
 
   /// Brings the next enemy in from off-screen; combat starts once it has
@@ -290,6 +358,7 @@ class WaveCombatScene extends Scene {
     if (_corpse != null) world.destroy(_corpse!);
     _corpse = enemyId;
     if (_enemyHudId != null) world.destroy(_enemyHudId!);
+    _enemyBar?.destroy();
 
     final meta = _meta[waves.currentId]!;
     final stats = meta.stats;
@@ -319,18 +388,32 @@ class WaveCombatScene extends Scene {
       zIndex: 20,
     );
     final bar = config.hud.enemyBar;
-    _enemyHudId = spawnHealthHudBar(
-      world,
-      source: enemyId!,
-      x: bar.x,
-      y: bar.y,
-      width: bar.width,
-      height: bar.height,
-      fillColorArgb: waves.isBoss
-          ? config.hud.bossBarColorArgb
-          : bar.fillColorArgb,
-      zIndex: 100,
-    );
+    if (config.ui.barsStem != null) {
+      _enemyBar = SpriteHealthBar.spawn(
+        world,
+        atlasId: _uiBars,
+        source: enemyId!,
+        left: bar.x,
+        top: bar.y,
+        width: bar.width,
+        fill: waves.isBoss ? 'boss' : 'hp',
+      );
+    } else {
+      _enemyHudId = spawnHealthHudBar(
+        world,
+        source: enemyId!,
+        x: bar.x,
+        y: bar.y,
+        width: bar.width,
+        height: bar.height,
+        fillColorArgb: waves.isBoss
+            ? config.hud.bossBarColorArgb
+            : bar.fillColorArgb,
+        screenSpace: false,
+        zIndex: 100,
+      );
+    }
+    _path?.update(waves.index, config.ui.pathNodeSize);
     enemyLabel = meta.name;
     enemyDescription = meta.descriptionFa;
     _combat.enabled = false;
@@ -361,6 +444,8 @@ class WaveCombatScene extends Scene {
   @override
   void update(double dt, World world) {
     _caption.update(world, dt);
+    _heroBar?.sync();
+    _enemyBar?.sync();
     if (finished) return;
     final h = heroId;
     final e = enemyId;
