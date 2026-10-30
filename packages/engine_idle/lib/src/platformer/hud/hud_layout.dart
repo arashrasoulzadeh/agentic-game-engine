@@ -52,10 +52,10 @@ class HudLayout {
     this.enemy = const HudTextStyle(x: 90, y: 44, colorArgb: 0xFFFFCCBC),
     this.description = const HudTextStyle(
       x: 90,
-      y: 74,
-      fontSize: 8,
+      y: 160,
+      fontSize: 7.5,
       colorArgb: 0xFFFFF3D0,
-      maxWidth: 160,
+      maxWidth: 150,
       rtl: true,
     ),
     this.heroBar = const HudBarStyle(x: 16, y: 28, fillColorArgb: 0xFF2AA198),
@@ -65,6 +65,11 @@ class HudLayout {
 
   final HudTextStyle status;
   final HudTextStyle enemy;
+
+  /// The enemy's description, typed in at the centre of the world by a
+  /// `DialogueCaption` while the enemy approaches. Unlike the other labels,
+  /// which are in screen pixels, its `x`, `y`, `fontSize` and `maxWidth` are
+  /// world units (so it scales with the window).
   final HudTextStyle description;
   final HudBarStyle heroBar;
   final HudBarStyle enemyBar;

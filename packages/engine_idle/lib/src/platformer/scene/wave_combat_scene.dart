@@ -10,6 +10,7 @@ import '../combat/fighter_death_system.dart';
 import '../combat/spawn_fighter.dart';
 import '../fighters/fighter_meta.dart';
 import '../fx/combat_fx.dart';
+import '../hud/dialogue_caption.dart';
 import '../hud/hud_layout.dart';
 import '../hud/scene_hud.dart';
 import '../level/level_data.dart';
@@ -121,6 +122,7 @@ class WaveCombatScene extends Scene {
     if (config.deathFxStem != null) _deathFx: config.deathFxStem!,
   };
   late SceneHud _hud;
+  late DialogueCaption _caption;
   late WalkPhase _walk;
   late Camera _camera;
   final _combat = AutoCombatSystem();
@@ -207,6 +209,7 @@ class WaveCombatScene extends Scene {
 
     _spawnHero(world);
     _hud = SceneHud.spawn(world, status: status, layout: config.hud);
+    _caption = DialogueCaption.spawn(world, style: config.hud.description);
     _spawnEnemy(world);
   }
 
@@ -332,19 +335,17 @@ class WaveCombatScene extends Scene {
     enemyDescription = meta.descriptionFa;
     _combat.enabled = false;
     _walk.start(world, hero: heroId!, enemy: enemyId!, corpse: _corpse);
+    _caption.show(world, enemyDescription);
     _syncHud(world);
   }
 
-  void _syncHud(World world) => _hud.sync(
-    world,
-    status: status,
-    enemy: enemyLabel,
-    description: enemyDescription,
-  );
+  void _syncHud(World world) =>
+      _hud.sync(world, status: status, enemy: enemyLabel);
 
   void _finish(World world, String message) {
     finished = true;
     status = message;
+    _caption.hide();
     _syncHud(world);
   }
 
@@ -359,6 +360,7 @@ class WaveCombatScene extends Scene {
 
   @override
   void update(double dt, World world) {
+    _caption.update(world, dt);
     if (finished) return;
     final h = heroId;
     final e = enemyId;
@@ -379,6 +381,8 @@ class WaveCombatScene extends Scene {
       return _finish(world, config.fallenMessage);
     }
     if (enemyHp != null && enemyHp.current <= 0) {
+      // The description stays up for the whole encounter and goes with the enemy.
+      _caption.hide();
       if (!_deathPlayed(world, e, dt)) return;
       if (waves.isBoss) return _finish(world, config.clearedMessage);
       waves.advance();

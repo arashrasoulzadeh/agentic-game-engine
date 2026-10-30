@@ -10,6 +10,7 @@ export 'combat/fighter_death_system.dart';
 export 'combat/spawn_fighter.dart';
 export 'fighters/fighter_meta.dart';
 export 'fx/combat_fx.dart';
+export 'hud/dialogue_caption.dart';
 export 'hud/hud_layout.dart';
 export 'hud/scene_hud.dart';
 export 'level/level_data.dart';

@@ -74,7 +74,7 @@ class ResearchNode {
   }
 }
 
-/// Buys [research] once: spends [ResearchNode.cost], marks purchased, grants [unlocks].
+/// Buys [research] once: spends [ResearchNode.cost], marks purchased, grants `unlocks`.
 BuyResult buyResearch(
   World world,
   BigTreasury wallet,
