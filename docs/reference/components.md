@@ -775,6 +775,7 @@ Platformer gameplay data. Registered by `registerPlatformerComponents`.
 | `meleeRange` | `double` | 0 to ∞ |
 | `meleeRadius` | `double` | 0 to ∞ |
 | `meleeDurationSeconds` | `double` | 0 to ∞ |
+| `meleeHitboxFromAnimation` | `bool` | default `false` |
 | `projectileSpeed` | `double` | 0 to ∞ |
 | `projectileRadius` | `double` | 0 to ∞ |
 | `projectileLifetimeSeconds` | `double` | 0 to ∞ |

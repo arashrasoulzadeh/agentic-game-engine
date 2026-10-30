@@ -138,6 +138,7 @@ const weaponSchema = ComponentSchema('weapon', [
   FieldSchema('meleeRange', FieldType.double, min: 0),
   FieldSchema('meleeRadius', FieldType.double, min: 0),
   FieldSchema('meleeDurationSeconds', FieldType.double, min: 0),
+  FieldSchema('meleeHitboxFromAnimation', FieldType.bool, defaultValue: false),
   FieldSchema('projectileSpeed', FieldType.double, min: 0),
   FieldSchema('projectileRadius', FieldType.double, min: 0),
   FieldSchema('projectileLifetimeSeconds', FieldType.double, min: 0),

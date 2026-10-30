@@ -111,6 +111,7 @@ final _samples = <String, Map<String, dynamic>>{
     'meleeRange': 24.0,
     'meleeRadius': 12.0,
     'meleeDurationSeconds': 0.2,
+    'meleeHitboxFromAnimation': false,
     'projectileSpeed': 300.0,
     'projectileRadius': 4.0,
     'projectileLifetimeSeconds': 2.0,
