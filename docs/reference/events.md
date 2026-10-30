@@ -20,6 +20,7 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | `TriggerEvent` | `triggerId`, `zone`, `other`, `data` | `installTriggerZones` |
 | `TweenCompleteEvent` | `entity` | `TweenSystem` |
 | `CinematicCompleteEvent` | — | `CinematicSystem` |
+| `PlaySoundEvent` | `audioKey`, `volume` | `DialogueRunner`, cinematic `PlaySoundStep`; played by `DialogueSfxSystem` |
 
 ## engine_core — turn-based
 
@@ -55,6 +56,13 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 |---|---|---|
 | `SoundEvent` | `x`, `y`, `loudness`, `tag?`, `data?` | A world event your game emits when something makes noise; `HearingSystem` delivers it to listeners (see `InvestigateBehavior`). |
 | `AnalyticsEvent` | `name`, `payload`, `timestamp`, `userId?`, `sessionId?` | **Not** a `world.events` event: a record handed to analytics providers by `AnalyticsManager`. Listed because of its name. |
+
+## engine_flutter
+
+| Event | Fields | Emitted by |
+|---|---|---|
+| `AnimationFrameEvent` | `entity`, `clipName`, `type`, `data`, `frameIndex` | `AnimationSystem` (one per cue when playback enters a frame whose `frameEvents` list one; `installAnimationCueSystems` turns `shake` / `particle` / `sfx` cues into camera shake, particle bursts and sound) |
+| `AnimationEvent` | `type`, `data` | **Not** a `world.events` event: the authored cue data in `AnimationClip.frameEvents` / `SpriteClip.frameEvents`. Listed because of its name. |
 
 ## engine_platformer
 
