@@ -1133,12 +1133,15 @@ The engine makes a deliberate, simple choice: **a single-player idle game trusts
 ## Wave combat (portrait auto-fighter)
 
 `engine_idle` also carries the genre\'s combat layer, which sits on `engine_platformer` and needs no Flutter code in
-the game. `WaveCombatScene(level: ..., config: ...)` is a whole portrait run: the hero walks (scenery scrolling in
+the game. `WaveCombatGame.load(levelAsset: ..., combat: ...)` builds the whole game (engine config + level JSON, letterboxed
+and scaled to the window), so a game\'s `main` is `runGame(await WaveCombatGame.load(...))`. Its scene,
+`WaveCombatScene(level: ..., config: ...)`, is a whole portrait run: the hero walks (scenery scrolling in
 parallax), meets the next enemy of a wave, auto-fights it, walks on, and ends with a boss; tapping after a win or loss
 replays. A game supplies two things:
 
 - `WaveCombatConfig` (code): where the art lives (`heroStem`, `enemyRoot`, `backgroundDir`, effect sheets), the
-  fighter draw size, walk speed, messages.
+  fighter draw size, walk speed, messages, and the `HudLayout` (positions, sizes and colours of the labels and
+  health bars; the defaults suit a 180x320 portrait world).
 - `LevelData` (JSON): `wave` and `boss` ids, hero/enemy anchors, balance (`preview_hero_scale`,
   `preview_boss_scale`), `parallax` layers with speeds, and `cues` (animation cues per state and frame, e.g. camera
   shake on the frame an attack lands).

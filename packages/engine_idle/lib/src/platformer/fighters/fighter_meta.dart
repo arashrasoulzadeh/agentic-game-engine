@@ -6,9 +6,9 @@ import 'package:engine_flutter/engine_flutter.dart';
 
 import '../level/level_data.dart' show StateCues;
 
-/// Stats block shared by hero / enemy Mobarez sidecars.
-class MobarezStats {
-  MobarezStats({
+/// Stats block shared by hero / enemy sidecars.
+class FighterStats {
+  FighterStats({
     required this.hp,
     required this.attack,
     required this.attackSpeed,
@@ -26,9 +26,9 @@ class MobarezStats {
   final int frames;
   final double cell;
 
-  factory MobarezStats.fromJson(Map<String, dynamic> json) {
+  factory FighterStats.fromJson(Map<String, dynamic> json) {
     final s = (json['stats'] as Map?)?.cast<String, dynamic>() ?? json;
-    return MobarezStats(
+    return FighterStats(
       hp: (s['hp'] as num? ?? s['health'] as num? ?? 1).toDouble(),
       attack: (s['attack'] as num? ?? s['damage'] as num? ?? 1).toDouble(),
       attackSpeed: (s['attack_speed'] as num? ?? 1).toDouble(),
@@ -58,7 +58,7 @@ class FighterMeta {
 
   final String id;
   final String name;
-  final MobarezStats stats;
+  final FighterStats stats;
   final String stemPrefix;
 
   /// Persian lore line from the sidecar (`history_fa`), empty if absent.
@@ -103,7 +103,7 @@ class FighterMeta {
     return FighterMeta(
       id: id,
       name: idle['name'] as String? ?? id,
-      stats: MobarezStats.fromJson(idle),
+      stats: FighterStats.fromJson(idle),
       stemPrefix: stemPrefix,
       frames: frames,
       descriptionFa: idle['history_fa'] as String? ?? '',

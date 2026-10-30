@@ -10,6 +10,7 @@ import '../combat/fighter_death_system.dart';
 import '../combat/spawn_fighter.dart';
 import '../fighters/fighter_meta.dart';
 import '../fx/combat_fx.dart';
+import '../hud/hud_layout.dart';
 import '../hud/scene_hud.dart';
 import '../level/level_data.dart';
 import '../level/wave_progress.dart';
@@ -36,6 +37,7 @@ class WaveCombatConfig {
     this.clearedMessage = 'Cleared — tap to replay',
     this.bossLabel = 'Boss',
     this.impactParticles = defaultImpactParticles,
+    this.hud = const HudLayout(),
   });
 
   /// Asset stem of the hero sheets (`<stem>_idle.png`, `_attack`, `_death`).
@@ -73,6 +75,9 @@ class WaveCombatConfig {
 
   /// HUD caption for the boss encounter.
   final String bossLabel;
+
+  /// Where the HUD's labels and health bars sit and their colours.
+  final HudLayout hud;
 
   /// Builds the spark emitter each fighter gets.
   final ParticleEmitter Function() impactParticles;
@@ -201,7 +206,7 @@ class WaveCombatScene extends Scene {
     }
 
     _spawnHero(world);
-    _hud = SceneHud.spawn(world, status: status);
+    _hud = SceneHud.spawn(world, status: status, layout: config.hud);
     _spawnEnemy(world);
   }
 
@@ -262,14 +267,15 @@ class WaveCombatScene extends Scene {
       // The hero draws in front of enemies and the corpse sliding past him.
       zIndex: 25,
     );
+    final bar = config.hud.heroBar;
     spawnHealthHudBar(
       world,
       source: heroId!,
-      x: 16,
-      y: 28,
-      width: 148,
-      height: 10,
-      fillColorArgb: 0xFF2AA198,
+      x: bar.x,
+      y: bar.y,
+      width: bar.width,
+      height: bar.height,
+      fillColorArgb: bar.fillColorArgb,
       zIndex: 100,
     );
   }
@@ -309,14 +315,17 @@ class WaveCombatScene extends Scene {
       scaleY: scale,
       zIndex: 20,
     );
+    final bar = config.hud.enemyBar;
     _enemyHudId = spawnHealthHudBar(
       world,
       source: enemyId!,
-      x: 16,
-      y: 52,
-      width: 148,
-      height: 10,
-      fillColorArgb: waves.isBoss ? 0xFFE65100 : 0xFFE0304C,
+      x: bar.x,
+      y: bar.y,
+      width: bar.width,
+      height: bar.height,
+      fillColorArgb: waves.isBoss
+          ? config.hud.bossBarColorArgb
+          : bar.fillColorArgb,
       zIndex: 100,
     );
     enemyLabel = meta.name;

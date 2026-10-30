@@ -116,8 +116,9 @@ bars). A screen that already has the target ratio gets exactly the whole screen 
 simply outside the game. To keep a fixed field of view on every screen, choose `Camera.zoom` from the
 screen size yourself, or set `fitWorld: true` and the engine does it: every frame it sets `Camera.zoom` so the
 whole world width fills the drawn area. A 180x320 portrait game is
-`ViewportConfig(targetAspectRatio: 180 / 320, fitWorld: true)` (what `Game.viewportConfig` returns) and needs no
-zoom maths of its own. Tested in `packages/engine_flutter/test/viewport_test.dart`.
+`ViewportConfig.fittingWorld(180, 320)` (what `Game.viewportConfig` returns: that aspect ratio, letterboxed, scaled,
+ignoring system insets) and needs no zoom maths of its own. Fullscreen/immersive mode is `GameConfig.fullscreen`
+(`"fullscreen": true` in `game_config.json`); `runGame(game)` is the whole `main`. Tested in `packages/engine_flutter/test/viewport_test.dart`.
 
 ## Animation
 

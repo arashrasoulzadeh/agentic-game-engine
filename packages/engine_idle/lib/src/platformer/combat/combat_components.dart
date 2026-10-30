@@ -10,7 +10,7 @@ class CombatRole {
       CombatRole(json['side'] as String);
 }
 
-/// Mobarez combat stats + attack timer (portrait idle auto-fight).
+/// Combat stats + attack timer for portrait idle auto-fight.
 class CombatStats {
   CombatStats({
     required this.maxHp,

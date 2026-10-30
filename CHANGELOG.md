@@ -22,12 +22,15 @@ pubspec.yaml.
 - `ViewportConfig.fitWorld` — the engine sets `Camera.zoom` so the world fills
   the letterboxed rectangle.
 - `Text.rtl` — per-text right-to-left override for Persian/Arabic lines.
-- `engine_idle`: `WaveCombatScene` / `WaveCombatConfig`, `WalkPhase`,
+- `ViewportConfig.fittingWorld(w, h)` — the config for a fixed-size world.
+- `engine_idle`: `WaveCombatGame.load` (config + level -> `Game`), `HudLayout`
+  (configurable HUD positions/colours), `WaveCombatScene` / `WaveCombatConfig`, `WalkPhase`,
   `AutoCombatSystem`, `FighterDeathSystem`, `spawnFighter`, `installCombatFx`,
   `LevelData` (waves, balance, parallax, cues) — a portrait walk-and-fight run
   from data; the Mobarez sample is now a config plus a JSON level.
 
 ### Changed
+- `engine_idle`: `MobarezStats` renamed `FighterStats`.
 - `Text` wrapped lines follow the component's `align` inside their box
   (previously only the box was aligned).
 

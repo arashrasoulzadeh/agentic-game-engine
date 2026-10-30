@@ -3,9 +3,10 @@ import 'package:engine_flutter/engine_flutter.dart'
     as eng
     show Text, TextAlignment;
 
+import 'hud_layout.dart';
+
 /// Screen-space labels for a portrait idle-combat scene: a status line, the
-/// current enemy's name, and a short description of it. Positions assume the 180×320
-/// logical canvas the idle-combat games use.
+/// current enemy's name, and a short description of it. Where they sit comes from a [HudLayout].
 class SceneHud {
   SceneHud._(this._status, this._enemy, this._description);
 
@@ -13,12 +14,15 @@ class SceneHud {
   final EntityId _enemy;
   final EntityId _description;
 
-  factory SceneHud.spawn(World world, {required String status}) {
-    final s = _text(world, 90, 14, status, 11, 0xFFFFE7A0, 170);
-    final e = _text(world, 90, 44, '', 9, 0xFFFFCCBC, 170);
-    final d = _text(world, 90, 74, '', 8, 0xFFFFF3D0, 160, rtl: true);
-    return SceneHud._(s, e, d);
-  }
+  factory SceneHud.spawn(
+    World world, {
+    required String status,
+    HudLayout layout = const HudLayout(),
+  }) => SceneHud._(
+    _text(world, layout.status, status),
+    _text(world, layout.enemy, ''),
+    _text(world, layout.description, ''),
+  );
 
   void sync(
     World world, {
@@ -31,29 +35,20 @@ class SceneHud {
     world.storeOf<eng.Text>().get(_description)?.text = description;
   }
 
-  static EntityId _text(
-    World world,
-    double x,
-    double y,
-    String text,
-    double size,
-    int color,
-    double maxWidth, {
-    bool? rtl,
-  }) {
+  static EntityId _text(World world, HudTextStyle style, String text) {
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(x, y));
+    world.storeOf<Position>().set(id, Position(style.x, style.y));
     world.storeOf<eng.Text>().set(
       id,
       eng.Text(
         text,
-        fontSize: size,
-        colorArgb: color,
+        fontSize: style.fontSize,
+        colorArgb: style.colorArgb,
         align: eng.TextAlignment.center,
         screenSpace: true,
         zIndex: 110,
-        maxWidth: maxWidth,
-        rtl: rtl,
+        maxWidth: style.maxWidth,
+        rtl: style.rtl,
       ),
     );
     return id;

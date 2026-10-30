@@ -41,6 +41,17 @@ class ViewportConfig {
   /// Centre the area in the available space (true), or pin it to the top left.
   final bool centerViewport;
 
+  /// The config for a world authored at a fixed [worldWidth] x [worldHeight]:
+  /// that aspect ratio, letterboxed, scaled to fill ([fitWorld]), ignoring
+  /// system insets. What a portrait 180x320 game wants from `Game.viewportConfig`.
+  const ViewportConfig.fittingWorld(double worldWidth, double worldHeight)
+    : targetAspectRatio = worldWidth / worldHeight,
+      fit = ViewportFit.contain,
+      avoidSystemUi = false,
+      letterboxColorArgb = 0xFF000000,
+      centerViewport = true,
+      fitWorld = true;
+
   /// Scale the picture to the rectangle: every frame the engine sets `Camera.zoom` so the whole
   /// world width fills it. For a world authored at a fixed logical size (a 180x320 portrait game)
   /// this replaces computing a zoom per screen by hand. Pair it with a [targetAspectRatio] equal

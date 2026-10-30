@@ -56,7 +56,7 @@ void main() {
     final meta = FighterMeta(
       id: 'wolf',
       name: 'Wolf',
-      stats: MobarezStats(hp: 1, attack: 1, attackSpeed: 1, armor: 0),
+      stats: FighterStats(hp: 1, attack: 1, attackSpeed: 1, armor: 0),
       stemPrefix: 'x/wolf',
       frames: const {'idle': 4, 'attack': 4, 'death': 3},
     );
