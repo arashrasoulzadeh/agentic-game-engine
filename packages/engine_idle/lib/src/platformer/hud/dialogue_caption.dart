@@ -39,10 +39,10 @@ class DialogueCaption {
   final HudTextStyle style;
 
   /// Characters revealed per second while typing in.
-  static const typeCharsPerSecond = 26.0;
+  static const typeCharsPerSecond = 60.0;
 
   /// Erasing runs this many times faster than typing.
-  static const eraseSpeedUp = 2.5;
+  static const eraseSpeedUp = 3.0;
 
   late final EntityId _entity;
   DialogueRunner? _runner;
