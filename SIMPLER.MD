@@ -56,13 +56,13 @@ Focus on DX over coverage of every internal type.
 - [ ] **Flutter integration polish**: Make `engine_flutter` integration feel natural with minimal glue code.
 
 
-## Component-Centric API (Store -> Component/GetComponent)
-- [ ] **Rename stores to Components**: Treat all data as components. Replace `storeOf<T>()` with `components<T>()` or just `getComponent<T>()`/`hasComponent<T>()` patterns.
-- [ ] **Component access**: `World.getComponent<T>(id)` / `World.setComponent<T>(id, comp)` / `World.hasComponent<T>(id)` / `World.removeComponent<T>(id)`. Make `storeOf` an internal detail or deprecated.
-- [ ] **Unified component model**: Everything attachable to entities should be a component. Systems operate on component sets, not on separate "stores" conceptually.
-- [ ] **Fluent component access**: Allow `entity.get<T>()`, `entity.set<T>()`, `entity.has<T>()` where `entity` is a lightweight handle.
-- [ ] **Cleaner naming**: In codebase, prefer "component" terminology over "store" in public APIs. Update docs/comments accordingly.
-- [ ] **Registration stays simple**: Keep component registration ergonomic but align with "everything is a component" philosophy.
+## Component-Centric API (Component, not Store)
+- [ ] **Everything is a component**: Don't think in terms of "stores of components". Think in terms of components attached to entities. 
+- [ ] **No "Store" in public API**: Avoid `storeOf`, `Store`, "key", or "name" when referring to component access. Use component-centric terminology everywhere.
+- [ ] **Use component accessors**: Prefer `getComponent<T>(id)`, `setComponent<T>(id, value)`, `hasComponent<T>(id)`, `removeComponent<T>(id)`. Use `world.component<T>()` or `world.components<T>()` to access component containers.
+- [ ] **Migrate as you go**: When touching any code during refactor, replace `storeOf<T>()` with the component-centric equivalents. Don't introduce new `store`-based APIs.
+- [ ] **Keep implementation detail hidden**: If `ComponentStore` remains internally, don't let "Store" leak into public-facing method names, comments, or docs.
+- [ ] **Fluent entity access**: Where possible, allow working with components directly on entity handles (`entity.get<T>()`, `entity.set<T>()`, `entity.has<T>()`).
 
 ## General Cleanup
 - [ ] **Barrel exports**: Clean up `engine_core.dart` so common imports are minimal (`import 'package:engine_core/engine_core.dart';` should cover most game code).
