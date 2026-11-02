@@ -108,7 +108,7 @@ Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_
 
 ### Errors and debugging
 Audited by probing ~20 common mistakes. Good already: unregistered component, dead-entity writes, unknown prefab, bad timers, bad patches, missing `after:` systems. Fixed: component JSON with a missing or mistyped field now says which data arrived and which fields are expected (was a raw "type 'Null' is not a subtype of type 'num'").
-- [ ] **Silent cases found, not changed** (each could break existing callers): `destroy` of a dead or twice-destroyed entity is a no-op; two systems may share a name (toggling and profiling then treat them as one); `components.register` with an existing name or type silently replaces; an event with no handler is dropped. Decide per case whether to warn in debug.
+- [ ] **Debug warnings shipped** (`world.warnings`, `DevWarnings`: collected only in debug builds, shown in `world.debug()`): duplicate system names, component re-registration, and opt-in `warnOnUnhandledEvents`. **Not shipped: warning on `destroy` of a dead entity.** It sits on the hot path and measured +8-9% on `entity_churn` (even as a cold helper method, even returning a bool from `EntityManager.destroy`), which with the earlier drift is past the 10% limit. Owner decision: accept the cost, or find a cheaper hook (e.g. only in `WorldCommands.destroy`).
 - [ ] **Machine-readable errors**: code, entity, component, suggested fix, in addition to the human message.
 
 ### API surface cleanup

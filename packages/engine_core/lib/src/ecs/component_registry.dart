@@ -1,4 +1,6 @@
 import 'package:engine_schema/engine_schema.dart';
+
+import 'dev_warnings.dart';
 import 'component_store.dart';
 import 'entity.dart';
 import 'archetype.dart';
@@ -89,6 +91,9 @@ class ComponentRegistration<T> {
 }
 
 class ComponentRegistry {
+  /// Where re-registration warnings go; set by `World`, null for a bare registry.
+  DevWarnings? warnings;
+
   final Map<Type, ComponentRegistration> _byType = {};
   final Map<String, ComponentRegistration> _byName = {};
   late final ArchetypeManager _archetypeManager = ArchetypeManager(this);
@@ -102,6 +107,13 @@ class ComponentRegistry {
     T Function(Map<String, dynamic>) fromJson, {
     ComponentSchema? schema,
   }) {
+    if (_byName.containsKey(name) || _byType.containsKey(T)) {
+      warnings?.warn(
+        'Component "$name" ($T) was registered again and replaced the earlier '
+        'registration; entities already holding the old one keep data in the '
+        'old store.',
+      );
+    }
     final reg = ComponentRegistration<T>(name, toJson, fromJson, schema);
     reg._setArchetypeManager(_archetypeManager);
     _byType[T] = reg;

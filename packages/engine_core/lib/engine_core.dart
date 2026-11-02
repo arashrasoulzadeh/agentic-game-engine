@@ -96,6 +96,7 @@ export 'src/ecs/world.dart';
 export 'src/ecs/world_random.dart';
 export 'src/ecs/world_timers.dart' show TimerHandle;
 export 'src/ecs/world_motion.dart';
+export 'src/ecs/dev_warnings.dart';
 export 'src/ecs/hierarchy.dart';
 export 'src/ecs/fixed_stepper.dart';
 export 'src/ecs/countdown_timer.dart';

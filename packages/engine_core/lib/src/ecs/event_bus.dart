@@ -72,6 +72,11 @@ class EventBus {
   /// collision itself — a real, surprising lag for anything chaining
   /// off another event rather than off a `System` directly. Call once
   /// per tick, after systems have had a chance to emit.
+  /// Called for each event that reaches flush with no handler registered for
+  /// its exact type. Null by default: unhandled events are normal (an event
+  /// nobody listens to yet), so this is opt-in diagnostics.
+  void Function(Object event)? onUnhandled;
+
   void flush() {
     _flushDepth++;
     try {
@@ -84,7 +89,10 @@ class EventBus {
         _queue.clear();
         for (final event in pending) {
           final handlers = _handlers[event.runtimeType];
-          if (handlers == null) continue;
+          if (handlers == null) {
+            onUnhandled?.call(event);
+            continue;
+          }
           final count = handlers.length;
           for (var i = 0; i < count; i++) {
             final sub = handlers[i];

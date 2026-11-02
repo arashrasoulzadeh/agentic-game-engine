@@ -1,6 +1,7 @@
 import 'component_registry.dart';
 import 'component_store.dart';
 import 'entity.dart';
+import 'dev_warnings.dart';
 import 'event_bus.dart';
 import 'hierarchy.dart' show destroyChildrenOf;
 import 'system.dart';
@@ -50,6 +51,9 @@ class World {
   final double height;
 
   final EntityManager entities = EntityManager();
+
+  /// Debug-time warnings about legal-but-suspicious calls (see [DevWarnings]).
+  final DevWarnings warnings = DevWarnings();
   final ComponentRegistry components = ComponentRegistry();
   final EventBus events = EventBus();
   final List<_SystemEntry> _systems = [];
@@ -86,7 +90,9 @@ class World {
   /// world is reproducible unless you ask otherwise: pass a varying seed for a
   /// game that should play differently each run (and record it to replay).
   World({required this.width, required this.height, this.seed = 0})
-    : random = WorldRandom(seed);
+    : random = WorldRandom(seed) {
+    components.warnings = warnings;
+  }
 
   /// The seed [random] started from.
   final int seed;
@@ -113,6 +119,12 @@ class World {
     SystemPhase phase = SystemPhase.physics,
     List<String> after = const [],
   }) {
+    if (_systems.any((e) => e.system.name == system.name)) {
+      warnings.warn(
+        'Two systems are named "${system.name}"; setSystemEnabled and the '
+        'profiler treat them as one.',
+      );
+    }
     final entry = _SystemEntry(system, phase, after);
     var at = _systems.length;
     while (at > 0 && _systems[at - 1].phase.index > phase.index) {
@@ -278,6 +290,15 @@ class World {
     }
   }
 
+  /// Records a warning for every event that is flushed with no handler for its
+  /// exact type (handlers match the runtime type, so a handler for a base class
+  /// does not count). Off by default because unhandled events are often fine.
+  set warnOnUnhandledEvents(bool on) => events.onUnhandled = on
+      ? (event) => warnings.warn(
+          'Event ${event.runtimeType} was emitted but nothing handles that exact type.',
+        )
+      : null;
+
   WorldTimers? _timers;
 
   /// Calls [callback] once, after [seconds] of simulated time (the `dt` given
@@ -389,6 +410,10 @@ class World {
     if (!commands.isEmpty) out.writeln('queued commands: ${commands.length}');
     for (final problem in problems) {
       out.writeln('order problem: $problem');
+    }
+    final warned = warnings.messages;
+    if (warned.isNotEmpty) {
+      out.writeln('warnings (${warned.length}), latest: ${warned.last}');
     }
     return out.toString().trimRight();
   }
