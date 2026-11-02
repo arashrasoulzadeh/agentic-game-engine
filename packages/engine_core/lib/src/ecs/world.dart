@@ -106,6 +106,9 @@ class World {
 
   EntityId spawn() => entities.create();
 
+  /// Incarnation counter of [id]; see [EntityManager.generationOf].
+  int generationOf(EntityId id) => entities.generationOf(id);
+
   void destroy(EntityId id) {
     for (final reg in components.all) {
       reg.removeEntity(id);

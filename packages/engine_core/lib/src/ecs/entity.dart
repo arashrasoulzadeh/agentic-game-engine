@@ -7,10 +7,26 @@ class EntityManager {
   int _next = 0;
   final List<EntityId> _free = [];
   final Set<EntityId> _alive = {};
+  final List<int> _generation = [];
+
+  /// How many times [id] has been destroyed (0 for an id never used).
+  ///
+  /// Ids are recycled, so an id alone cannot tell "the enemy I stored last
+  /// frame" from "a bullet that reused its slot". A holder that remembers
+  /// `(id, generationOf(id))` can later ask [isCurrent]. Runtime-only: not
+  /// serialized, so JSON and snapshots still carry plain ids.
+  int generationOf(EntityId id) =>
+      id < _generation.length ? _generation[id] : 0;
+
+  /// Whether [id] is alive *and* still the same incarnation as when
+  /// [generation] was read from [generationOf].
+  bool isCurrent(EntityId id, int generation) =>
+      _alive.contains(id) && generationOf(id) == generation;
 
   EntityId create() {
     final id = _free.isNotEmpty ? _free.removeLast() : _next++;
     _alive.add(id);
+    _growGenerations(id);
     return id;
   }
 
@@ -25,11 +41,19 @@ class EntityManager {
     }
     if (id >= _next) _next = id + 1;
     _alive.add(id);
+    _growGenerations(id);
+  }
+
+  void _growGenerations(EntityId id) {
+    while (_generation.length <= id) {
+      _generation.add(0);
+    }
   }
 
   void destroy(EntityId id) {
     if (_alive.remove(id)) {
       _free.add(id);
+      _generation[id]++;
     }
   }
 
