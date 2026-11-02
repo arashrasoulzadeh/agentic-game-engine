@@ -20,11 +20,7 @@ const _simulationDirs = [
 ];
 
 /// Known exceptions, each with the reason it is still here.
-const _allowUnseededRandom = {
-  // Cosmetic particles default to an unseeded Random(); worlds that need
-  // reproducible visuals pass `random:`. Tracked in SIMPLER.MD (follow-ups).
-  'lib/src/rendering/particle_system.dart',
-};
+const _allowUnseededRandom = <String>{};
 
 Iterable<File> _dartFiles(String root) => Directory(root)
     .listSync(recursive: true)

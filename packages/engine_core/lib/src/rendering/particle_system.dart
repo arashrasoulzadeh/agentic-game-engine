@@ -22,12 +22,13 @@ import '../ecs/world.dart';
 /// - Particles that follow their emitter entity
 /// - TileMap collision (via engine_platformer's extension)
 ///
-/// Pass a seeded [random] in tests for deterministic particle angles/
-/// speeds/lifetimes; defaults to `Random()` for real gameplay.
+/// Defaults to a fixed seed so two runs of the same world produce identical
+/// particles (replays, snapshots and headless tests agree). Pass a differently
+/// seeded [random] when visuals should vary between runs.
 class ParticleSystem implements System {
   final Random random;
 
-  ParticleSystem({Random? random}) : random = random ?? Random();
+  ParticleSystem({Random? random}) : random = random ?? Random(0);
 
   @override
   String get name => 'particle';

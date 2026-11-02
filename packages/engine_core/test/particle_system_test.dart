@@ -61,6 +61,40 @@ void main() {
     },
   );
 
+  test(
+    'the default seed makes two identical worlds spawn identical particles',
+    () {
+      List<List<double>> run() {
+        final world = _buildWorld();
+        world.addSystem(ParticleSystem());
+        final emitterEntity = world.spawn();
+        world.componentsOf<Position>().set(emitterEntity, Position(0, 0));
+        world.componentsOf<ParticleEmitter>().set(
+          emitterEntity,
+          ParticleEmitter(
+            burstCount: 6,
+            speedMin: 10,
+            speedMax: 50,
+            angleMin: 0,
+            angleMax: 6.28,
+            lifetimeMin: 1,
+            lifetimeMax: 2,
+          ),
+        );
+        world.step(0.016);
+        final velocities = world.componentsOf<Velocity>();
+        return [
+          for (var i = 0; i < velocities.length; i++)
+            [velocities.denseAt(i).x, velocities.denseAt(i).y],
+        ];
+      }
+
+      final first = run();
+      expect(first, hasLength(6));
+      expect(run(), first);
+    },
+  );
+
   test('burstCount spawns that many particles in one tick and resets to 0', () {
     final world = _buildWorld();
     world.addSystem(ParticleSystem(random: Random(1)));
