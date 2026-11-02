@@ -136,10 +136,10 @@ class FlagCapturedEvent {
 /// any flag along, and scores one it delivers. Both order systems call this after
 /// every step, so a pickup happens on the exact cell it is walked onto.
 void onUnitMoved(World world, EntityId unit) {
-  final flags = world.storeOf<Flag>();
+  final flags = world.componentsOf<Flag>();
   if (flags.length == 0) return;
-  final at = world.storeOf<GridPosition>().get(unit);
-  final team = world.storeOf<Team>().get(unit)?.id;
+  final at = world.componentsOf<GridPosition>().get(unit);
+  final team = world.componentsOf<Team>().get(unit)?.id;
   if (at == null || team == null) return;
 
   for (var i = 0; i < flags.length; i++) {
@@ -173,14 +173,14 @@ void _deliver(
   String team,
   GridPosition at,
 ) {
-  final zones = world.storeOf<DeliveryZone>();
+  final zones = world.componentsOf<DeliveryZone>();
   for (var z = 0; z < zones.length; z++) {
     final zone = zones.denseAt(z);
     if (zone.team != team || zone.col != at.col || zone.row != at.row) continue;
     flag.carrier = null;
     flag.col = flag.homeCol;
     flag.row = flag.homeRow;
-    final rules = world.storeOf<FlagRules>();
+    final rules = world.componentsOf<FlagRules>();
     var total = 0;
     if (rules.length > 0) {
       final r = rules.denseAt(0);
@@ -199,7 +199,7 @@ void _deliver(
 /// Call when [unit] is about to be destroyed: any flag it carries is dropped on its
 /// cell. `resolveAttack` does this for combat deaths.
 void dropCarried(World world, EntityId unit) {
-  final flags = world.storeOf<Flag>();
+  final flags = world.componentsOf<Flag>();
   for (var i = 0; i < flags.length; i++) {
     final flag = flags.denseAt(i);
     if (flag.carrier != unit) continue;

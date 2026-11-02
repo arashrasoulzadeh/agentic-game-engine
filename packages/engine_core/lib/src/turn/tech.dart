@@ -43,14 +43,14 @@ class Provides {
 /// Everything [team] currently has: its [TechState]s plus whatever its finished buildings [Provides].
 Set<String> availableTech(World world, String team) {
   final out = <String>{};
-  final states = world.storeOf<TechState>();
+  final states = world.componentsOf<TechState>();
   for (var i = 0; i < states.length; i++) {
     if (states.denseAt(i).team == team)
       out.addAll(states.denseAt(i).researched);
   }
-  final provides = world.storeOf<Provides>();
-  final teams = world.storeOf<Team>();
-  final building = world.storeOf<Construction>();
+  final provides = world.componentsOf<Provides>();
+  final teams = world.componentsOf<Team>();
+  final building = world.componentsOf<Construction>();
   for (var i = 0; i < provides.length; i++) {
     final e = provides.entityAt(i);
     if (teams.get(e)?.id == team && !building.has(e))
@@ -68,7 +68,7 @@ Set<String> missingTech(World world, String team, Iterable<String> requires) {
 
 /// Unlocks [tech] for [team] by name. Creates the team's [TechState] if it has none.
 void grantTech(World world, String team, String tech) {
-  final states = world.storeOf<TechState>();
+  final states = world.componentsOf<TechState>();
   for (var i = 0; i < states.length; i++) {
     if (states.denseAt(i).team == team) {
       states.denseAt(i).researched.add(tech);

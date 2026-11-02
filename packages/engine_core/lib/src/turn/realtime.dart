@@ -83,8 +83,8 @@ class RealtimeOrderSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final queues = world.storeOf<OrderQueue>();
-    final stats = world.storeOf<RealtimeStats>();
+    final queues = world.componentsOf<OrderQueue>();
+    final stats = world.componentsOf<RealtimeStats>();
     // Snapshot the ids first - resolving an attack can destroy entities mid-loop -
     // and process them in id order. A ComponentStore's dense order depends on its
     // add/remove history, so a world rebuilt from a snapshot iterates differently
@@ -125,7 +125,7 @@ class RealtimeOrderSystem extends System {
     MoveOrder order,
     double dt,
   ) {
-    final grid = world.storeOf<GridPosition>();
+    final grid = world.componentsOf<GridPosition>();
     final pos = grid.get(entity);
     if (pos == null)
       return _fail(world, entity, order, OrderFailure.invalidTarget);
@@ -133,7 +133,7 @@ class RealtimeOrderSystem extends System {
     final field = fields.fieldFor(
       order.col,
       order.row,
-      footprint: world.storeOf<GridFootprint>().get(entity)?.size ?? 1,
+      footprint: world.componentsOf<GridFootprint>().get(entity)?.size ?? 1,
     );
     if (!field.reaches(pos.col, pos.row))
       return _fail(world, entity, order, OrderFailure.blocked);
@@ -159,8 +159,8 @@ class RealtimeOrderSystem extends System {
     double dt,
   ) {
     if (!world.entities.isAlive(order.target)) return _Result.done;
-    final grid = world.storeOf<GridPosition>();
-    final teams = world.storeOf<Team>();
+    final grid = world.componentsOf<GridPosition>();
+    final teams = world.componentsOf<Team>();
     final me = grid.get(entity);
     final target = grid.get(order.target);
     final myTeam = teams.get(entity)?.id;
@@ -174,8 +174,8 @@ class RealtimeOrderSystem extends System {
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     }
     final reach =
-        world.storeOf<AttackProfile>().get(entity)?.range ?? attackRange;
-    final bodies = world.storeOf<GridFootprint>();
+        world.componentsOf<AttackProfile>().get(entity)?.range ?? attackRange;
+    final bodies = world.componentsOf<GridFootprint>();
     final mySize = bodies.get(entity)?.size ?? 1;
     final theirSize = bodies.get(order.target)?.size ?? 1;
     if (footprintDistance(me, mySize, target, theirSize) <= reach) {
@@ -189,7 +189,7 @@ class RealtimeOrderSystem extends System {
     final field = fields.fieldFor(
       target.col,
       target.row,
-      footprint: world.storeOf<GridFootprint>().get(entity)?.size ?? 1,
+      footprint: world.componentsOf<GridFootprint>().get(entity)?.size ?? 1,
     );
     if (!field.reaches(me.col, me.row))
       return _fail(world, entity, order, OrderFailure.blocked);
@@ -210,14 +210,14 @@ class RealtimeOrderSystem extends System {
   /// Ties break by lowest entity id.
   void _engageNearest(World world, EntityId entity, RealtimeStats s) {
     if (s.cooldown > 0) return;
-    final grid = world.storeOf<GridPosition>();
-    final teams = world.storeOf<Team>();
+    final grid = world.componentsOf<GridPosition>();
+    final teams = world.componentsOf<Team>();
     final me = grid.get(entity);
     final myTeam = teams.get(entity)?.id;
-    if (me == null || myTeam == null || !world.storeOf<UnitStats>().has(entity))
+    if (me == null || myTeam == null || !world.componentsOf<UnitStats>().has(entity))
       return;
     final reach =
-        world.storeOf<AttackProfile>().get(entity)?.range ?? attackRange;
+        world.componentsOf<AttackProfile>().get(entity)?.range ?? attackRange;
     EntityId? best;
     var bestDist = 1 << 30;
     for (var i = 0; i < grid.length; i++) {
@@ -225,7 +225,7 @@ class RealtimeOrderSystem extends System {
       final otherTeam = teams.get(other)?.id;
       if (otherTeam == null ||
           otherTeam == myTeam ||
-          !world.storeOf<UnitStats>().has(other))
+          !world.componentsOf<UnitStats>().has(other))
         continue;
       final d = me.chebyshev(grid.denseAt(i));
       // Nearest wins; equal distances go to the lower id, not whichever the store
@@ -255,13 +255,13 @@ class RealtimeOrderSystem extends System {
     EntityId? ignore,
     required bool Function(GridPosition) stopWhen,
   }) {
-    final grid = world.storeOf<GridPosition>();
+    final grid = world.componentsOf<GridPosition>();
     final pos = grid.get(entity)!;
     final blocked = occupiedBy(
       grid,
       entity,
       ignore: ignore,
-      footprints: world.storeOf<GridFootprint>(),
+      footprints: world.componentsOf<GridFootprint>(),
     );
     s.moveProgress += s.speed * dt;
     // The epsilon makes exact multiples count: thirty 0.1s sum to 2.9999999999999996,
@@ -337,13 +337,13 @@ EntityId spawnRealtimeUnit(
   int defense = 0,
 }) {
   final id = world.spawn();
-  world.storeOf<Team>().set(id, Team(team));
-  world.storeOf<GridPosition>().set(id, GridPosition(col, row));
-  world.storeOf<RealtimeStats>().set(
+  world.componentsOf<Team>().set(id, Team(team));
+  world.componentsOf<GridPosition>().set(id, GridPosition(col, row));
+  world.componentsOf<RealtimeStats>().set(
     id,
     RealtimeStats(speed: speed, attackInterval: attackInterval),
   );
-  world.storeOf<UnitStats>().set(
+  world.componentsOf<UnitStats>().set(
     id,
     UnitStats(maxHp: maxHp, attack: attack, defense: defense),
   );

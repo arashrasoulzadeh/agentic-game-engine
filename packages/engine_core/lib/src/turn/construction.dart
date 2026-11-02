@@ -75,12 +75,12 @@ class BuildWorker {
 /// Sends [unit] to work on [site]. False (nothing changes) when the unit is not a [BuildWorker], the
 /// site is not under construction, or they are on different teams.
 bool assignBuild(World world, EntityId unit, EntityId site) {
-  final b = world.storeOf<BuildWorker>().get(unit);
-  if (b == null || !world.storeOf<Construction>().has(site)) return false;
-  final teams = world.storeOf<Team>();
+  final b = world.componentsOf<BuildWorker>().get(unit);
+  if (b == null || !world.componentsOf<Construction>().has(site)) return false;
+  final teams = world.componentsOf<Team>();
   if (teams.get(unit)?.id != teams.get(site)?.id) return false;
   b.site = site;
-  world.storeOf<OrderQueue>().get(unit)?.orders.clear();
+  world.componentsOf<OrderQueue>().get(unit)?.orders.clear();
   return true;
 }
 
@@ -96,7 +96,7 @@ class BuildSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final builders = world.storeOf<BuildWorker>();
+    final builders = world.componentsOf<BuildWorker>();
     final ids = [for (var i = 0; i < builders.length; i++) builders.entityAt(i)]
       ..sort();
     for (final id in ids) {
@@ -104,12 +104,12 @@ class BuildSystem extends System {
       final site = b?.site;
       if (b == null || site == null) continue;
       if (!world.entities.isAlive(site) ||
-          !world.storeOf<Construction>().has(site)) {
+          !world.componentsOf<Construction>().has(site)) {
         b.site = null;
         continue;
       }
-      final here = world.storeOf<GridPosition>().get(id);
-      final there = world.storeOf<GridPosition>().get(site);
+      final here = world.componentsOf<GridPosition>().get(id);
+      final there = world.componentsOf<GridPosition>().get(site);
       if (here == null || there == null || here.chebyshev(there) <= 1) continue;
       queueMoveNextTo(world, navigator, id, there);
     }
@@ -124,7 +124,7 @@ class ConstructionSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final store = world.storeOf<Construction>();
+    final store = world.componentsOf<Construction>();
     final ids = [for (var i = 0; i < store.length; i++) store.entityAt(i)]
       ..sort();
     for (final id in ids) {
@@ -141,8 +141,8 @@ class ConstructionSystem extends System {
   }
 
   int _buildersAt(World world, EntityId site) {
-    final builders = world.storeOf<BuildWorker>();
-    final grid = world.storeOf<GridPosition>();
+    final builders = world.componentsOf<BuildWorker>();
+    final grid = world.componentsOf<GridPosition>();
     final at = grid.get(site);
     if (at == null) return 0;
     var n = 0;

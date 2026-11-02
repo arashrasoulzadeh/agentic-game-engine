@@ -68,7 +68,7 @@ class StatusExpiredEvent {
 /// Gives [entity] [effect], replacing an existing effect with the same id (so
 /// re-applying `defending` refreshes it rather than stacking).
 void applyStatus(World world, EntityId entity, StatusEffect effect) {
-  final store = world.storeOf<StatusEffects>();
+  final store = world.componentsOf<StatusEffects>();
   var statuses = store.get(entity);
   if (statuses == null) {
     statuses = StatusEffects();
@@ -82,8 +82,8 @@ void applyStatus(World world, EntityId entity, StatusEffect effect) {
 /// Counts down every status on [team]'s units at the start of that team's turn,
 /// removing (and announcing) those that run out. Called by the turn clock.
 void tickStatusEffects(World world, String team) {
-  final teams = world.storeOf<Team>();
-  final statuses = world.storeOf<StatusEffects>();
+  final teams = world.componentsOf<Team>();
+  final statuses = world.componentsOf<StatusEffects>();
   for (var i = 0; i < statuses.length; i++) {
     final entity = statuses.entityAt(i);
     if (teams.get(entity)?.id != team) continue;

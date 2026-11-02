@@ -73,9 +73,9 @@ class ObjectiveCapturedEvent {
 /// A cell holds one unit, so "standing on it" is enough; there is no contested
 /// state. With `ObjectiveRules` present it also checks hold-to-win.
 void resolveObjectives(World world, String team) {
-  final objectives = world.storeOf<Objective>();
-  final grid = world.storeOf<GridPosition>();
-  final teams = world.storeOf<Team>();
+  final objectives = world.componentsOf<Objective>();
+  final grid = world.componentsOf<GridPosition>();
+  final teams = world.componentsOf<Team>();
   for (var i = 0; i < objectives.length; i++) {
     final o = objectives.denseAt(i);
     if (o.owner == team) continue;
@@ -94,7 +94,7 @@ void resolveObjectives(World world, String team) {
     }
   }
 
-  final rules = world.storeOf<ObjectiveRules>();
+  final rules = world.componentsOf<ObjectiveRules>();
   if (rules.length == 0 || objectives.length == 0) return;
   final r = rules.denseAt(0);
   var holdsAll = true;
@@ -113,7 +113,7 @@ void resolveObjectives(World world, String team) {
 
 /// Objectives not owned by [team] (neutral or enemy-held), as `(entity, objective)`.
 List<(EntityId, Objective)> objectivesToTake(World world, String team) {
-  final store = world.storeOf<Objective>();
+  final store = world.componentsOf<Objective>();
   return [
     for (var i = 0; i < store.length; i++)
       if (store.denseAt(i).owner != team) (store.entityAt(i), store.denseAt(i)),

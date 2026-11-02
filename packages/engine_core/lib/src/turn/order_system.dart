@@ -21,11 +21,11 @@ import 'turn_system.dart';
 /// ordered at any time (who may command which unit is then the caller's rule).
 bool submitOrder(World world, EntityId entity, Order order) {
   final state = turnStateOf(world);
-  final team = world.storeOf<Team>().get(entity);
+  final team = world.componentsOf<Team>().get(entity);
   if (team == null) return false;
   if (state != null && (state.winner != null || team.id != state.activeTeam))
     return false;
-  final store = world.storeOf<OrderQueue>();
+  final store = world.componentsOf<OrderQueue>();
   var queue = store.get(entity);
   if (queue == null) {
     queue = OrderQueue();
@@ -122,8 +122,8 @@ class OrderSystem extends System {
   void update(World world, double dt) {
     final state = turnStateOf(world);
     if (state == null) return;
-    final queues = world.storeOf<OrderQueue>();
-    final teams = world.storeOf<Team>();
+    final queues = world.componentsOf<OrderQueue>();
+    final teams = world.componentsOf<Team>();
     // In id order, not store order: the store's order depends on add/remove
     // history, so a world restored from a snapshot would resolve contested cells
     // differently from the original (see RealtimeOrderSystem.update).
@@ -153,17 +153,17 @@ class OrderSystem extends System {
     EntityId entity, {
     EntityId? ignore,
   }) => occupiedBy(
-    world.storeOf<GridPosition>(),
+    world.componentsOf<GridPosition>(),
     entity,
     ignore: ignore,
-    footprints: world.storeOf<GridFootprint>(),
+    footprints: world.componentsOf<GridFootprint>(),
     navigator: navigator,
   );
 
   /// Cells between two units' nearest edges (their footprints count), so a 3x3 boss is hit from its edge.
   int _distance(World world, EntityId a, EntityId b) {
-    final grid = world.storeOf<GridPosition>();
-    final fp = world.storeOf<GridFootprint>();
+    final grid = world.componentsOf<GridPosition>();
+    final fp = world.componentsOf<GridFootprint>();
     return footprintDistance(
       grid.get(a)!,
       fp.get(a)?.size ?? 1,
@@ -173,7 +173,7 @@ class OrderSystem extends System {
   }
 
   _Result _move(World world, EntityId entity, MoveOrder order) {
-    final grid = world.storeOf<GridPosition>();
+    final grid = world.componentsOf<GridPosition>();
     final pos = grid.get(entity);
     if (pos == null)
       return _fail(world, entity, order, OrderFailure.invalidTarget);
@@ -197,23 +197,23 @@ class OrderSystem extends System {
   }
 
   _Result _attack(World world, EntityId entity, AttackOrder order) {
-    final grid = world.storeOf<GridPosition>();
+    final grid = world.componentsOf<GridPosition>();
     final me = grid.get(entity);
     final target = grid.get(order.target);
     final friendly =
-        world.storeOf<Team>().get(order.target)?.id ==
-        world.storeOf<Team>().get(entity)?.id;
+        world.componentsOf<Team>().get(order.target)?.id ==
+        world.componentsOf<Team>().get(entity)?.id;
     if (me == null ||
         target == null ||
         friendly ||
         !world.entities.isAlive(order.target)) {
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     }
-    final myTeam = world.storeOf<Team>().get(entity)?.id;
+    final myTeam = world.componentsOf<Team>().get(entity)?.id;
     if (myTeam != null && !canSee(world, myTeam, order.target)) {
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     }
-    final profile = world.storeOf<AttackProfile>().get(entity);
+    final profile = world.componentsOf<AttackProfile>().get(entity);
     final reach = profile?.range ?? attackRange;
     final price = profile?.cost ?? attackCost;
     if (_distance(world, entity, order.target) > reach) {
@@ -243,7 +243,7 @@ class OrderSystem extends System {
   }
 
   _Result _defend(World world, EntityId entity, DefendOrder order) {
-    final ap = world.storeOf<ActionPoints>().get(entity);
+    final ap = world.componentsOf<ActionPoints>().get(entity);
     if (ap == null)
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     if (ap.current <= 0) return _Result.waiting;
@@ -258,7 +258,7 @@ class OrderSystem extends System {
   }
 
   _Result _overwatch(World world, EntityId entity, OverwatchOrder order) {
-    final ap = world.storeOf<ActionPoints>().get(entity);
+    final ap = world.componentsOf<ActionPoints>().get(entity);
     if (ap == null)
       return _fail(world, entity, order, OrderFailure.invalidTarget);
     if (ap.current <= 0) return _Result.waiting;
@@ -272,10 +272,10 @@ class OrderSystem extends System {
   /// and reaches it fires, and its stance ends. Returns true if [mover] died, so
   /// the caller abandons the rest of its path.
   bool _triggerOverwatch(World world, EntityId mover) {
-    final teams = world.storeOf<Team>();
+    final teams = world.componentsOf<Team>();
     final moverTeam = teams.get(mover)?.id;
-    final statuses = world.storeOf<StatusEffects>();
-    final grid = world.storeOf<GridPosition>();
+    final statuses = world.componentsOf<StatusEffects>();
+    final grid = world.componentsOf<GridPosition>();
     final at = grid.get(mover);
     if (moverTeam == null || at == null) return false;
     for (var i = 0; i < statuses.length; i++) {
@@ -286,7 +286,7 @@ class OrderSystem extends System {
       final from = grid.get(watcher);
       if (from == null) continue;
       final reach =
-          world.storeOf<AttackProfile>().get(watcher)?.range ?? attackRange;
+          world.componentsOf<AttackProfile>().get(watcher)?.range ?? attackRange;
       if (from.chebyshev(at) > reach) continue;
       final watcherTeam = teams.get(watcher)?.id;
       if (watcherTeam != null && !canSee(world, watcherTeam, mover)) continue;

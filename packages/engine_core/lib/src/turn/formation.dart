@@ -67,7 +67,7 @@ Map<EntityId, GridPosition> assignFormation(
   List<EntityId> units,
   List<GridPosition> cells,
 ) {
-  final grid = world.storeOf<GridPosition>();
+  final grid = world.componentsOf<GridPosition>();
   final remaining = [...units]..sort();
   final out = <EntityId, GridPosition>{};
   for (final cell in cells) {
@@ -97,7 +97,7 @@ bool Function(int col, int row) cellsHeldExcept(
   Iterable<EntityId> movers,
 ) {
   final moving = movers.toSet();
-  final grid = world.storeOf<GridPosition>();
+  final grid = world.componentsOf<GridPosition>();
   return (c, r) {
     for (var i = 0; i < grid.length; i++) {
       final g = grid.denseAt(i);
@@ -117,8 +117,8 @@ bool queueMoveNextTo(
   EntityId id,
   GridPosition target,
 ) {
-  final queue = world.storeOf<OrderQueue>().get(id);
-  final here = world.storeOf<GridPosition>().get(id);
+  final queue = world.componentsOf<OrderQueue>().get(id);
+  final here = world.componentsOf<GridPosition>().get(id);
   if (queue == null || here == null) return false;
   if (queue.orders.isNotEmpty) return true;
   final cells = formationCells(

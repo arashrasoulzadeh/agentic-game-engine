@@ -37,9 +37,9 @@ abstract class TurnAI {
 class AggressiveAI implements TurnAI {
   @override
   void playTurn(World world, String team) {
-    final teams = world.storeOf<Team>();
-    final grid = world.storeOf<GridPosition>();
-    final points = world.storeOf<ActionPoints>();
+    final teams = world.componentsOf<Team>();
+    final grid = world.componentsOf<GridPosition>();
+    final points = world.componentsOf<ActionPoints>();
     final mine = <EntityId>[];
     final enemies = <EntityId>[];
     for (var i = 0; i < teams.length; i++) {
@@ -65,7 +65,7 @@ class AggressiveAI implements TurnAI {
         }
       }
       if (best == null) continue;
-      world.storeOf<OrderQueue>().get(unit)?.orders.clear();
+      world.componentsOf<OrderQueue>().get(unit)?.orders.clear();
       submitOrder(world, unit, AttackOrder(best));
     }
   }
@@ -107,9 +107,9 @@ class TacticalAI implements TurnAI {
 
   @override
   void playTurn(World world, String team) {
-    final teams = world.storeOf<Team>();
-    final grid = world.storeOf<GridPosition>();
-    final points = world.storeOf<ActionPoints>();
+    final teams = world.componentsOf<Team>();
+    final grid = world.componentsOf<GridPosition>();
+    final points = world.componentsOf<ActionPoints>();
     final mine = <EntityId>[];
     final enemies = <EntityId>[];
     for (var i = 0; i < teams.length; i++) {
@@ -127,7 +127,7 @@ class TacticalAI implements TurnAI {
     enemies.sort();
     if (mine.isEmpty) return;
     for (final unit in mine) {
-      world.storeOf<OrderQueue>().get(unit)?.orders.clear();
+      world.componentsOf<OrderQueue>().get(unit)?.orders.clear();
     }
     if (enemies.isEmpty) {
       _idle(world, team, mine);
@@ -144,8 +144,8 @@ class TacticalAI implements TurnAI {
   }
 
   EntityId _weakest(World world, List<EntityId> mine, List<EntityId> enemies) {
-    final stats = world.storeOf<UnitStats>();
-    final grid = world.storeOf<GridPosition>();
+    final stats = world.componentsOf<UnitStats>();
+    final grid = world.componentsOf<GridPosition>();
     var cx = 0.0, cy = 0.0;
     for (final m in mine) {
       cx += grid.get(m)!.col;
@@ -168,7 +168,7 @@ class TacticalAI implements TurnAI {
   }
 
   EntityId _nearest(World world, EntityId unit, List<EntityId> enemies) {
-    final grid = world.storeOf<GridPosition>();
+    final grid = world.componentsOf<GridPosition>();
     final from = grid.get(unit)!;
     EntityId best = enemies.first;
     for (final e in enemies.skip(1)) {
@@ -180,7 +180,7 @@ class TacticalAI implements TurnAI {
 
   bool _shouldRetreat(World world, EntityId unit) {
     if (navigator == null || retreatBelow <= 0) return false;
-    final stats = world.storeOf<UnitStats>().get(unit);
+    final stats = world.componentsOf<UnitStats>().get(unit);
     return stats != null && stats.hp / stats.maxHp < retreatBelow;
   }
 
@@ -188,7 +188,7 @@ class TacticalAI implements TurnAI {
       _retreatFrom(
         world,
         unit,
-        world.storeOf<GridPosition>().get(unit)!,
+        world.componentsOf<GridPosition>().get(unit)!,
         enemies,
         navigator!,
       );
@@ -214,7 +214,7 @@ class TacticalAI implements TurnAI {
     FogOfWar fog,
     Set<int> claimed,
   ) {
-    final from = world.storeOf<GridPosition>().get(unit)!;
+    final from = world.componentsOf<GridPosition>().get(unit)!;
     final explored = fog.explored[team] ?? const <int>{};
     (int, int)? best;
     var bestDist = 1 << 30;
@@ -229,7 +229,7 @@ class TacticalAI implements TurnAI {
         if (navigator!.findPath(
               from,
               GridPosition(c, r),
-              blocked: occupiedBy(world.storeOf<GridPosition>(), unit),
+              blocked: occupiedBy(world.componentsOf<GridPosition>(), unit),
             ) ==
             null) {
           continue;
@@ -281,9 +281,9 @@ class ObjectiveAI implements TurnAI {
 
   @override
   void playTurn(World world, String team) {
-    final teams = world.storeOf<Team>();
-    final grid = world.storeOf<GridPosition>();
-    final points = world.storeOf<ActionPoints>();
+    final teams = world.componentsOf<Team>();
+    final grid = world.componentsOf<GridPosition>();
+    final points = world.componentsOf<ActionPoints>();
     final mine = <EntityId>[];
     final enemies = <EntityId>[];
     for (var i = 0; i < teams.length; i++) {
@@ -298,10 +298,10 @@ class ObjectiveAI implements TurnAI {
     mine.sort();
     enemies.sort();
     for (final unit in mine) {
-      world.storeOf<OrderQueue>().get(unit)?.orders.clear();
+      world.componentsOf<OrderQueue>().get(unit)?.orders.clear();
     }
 
-    final objectives = world.storeOf<Objective>();
+    final objectives = world.componentsOf<Objective>();
     final targets = objectivesToTake(world, team);
     final claimed = <EntityId>{};
     final claimedFlags = <EntityId>{};
@@ -348,11 +348,11 @@ class ObjectiveAI implements TurnAI {
     List<EntityId> enemies,
     Set<EntityId> claimedFlags,
   ) {
-    final flags = world.storeOf<Flag>();
-    final grid = world.storeOf<GridPosition>();
+    final flags = world.componentsOf<Flag>();
+    final grid = world.componentsOf<GridPosition>();
 
     // 1. The Vip keeps away from danger.
-    if (world.storeOf<Vip>().has(unit) && enemies.isNotEmpty) {
+    if (world.componentsOf<Vip>().has(unit) && enemies.isNotEmpty) {
       final near = _nearest(grid, at, enemies)!;
       if (at.chebyshev(grid.get(near)!) <= engageRange + 1 &&
           _retreatFrom(world, unit, at, enemies, navigator)) {
@@ -363,7 +363,7 @@ class ObjectiveAI implements TurnAI {
     // 2. A carrier runs for home.
     for (var i = 0; i < flags.length; i++) {
       if (flags.denseAt(i).carrier != unit) continue;
-      final zones = world.storeOf<DeliveryZone>();
+      final zones = world.componentsOf<DeliveryZone>();
       for (var z = 0; z < zones.length; z++) {
         final zone = zones.denseAt(z);
         if (zone.team != team) continue;
@@ -379,7 +379,7 @@ class ObjectiveAI implements TurnAI {
           holder == null ||
           !world.entities.isAlive(holder))
         continue;
-      if (world.storeOf<Team>().get(holder)?.id == team ||
+      if (world.componentsOf<Team>().get(holder)?.id == team ||
           !canSee(world, team, holder))
         continue;
       final hp = grid.get(holder);
@@ -394,7 +394,7 @@ class ObjectiveAI implements TurnAI {
       final id = flags.entityAt(i);
       if (f.homeTeam == team || f.carrier != null || claimedFlags.contains(id))
         continue;
-      if (world.storeOf<Vip>().has(unit)) continue;
+      if (world.componentsOf<Vip>().has(unit)) continue;
       if (_isNearestTo(world, team, unit, f.col, f.row)) {
         claimedFlags.add(id);
         return submitOrder(world, unit, MoveOrder(f.col, f.row));
@@ -406,9 +406,9 @@ class ObjectiveAI implements TurnAI {
   /// True if [unit] is the closest of this team's units with action points to
   /// ([col], [row]) (ties go to the lowest id, so the answer is deterministic).
   bool _isNearestTo(World world, String team, EntityId unit, int col, int row) {
-    final teams = world.storeOf<Team>();
-    final grid = world.storeOf<GridPosition>();
-    final points = world.storeOf<ActionPoints>();
+    final teams = world.componentsOf<Team>();
+    final grid = world.componentsOf<GridPosition>();
+    final points = world.componentsOf<ActionPoints>();
     final cell = GridPosition(col, row);
     EntityId? best;
     var bestD = 1 << 30;
@@ -416,7 +416,7 @@ class ObjectiveAI implements TurnAI {
       final e = teams.entityAt(i);
       if (teams.denseAt(i).id != team ||
           !_canAct(points.get(e)) ||
-          world.storeOf<Vip>().has(e))
+          world.componentsOf<Vip>().has(e))
         continue;
       final p = grid.get(e);
       if (p == null) continue;
@@ -494,7 +494,7 @@ bool _retreatFrom(
   List<EntityId> enemies,
   GridNavigator navigator,
 ) {
-  final grid = world.storeOf<GridPosition>();
+  final grid = world.componentsOf<GridPosition>();
   int threat(int col, int row) {
     var nearest = 1 << 30;
     for (final e in enemies) {
@@ -508,7 +508,7 @@ bool _retreatFrom(
   }
 
   final budget =
-      world.storeOf<ActionPoints>().get(unit)?.current ?? _realtimeRetreatCells;
+      world.componentsOf<ActionPoints>().get(unit)?.current ?? _realtimeRetreatCells;
   final options = navigator.reachable(
     from,
     budget,
@@ -561,9 +561,9 @@ class AITurnSystem extends System {
   }
 
   bool _canStillAct(World world, String team) {
-    final queues = world.storeOf<OrderQueue>();
-    final teams = world.storeOf<Team>();
-    final points = world.storeOf<ActionPoints>();
+    final queues = world.componentsOf<OrderQueue>();
+    final teams = world.componentsOf<Team>();
+    final points = world.componentsOf<ActionPoints>();
     for (var i = 0; i < queues.length; i++) {
       final e = queues.entityAt(i);
       if (queues.denseAt(i).orders.isEmpty || teams.get(e)?.id != team)

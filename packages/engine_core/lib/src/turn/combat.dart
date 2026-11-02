@@ -106,12 +106,12 @@ void installCombat(World world) {
 /// hit must land *immediately* rather than at the next event flush -- overwatch
 /// uses this so a shot can stop the mover mid-path.
 void resolveAttack(World world, EntityId attackerId, EntityId targetId) {
-  final stats = world.storeOf<UnitStats>();
+  final stats = world.componentsOf<UnitStats>();
   final attacker = stats.get(attackerId);
   final target = stats.get(targetId);
   if (attacker == null || target == null || !world.entities.isAlive(targetId))
     return;
-  final statuses = world.storeOf<StatusEffects>();
+  final statuses = world.componentsOf<StatusEffects>();
   final amount = damageFor(
     attacker,
     target,
@@ -122,7 +122,7 @@ void resolveAttack(World world, EntityId attackerId, EntityId targetId) {
   world.events.emit(UnitDamagedEvent(attackerId, targetId, amount));
   if (target.hp == 0) {
     world.events.emit(
-      UnitDefeatedEvent(targetId, world.storeOf<Team>().get(targetId)?.id),
+      UnitDefeatedEvent(targetId, world.componentsOf<Team>().get(targetId)?.id),
     );
     dropCarried(world, targetId);
     world.destroy(targetId);
@@ -144,7 +144,7 @@ class WinConditionSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final state = world.storeOf<TurnState>();
+    final state = world.componentsOf<TurnState>();
     if (state.length == 0) return;
     final turn = state.denseAt(0);
     if (turn.winner != null) return;
@@ -174,9 +174,9 @@ class WinConditionSystem extends System {
 /// memory of which teams had one (a dead Vip is no longer in the world to find),
 /// updated here.
 Set<String> teamsStillInPlay(World world, Set<String> vipTeams) {
-  final teams = world.storeOf<Team>();
-  final stats = world.storeOf<UnitStats>();
-  final vips = world.storeOf<Vip>();
+  final teams = world.componentsOf<Team>();
+  final stats = world.componentsOf<UnitStats>();
+  final vips = world.componentsOf<Vip>();
   final withUnits = <String>{};
   final withVip = <String>{};
   for (var i = 0; i < teams.length; i++) {

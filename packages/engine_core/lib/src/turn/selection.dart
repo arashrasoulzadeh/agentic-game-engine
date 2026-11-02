@@ -21,13 +21,13 @@ class Selected {
 
 /// Selected entities, in storage order.
 List<EntityId> selectedEntities(World world) {
-  final store = world.storeOf<Selected>();
+  final store = world.componentsOf<Selected>();
   return [for (var i = 0; i < store.length; i++) store.entityAt(i)];
 }
 
 void clearSelection(World world) {
   for (final e in selectedEntities(world)) {
-    world.storeOf<Selected>().remove(e);
+    world.componentsOf<Selected>().remove(e);
   }
 }
 
@@ -41,8 +41,8 @@ String? _controlling(World world, String? team) {
 }
 
 bool _selectable(World world, EntityId e, String team) =>
-    world.storeOf<Team>().get(e)?.id == team &&
-    world.storeOf<GridPosition>().has(e);
+    world.componentsOf<Team>().get(e)?.id == team &&
+    world.componentsOf<GridPosition>().has(e);
 
 /// Selects the controlled team's unit standing on ([col], [row]). The controlled
 /// team is [team] if given -- required in a real-time game, which has no turns --
@@ -59,13 +59,13 @@ EntityId? selectAtCell(
 }) {
   final controlled = _controlling(world, team);
   if (controlled == null) return null;
-  final grid = world.storeOf<GridPosition>();
+  final grid = world.componentsOf<GridPosition>();
   for (var i = 0; i < grid.length; i++) {
     final e = grid.entityAt(i);
     final p = grid.denseAt(i);
     if (p.col == col && p.row == row && _selectable(world, e, controlled)) {
       if (!additive) clearSelection(world);
-      world.storeOf<Selected>().set(e, const Selected());
+      world.componentsOf<Selected>().set(e, const Selected());
       return e;
     }
   }
@@ -89,7 +89,7 @@ int selectInBox(
   if (controlled == null) return 0;
   final c0 = col0 < col1 ? col0 : col1, c1 = col0 < col1 ? col1 : col0;
   final r0 = row0 < row1 ? row0 : row1, r1 = row0 < row1 ? row1 : row0;
-  final grid = world.storeOf<GridPosition>();
+  final grid = world.componentsOf<GridPosition>();
   final hits = <EntityId>[
     for (var i = 0; i < grid.length; i++)
       if (grid.denseAt(i).col >= c0 &&
@@ -102,7 +102,7 @@ int selectInBox(
   if (hits.isEmpty) return 0;
   if (!additive) clearSelection(world);
   for (final e in hits) {
-    world.storeOf<Selected>().set(e, const Selected());
+    world.componentsOf<Selected>().set(e, const Selected());
   }
   return hits.length;
 }
@@ -127,8 +127,8 @@ int commandSelected(
 }) {
   final controlled = _controlling(world, team);
   if (controlled == null) return 0;
-  final grid = world.storeOf<GridPosition>();
-  final teams = world.storeOf<Team>();
+  final grid = world.componentsOf<GridPosition>();
+  final teams = world.componentsOf<Team>();
   EntityId? enemy;
   for (var i = 0; i < grid.length; i++) {
     final e = grid.entityAt(i);
@@ -159,7 +159,7 @@ int commandSelected(
       : const <EntityId, GridPosition>{};
   var accepted = 0;
   for (final e in commanded) {
-    if (replace) world.storeOf<OrderQueue>().get(e)?.orders.clear();
+    if (replace) world.componentsOf<OrderQueue>().get(e)?.orders.clear();
     final slot = spread[e];
     final order = enemy != null
         ? AttackOrder(enemy)
@@ -184,8 +184,8 @@ class GridToWorldSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final grid = world.storeOf<GridPosition>();
-    final positions = world.storeOf<Position>();
+    final grid = world.componentsOf<GridPosition>();
+    final positions = world.componentsOf<Position>();
     for (var i = 0; i < grid.length; i++) {
       final p = positions.get(grid.entityAt(i));
       if (p == null) continue;

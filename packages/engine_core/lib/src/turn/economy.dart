@@ -167,7 +167,7 @@ class ProductionStalledEvent {
 
 /// The [Treasury] that belongs to [team], or null if that team has none.
 Treasury? treasuryOf(World world, String team) {
-  final store = world.storeOf<Treasury>();
+  final store = world.componentsOf<Treasury>();
   for (var i = 0; i < store.length; i++) {
     if (store.denseAt(i).team == team) return store.denseAt(i);
   }
@@ -177,7 +177,7 @@ Treasury? treasuryOf(World world, String team) {
 /// Queues [count] more units at [producer]. Returns false if it isn't a producer
 /// or [count] isn't positive.
 bool queueProduction(World world, EntityId producer, [int count = 1]) {
-  final p = world.storeOf<Producer>().get(producer);
+  final p = world.componentsOf<Producer>().get(producer);
   if (p == null || count < 1) return false;
   p.queued += count;
   return true;
@@ -207,23 +207,23 @@ class ProductionSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final treasuries = world.storeOf<Treasury>();
+    final treasuries = world.componentsOf<Treasury>();
     for (var i = 0; i < treasuries.length; i++) {
       treasuries.denseAt(i).accrue(dt);
     }
-    final producers = world.storeOf<Producer>();
+    final producers = world.componentsOf<Producer>();
     final ids = [
       for (var i = 0; i < producers.length; i++) producers.entityAt(i),
     ]..sort();
     for (final id in ids) {
       final p = producers.get(id);
-      if (p != null && p.queued > 0 && !world.storeOf<Construction>().has(id))
+      if (p != null && p.queued > 0 && !world.componentsOf<Construction>().has(id))
         _work(world, id, p, dt);
     }
   }
 
   void _work(World world, EntityId id, Producer p, double dt) {
-    final team = world.storeOf<Team>().get(id)?.id;
+    final team = world.componentsOf<Team>().get(id)?.id;
     if (team == null) return;
     if (!p.paid) {
       final missing = missingTech(world, team, p.requires);
@@ -260,7 +260,7 @@ class ProductionSystem extends System {
   }
 
   EntityId? _spawn(World world, EntityId producer, Producer p, String team) {
-    final at = world.storeOf<GridPosition>().get(producer);
+    final at = world.componentsOf<GridPosition>().get(producer);
     if (at == null) return null;
     final held = cellsHeldExcept(world, const []);
     final cells = formationCells(navigator, at, 1, taken: held);

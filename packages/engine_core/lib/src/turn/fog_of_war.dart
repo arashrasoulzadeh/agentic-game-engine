@@ -113,12 +113,12 @@ class VisionSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final fogs = world.storeOf<FogOfWar>();
+    final fogs = world.componentsOf<FogOfWar>();
     if (fogs.length == 0) return;
     final fog = fogs.denseAt(0);
-    final teams = world.storeOf<Team>();
-    final grid = world.storeOf<GridPosition>();
-    final vision = world.storeOf<Vision>();
+    final teams = world.componentsOf<Team>();
+    final grid = world.componentsOf<GridPosition>();
+    final vision = world.componentsOf<Vision>();
 
     for (final set in fog.visible.values) {
       set.clear();
@@ -149,7 +149,7 @@ class VisionSystem extends System {
 
 /// The world's fog, or null when the game has none (fog is optional).
 FogOfWar? fogOf(World world) {
-  final s = world.storeOf<FogOfWar>();
+  final s = world.componentsOf<FogOfWar>();
   return s.length == 0 ? null : s.denseAt(0);
 }
 
@@ -158,7 +158,7 @@ FogOfWar? fogOf(World world) {
 bool canSee(World world, String team, EntityId entity) {
   final fog = fogOf(world);
   if (fog == null) return true;
-  if (world.storeOf<Team>().get(entity)?.id == team) return true;
-  final pos = world.storeOf<GridPosition>().get(entity);
+  if (world.componentsOf<Team>().get(entity)?.id == team) return true;
+  final pos = world.componentsOf<GridPosition>().get(entity);
   return pos != null && fog.isVisible(team, pos.col, pos.row);
 }

@@ -14,7 +14,7 @@ EntityId startTurnBasedGame(World world, List<String> teamOrder) {
   }
   final manager = world.spawn();
   final state = TurnState(List<String>.from(teamOrder));
-  world.storeOf<TurnState>().set(manager, state);
+  world.componentsOf<TurnState>().set(manager, state);
   _beginTurn(world, state);
   return manager;
 }
@@ -22,7 +22,7 @@ EntityId startTurnBasedGame(World world, List<String> teamOrder) {
 /// The single [TurnState] in [world], or null before
 /// [startTurnBasedGame]. A world has at most one turn clock.
 TurnState? turnStateOf(World world) {
-  final store = world.storeOf<TurnState>();
+  final store = world.componentsOf<TurnState>();
   return store.length == 0 ? null : store.denseAt(0);
 }
 
@@ -51,8 +51,8 @@ bool endTurn(World world) {
 /// enforced in one place instead of re-checked per action type.
 bool trySpendActionPoints(World world, EntityId entity, int cost) {
   final state = turnStateOf(world);
-  final team = world.storeOf<Team>().get(entity);
-  final ap = world.storeOf<ActionPoints>().get(entity);
+  final team = world.componentsOf<Team>().get(entity);
+  final ap = world.componentsOf<ActionPoints>().get(entity);
   if (state == null || state.winner != null || team == null || ap == null)
     return false;
   if (team.id != state.activeTeam || cost < 0 || ap.current < cost)
@@ -62,8 +62,8 @@ bool trySpendActionPoints(World world, EntityId entity, int cost) {
 }
 
 void _beginTurn(World world, TurnState state) {
-  final teams = world.storeOf<Team>();
-  final points = world.storeOf<ActionPoints>();
+  final teams = world.componentsOf<Team>();
+  final points = world.componentsOf<ActionPoints>();
   for (var i = 0; i < teams.length; i++) {
     if (teams.denseAt(i).id != state.activeTeam) continue;
     points.get(teams.entityAt(i))?.refill();
@@ -90,8 +90,8 @@ class TurnSystem extends System {
   void update(World world, double dt) {
     final state = turnStateOf(world);
     if (state == null || !autoEndTeams.contains(state.activeTeam)) return;
-    final teams = world.storeOf<Team>();
-    final points = world.storeOf<ActionPoints>();
+    final teams = world.componentsOf<Team>();
+    final points = world.componentsOf<ActionPoints>();
     var anyActor = false;
     for (var i = 0; i < teams.length; i++) {
       if (teams.denseAt(i).id != state.activeTeam) continue;

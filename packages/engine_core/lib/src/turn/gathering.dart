@@ -118,8 +118,8 @@ class ResourceDepletedEvent {
 /// a [Gatherer], or the node is gone or empty. A unit already carrying a different resource
 /// drops it: carrying two kinds is not modelled.
 bool assignGather(World world, EntityId unit, EntityId node) {
-  final g = world.storeOf<Gatherer>().get(unit);
-  final n = world.storeOf<ResourceNode>().get(node);
+  final g = world.componentsOf<Gatherer>().get(unit);
+  final n = world.componentsOf<ResourceNode>().get(node);
   if (g == null || n == null || n.amount <= 0) return false;
   if (g.carrying != null && g.carrying != n.resource) {
     g.carrying = null;
@@ -128,7 +128,7 @@ bool assignGather(World world, EntityId unit, EntityId node) {
   g.node = node;
   g.phase = GatherPhase.toNode;
   g.progress = 0;
-  world.storeOf<OrderQueue>().get(unit)?.orders.clear();
+  world.componentsOf<OrderQueue>().get(unit)?.orders.clear();
   return true;
 }
 
@@ -147,7 +147,7 @@ class GatherSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final gatherers = world.storeOf<Gatherer>();
+    final gatherers = world.componentsOf<Gatherer>();
     final ids = [
       for (var i = 0; i < gatherers.length; i++) gatherers.entityAt(i),
     ]..sort();
@@ -170,7 +170,7 @@ class GatherSystem extends System {
   ResourceNode? _liveNode(World world, Gatherer g) {
     final id = g.node;
     if (id == null || !world.entities.isAlive(id)) return null;
-    final n = world.storeOf<ResourceNode>().get(id);
+    final n = world.componentsOf<ResourceNode>().get(id);
     return n == null || n.amount <= 0 ? null : n;
   }
 
@@ -180,13 +180,13 @@ class GatherSystem extends System {
       g.phase = g.carried > 0 ? GatherPhase.toDepot : GatherPhase.idle;
       return;
     }
-    final here = world.storeOf<GridPosition>().get(id);
-    final there = world.storeOf<GridPosition>().get(g.node!);
+    final here = world.componentsOf<GridPosition>().get(id);
+    final there = world.componentsOf<GridPosition>().get(g.node!);
     if (here == null || there == null) return;
     if (here.chebyshev(there) <= 1) {
       g.phase = GatherPhase.harvesting;
       g.progress = 0;
-      world.storeOf<OrderQueue>().get(id)?.orders.clear();
+      world.componentsOf<OrderQueue>().get(id)?.orders.clear();
       return;
     }
     queueMoveNextTo(world, navigator, id, there);
@@ -218,8 +218,8 @@ class GatherSystem extends System {
   }
 
   void _toDepot(World world, EntityId id, Gatherer g) {
-    final team = world.storeOf<Team>().get(id)?.id;
-    final here = world.storeOf<GridPosition>().get(id);
+    final team = world.componentsOf<Team>().get(id)?.id;
+    final here = world.componentsOf<GridPosition>().get(id);
     final resource = g.carrying;
     if (team == null || here == null || resource == null || g.carried <= 0) {
       g.phase = GatherPhase.idle;
@@ -227,7 +227,7 @@ class GatherSystem extends System {
     }
     final depot = _nearestDepot(world, team, resource, here);
     if (depot == null) return; // nowhere to deliver yet: wait, keeping the haul
-    final there = world.storeOf<GridPosition>().get(depot)!;
+    final there = world.componentsOf<GridPosition>().get(depot)!;
     if (here.chebyshev(there) > 1) {
       queueMoveNextTo(world, navigator, id, there);
       return;
@@ -248,10 +248,10 @@ class GatherSystem extends System {
     String resource,
     GridPosition from,
   ) {
-    final depots = world.storeOf<Depot>();
-    final teams = world.storeOf<Team>();
-    final grid = world.storeOf<GridPosition>();
-    final building = world.storeOf<Construction>();
+    final depots = world.componentsOf<Depot>();
+    final teams = world.componentsOf<Team>();
+    final grid = world.componentsOf<GridPosition>();
+    final building = world.componentsOf<Construction>();
     EntityId? best;
     var bestD = 1 << 30;
     for (var i = 0; i < depots.length; i++) {
