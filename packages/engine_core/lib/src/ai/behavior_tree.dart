@@ -77,6 +77,72 @@ class BTContext {
 
   T? get<T>(String key) => blackboard[key] as T?;
   void set<T>(String key, T value) => blackboard[key] = value;
+
+  /// Whether [key] holds a value.
+  bool has(String key) => blackboard.containsKey(key);
+
+  /// Adds [by] to the number under [key] (a missing key counts as 0) and
+  /// returns the new total; for counters like "attacks this wave".
+  num inc(String key, [num by = 1]) {
+    final next = ((blackboard[key] as num?) ?? 0) + by;
+    blackboard[key] = next;
+    return next;
+  }
+
+  /// Forgets [key]; a no-op when absent.
+  void remove(String key) => blackboard.remove(key);
+}
+
+/// Short constructors for the tree nodes, so a tree reads as a tree instead of
+/// a pile of named arguments. Pure sugar: every method returns the same node
+/// class (and therefore the same JSON) as its long form.
+///
+/// ```dart
+/// final tree = BT.selector([
+///   BT.sequence([BT.leaf('chase'), BT.wait(0.5)]),
+///   BT.leaf('idle'),
+/// ]);
+/// ```
+abstract final class BT {
+  /// Ticks [children] in order until one fails; see [BTSequence].
+  static BTNode sequence(List<BTNode> children) =>
+      BTSequence(children: children);
+
+  /// Ticks [children] in order until one succeeds; see [BTSelector].
+  static BTNode selector(List<BTNode> children) =>
+      BTSelector(children: children);
+
+  /// Ticks all [children] each tick; succeeds once [requiredSuccess] have.
+  static BTNode parallel(List<BTNode> children, {int requiredSuccess = 1}) =>
+      BTParallel(children: children, requiredSuccess: requiredSuccess);
+
+  /// Runs the behavior registered as [behaviorId].
+  static BTNode leaf(String behaviorId) => BTLeaf(behaviorId: behaviorId);
+
+  /// Runs [child] [times] times.
+  static BTNode repeat(int times, BTNode child) =>
+      BTRepeater(child: child, count: times);
+
+  /// Runs [child] forever.
+  static BTNode forever(BTNode child) => BTRepeater(child: child);
+
+  /// Flips success and failure of [child].
+  static BTNode not(BTNode child) => BTInverter(child: child);
+
+  /// Waits [seconds] then succeeds.
+  static BTNode wait(double seconds) => BTWait(duration: seconds);
+
+  /// Runs behavior [behaviorId] at most once per [seconds].
+  static BTNode cooldown(double seconds, String behaviorId) =>
+      BTCooldown(behaviorId: behaviorId, cooldownDuration: seconds);
+
+  /// Picks among [children] at random; see [BTRandomSelector].
+  static BTNode random(List<BTNode> children) =>
+      BTRandomSelector(children: children);
+
+  /// Fails [child] if it runs longer than [seconds].
+  static BTNode timeout(double seconds, BTNode child) =>
+      BTTimeout(child: child, timeoutDuration: seconds);
 }
 
 /// Composite node that ticks children in order until one fails or all succeed.

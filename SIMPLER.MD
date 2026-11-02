@@ -85,9 +85,8 @@ Each item gets its own mini-spec appended here before work starts (files, tests,
 
 ### AI, behavior trees and state machines
 `ai/behavior_tree.dart` already has the node classes and `BTNode.fromJson`; the factories below are sugar over them, JSON shape unchanged. `BT.inRange/seeTarget/ifHasTarget` need `WorldView` access (check what `BTContext` exposes first).
-- [ ] **Fluent BT DSL / factories**: `BT.sequence`, `BT.selector`, `BT.leaf`, `BT.repeat(n, child)`, `BT.forever`, `BT.wait`, `BT.cooldown`, `BT.random`, `BT.inRange`, `BT.seeTarget`.
-- [ ] **Inline behaviors**: `Behavior((view, self) => ...)` for trivial cases.
-- [ ] **AI helpers and blackboard sugar**: `ai.setBehavior`, `ai.runTree`, typed `blackboard.get/set/has/inc`.
+- [ ] **Tree conditions** `BT.inRange`, `BT.seeTarget`, `BT.ifHasTarget`: need `WorldView` queries from `BTContext` (the `BT` factories, `registerFn` and blackboard `has/inc/remove` shipped). Express them as registered behaviors first and see if a factory earns its place.
+- [ ] **AI helpers**: `ai.setBehavior`, `ai.runTree`.
 - [ ] **Steering combinators**: composable `Steer.seek(arrive(wander(...)))` over existing `steering.dart`.
 - [ ] **State machine DSL**: cleaner JSON or builder over `state_machine.dart`.
 
