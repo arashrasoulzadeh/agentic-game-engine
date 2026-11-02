@@ -89,6 +89,7 @@ export 'src/ecs/world_commands.dart';
 export 'src/ecs/world_query.dart';
 export 'src/ecs/entity_handle.dart';
 export 'src/ecs/entity_builder.dart';
+export 'src/ecs/tags.dart';
 export 'src/ecs/world_profiler.dart';
 export 'src/net/world_snapshot.dart';
 export 'src/net/lobby.dart';
@@ -145,6 +146,7 @@ import 'src/ui/trigger_zone.dart';
 import 'src/rendering/tween.dart';
 import 'src/physics/velocity.dart';
 import 'src/ecs/world.dart';
+import 'src/ecs/tags.dart';
 import 'src/content/game_state.dart';
 import 'src/turn/turn_components.dart';
 import 'src/turn/order.dart';
@@ -339,6 +341,12 @@ void registerCoreComponents(World world) {
     (q) => q.toJson(),
     OrderQueue.fromJson,
     schema: orderQueueSchema,
+  );
+  world.components.register<EntityTags>(
+    'tags',
+    (t) => t.toJson(),
+    EntityTags.fromJson,
+    schema: tagsSchema,
   );
   world.components.register<Selected>(
     'selected',

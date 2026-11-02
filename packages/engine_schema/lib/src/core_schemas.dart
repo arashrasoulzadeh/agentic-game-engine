@@ -201,6 +201,10 @@ const orderQueueSchema = ComponentSchema('orderQueue', [
 
 const selectedSchema = ComponentSchema('selected', []);
 
+const tagsSchema = ComponentSchema('tags', [
+  FieldSchema('tags', FieldType.list, required: true),
+]);
+
 const unitStatsSchema = ComponentSchema('unitStats', [
   FieldSchema('maxHp', FieldType.int, min: 1, required: true),
   FieldSchema('hp', FieldType.int, min: 0),

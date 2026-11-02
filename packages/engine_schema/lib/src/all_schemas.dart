@@ -35,6 +35,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'gridFootprint': gridFootprintSchema,
   'orderQueue': orderQueueSchema,
   'selected': selectedSchema,
+  'tags': tagsSchema,
   'unitStats': unitStatsSchema,
   'attackProfile': attackProfileSchema,
   'realtimeStats': realtimeStatsSchema,
