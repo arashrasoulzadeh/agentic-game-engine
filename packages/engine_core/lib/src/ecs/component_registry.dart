@@ -66,6 +66,20 @@ class ComponentRegistration<T> {
     }
   }
 
+  /// A one-line, author-facing reason [json] was rejected, for [cause] thrown
+  /// by [fromJson]. A raw cast failure ("type 'Null' is not a subtype of type
+  /// 'num'") says nothing about which field, so for those it shows the data
+  /// received and, when a schema is registered, the fields expected.
+  String explainFailure(Map<String, dynamic> json, Object cause) {
+    if (cause is! TypeError && cause is! NoSuchMethodError) return '$cause';
+    final fields = schema?.fields;
+    final expected = fields == null
+        ? ''
+        : '; expected fields: ${fields.map((f) => '${f.name} (${f.type.name}'
+              '${f.required ? ', required' : ''})').join(', ')}';
+    return 'a field is missing or has the wrong type. Got $json$expected';
+  }
+
   void removeEntity(EntityId entity) {
     if (_store.has(entity)) {
       _archetypeManager?.onComponentRemoved(entity, T);
@@ -146,10 +160,11 @@ class ComponentRegistry {
           '${(_byName.keys.toList()..sort()).join(', ')})';
     }
     if (value is! Map) return 'expected an object, got ${value.runtimeType}';
+    final data = value.cast<String, dynamic>();
     try {
-      reg.fromJson(value.cast<String, dynamic>());
+      reg.fromJson(data);
     } catch (cause) {
-      return '$cause';
+      return reg.explainFailure(data, cause);
     }
     return null;
   }
@@ -170,12 +185,17 @@ class ComponentRegistry {
           'expected an object, got ${rawValue.runtimeType}',
         );
       }
+      final data = rawValue.cast<String, dynamic>();
       try {
-        reg.applyJson(entity, rawValue.cast<String, dynamic>());
+        reg.applyJson(entity, data);
       } on ComponentApplyException {
         rethrow;
       } catch (cause) {
-        throw ComponentApplyException(entry.key, entity, cause);
+        throw ComponentApplyException(
+          entry.key,
+          entity,
+          reg.explainFailure(data, cause),
+        );
       }
     }
   }

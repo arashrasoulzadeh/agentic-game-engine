@@ -107,10 +107,8 @@ Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_
 - [ ] **Action mapping and UI wiring.** Camera audited: `followSmooth` shipped and `shake(frequency:)` now oscillates when set (null keeps the original random jitter). (`Input` facade shipped in `input_facade.dart`: `justPressed/justReleased/isDown/axis` over `InputState`; keyboard, touch and gamepad already all write the same named actions.)
 
 ### Errors and debugging
-`WorldPatchException` is the model for message quality.
-- [ ] **Actionable errors**: every "component not found" says how to fix it.
-- [ ] **Type-aware errors**: expected vs got.
-- [ ] **Dev-mode warnings** beyond system order (missing registration) and helpful debug-only asserts.
+Audited by probing ~20 common mistakes. Good already: unregistered component, dead-entity writes, unknown prefab, bad timers, bad patches, missing `after:` systems. Fixed: component JSON with a missing or mistyped field now says which data arrived and which fields are expected (was a raw "type 'Null' is not a subtype of type 'num'").
+- [ ] **Silent cases found, not changed** (each could break existing callers): `destroy` of a dead or twice-destroyed entity is a no-op; two systems may share a name (toggling and profiling then treat them as one); `components.register` with an existing name or type silently replaces; an event with no handler is dropped. Decide per case whether to warn in debug.
 - [ ] **Machine-readable errors**: code, entity, component, suggested fix, in addition to the human message.
 
 ### API surface cleanup
