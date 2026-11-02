@@ -246,6 +246,32 @@ class ProfilerPanel extends StatelessWidget {
   }
 }
 
+/// The sections of [DebugOverlay], so a game can show just the ones it is
+/// debugging instead of the whole wall of graphs.
+enum DebugPanel {
+  /// Frame, step, raster and memory graphs.
+  graphs,
+
+  /// Entity / sprite / particle counts and jank.
+  counts,
+
+  /// Held input actions.
+  input,
+
+  /// Component census.
+  census,
+
+  /// Per-system timings.
+  profiler,
+
+  /// Entity inspector (also needs `showInspector`).
+  inspector,
+
+  /// `World.debug()`: tick, seed, system order, queued commands and
+  /// system-order problems. Off by default.
+  worldSummary,
+}
+
 /// A composed debug HUD: frame / step / raster graphs, a memory graph where the
 /// platform allows it, the pressed input actions (by their friendly alias), a
 /// component census, the profiler table and an entity inspector.
@@ -263,7 +289,22 @@ class DebugOverlay extends StatefulWidget {
     this.refresh = const Duration(milliseconds: 250),
     this.showInspector = true,
     this.frameBudgetMs = 1000 / 60,
+    this.panels = defaultPanels,
   });
+
+  /// Everything the overlay showed before [panels] existed.
+  static const Set<DebugPanel> defaultPanels = {
+    DebugPanel.graphs,
+    DebugPanel.counts,
+    DebugPanel.input,
+    DebugPanel.census,
+    DebugPanel.profiler,
+    DebugPanel.inspector,
+  };
+
+  /// Which sections to show; change it at runtime (e.g. from a hotkey) to
+  /// toggle them.
+  final Set<DebugPanel> panels;
 
   final World world;
   final FrameStats frameStats;
@@ -319,6 +360,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
     final timings = widget.timings;
     final input = widget.input;
     const style = TextStyle(color: Colors.white, fontSize: 10);
+    bool show(DebugPanel panel) => widget.panels.contains(panel);
     return IgnorePointer(
       ignoring: !widget.showInspector,
       child: Container(
@@ -330,52 +372,63 @@ class _DebugOverlayState extends State<DebugOverlay> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              DebugGraph(
-                label: 'frame',
-                values: stats.frameHistory.toList(),
-                budget: widget.frameBudgetMs,
-              ),
-              DebugGraph(
-                label: 'step',
-                values: stats.stepHistory.toList(),
-                budget: widget.frameBudgetMs,
-              ),
-              if (timings != null)
+              if (show(DebugPanel.graphs))
+                DebugGraph(
+                  label: 'frame',
+                  values: stats.frameHistory.toList(),
+                  budget: widget.frameBudgetMs,
+                ),
+              if (show(DebugPanel.graphs))
+                DebugGraph(
+                  label: 'step',
+                  values: stats.stepHistory.toList(),
+                  budget: widget.frameBudgetMs,
+                ),
+              if (show(DebugPanel.graphs) && timings != null)
                 DebugGraph(
                   label: 'raster (gpu)',
                   values: timings.rasterHistory.toList(),
                   budget: widget.frameBudgetMs,
                 ),
-              if (!_memoryMb.isEmpty)
+              if (show(DebugPanel.graphs) && !_memoryMb.isEmpty)
                 DebugGraph(
                   label: 'memory',
                   values: _memoryMb.toList(),
                   unit: 'MB',
                 ),
-              m.Text(
-                'entities ${stats.entities}  sprites ${stats.sprites}  particles ${stats.particles}',
-                style: style,
-              ),
-              if (timings != null)
+              if (show(DebugPanel.counts))
+                m.Text(
+                  'entities ${stats.entities}  sprites ${stats.sprites}  particles ${stats.particles}',
+                  style: style,
+                ),
+              if (show(DebugPanel.counts) && timings != null)
                 m.Text(
                   'jank ${(timings.jankRatio * 100).toStringAsFixed(1)}%  worst raster '
                   '${timings.worstRasterMs.toStringAsFixed(1)}ms',
                   key: const Key('debug-jank'),
                   style: style,
                 ),
-              if (input != null)
+              if (show(DebugPanel.input) && input != null)
                 m.Text(
                   DebugOverlay.pressedLabel(input),
                   key: const Key('debug-input'),
                   style: style,
                 ),
-              m.Text(
-                'components: ${DebugOverlay.census(widget.world)}',
-                key: const Key('debug-census'),
-                style: style,
-              ),
-              ProfilerPanel(world: widget.world),
-              if (widget.showInspector) EntityInspector(world: widget.world),
+              if (show(DebugPanel.census))
+                m.Text(
+                  'components: ${DebugOverlay.census(widget.world)}',
+                  key: const Key('debug-census'),
+                  style: style,
+                ),
+              if (show(DebugPanel.profiler)) ProfilerPanel(world: widget.world),
+              if (show(DebugPanel.worldSummary))
+                m.Text(
+                  widget.world.debug(),
+                  key: const Key('debug-world-summary'),
+                  style: style.copyWith(fontFamily: 'monospace'),
+                ),
+              if (show(DebugPanel.inspector) && widget.showInspector)
+                EntityInspector(world: widget.world),
             ],
           ),
         ),

@@ -138,7 +138,7 @@ Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_
 - [ ] **Migration guide** for downstream projects (`storeOf` -> component API) before 7.final.
 
 ### Content polish
-- [ ] (`GameAudio` shipped: `sfx/music` by name, `silent()` for headless, unknown names throw even then.) **particles preset** with pooling, (`SaveMigrations` shipped: chained version steps plus rename/add helpers, plugs into `SaveGame.load(migrate:)` via `forVersion`) **debug overlay** additions (FPS, collider outlines, system timings).
+- [ ] (`GameAudio` shipped: `sfx/music` by name, `silent()` for headless, unknown names throw even then.) **particles preset** with pooling, (`SaveMigrations` shipped: chained version steps plus rename/add helpers, plugs into `SaveGame.load(migrate:)` via `forVersion`) debug overlay audited: FPS, graphs, entity counts, collider outlines (`GameConfig.showColliderDebug`) and system timings already existed; `DebugOverlay(panels:)` now toggles sections and adds a `World.debug()` panel.
 
 ## Standing guardrails
 - Components only in public API wording; convention over configuration (a minimal game in < 20 lines); explicit over magic; `engine_core` stays Flutter-free; data-driven friendly.

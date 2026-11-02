@@ -27,6 +27,7 @@ World _world() {
 }
 
 void main() {
+  debugPanelTests();
   group('FrameStats history', () {
     test('recordHistory keeps the latest frame and step times, capped', () {
       final s = FrameStats();
@@ -262,5 +263,41 @@ void main() {
       w.componentsOf<Velocity>().set(w.spawn(), Velocity(0, 0));
       expect(DebugOverlay.census(w), 'position 3, velocity 1');
     });
+  });
+}
+
+void debugPanelTests() {
+  testWidgets('panels select which sections the overlay shows', (tester) async {
+    final w = _world();
+    w.componentsOf<Position>().set(w.spawn(), Position(0, 0));
+    final stats = FrameStats()
+      ..entities = 3
+      ..recordHistory();
+    Future<void> pump(Set<DebugPanel> panels) => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DebugOverlay(world: w, frameStats: stats, panels: panels),
+        ),
+      ),
+    );
+
+    await pump({DebugPanel.census});
+    expect(find.byKey(const Key('debug-census')), findsOneWidget);
+    expect(find.byType(DebugGraph), findsNothing);
+    expect(find.textContaining('entities 3'), findsNothing);
+    expect(find.byKey(const Key('debug-world-summary')), findsNothing);
+
+    await pump({DebugPanel.worldSummary, DebugPanel.counts});
+    expect(find.byKey(const Key('debug-census')), findsNothing);
+    expect(find.textContaining('entities 3'), findsOneWidget);
+    expect(
+      tester.widget<m.Text>(find.byKey(const Key('debug-world-summary'))).data,
+      contains('tick'),
+    );
+
+    await pump(DebugOverlay.defaultPanels);
+    expect(find.byType(DebugGraph), findsWidgets);
+    expect(find.byKey(const Key('debug-world-summary')), findsNothing);
+    await tester.pumpWidget(const SizedBox());
   });
 }
