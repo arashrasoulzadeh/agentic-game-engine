@@ -116,7 +116,7 @@ void main() {
       expect(errors, [
         'current must be at least 0',
         'max must be an integer',
-        'label is missing',
+        'label is missing (add "label": "")',
       ]);
     });
 

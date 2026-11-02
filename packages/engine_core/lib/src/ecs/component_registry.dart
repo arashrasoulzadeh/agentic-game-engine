@@ -168,8 +168,8 @@ class ComponentRegistry {
   String? checkComponent(String name, Object? value) {
     final reg = _byName[name];
     if (reg == null) {
-      return 'unknown component "$name" (registered: '
-          '${(_byName.keys.toList()..sort()).join(', ')})';
+      return 'unknown component "$name"${didYouMean(name, _byName.keys)} '
+          '(registered: ${(_byName.keys.toList()..sort()).join(', ')})';
     }
     if (value is! Map) return 'expected an object, got ${value.runtimeType}';
     final data = value.cast<String, dynamic>();

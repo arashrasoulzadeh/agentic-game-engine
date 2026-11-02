@@ -49,7 +49,20 @@ class LevelValidator {
   /// schema is reported as unchecked; an unknown one as a typo.
   final bool Function(String name) isKnown;
 
-  const LevelValidator({required this.schemaFor, required this.isKnown});
+  /// Every known component name, used to suggest the likely intended name for
+  /// an unknown one. Null disables the suggestion.
+  final Iterable<String> Function()? knownNames;
+
+  const LevelValidator({
+    required this.schemaFor,
+    required this.isKnown,
+    this.knownNames,
+  });
+
+  String _suggest(String name) {
+    final names = knownNames?.call();
+    return names == null ? '' : didYouMean(name, names);
+  }
 
   /// Validates against a live registry, which knows exactly what a running game
   /// registers. Use this inside the engine and its tests.
@@ -57,6 +70,7 @@ class LevelValidator {
       LevelValidator(
         schemaFor: components.schemaFor,
         isKnown: components.isRegistered,
+        knownNames: () => components.registeredNames,
       );
 
   /// Validates against a plain schema map, such as `allComponentSchemas`, for
@@ -66,6 +80,7 @@ class LevelValidator {
       LevelValidator(
         schemaFor: (name) => schemas[name],
         isKnown: schemas.containsKey,
+        knownNames: () => schemas.keys,
       );
 
   /// Every issue in [document], in entity order. Empty when the level is valid.
@@ -96,7 +111,7 @@ class LevelValidator {
               entityName: entity.name,
               component: name,
               message: !isKnown(name)
-                  ? 'unknown component "$name"'
+                  ? 'unknown component "$name"${_suggest(name)}'
                   : 'component "$name" has no schema, so its fields cannot be checked',
             ),
           );

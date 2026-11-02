@@ -1,3 +1,7 @@
+import 'dart:convert' show jsonEncode;
+
+import 'did_you_mean.dart';
+
 /// The JSON-level type of one component field, as the studio's inspector
 /// and `game_agent studio validate` need to see it. Deliberately coarse:
 /// these map to the widgets/validators a field needs, not to Dart's type
@@ -61,7 +65,8 @@ class FieldSchema {
         return value is String ? null : '$name must be a string';
       case FieldType.enumeration:
         if (value is! String || !options.contains(value)) {
-          return '$name must be one of ${options.join(', ')}';
+          final hint = value is String ? didYouMean(value, options) : '';
+          return '$name must be one of ${options.join(', ')}$hint';
         }
         return null;
       case FieldType.list:
@@ -150,7 +155,12 @@ class ComponentSchema {
     final errors = <String>[];
     for (final field in fields) {
       if (!json.containsKey(field.name)) {
-        if (field.required) errors.add('${field.name} is missing');
+        if (field.required) {
+          final example = jsonEncode(_templateValue(field));
+          errors.add(
+            '${field.name} is missing (add "${field.name}": $example)',
+          );
+        }
         continue;
       }
       final error = field.validate(json[field.name]);

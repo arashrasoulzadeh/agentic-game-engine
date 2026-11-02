@@ -5,6 +5,7 @@
 /// validate levels without importing Flutter.
 library;
 
+export 'src/did_you_mean.dart';
 export 'src/field_schema.dart';
 export 'src/core_schemas.dart';
 export 'src/flutter_schemas.dart';
