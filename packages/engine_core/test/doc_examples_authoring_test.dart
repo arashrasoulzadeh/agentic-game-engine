@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:engine_core/engine_core.dart';
+import 'package:engine_core/engine_core_testing.dart';
 import 'package:test/test.dart';
 
 /// Mirrors docs/concepts/authoring.md: if you change a snippet there, change
@@ -186,5 +189,16 @@ void main() {
     copy.events.on<CountdownTimerFired>((_) => fired++);
     copy.step(0.5);
     expect(fired, 1);
+  });
+
+  test('Testing your game', () {
+    final t = GameTester(width: 100, height: 100, seed: 1);
+    final ball = t.world.spawnWith([Position(0, 0), Velocity(60, 0)]);
+    t.advance(1);
+    expect(t.component<Position>(ball).x, closeTo(60, 1));
+    final dir = Directory.systemTemp.createTempSync('authoring_golden');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    expectGolden('${dir.path}/ball.json', t.snapshotText());
+    expectGolden('${dir.path}/ball.json', t.snapshotText());
   });
 }

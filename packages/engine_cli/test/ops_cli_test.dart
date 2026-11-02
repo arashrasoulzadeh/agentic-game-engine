@@ -162,6 +162,21 @@ void main() {
     },
   );
 
+  test(
+    'project doctor exits 0 on a healthy project and 1 on a content error',
+    () async {
+      final healthy = await run(['project', 'doctor']);
+      expect(healthy.code, 0, reason: healthy.out + healthy.err);
+      expect(healthy.out, contains('dependencies'));
+      File('${project.path}/assets/levels/bad.json').writeAsStringSync(
+        '{"entities": [{"name": "x", "components": {"position": {"x": "left", "y": 0}}}]}',
+      );
+      final broken = await run(['project', 'doctor']);
+      expect(broken.code, 1, reason: broken.out + broken.err);
+      expect(broken.out, contains('content'));
+    },
+  );
+
   test('validation commands exit 1 when the thing is invalid', () async {
     File('${project.path}/assets/levels/bad.json').writeAsStringSync(
       '{"entities": [{"name": "x", "components": {"position": {"x": "left", "y": 0}}}]}',

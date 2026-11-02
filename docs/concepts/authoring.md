@@ -120,6 +120,20 @@ world.applyPatch(patch, strict: true);     // all or nothing
 print(world.debug());                      // one-screen summary
 ```
 
+## Testing your game
+
+```dart
+final t = GameTester(width: 100, height: 100, seed: 1);
+final ball = t.world.spawnWith([Position(0, 0), Velocity(60, 0)]);
+t.advance(1);                                  // one simulated second
+expect(t.component<Position>(ball).x, closeTo(60, 1));
+expectGolden('test/golden/ball.json', t.snapshotText());
+```
+
+`import 'package:engine_core/engine_core_testing.dart'`. `tickUntil` waits for a
+condition and fails with `world.debug()` instead of hanging; `expectGolden`
+creates a missing golden and, under `UPDATE_GOLDENS=1`, refreshes it.
+
 ## What agents can call and what stays code
 
 The agent API is a set of operations (see the
@@ -135,4 +149,4 @@ are deliberately not operations:
 | `save` / `load` | `world.snapshot` reads a sandbox world; sandbox worlds are throwaway |
 | `checkPatch`, strict `applyPatch` | `world.patch` with `dryRun` / `strict` |
 | `commands`, events, systems, phases, `after`/`every`, `GameBuilder` | code that runs the game, not data an agent edits |
-| `validateSystemOrder`, `debug()` | `game_agent doctor` (planned) |
+| `validateSystemOrder`, `debug()` | needs your game's code, so assert it in a test with `GameTester` (`engine_core_testing`); `game_agent project doctor` checks content and dependency wiring |

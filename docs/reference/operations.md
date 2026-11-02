@@ -1274,6 +1274,20 @@ Implemented by `game_agent create` because it runs `flutter create` and `pub get
 game_agent project create <name>
 ```
 
+### `project.doctor`
+
+A health check of the project: content problems and engine dependency wiring.
+
+Runs the checks that can be made without running the game: every level, graph and the idle game (the same findings as `project.problems`), the project folder layout, and whether the `engine_*` dependencies in `pubspec.yaml` agree (same git url and ref, no mix of git and path). Returns a list of checks with `status` `ok`, `warn` or `error`; `ok` is true when none is an error. Checks that need the game's code (such as `World.validateSystemOrder`) belong in a test of your game: see `GameTester` in `engine_core_testing`.
+
+*read*, needs an open project, idempotent.
+
+```bash
+game_agent project doctor
+```
+
+REST: `POST /v1/project/doctor` · MCP tool: `project.doctor` · JSON-RPC method: `project.doctor`
+
 ### `project.git_status`
 
 Which files git sees as changed (empty when the project is not in a git repository).

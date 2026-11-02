@@ -282,6 +282,7 @@ class _OpCommand extends Command<int> {
     }
     if (op.name == 'level.validate' ||
         op.name == 'project.validate' ||
+        op.name == 'project.doctor' ||
         op.name == 'idle.validate') {
       if (d is Map && d['ok'] == false) return 1;
     }
