@@ -44,7 +44,7 @@ void main() {
     );
     expect(w.systemOrder.first, 'vision');
     expect(w.systemOrder.last, 'fogShade');
-    expect(w.storeOf<FogOfWar>().has(install.fog!), isTrue);
+    expect(w.componentsOf<FogOfWar>().has(install.fog!), isTrue);
 
     expect(
       () => installRealtimeStrategySystems(_world(),
@@ -60,10 +60,10 @@ void main() {
     final u = spawnStrategyUnit(w,
         team: 'red', col: 2, row: 3, cellSize: 32, realtime: RealtimeStats(speed: 3, attackInterval: 0.5));
     final turn = spawnStrategyUnit(w, team: 'red', col: 3, row: 3, cellSize: 32);
-    expect(w.storeOf<RealtimeStats>().get(u)!.speed, 3);
-    expect(w.storeOf<ActionPoints>().has(u), isFalse);
-    expect(w.storeOf<ActionPoints>().has(turn), isTrue);
-    expect(w.storeOf<RealtimeStats>().has(turn), isFalse);
+    expect(w.componentsOf<RealtimeStats>().get(u)!.speed, 3);
+    expect(w.componentsOf<ActionPoints>().has(u), isFalse);
+    expect(w.componentsOf<ActionPoints>().has(turn), isTrue);
+    expect(w.componentsOf<RealtimeStats>().has(turn), isFalse);
   });
 
   test('a whole real-time skirmish: tap to select, tap to attack-move, win', () {
@@ -108,7 +108,7 @@ void main() {
     for (var i = 0; i < 20; i++) {
       w.step(1 / 20);
     }
-    final p = w.storeOf<Position>().get(u)!;
+    final p = w.componentsOf<Position>().get(u)!;
     expect((p.x, p.y), (5.5 * 32, 0.5 * 32));
   });
 
@@ -122,56 +122,56 @@ void main() {
 
     EntityId unit(World w, int col, int row) {
       final e = w.spawn();
-      w.storeOf<GridPosition>().set(e, GridPosition(col, row));
-      w.storeOf<Position>().set(e, Position((col + 0.5) * 32, (row + 0.5) * 32));
+      w.componentsOf<GridPosition>().set(e, GridPosition(col, row));
+      w.componentsOf<Position>().set(e, Position((col + 0.5) * 32, (row + 0.5) * 32));
       return e;
     }
 
     test('glides toward the new cell at its speed instead of jumping', () {
       final w = setup((_) {});
       final u = unit(w, 0, 0);
-      w.storeOf<GridPosition>().get(u)!.col = 2;
+      w.componentsOf<GridPosition>().get(u)!.col = 2;
       w.step(0.1); // 4 cells/s * 0.1 s = 0.4 cell = 12.8 px
-      final x = w.storeOf<Position>().get(u)!.x;
+      final x = w.componentsOf<Position>().get(u)!.x;
       expect(x, closeTo(16 + 12.8, 1e-9));
       expect(x, lessThan(2.5 * 32));
       for (var i = 0; i < 20; i++) {
         w.step(0.1);
       }
-      expect(w.storeOf<Position>().get(u)!.x, 2.5 * 32);
+      expect(w.componentsOf<Position>().get(u)!.x, 2.5 * 32);
     });
 
     test('never changes the grid cell: rules and networking still read GridPosition', () {
       final w = setup((_) {});
       final u = unit(w, 1, 1);
-      w.storeOf<GridPosition>().get(u)!
+      w.componentsOf<GridPosition>().get(u)!
         ..col = 3
         ..row = 2;
       w.step(0.05);
-      final g = w.storeOf<GridPosition>().get(u)!;
+      final g = w.componentsOf<GridPosition>().get(u)!;
       expect((g.col, g.row), (3, 2));
     });
 
     test('a far jump (respawn, snapshot restore) snaps rather than sliding across the map', () {
       final w = setup((_) {});
       final u = unit(w, 0, 0);
-      w.storeOf<GridPosition>().get(u)!.col = 15;
+      w.componentsOf<GridPosition>().get(u)!.col = 15;
       w.step(0.05);
-      expect(w.storeOf<Position>().get(u)!.x, 15.5 * 32);
+      expect(w.componentsOf<Position>().get(u)!.x, 15.5 * 32);
     });
 
     test('entities without a Position are left alone, and diagonal glides stay on the line', () {
       final w = setup((_) {});
       final bare = w.spawn();
-      w.storeOf<GridPosition>().set(bare, GridPosition(4, 4));
+      w.componentsOf<GridPosition>().set(bare, GridPosition(4, 4));
       final u = unit(w, 0, 0);
-      w.storeOf<GridPosition>().get(u)!
+      w.componentsOf<GridPosition>().get(u)!
         ..col = 2
         ..row = 2;
       w.step(0.1);
-      final p = w.storeOf<Position>().get(u)!;
+      final p = w.componentsOf<Position>().get(u)!;
       expect(p.x - 16, closeTo(p.y - 16, 1e-9), reason: 'moving along the diagonal');
-      expect(w.storeOf<Position>().has(bare), isFalse);
+      expect(w.componentsOf<Position>().has(bare), isFalse);
     });
   });
 
@@ -189,7 +189,7 @@ void main() {
     for (var i = 0; i < 200; i++) {
       w.step(1 / 20);
     }
-    final cells = {for (final u in units) (w.storeOf<GridPosition>().get(u)!.col, w.storeOf<GridPosition>().get(u)!.row)};
+    final cells = {for (final u in units) (w.componentsOf<GridPosition>().get(u)!.col, w.componentsOf<GridPosition>().get(u)!.row)};
     expect(cells, hasLength(4), reason: 'no two units ended on the same cell');
     for (final c in cells) {
       expect(GridPosition(c.$1, c.$2).chebyshev(GridPosition(10, 10)), lessThanOrEqualTo(1));
@@ -203,11 +203,11 @@ void economyTests() {
     installRealtimeStrategySystems(w, navigator: _nav(), cellSize: 32, production: true);
     expect(w.systemOrder.take(2), ['construction', 'production']);
 
-    w.storeOf<Treasury>().set(w.spawn(), Treasury('red', amounts: {'gold': 50}, incomePerSecond: {'gold': 1}));
+    w.componentsOf<Treasury>().set(w.spawn(), Treasury('red', amounts: {'gold': 50}, incomePerSecond: {'gold': 1}));
     final barracks = w.spawn();
-    w.storeOf<Team>().set(barracks, Team('red'));
-    w.storeOf<GridPosition>().set(barracks, GridPosition(3, 3));
-    w.storeOf<Producer>().set(
+    w.componentsOf<Team>().set(barracks, Team('red'));
+    w.componentsOf<GridPosition>().set(barracks, GridPosition(3, 3));
+    w.componentsOf<Producer>().set(
           barracks,
           Producer(cost: {'gold': 30}, seconds: 1, template: {
             'unitStats': {'maxHp': 8, 'hp': 8, 'attack': 2, 'defense': 0},
@@ -218,8 +218,8 @@ void economyTests() {
     for (var i = 0; i < 40; i++) {
       w.step(1 / 20);
     }
-    expect(w.storeOf<RealtimeStats>().length, 1);
-    final gold = w.storeOf<Treasury>().denseAt(0).of('gold');
+    expect(w.componentsOf<RealtimeStats>().length, 1);
+    final gold = w.componentsOf<Treasury>().denseAt(0).of('gold');
     expect(gold, inInclusiveRange(20, 24), reason: '50 - 30 spent + about 2 s of income');
   });
 
@@ -230,7 +230,7 @@ void economyTests() {
     expect(w.systemOrder.indexOf('construction'), lessThan(w.systemOrder.indexOf('gather')));
 
     final treasury = Treasury('red');
-    w.storeOf<Treasury>().set(w.spawn(), treasury);
+    w.componentsOf<Treasury>().set(w.spawn(), treasury);
     final worker = w.spawn();
     w.components.applyToEntity(worker, {
       'team': {'id': 'red'},

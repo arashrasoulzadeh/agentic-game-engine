@@ -19,10 +19,10 @@ World _host() {
 
 EntityId _unit(World w, String team, int c, int r) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(6, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(6, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
   return e;
 }
 
@@ -96,7 +96,7 @@ void main() {
         network();
       }
       expect(
-        host.storeOf<GridPosition>().get(mine)!.row,
+        host.componentsOf<GridPosition>().get(mine)!.row,
         3,
         reason: 'the move order reached the host',
       );
@@ -110,9 +110,9 @@ void main() {
       for (var i = 0; i < 20; i++) {
         network();
       }
-      final p = host.storeOf<GridPosition>().get(mine)!;
+      final p = host.componentsOf<GridPosition>().get(mine)!;
       expect(
-        p.chebyshev(host.storeOf<GridPosition>().get(foe)!),
+        p.chebyshev(host.componentsOf<GridPosition>().get(foe)!),
         lessThanOrEqualTo(1),
         reason: 'tapping an enemy walked the unit up to attack it',
       );

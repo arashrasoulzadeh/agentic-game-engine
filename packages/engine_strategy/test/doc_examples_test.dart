@@ -38,24 +38,24 @@ void main() {
       // Step 4 -- start the clock *after* the units exist.
       startTurnBasedGame(world, ['red', 'blue']);
       expect(turnStateOf(world)!.activeTeam, 'red');
-      expect(world.storeOf<ActionPoints>().get(knight)!.current, 4);
+      expect(world.componentsOf<ActionPoints>().get(knight)!.current, 4);
 
       // Step 5 -- feed taps through a GridTapController.
       final taps = GridTapController(cell);
       expect(taps.handleTap(world, const Offset(1.5 * cell, 6.5 * cell)), GridTapResult.selected);
       expect(taps.handleTap(world, const Offset(1.5 * cell, 4.5 * cell)), GridTapResult.commanded);
       world.step(1 / 60);
-      expect(world.storeOf<GridPosition>().get(knight)!.row, 4);
-      expect(world.storeOf<ActionPoints>().get(knight)!.current, 2);
+      expect(world.componentsOf<GridPosition>().get(knight)!.row, 4);
+      expect(world.componentsOf<ActionPoints>().get(knight)!.current, 2);
 
       // Attack by tapping the enemy: the unit walks into range first.
       taps.handleTap(world, const Offset(5.5 * cell, 2.5 * cell));
       world.step(1 / 60);
-      expect(world.storeOf<OrderQueue>().get(knight)!.orders, isNotEmpty);
+      expect(world.componentsOf<OrderQueue>().get(knight)!.orders, isNotEmpty);
 
       endTurn(world);
       expect(turnStateOf(world)!.activeTeam, 'blue');
-      expect(world.storeOf<UnitStats>().get(goblin)!.hp, 8);
+      expect(world.componentsOf<UnitStats>().get(goblin)!.hp, 8);
       expect(world.entities.isAlive(archer), isTrue);
     });
 
@@ -131,7 +131,7 @@ void main() {
       startTurnBasedGame(world, ['red', 'blue']);
       world.step(1 / 60);
 
-      final fog = world.storeOf<FogOfWar>().get(fogEntity)!;
+      final fog = world.componentsOf<FogOfWar>().get(fogEntity)!;
       expect(fog.isVisible('red', 3, 3), isTrue);
       expect(fog.isVisible('red', 5, 3), isFalse); // behind the wall
       expect(canSee(world, 'red', near), isTrue);
@@ -177,7 +177,7 @@ void main() {
       startTurnBasedGame(world, ['red', 'blue']);
       endTurn(world);
       world.step(1 / 60);
-      expect((world.storeOf<OrderQueue>().get(bot)!.orders.single as AttackOrder).target, weak);
+      expect((world.componentsOf<OrderQueue>().get(bot)!.orders.single as AttackOrder).target, weak);
     });
 
     test('save and restore a turn-based game', () {
@@ -229,8 +229,8 @@ class MoveRangePainter extends CustomPainter {
 class FocusFireAI implements TurnAI {
   @override
   void playTurn(World world, String team) {
-    final teams = world.storeOf<Team>();
-    final stats = world.storeOf<UnitStats>();
+    final teams = world.componentsOf<Team>();
+    final stats = world.componentsOf<UnitStats>();
     EntityId? weakest;
     for (var i = 0; i < teams.length; i++) {
       final e = teams.entityAt(i);

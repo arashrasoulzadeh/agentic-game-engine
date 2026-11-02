@@ -18,11 +18,11 @@ void main() {
     final w = _world();
     final u = spawnStrategyUnit(w,
         team: 'red', col: 2, row: 3, cellSize: 32, visionRange: 4, atlasId: 'a', spriteRegion: 'r');
-    expect(w.storeOf<Team>().get(u)!.id, 'red');
-    expect(w.storeOf<ActionPoints>().get(u)!.current, 0);
-    expect(w.storeOf<Vision>().get(u)!.range, 4);
-    expect(w.storeOf<Sprite>().has(u), isTrue);
-    final p = w.storeOf<Position>().get(u)!;
+    expect(w.componentsOf<Team>().get(u)!.id, 'red');
+    expect(w.componentsOf<ActionPoints>().get(u)!.current, 0);
+    expect(w.componentsOf<Vision>().get(u)!.range, 4);
+    expect(w.componentsOf<Sprite>().has(u), isTrue);
+    final p = w.componentsOf<Position>().get(u)!;
     expect((p.x, p.y), (80.0, 112.0));
   });
 
@@ -31,11 +31,11 @@ void main() {
     final archer = spawnStrategyUnit(w, team: 'red', col: 0, row: 0, cellSize: 32, attackRange: 3);
     final mage = spawnStrategyUnit(w, team: 'red', col: 1, row: 0, cellSize: 32, attackCost: 2);
     final knight = spawnStrategyUnit(w, team: 'red', col: 2, row: 0, cellSize: 32);
-    expect(w.storeOf<AttackProfile>().get(archer)!.range, 3);
-    expect(w.storeOf<AttackProfile>().get(archer)!.cost, 1);
-    expect(w.storeOf<AttackProfile>().get(mage)!.cost, 2);
-    expect(w.storeOf<AttackProfile>().get(mage)!.range, 1);
-    expect(w.storeOf<AttackProfile>().has(knight), isFalse);
+    expect(w.componentsOf<AttackProfile>().get(archer)!.range, 3);
+    expect(w.componentsOf<AttackProfile>().get(archer)!.cost, 1);
+    expect(w.componentsOf<AttackProfile>().get(mage)!.cost, 2);
+    expect(w.componentsOf<AttackProfile>().get(mage)!.range, 1);
+    expect(w.componentsOf<AttackProfile>().has(knight), isFalse);
   });
 
   test('an archer shoots over a gap a knight cannot, through the installed systems', () {
@@ -46,15 +46,15 @@ void main() {
     startTurnBasedGame(w, ['red', 'blue']);
     submitOrder(w, archer, AttackOrder(foe));
     w.step(0.1);
-    expect(w.storeOf<UnitStats>().get(foe)!.hp, 7);
-    expect(w.storeOf<GridPosition>().get(archer)!.col, 0);
+    expect(w.componentsOf<UnitStats>().get(foe)!.hp, 7);
+    expect(w.componentsOf<GridPosition>().get(archer)!.col, 0);
   });
 
   test('sprite and vision are optional', () {
     final w = _world();
     final u = spawnStrategyUnit(w, team: 'red', col: 0, row: 0, cellSize: 32);
-    expect(w.storeOf<Vision>().has(u), isFalse);
-    expect(w.storeOf<Sprite>().has(u), isFalse);
+    expect(w.componentsOf<Vision>().has(u), isFalse);
+    expect(w.componentsOf<Sprite>().has(u), isFalse);
   });
 
   test('installStrategySystems registers systems in the documented order', () {
@@ -62,7 +62,7 @@ void main() {
     final fog = installStrategySystems(w, navigator: _nav(), cellSize: 32, fog: true);
     expect(w.systemOrder,
         ['vision', 'orders', 'turn', 'winCondition', 'gridToWorld', 'selectionMarkers']);
-    expect(w.storeOf<FogOfWar>().has(fog!), isTrue);
+    expect(w.componentsOf<FogOfWar>().has(fog!), isTrue);
   });
 
   test('no fog and no markers omits those systems', () {
@@ -86,7 +86,7 @@ void main() {
       w.step(0.1);
     }
     expect(turnStateOf(w)!.activeTeam, 'red');
-    expect(w.storeOf<UnitStats>().get(red)!.hp, 16);
+    expect(w.componentsOf<UnitStats>().get(red)!.hp, 16);
   });
 
   test('a full game: select, move, attack, win, through the installed systems', () {
@@ -104,21 +104,21 @@ void main() {
 
     expect(w.entities.isAlive(blue), isFalse);
     expect(turnStateOf(w)!.winner, 'red');
-    final g = w.storeOf<GridPosition>().get(red)!;
+    final g = w.componentsOf<GridPosition>().get(red)!;
     expect(g.col, 2);
-    expect(w.storeOf<Position>().get(red)!.x, 2.5 * 32);
-    expect(w.storeOf<SelectionMarker>().length, 1);
+    expect(w.componentsOf<Position>().get(red)!.x, 2.5 * 32);
+    expect(w.componentsOf<SelectionMarker>().length, 1);
   });
 }
 
 void moveRangeTests() {
   Set<(int, int)> lit(World w) {
-    final markers = w.storeOf<MoveRangeMarker>();
+    final markers = w.componentsOf<MoveRangeMarker>();
     return {
       for (var i = 0; i < markers.length; i++)
         (
-          (w.storeOf<Position>().get(markers.entityAt(i))!.x / 32 - 0.5).round(),
-          (w.storeOf<Position>().get(markers.entityAt(i))!.y / 32 - 0.5).round(),
+          (w.componentsOf<Position>().get(markers.entityAt(i))!.x / 32 - 0.5).round(),
+          (w.componentsOf<Position>().get(markers.entityAt(i))!.y / 32 - 0.5).round(),
         ),
     };
   }
@@ -148,12 +148,12 @@ void moveRangeTests() {
     final expected = _nav().reachable(GridPosition(3, 3), 1).keys.toSet();
     expect(lit(w), expected);
     expect(lit(w).length, 8);
-    expect(w.storeOf<Sprite>().get(w.storeOf<MoveRangeMarker>().entityAt(0))!.region, 'highlight');
+    expect(w.componentsOf<Sprite>().get(w.componentsOf<MoveRangeMarker>().entityAt(0))!.region, 'highlight');
 
     clearSelection(w);
     w.step(0.1);
     expect(lit(w), isEmpty);
-    expect(w.storeOf<Team>().has(u), isTrue);
+    expect(w.componentsOf<Team>().has(u), isTrue);
   });
 
   test('occupied cells are not lit, and the highlight shrinks as points are spent', () {

@@ -27,10 +27,10 @@ World _game({Set<(int, int)> walls = const {}}) {
 }
 
 String _regionAt(World w, int col, int row) {
-  final cells = w.storeOf<FogShadeCell>();
+  final cells = w.componentsOf<FogShadeCell>();
   for (var i = 0; i < cells.length; i++) {
     if (cells.denseAt(i).col == col && cells.denseAt(i).row == row) {
-      return w.storeOf<Sprite>().get(cells.entityAt(i))!.region;
+      return w.componentsOf<Sprite>().get(cells.entityAt(i))!.region;
     }
   }
   throw StateError('no tile at $col,$row');
@@ -44,7 +44,7 @@ void main() {
     startTurnBasedGame(w, ['red', 'blue']);
     w.step(0.1);
 
-    expect(w.storeOf<FogShadeCell>().length, 100);
+    expect(w.componentsOf<FogShadeCell>().length, 100);
     expect(_regionAt(w, 2, 2), 'fog_clear');
     expect(_regionAt(w, 3, 2), 'fog_clear');
     expect(_regionAt(w, 8, 8), 'fog_unknown');
@@ -58,7 +58,7 @@ void main() {
     w.step(0.1);
     expect(_regionAt(w, 1, 1), 'fog_clear');
 
-    w.storeOf<GridPosition>().get(scout)!
+    w.componentsOf<GridPosition>().get(scout)!
       ..col = 5
       ..row = 5;
     w.step(0.1);
@@ -85,14 +85,14 @@ void main() {
     startTurnBasedGame(w, ['red', 'blue']);
     w.step(0.1);
 
-    expect(w.storeOf<Sprite>().has(foe), isFalse);
-    expect(w.storeOf<FogHidden>().get(foe)!.sprite.region, 'blue');
-    expect(w.storeOf<Sprite>().has(friend), isTrue, reason: 'your own units are never hidden');
+    expect(w.componentsOf<Sprite>().has(foe), isFalse);
+    expect(w.componentsOf<FogHidden>().get(foe)!.sprite.region, 'blue');
+    expect(w.componentsOf<Sprite>().has(friend), isTrue, reason: 'your own units are never hidden');
 
-    w.storeOf<GridPosition>().get(foe)!.col = 2;
+    w.componentsOf<GridPosition>().get(foe)!.col = 2;
     w.step(0.1);
-    expect(w.storeOf<Sprite>().get(foe)!.region, 'blue');
-    expect(w.storeOf<FogHidden>().has(foe), isFalse);
+    expect(w.componentsOf<Sprite>().get(foe)!.region, 'blue');
+    expect(w.componentsOf<FogHidden>().has(foe), isFalse);
   });
 
   test('a hidden enemy survives a save: FogHidden serializes through World.toJson', () {
@@ -111,7 +111,7 @@ void main() {
     final w = World(width: 320, height: 320);
     registerCoreComponents(w);
     registerFlutterComponents(w);
-    w.storeOf<FogOfWar>().set(w.spawn(), FogOfWar(4, 4));
+    w.componentsOf<FogOfWar>().set(w.spawn(), FogOfWar(4, 4));
     w.addSystem(VisionSystem());
     w.addSystem(FogShadeSystem(
       team: 'red',
@@ -124,10 +124,10 @@ void main() {
     ));
     w.components.register<FogShadeCell>('fogShadeCell', (c) => c.toJson(), FogShadeCell.fromJson);
     final foe = w.spawn();
-    w.storeOf<Team>().set(foe, Team('blue'));
-    w.storeOf<Sprite>().set(foe, Sprite('x', 'y'));
+    w.componentsOf<Team>().set(foe, Team('blue'));
+    w.componentsOf<Sprite>().set(foe, Sprite('x', 'y'));
     w.step(0.1);
-    expect(w.storeOf<Sprite>().has(foe), isTrue);
+    expect(w.componentsOf<Sprite>().has(foe), isTrue);
   });
 
   test('without a FogOfWar entity it does nothing, and a resized fog rebuilds the tiles', () {
@@ -139,15 +139,15 @@ void main() {
     w.addSystem(FogShadeSystem(
         team: 'red', cellSize: 32, atlasId: 'a', unknownRegion: 'u', exploredRegion: 'e', clearRegion: 'c'));
     w.step(0.1);
-    expect(w.storeOf<FogShadeCell>().length, 0);
+    expect(w.componentsOf<FogShadeCell>().length, 0);
 
     final fogEntity = w.spawn();
-    w.storeOf<FogOfWar>().set(fogEntity, FogOfWar(3, 3));
+    w.componentsOf<FogOfWar>().set(fogEntity, FogOfWar(3, 3));
     w.step(0.1);
-    expect(w.storeOf<FogShadeCell>().length, 9);
-    w.storeOf<FogOfWar>().set(fogEntity, FogOfWar(4, 2));
+    expect(w.componentsOf<FogShadeCell>().length, 9);
+    w.componentsOf<FogOfWar>().set(fogEntity, FogOfWar(4, 2));
     w.step(0.1);
-    expect(w.storeOf<FogShadeCell>().length, 8);
+    expect(w.componentsOf<FogShadeCell>().length, 8);
   });
 
   test('FogShadeCell JSON round-trips; fogShade without fog is rejected; double install is safe', () {
