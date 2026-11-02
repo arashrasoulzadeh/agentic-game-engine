@@ -85,6 +85,7 @@ export 'src/physics/tmx_import.dart';
 export 'src/physics/tmx_export.dart';
 export 'src/ui/trigger_helpers.dart';
 export 'src/ecs/world.dart';
+export 'src/ecs/world_commands.dart';
 export 'src/ecs/world_profiler.dart';
 export 'src/net/world_snapshot.dart';
 export 'src/net/lobby.dart';

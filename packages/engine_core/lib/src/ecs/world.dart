@@ -6,6 +6,7 @@ import 'system.dart';
 import 'archetype.dart';
 import 'job_system.dart';
 import 'world_profiler.dart';
+import 'world_commands.dart';
 
 /// Thrown by [World.applyPatch] when the patch's own shape is wrong —
 /// `entities` not a list, an entry not an object, a missing/malformed
@@ -104,6 +105,10 @@ class World {
   void removeComponent<T>(EntityId entity) =>
       components.storeOf<T>().remove(entity);
 
+  /// Changes queued by systems to be applied between systems; see
+  /// [WorldCommands]. Use this instead of mutating while you iterate.
+  late final WorldCommands commands = WorldCommands(this);
+
   EntityId spawn() => entities.create();
 
   /// Incarnation counter of [id]; see [EntityManager.generationOf].
@@ -126,8 +131,10 @@ class World {
     if (profiler == null) {
       for (final system in _systems) {
         system.update(this, dt);
+        commands.apply();
       }
       events.flush();
+      commands.apply();
     } else {
       _profiledStep(profiler, dt);
     }
@@ -142,12 +149,14 @@ class World {
         ..reset()
         ..start();
       system.update(this, dt);
+      commands.apply();
       profiler.recordSystem(system.name, timer.elapsedMicroseconds / 1000);
     }
     timer
       ..reset()
       ..start();
     events.flush();
+    commands.apply();
     profiler.recordStep(
       stepMs: whole.elapsedMicroseconds / 1000,
       eventsMs: timer.elapsedMicroseconds / 1000,
