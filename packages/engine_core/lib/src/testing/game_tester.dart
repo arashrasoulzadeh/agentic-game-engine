@@ -89,6 +89,49 @@ class GameTester {
     );
   }
 
+  /// Spawns a named, solid, movable entity (`Position`, `Velocity`,
+  /// `Collider`) at ([x], [y]) and returns it: the usual "player" of a test.
+  /// Find it again later with `world.find(name)`.
+  EntityId spawnActor({
+    String name = 'player',
+    double x = 0,
+    double y = 0,
+    double radius = 8,
+  }) {
+    final id = world.spawnWith([Position(x, y), Velocity(), Collider(radius)]);
+    world.setName(id, name);
+    return id;
+  }
+
+  /// Whether [entity] is alive and has a [T].
+  bool has<T>(EntityId entity) => world.hasComponent<T>(entity);
+
+  /// Throws a [StateError] unless [entity] has a [T]; the message lists what
+  /// it does have. Reads better in a test than `expect(has<T>(e), isTrue)`.
+  void expectHas<T>(EntityId entity) {
+    component<T>(entity);
+  }
+
+  /// Throws a [StateError] if [entity] has a [T].
+  void expectMissing<T>(EntityId entity) {
+    if (!world.hasComponent<T>(entity)) return;
+    throw StateError('Entity $entity unexpectedly has a $T.');
+  }
+
+  /// Throws a [StateError] unless [entity] is alive.
+  void expectAlive(EntityId entity) {
+    if (!world.entities.isAlive(entity)) {
+      throw StateError('Entity $entity is not alive.');
+    }
+  }
+
+  /// Throws a [StateError] if [entity] is still alive.
+  void expectDestroyed(EntityId entity) {
+    if (world.entities.isAlive(entity)) {
+      throw StateError('Entity $entity is still alive.');
+    }
+  }
+
   /// Collects every event of type [E] emitted from now on. The returned list
   /// grows as the world steps.
   List<E> record<E>() {

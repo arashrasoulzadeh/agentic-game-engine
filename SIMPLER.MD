@@ -124,7 +124,7 @@ Audited by probing ~20 common mistakes. Good already: unregistered component, de
 - [x] **Named lookup**: decided to add a registered `Name` component (not keep names a level concern). `world.find('player')` (lowest id wins on duplicates), `nameOf`, `setName`; `Level.loadInto` gives every entity with a `name` key this component (skipped when `name` is not registered). `find` is a scan: look up once and keep the id. `world.withTag(...)` still covers many-entities labels.
 
 ### Testing
-- [ ] **`GameTester.press(action)`** and component matchers (`hasComponent<Dead>()`); **test builders** (`TestWorld.withPlayer()`). The `engine_flutter/lib/src/testing/` directory is empty and is the home for a Flutter-side harness.
+- [x] **Testing helpers**: `GameTester.spawnActor` (named player with Position/Velocity/Collider), `has`, `expectHas<T>`, `expectMissing<T>`, `expectAlive`, `expectDestroyed` (plain throwing helpers, not matchers: `engine_core` deliberately has no test-framework dependency). Input lives in Flutter, so `press` is `InputDriver(state, tick:)` in `engine_flutter/lib/src/testing/` (`press/release/tap/setAxis/releaseAll`), kept free of the dart:io testing library so web builds stay clean.
 
 ### Agent-friendliness
 - [ ] **Self-describing schema**: check what `schema_ops` returns before adding `world.describe()`.
