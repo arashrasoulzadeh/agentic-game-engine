@@ -211,6 +211,10 @@ const tagsSchema = ComponentSchema('tags', [
   FieldSchema('tags', FieldType.list, required: true),
 ]);
 
+const parentSchema = ComponentSchema('parent', [
+  FieldSchema('entity', FieldType.int, min: 0, required: true),
+]);
+
 const unitStatsSchema = ComponentSchema('unitStats', [
   FieldSchema('maxHp', FieldType.int, min: 1, required: true),
   FieldSchema('hp', FieldType.int, min: 0),

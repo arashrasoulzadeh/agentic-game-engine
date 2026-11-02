@@ -2,6 +2,7 @@ import 'component_registry.dart';
 import 'component_store.dart';
 import 'entity.dart';
 import 'event_bus.dart';
+import 'hierarchy.dart' show destroyChildrenOf;
 import 'system.dart';
 import 'archetype.dart';
 import 'job_system.dart';
@@ -295,7 +296,14 @@ class World {
   /// Incarnation counter of [id]; see [EntityManager.generationOf].
   int generationOf(EntityId id) => entities.generationOf(id);
 
+  /// Destroys [id] and removes all of its components. Entities parented to it
+  /// (see [Parent]) are destroyed too, recursively, so attachments never
+  /// outlive what they were attached to.
   void destroy(EntityId id) {
+    final children = destroyChildrenOf(this, id);
+    for (final child in children) {
+      destroy(child);
+    }
     for (final reg in components.all) {
       reg.removeEntity(id);
     }

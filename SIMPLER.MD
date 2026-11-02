@@ -126,8 +126,7 @@ Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_
 - [ ] Scene stack (`push/pop/replace` with enter/exit hooks), scene = level + systems + UI, built-in transitions. Do not create a second `Scene` type; `scene.dart`, `scene_transition.dart` already exist.
 
 ### Hierarchy
-- [ ] **Parent/child** with local vs world `Position` and cascading destroy (a registered `Parent` component; today `World.destroy` removes one entity).
-- [ ] **Named lookup**: `world.find('player')`, `world.findAll(tag: 'enemy')`, reusing the level `"name"` mechanism and `EntityTags`.
+- [ ] **Named lookup**: `world.find('player')`. Names live only in level JSON (`LevelHandle.named`), not on the world; decide whether to add a registered `Name` component (then `find` is a store scan) or keep names a level concern. `world.withTag(...)` already covers the by-label case. (`Parent`, `addChild`, `childrenOf`, `worldPositionOf` and cascading destroy shipped.)
 
 ### Testing
 - [ ] **`GameTester.press(action)`** and component matchers (`hasComponent<Dead>()`); **test builders** (`TestWorld.withPlayer()`). The `engine_flutter/lib/src/testing/` directory is empty and is the home for a Flutter-side harness.

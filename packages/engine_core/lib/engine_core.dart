@@ -93,6 +93,7 @@ export 'src/ecs/world.dart';
 export 'src/ecs/world_random.dart';
 export 'src/ecs/world_timers.dart' show TimerHandle;
 export 'src/ecs/world_motion.dart';
+export 'src/ecs/hierarchy.dart';
 export 'src/ecs/fixed_stepper.dart';
 export 'src/ecs/countdown_timer.dart';
 export 'src/ecs/world_commands.dart';
@@ -157,6 +158,7 @@ import 'src/rendering/tween.dart';
 import 'src/physics/velocity.dart';
 import 'src/ecs/world.dart';
 import 'src/ecs/tags.dart';
+import 'src/ecs/hierarchy.dart';
 import 'src/ecs/countdown_timer.dart';
 import 'src/content/game_state.dart';
 import 'src/turn/turn_components.dart';
@@ -358,6 +360,12 @@ void registerCoreComponents(World world) {
     (t) => t.toJson(),
     CountdownTimer.fromJson,
     schema: countdownTimerSchema,
+  );
+  world.components.register<Parent>(
+    'parent',
+    (p) => p.toJson(),
+    Parent.fromJson,
+    schema: parentSchema,
   );
   world.components.register<EntityTags>(
     'tags',
