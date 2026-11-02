@@ -98,7 +98,7 @@ class ParrySystem implements System {
 
   @override
   void update(World world, double dt) {
-    final parries = world.storeOf<Parry>();
+    final parries = world.componentsOf<Parry>();
     for (var i = 0; i < parries.length; i++) {
       final parry = parries.denseAt(i);
       if (parry.parryTimer > 0) {
@@ -122,13 +122,13 @@ extension ParryWorld on World {
   /// window, the hit is negated, attacker is stunned, and
   /// [ParrySuccessEvent] fires. Returns true if parried.
   bool tryParry(EntityId target, EntityId attacker) {
-    final parry = storeOf<Parry>().get(target);
+    final parry = componentsOf<Parry>().get(target);
     if (parry != null && parry.isParrying) {
       // Successful parry!
       parry.parryTimer = 0; // Consume the parry window
 
       // Stun the attacker
-      final attackerController = storeOf<PlatformerController>().get(attacker);
+      final attackerController = componentsOf<PlatformerController>().get(attacker);
       if (attackerController != null) {
         attackerController.hitstunSeconds = parry.parryStunSeconds;
       }

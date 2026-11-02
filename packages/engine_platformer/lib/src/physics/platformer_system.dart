@@ -39,11 +39,11 @@ class PlatformerSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final positions = world.storeOf<Position>();
-    final velocities = world.storeOf<Velocity>();
-    final colliders = world.storeOf<Collider>();
-    final controllers = world.storeOf<PlatformerController>();
-    final platformBodies = world.storeOf<PlatformBody>();
+    final positions = world.componentsOf<Position>();
+    final velocities = world.componentsOf<Velocity>();
+    final colliders = world.componentsOf<Collider>();
+    final controllers = world.componentsOf<PlatformerController>();
+    final platformBodies = world.componentsOf<PlatformBody>();
 
     for (var i = 0; i < controllers.length; i++) {
       final entity = controllers.entityAt(i);

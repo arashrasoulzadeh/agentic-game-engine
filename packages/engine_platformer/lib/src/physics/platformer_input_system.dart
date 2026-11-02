@@ -52,11 +52,11 @@ class PlatformerInputSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final input = world.storeOf<InputState>().get(entity);
-    final vel = world.storeOf<Velocity>().get(entity);
+    final input = world.componentsOf<InputState>().get(entity);
+    final vel = world.componentsOf<Velocity>().get(entity);
     if (input == null || vel == null) return;
 
-    final controller = world.storeOf<PlatformerController>().get(entity);
+    final controller = world.componentsOf<PlatformerController>().get(entity);
     if (controller != null && controller.hitstunSeconds > 0) return;
 
     var vx = 0.0;

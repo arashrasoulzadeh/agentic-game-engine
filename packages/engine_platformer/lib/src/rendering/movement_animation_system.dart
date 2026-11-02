@@ -22,12 +22,12 @@ class MovementAnimationSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final sets = world.storeOf<MovementAnimationSet>();
-    final velocities = world.storeOf<Velocity>();
-    final animStates = world.storeOf<AnimationState>();
-    final controllers = world.storeOf<PlatformerController>();
-    final sprites = world.storeOf<Sprite>();
-    final transitions = world.storeOf<AnimationTransition>();
+    final sets = world.componentsOf<MovementAnimationSet>();
+    final velocities = world.componentsOf<Velocity>();
+    final animStates = world.componentsOf<AnimationState>();
+    final controllers = world.componentsOf<PlatformerController>();
+    final sprites = world.componentsOf<Sprite>();
+    final transitions = world.componentsOf<AnimationTransition>();
 
     for (var i = 0; i < sets.length; i++) {
       final entity = sets.entityAt(i);

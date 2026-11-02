@@ -16,8 +16,8 @@ class FacingSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final velocities = world.storeOf<Velocity>();
-    final sprites = world.storeOf<Sprite>();
+    final velocities = world.componentsOf<Velocity>();
+    final sprites = world.componentsOf<Sprite>();
 
     for (var i = 0; i < sprites.length; i++) {
       final entity = sprites.entityAt(i);

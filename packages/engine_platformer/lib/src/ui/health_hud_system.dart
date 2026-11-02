@@ -19,9 +19,9 @@ class HealthHudSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final links = world.storeOf<HealthHudLink>();
-    final bars = world.storeOf<HudBar>();
-    final healths = world.storeOf<Health>();
+    final links = world.componentsOf<HealthHudLink>();
+    final bars = world.componentsOf<HudBar>();
+    final healths = world.componentsOf<Health>();
     for (var i = 0; i < links.length; i++) {
       final entity = links.entityAt(i);
       final bar = bars.get(entity);

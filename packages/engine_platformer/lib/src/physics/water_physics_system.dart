@@ -22,11 +22,11 @@ class WaterPhysicsSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final positions = world.storeOf<Position>();
-    final velocities = world.storeOf<Velocity>();
-    final colliders = world.storeOf<Collider>();
-    final controllers = world.storeOf<PlatformerController>();
-    final zones = world.storeOf<WaterZone>();
+    final positions = world.componentsOf<Position>();
+    final velocities = world.componentsOf<Velocity>();
+    final colliders = world.componentsOf<Collider>();
+    final controllers = world.componentsOf<PlatformerController>();
+    final zones = world.componentsOf<WaterZone>();
     if (zones.length == 0) return;
 
     for (var i = 0; i < controllers.length; i++) {

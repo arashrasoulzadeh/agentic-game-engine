@@ -127,7 +127,7 @@ class _SetVelocityXYAction implements Action {
 
   @override
   void apply(World world) {
-    final store = world.storeOf<Velocity>();
+    final store = world.componentsOf<Velocity>();
     store.set(entity, Velocity(vx, vy));
   }
 }
@@ -141,7 +141,7 @@ class _SetVelocityAndJumpAction implements Action {
   @override
   void apply(World world) {
     setVelocityX(world, entity, vx);
-    final controller = world.storeOf<PlatformerController>().get(entity);
+    final controller = world.componentsOf<PlatformerController>().get(entity);
     if (controller != null) {
       controller.jumpRequested = true;
     }
@@ -157,7 +157,7 @@ class _SetVelocityAndDownAction implements Action {
   @override
   void apply(World world) {
     setVelocityX(world, entity, vx);
-    final controller = world.storeOf<PlatformerController>().get(entity);
+    final controller = world.componentsOf<PlatformerController>().get(entity);
     if (controller != null) {
       // Request drop through one-way platform
       // This would need a new field on PlatformerController

@@ -14,7 +14,7 @@ class HealthSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final healths = world.storeOf<Health>();
+    final healths = world.componentsOf<Health>();
     for (var i = 0; i < healths.length; i++) {
       final health = healths.denseAt(i);
 

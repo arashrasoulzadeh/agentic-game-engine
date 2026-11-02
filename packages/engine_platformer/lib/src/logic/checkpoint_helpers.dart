@@ -13,13 +13,13 @@ import 'last_checkpoint.dart';
 /// respawn tracking.
 void trackCheckpoints(World world, EntityId player) {
   world.onCollisionInvolving(player, (other) {
-    final checkpoint = world.storeOf<Checkpoint>().get(other);
+    final checkpoint = world.componentsOf<Checkpoint>().get(other);
     if (checkpoint == null) return;
-    final pos = world.storeOf<Position>().get(other);
+    final pos = world.componentsOf<Position>().get(other);
     if (pos == null) return;
 
     checkpoint.activated = true;
-    world.storeOf<LastCheckpoint>().set(player, LastCheckpoint(pos.x, pos.y));
+    world.componentsOf<LastCheckpoint>().set(player, LastCheckpoint(pos.x, pos.y));
   });
 }
 
@@ -34,20 +34,20 @@ void respawnPlayer(
   required double fallbackX,
   required double fallbackY,
 }) {
-  final last = world.storeOf<LastCheckpoint>().get(player);
-  final pos = world.storeOf<Position>().get(player);
+  final last = world.componentsOf<LastCheckpoint>().get(player);
+  final pos = world.componentsOf<Position>().get(player);
   if (pos != null) {
     pos.x = last?.x ?? fallbackX;
     pos.y = last?.y ?? fallbackY;
   }
 
-  final vel = world.storeOf<Velocity>().get(player);
+  final vel = world.componentsOf<Velocity>().get(player);
   if (vel != null) {
     vel.x = 0;
     vel.y = 0;
   }
 
-  final health = world.storeOf<Health>().get(player);
+  final health = world.componentsOf<Health>().get(player);
   if (health != null) {
     health.current = health.max;
     health.invincibleSeconds = 0;

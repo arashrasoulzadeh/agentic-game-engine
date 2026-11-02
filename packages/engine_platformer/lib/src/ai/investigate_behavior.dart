@@ -150,7 +150,7 @@ class _InvestigateAction implements Action {
     setVelocityX(world, entity, vx);
 
     if (clearMemory) {
-      final state = world.storeOf<AIState>().get(entity);
+      final state = world.componentsOf<AIState>().get(entity);
       state?.memory.remove('lastHeardSound');
     }
   }

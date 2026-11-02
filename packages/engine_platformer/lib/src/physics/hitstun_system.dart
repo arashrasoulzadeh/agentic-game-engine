@@ -14,7 +14,7 @@ class HitstunSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final controllers = world.storeOf<PlatformerController>();
+    final controllers = world.componentsOf<PlatformerController>();
     for (var i = 0; i < controllers.length; i++) {
       final controller = controllers.denseAt(i);
       if (controller.hitstunSeconds > 0) {

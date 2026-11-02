@@ -11,9 +11,9 @@ import 'physics/platformer_controller.dart';
 /// character needs regardless of player/enemy — shared so the two
 /// spawn helpers below can't drift on it.
 void _attachBody(World world, EntityId id, double x, double y, double radius) {
-  world.storeOf<Position>().set(id, Position(x, y));
-  world.storeOf<Velocity>().set(id, Velocity(0, 0));
-  world.storeOf<Collider>().set(id, Collider(radius));
+  world.componentsOf<Position>().set(id, Position(x, y));
+  world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+  world.componentsOf<Collider>().set(id, Collider(radius));
 }
 
 /// Attaches a `Sprite` only if both [atlasId] and [spriteRegion] are
@@ -26,7 +26,7 @@ void _attachSprite(
   String? spriteRegion,
 ) {
   if (atlasId != null && spriteRegion != null) {
-    world.storeOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
+    world.componentsOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
   }
 }
 
@@ -38,15 +38,15 @@ void _attachAnimations(
   MovementAnimationSet? animations,
 ) {
   if (animations != null) {
-    world.storeOf<MovementAnimationSet>().set(id, animations);
-    world.storeOf<AnimationState>().set(id, AnimationState(animations.idle));
+    world.componentsOf<MovementAnimationSet>().set(id, animations);
+    world.componentsOf<AnimationState>().set(id, AnimationState(animations.idle));
   }
 }
 
 /// Attaches `Health` (full at spawn), if [maxHealth] is given.
 void _attachHealth(World world, EntityId id, double? maxHealth) {
   if (maxHealth != null) {
-    world.storeOf<Health>().set(id, Health(current: maxHealth, max: maxHealth));
+    world.componentsOf<Health>().set(id, Health(current: maxHealth, max: maxHealth));
   }
 }
 
@@ -87,20 +87,20 @@ EntityId spawnPlayer(
 }) {
   final id = world.spawn();
   _attachBody(world, id, x, y, radius);
-  world.storeOf<Gravity>().set(id, Gravity(scale: gravityScale));
-  world.storeOf<PlatformerController>().set(
+  world.componentsOf<Gravity>().set(id, Gravity(scale: gravityScale));
+  world.componentsOf<PlatformerController>().set(
     id,
     PlatformerController(jumpSpeed: jumpSpeed),
   );
-  world.storeOf<InputState>().set(id, input);
+  world.componentsOf<InputState>().set(id, input);
   _attachSprite(world, id, atlasId, spriteRegion);
   _attachAnimations(world, id, animations);
   _attachHealth(world, id, maxHealth);
   if (maxHealth != null) {
-    world.storeOf<LastCheckpoint>().set(id, LastCheckpoint(x, y));
+    world.componentsOf<LastCheckpoint>().set(id, LastCheckpoint(x, y));
   }
   if (startingInventory != null) {
-    world.storeOf<Inventory>().set(id, Inventory(Map.of(startingInventory)));
+    world.componentsOf<Inventory>().set(id, Inventory(Map.of(startingInventory)));
   }
   return id;
 }
@@ -133,10 +133,10 @@ EntityId spawnEnemy(
 }) {
   final id = world.spawn();
   _attachBody(world, id, x, y, radius);
-  world.storeOf<AIState>().set(id, AIState(behaviorId, memory: memory));
+  world.componentsOf<AIState>().set(id, AIState(behaviorId, memory: memory));
   if (affectedByGravity) {
-    world.storeOf<Gravity>().set(id, Gravity(scale: gravityScale));
-    world.storeOf<PlatformerController>().set(id, PlatformerController());
+    world.componentsOf<Gravity>().set(id, Gravity(scale: gravityScale));
+    world.componentsOf<PlatformerController>().set(id, PlatformerController());
   }
   _attachSprite(world, id, atlasId, spriteRegion);
   _attachAnimations(world, id, animations);

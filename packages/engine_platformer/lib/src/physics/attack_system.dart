@@ -60,10 +60,10 @@ class AttackSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final weapons = world.storeOf<Weapon>();
-    final positions = world.storeOf<Position>();
-    final inputs = world.storeOf<InputState>();
-    final controllers = world.storeOf<PlatformerController>();
+    final weapons = world.componentsOf<Weapon>();
+    final positions = world.componentsOf<Position>();
+    final inputs = world.componentsOf<InputState>();
+    final controllers = world.componentsOf<PlatformerController>();
 
     // Create WorldView once for line-of-sight checks
     final view = requireLineOfSight ? WorldView(world) : null;
@@ -255,7 +255,7 @@ class AttackSystem implements System {
     final id = weapon.meleeActiveHitbox;
     if (id == null) return;
     weapon.meleeActiveHitbox = null;
-    if (world.storeOf<Projectile>().get(id) != null) {
+    if (world.componentsOf<Projectile>().get(id) != null) {
       world.destroy(id);
     }
   }

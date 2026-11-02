@@ -42,8 +42,8 @@ class JumpSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final controllers = world.storeOf<PlatformerController>();
-    final velocities = world.storeOf<Velocity>();
+    final controllers = world.componentsOf<PlatformerController>();
+    final velocities = world.componentsOf<Velocity>();
 
     for (var i = 0; i < controllers.length; i++) {
       final entity = controllers.entityAt(i);

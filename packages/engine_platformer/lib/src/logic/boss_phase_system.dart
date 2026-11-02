@@ -97,7 +97,7 @@ class BossPhaseSystem implements System {
       if (!_activeCinematic!.isPlaying) _activeCinematic = null;
     }
 
-    final health = world.storeOf<Health>().get(entity);
+    final health = world.componentsOf<Health>().get(entity);
     if (health == null || health.max <= 0) return;
     final fraction = health.current / health.max;
 

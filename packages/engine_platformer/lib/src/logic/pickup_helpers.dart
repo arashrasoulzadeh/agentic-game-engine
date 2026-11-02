@@ -21,7 +21,7 @@ void collectItem(
   String itemId, {
   int amount = 1,
 }) {
-  final inventory = world.storeOf<Inventory>().get(holder);
+  final inventory = world.componentsOf<Inventory>().get(holder);
   if (inventory == null) return;
 
   inventory.items[itemId] = inventory.count(itemId) + amount;

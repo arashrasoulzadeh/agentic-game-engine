@@ -143,7 +143,7 @@ class _PatrolStepAction implements Action {
     setVelocityX(world, entity, vx);
     final dir = newDirection;
     if (dir != null) {
-      world.storeOf<AIState>().get(entity)?.memory['dir'] = dir;
+      world.componentsOf<AIState>().get(entity)?.memory['dir'] = dir;
     }
   }
 }

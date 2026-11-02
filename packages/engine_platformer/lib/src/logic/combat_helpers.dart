@@ -114,18 +114,18 @@ bool damageEntity(
   double knockbackSpeed = 0,
   double hitstunSeconds = 0,
 }) {
-  final health = world.storeOf<Health>().get(entity);
+  final health = world.componentsOf<Health>().get(entity);
   if (health == null || health.isInvincible || health.isDead) return false;
 
   // Check for parry - if target has active parry window, negate hit and stun attacker
   if (source != null) {
-    final parry = world.storeOf<Parry>().get(entity);
+    final parry = world.componentsOf<Parry>().get(entity);
     if (parry != null && parry.isParrying) {
       // Successful parry!
       parry.parryTimer = 0; // Consume the parry window
 
       // Stun the attacker
-      final attackerController = world.storeOf<PlatformerController>().get(
+      final attackerController = world.componentsOf<PlatformerController>().get(
         source,
       );
       if (attackerController != null) {
@@ -191,9 +191,9 @@ bool damageEntity(
   }
 
   if (knockbackSpeed > 0 && source != null) {
-    final vel = world.storeOf<Velocity>().get(entity);
-    final entityPos = world.storeOf<Position>().get(entity);
-    final sourcePos = world.storeOf<Position>().get(source);
+    final vel = world.componentsOf<Velocity>().get(entity);
+    final entityPos = world.componentsOf<Position>().get(entity);
+    final sourcePos = world.componentsOf<Position>().get(source);
     if (vel != null && entityPos != null && sourcePos != null) {
       final dx = entityPos.x - sourcePos.x;
       final dy = entityPos.y - sourcePos.y;
@@ -206,7 +206,7 @@ bool damageEntity(
   }
 
   if (hitstunSeconds > 0) {
-    world.storeOf<PlatformerController>().get(entity)?.hitstunSeconds =
+    world.componentsOf<PlatformerController>().get(entity)?.hitstunSeconds =
         hitstunSeconds;
   }
 
@@ -216,7 +216,7 @@ bool damageEntity(
 /// Restores [amount] of `Health.current`, clamped to `max`. A no-op if
 /// [entity] has no `Health` component.
 void healEntity(World world, EntityId entity, double amount) {
-  final health = world.storeOf<Health>().get(entity);
+  final health = world.componentsOf<Health>().get(entity);
   if (health == null) return;
   health.current = (health.current + amount).clamp(0, health.max);
 }
@@ -224,7 +224,7 @@ void healEntity(World world, EntityId entity, double amount) {
 /// Restores [amount] of `Health.stability`, clamped to effective max.
 /// A no-op if [entity] has no `Health` component.
 void restoreStability(World world, EntityId entity, double amount) {
-  final health = world.storeOf<Health>().get(entity);
+  final health = world.componentsOf<Health>().get(entity);
   if (health == null) return;
   health.stability = (health.stability + amount).clamp(
     0,

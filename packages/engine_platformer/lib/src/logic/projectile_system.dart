@@ -14,7 +14,7 @@ class ProjectileSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final projectiles = world.storeOf<Projectile>();
+    final projectiles = world.componentsOf<Projectile>();
     final expired = <EntityId>[];
     for (var i = 0; i < projectiles.length; i++) {
       final projectile = projectiles.denseAt(i);

@@ -26,9 +26,9 @@ class GravitySystem implements System {
 
   @override
   void update(World world, double dt) {
-    final gravities = world.storeOf<Gravity>();
-    final velocities = world.storeOf<Velocity>();
-    final controllers = world.storeOf<PlatformerController>();
+    final gravities = world.componentsOf<Gravity>();
+    final velocities = world.componentsOf<Velocity>();
+    final controllers = world.componentsOf<PlatformerController>();
 
     for (var i = 0; i < gravities.length; i++) {
       final entity = gravities.entityAt(i);

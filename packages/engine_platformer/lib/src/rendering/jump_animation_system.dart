@@ -27,11 +27,11 @@ class JumpAnimationSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final sets = world.storeOf<JumpAnimationSet>();
-    final phaseStates = world.storeOf<JumpAnimationPhaseState>();
-    final controllers = world.storeOf<PlatformerController>();
-    final velocities = world.storeOf<Velocity>();
-    final animStates = world.storeOf<AnimationState>();
+    final sets = world.componentsOf<JumpAnimationSet>();
+    final phaseStates = world.componentsOf<JumpAnimationPhaseState>();
+    final controllers = world.componentsOf<PlatformerController>();
+    final velocities = world.componentsOf<Velocity>();
+    final animStates = world.componentsOf<AnimationState>();
 
     for (var i = 0; i < sets.length; i++) {
       final entity = sets.entityAt(i);

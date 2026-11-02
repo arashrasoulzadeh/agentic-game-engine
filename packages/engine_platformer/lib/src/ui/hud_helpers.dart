@@ -27,8 +27,8 @@ EntityId spawnHealthHudBar(
   int zIndex = 0,
 }) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(x, y));
-  world.storeOf<HudBar>().set(
+  world.componentsOf<Position>().set(id, Position(x, y));
+  world.componentsOf<HudBar>().set(
     id,
     HudBar(
       value: 0,
@@ -41,6 +41,6 @@ EntityId spawnHealthHudBar(
       zIndex: zIndex,
     ),
   );
-  world.storeOf<HealthHudLink>().set(id, HealthHudLink(source));
+  world.componentsOf<HealthHudLink>().set(id, HealthHudLink(source));
   return id;
 }

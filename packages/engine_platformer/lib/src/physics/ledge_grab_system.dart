@@ -63,7 +63,7 @@ class LedgeGrabSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final controller = world.storeOf<PlatformerController>().get(entity);
+    final controller = world.componentsOf<PlatformerController>().get(entity);
     if (controller == null || !controller.ledgeGrabEnabled) return;
 
     if (controller.hitstunSeconds > 0) {
@@ -74,9 +74,9 @@ class LedgeGrabSystem implements System {
       return;
     }
 
-    final pos = world.storeOf<Position>().get(entity);
-    final vel = world.storeOf<Velocity>().get(entity);
-    final input = world.storeOf<InputState>().get(entity);
+    final pos = world.componentsOf<Position>().get(entity);
+    final vel = world.componentsOf<Velocity>().get(entity);
+    final input = world.componentsOf<InputState>().get(entity);
     if (pos == null || vel == null || input == null) return;
 
     if (controller.ledgeGrabbing) {
@@ -101,12 +101,12 @@ class LedgeGrabSystem implements System {
     if (controller.grounded) return;
     if (!controller.touchingWallLeft && !controller.touchingWallRight) return;
 
-    final collider = world.storeOf<Collider>().get(entity);
+    final collider = world.componentsOf<Collider>().get(entity);
     if (collider == null) return;
 
     final direction = controller.touchingWallRight ? 1 : -1;
-    final tileMaps = world.storeOf<TileMap>();
-    final positions = world.storeOf<Position>();
+    final tileMaps = world.componentsOf<TileMap>();
+    final positions = world.componentsOf<Position>();
 
     for (var m = 0; m < tileMaps.length; m++) {
       final mapEntity = tileMaps.entityAt(m);

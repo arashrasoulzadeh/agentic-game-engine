@@ -140,7 +140,7 @@ class _FollowWithJumpAction implements Action {
         // JumpSystem will only fire it if the entity is actually grounded/
         // in coyote time/has air jumps - we just express the intent here.
         if (jumpAcrossGaps) {
-          final controller = world.storeOf<PlatformerController>().get(self);
+          final controller = world.componentsOf<PlatformerController>().get(self);
           if (controller != null && controller.jumpSpeed > 0) {
             controller.jumpRequested = true;
           }
@@ -155,10 +155,10 @@ class _FollowWithJumpAction implements Action {
 
   /// Checks if there's ground ahead of the entity in the direction of movement.
   bool _hasGroundAhead(World world) {
-    final pos = world.storeOf<Position>().get(self);
-    final controller = world.storeOf<PlatformerController>().get(self);
-    final collider = world.storeOf<Collider>().get(self);
-    final targetPos = world.storeOf<Position>().get(target);
+    final pos = world.componentsOf<Position>().get(self);
+    final controller = world.componentsOf<PlatformerController>().get(self);
+    final collider = world.componentsOf<Collider>().get(self);
+    final targetPos = world.componentsOf<Position>().get(target);
     if (pos == null ||
         controller == null ||
         collider == null ||
@@ -172,8 +172,8 @@ class _FollowWithJumpAction implements Action {
     // Search for ground in all TileMaps
     final view = WorldView(world);
     for (final mapEntity in view.entitiesWith<TileMap>()) {
-      final map = world.storeOf<TileMap>().get(mapEntity)!;
-      final origin = world.storeOf<Position>().get(mapEntity) ?? Position(0, 0);
+      final map = world.componentsOf<TileMap>().get(mapEntity)!;
+      final origin = world.componentsOf<Position>().get(mapEntity) ?? Position(0, 0);
 
       // Check up to 4 rows down from the entity's feet
       if (hasGroundAhead(
@@ -197,16 +197,16 @@ class _FollowWithJumpAction implements Action {
   /// Used instead of controller.grounded because AI runs before
   /// the collision system updates the grounded flag.
   bool _isOnGround(World world) {
-    final pos = world.storeOf<Position>().get(self);
-    final collider = world.storeOf<Collider>().get(self);
+    final pos = world.componentsOf<Position>().get(self);
+    final collider = world.componentsOf<Collider>().get(self);
     if (pos == null || collider == null) return false;
 
     final footY = pos.y + collider.radius;
 
     // Check if foot is within a small threshold of a solid/one-way tile
     for (final mapEntity in WorldView(world).entitiesWith<TileMap>()) {
-      final map = world.storeOf<TileMap>().get(mapEntity)!;
-      final origin = world.storeOf<Position>().get(mapEntity) ?? Position(0, 0);
+      final map = world.componentsOf<TileMap>().get(mapEntity)!;
+      final origin = world.componentsOf<Position>().get(mapEntity) ?? Position(0, 0);
 
       final col = ((pos.x - origin.x) / map.tileWidth).floor();
       if (col < 0 || col >= map.cols) continue;

@@ -16,7 +16,7 @@ import 'package:engine_core/engine_core.dart';
 /// here means a future horizontal-only behavior can't repeat that
 /// mistake by copy-pasting one of the few call sites that got it wrong.
 void setVelocityX(World world, EntityId entity, double vx) {
-  final store = world.storeOf<Velocity>();
+  final store = world.componentsOf<Velocity>();
   final existing = store.get(entity);
   store.set(entity, Velocity(vx, existing?.y ?? 0));
 }

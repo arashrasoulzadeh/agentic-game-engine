@@ -93,7 +93,7 @@ class _AvoidancePushAction implements Action {
   @override
   void apply(World world) {
     inner.apply(world);
-    final vel = world.storeOf<Velocity>().get(entity);
+    final vel = world.componentsOf<Velocity>().get(entity);
     if (vel != null) vel.x += pushX;
   }
 }

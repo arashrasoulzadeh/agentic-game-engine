@@ -508,7 +508,7 @@ class _CountdownAction implements Action {
 
   @override
   void apply(World world) {
-    final combat = world.storeOf<EnemyCombat>().get(entity);
+    final combat = world.componentsOf<EnemyCombat>().get(entity);
     if (combat != null && combat.stateTimer > 0) {
       // Timer is counted down by the behavior's decide, not here
       // This action exists to consume the tick while timer counts
@@ -524,9 +524,9 @@ class _PatrolStepAction implements Action {
 
   @override
   void apply(World world) {
-    world.storeOf<Velocity>().set(entity, Velocity(vx, 0));
+    world.componentsOf<Velocity>().set(entity, Velocity(vx, 0));
     if (newDirection != null) {
-      world.storeOf<AIState>().get(entity)?.memory['dir'] = newDirection;
+      world.componentsOf<AIState>().get(entity)?.memory['dir'] = newDirection;
     }
   }
 }
@@ -538,7 +538,7 @@ class _SetFacingAction implements Action {
 
   @override
   void apply(World world) {
-    world.storeOf<PlatformerController>().get(entity)?.facingSign = facing;
+    world.componentsOf<PlatformerController>().get(entity)?.facingSign = facing;
   }
 }
 
@@ -550,11 +550,11 @@ class _SetFacingAndVelocityAction implements Action {
 
   @override
   void apply(World world) {
-    final controller = world.storeOf<PlatformerController>().get(entity);
+    final controller = world.componentsOf<PlatformerController>().get(entity);
     if (controller != null) {
       controller.facingSign = facing;
     }
-    world.storeOf<Velocity>().set(entity, Velocity(facing * speed, 0));
+    world.componentsOf<Velocity>().set(entity, Velocity(facing * speed, 0));
   }
 }
 
