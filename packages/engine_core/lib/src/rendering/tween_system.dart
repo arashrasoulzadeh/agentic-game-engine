@@ -22,7 +22,7 @@ class TweenSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final tweens = world.storeOf<Tween>();
+    final tweens = world.componentsOf<Tween>();
     for (var i = 0; i < tweens.length; i++) {
       final tween = tweens.denseAt(i);
       if (tween.isComplete) continue; // already fired its completion event

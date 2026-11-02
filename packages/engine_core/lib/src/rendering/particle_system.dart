@@ -41,8 +41,8 @@ class ParticleSystem implements System {
   }
 
   void _emit(World world, double dt) {
-    final emitters = world.storeOf<ParticleEmitter>();
-    final positions = world.storeOf<Position>();
+    final emitters = world.componentsOf<ParticleEmitter>();
+    final positions = world.componentsOf<Position>();
 
     for (var i = 0; i < emitters.length; i++) {
       final entity = emitters.entityAt(i);
@@ -114,12 +114,12 @@ class ParticleSystem implements System {
     final lifetime = _randomBetween(emitter.lifetimeMin, emitter.lifetimeMax);
 
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(spawnX, spawnY));
-    world.storeOf<Velocity>().set(
+    world.componentsOf<Position>().set(id, Position(spawnX, spawnY));
+    world.componentsOf<Velocity>().set(
       id,
       Velocity(cos(angle) * speed, sin(angle) * speed),
     );
-    world.storeOf<Particle>().set(
+    world.componentsOf<Particle>().set(
       id,
       Particle(
           lifetime: lifetime,
@@ -136,12 +136,12 @@ class ParticleSystem implements System {
   }
 
   void _applyForces(World world, double dt) {
-    final forces = world.storeOf<ParticleForces>();
+    final forces = world.componentsOf<ParticleForces>();
     if (forces.length == 0) return;
 
-    final particles = world.storeOf<Particle>();
-    final positions = world.storeOf<Position>();
-    final velocities = world.storeOf<Velocity>();
+    final particles = world.componentsOf<Particle>();
+    final positions = world.componentsOf<Position>();
+    final velocities = world.componentsOf<Velocity>();
 
     for (var i = 0; i < particles.length; i++) {
       final entity = particles.entityAt(i);
@@ -180,9 +180,9 @@ class ParticleSystem implements System {
   }
 
   void _followEmitters(World world, double dt) {
-    final particles = world.storeOf<Particle>();
-    final positions = world.storeOf<Position>();
-    final velocities = world.storeOf<Velocity>();
+    final particles = world.componentsOf<Particle>();
+    final positions = world.componentsOf<Position>();
+    final velocities = world.componentsOf<Velocity>();
 
     for (var i = 0; i < particles.length; i++) {
       final particle = particles.denseAt(i);
@@ -212,7 +212,7 @@ class ParticleSystem implements System {
       max <= min ? min : min + random.nextDouble() * (max - min);
 
   void _age(World world, double dt) {
-    final particles = world.storeOf<Particle>();
+    final particles = world.componentsOf<Particle>();
     final expired = <EntityId>[];
     for (var i = 0; i < particles.length; i++) {
       final particle = particles.denseAt(i);
