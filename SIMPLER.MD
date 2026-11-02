@@ -30,7 +30,7 @@ The phased plan below is the **executable** part. Everything after "Backlog refe
 - **G2 all packages**: G1 plus the same analyze/test in `engine_cli`, `engine_schema` (`dart`) and `engine_flutter`, `engine_platformer`, `engine_strategy`, `engine_idle` (`flutter analyze --fatal-infos --no-pub && flutter test --no-pub`). Required for any change to an exported core API.
 - **G3 perf**: run `packages/engine_core/benchmark/{world_step,entity_churn,collision_system,world_view,particle_system}_benchmark.dart` and `packages/engine_platformer/benchmark/*` before and after; allowed regression 10% (owner may change). Required for anything in `World`, `ComponentStore`, archetypes, event bus, systems loop, or any new per-entity wrapper.
 - **G4 core purity**: `grep -ri "flutter" packages/engine_core/lib` must print nothing; `grep -rE "Random\(|DateTime\.now" packages/engine_core/lib` must only hit `deterministic_random.dart` (plus any file allow-listed by Phase 7).
-- **G5 docs/ops**: regenerate bundled docs and `docs/reference/operations.md` when ops/docs changed; `git diff` shows only intended regeneration.
+- **G5 docs/ops**: when ops/docs changed, regenerate with `cd packages/engine_core && dart run tool/gen_bundled_docs.dart` and `cd packages/engine_api && dart run tool/gen_api_docs.dart > ../../docs/reference/operations.md`; `git diff` shows only intended regeneration (a drift test fails if stale).
 - **G6 end-to-end**: for CLI or cross-package dependency changes, run `game_agent create` against the pushed ref (or scratch copy offline) and confirm the generated project analyzes and tests.
 
 ### Baseline (measured 2026-11-02, working tree with 18 uncommitted/untracked files from other work)
@@ -42,8 +42,22 @@ The phased plan below is the **executable** part. Everything after "Backlog refe
 | engine_platformer | clean | 348 pass |
 | engine_strategy | clean | 46 pass |
 | engine_idle | clean | 196 pass |
-| engine_cli | clean | 129 pass, **1 FAIL**: `test/first_level_tutorial_test.dart` "the first-level tutorial steps work and the level validates" (expected exit 0, got 1) |
-Not yet measured: benchmark numbers (G3), `engine_api` and `engine_studio` suites, whether the CLI failure is pre-existing or caused by the dirty tree (the baseline was run without stashing).
+| engine_cli | clean | 131 pass (was 129 + 1 fail; see 0.2) |
+| engine_api | clean | 61 pass |
+| engine_studio | clean | 449 pass (445 + 4 new GitPanel tests) |
+(engine_core is 1322 with the 20 golden tests from 0.6.) The numbers above were re-measured on a clean HEAD (the two uncommitted alias files in `world.dart`/`component_registry.dart` were stashed and restored).
+
+Benchmark baseline (single run, 2026-11-02, this machine; lower is better; expect noise, so for G3 compare the median of 3 runs before vs after, same session, same load):
+| Benchmark | small | medium | large |
+|---|---|---|---|
+| world_step (movement only, n=100/1000/5000) | 7.3 us | 67.7 us | 358.5 us |
+| entity_churn (spawn+destroy, n=100/1000/5000) | 1654 us | 16738 us | 84422 us |
+| collision_system (packed, n=100/1000/5000) | 177 us | 1798 us | 509476 us (superlinear; very noisy) |
+| world_view nearestWithPosition (50/200/1000) | 58.5 us | 662 us | 13849 us |
+| particle_system (emitters=10/100/500) | 63.4 us | 621 us | 3327 us |
+| platformer full_pipeline (enemies=10/100/500) | 50.0 us | 672 us | 3240 us |
+| platformer tile_collision (n=50/500/2000) | 238 us | 2311 us | 9215 us |
+Run commands: core `cd packages/engine_core && dart run benchmark/<name>_benchmark.dart`; platformer needs the Flutter engine (`dart run` fails on dart:ui): `cd packages/engine_platformer && flutter test --no-pub benchmark/<name>_benchmark.dart`. macOS has no `timeout` command. The 10% threshold (D6) is tighter than run-to-run noise on the large sizes, so judge regressions on small/medium sizes and repeat before concluding.
 
 ### Decisions (D1-D6 CONFIRMED by owner 2026-11-02: defaults in bold accepted)
 - **D1 canonical collection accessor.** `World.components` is already the `ComponentRegistry` field, so the name is taken. **Keep `world.componentsOf<T>()` as the one public collection accessor; remove `component<T>()` and `getComponentStore<T>()` aliases; deprecate `storeOf<T>()`.** Value access is `getComponent/setComponent/hasComponent/removeComponent`; skip the `get/set/has/del` short aliases (API-explosion rule).
@@ -57,10 +71,11 @@ Not yet measured: benchmark numbers (G3), `engine_api` and `engine_studio` suite
 Each step lists: change -> required tests -> gate. "Docs" always means doc comments; extra docs are named.
 
 #### Phase 0: Stabilize (no new API)
-- [ ] 0.1 Resolve the 18 in-flight files: owner commits, stashes or discards them (not this plan's work). Do not start Phase 1 on a dirty tree. Gate: `git status` clean.
-- [ ] 0.2 Diagnose the `first_level_tutorial_test` failure on a clean tree; fix or record as known-pre-existing in `TODO.md`. Gate: `engine_cli` `dart test` green (or failure documented with cause).
-- [ ] 0.3 Record benchmark baseline numbers in this file (table) per G3.
-- [ ] 0.4 Confirm the operations-doc regeneration command from the `TODO.md` agent-API checklist and write it into G5 here.
+- [~] 0.1 Resolve the in-flight files. 16 of 18 were validated and committed (formatting, git panel + tests, this file). **Remaining: `engine_core/lib/src/ecs/world.dart` and `component_registry.dart` alias WIP, deliberately kept uncommitted by the owner** (no tests/docs; superseded by Phase 1.1). Phase 1 must start from a tree where these two are committed, reworked or discarded: do not begin 1.1 until the owner decides. A backup is not needed (it is in the working tree).
+- [x] 0.2 Diagnosed `first_level_tutorial_test`: real bug, pre-existing on clean HEAD. `game_agent studio` writes its undo journal to `.studio/undo/` next to the level it edits (`assets/levels/.studio/undo/*.json`), and `validate` then scanned those journal files as levels ("missing required key entities"). Fixed in `studio_command.dart` `_levelFiles` (skips `.studio`), regression test `engine_cli/test/level_files_journal_test.dart`. `engine_cli` now green (131).
+- [x] 0.3 Benchmark baseline recorded (table above).
+- [x] 0.4 Confirmed regeneration commands (no step 0.4 guess needed): operations reference = `cd packages/engine_api && dart run tool/gen_api_docs.dart > ../../docs/reference/operations.md` (from `docs/contributing-docs.md`; a drift test fails when stale); bundled docs = `cd packages/engine_core && dart run tool/gen_bundled_docs.dart`. Use these in G5.
+- [x] 0.6 Golden-behavior tests added: `packages/engine_core/test/golden_behavior_test.dart` (20 tests) pins event ordering, destroy-during-iteration and id reuse exactly as they behave today, so Phases 2/3 can show precisely what they change. Findings it locks (correcting earlier notes): events from systems are delivered after all systems ran; a handler-emitted event is delivered in a later round of the same flush; handlers match on exact runtime type; the 20-round cascade cap **defers** the remainder to the next flush (nothing is dropped); forward destroy-while-iterating skips every other entity; a stale id aliases the entity that reused the id and reports alive; ids are reused last-freed-first. When a later phase intentionally changes one of these, update that test in the same commit and say why in the message.
 - [x] 0.5 Owner answers D1-D6: defaults accepted 2026-11-02.
 
 #### Phase 1: Component access cleanup (applies D1)
@@ -69,7 +84,7 @@ Each step lists: change -> required tests -> gate. "Docs" always means doc comme
 - [ ] 1.3 Add `World.destroy` safety test that proves components are gone from all stores and archetypes. Gate: G1.
 
 #### Phase 2: Safe mutation foundations (needed before fluent APIs)
-- [ ] 2.1 Regression test demonstrating that destroying during dense iteration skips entities (swap-remove). Gate: G1 (test documents current behavior).
+- [x] 2.1 Done in 0.6 (`golden_behavior_test.dart`, "destroy during iteration" group).
 - [ ] 2.2 `EventBus.on` returns a subscription handle; add `off`/`once`. Handlers still keyed by runtimeType; document. Tests: unsubscribe stops delivery, once fires once, unsubscribe during flush is safe. Gate: G2, G3.
 - [ ] 2.3 Entity generations: stale `Entity`/id detection (`world.isAlive(entity)`), without changing the `int` id JSON format. Tests: reuse of a freed id is distinguishable. Gate: G2, G3 (`entity_churn`).
 - [ ] 2.4 Deferred ops (`WorldCommands`, name must not collide with editor `command/`): `spawn/destroy/set/remove` queued, applied after the system or at step end. Tests: destroy-while-iterating no longer skips. Gate: G2, G3.
@@ -161,7 +176,7 @@ Read before picking items; several "new" ideas below already exist in part. Each
 - [ ] **Deprecation path**: Mark `storeOf` deprecated with clear migration message pointing to component APIs.
 
 ## Smarter World API
-> Status: `EventBus` has only `on<T>`, `emit`, `flush`, `clearHandlers`. There is **no unsubscribe, no `once`**, so `world.on` auto-unsubscribe needs `on` to return a handle first. Handlers are keyed by `event.runtimeType` (a subclass event will not reach a base-type handler); document or fix. Flush caps at 20 cascade rounds and silently drops the rest; dev mode should warn. `World.step` already exists (add `update` as an alias only if you accept another alias). `onCollisionBetween/Involving/WithAny` already exist in `ecs/event_helpers.dart`, so the "collision callbacks" item is mostly done: expose them via the facade and add unsubscribe. `World.dispose()` exists and shuts down the job system only; it does not clear event handlers or systems.
+> Status: `EventBus` has only `on<T>`, `emit`, `flush`, `clearHandlers`. There is **no unsubscribe, no `once`**, so `world.on` auto-unsubscribe needs `on` to return a handle first. Handlers are keyed by `event.runtimeType` (a subclass event will not reach a base-type handler); document or fix. Flush caps at 20 cascade rounds and defers the remainder to the next flush (pinned in `golden_behavior_test.dart`); a runaway self-emitting handler therefore never terminates a step's flush cleanly, so dev mode should warn. `World.step` already exists (add `update` as an alias only if you accept another alias). `onCollisionBetween/Involving/WithAny` already exist in `ecs/event_helpers.dart`, so the "collision callbacks" item is mostly done: expose them via the facade and add unsubscribe. `World.dispose()` exists and shuts down the job system only; it does not clear event handlers or systems.
 - [ ] **Return a subscription handle from `EventBus.on`** (prerequisite for `once`, `off`, scene-scoped listeners).
 - [ ] **Leak guard**: `onCollision*` helpers register forever and are never removed when the entity dies; tie them to entity lifetime.
 - [ ] **Shortcuts**: `world.get<T>(id)`, `world.set<T>(id, T)`, `world.has<T>(id)`, `world.del<T>(id)` as ultra-short aliases.
