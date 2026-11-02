@@ -100,8 +100,7 @@ Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `leve
 - [ ] **Tiled mapping polish** and **hot-reload friendliness**.
 
 ### Physics, collision and movement
-`world.raycast` and `world.findNear` are extension wrappers over `raycast.dart` / `spatial_hash.dart`; check whether the hash is rebuilt per step before calling `findNear` cheap.
-- [ ] **Simple movement helpers**, **tilemap helpers** (`isSolid(x,y)`, tile/world coordinate conversion), **`world.raycast(from, to)`**, **`world.findNear(pos, radius)`**.
+- [ ] **Simple movement helpers** (`Movement.move(entity, dir * speed * dt)`). (`world.raycast`, `world.findNear` and `TileMap` world-coordinate helpers shipped; `findNear` is an O(n) scan, per-frame work should use `SpatialHash`.)
 
 ### Turn-based (lives in `engine_strategy`)
 - [ ] `TurnGame.setup(world)`, `unit.do(MoveTo/Attack)` via `OrderQueue`, `game.nextTurn()/endPlayerTurn()` callbacks, `game.select/selectAll/commandSelected`, opt-in AI turns.

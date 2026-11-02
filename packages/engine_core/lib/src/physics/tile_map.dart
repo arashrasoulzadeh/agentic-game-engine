@@ -227,6 +227,20 @@ class TileMap {
     return collisionGroups[tileId] ?? 1; // default group 1 for solid tiles
   }
 
+  /// Column containing world x [x] (the map's origin is world 0,0). Negative
+  /// or past-the-edge positions give out-of-range columns, which [tileAt]
+  /// reads as empty.
+  int colAtX(double x) => (x / tileWidth).floor();
+
+  /// Row containing world y [y]; see [colAtX].
+  int rowAtY(double y) => (y / tileHeight).floor();
+
+  /// Tile id under the world point ([x], [y]); 0 outside the map.
+  int tileAtWorld(double x, double y) => tileAt(colAtX(x), rowAtY(y));
+
+  /// Whether the world point ([x], [y]) is inside a solid tile.
+  bool isSolidAtWorld(double x, double y) => isSolid(colAtX(x), rowAtY(y));
+
   bool isSolid(int col, int row) => solidTileIds.contains(tileAt(col, row));
   bool isOneWay(int col, int row) => oneWayTileIds.contains(tileAt(col, row));
   bool isSlopeUpRight(int col, int row) =>
