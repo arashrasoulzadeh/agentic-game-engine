@@ -30,11 +30,41 @@ class Level {
   /// itself (attaching a live `InputState`, passing an id to
   /// `installPlatformerSystems`). An entity with no `"name"` isn't in
   /// the returned map at all; it's still spawned normally.
+  ///
+  /// By default unknown component names are skipped, so partial or
+  /// forward-compatible data still loads. With [strict] every component is
+  /// checked first (unknown name, not an object, or rejected by its own
+  /// `fromJson`) and a [LevelLoadException] lists every problem with its
+  /// `entities[i].components.name` path; nothing is spawned in that case.
   static Map<String, EntityId> loadInto(
     World world,
-    Map<String, dynamic> json,
-  ) {
+    Map<String, dynamic> json, {
+    bool strict = false,
+  }) {
     final entities = validate(json);
+    if (strict) {
+      final problems = <String>[];
+      for (var i = 0; i < entities.length; i++) {
+        final components =
+            entities[i]['components'] as Map<String, dynamic>? ?? const {};
+        for (final entry in components.entries) {
+          final problem = world.components.checkComponent(
+            entry.key,
+            entry.value,
+          );
+          if (problem != null) {
+            problems.add('entities[$i].components.${entry.key}: $problem');
+          }
+        }
+      }
+      if (problems.isNotEmpty) {
+        throw LevelLoadException(
+          'Level has ${problems.length} invalid component '
+          '${problems.length == 1 ? 'entry' : 'entries'}:\n  '
+          '${problems.join('\n  ')}',
+        );
+      }
+    }
     final named = <String, EntityId>{};
     for (final entityJson in entities) {
       final id = world.spawn();

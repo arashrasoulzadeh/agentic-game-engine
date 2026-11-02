@@ -93,7 +93,7 @@ Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `leve
 - [x] Prefab audit: `Prefab` (data, `prefab.*` operations) existed but had no runtime spawn. `PrefabRegistry.register/registerJson/spawn(world, name, x, y)` shipped; it validates every component up front. **Finding:** `Level.loadInto` (via `applyToEntity`) silently skips unknown component names, so a typo in a level drops the component without a word. See the validation item below.
 - [ ] **Auto-spawn from prefab** (`PrefabRef` component).
 - [ ] **Component defaults on level load**.
-- [ ] **Validation with fixes** (including: warn or fail on unknown component names in `Level.loadInto`; today it silently skips them, by design for forward-compatible patches, so it needs an opt-in strict mode): messages like "missing Position on entity 'player', add {...}"; extend `level_validator.dart`, do not add a second validator.
+- [ ] **Validation with fixes** (`Level.loadInto(strict: true)` shipped: lists every unknown or malformed component with its path, all-or-nothing; the default still skips unknown names. Not done: fix suggestions in messages, and using strict in `project.doctor`/CLI validate): messages like "missing Position on entity 'player', add {...}"; extend `level_validator.dart`, do not add a second validator.
 - [ ] **Tiled mapping polish** and **hot-reload friendliness**.
 
 ### Physics, collision and movement
