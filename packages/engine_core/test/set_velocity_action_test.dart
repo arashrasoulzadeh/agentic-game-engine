@@ -8,13 +8,13 @@ void main() {
       registerCoreComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
 
       final action = SetVelocityAction(id, 50, 30);
       action.apply(world);
 
-      final vel = world.storeOf<Velocity>().get(id)!;
+      final vel = world.componentsOf<Velocity>().get(id)!;
       expect(vel.x, 50);
       expect(vel.y, 30);
     });
@@ -24,13 +24,13 @@ void main() {
       registerCoreComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(100, 100));
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(100, 100));
 
       final action = SetVelocityAction(id, -20, 40);
       action.apply(world);
 
-      final vel = world.storeOf<Velocity>().get(id)!;
+      final vel = world.componentsOf<Velocity>().get(id)!;
       expect(vel.x, -20);
       expect(vel.y, 40);
     });
@@ -40,14 +40,14 @@ void main() {
       registerCoreComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Position>().set(id, Position(0, 0));
       // No Velocity component initially
 
       final action = SetVelocityAction(id, 50, 30);
       action.apply(world);
 
       // Action creates the Velocity component
-      final vel = world.storeOf<Velocity>().get(id);
+      final vel = world.componentsOf<Velocity>().get(id);
       expect(vel, isNotNull);
       expect(vel!.x, 50);
       expect(vel.y, 30);

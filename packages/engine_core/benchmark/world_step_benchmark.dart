@@ -21,8 +21,8 @@ class WorldStepBenchmark extends BenchmarkBase {
 
     for (var i = 0; i < entityCount; i++) {
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position((i % 100) * 10.0, (i ~/ 100) * 10.0));
-      world.storeOf<Velocity>().set(id, Velocity(10, 5));
+      world.componentsOf<Position>().set(id, Position((i % 100) * 10.0, (i ~/ 100) * 10.0));
+      world.componentsOf<Velocity>().set(id, Velocity(10, 5));
     }
   }
 

@@ -19,11 +19,11 @@ World _world(GridNavigator nav) {
 
 EntityId _unit(World w, String team, int c, int r, {int? size, int ap = 30}) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
-  if (size != null) w.storeOf<GridFootprint>().set(e, GridFootprint(size));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
+  if (size != null) w.componentsOf<GridFootprint>().set(e, GridFootprint(size));
   return e;
 }
 
@@ -66,14 +66,14 @@ void main() {
       final big = _unit(w, 'red', 4, 4, size: 2);
       final me = _unit(w, 'blue', 0, 0);
       final blocked = occupiedBy(
-        w.storeOf<GridPosition>(),
+        w.componentsOf<GridPosition>(),
         me,
-        footprints: w.storeOf<GridFootprint>(),
+        footprints: w.componentsOf<GridFootprint>(),
       );
       expect(blocked(5, 5), isTrue);
       expect(blocked(4, 5), isTrue);
       expect(blocked(6, 4), isFalse);
-      expect(w.storeOf<GridPosition>().get(big)!.col, 4);
+      expect(w.componentsOf<GridPosition>().get(big)!.col, 4);
     });
 
     test(
@@ -84,9 +84,9 @@ void main() {
         _unit(w, 'red', 5, 0);
         final big = _unit(w, 'blue', 0, 0, size: 2);
         final blocked = occupiedBy(
-          w.storeOf<GridPosition>(),
+          w.componentsOf<GridPosition>(),
           big,
-          footprints: w.storeOf<GridFootprint>(),
+          footprints: w.componentsOf<GridFootprint>(),
           navigator: _nav({3}),
         );
         expect(
@@ -109,7 +109,7 @@ void main() {
       startTurnBasedGame(wide, ['red', 'blue']);
       submitOrder(wide, a, const MoveOrder(4, 6));
       wide.step(0.1);
-      expect(wide.storeOf<GridPosition>().get(a)!.row, 6);
+      expect(wide.componentsOf<GridPosition>().get(a)!.row, 6);
 
       final narrow = _world(_nav({4}));
       final b = _unit(narrow, 'red', 4, 2, size: 2);
@@ -118,12 +118,12 @@ void main() {
       submitOrder(narrow, b, const MoveOrder(4, 6));
       narrow.step(0.1);
       expect(
-        narrow.storeOf<GridPosition>().get(b)!.row,
+        narrow.componentsOf<GridPosition>().get(b)!.row,
         2,
         reason: 'could not get through',
       );
       expect(
-        narrow.storeOf<OrderQueue>().get(b)!.orders,
+        narrow.componentsOf<OrderQueue>().get(b)!.orders,
         isEmpty,
         reason: 'order failed as blocked',
       );
@@ -136,7 +136,7 @@ void main() {
       startTurnBasedGame(w, ['red', 'blue']);
       submitOrder(w, a, const MoveOrder(4, 6));
       w.step(0.1);
-      expect(w.storeOf<GridPosition>().get(a)!.row, 6);
+      expect(w.componentsOf<GridPosition>().get(a)!.row, 6);
     });
   });
 
@@ -152,7 +152,7 @@ void main() {
         w.events.on<AttackResolvedEvent>(hits.add);
         submitOrder(w, hitter, AttackOrder(big));
         w.step(0.1);
-        final pos = w.storeOf<GridPosition>().get(hitter)!;
+        final pos = w.componentsOf<GridPosition>().get(hitter)!;
         expect(
           [pos.col, pos.row],
           [5, 8],
@@ -171,19 +171,19 @@ void main() {
       w.addSystem(RealtimeOrderSystem(fields: FlowFieldCache(nav)));
       final big = _unit(w, 'blue', 3, 0, size: 2);
       final walker = w.spawn();
-      w.storeOf<Team>().set(walker, Team('red'));
-      w.storeOf<GridPosition>().set(walker, GridPosition(0, 0));
-      w.storeOf<RealtimeStats>().set(walker, RealtimeStats(speed: 10));
-      w.storeOf<OrderQueue>().set(walker, OrderQueue([const MoveOrder(6, 0)]));
+      w.componentsOf<Team>().set(walker, Team('red'));
+      w.componentsOf<GridPosition>().set(walker, GridPosition(0, 0));
+      w.componentsOf<RealtimeStats>().set(walker, RealtimeStats(speed: 10));
+      w.componentsOf<OrderQueue>().set(walker, OrderQueue([const MoveOrder(6, 0)]));
       for (var i = 0; i < 80; i++) {
         w.step(0.1);
       }
       final cells = <int>{};
       for (var i = 0; i < 1; i++) {
-        final p = w.storeOf<GridPosition>().get(walker)!;
+        final p = w.componentsOf<GridPosition>().get(walker)!;
         cells.add(p.col);
         expect(
-          footprintsOverlap(p, 1, w.storeOf<GridPosition>().get(big)!, 2),
+          footprintsOverlap(p, 1, w.componentsOf<GridPosition>().get(big)!, 2),
           isFalse,
           reason: 'walker at (${p.col},${p.row}) is inside the 2x2 body',
         );
@@ -229,11 +229,11 @@ void main() {
       w.addSystem(RealtimeOrderSystem(fields: FlowFieldCache(nav)));
       EntityId unit(int size) {
         final e = w.spawn();
-        w.storeOf<Team>().set(e, Team('red'));
-        w.storeOf<GridPosition>().set(e, GridPosition(4, 1));
-        w.storeOf<RealtimeStats>().set(e, RealtimeStats(speed: 10));
-        w.storeOf<OrderQueue>().set(e, OrderQueue([const MoveOrder(4, 8)]));
-        if (size > 1) w.storeOf<GridFootprint>().set(e, GridFootprint(size));
+        w.componentsOf<Team>().set(e, Team('red'));
+        w.componentsOf<GridPosition>().set(e, GridPosition(4, 1));
+        w.componentsOf<RealtimeStats>().set(e, RealtimeStats(speed: 10));
+        w.componentsOf<OrderQueue>().set(e, OrderQueue([const MoveOrder(4, 8)]));
+        if (size > 1) w.componentsOf<GridFootprint>().set(e, GridFootprint(size));
         return e;
       }
 
@@ -245,12 +245,12 @@ void main() {
         w.step(0.1);
       }
       expect(
-        w.storeOf<GridPosition>().get(small)!.row,
+        w.componentsOf<GridPosition>().get(small)!.row,
         greaterThan(4),
         reason: 'the small unit passed the wall',
       );
       expect(
-        w.storeOf<GridPosition>().get(big)!.row,
+        w.componentsOf<GridPosition>().get(big)!.row,
         lessThan(4),
         reason: 'the big unit stayed north of it',
       );

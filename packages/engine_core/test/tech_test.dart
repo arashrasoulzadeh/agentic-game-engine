@@ -17,11 +17,11 @@ _Rig _rig({List<String> requires = const ['barracks']}) {
   w.addSystem(ConstructionSystem());
   w.addSystem(ProductionSystem(_nav()));
   final t = Treasury('red', amounts: {'gold': 100});
-  w.storeOf<Treasury>().set(w.spawn(), t);
+  w.componentsOf<Treasury>().set(w.spawn(), t);
   final stable = w.spawn();
-  w.storeOf<Team>().set(stable, Team('red'));
-  w.storeOf<GridPosition>().set(stable, GridPosition(6, 6));
-  w.storeOf<Producer>().set(
+  w.componentsOf<Team>().set(stable, Team('red'));
+  w.componentsOf<GridPosition>().set(stable, GridPosition(6, 6));
+  w.componentsOf<Producer>().set(
     stable,
     Producer(
       cost: {'gold': 30},
@@ -74,7 +74,7 @@ void main() {
         100,
         reason: 'nothing charged while locked',
       );
-      expect(r.world.storeOf<Producer>().get(r.stable)!.progress, 0);
+      expect(r.world.componentsOf<Producer>().get(r.stable)!.progress, 0);
     },
   );
 
@@ -84,7 +84,7 @@ void main() {
     _barracks(r.world, 'red');
     _run(r.world, 3);
     expect(
-      r.world.storeOf<Producer>().get(r.stable)!.queued,
+      r.world.componentsOf<Producer>().get(r.stable)!.queued,
       0,
       reason: 'a knight was made',
     );
@@ -98,16 +98,16 @@ void main() {
       queueProduction(r.world, r.stable);
       _barracks(r.world, 'red', buildSeconds: 3);
       _run(r.world, 2);
-      expect(r.world.storeOf<Producer>().get(r.stable)!.progress, 0);
+      expect(r.world.componentsOf<Producer>().get(r.stable)!.progress, 0);
       _run(r.world, 3);
-      expect(r.world.storeOf<Producer>().get(r.stable)!.queued, 0);
+      expect(r.world.componentsOf<Producer>().get(r.stable)!.queued, 0);
     },
   );
 
   test('another team\'s building does not unlock it', () {
     final r = _rig();
     queueProduction(r.world, r.stable);
-    r.world.storeOf<Treasury>().set(
+    r.world.componentsOf<Treasury>().set(
       r.world.spawn(),
       Treasury('blue'),
     ); // placeBuilding needs one
@@ -139,7 +139,7 @@ void main() {
     ); // idempotent, one TechState per team
     _run(r.world, 3);
     expect(r.treasury.of('gold'), 70);
-    expect(r.world.storeOf<TechState>().length, 2);
+    expect(r.world.componentsOf<TechState>().length, 2);
   });
 
   test(

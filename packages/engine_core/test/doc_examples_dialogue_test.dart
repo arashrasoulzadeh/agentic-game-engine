@@ -8,7 +8,7 @@ void main() {
   setUp(() {
     world = World(width: 800, height: 480);
     registerCoreComponents(world);
-    world.storeOf<GameState>().set(world.spawn(), GameState({'name': 'Mira'}));
+    world.componentsOf<GameState>().set(world.spawn(), GameState({'name': 'Mira'}));
   });
 
   final strings = StringTable({
@@ -64,7 +64,7 @@ void main() {
       'shop.leave',
     ]);
 
-    world.storeOf<GameState>().set(
+    world.componentsOf<GameState>().set(
       world.entities.all.first,
       GameState({'name': 'Mira', 'is_vip': true}),
     );

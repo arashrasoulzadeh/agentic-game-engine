@@ -108,9 +108,9 @@ void main() {
     registerCoreComponents(w);
     final a = w.spawn();
     final b = w.spawn();
-    w.storeOf<Position>().set(a, Position(0, 0));
-    w.storeOf<Position>().set(b, Position(1, 1));
-    w.storeOf<Velocity>().set(a, Velocity(0, 0));
+    w.componentsOf<Position>().set(a, Position(0, 0));
+    w.componentsOf<Position>().set(b, Position(1, 1));
+    w.componentsOf<Velocity>().set(a, Velocity(0, 0));
     final counts = w.componentCounts();
     expect(counts['position'], 2);
     expect(counts['velocity'], 1);

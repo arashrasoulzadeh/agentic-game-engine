@@ -20,10 +20,10 @@ EntityId _unit(
   int def = 0,
 }) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(
     e,
     UnitStats(maxHp: hp, attack: atk, defense: def),
   );
@@ -39,7 +39,7 @@ void main() {
         final archer = _unit(w, 'red', 0, 0);
         final knight = _unit(w, 'red', 0, 1);
         final target = _unit(w, 'blue', 3, 0);
-        w.storeOf<AttackProfile>().set(archer, AttackProfile(range: 3));
+        w.componentsOf<AttackProfile>().set(archer, AttackProfile(range: 3));
         startTurnBasedGame(w, ['red', 'blue']);
         final failed = <OrderFailedEvent>[];
         w.events.on<OrderFailedEvent>(failed.add);
@@ -47,8 +47,8 @@ void main() {
         submitOrder(w, archer, AttackOrder(target));
         submitOrder(w, knight, AttackOrder(target));
         w.step(0.1);
-        expect(w.storeOf<UnitStats>().get(target)!.hp, 16);
-        expect(w.storeOf<GridPosition>().get(archer)!.col, 0);
+        expect(w.componentsOf<UnitStats>().get(target)!.hp, 16);
+        expect(w.componentsOf<GridPosition>().get(archer)!.col, 0);
         expect(failed.single.entity, knight);
         expect(failed.single.reason, OrderFailure.outOfRange);
       },
@@ -58,24 +58,24 @@ void main() {
       final w = _world();
       final mage = _unit(w, 'red', 0, 0, ap: 3);
       final target = _unit(w, 'blue', 1, 0);
-      w.storeOf<AttackProfile>().set(mage, AttackProfile(range: 1, cost: 3));
+      w.componentsOf<AttackProfile>().set(mage, AttackProfile(range: 1, cost: 3));
       startTurnBasedGame(w, ['red', 'blue']);
       submitOrder(w, mage, AttackOrder(target));
       w.step(0.1);
-      expect(w.storeOf<ActionPoints>().get(mage)!.current, 0);
-      expect(w.storeOf<UnitStats>().get(target)!.hp, 16);
+      expect(w.componentsOf<ActionPoints>().get(mage)!.current, 0);
+      expect(w.componentsOf<UnitStats>().get(target)!.hp, 16);
     });
 
     test('approaching stops at the unit\'s own reach, not the global one', () {
       final w = _world(approach: true);
       final archer = _unit(w, 'red', 0, 0);
       final target = _unit(w, 'blue', 6, 0);
-      w.storeOf<AttackProfile>().set(archer, AttackProfile(range: 3));
+      w.componentsOf<AttackProfile>().set(archer, AttackProfile(range: 3));
       startTurnBasedGame(w, ['red', 'blue']);
       submitOrder(w, archer, AttackOrder(target));
       w.step(0.1);
-      expect(w.storeOf<GridPosition>().get(archer)!.col, 3);
-      expect(w.storeOf<UnitStats>().get(target)!.hp, 16);
+      expect(w.componentsOf<GridPosition>().get(archer)!.col, 3);
+      expect(w.componentsOf<UnitStats>().get(target)!.hp, 16);
     });
 
     test('JSON round trip and defaults', () {
@@ -130,7 +130,7 @@ void main() {
       startTurnBasedGame(w, ['red', 'blue']);
       submitOrder(w, a, AttackOrder(b));
       w.step(0.1);
-      expect(w.storeOf<UnitStats>().get(b)!.hp, 20 - (4 + 3 - 1));
+      expect(w.componentsOf<UnitStats>().get(b)!.hp, 20 - (4 + 3 - 1));
     });
 
     test(
@@ -143,8 +143,8 @@ void main() {
         applyStatus(w, a, StatusEffect('x', defense: 1));
         applyStatus(w, a, StatusEffect('x', defense: 5));
         w.events.flush();
-        expect(w.storeOf<StatusEffects>().get(a)!.effects, hasLength(1));
-        expect(w.storeOf<StatusEffects>().get(a)!.defenseBonus, 5);
+        expect(w.componentsOf<StatusEffects>().get(a)!.effects, hasLength(1));
+        expect(w.componentsOf<StatusEffects>().get(a)!.defenseBonus, 5);
         expect(seen, ['x', 'x']);
       },
     );
@@ -169,9 +169,9 @@ void main() {
         ]); // red's turn 1 starts: short 1->0, long 2->1
         w.events.flush();
         expect(expired, ['$red:short']);
-        expect(w.storeOf<StatusEffects>().get(red)!.has('long'), isTrue);
+        expect(w.componentsOf<StatusEffects>().get(red)!.has('long'), isTrue);
         expect(
-          w.storeOf<StatusEffects>().get(blue)!.has('theirs'),
+          w.componentsOf<StatusEffects>().get(blue)!.has('theirs'),
           isTrue,
           reason: 'not blue\'s turn yet',
         );
@@ -181,7 +181,7 @@ void main() {
         w.events.flush();
         expect(expired, contains('$red:long'));
         expect(expired, contains('$blue:theirs'));
-        expect(w.storeOf<StatusEffects>().get(red)!.effects, isEmpty);
+        expect(w.componentsOf<StatusEffects>().get(red)!.effects, isEmpty);
       },
     );
   });
@@ -196,20 +196,20 @@ void main() {
         startTurnBasedGame(w, ['red', 'blue']);
         submitOrder(w, red, const DefendOrder());
         w.step(0.1);
-        expect(w.storeOf<ActionPoints>().get(red)!.current, 0);
-        expect(w.storeOf<StatusEffects>().get(red)!.has('defending'), isTrue);
+        expect(w.componentsOf<ActionPoints>().get(red)!.current, 0);
+        expect(w.componentsOf<StatusEffects>().get(red)!.has('defending'), isTrue);
 
         endTurn(w);
         submitOrder(w, blue, AttackOrder(red));
         w.step(0.1);
         expect(
-          w.storeOf<UnitStats>().get(red)!.hp,
+          w.componentsOf<UnitStats>().get(red)!.hp,
           20 - (5 - 2),
           reason: 'defense 0 + 2 from defending',
         );
 
         endTurn(w); // red's turn again: defending (turns 1) expires
-        expect(w.storeOf<StatusEffects>().get(red)!.has('defending'), isFalse);
+        expect(w.componentsOf<StatusEffects>().get(red)!.has('defending'), isFalse);
       },
     );
 
@@ -223,7 +223,7 @@ void main() {
       startTurnBasedGame(w, ['red', 'blue']);
       submitOrder(w, u, const DefendOrder());
       w.step(0.1);
-      expect(w.storeOf<StatusEffects>().get(u)!.defenseBonus, 4);
+      expect(w.componentsOf<StatusEffects>().get(u)!.defenseBonus, 4);
     });
 
     test('with no points left it waits and resumes next turn', () {
@@ -234,24 +234,24 @@ void main() {
       trySpendActionPoints(w, red, 2);
       submitOrder(w, red, const DefendOrder());
       w.step(0.1);
-      expect(w.storeOf<StatusEffects>().has(red), isFalse);
-      expect(w.storeOf<OrderQueue>().get(red)!.orders, hasLength(1));
+      expect(w.componentsOf<StatusEffects>().has(red), isFalse);
+      expect(w.componentsOf<OrderQueue>().get(red)!.orders, hasLength(1));
       endTurn(w);
       endTurn(w);
       w.step(0.1);
-      expect(w.storeOf<StatusEffects>().get(red)!.has('defending'), isTrue);
-      expect(w.storeOf<OrderQueue>().get(red)!.orders, isEmpty);
+      expect(w.componentsOf<StatusEffects>().get(red)!.has('defending'), isTrue);
+      expect(w.componentsOf<OrderQueue>().get(red)!.orders, isEmpty);
     });
 
     test('a unit without ActionPoints cannot defend', () {
       final w = _world();
       final e = _unit(w, 'red', 0, 0);
-      w.storeOf<ActionPoints>().remove(e);
+      w.componentsOf<ActionPoints>().remove(e);
       _unit(w, 'blue', 4, 4);
       startTurnBasedGame(w, ['red', 'blue']);
       final failed = <OrderFailedEvent>[];
       w.events.on<OrderFailedEvent>(failed.add);
-      w.storeOf<OrderQueue>().set(e, OrderQueue([const DefendOrder()]));
+      w.componentsOf<OrderQueue>().set(e, OrderQueue([const DefendOrder()]));
       w.step(0.1);
       expect(failed.single.reason, OrderFailure.invalidTarget);
     });

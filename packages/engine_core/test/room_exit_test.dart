@@ -16,7 +16,7 @@ void main() {
       registerCoreComponents(world);
 
       final id = world.spawn();
-      world.storeOf<RoomExit>().set(
+      world.componentsOf<RoomExit>().set(
         id,
         RoomExit('caveEntrance', 'doorFromOverworld'),
       );
@@ -30,7 +30,7 @@ void main() {
       world.components.applyToEntity(id, {
         'roomExit': {'targetSceneId': 'town', 'spawnPoint': 'doorFromCave'},
       });
-      expect(world.storeOf<RoomExit>().get(id)!.targetSceneId, 'town');
+      expect(world.componentsOf<RoomExit>().get(id)!.targetSceneId, 'town');
     },
   );
 }

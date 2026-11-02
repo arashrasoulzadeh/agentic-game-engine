@@ -51,7 +51,7 @@ void main() {
           {'type': 'leaf', 'id': 'walk', 'behaviorId': 'patrol'},
         ],
       };
-      world.storeOf<AIState>().set(
+      world.componentsOf<AIState>().set(
         guard,
         AIState('tree', memory: {'_bt_root': tree}),
       );
@@ -106,7 +106,7 @@ void main() {
           'player_lost': (ctx) => !visible,
         },
       );
-      world.storeOf<AIState>().set(
+      world.componentsOf<AIState>().set(
         guard,
         AIState('fsm', memory: {'_fsm_root': json}),
       );
@@ -188,26 +188,26 @@ void main() {
   test('hearing: a sound in range is remembered; one out of range is not', () {
     world.addSystem(HearingSystem());
     final guardPos = Position(100, 100);
-    world.storeOf<Position>().set(guard, guardPos);
-    world.storeOf<HearingComponent>().set(guard, HearingComponent(range: 200));
-    world.storeOf<AIState>().set(guard, AIState('idle'));
+    world.componentsOf<Position>().set(guard, guardPos);
+    world.componentsOf<HearingComponent>().set(guard, HearingComponent(range: 200));
+    world.componentsOf<AIState>().set(guard, AIState('idle'));
 
     world.events.emit(
       const SoundEvent(x: 150, y: 100, loudness: 120, tag: 'footstep'),
     );
     world.step(1 / 60);
     final heard =
-        world.storeOf<AIState>().get(guard)!.memory['lastHeardSound'] as Map;
+        world.componentsOf<AIState>().get(guard)!.memory['lastHeardSound'] as Map;
     expect(heard['x'], 150);
     expect(heard['tag'], 'footstep');
 
-    world.storeOf<AIState>().get(guard)!.memory.clear();
+    world.componentsOf<AIState>().get(guard)!.memory.clear();
     world.events.emit(
       const SoundEvent(x: 400, y: 100, loudness: 120),
     ); // 300 away, louder than range or not
     world.step(1 / 60);
     expect(
-      world.storeOf<AIState>().get(guard)!.memory.containsKey('lastHeardSound'),
+      world.componentsOf<AIState>().get(guard)!.memory.containsKey('lastHeardSound'),
       isFalse,
     );
   });

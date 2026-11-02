@@ -8,7 +8,7 @@ World _world({bool fog = false}) {
   final w = World(width: 10, height: 10);
   registerCoreComponents(w);
   if (fog) {
-    w.storeOf<FogOfWar>().set(w.spawn(), FogOfWar(10, 10));
+    w.componentsOf<FogOfWar>().set(w.spawn(), FogOfWar(10, 10));
     w.addSystem(VisionSystem());
   }
   w.addSystem(OrderSystem.withNavigator(_nav()));
@@ -26,16 +26,16 @@ EntityId _unit(
   int? vision,
 }) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: maxHp, hp: hp));
-  if (vision != null) w.storeOf<Vision>().set(e, Vision(vision));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(e, UnitStats(maxHp: maxHp, hp: hp));
+  if (vision != null) w.componentsOf<Vision>().set(e, Vision(vision));
   return e;
 }
 
 Order _first(World w, EntityId e) =>
-    w.storeOf<OrderQueue>().get(e)!.orders.first;
+    w.componentsOf<OrderQueue>().get(e)!.orders.first;
 
 void _play(World w, TurnAI ai, {String team = 'blue'}) {
   startTurnBasedGame(w, ['red', 'blue']);
@@ -94,7 +94,7 @@ void main() {
           8,
           reason: '3 points of movement straight away from the enemy at (4,4)',
         );
-        expect(w.storeOf<OrderQueue>().get(hurt)!.orders, hasLength(1));
+        expect(w.componentsOf<OrderQueue>().get(hurt)!.orders, hasLength(1));
       },
     );
 
@@ -155,7 +155,7 @@ void main() {
         w.step(0.1);
         endTurn(w);
         ai.playTurn(w, 'blue');
-        return w.storeOf<OrderQueue>().get(u)?.orders ?? const [];
+        return w.componentsOf<OrderQueue>().get(u)?.orders ?? const [];
       }
 
       expect(
@@ -193,7 +193,7 @@ void main() {
         w.step(0.1);
         endTurn(w);
         TacticalAI(defendWhenIdle: defend).playTurn(w, 'blue');
-        final queue = w.storeOf<OrderQueue>().get(u)?.orders ?? const [];
+        final queue = w.componentsOf<OrderQueue>().get(u)?.orders ?? const [];
         expect(queue.any((o) => o is DefendOrder), defend);
       }
     });
@@ -206,14 +206,14 @@ void main() {
     final spent = _unit(w, 'blue', 2, 0);
     startTurnBasedGame(w, ['red', 'blue']);
     endTurn(w);
-    w.storeOf<ActionPoints>().get(spent)!.current = 0;
-    w.storeOf<OrderQueue>().set(
+    w.componentsOf<ActionPoints>().get(spent)!.current = 0;
+    w.componentsOf<OrderQueue>().set(
       a,
       OrderQueue([const MoveOrder(9, 9), const MoveOrder(8, 8)]),
     );
     TacticalAI().playTurn(w, 'blue');
-    expect(w.storeOf<OrderQueue>().get(a)!.orders.single, isA<AttackOrder>());
-    expect(w.storeOf<OrderQueue>().get(spent)?.orders ?? const [], isEmpty);
+    expect(w.componentsOf<OrderQueue>().get(a)!.orders.single, isA<AttackOrder>());
+    expect(w.componentsOf<OrderQueue>().get(spent)?.orders ?? const [], isEmpty);
   });
 
   test('it only targets what its team can see', () {
@@ -224,7 +224,7 @@ void main() {
     w.step(0.1);
     endTurn(w);
     TacticalAI().playTurn(w, 'blue');
-    final queue = w.storeOf<OrderQueue>().get(u)?.orders ?? const [];
+    final queue = w.componentsOf<OrderQueue>().get(u)?.orders ?? const [];
     expect(queue.whereType<AttackOrder>(), isEmpty);
   });
 
@@ -234,14 +234,14 @@ void main() {
     w.addSystem(WinConditionSystem());
     installCombat(w);
     final hero = _unit(w, 'red', 0, 0, hp: 40);
-    w.storeOf<UnitStats>().get(hero)!.attack = 6;
+    w.componentsOf<UnitStats>().get(hero)!.attack = 6;
     _unit(w, 'blue', 5, 0, hp: 10);
     startTurnBasedGame(w, ['red', 'blue']);
     for (var round = 0; round < 12 && turnStateOf(w)!.winner == null; round++) {
       final enemies = [
-        for (var i = 0; i < w.storeOf<Team>().length; i++)
-          if (w.storeOf<Team>().denseAt(i).id == 'blue')
-            w.storeOf<Team>().entityAt(i),
+        for (var i = 0; i < w.componentsOf<Team>().length; i++)
+          if (w.componentsOf<Team>().denseAt(i).id == 'blue')
+            w.componentsOf<Team>().entityAt(i),
       ];
       if (enemies.isNotEmpty) submitOrder(w, hero, AttackOrder(enemies.first));
       w.step(0.1);

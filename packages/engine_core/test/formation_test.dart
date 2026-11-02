@@ -81,7 +81,7 @@ void main() {
       final w = World(width: 12, height: 12);
       registerCoreComponents(w);
       for (final p in positions) {
-        w.storeOf<GridPosition>().set(w.spawn(), GridPosition(p.$1, p.$2));
+        w.componentsOf<GridPosition>().set(w.spawn(), GridPosition(p.$1, p.$2));
       }
       return w;
     }
@@ -133,8 +133,8 @@ void main() {
     List<(int, int)> targets(World w) => [
       for (final e in selectedEntities(w))
         (
-          (w.storeOf<OrderQueue>().get(e)!.orders.single as MoveOrder).col,
-          (w.storeOf<OrderQueue>().get(e)!.orders.single as MoveOrder).row,
+          (w.componentsOf<OrderQueue>().get(e)!.orders.single as MoveOrder).col,
+          (w.componentsOf<OrderQueue>().get(e)!.orders.single as MoveOrder).row,
         ),
     ];
 
@@ -170,7 +170,7 @@ void main() {
       commandSelected(w, 9, 9, team: 'red', formation: _nav());
       for (final e in selectedEntities(w)) {
         expect(
-          (w.storeOf<OrderQueue>().get(e)!.orders.single as AttackOrder).target,
+          (w.componentsOf<OrderQueue>().get(e)!.orders.single as AttackOrder).target,
           foe,
         );
       }

@@ -27,7 +27,7 @@ void main() {
     });
 
     expect(world.entities.count, 2);
-    final positions = world.storeOf<Position>().length;
+    final positions = world.componentsOf<Position>().length;
     expect(positions, 2);
   });
 
@@ -53,7 +53,7 @@ void main() {
       });
 
       expect(named.keys, {'player', 'door'});
-      expect(world.storeOf<Position>().get(named['player']!)?.x, 10);
+      expect(world.componentsOf<Position>().get(named['player']!)?.x, 10);
     },
   );
 
@@ -82,7 +82,7 @@ void main() {
     });
 
     expect(world.entities.count, 1);
-    expect(world.storeOf<Position>().length, 0);
+    expect(world.componentsOf<Position>().length, 0);
   });
 
   test('looksLikeDocument is true only when entities is a list', () {

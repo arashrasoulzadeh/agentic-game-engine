@@ -7,16 +7,16 @@ World _world({bool Function(int, int)? walls}) {
   w.addSystem(VisionSystem(blocksSight: walls ?? (_, __) => false));
   w.addSystem(OrderSystem());
   final fog = w.spawn();
-  w.storeOf<FogOfWar>().set(fog, FogOfWar(10, 10));
+  w.componentsOf<FogOfWar>().set(fog, FogOfWar(10, 10));
   return w;
 }
 
 EntityId _unit(World w, String team, int c, int r, {int? vision}) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(5, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  if (vision != null) w.storeOf<Vision>().set(e, Vision(vision));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(5, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  if (vision != null) w.componentsOf<Vision>().set(e, Vision(vision));
   return e;
 }
 
@@ -50,7 +50,7 @@ void main() {
     final fog = fogOf(w)!;
     expect(fog.isVisible('red', 6, 5), isTrue);
     expect(fog.isVisible('red', 8, 5), isFalse);
-    w.storeOf<GridPosition>().get(a)!
+    w.componentsOf<GridPosition>().get(a)!
       ..col = 0
       ..row = 0;
     w.step(0.1);

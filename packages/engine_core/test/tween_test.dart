@@ -78,7 +78,7 @@ void main() {
     final world = _buildWorld();
     final id = world.spawn();
     final tween = Tween(from: 0, to: 10, duration: 1);
-    world.storeOf<Tween>().set(id, tween);
+    world.componentsOf<Tween>().set(id, tween);
 
     world.step(0.5);
     expect(tween.elapsed, closeTo(0.5, 0.001));
@@ -91,7 +91,7 @@ void main() {
   test('TweenSystem emits TweenCompleteEvent exactly once', () {
     final world = _buildWorld();
     final id = world.spawn();
-    world.storeOf<Tween>().set(id, Tween(from: 0, to: 1, duration: 0.1));
+    world.componentsOf<Tween>().set(id, Tween(from: 0, to: 1, duration: 0.1));
 
     var completions = 0;
     world.events.on<TweenCompleteEvent>((e) {
@@ -109,7 +109,7 @@ void main() {
     final world = _buildWorld();
     final id = world.spawn();
     final tween = Tween(from: 0, to: 1, duration: 1, loop: true);
-    world.storeOf<Tween>().set(id, tween);
+    world.componentsOf<Tween>().set(id, tween);
 
     world.step(1.25);
     expect(tween.elapsed, closeTo(0.25, 0.001));
@@ -119,7 +119,7 @@ void main() {
     final world = _buildWorld();
     final id = world.spawn();
     final tween = Tween(from: 0, to: 10, duration: 1, pingPong: true);
-    world.storeOf<Tween>().set(id, tween);
+    world.componentsOf<Tween>().set(id, tween);
 
     expect(tween.reversed, isFalse);
     world.step(1.2); // crosses duration -> flips, elapsed wraps
@@ -141,7 +141,7 @@ void main() {
     () {
       final world = _buildWorld();
       final id = world.spawn();
-      world.storeOf<Tween>().set(
+      world.componentsOf<Tween>().set(
         id,
         Tween(from: 0, to: 5, duration: 0, loop: true),
       );
@@ -185,7 +185,7 @@ void main() {
   test('Tween serializes through World.toJson via registerCoreComponents', () {
     final world = _buildWorld();
     final id = world.spawn();
-    world.storeOf<Tween>().set(id, Tween(from: 0, to: 1, duration: 1));
+    world.componentsOf<Tween>().set(id, Tween(from: 0, to: 1, duration: 1));
 
     final snapshot = world.toJson();
     final entity = (snapshot['entities'] as List).first as Map;

@@ -10,7 +10,7 @@ World _world({int? holdToWin}) {
   w.addSystem(OrderSystem.withNavigator(_nav()));
   installCombat(w);
   if (holdToWin != null) {
-    w.storeOf<ObjectiveRules>().set(
+    w.componentsOf<ObjectiveRules>().set(
       w.spawn(),
       ObjectiveRules(holdTurnsToWin: holdToWin),
     );
@@ -28,20 +28,20 @@ EntityId _unit(
   int atk = 3,
 }) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: hp, attack: atk));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(e, UnitStats(maxHp: hp, attack: atk));
   return e;
 }
 
 EntityId _flag(World w, String id, int c, int r, {String? owner}) {
   final e = w.spawn();
-  w.storeOf<Objective>().set(e, Objective(id, c, r, owner: owner));
+  w.componentsOf<Objective>().set(e, Objective(id, c, r, owner: owner));
   return e;
 }
 
-Objective _obj(World w, EntityId e) => w.storeOf<Objective>().get(e)!;
+Objective _obj(World w, EntityId e) => w.componentsOf<Objective>().get(e)!;
 
 void main() {
   group('capture', () {
@@ -92,7 +92,7 @@ void main() {
         final flag = _flag(w, 'flag', 3, 3);
         final u = _unit(w, 'blue', 3, 3);
         _unit(w, 'red', 9, 9);
-        w.storeOf<OrderQueue>().set(u, OrderQueue([const MoveOrder(8, 8)]));
+        w.componentsOf<OrderQueue>().set(u, OrderQueue([const MoveOrder(8, 8)]));
         startTurnBasedGame(w, ['red', 'blue']);
         expect(_obj(w, flag).owner, isNull);
         endTurn(w); // blue's turn begins; no step has run yet
@@ -155,7 +155,7 @@ void main() {
           'blue',
         ]); // red turn 1: owns all -> hold 1
         expect(turnStateOf(w)!.winner, isNull);
-        expect(w.storeOf<ObjectiveRules>().denseAt(0).holds['red'], 1);
+        expect(w.componentsOf<ObjectiveRules>().denseAt(0).holds['red'], 1);
 
         endTurn(w);
         endTurn(w); // red turn 2: hold 2 -> win
@@ -174,13 +174,13 @@ void main() {
       _unit(w, 'red', 2, 1);
       _unit(w, 'blue', 9, 9);
       startTurnBasedGame(w, ['red', 'blue']);
-      expect(w.storeOf<ObjectiveRules>().denseAt(0).holds['red'], 1);
+      expect(w.componentsOf<ObjectiveRules>().denseAt(0).holds['red'], 1);
       _obj(w, a).owner = 'blue'; // taken from them
-      w.storeOf<GridPosition>().get(u1)!.col =
+      w.componentsOf<GridPosition>().get(u1)!.col =
           5; // and red's unit is not on it to retake
       endTurn(w);
       endTurn(w);
-      expect(w.storeOf<ObjectiveRules>().denseAt(0).holds['red'], 0);
+      expect(w.componentsOf<ObjectiveRules>().denseAt(0).holds['red'], 0);
       expect(turnStateOf(w)!.winner, isNull);
     });
 
@@ -202,7 +202,7 @@ void main() {
 
   group('ObjectiveAI', () {
     Order first(World w, EntityId e) =>
-        w.storeOf<OrderQueue>().get(e)!.orders.first;
+        w.componentsOf<OrderQueue>().get(e)!.orders.first;
 
     void play(World w, TurnAI ai) {
       startTurnBasedGame(w, ['red', 'blue']);
@@ -293,7 +293,7 @@ void main() {
       startTurnBasedGame(w, ['red', 'blue']);
       endTurn(w);
       ObjectiveAI(navigator: _nav()).playTurn(w, 'blue');
-      expect(w.storeOf<OrderQueue>().get(u)?.orders ?? const [], isEmpty);
+      expect(w.componentsOf<OrderQueue>().get(u)?.orders ?? const [], isEmpty);
     });
 
     test('with nothing left to capture it hunts the visible enemy', () {

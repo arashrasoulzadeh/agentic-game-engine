@@ -23,7 +23,7 @@ class WorldViewNearestBenchmark extends BenchmarkBase {
     registerCoreComponents(world);
     for (var i = 0; i < entityCount; i++) {
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position((i * 37) % 2000, (i * 53) % 2000));
+      world.componentsOf<Position>().set(id, Position((i * 37) % 2000, (i * 53) % 2000));
     }
     view = WorldView(world);
   }

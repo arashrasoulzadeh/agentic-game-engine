@@ -17,8 +17,8 @@ void main() {
     test('BTSequence succeeds when all children succeed', () {
       final world = _buildWorld();
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(
+      world.componentsOf<Position>().set(entity, Position(0, 0));
+      world.componentsOf<AIState>().set(
         entity,
         AIState('test', memory: {'_bt_blackboard': {}}),
       );
@@ -40,14 +40,14 @@ void main() {
       ).decide(WorldView(world), entity);
       action.apply(world);
 
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 2);
+      expect(world.componentsOf<_TestValue>().get(entity)?.value, 2);
     });
 
     test('BTSequence fails when any child fails', () {
       final world = _buildWorld();
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(
+      world.componentsOf<Position>().set(entity, Position(0, 0));
+      world.componentsOf<AIState>().set(
         entity,
         AIState('test', memory: {'_bt_blackboard': {}}),
       );
@@ -70,14 +70,14 @@ void main() {
       action.apply(world);
 
       // First action should have run (value = 1), then sequence should stop on failure
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 1);
+      expect(world.componentsOf<_TestValue>().get(entity)?.value, 1);
     });
 
     test('BTSelector succeeds when any child succeeds', () {
       final world = _buildWorld();
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(
+      world.componentsOf<Position>().set(entity, Position(0, 0));
+      world.componentsOf<AIState>().set(
         entity,
         AIState('test', memory: {'_bt_blackboard': {}}),
       );
@@ -99,14 +99,14 @@ void main() {
       ).decide(WorldView(world), entity);
       action.apply(world);
 
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 42);
+      expect(world.componentsOf<_TestValue>().get(entity)?.value, 42);
     });
 
     test('BTInverter inverts success to failure and vice versa', () {
       final world = _buildWorld();
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(
+      world.componentsOf<Position>().set(entity, Position(0, 0));
+      world.componentsOf<AIState>().set(
         entity,
         AIState('test', memory: {'_bt_blackboard': {}}),
       );
@@ -123,8 +123,8 @@ void main() {
     test('BTRepeater repeats child N times', () {
       final world = _buildWorld();
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(
+      world.componentsOf<Position>().set(entity, Position(0, 0));
+      world.componentsOf<AIState>().set(
         entity,
         AIState('test', memory: {'_bt_blackboard': {}}),
       );
@@ -138,26 +138,26 @@ void main() {
 
       // Tick 1
       behavior.decide(WorldView(world), entity).apply(world);
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 1);
+      expect(world.componentsOf<_TestValue>().get(entity)?.value, 1);
 
       // Tick 2
       behavior.decide(WorldView(world), entity).apply(world);
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 2);
+      expect(world.componentsOf<_TestValue>().get(entity)?.value, 2);
 
       // Tick 3
       behavior.decide(WorldView(world), entity).apply(world);
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 3);
+      expect(world.componentsOf<_TestValue>().get(entity)?.value, 3);
 
       // Tick 4 - should be done (repeater returns success, no more increments)
       behavior.decide(WorldView(world), entity).apply(world);
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 3);
+      expect(world.componentsOf<_TestValue>().get(entity)?.value, 3);
     });
 
     test('BTRepeater with null count repeats forever (until child fails)', () {
       final world = _buildWorld();
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(
+      world.componentsOf<Position>().set(entity, Position(0, 0));
+      world.componentsOf<AIState>().set(
         entity,
         AIState('test', memory: {'_bt_blackboard': {}}),
       );
@@ -178,14 +178,14 @@ void main() {
       action.apply(world);
 
       // Should have run 3 times (fail on 3rd)
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 3);
+      expect(world.componentsOf<_TestValue>().get(entity)?.value, 3);
     });
 
     test('BTParallel succeeds when required children succeed', () {
       final world = _buildWorld();
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(
+      world.componentsOf<Position>().set(entity, Position(0, 0));
+      world.componentsOf<AIState>().set(
         entity,
         AIState('test', memory: {'_bt_blackboard': {}}),
       );
@@ -213,7 +213,7 @@ void main() {
 
       // All three should have run since they all succeed
       expect(
-        world.storeOf<_TestValue>().get(entity)?.value,
+        world.componentsOf<_TestValue>().get(entity)?.value,
         30,
       ); // Last one wins
     });
@@ -267,8 +267,8 @@ void main() {
     test('Blackboard persists between ticks via AIState.memory', () {
       final world = _buildWorld();
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<AIState>().set(
+      world.componentsOf<Position>().set(entity, Position(0, 0));
+      world.componentsOf<AIState>().set(
         entity,
         AIState('test', memory: {'_bt_blackboard': {}}),
       );
@@ -281,11 +281,11 @@ void main() {
 
       // First tick - runs first iteration
       behavior.decide(WorldView(world), entity).apply(world);
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 1);
+      expect(world.componentsOf<_TestValue>().get(entity)?.value, 1);
 
       // Second tick - runs second iteration
       behavior.decide(WorldView(world), entity).apply(world);
-      expect(world.storeOf<_TestValue>().get(entity)?.value, 2);
+      expect(world.componentsOf<_TestValue>().get(entity)?.value, 2);
     });
   });
 }
@@ -314,7 +314,7 @@ class _TestAction implements Action {
   @override
   void apply(World world) {
     // Store value in a test component on the entity
-    world.storeOf<_TestValue>().set(entity, _TestValue(value: value));
+    world.componentsOf<_TestValue>().set(entity, _TestValue(value: value));
   }
 }
 
@@ -329,7 +329,7 @@ class _IncrementAction implements Action {
   @override
   void apply(World world) {
     // Find existing test value and increment
-    final stores = world.storeOf<_TestValue>();
+    final stores = world.componentsOf<_TestValue>();
     final existing = stores.get(entity);
     if (existing != null) {
       stores.set(entity, _TestValue(value: existing.value + 1));
@@ -352,7 +352,7 @@ class _FailAfterBehavior implements Behavior {
   Action decide(WorldView view, EntityId self) {
     // Check current value to decide if we should fail
     // Fail when value reaches failAfter (after failAfter successful increments)
-    final stores = view.world.storeOf<_TestValue>();
+    final stores = view.world.componentsOf<_TestValue>();
     final existing = stores.get(self);
     if (existing != null && existing.value >= failAfter) {
       return const FailureAction();
@@ -367,7 +367,7 @@ class _FailAfterAction implements Action {
 
   @override
   void apply(World world) {
-    final stores = world.storeOf<_TestValue>();
+    final stores = world.componentsOf<_TestValue>();
     final existing = stores.get(entity);
     if (existing != null) {
       stores.set(entity, _TestValue(value: existing.value + 1));

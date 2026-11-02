@@ -9,7 +9,7 @@ class _Fake {
 void main() {
   test('storeOf throws for a type that was never registered', () {
     final world = World(width: 10, height: 10);
-    expect(() => world.storeOf<_Fake>(), throwsStateError);
+    expect(() => world.componentsOf<_Fake>(), throwsStateError);
   });
 
   test('registered component types serialize/deserialize by name', () {
@@ -17,7 +17,7 @@ void main() {
     registerCoreComponents(world);
 
     final id = world.spawn();
-    world.storeOf<AIState>().set(id, AIState('patrol'));
+    world.componentsOf<AIState>().set(id, AIState('patrol'));
 
     final serialized = world.components.serializeEntity(id);
     expect(serialized['aiState'], {
@@ -28,7 +28,7 @@ void main() {
     world.components.applyToEntity(id, {
       'aiState': {'behaviorId': 'chase', 'memory': <String, dynamic>{}},
     });
-    expect(world.storeOf<AIState>().get(id)!.behaviorId, 'chase');
+    expect(world.componentsOf<AIState>().get(id)!.behaviorId, 'chase');
   });
 
   test('TileMap/Particle/ParticleEmitter serialize through World.toJson', () {
@@ -36,16 +36,16 @@ void main() {
     registerCoreComponents(world);
 
     final mapEntity = world.spawn();
-    world.storeOf<TileMap>().set(
+    world.componentsOf<TileMap>().set(
       mapEntity,
       TileMap(cols: 1, rows: 1, tileWidth: 10, tileHeight: 10, tiles: [1]),
     );
 
     final particleEntity = world.spawn();
-    world.storeOf<Particle>().set(particleEntity, Particle(lifetime: 1));
+    world.componentsOf<Particle>().set(particleEntity, Particle(lifetime: 1));
 
     final emitterEntity = world.spawn();
-    world.storeOf<ParticleEmitter>().set(emitterEntity, ParticleEmitter());
+    world.componentsOf<ParticleEmitter>().set(emitterEntity, ParticleEmitter());
 
     final snapshot = world.toJson();
     final byId = {

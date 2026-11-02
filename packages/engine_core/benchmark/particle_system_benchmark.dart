@@ -24,8 +24,8 @@ class ParticleSystemBenchmark extends BenchmarkBase {
 
     for (var i = 0; i < emitterCount; i++) {
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position((i % 50) * 20.0, (i ~/ 50) * 20.0));
-      world.storeOf<ParticleEmitter>().set(
+      world.componentsOf<Position>().set(id, Position((i % 50) * 20.0, (i ~/ 50) * 20.0));
+      world.componentsOf<ParticleEmitter>().set(
             id,
             ParticleEmitter(rate: 20, lifetimeMin: 0.3, lifetimeMax: 0.3),
           );

@@ -207,8 +207,8 @@ void main() {
     test('false when a solid tile blocks the line', () {
       final world = buildWorld();
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 3,
@@ -227,8 +227,8 @@ void main() {
     test('true through a one-way tile by default', () {
       final world = buildWorld();
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 3,

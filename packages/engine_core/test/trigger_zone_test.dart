@@ -21,13 +21,13 @@ void main() {
     () {
       final world = _buildWorld();
       final player = world.spawn();
-      world.storeOf<Position>().set(player, Position(0, 0));
-      world.storeOf<Collider>().set(player, Collider(10));
+      world.componentsOf<Position>().set(player, Position(0, 0));
+      world.componentsOf<Collider>().set(player, Collider(10));
 
       final zone = world.spawn();
-      world.storeOf<Position>().set(zone, Position(5, 0));
-      world.storeOf<Collider>().set(zone, Collider(10));
-      world.storeOf<TriggerZone>().set(
+      world.componentsOf<Position>().set(zone, Position(5, 0));
+      world.componentsOf<Collider>().set(zone, Collider(10));
+      world.componentsOf<TriggerZone>().set(
         zone,
         TriggerZone('bossIntro', data: {'lineId': 3}),
       );
@@ -52,21 +52,21 @@ void main() {
     () {
       final world = _buildWorld();
       final player = world.spawn();
-      world.storeOf<Position>().set(player, Position(0, 0));
-      world.storeOf<Velocity>().set(player, Velocity(50, 0));
-      world.storeOf<Collider>().set(player, Collider(10));
+      world.componentsOf<Position>().set(player, Position(0, 0));
+      world.componentsOf<Velocity>().set(player, Velocity(50, 0));
+      world.componentsOf<Collider>().set(player, Collider(10));
 
       final zone = world.spawn();
-      world.storeOf<Position>().set(zone, Position(5, 0));
-      world.storeOf<Collider>().set(zone, Collider(10));
-      world.storeOf<TriggerZone>().set(zone, TriggerZone('checkpointA'));
+      world.componentsOf<Position>().set(zone, Position(5, 0));
+      world.componentsOf<Collider>().set(zone, Collider(10));
+      world.componentsOf<TriggerZone>().set(zone, TriggerZone('checkpointA'));
       // Deliberately no Velocity on the zone.
 
       installTriggerZones(world);
       world.step(0.016);
 
       expect(
-        world.storeOf<Velocity>().get(player)!.x,
+        world.componentsOf<Velocity>().get(player)!.x,
         50,
         reason: 'unaffected by the trigger zone touch',
       );
@@ -76,11 +76,11 @@ void main() {
   test('colliding with a non-TriggerZone entity fires no TriggerEvent', () {
     final world = _buildWorld();
     final a = world.spawn();
-    world.storeOf<Position>().set(a, Position(0, 0));
-    world.storeOf<Collider>().set(a, Collider(10));
+    world.componentsOf<Position>().set(a, Position(0, 0));
+    world.componentsOf<Collider>().set(a, Collider(10));
     final b = world.spawn();
-    world.storeOf<Position>().set(b, Position(5, 0));
-    world.storeOf<Collider>().set(b, Collider(10));
+    world.componentsOf<Position>().set(b, Position(5, 0));
+    world.componentsOf<Collider>().set(b, Collider(10));
 
     installTriggerZones(world);
     var fired = false;
@@ -94,13 +94,13 @@ void main() {
   test('both sides being TriggerZones fires an event for each', () {
     final world = _buildWorld();
     final a = world.spawn();
-    world.storeOf<Position>().set(a, Position(0, 0));
-    world.storeOf<Collider>().set(a, Collider(10));
-    world.storeOf<TriggerZone>().set(a, TriggerZone('zoneA'));
+    world.componentsOf<Position>().set(a, Position(0, 0));
+    world.componentsOf<Collider>().set(a, Collider(10));
+    world.componentsOf<TriggerZone>().set(a, TriggerZone('zoneA'));
     final b = world.spawn();
-    world.storeOf<Position>().set(b, Position(5, 0));
-    world.storeOf<Collider>().set(b, Collider(10));
-    world.storeOf<TriggerZone>().set(b, TriggerZone('zoneB'));
+    world.componentsOf<Position>().set(b, Position(5, 0));
+    world.componentsOf<Collider>().set(b, Collider(10));
+    world.componentsOf<TriggerZone>().set(b, TriggerZone('zoneB'));
 
     installTriggerZones(world);
     final ids = <String>[];

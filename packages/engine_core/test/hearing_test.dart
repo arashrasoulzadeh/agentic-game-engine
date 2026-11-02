@@ -37,12 +37,12 @@ void main() {
       world.addSystem(HearingSystem());
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(
+      world.componentsOf<Position>().set(entity, Position(100, 100));
+      world.componentsOf<HearingComponent>().set(
         entity,
         HearingComponent(range: 200),
       );
-      world.storeOf<AIState>().set(entity, AIState('idle'));
+      world.componentsOf<AIState>().set(entity, AIState('idle'));
 
       // Emit a sound within range
       world.events.emit(
@@ -51,7 +51,7 @@ void main() {
 
       world.step(0.016);
 
-      final aiState = world.storeOf<AIState>().get(entity)!;
+      final aiState = world.componentsOf<AIState>().get(entity)!;
       final soundData = aiState.memory['lastHeardSound'];
       expect(soundData, isNotNull);
       expect(soundData['x'], 150);
@@ -64,19 +64,19 @@ void main() {
       world.addSystem(HearingSystem());
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(
+      world.componentsOf<Position>().set(entity, Position(100, 100));
+      world.componentsOf<HearingComponent>().set(
         entity,
         HearingComponent(range: 50),
       );
-      world.storeOf<AIState>().set(entity, AIState('idle'));
+      world.componentsOf<AIState>().set(entity, AIState('idle'));
 
       // Sound at distance 100, hearing range 50
       world.events.emit(SoundEvent(x: 200, y: 100, loudness: 100));
 
       world.step(0.016);
 
-      final aiState = world.storeOf<AIState>().get(entity)!;
+      final aiState = world.componentsOf<AIState>().get(entity)!;
       expect(aiState.memory['lastHeardSound'], isNull);
     });
 
@@ -84,19 +84,19 @@ void main() {
       world.addSystem(HearingSystem());
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(
+      world.componentsOf<Position>().set(entity, Position(100, 100));
+      world.componentsOf<HearingComponent>().set(
         entity,
         HearingComponent(range: 200),
       );
-      world.storeOf<AIState>().set(entity, AIState('idle'));
+      world.componentsOf<AIState>().set(entity, AIState('idle'));
 
       // Sound loudness 50, distance 100
       world.events.emit(SoundEvent(x: 200, y: 100, loudness: 50));
 
       world.step(0.016);
 
-      final aiState = world.storeOf<AIState>().get(entity)!;
+      final aiState = world.componentsOf<AIState>().get(entity)!;
       expect(aiState.memory['lastHeardSound'], isNull);
     });
 
@@ -105,8 +105,8 @@ void main() {
 
       // TileMap with solid wall between entity and sound
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 10,
@@ -122,19 +122,19 @@ void main() {
       );
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(
+      world.componentsOf<Position>().set(entity, Position(100, 100));
+      world.componentsOf<HearingComponent>().set(
         entity,
         HearingComponent(range: 200),
       );
-      world.storeOf<AIState>().set(entity, AIState('idle'));
+      world.componentsOf<AIState>().set(entity, AIState('idle'));
 
       // Sound behind wall at x=130
       world.events.emit(SoundEvent(x: 130, y: 100, loudness: 100));
 
       world.step(0.016);
 
-      final aiState = world.storeOf<AIState>().get(entity)!;
+      final aiState = world.componentsOf<AIState>().get(entity)!;
       expect(
         aiState.memory['lastHeardSound'],
         isNull,
@@ -147,8 +147,8 @@ void main() {
 
       // TileMap with one-way platform (not solid)
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 10,
@@ -164,19 +164,19 @@ void main() {
       );
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(
+      world.componentsOf<Position>().set(entity, Position(100, 100));
+      world.componentsOf<HearingComponent>().set(
         entity,
         HearingComponent(range: 200),
       );
-      world.storeOf<AIState>().set(entity, AIState('idle'));
+      world.componentsOf<AIState>().set(entity, AIState('idle'));
 
       // Sound behind one-way platform at x=130
       world.events.emit(SoundEvent(x: 130, y: 100, loudness: 100));
 
       world.step(0.016);
 
-      final aiState = world.storeOf<AIState>().get(entity)!;
+      final aiState = world.componentsOf<AIState>().get(entity)!;
       expect(
         aiState.memory['lastHeardSound'],
         isNotNull,
@@ -189,14 +189,14 @@ void main() {
       world.addSystem(HearingSystem());
 
       final e1 = world.spawn();
-      world.storeOf<Position>().set(e1, Position(100, 100));
-      world.storeOf<HearingComponent>().set(e1, HearingComponent(range: 50));
-      world.storeOf<AIState>().set(e1, AIState('idle'));
+      world.componentsOf<Position>().set(e1, Position(100, 100));
+      world.componentsOf<HearingComponent>().set(e1, HearingComponent(range: 50));
+      world.componentsOf<AIState>().set(e1, AIState('idle'));
 
       final e2 = world.spawn();
-      world.storeOf<Position>().set(e2, Position(200, 100));
-      world.storeOf<HearingComponent>().set(e2, HearingComponent(range: 200));
-      world.storeOf<AIState>().set(e2, AIState('idle'));
+      world.componentsOf<Position>().set(e2, Position(200, 100));
+      world.componentsOf<HearingComponent>().set(e2, HearingComponent(range: 200));
+      world.componentsOf<AIState>().set(e2, AIState('idle'));
 
       // Sound at x=150, distance 50 from e1, 50 from e2
       world.events.emit(SoundEvent(x: 150, y: 100, loudness: 100));
@@ -204,11 +204,11 @@ void main() {
       world.step(0.016);
 
       // e1: distance 50, range 50 -> hears (distance == range)
-      final ai1 = world.storeOf<AIState>().get(e1)!;
+      final ai1 = world.componentsOf<AIState>().get(e1)!;
       expect(ai1.memory['lastHeardSound'], isNotNull);
 
       // e2: distance 50, range 200 -> hears
-      final ai2 = world.storeOf<AIState>().get(e2)!;
+      final ai2 = world.componentsOf<AIState>().get(e2)!;
       expect(ai2.memory['lastHeardSound'], isNotNull);
     });
 
@@ -216,12 +216,12 @@ void main() {
       world.addSystem(HearingSystem());
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(
+      world.componentsOf<Position>().set(entity, Position(100, 100));
+      world.componentsOf<HearingComponent>().set(
         entity,
         HearingComponent(range: 200),
       );
-      world.storeOf<AIState>().set(entity, AIState('idle'));
+      world.componentsOf<AIState>().set(entity, AIState('idle'));
 
       // First sound
       world.events.emit(
@@ -229,7 +229,7 @@ void main() {
       );
       world.step(0.016);
 
-      var aiState = world.storeOf<AIState>().get(entity)!;
+      var aiState = world.componentsOf<AIState>().get(entity)!;
       expect(aiState.memory['lastHeardSound']['tag'], 'first');
 
       // Second sound
@@ -238,7 +238,7 @@ void main() {
       );
       world.step(0.016);
 
-      aiState = world.storeOf<AIState>().get(entity)!;
+      aiState = world.componentsOf<AIState>().get(entity)!;
       expect(aiState.memory['lastHeardSound']['tag'], 'second');
     });
 
@@ -246,14 +246,14 @@ void main() {
       world.addSystem(HearingSystem());
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<AIState>().set(entity, AIState('idle'));
+      world.componentsOf<Position>().set(entity, Position(100, 100));
+      world.componentsOf<AIState>().set(entity, AIState('idle'));
       // No HearingComponent
 
       world.events.emit(SoundEvent(x: 150, y: 100, loudness: 100));
       world.step(0.016);
 
-      final aiState = world.storeOf<AIState>().get(entity)!;
+      final aiState = world.componentsOf<AIState>().get(entity)!;
       expect(aiState.memory['lastHeardSound'], isNull);
     });
 
@@ -261,8 +261,8 @@ void main() {
       world.addSystem(HearingSystem());
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(100, 100));
-      world.storeOf<HearingComponent>().set(
+      world.componentsOf<Position>().set(entity, Position(100, 100));
+      world.componentsOf<HearingComponent>().set(
         entity,
         HearingComponent(range: 200),
       );
@@ -294,19 +294,19 @@ void main() {
 
       other.addSystem(HearingSystem());
       final entity = other.spawn();
-      other.storeOf<Position>().set(entity, Position(100, 100));
-      other.storeOf<HearingComponent>().set(
+      other.componentsOf<Position>().set(entity, Position(100, 100));
+      other.componentsOf<HearingComponent>().set(
         entity,
         HearingComponent(range: 200),
       );
-      other.storeOf<AIState>().set(entity, AIState('idle'));
+      other.componentsOf<AIState>().set(entity, AIState('idle'));
 
       other.events.emit(
         SoundEvent(x: 150, y: 100, loudness: 100, tag: 'footstep'),
       );
       other.step(0.016);
 
-      final aiState = other.storeOf<AIState>().get(entity)!;
+      final aiState = other.componentsOf<AIState>().get(entity)!;
       expect(
         aiState.memory['lastHeardSound'],
         isNotNull,

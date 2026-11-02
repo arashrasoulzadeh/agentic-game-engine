@@ -166,8 +166,8 @@ void main() {
     test('returns null when the ray misses every entity', () {
       final world = buildWorld();
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(500, 500));
-      world.storeOf<Collider>().set(id, Collider(10));
+      world.componentsOf<Position>().set(id, Position(500, 500));
+      world.componentsOf<Collider>().set(id, Collider(10));
 
       final hit = raycastEntities(world, fromX: 0, fromY: 0, toX: 100, toY: 0);
       expect(hit, isNull);
@@ -176,8 +176,8 @@ void main() {
     test('hits an entity the ray passes through', () {
       final world = buildWorld();
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(100, 0));
-      world.storeOf<Collider>().set(id, Collider(10));
+      world.componentsOf<Position>().set(id, Position(100, 0));
+      world.componentsOf<Collider>().set(id, Collider(10));
 
       final hit = raycastEntities(world, fromX: 0, fromY: 0, toX: 200, toY: 0);
 
@@ -189,11 +189,11 @@ void main() {
     test('returns the nearest of several entities along the ray', () {
       final world = buildWorld();
       final near = world.spawn();
-      world.storeOf<Position>().set(near, Position(100, 0));
-      world.storeOf<Collider>().set(near, Collider(10));
+      world.componentsOf<Position>().set(near, Position(100, 0));
+      world.componentsOf<Collider>().set(near, Collider(10));
       final far = world.spawn();
-      world.storeOf<Position>().set(far, Position(300, 0));
-      world.storeOf<Collider>().set(far, Collider(10));
+      world.componentsOf<Position>().set(far, Position(300, 0));
+      world.componentsOf<Collider>().set(far, Collider(10));
 
       final hit = raycastEntities(world, fromX: 0, fromY: 0, toX: 400, toY: 0);
 
@@ -203,11 +203,11 @@ void main() {
     test('excludes the given entity even if the ray passes through it', () {
       final world = buildWorld();
       final caster = world.spawn();
-      world.storeOf<Position>().set(caster, Position(0, 0));
-      world.storeOf<Collider>().set(caster, Collider(5));
+      world.componentsOf<Position>().set(caster, Position(0, 0));
+      world.componentsOf<Collider>().set(caster, Collider(5));
       final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(100, 0));
-      world.storeOf<Collider>().set(target, Collider(10));
+      world.componentsOf<Position>().set(target, Position(100, 0));
+      world.componentsOf<Collider>().set(target, Collider(10));
 
       final hit = raycastEntities(
         world,
@@ -224,8 +224,8 @@ void main() {
     test('a ray that ends before reaching an entity misses it', () {
       final world = buildWorld();
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(300, 0));
-      world.storeOf<Collider>().set(id, Collider(10));
+      world.componentsOf<Position>().set(id, Position(300, 0));
+      world.componentsOf<Collider>().set(id, Collider(10));
 
       final hit = raycastEntities(world, fromX: 0, fromY: 0, toX: 100, toY: 0);
       expect(hit, isNull);

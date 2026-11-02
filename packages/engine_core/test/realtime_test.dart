@@ -19,7 +19,7 @@ GridNavigator _nav({int size = 20, Set<(int, int)> walls = const {}}) =>
   final w = World(width: size.toDouble(), height: size.toDouble());
   registerCoreComponents(w);
   if (fog) {
-    w.storeOf<FogOfWar>().set(w.spawn(), FogOfWar(size, size));
+    w.componentsOf<FogOfWar>().set(w.spawn(), FogOfWar(size, size));
     w.addSystem(VisionSystem());
   }
   final cache = FlowFieldCache(_nav(size: size, walls: walls));
@@ -27,7 +27,7 @@ GridNavigator _nav({int size = 20, Set<(int, int)> walls = const {}}) =>
   return (world: w, cache: cache);
 }
 
-GridPosition _at(World w, EntityId e) => w.storeOf<GridPosition>().get(e)!;
+GridPosition _at(World w, EntityId e) => w.componentsOf<GridPosition>().get(e)!;
 
 void _run(World w, double seconds, {double dt = 0.05}) {
   final steps = (seconds / dt).round();
@@ -65,7 +65,7 @@ void main() {
       expect(commandSelected(g.world, 9, 9), 0, reason: 'no clock and no team');
       expect(commandSelected(g.world, 5, 5, team: 'red'), 1);
       expect(
-        (g.world.storeOf<OrderQueue>().get(red)!.orders.single as AttackOrder)
+        (g.world.componentsOf<OrderQueue>().get(red)!.orders.single as AttackOrder)
             .target,
         blue,
       );
@@ -88,7 +88,7 @@ void main() {
       expect(_at(g.world, u).col, 3);
       _run(g.world, 1.5);
       expect(_at(g.world, u).col, 6);
-      expect(g.world.storeOf<OrderQueue>().get(u)!.orders, isEmpty);
+      expect(g.world.componentsOf<OrderQueue>().get(u)!.orders, isEmpty);
     });
 
     test(
@@ -130,7 +130,7 @@ void main() {
       submitOrder(g.world, u, const MoveOrder(5, 5));
       _run(g.world, 0.2);
       expect(failed.single.reason, OrderFailure.blocked);
-      expect(g.world.storeOf<OrderQueue>().get(u)!.orders, isEmpty);
+      expect(g.world.componentsOf<OrderQueue>().get(u)!.orders, isEmpty);
     });
 
     test(
@@ -187,7 +187,7 @@ void main() {
         _run(w, 0.5);
         expect((_at(w, u).col, _at(w, u).row), (0, 0));
         expect(
-          w.storeOf<RealtimeStats>().get(u)!.moveProgress,
+          w.componentsOf<RealtimeStats>().get(u)!.moveProgress,
           lessThanOrEqualTo(1),
         );
         for (final o in [blocker, ...others]) {
@@ -243,7 +243,7 @@ void main() {
           1,
           reason: 'stopped at melee range',
         );
-        expect(w.storeOf<OrderQueue>().get(a)!.orders, isEmpty);
+        expect(w.componentsOf<OrderQueue>().get(a)!.orders, isEmpty);
       },
     );
 
@@ -285,7 +285,7 @@ void main() {
           speed: 3,
           attack: 5,
         );
-        w.storeOf<AttackProfile>().set(archer, AttackProfile(range: 4));
+        w.componentsOf<AttackProfile>().set(archer, AttackProfile(range: 4));
         final target = spawnRealtimeUnit(
           w,
           team: 'blue',
@@ -296,7 +296,7 @@ void main() {
         );
         submitOrder(w, archer, AttackOrder(target));
         _run(w, 0.2);
-        expect(w.storeOf<UnitStats>().get(target)!.hp, 45);
+        expect(w.componentsOf<UnitStats>().get(target)!.hp, 45);
         expect(_at(w, archer).col, 0);
       },
     );
@@ -318,14 +318,14 @@ void main() {
       w.destroy(foe);
       _run(w, 0.1);
       expect(failed, isEmpty);
-      expect(w.storeOf<OrderQueue>().get(a)!.orders, isEmpty);
+      expect(w.componentsOf<OrderQueue>().get(a)!.orders, isEmpty);
     });
 
     test('fog: cannot attack what the team cannot see', () {
       final g = _game(fog: true);
       final w = g.world;
       final a = spawnRealtimeUnit(w, team: 'red', col: 0, row: 0);
-      w.storeOf<Vision>().set(a, Vision(1));
+      w.componentsOf<Vision>().set(a, Vision(1));
       final foe = spawnRealtimeUnit(w, team: 'blue', col: 10, row: 10);
       final failed = <OrderFailedEvent>[];
       w.events.on<OrderFailedEvent>(failed.add);
@@ -436,7 +436,7 @@ void main() {
         }
         expect(fingerprint(a), fingerprint(b));
         expect(
-          a.storeOf<UnitStats>().length,
+          a.componentsOf<UnitStats>().length,
           lessThan(30),
           reason: 'fighting actually happened',
         );

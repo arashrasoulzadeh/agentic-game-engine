@@ -196,12 +196,12 @@ void main() {
         ),
       );
       final unit = hostWorld.spawn();
-      hostWorld.storeOf<Team>().set(unit, Team('red'));
-      hostWorld.storeOf<ActionPoints>().set(unit, ActionPoints(6, current: 0));
-      hostWorld.storeOf<GridPosition>().set(unit, GridPosition(1, 1));
+      hostWorld.componentsOf<Team>().set(unit, Team('red'));
+      hostWorld.componentsOf<ActionPoints>().set(unit, ActionPoints(6, current: 0));
+      hostWorld.componentsOf<GridPosition>().set(unit, GridPosition(1, 1));
       final blue = hostWorld.spawn();
-      hostWorld.storeOf<Team>().set(blue, Team('blue'));
-      hostWorld.storeOf<GridPosition>().set(blue, GridPosition(9, 9));
+      hostWorld.componentsOf<Team>().set(blue, Team('blue'));
+      hostWorld.componentsOf<GridPosition>().set(blue, GridPosition(9, 9));
       startTurnBasedGame(hostWorld, ['red', 'blue']);
       final host = HostSession(world: hostWorld, teams: ['red', 'blue']);
       final udp = await UdpListener.bind(host.accept);
@@ -223,8 +223,8 @@ void main() {
       expect(session.team, 'red');
 
       session.sendOrder(unit, const MoveOrder(3, 1));
-      await until(() => hostWorld.storeOf<GridPosition>().get(unit)!.col == 3);
-      expect(hostWorld.storeOf<GridPosition>().get(unit)!.col, 3);
+      await until(() => hostWorld.componentsOf<GridPosition>().get(unit)!.col == 3);
+      expect(hostWorld.componentsOf<GridPosition>().get(unit)!.col, 3);
     },
   );
 }

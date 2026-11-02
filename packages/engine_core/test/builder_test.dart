@@ -14,7 +14,7 @@ _Rig _rig({double seconds = 4}) {
   w.addSystem(ConstructionSystem());
   w.addSystem(BuildSystem(nav));
   w.addSystem(RealtimeOrderSystem(fields: FlowFieldCache(nav)));
-  w.storeOf<Treasury>().set(w.spawn(), Treasury('red', amounts: {'gold': 100}));
+  w.componentsOf<Treasury>().set(w.spawn(), Treasury('red', amounts: {'gold': 100}));
   final site = placeBuilding(
     w,
     nav,
@@ -51,7 +51,7 @@ void main() {
   test('without a builder the site does not progress', () {
     final r = _rig();
     _run(r.world, 5);
-    expect(r.world.storeOf<Construction>().get(r.site)!.remaining, 4);
+    expect(r.world.componentsOf<Construction>().get(r.site)!.remaining, 4);
   });
 
   test(
@@ -66,9 +66,9 @@ void main() {
       _run(r.world, 12);
 
       expect(done, [r.site]);
-      expect(r.world.storeOf<Construction>().has(r.site), isFalse);
+      expect(r.world.componentsOf<Construction>().has(r.site), isFalse);
       expect(
-        r.world.storeOf<BuildWorker>().get(b)!.site,
+        r.world.componentsOf<BuildWorker>().get(b)!.site,
         isNull,
         reason: 'freed',
       );
@@ -83,7 +83,7 @@ void main() {
       r.world,
       0.5,
     ); // still walking (about 8 cells away at 8 cells/s needs a moment)
-    final early = r.world.storeOf<Construction>().get(r.site)!.remaining;
+    final early = r.world.componentsOf<Construction>().get(r.site)!.remaining;
     expect(early, 4, reason: 'no progress before arriving');
   });
 
@@ -98,12 +98,12 @@ void main() {
     _run(duo.world, 4);
 
     expect(
-      solo.world.storeOf<Construction>().has(solo.site),
+      solo.world.componentsOf<Construction>().has(solo.site),
       isTrue,
       reason: 'one builder: 6 s of work',
     );
     expect(
-      duo.world.storeOf<Construction>().has(duo.site),
+      duo.world.componentsOf<Construction>().has(duo.site),
       isFalse,
       reason: 'two builders: ~3 s',
     );
@@ -113,7 +113,7 @@ void main() {
     'a builder of another team, an unassigned one, or one assigned elsewhere does not help',
     () {
       final r = _rig();
-      r.world.storeOf<Treasury>().set(r.world.spawn(), Treasury('blue'));
+      r.world.componentsOf<Treasury>().set(r.world.spawn(), Treasury('blue'));
       final enemy = _builder(r.world, col: 7, row: 3, team: 'blue');
       expect(
         assignBuild(r.world, enemy, r.site),
@@ -123,18 +123,18 @@ void main() {
       _builder(r.world, col: 7, row: 3); // idle, adjacent, but never assigned
 
       _run(r.world, 3);
-      expect(r.world.storeOf<Construction>().get(r.site)!.remaining, 4);
+      expect(r.world.componentsOf<Construction>().get(r.site)!.remaining, 4);
     },
   );
 
   test('assignBuild refuses non-builders and finished or missing sites', () {
     final r = _rig();
     final notBuilder = r.world.spawn();
-    r.world.storeOf<Team>().set(notBuilder, Team('red'));
+    r.world.componentsOf<Team>().set(notBuilder, Team('red'));
     expect(assignBuild(r.world, notBuilder, r.site), isFalse);
     final b = _builder(r.world);
     expect(assignBuild(r.world, b, 9999), isFalse);
-    r.world.storeOf<Construction>().remove(r.site);
+    r.world.componentsOf<Construction>().remove(r.site);
     expect(
       assignBuild(r.world, b, r.site),
       isFalse,
@@ -146,7 +146,7 @@ void main() {
     final w = World(width: 12, height: 12);
     registerCoreComponents(w);
     w.addSystem(ConstructionSystem());
-    w.storeOf<Treasury>().set(w.spawn(), Treasury('red'));
+    w.componentsOf<Treasury>().set(w.spawn(), Treasury('red'));
     final id = placeBuilding(
       w,
       _nav(),
@@ -157,7 +157,7 @@ void main() {
       buildSeconds: 1,
     ).id!;
     _run(w, 1.5);
-    expect(w.storeOf<Construction>().has(id), isFalse);
+    expect(w.componentsOf<Construction>().has(id), isFalse);
   });
 
   test('the flag and the builder survive JSON', () {

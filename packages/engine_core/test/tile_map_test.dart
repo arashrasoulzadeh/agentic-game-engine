@@ -468,7 +468,7 @@ void main() {
         tileHeight: 10,
         tiles: [0],
       );
-      world.storeOf<TileMap>().set(id, map);
+      world.componentsOf<TileMap>().set(id, map);
 
       world.step(0.5);
       expect(map.animationElapsed, closeTo(0.5, 1e-9));

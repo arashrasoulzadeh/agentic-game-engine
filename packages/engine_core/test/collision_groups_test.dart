@@ -80,17 +80,17 @@ void main() {
       registerCoreComponents(world);
 
       final a = world.spawn();
-      world.storeOf<Position>().set(a, Position(0, 0));
-      world.storeOf<Velocity>().set(a, Velocity(5, 0));
-      world.storeOf<Collider>().set(
+      world.componentsOf<Position>().set(a, Position(0, 0));
+      world.componentsOf<Velocity>().set(a, Velocity(5, 0));
+      world.componentsOf<Collider>().set(
         a,
         Collider(10, collisionGroup: 1, collisionMask: 1),
       );
 
       final b = world.spawn();
-      world.storeOf<Position>().set(b, Position(5, 0));
-      world.storeOf<Velocity>().set(b, Velocity(-3, 2));
-      world.storeOf<Collider>().set(
+      world.componentsOf<Position>().set(b, Position(5, 0));
+      world.componentsOf<Velocity>().set(b, Velocity(-3, 2));
+      world.componentsOf<Collider>().set(
         b,
         Collider(10, collisionGroup: 1, collisionMask: 1),
       );
@@ -99,8 +99,8 @@ void main() {
 
       world.step(0);
 
-      final velA = world.storeOf<Velocity>().get(a)!;
-      final velB = world.storeOf<Velocity>().get(b)!;
+      final velA = world.componentsOf<Velocity>().get(a)!;
+      final velB = world.componentsOf<Velocity>().get(b)!;
       expect(velA.x, -3);
       expect(velA.y, 2);
       expect(velB.x, 5);
@@ -112,17 +112,17 @@ void main() {
       registerCoreComponents(world);
 
       final a = world.spawn();
-      world.storeOf<Position>().set(a, Position(0, 0));
-      world.storeOf<Velocity>().set(a, Velocity(5, 0));
-      world.storeOf<Collider>().set(
+      world.componentsOf<Position>().set(a, Position(0, 0));
+      world.componentsOf<Velocity>().set(a, Velocity(5, 0));
+      world.componentsOf<Collider>().set(
         a,
         Collider(10, collisionGroup: 1, collisionMask: 1),
       );
 
       final b = world.spawn();
-      world.storeOf<Position>().set(b, Position(5, 0));
-      world.storeOf<Velocity>().set(b, Velocity(-3, 2));
-      world.storeOf<Collider>().set(
+      world.componentsOf<Position>().set(b, Position(5, 0));
+      world.componentsOf<Velocity>().set(b, Velocity(-3, 2));
+      world.componentsOf<Collider>().set(
         b,
         Collider(10, collisionGroup: 2, collisionMask: 2),
       );
@@ -131,8 +131,8 @@ void main() {
 
       world.step(0);
 
-      final velA = world.storeOf<Velocity>().get(a)!;
-      final velB = world.storeOf<Velocity>().get(b)!;
+      final velA = world.componentsOf<Velocity>().get(a)!;
+      final velB = world.componentsOf<Velocity>().get(b)!;
       expect(velA.x, 5);
       expect(velA.y, 0);
       expect(velB.x, -3);
@@ -144,17 +144,17 @@ void main() {
       registerCoreComponents(world);
 
       final a = world.spawn();
-      world.storeOf<Position>().set(a, Position(0, 0));
-      world.storeOf<Velocity>().set(a, Velocity(5, 0));
-      world.storeOf<Collider>().set(
+      world.componentsOf<Position>().set(a, Position(0, 0));
+      world.componentsOf<Velocity>().set(a, Velocity(5, 0));
+      world.componentsOf<Collider>().set(
         a,
         Collider(10, collisionGroup: 1, collisionMask: 0),
       );
 
       final b = world.spawn();
-      world.storeOf<Position>().set(b, Position(5, 0));
-      world.storeOf<Velocity>().set(b, Velocity(-3, 2));
-      world.storeOf<Collider>().set(
+      world.componentsOf<Position>().set(b, Position(5, 0));
+      world.componentsOf<Velocity>().set(b, Velocity(-3, 2));
+      world.componentsOf<Collider>().set(
         b,
         Collider(10, collisionGroup: 1, collisionMask: 1),
       );
@@ -163,8 +163,8 @@ void main() {
 
       world.step(0);
 
-      final velA = world.storeOf<Velocity>().get(a)!;
-      final velB = world.storeOf<Velocity>().get(b)!;
+      final velA = world.componentsOf<Velocity>().get(a)!;
+      final velB = world.componentsOf<Velocity>().get(b)!;
       expect(velA.x, 5);
       expect(velA.y, 0);
       expect(velB.x, -3);

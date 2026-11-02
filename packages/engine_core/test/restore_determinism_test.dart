@@ -26,10 +26,10 @@ World _skirmish() {
   for (var i = 0; i < 6; i++) {
     for (final (team, col) in [('red', 1), ('blue', 10)]) {
       final e = w.spawn();
-      w.storeOf<Team>().set(e, Team(team));
-      w.storeOf<ActionPoints>().set(e, ActionPoints(4, current: 0));
-      w.storeOf<GridPosition>().set(e, GridPosition(col, 3 + i));
-      w.storeOf<UnitStats>().set(e, UnitStats(maxHp: 12, attack: 3));
+      w.componentsOf<Team>().set(e, Team(team));
+      w.componentsOf<ActionPoints>().set(e, ActionPoints(4, current: 0));
+      w.componentsOf<GridPosition>().set(e, GridPosition(col, 3 + i));
+      w.componentsOf<UnitStats>().set(e, UnitStats(maxHp: 12, attack: 3));
     }
   }
   startTurnBasedGame(w, ['red', 'blue']);
@@ -70,8 +70,8 @@ void main() {
     final b = _skirmish();
     for (var i = 0; i < 20; i++) {
       final junk = b.spawn();
-      b.storeOf<Team>().set(junk, Team('red'));
-      b.storeOf<GridPosition>().set(junk, GridPosition(0, 0));
+      b.componentsOf<Team>().set(junk, Team('red'));
+      b.componentsOf<GridPosition>().set(junk, GridPosition(0, 0));
     }
     snap.restoreInto(b);
     _play(a, 100);

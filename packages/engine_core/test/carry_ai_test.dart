@@ -14,24 +14,24 @@ World _world() {
 
 EntityId _unit(World w, String team, int c, int r, {int ap = 6, int hp = 10}) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: hp, attack: 3));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(e, UnitStats(maxHp: hp, attack: 3));
   return e;
 }
 
 EntityId _flag(World w, String home, int c, int r, {EntityId? carrier}) {
   final e = w.spawn();
-  w.storeOf<Flag>().set(e, Flag('$home flag', home, c, r, carrier: carrier));
+  w.componentsOf<Flag>().set(e, Flag('$home flag', home, c, r, carrier: carrier));
   return e;
 }
 
 void _zone(World w, String team, int c, int r) =>
-    w.storeOf<DeliveryZone>().set(w.spawn(), DeliveryZone(team, c, r));
+    w.componentsOf<DeliveryZone>().set(w.spawn(), DeliveryZone(team, c, r));
 
 Order _first(World w, EntityId e) =>
-    w.storeOf<OrderQueue>().get(e)!.orders.first;
+    w.componentsOf<OrderQueue>().get(e)!.orders.first;
 
 void _play(World w) {
   startTurnBasedGame(w, ['red', 'blue']);
@@ -60,7 +60,7 @@ void main() {
     _play(w);
     final grab = _first(w, near) as MoveOrder;
     expect((grab.col, grab.row), (15, 15));
-    final other = w.storeOf<OrderQueue>().get(far)?.orders ?? const [];
+    final other = w.componentsOf<OrderQueue>().get(far)?.orders ?? const [];
     expect(
       other.whereType<MoveOrder>().where((m) => m.col == 15 && m.row == 15),
       isEmpty,
@@ -93,12 +93,12 @@ void main() {
   test('the Vip retreats from nearby enemies instead of fighting', () {
     final w = _world();
     final king = _unit(w, 'blue', 10, 10);
-    w.storeOf<Vip>().set(king, const Vip());
+    w.componentsOf<Vip>().set(king, const Vip());
     final foe = _unit(w, 'red', 12, 10);
     _play(w);
     final m = _first(w, king) as MoveOrder;
     final from = GridPosition(10, 10),
-        foePos = w.storeOf<GridPosition>().get(foe)!;
+        foePos = w.componentsOf<GridPosition>().get(foe)!;
     expect(
       GridPosition(m.col, m.row).chebyshev(foePos),
       greaterThan(from.chebyshev(foePos)),
@@ -110,12 +110,12 @@ void main() {
     () {
       final w = _world();
       final king = _unit(w, 'blue', 2, 2);
-      w.storeOf<Vip>().set(king, const Vip());
+      w.componentsOf<Vip>().set(king, const Vip());
       _flag(w, 'red', 3, 3);
       final soldier = _unit(w, 'blue', 18, 18);
       _unit(w, 'red', 18, 0);
       _play(w);
-      final kingOrders = w.storeOf<OrderQueue>().get(king)?.orders ?? const [];
+      final kingOrders = w.componentsOf<OrderQueue>().get(king)?.orders ?? const [];
       expect(
         kingOrders.whereType<MoveOrder>().where(
           (m) => m.col == 3 && m.row == 3,
@@ -136,7 +136,7 @@ void main() {
     w.addSystem(WinConditionSystem());
     _flag(w, 'red', 12, 4);
     _zone(w, 'blue', 2, 4);
-    w.storeOf<FlagRules>().set(w.spawn(), FlagRules(capturesToWin: 1));
+    w.componentsOf<FlagRules>().set(w.spawn(), FlagRules(capturesToWin: 1));
     _unit(w, 'blue', 3, 4, ap: 6);
     _unit(w, 'red', 18, 18);
     startTurnBasedGame(w, ['red', 'blue']);

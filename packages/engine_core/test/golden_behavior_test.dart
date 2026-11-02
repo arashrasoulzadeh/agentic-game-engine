@@ -157,9 +157,9 @@ void main() {
       final world = _world();
       final ids = [for (var i = 0; i < 4; i++) world.spawn()];
       for (final id in ids) {
-        world.storeOf<Position>().set(id, Position(id.toDouble(), 0));
+        world.componentsOf<Position>().set(id, Position(id.toDouble(), 0));
       }
-      final store = world.storeOf<Position>();
+      final store = world.componentsOf<Position>();
       final visited = <EntityId>[];
       for (var i = 0; i < store.length; i++) {
         final id = store.entityAt(i);
@@ -174,9 +174,9 @@ void main() {
       final world = _world();
       final ids = [for (var i = 0; i < 4; i++) world.spawn()];
       for (final id in ids) {
-        world.storeOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Position>().set(id, Position(0, 0));
       }
-      final store = world.storeOf<Position>();
+      final store = world.componentsOf<Position>();
       final visited = <EntityId>[];
       for (var i = store.length - 1; i >= 0; i--) {
         final id = store.entityAt(i);
@@ -191,12 +191,12 @@ void main() {
       final world = _world();
       final ids = [for (var i = 0; i < 4; i++) world.spawn()];
       for (final id in ids) {
-        world.storeOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Position>().set(id, Position(0, 0));
       }
       for (final id in List.of(ids)) {
         world.destroy(id);
       }
-      expect(world.storeOf<Position>().length, 0);
+      expect(world.componentsOf<Position>().length, 0);
       expect(world.entities.count, 0);
     });
 
@@ -204,12 +204,12 @@ void main() {
         'system in the same step', () {
       final world = _world();
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Position>().set(id, Position(0, 0));
       final seen = <bool>[];
       world
         ..addSystem(_Recorder('kill', [], (w) => w.destroy(id)))
         ..addSystem(
-          _Recorder('look', [], (w) => seen.add(w.storeOf<Position>().has(id))),
+          _Recorder('look', [], (w) => seen.add(w.componentsOf<Position>().has(id))),
         );
       world.step(0.1);
       expect(seen, [false]);
@@ -218,11 +218,11 @@ void main() {
     test('destroy removes the entity from every component store', () {
       final world = _world();
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(1, 2));
-      world.storeOf<Velocity>().set(id, Velocity(3, 4));
+      world.componentsOf<Position>().set(id, Position(1, 2));
+      world.componentsOf<Velocity>().set(id, Velocity(3, 4));
       world.destroy(id);
-      expect(world.storeOf<Position>().has(id), isFalse);
-      expect(world.storeOf<Velocity>().has(id), isFalse);
+      expect(world.componentsOf<Position>().has(id), isFalse);
+      expect(world.componentsOf<Velocity>().has(id), isFalse);
       expect(world.entities.isAlive(id), isFalse);
     });
 
@@ -264,24 +264,24 @@ void main() {
         'reads the new entity\'s components', () {
       final world = _world();
       final old = world.spawn();
-      world.storeOf<Position>().set(old, Position(1, 1));
+      world.componentsOf<Position>().set(old, Position(1, 1));
       world.destroy(old);
       expect(world.entities.isAlive(old), isFalse);
 
       final fresh = world.spawn();
-      world.storeOf<Position>().set(fresh, Position(9, 9));
+      world.componentsOf<Position>().set(fresh, Position(9, 9));
       expect(fresh, old);
       expect(world.entities.isAlive(old), isTrue);
-      expect(world.storeOf<Position>().get(old)!.x, 9);
+      expect(world.componentsOf<Position>().get(old)!.x, 9);
     });
 
     test('a reused id starts with no components', () {
       final world = _world();
       final old = world.spawn();
-      world.storeOf<Position>().set(old, Position(1, 1));
+      world.componentsOf<Position>().set(old, Position(1, 1));
       world.destroy(old);
       final fresh = world.spawn();
-      expect(world.storeOf<Position>().has(fresh), isFalse);
+      expect(world.componentsOf<Position>().has(fresh), isFalse);
     });
 
     test('ensureAlive creates the id and frees the gap below it', () {
@@ -297,7 +297,7 @@ void main() {
       final world = _world();
       final a = world.spawn();
       final b = world.spawn();
-      world.storeOf<Position>().set(b, Position(5, 6));
+      world.componentsOf<Position>().set(b, Position(5, 6));
       world.destroy(a);
       final json = world.toJson();
       expect([for (final e in json['entities'] as List) e['id']], [b]);

@@ -8,7 +8,7 @@ World _world({bool fog = false, bool corridor = false}) {
   final w = World(width: 20, height: 20);
   registerCoreComponents(w);
   if (fog) {
-    w.storeOf<FogOfWar>().set(w.spawn(), FogOfWar(20, 20));
+    w.componentsOf<FogOfWar>().set(w.spawn(), FogOfWar(20, 20));
     w.addSystem(VisionSystem());
   }
   w.addSystem(
@@ -36,14 +36,14 @@ EntityId _unit(
   int? vision,
 }) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(
     e,
     UnitStats(maxHp: hp, attack: atk, defense: def),
   );
-  if (vision != null) w.storeOf<Vision>().set(e, Vision(vision));
+  if (vision != null) w.componentsOf<Vision>().set(e, Vision(vision));
   return e;
 }
 
@@ -57,9 +57,9 @@ void main() {
       startTurnBasedGame(w, ['red', 'blue']);
       submitOrder(w, guard, const OverwatchOrder());
       w.step(0.1);
-      expect(w.storeOf<ActionPoints>().get(guard)!.current, 0);
+      expect(w.componentsOf<ActionPoints>().get(guard)!.current, 0);
       expect(
-        w.storeOf<StatusEffects>().get(guard)!.has(overwatchStatus),
+        w.componentsOf<StatusEffects>().get(guard)!.has(overwatchStatus),
         isTrue,
       );
       expect(
@@ -107,7 +107,7 @@ void main() {
     expect(triggered.single.watcher, guard);
     expect(triggered.single.target, runner);
     expect(
-      w.storeOf<StatusEffects>().get(guard)!.has(overwatchStatus),
+      w.componentsOf<StatusEffects>().get(guard)!.has(overwatchStatus),
       isFalse,
       reason: 'the stance ends on firing',
     );
@@ -125,17 +125,17 @@ void main() {
     submitOrder(w, runner, const MoveOrder(5, 9));
     w.step(0.1);
     expect(
-      w.storeOf<UnitStats>().get(runner)!.hp,
+      w.componentsOf<UnitStats>().get(runner)!.hp,
       26,
       reason: 'one shot of 4, then the stance is spent',
     );
-    expect(w.storeOf<GridPosition>().get(runner)!.row, 9);
+    expect(w.componentsOf<GridPosition>().get(runner)!.row, 9);
   });
 
   test('a longer-ranged watcher (AttackProfile) fires earlier', () {
     final w = _world(corridor: true);
     final archer = _unit(w, 'red', 6, 5, ap: 2, atk: 99);
-    w.storeOf<AttackProfile>().set(archer, AttackProfile(range: 3));
+    w.componentsOf<AttackProfile>().set(archer, AttackProfile(range: 3));
     final runner = _unit(w, 'blue', 5, 0, hp: 50, ap: 9);
     startTurnBasedGame(w, ['red', 'blue']);
     submitOrder(w, archer, const OverwatchOrder());
@@ -158,11 +158,11 @@ void main() {
     submitOrder(w, friend, const MoveOrder(0, 1));
     w.step(0.1);
     expect(
-      w.storeOf<UnitStats>().get(friend)!.hp,
+      w.componentsOf<UnitStats>().get(friend)!.hp,
       20,
       reason: 'friendly movement never triggers it',
     );
-    expect(w.storeOf<StatusEffects>().get(guard)!.has(overwatchStatus), isTrue);
+    expect(w.componentsOf<StatusEffects>().get(guard)!.has(overwatchStatus), isTrue);
   });
 
   test('the stance lapses at the owner\'s next turn start if nothing came', () {
@@ -175,7 +175,7 @@ void main() {
     endTurn(w);
     endTurn(w);
     expect(
-      w.storeOf<StatusEffects>().get(guard)!.has(overwatchStatus),
+      w.componentsOf<StatusEffects>().get(guard)!.has(overwatchStatus),
       isFalse,
     );
   });
@@ -192,7 +192,7 @@ void main() {
       endTurn(w);
       submitOrder(w, runner, const MoveOrder(5, 9));
       w.step(0.1);
-      return w.storeOf<UnitStats>().get(runner)!.hp;
+      return w.componentsOf<UnitStats>().get(runner)!.hp;
     }
 
     expect(runnerHp(0), 30, reason: 'vision 0 sees only its own cell');
@@ -214,7 +214,7 @@ void main() {
     endTurn(w);
     submitOrder(w, runner, AttackOrder(other));
     w.step(0.1);
-    expect(w.storeOf<UnitStats>().get(runner)!.hp, 26);
+    expect(w.componentsOf<UnitStats>().get(runner)!.hp, 26);
   });
 
   test('with no points left it waits for next turn, like defend', () {
@@ -225,22 +225,22 @@ void main() {
     trySpendActionPoints(w, guard, 2);
     submitOrder(w, guard, const OverwatchOrder());
     w.step(0.1);
-    expect(w.storeOf<OrderQueue>().get(guard)!.orders, hasLength(1));
+    expect(w.componentsOf<OrderQueue>().get(guard)!.orders, hasLength(1));
     endTurn(w);
     endTurn(w);
     w.step(0.1);
-    expect(w.storeOf<StatusEffects>().get(guard)!.has(overwatchStatus), isTrue);
+    expect(w.componentsOf<StatusEffects>().get(guard)!.has(overwatchStatus), isTrue);
   });
 
   test('a unit without ActionPoints cannot take the stance', () {
     final w = _world();
     final e = _unit(w, 'red', 0, 0);
-    w.storeOf<ActionPoints>().remove(e);
+    w.componentsOf<ActionPoints>().remove(e);
     _unit(w, 'blue', 9, 9);
     startTurnBasedGame(w, ['red', 'blue']);
     final failed = <OrderFailedEvent>[];
     w.events.on<OrderFailedEvent>(failed.add);
-    w.storeOf<OrderQueue>().set(e, OrderQueue([const OverwatchOrder()]));
+    w.componentsOf<OrderQueue>().set(e, OrderQueue([const OverwatchOrder()]));
     w.step(0.1);
     expect(failed.single.reason, OrderFailure.invalidTarget);
   });

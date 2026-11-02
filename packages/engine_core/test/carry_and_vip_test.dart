@@ -23,22 +23,22 @@ EntityId _unit(
   int atk = 3,
 }) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: hp, attack: atk));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(e, UnitStats(maxHp: hp, attack: atk));
   return e;
 }
 
 EntityId _flag(World w, String id, String home, int c, int r) {
   final e = w.spawn();
-  w.storeOf<Flag>().set(e, Flag(id, home, c, r));
+  w.componentsOf<Flag>().set(e, Flag(id, home, c, r));
   return e;
 }
 
 EntityId _zone(World w, String team, int c, int r) {
   final e = w.spawn();
-  w.storeOf<DeliveryZone>().set(e, DeliveryZone(team, c, r));
+  w.componentsOf<DeliveryZone>().set(e, DeliveryZone(team, c, r));
   return e;
 }
 
@@ -47,7 +47,7 @@ void main() {
     test('losing the Vip loses the game even with units left', () {
       final w = _turnWorld();
       final vip = _unit(w, 'red', 0, 0, hp: 3);
-      w.storeOf<Vip>().set(vip, const Vip());
+      w.componentsOf<Vip>().set(vip, const Vip());
       _unit(w, 'red', 5, 5);
       _unit(w, 'red', 6, 5);
       final hunter = _unit(w, 'blue', 1, 0, atk: 9);
@@ -85,7 +85,7 @@ void main() {
       final sys = LastTeamStandingSystem();
       w.addSystem(sys);
       final vip = spawnRealtimeUnit(w, team: 'red', col: 0, row: 0);
-      w.storeOf<Vip>().set(vip, const Vip());
+      w.componentsOf<Vip>().set(vip, const Vip());
       spawnRealtimeUnit(w, team: 'red', col: 1, row: 0);
       spawnRealtimeUnit(w, team: 'blue', col: 5, row: 5);
       w.step(0.1);
@@ -117,7 +117,7 @@ void main() {
       ); // steps off so the raider can enter
       w.step(0.1);
       expect(
-        w.storeOf<Flag>().get(flag)!.carrier,
+        w.componentsOf<Flag>().get(flag)!.carrier,
         isNull,
         reason: 'its own team never picks up its own flag',
       );
@@ -126,7 +126,7 @@ void main() {
       submitOrder(w, raider, const MoveOrder(5, 0));
       w.step(0.1);
       w.events.flush();
-      expect(w.storeOf<Flag>().get(flag)!.carrier, raider);
+      expect(w.componentsOf<Flag>().get(flag)!.carrier, raider);
       expect(events.single.carrier, raider);
     });
 
@@ -139,7 +139,7 @@ void main() {
       submitOrder(w, raider, const MoveOrder(5, 5));
       submitOrder(w, raider, const MoveOrder(9, 9));
       w.step(0.1);
-      final f = w.storeOf<Flag>().get(flag)!;
+      final f = w.componentsOf<Flag>().get(flag)!;
       expect(f.carrier, raider);
       expect((f.col, f.row), (9, 9));
     });
@@ -158,8 +158,8 @@ void main() {
       submitOrder(w, raider, const MoveOrder(7, 5));
       w.step(0.1);
       final carriers = [
-        w.storeOf<Flag>().get(f1)!.carrier,
-        w.storeOf<Flag>().get(f2)!.carrier,
+        w.componentsOf<Flag>().get(f1)!.carrier,
+        w.componentsOf<Flag>().get(f2)!.carrier,
       ];
       expect(carriers.where((c) => c == raider), hasLength(1));
     });
@@ -170,7 +170,7 @@ void main() {
         final w = _turnWorld();
         final flag = _flag(w, 'red flag', 'red', 10, 0);
         _zone(w, 'blue', 0, 10);
-        w.storeOf<FlagRules>().set(w.spawn(), FlagRules(capturesToWin: 1));
+        w.componentsOf<FlagRules>().set(w.spawn(), FlagRules(capturesToWin: 1));
         final raider = _unit(w, 'blue', 10, 2, ap: 20);
         _unit(w, 'red', 15, 15);
         final captured = <FlagCapturedEvent>[];
@@ -184,7 +184,7 @@ void main() {
 
         expect(captured.single.team, 'blue');
         expect(captured.single.total, 1);
-        final f = w.storeOf<Flag>().get(flag)!;
+        final f = w.componentsOf<Flag>().get(flag)!;
         expect(f.carrier, isNull);
         expect((f.col, f.row), (10, 0), reason: 'back at home');
         expect(turnStateOf(w)!.winner, 'blue');
@@ -198,7 +198,7 @@ void main() {
         _flag(w, 'f', 'red', 5, 5);
         _zone(w, 'blue', 0, 0);
         final rules = FlagRules(capturesToWin: 2);
-        w.storeOf<FlagRules>().set(w.spawn(), rules);
+        w.componentsOf<FlagRules>().set(w.spawn(), rules);
         final raider = _unit(w, 'blue', 1, 0, ap: 40);
         _unit(w, 'red', 15, 15);
         startTurnBasedGame(w, ['red', 'blue']);
@@ -227,23 +227,23 @@ void main() {
         w.events.on<FlagDroppedEvent>(dropped.add);
         startTurnBasedGame(w, ['red', 'blue']);
         endTurn(w);
-        w.storeOf<Flag>().get(flag)!.carrier = carrier;
+        w.componentsOf<Flag>().get(flag)!.carrier = carrier;
         endTurn(w);
         submitOrder(w, defender, AttackOrder(carrier));
         w.step(0.1);
         w.events.flush();
         expect(w.entities.isAlive(carrier), isFalse);
-        expect(w.storeOf<Flag>().get(flag)!.carrier, isNull);
+        expect(w.componentsOf<Flag>().get(flag)!.carrier, isNull);
         expect(dropped.single.formerCarrier, carrier);
         expect(
-          (w.storeOf<Flag>().get(flag)!.col, w.storeOf<Flag>().get(flag)!.row),
+          (w.componentsOf<Flag>().get(flag)!.col, w.componentsOf<Flag>().get(flag)!.row),
           (5, 5),
         );
 
         endTurn(w);
         submitOrder(w, second, const MoveOrder(5, 5));
         w.step(0.1);
-        expect(w.storeOf<Flag>().get(flag)!.carrier, second);
+        expect(w.componentsOf<Flag>().get(flag)!.carrier, second);
       },
     );
 
@@ -254,7 +254,7 @@ void main() {
       w.addSystem(RealtimeOrderSystem(fields: cache, autoEngage: false));
       final flag = _flag(w, 'f', 'red', 8, 0);
       _zone(w, 'blue', 0, 0);
-      w.storeOf<FlagRules>().set(w.spawn(), FlagRules(capturesToWin: 5));
+      w.componentsOf<FlagRules>().set(w.spawn(), FlagRules(capturesToWin: 5));
       final raider = spawnRealtimeUnit(
         w,
         team: 'blue',
@@ -270,7 +270,7 @@ void main() {
         w.step(0.05);
       }
       expect(captured, hasLength(1));
-      expect(w.storeOf<Flag>().get(flag)!.carrier, isNull);
+      expect(w.componentsOf<Flag>().get(flag)!.carrier, isNull);
     });
 
     test('flag, zone and rules round-trip JSON', () {
@@ -307,7 +307,7 @@ void main() {
         startTurnBasedGame(w, ['red', 'blue']);
         submitOrder(w, red, const MoveOrder(6, 0));
         w.step(0.1);
-        expect(w.storeOf<GridPosition>().get(red)!.col, 6);
+        expect(w.componentsOf<GridPosition>().get(red)!.col, 6);
         expect(selectAtCell(w, 3, 0), isNull);
       },
     );

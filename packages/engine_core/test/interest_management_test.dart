@@ -11,7 +11,7 @@ World _server(int n) {
   registerCoreComponents(w);
   for (var i = 0; i < n; i++) {
     final e = w.spawn();
-    w.storeOf<Position>().set(e, Position(i * 100.0, 0));
+    w.componentsOf<Position>().set(e, Position(i * 100.0, 0));
   }
   return w;
 }
@@ -93,21 +93,21 @@ void main() {
     r.tick();
     final before = r.sync.deltasSent;
 
-    server.storeOf<Position>().get(15)!.x = 1501; // far outside the view
+    server.componentsOf<Position>().get(15)!.x = 1501; // far outside the view
     r.tick();
     expect(r.sync.deltasSent, before + 1);
     expect(r.client.entities.isAlive(15), isFalse);
     expect(r.client.entities.all.toSet(), {0, 1, 2});
 
-    server.storeOf<Position>().get(1)!.x = 111; // inside
+    server.componentsOf<Position>().get(1)!.x = 111; // inside
     r.tick();
-    expect(r.client.storeOf<Position>().get(1)!.x, closeTo(111, 1));
+    expect(r.client.componentsOf<Position>().get(1)!.x, closeTo(111, 1));
   });
 
   test('an entity with no position (global state) is always sent', () {
     final server = _server(5);
     final global = server.spawn();
-    server.storeOf<Treasury>().set(
+    server.componentsOf<Treasury>().set(
       global,
       Treasury('red', amounts: {'gold': 5}),
     );

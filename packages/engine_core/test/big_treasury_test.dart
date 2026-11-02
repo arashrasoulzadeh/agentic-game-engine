@@ -87,7 +87,7 @@ void main() {
       final w = World(width: 10, height: 10);
       registerCoreComponents(w);
       final e = w.spawn();
-      w.storeOf<BigTreasury>().set(
+      w.componentsOf<BigTreasury>().set(
         e,
         BigTreasury(
           amounts: {'gold': n('1e500')},
@@ -98,7 +98,7 @@ void main() {
       final w2 = World(width: 10, height: 10);
       registerCoreComponents(w2);
       snap.restoreInto(w2);
-      expect(w2.storeOf<BigTreasury>().get(e)!.of('gold'), n('1e500'));
+      expect(w2.componentsOf<BigTreasury>().get(e)!.of('gold'), n('1e500'));
     },
   );
 

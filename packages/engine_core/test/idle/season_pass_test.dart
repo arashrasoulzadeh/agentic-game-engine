@@ -10,11 +10,11 @@ void main() {
     registerCoreComponents(world);
     registerIdleComponents(world);
     final wallet = BigTreasury(amounts: {'coins': n('0'), 'gems': n('0')});
-    world.storeOf<BigTreasury>().set(world.spawn(), wallet);
-    world.storeOf<IdleModifiers>().set(world.spawn(), IdleModifiers());
+    world.componentsOf<BigTreasury>().set(world.spawn(), wallet);
+    world.componentsOf<IdleModifiers>().set(world.spawn(), IdleModifiers());
     final stats = IdleStats(lifetimeEarned: {'coins': n('1500')});
-    world.storeOf<IdleStats>().set(world.spawn(), stats);
-    world.storeOf<SeasonPass>().set(
+    world.componentsOf<IdleStats>().set(world.spawn(), stats);
+    world.componentsOf<SeasonPass>().set(
       world.spawn(),
       SeasonPass(
         id: 'spring',
@@ -30,10 +30,10 @@ void main() {
     expect(claimSeasonPass(world, wallet), 2);
     expect(wallet.of('gems'), n('1'));
     expect(
-      world.storeOf<IdleModifiers>().denseAt(0).stack.sources,
+      world.componentsOf<IdleModifiers>().denseAt(0).stack.sources,
       contains('seasonPass:spring:1'),
     );
-    expect(world.storeOf<SeasonPass>().denseAt(0).claimed, 2);
+    expect(world.componentsOf<SeasonPass>().denseAt(0).claimed, 2);
 
     stats.lifetimeEarned['coins'] = n('20000');
     expect(claimSeasonPass(world, wallet), 1);
@@ -46,13 +46,13 @@ void main() {
     registerCoreComponents(world);
     registerIdleComponents(world);
     final wallet = BigTreasury(amounts: {'coins': n('0'), 'gems': n('0')});
-    world.storeOf<BigTreasury>().set(world.spawn(), wallet);
-    world.storeOf<IdleModifiers>().set(world.spawn(), IdleModifiers());
-    world.storeOf<IdleStats>().set(
+    world.componentsOf<BigTreasury>().set(world.spawn(), wallet);
+    world.componentsOf<IdleModifiers>().set(world.spawn(), IdleModifiers());
+    world.componentsOf<IdleStats>().set(
       world.spawn(),
       IdleStats(lifetimeEarned: {'coins': n('200')}),
     );
-    world.storeOf<SeasonPass>().set(
+    world.componentsOf<SeasonPass>().set(
       world.spawn(),
       SeasonPass(
         id: 's',

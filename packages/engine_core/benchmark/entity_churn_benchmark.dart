@@ -24,9 +24,9 @@ class EntityChurnBenchmark extends BenchmarkBase {
   void run() {
     for (var i = 0; i < churnCount; i++) {
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<Collider>().set(id, Collider(4));
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<Collider>().set(id, Collider(4));
     }
     // Destroy every entity just spawned this run() so churnCount stays
     // the live population delta per call, not a monotonically growing

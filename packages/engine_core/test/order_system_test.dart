@@ -10,9 +10,9 @@ World _world() {
 
 EntityId _unit(World w, String team, int col, int row, int ap) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(col, row));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(col, row));
   return e;
 }
 
@@ -41,17 +41,17 @@ void main() {
     startTurnBasedGame(w, ['red', 'blue']);
     submitOrder(w, a, const MoveOrder(3, 0));
     w.step(0.1);
-    var p = w.storeOf<GridPosition>().get(a)!;
+    var p = w.componentsOf<GridPosition>().get(a)!;
     expect([p.col, p.row], [2, 0]);
-    expect(w.storeOf<ActionPoints>().get(a)!.current, 0);
-    expect(w.storeOf<OrderQueue>().get(a)!.orders, hasLength(1));
+    expect(w.componentsOf<ActionPoints>().get(a)!.current, 0);
+    expect(w.componentsOf<OrderQueue>().get(a)!.orders, hasLength(1));
 
     endTurn(w);
     endTurn(w);
     w.step(0.1);
-    p = w.storeOf<GridPosition>().get(a)!;
+    p = w.componentsOf<GridPosition>().get(a)!;
     expect([p.col, p.row], [3, 0]);
-    expect(w.storeOf<OrderQueue>().get(a)!.orders, isEmpty);
+    expect(w.componentsOf<OrderQueue>().get(a)!.orders, isEmpty);
   });
 
   test('move into a blocked straight line fails with blocked', () {
@@ -64,7 +64,7 @@ void main() {
     submitOrder(w, a, const MoveOrder(2, 0));
     w.step(0.1);
     expect(failed.single.reason, OrderFailure.blocked);
-    expect(w.storeOf<OrderQueue>().get(a)!.orders, isEmpty);
+    expect(w.componentsOf<OrderQueue>().get(a)!.orders, isEmpty);
   });
 
   test('move routes around an obstacle on the other axis', () {
@@ -74,7 +74,7 @@ void main() {
     startTurnBasedGame(w, ['red', 'blue']);
     submitOrder(w, a, const MoveOrder(1, 1));
     w.step(0.1);
-    final p = w.storeOf<GridPosition>().get(a)!;
+    final p = w.componentsOf<GridPosition>().get(a)!;
     expect([p.col, p.row], [1, 1]);
   });
 
@@ -93,7 +93,7 @@ void main() {
     w.step(0.1);
     expect(failed.single.reason, OrderFailure.outOfRange);
     expect(hits.single.target, near);
-    expect(w.storeOf<ActionPoints>().get(a)!.current, 2);
+    expect(w.componentsOf<ActionPoints>().get(a)!.current, 2);
   });
 
   test('attack on a destroyed target is invalid', () {
@@ -114,9 +114,9 @@ void main() {
     _unit(w, 'red', 0, 0, 3);
     final b = _unit(w, 'blue', 5, 5, 3);
     startTurnBasedGame(w, ['red', 'blue']);
-    w.storeOf<OrderQueue>().set(b, OrderQueue([const MoveOrder(5, 6)]));
+    w.componentsOf<OrderQueue>().set(b, OrderQueue([const MoveOrder(5, 6)]));
     w.step(0.1);
-    expect(w.storeOf<GridPosition>().get(b)!.row, 5);
+    expect(w.componentsOf<GridPosition>().get(b)!.row, 5);
   });
 
   test(
@@ -127,9 +127,9 @@ void main() {
       w.addSystem(OrderSystem(approachTargets: true));
       EntityId unit(String t, int c, int r, int ap) {
         final e = w.spawn();
-        w.storeOf<Team>().set(e, Team(t));
-        w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-        w.storeOf<GridPosition>().set(e, GridPosition(c, r));
+        w.componentsOf<Team>().set(e, Team(t));
+        w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+        w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
         return e;
       }
 
@@ -140,16 +140,16 @@ void main() {
       w.events.on<AttackResolvedEvent>(hits.add);
       submitOrder(w, a, AttackOrder(x));
       w.step(0.1);
-      expect(w.storeOf<GridPosition>().get(a)!.col, 2);
+      expect(w.componentsOf<GridPosition>().get(a)!.col, 2);
       expect(hits, isEmpty);
-      expect(w.storeOf<OrderQueue>().get(a)!.orders, hasLength(1));
+      expect(w.componentsOf<OrderQueue>().get(a)!.orders, hasLength(1));
 
       endTurn(w);
       endTurn(w);
       w.step(0.1);
-      expect(w.storeOf<GridPosition>().get(a)!.col, 3);
+      expect(w.componentsOf<GridPosition>().get(a)!.col, 3);
       expect(hits.single.target, x);
-      expect(w.storeOf<OrderQueue>().get(a)!.orders, isEmpty);
+      expect(w.componentsOf<OrderQueue>().get(a)!.orders, isEmpty);
     },
   );
 }

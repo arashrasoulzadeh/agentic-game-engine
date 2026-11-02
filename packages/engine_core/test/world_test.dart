@@ -23,14 +23,14 @@ void main() {
     () {
       final world = _buildWorld();
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(195, 100));
-      world.storeOf<Velocity>().set(id, Velocity(50, 0));
-      world.storeOf<Collider>().set(id, Collider(5));
+      world.componentsOf<Position>().set(id, Position(195, 100));
+      world.componentsOf<Velocity>().set(id, Velocity(50, 0));
+      world.componentsOf<Collider>().set(id, Collider(5));
 
       world.step(1.0); // would move to x=245, past the 200-wide world -> bounce
 
-      final pos = world.storeOf<Position>().get(id)!;
-      final vel = world.storeOf<Velocity>().get(id)!;
+      final pos = world.componentsOf<Position>().get(id)!;
+      final vel = world.componentsOf<Velocity>().get(id)!;
       expect(pos.x, lessThanOrEqualTo(195));
       expect(vel.x, lessThan(0));
     },
@@ -40,12 +40,12 @@ void main() {
     final world = _buildWorld();
     final a = world.spawn();
     final b = world.spawn();
-    world.storeOf<Position>().set(a, Position(100, 100));
-    world.storeOf<Velocity>().set(a, Velocity(10, 0));
-    world.storeOf<Collider>().set(a, Collider(5));
-    world.storeOf<Position>().set(b, Position(102, 100));
-    world.storeOf<Velocity>().set(b, Velocity(-10, 0));
-    world.storeOf<Collider>().set(b, Collider(5));
+    world.componentsOf<Position>().set(a, Position(100, 100));
+    world.componentsOf<Velocity>().set(a, Velocity(10, 0));
+    world.componentsOf<Collider>().set(a, Collider(5));
+    world.componentsOf<Position>().set(b, Position(102, 100));
+    world.componentsOf<Velocity>().set(b, Velocity(-10, 0));
+    world.componentsOf<Collider>().set(b, Collider(5));
 
     var collided = false;
     world.events.on<CollisionEvent>((e) => collided = true);
@@ -58,9 +58,9 @@ void main() {
   test('world state round-trips through toJson/applyPatch', () {
     final world = _buildWorld();
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(10, 20));
-    world.storeOf<Velocity>().set(id, Velocity(1, 2));
-    world.storeOf<Collider>().set(id, Collider(3));
+    world.componentsOf<Position>().set(id, Position(10, 20));
+    world.componentsOf<Velocity>().set(id, Velocity(1, 2));
+    world.componentsOf<Collider>().set(id, Collider(3));
 
     final snapshot = world.toJson();
     expect(snapshot['entities'], hasLength(1));
@@ -78,7 +78,7 @@ void main() {
     };
     world2.applyPatch(patched);
 
-    final restored = world2.storeOf<Position>().get(id2)!;
+    final restored = world2.componentsOf<Position>().get(id2)!;
     expect(restored.x, 10);
     expect(restored.y, 20);
   });
@@ -120,12 +120,12 @@ void main() {
       final world = _buildWorld();
       for (var i = 0; i < 500; i++) {
         final id = world.spawn();
-        world.storeOf<Position>().set(
+        world.componentsOf<Position>().set(
           id,
           Position((i % 20) * 10.0, (i ~/ 20) * 10.0),
         );
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
-        world.storeOf<Collider>().set(id, Collider(4));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<Collider>().set(id, Collider(4));
       }
 
       var collisionCount = 0;

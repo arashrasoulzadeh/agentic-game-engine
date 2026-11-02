@@ -11,20 +11,20 @@ World _newWorld({int players = 2}) {
   w.addSystem(MovementSystem());
   for (var i = 0; i < players; i++) {
     final e = w.spawn();
-    w.storeOf<Position>().set(e, Position(0, 0));
-    w.storeOf<Velocity>().set(e, Velocity(0, 0));
+    w.componentsOf<Position>().set(e, Position(0, 0));
+    w.componentsOf<Velocity>().set(e, Velocity(0, 0));
   }
   return w;
 }
 
 void _apply(World w, Map<int, Map<String, dynamic>> inputs) {
   for (final e in inputs.entries) {
-    w.storeOf<Velocity>().get(e.key)!.x =
+    w.componentsOf<Velocity>().get(e.key)!.x =
         ((e.value['dx'] as num?) ?? 0).toDouble() * 60;
   }
 }
 
-double _x(World w, int e) => w.storeOf<Position>().get(e)!.x;
+double _x(World w, int e) => w.componentsOf<Position>().get(e)!.x;
 
 void main() {
   group('LoopbackLink', () {
@@ -180,7 +180,7 @@ void main() {
           cl.addInput(0, i, {'dx': 1});
           cl.advance([0]);
         }
-        client.storeOf<Position>().get(0)!.x = 999; // client drifted
+        client.componentsOf<Position>().get(0)!.x = 999; // client drifted
         final replayed = cl.correctState(authoritativeAt3, [0]);
         expect(replayed, 3);
         expect(client.tick, 6);
@@ -202,7 +202,7 @@ void main() {
       final w = _newWorld(players: 1);
       final h = PositionHistory();
       for (var i = 0; i < 10; i++) {
-        w.storeOf<Velocity>().get(0)!.x = 60;
+        w.componentsOf<Velocity>().get(0)!.x = 60;
         w.step(_dt);
         h.record(w);
       }
@@ -253,9 +253,9 @@ void main() {
       () {
         final w = _newWorld(players: 1);
         final h = PositionHistory(capacity: 3);
-        w.storeOf<Position>().get(0)!.x = 1;
+        w.componentsOf<Position>().get(0)!.x = 1;
         h.record(w);
-        w.storeOf<Position>().get(0)!.x = 2;
+        w.componentsOf<Position>().get(0)!.x = 2;
         h.record(w);
         expect(h.positionAt(0, 0)!.x, 2);
         for (var i = 0; i < 5; i++) {
@@ -304,7 +304,7 @@ void main() {
       expect(sync.fullSnapshotsSent, 1);
       expect(client.entities.count, 3);
 
-      server.storeOf<Position>().get(2)!.x = 77;
+      server.componentsOf<Position>().get(2)!.x = 77;
       server.step(_dt);
       sync.broadcast();
       expect(sync.deltasSent, 1);
@@ -333,7 +333,7 @@ void main() {
       tick();
       server.destroy(0);
       final fresh = server.spawn();
-      server.storeOf<Position>().set(fresh, Position(5, 5));
+      server.componentsOf<Position>().set(fresh, Position(5, 5));
       tick();
       tick();
       expect(client.entities.isAlive(1), isTrue);
@@ -368,7 +368,7 @@ void main() {
 
       for (var i = 0; i < 200; i++) {
         for (var p = 0; p < 4; p++) {
-          server.storeOf<Velocity>().get(p)!.x =
+          server.componentsOf<Velocity>().get(p)!.x =
               (i % 17 < 8 ? 1 : -1) * 30.0 * (p + 1);
         }
         server.step(_dt);

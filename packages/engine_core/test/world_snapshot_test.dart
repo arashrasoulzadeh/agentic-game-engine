@@ -43,9 +43,9 @@ void main() {
     test('capture is a deep copy: later changes do not alter it', () {
       final w = _world();
       final e = w.spawn();
-      w.storeOf<Position>().set(e, Position(1, 2));
+      w.componentsOf<Position>().set(e, Position(1, 2));
       final snap = WorldSnapshot.capture(w);
-      w.storeOf<Position>().get(e)!.x = 99;
+      w.componentsOf<Position>().get(e)!.x = 99;
       expect(snap.entities[e]!['position']['x'], 1);
     });
 
@@ -55,50 +55,50 @@ void main() {
         final w = _world();
         final a = w.spawn();
         final b = w.spawn();
-        w.storeOf<Position>().set(a, Position(1, 1));
-        w.storeOf<Position>().set(b, Position(2, 2));
+        w.componentsOf<Position>().set(a, Position(1, 1));
+        w.componentsOf<Position>().set(b, Position(2, 2));
         w.step(0.1);
         final snap = WorldSnapshot.capture(w);
 
-        w.storeOf<Position>().get(a)!.x = 50;
+        w.componentsOf<Position>().get(a)!.x = 50;
         final c = w
             .spawn(); // spawned before the destroy, so it cannot reuse b's id
-        w.storeOf<Velocity>().set(c, Velocity(1, 1));
+        w.componentsOf<Velocity>().set(c, Velocity(1, 1));
         w.destroy(b);
         w.step(0.1);
 
         snap.restoreInto(w);
         expect(w.tick, snap.tick);
-        expect(w.storeOf<Position>().get(a)!.x, 1);
+        expect(w.componentsOf<Position>().get(a)!.x, 1);
         expect(w.entities.isAlive(b), isTrue);
-        expect(w.storeOf<Position>().get(b)!.y, 2);
+        expect(w.componentsOf<Position>().get(b)!.y, 2);
         expect(w.entities.isAlive(c), isFalse);
-        expect(w.storeOf<Velocity>().has(c), isFalse);
+        expect(w.componentsOf<Velocity>().has(c), isFalse);
       },
     );
 
     test('restore removes a component that was added after the snapshot', () {
       final w = _world();
       final e = w.spawn();
-      w.storeOf<Position>().set(e, Position(0, 0));
+      w.componentsOf<Position>().set(e, Position(0, 0));
       final snap = WorldSnapshot.capture(w);
-      w.storeOf<Velocity>().set(e, Velocity(1, 0));
+      w.componentsOf<Velocity>().set(e, Velocity(1, 0));
       snap.restoreInto(w);
-      expect(w.storeOf<Velocity>().has(e), isFalse);
+      expect(w.componentsOf<Velocity>().has(e), isFalse);
     });
 
     test('unchanged entities are not recreated', () {
       final w = _world();
       final e = w.spawn();
-      w.storeOf<Position>().set(e, Position(1, 1));
-      final instance = w.storeOf<Position>().get(e);
+      w.componentsOf<Position>().set(e, Position(1, 1));
+      final instance = w.componentsOf<Position>().get(e);
       WorldSnapshot.capture(w).restoreInto(w);
-      expect(identical(w.storeOf<Position>().get(e), instance), isTrue);
+      expect(identical(w.componentsOf<Position>().get(e), instance), isTrue);
     });
 
     test('JSON round trip', () {
       final w = _world();
-      w.storeOf<Position>().set(w.spawn(), Position(3, 4));
+      w.componentsOf<Position>().set(w.spawn(), Position(3, 4));
       final snap = WorldSnapshot.capture(w);
       final back = WorldSnapshot.fromJson(snap.toJson());
       expect(back.tick, snap.tick);

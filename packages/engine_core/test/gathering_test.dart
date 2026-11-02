@@ -27,7 +27,7 @@ _Rig _rig({int gold = 6, bool withDepot = true}) {
   w.addSystem(GatherSystem(nav));
   w.addSystem(RealtimeOrderSystem(fields: fields));
   final treasury = Treasury('red');
-  w.storeOf<Treasury>().set(w.spawn(), treasury);
+  w.componentsOf<Treasury>().set(w.spawn(), treasury);
   final worker = w.spawn();
   w.components.applyToEntity(worker, {
     ..._worker,
@@ -83,7 +83,7 @@ void main() {
           reason: 'an empty node is removed',
         );
         expect(
-          r.world.storeOf<Gatherer>().get(r.worker)!.phase,
+          r.world.componentsOf<Gatherer>().get(r.worker)!.phase,
           GatherPhase.idle,
         );
       },
@@ -91,28 +91,28 @@ void main() {
 
     test('harvesting takes secondsPerUnit per unit', () {
       final r = _rig();
-      r.world.storeOf<GridPosition>().get(r.worker)!
+      r.world.componentsOf<GridPosition>().get(r.worker)!
         ..col = 5
         ..row = 1; // already next to the mine
       assignGather(r.world, r.worker, r.mine);
       _run(r.world, 1.2); // one tick to start, then 0.5 s per unit
-      final g = r.world.storeOf<Gatherer>().get(r.worker)!;
+      final g = r.world.componentsOf<Gatherer>().get(r.worker)!;
       expect(g.carried, 2);
-      expect(r.world.storeOf<ResourceNode>().get(r.mine)!.amount, 4);
+      expect(r.world.componentsOf<ResourceNode>().get(r.mine)!.amount, 4);
     });
 
     test('without a depot the haul waits, kept, until one exists', () {
       final r = _rig(withDepot: false);
       assignGather(r.world, r.worker, r.mine);
       _run(r.world, 30);
-      final g = r.world.storeOf<Gatherer>().get(r.worker)!;
+      final g = r.world.componentsOf<Gatherer>().get(r.worker)!;
       expect((g.phase, g.carried), (GatherPhase.toDepot, 4));
       expect(r.treasury.of('gold'), 0);
     });
 
     test('an unfinished depot does not accept deliveries', () {
       final r = _rig();
-      r.world.storeOf<Construction>().set(r.hall, Construction(1000));
+      r.world.componentsOf<Construction>().set(r.hall, Construction(1000));
       assignGather(r.world, r.worker, r.mine);
       _run(r.world, 30);
       expect(r.treasury.of('gold'), 0);
@@ -135,7 +135,7 @@ void main() {
 
     test('switching resource drops what was carried', () {
       final r = _rig();
-      final g = r.world.storeOf<Gatherer>().get(r.worker)!
+      final g = r.world.componentsOf<Gatherer>().get(r.worker)!
         ..carrying = 'wood'
         ..carried = 3;
       assignGather(r.world, r.worker, r.mine);
@@ -176,7 +176,7 @@ void main() {
       r.world.events.on<ResourceDeliveredEvent>(events.add);
       assignGather(r.world, r.worker, r.mine);
       _run(r.world, 15);
-      final p = r.world.storeOf<GridPosition>().get(r.worker)!;
+      final p = r.world.componentsOf<GridPosition>().get(r.worker)!;
       expect(
         p.chebyshev(GridPosition(6, 3)),
         lessThanOrEqualTo(3),
@@ -193,7 +193,7 @@ void main() {
       w.addSystem(ConstructionSystem());
       w.addSystem(ProductionSystem(_nav()));
       final t = Treasury('red', amounts: {'gold': gold});
-      w.storeOf<Treasury>().set(w.spawn(), t);
+      w.componentsOf<Treasury>().set(w.spawn(), t);
       return (world: w, treasury: t);
     }
 
@@ -224,9 +224,9 @@ void main() {
         expect(res.failure, isNull);
         expect(r.treasury.of('gold'), 60);
         final id = res.id!;
-        expect(r.world.storeOf<Construction>().get(id)!.remaining, 5);
-        expect(r.world.storeOf<Team>().get(id)!.id, 'red');
-        expect(r.world.storeOf<GridPosition>().get(id)!.col, 3);
+        expect(r.world.componentsOf<Construction>().get(id)!.remaining, 5);
+        expect(r.world.componentsOf<Team>().get(id)!.id, 'red');
+        expect(r.world.componentsOf<GridPosition>().get(id)!.col, 3);
       },
     );
 
@@ -244,9 +244,9 @@ void main() {
         buildSeconds: 2,
       ).id!;
       _run(r.world, 1.5);
-      expect(r.world.storeOf<Construction>().has(id), isTrue);
+      expect(r.world.componentsOf<Construction>().has(id), isTrue);
       _run(r.world, 1.0);
-      expect(r.world.storeOf<Construction>().has(id), isFalse);
+      expect(r.world.componentsOf<Construction>().has(id), isFalse);
       expect(done, [id]);
     });
 
@@ -265,7 +265,7 @@ void main() {
         ).id!;
         queueProduction(r.world, id);
         _run(r.world, 2.5);
-        expect(r.world.storeOf<Producer>().get(id)!.progress, 0);
+        expect(r.world.componentsOf<Producer>().get(id)!.progress, 0);
         expect(
           r.treasury.of('gold'),
           100,
@@ -273,7 +273,7 @@ void main() {
         );
         _run(r.world, 3);
         expect(
-          r.world.storeOf<Producer>().get(id)!.queued,
+          r.world.componentsOf<Producer>().get(id)!.queued,
           0,
           reason: 'one unit built after completion',
         );
@@ -290,7 +290,7 @@ void main() {
         col: 3,
         row: 3,
       ).id!;
-      expect(r.world.storeOf<Construction>().has(id), isFalse);
+      expect(r.world.componentsOf<Construction>().has(id), isFalse);
     });
 
     test('every refusal reason, and a refusal spends nothing', () {

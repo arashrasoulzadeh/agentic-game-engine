@@ -16,11 +16,11 @@ void main() {
     registerCoreComponents(world);
     registerIdleComponents(world);
     wallet = BigTreasury(amounts: {'coins': n('10000'), 'gems': n('2')});
-    world.storeOf<BigTreasury>().set(world.spawn(), wallet);
-    world.storeOf<IdleModifiers>().set(world.spawn(), IdleModifiers());
-    world.storeOf<IdleStats>().set(world.spawn(), IdleStats());
+    world.componentsOf<BigTreasury>().set(world.spawn(), wallet);
+    world.componentsOf<IdleModifiers>().set(world.spawn(), IdleModifiers());
+    world.componentsOf<IdleStats>().set(world.spawn(), IdleStats());
     lockedGen = world.spawn();
-    world.storeOf<Generator>().set(
+    world.componentsOf<Generator>().set(
       lockedGen,
       Generator(
         id: 'mine',
@@ -30,7 +30,7 @@ void main() {
       ),
     );
     research = world.spawn();
-    world.storeOf<ResearchNode>().set(
+    world.componentsOf<ResearchNode>().set(
       research,
       ResearchNode(
         id: 'mining',
@@ -40,7 +40,7 @@ void main() {
       ),
     );
     warp = world.spawn();
-    world.storeOf<TimeWarpOffer>().set(
+    world.componentsOf<TimeWarpOffer>().set(
       warp,
       TimeWarpOffer(
         id: 'hour',
@@ -60,7 +60,7 @@ void main() {
 
   test('timeWarp credits current income for the requested duration', () {
     final open = world.spawn();
-    world.storeOf<Generator>().set(
+    world.componentsOf<Generator>().set(
       open,
       Generator(
         id: 'farm',
@@ -79,7 +79,7 @@ void main() {
 
   test('buyTimeWarp spends gems then applies the offer', () {
     final open = world.spawn();
-    world.storeOf<Generator>().set(
+    world.componentsOf<Generator>().set(
       open,
       Generator(
         id: 'farm',
@@ -124,8 +124,8 @@ void main() {
         },
       ],
     });
-    expect(w.storeOf<ResearchNode>().length, 1);
-    expect(w.storeOf<TimeWarpOffer>().length, 1);
+    expect(w.componentsOf<ResearchNode>().length, 1);
+    expect(w.componentsOf<TimeWarpOffer>().length, 1);
     expect(validateIdleDefinition({
       'research': [
         {'id': 'x', 'cost': {'nope': '1'}},

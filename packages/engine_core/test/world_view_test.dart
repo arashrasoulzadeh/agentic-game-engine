@@ -11,7 +11,7 @@ void main() {
   test('component/hasComponent read through to the underlying store', () {
     final world = _buildWorld();
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(1, 2));
+    world.componentsOf<Position>().set(id, Position(1, 2));
     final view = WorldView(world);
 
     expect(view.hasComponent<Position>(id), isTrue);
@@ -37,8 +37,8 @@ void main() {
     final a = world.spawn();
     final b = world.spawn();
     world.spawn(); // no Position
-    world.storeOf<Position>().set(a, Position(0, 0));
-    world.storeOf<Position>().set(b, Position(0, 0));
+    world.componentsOf<Position>().set(a, Position(0, 0));
+    world.componentsOf<Position>().set(b, Position(0, 0));
 
     final view = WorldView(world);
     expect(view.entitiesWith<Position>().toSet(), {a, b});
@@ -50,10 +50,10 @@ void main() {
     final onlyPosition = world.spawn();
     final onlyVelocity = world.spawn();
     world.spawn(); // neither
-    world.storeOf<Position>().set(both, Position(0, 0));
-    world.storeOf<Velocity>().set(both, Velocity(0, 0));
-    world.storeOf<Position>().set(onlyPosition, Position(0, 0));
-    world.storeOf<Velocity>().set(onlyVelocity, Velocity(0, 0));
+    world.componentsOf<Position>().set(both, Position(0, 0));
+    world.componentsOf<Velocity>().set(both, Velocity(0, 0));
+    world.componentsOf<Position>().set(onlyPosition, Position(0, 0));
+    world.componentsOf<Velocity>().set(onlyVelocity, Velocity(0, 0));
 
     final view = WorldView(world);
     expect(view.entitiesWithAll<Position, Velocity>().toSet(), {both});
@@ -62,11 +62,11 @@ void main() {
   test('entitiesWithAll works regardless of which store is smaller', () {
     final world = _buildWorld();
     final both = world.spawn();
-    world.storeOf<Position>().set(both, Position(0, 0));
-    world.storeOf<Velocity>().set(both, Velocity(0, 0));
+    world.componentsOf<Position>().set(both, Position(0, 0));
+    world.componentsOf<Velocity>().set(both, Velocity(0, 0));
     for (var i = 0; i < 5; i++) {
       final id = world.spawn();
-      world.storeOf<Position>().set(
+      world.componentsOf<Position>().set(
         id,
         Position(0, 0),
       ); // Position store now larger
@@ -92,13 +92,13 @@ void main() {
       final onEdge = world.spawn();
       final far = world.spawn();
       final self = world.spawn();
-      world.storeOf<Position>().set(near, Position(3, 4)); // distance 5
-      world.storeOf<Position>().set(
+      world.componentsOf<Position>().set(near, Position(3, 4)); // distance 5
+      world.componentsOf<Position>().set(
         onEdge,
         Position(10, 0),
       ); // distance 10, exactly on radius
-      world.storeOf<Position>().set(far, Position(100, 0));
-      world.storeOf<Position>().set(self, Position(0, 0));
+      world.componentsOf<Position>().set(far, Position(100, 0));
+      world.componentsOf<Position>().set(self, Position(0, 0));
 
       final view = WorldView(world);
       expect(view.entitiesWithinRadius(0, 0, 10, exclude: self).toSet(), {
@@ -111,7 +111,7 @@ void main() {
   test('entitiesWithinRadius returns empty when nothing is in range', () {
     final world = _buildWorld();
     final far = world.spawn();
-    world.storeOf<Position>().set(far, Position(1000, 1000));
+    world.componentsOf<Position>().set(far, Position(1000, 1000));
 
     final view = WorldView(world);
     expect(view.entitiesWithinRadius(0, 0, 10), isEmpty);
@@ -124,9 +124,9 @@ void main() {
       final near = world.spawn();
       final far = world.spawn();
       final self = world.spawn();
-      world.storeOf<Position>().set(near, Position(10, 0));
-      world.storeOf<Position>().set(far, Position(100, 0));
-      world.storeOf<Position>().set(self, Position(0, 0));
+      world.componentsOf<Position>().set(near, Position(10, 0));
+      world.componentsOf<Position>().set(far, Position(100, 0));
+      world.componentsOf<Position>().set(self, Position(0, 0));
 
       final view = WorldView(world);
       expect(view.nearestWithPosition(0, 0, exclude: self), near);

@@ -20,11 +20,11 @@ const _soldier = {
   registerCoreComponents(w);
   w.addSystem(ProductionSystem(_nav()));
   final treasury = Treasury('red', amounts: {...gold});
-  w.storeOf<Treasury>().set(w.spawn(), treasury);
+  w.componentsOf<Treasury>().set(w.spawn(), treasury);
   final b = w.spawn();
-  w.storeOf<Team>().set(b, Team('red'));
-  w.storeOf<GridPosition>().set(b, GridPosition(5, 5));
-  w.storeOf<Producer>().set(
+  w.componentsOf<Team>().set(b, Team('red'));
+  w.componentsOf<GridPosition>().set(b, GridPosition(5, 5));
+  w.componentsOf<Producer>().set(
     b,
     Producer(cost: {...cost}, seconds: seconds, template: _soldier),
   );
@@ -113,16 +113,16 @@ void main() {
 
         expect(produced, hasLength(1));
         final unit = produced.single.unit;
-        expect(s.world.storeOf<Team>().get(unit)!.id, 'red');
-        expect(s.world.storeOf<UnitStats>().get(unit)!.attack, 4);
-        expect(s.world.storeOf<RealtimeStats>().get(unit)!.speed, 3);
-        final at = s.world.storeOf<GridPosition>().get(unit)!;
+        expect(s.world.componentsOf<Team>().get(unit)!.id, 'red');
+        expect(s.world.componentsOf<UnitStats>().get(unit)!.attack, 4);
+        expect(s.world.componentsOf<RealtimeStats>().get(unit)!.speed, 3);
+        final at = s.world.componentsOf<GridPosition>().get(unit)!;
         expect(
           at.chebyshev(GridPosition(5, 5)),
           1,
           reason: 'next to the barracks',
         );
-        expect(s.world.storeOf<Producer>().get(s.barracks)!.queued, 0);
+        expect(s.world.componentsOf<Producer>().get(s.barracks)!.queued, 0);
       },
     );
 
@@ -130,9 +130,9 @@ void main() {
       final s = _setup(seconds: 1);
       queueProduction(s.world, s.barracks, 3);
       _run(s.world, 1.05);
-      expect(s.world.storeOf<UnitStats>().length, 1);
+      expect(s.world.componentsOf<UnitStats>().length, 1);
       _run(s.world, 2.1);
-      expect(s.world.storeOf<UnitStats>().length, 3);
+      expect(s.world.componentsOf<UnitStats>().length, 3);
       expect(s.treasury.of('gold'), 10);
     });
 
@@ -163,9 +163,9 @@ void main() {
         registerCoreComponents(w);
         w.addSystem(ProductionSystem(_nav()));
         final b = w.spawn();
-        w.storeOf<Team>().set(b, Team('green'));
-        w.storeOf<GridPosition>().set(b, GridPosition(2, 2));
-        w.storeOf<Producer>().set(
+        w.componentsOf<Team>().set(b, Team('green'));
+        w.componentsOf<GridPosition>().set(b, GridPosition(2, 2));
+        w.componentsOf<Producer>().set(
           b,
           Producer(cost: {'gold': 5}, seconds: 1, template: _soldier),
         );
@@ -174,7 +174,7 @@ void main() {
         queueProduction(w, b);
         _run(w, 2);
         expect(stalled.single.missing, {'gold': 5});
-        expect(w.storeOf<UnitStats>().length, 0);
+        expect(w.componentsOf<UnitStats>().length, 0);
       },
     );
 
@@ -183,9 +183,9 @@ void main() {
       () {
         final s = _setup(gold: const {'gold': 30});
         final second = s.world.spawn();
-        s.world.storeOf<Team>().set(second, Team('red'));
-        s.world.storeOf<GridPosition>().set(second, GridPosition(8, 8));
-        s.world.storeOf<Producer>().set(
+        s.world.componentsOf<Team>().set(second, Team('red'));
+        s.world.componentsOf<GridPosition>().set(second, GridPosition(8, 8));
+        s.world.componentsOf<Producer>().set(
           second,
           Producer(cost: {'gold': 30}, seconds: 1, template: _soldier),
         );
@@ -193,11 +193,11 @@ void main() {
         queueProduction(s.world, s.barracks);
         _run(s.world, 0.1);
         expect(
-          s.world.storeOf<Producer>().get(s.barracks)!.paid,
+          s.world.componentsOf<Producer>().get(s.barracks)!.paid,
           isTrue,
           reason: 'barracks has the lower id',
         );
-        expect(s.world.storeOf<Producer>().get(second)!.paid, isFalse);
+        expect(s.world.componentsOf<Producer>().get(second)!.paid, isFalse);
       },
     );
 
@@ -211,28 +211,28 @@ void main() {
             GridNavigator(cols: 2, rows: 1, terrainCost: (c, r) => 1),
           ),
         );
-        tiny.storeOf<Treasury>().set(
+        tiny.componentsOf<Treasury>().set(
           tiny.spawn(),
           Treasury('red', amounts: {'gold': 100}),
         );
         final b = tiny.spawn();
-        tiny.storeOf<Team>().set(b, Team('red'));
-        tiny.storeOf<GridPosition>().set(b, GridPosition(0, 0));
-        tiny.storeOf<Producer>().set(
+        tiny.componentsOf<Team>().set(b, Team('red'));
+        tiny.componentsOf<GridPosition>().set(b, GridPosition(0, 0));
+        tiny.componentsOf<Producer>().set(
           b,
           Producer(cost: {}, seconds: 1, template: _soldier),
         );
         final blocker = tiny.spawn();
-        tiny.storeOf<GridPosition>().set(blocker, GridPosition(1, 0));
+        tiny.componentsOf<GridPosition>().set(blocker, GridPosition(1, 0));
         queueProduction(tiny, b);
         _run(tiny, 3);
-        expect(tiny.storeOf<UnitStats>().length, 0);
-        expect(tiny.storeOf<Producer>().get(b)!.queued, 1);
+        expect(tiny.componentsOf<UnitStats>().length, 0);
+        expect(tiny.componentsOf<Producer>().get(b)!.queued, 1);
 
         tiny.destroy(blocker);
         _run(tiny, 0.2);
-        expect(tiny.storeOf<UnitStats>().length, 1);
-        expect(tiny.storeOf<Producer>().get(b)!.queued, 0);
+        expect(tiny.componentsOf<UnitStats>().length, 1);
+        expect(tiny.componentsOf<Producer>().get(b)!.queued, 0);
       },
     );
 
@@ -241,7 +241,7 @@ void main() {
       expect(queueProduction(s.world, s.world.spawn()), isFalse);
       expect(queueProduction(s.world, s.barracks, 0), isFalse);
       expect(queueProduction(s.world, s.barracks, -2), isFalse);
-      expect(s.world.storeOf<Producer>().get(s.barracks)!.queued, 0);
+      expect(s.world.componentsOf<Producer>().get(s.barracks)!.queued, 0);
     });
 
     test('produced units are real units: they can be ordered and fight', () {
@@ -255,7 +255,7 @@ void main() {
       final unit = produced.single.unit;
       expect(submitOrder(s.world, unit, const MoveOrder(9, 9)), isTrue);
       _run(s.world, 6);
-      expect(s.world.storeOf<GridPosition>().get(unit)!.col, 9);
+      expect(s.world.componentsOf<GridPosition>().get(unit)!.col, 9);
     });
   });
 
@@ -309,14 +309,14 @@ void main() {
         final w = World(width: 4, height: 4);
         registerCoreComponents(w);
         w.addSystem(ProductionSystem(_nav()));
-        w.storeOf<Treasury>().set(
+        w.componentsOf<Treasury>().set(
           w.spawn(),
           Treasury('red', incomePerSecond: {'gold': 0.7}),
         );
         return w;
       }
 
-      int gold(World w) => w.storeOf<Treasury>().denseAt(0).of('gold');
+      int gold(World w) => w.componentsOf<Treasury>().denseAt(0).of('gold');
 
       final a = build();
       for (var i = 0; i < 13; i++) {

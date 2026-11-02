@@ -157,8 +157,8 @@ void main() {
     'an authenticated player still cannot order another team\'s units',
     () async {
       final enemy = world.spawn();
-      world.storeOf<Team>().set(enemy, Team('blue'));
-      world.storeOf<GridPosition>().set(enemy, GridPosition(5, 5));
+      world.componentsOf<Team>().set(enemy, Team('blue'));
+      world.componentsOf<GridPosition>().set(enemy, GridPosition(5, 5));
       final host = HostSession(
         world: world,
         teams: ['red', 'blue'],

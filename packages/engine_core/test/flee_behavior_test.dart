@@ -18,13 +18,13 @@ void main() {
 
       final fleer = world.spawn();
       final target = 999;
-      world.storeOf<Position>().set(fleer, Position(100, 100));
-      world.storeOf<Position>().set(target, Position(150, 100));
-      world.storeOf<AIState>().set(fleer, AIState('flee'));
+      world.componentsOf<Position>().set(fleer, Position(100, 100));
+      world.componentsOf<Position>().set(target, Position(150, 100));
+      world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(fleer);
+      final vel = world.componentsOf<Velocity>().get(fleer);
       expect(vel, isNotNull);
       expect(vel!.x, -100); // target is to the right, so flee left
       expect(vel.y, 0); // doesn't touch y
@@ -35,13 +35,13 @@ void main() {
 
       final fleer = world.spawn();
       final target = 999;
-      world.storeOf<Position>().set(fleer, Position(100, 100));
-      world.storeOf<Position>().set(target, Position(50, 100));
-      world.storeOf<AIState>().set(fleer, AIState('flee'));
+      world.componentsOf<Position>().set(fleer, Position(100, 100));
+      world.componentsOf<Position>().set(target, Position(50, 100));
+      world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(fleer);
+      final vel = world.componentsOf<Velocity>().get(fleer);
       expect(vel!.x, 100); // target is to the left, so flee right
     });
 
@@ -53,16 +53,16 @@ void main() {
 
       final fleer = world.spawn();
       final target = 999;
-      world.storeOf<Position>().set(fleer, Position(100, 100));
-      world.storeOf<Position>().set(
+      world.componentsOf<Position>().set(fleer, Position(100, 100));
+      world.componentsOf<Position>().set(
         target,
         Position(50, 100),
       ); // distance 50 == minDistance
-      world.storeOf<AIState>().set(fleer, AIState('flee'));
+      world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(fleer);
+      final vel = world.componentsOf<Velocity>().get(fleer);
       expect(vel!.x, 0); // at minDistance, stops
     });
 
@@ -81,16 +81,16 @@ void main() {
 
         final fleer = world.spawn();
         final target = 999;
-        world.storeOf<Position>().set(fleer, Position(100, 100));
-        world.storeOf<Position>().set(
+        world.componentsOf<Position>().set(fleer, Position(100, 100));
+        world.componentsOf<Position>().set(
           target,
           Position(140, 100),
         ); // distance 40, stopBoundary = 48
-        world.storeOf<AIState>().set(fleer, AIState('flee'));
+        world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
         world.step(0.016);
 
-        final vel = world.storeOf<Velocity>().get(fleer);
+        final vel = world.componentsOf<Velocity>().get(fleer);
         expect(vel!.x, -100); // 40 < 48, still fleeing
       },
     );
@@ -108,16 +108,16 @@ void main() {
 
       final fleer = world.spawn();
       final target = 999;
-      world.storeOf<Position>().set(fleer, Position(100, 100));
-      world.storeOf<Position>().set(
+      world.componentsOf<Position>().set(fleer, Position(100, 100));
+      world.componentsOf<Position>().set(
         target,
         Position(145, 100),
       ); // distance 45, stopBoundary = 40
-      world.storeOf<AIState>().set(fleer, AIState('flee'));
+      world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(fleer);
+      final vel = world.componentsOf<Velocity>().get(fleer);
       expect(vel!.x, 0); // 45 >= 40, at stopBoundary, stops
     });
 
@@ -126,14 +126,14 @@ void main() {
 
       final fleer = world.spawn();
       final target = 999;
-      world.storeOf<Position>().set(fleer, Position(100, 100));
-      world.storeOf<Position>().set(target, Position(150, 100));
-      world.storeOf<Velocity>().set(fleer, Velocity(0, 200)); // falling
-      world.storeOf<AIState>().set(fleer, AIState('flee'));
+      world.componentsOf<Position>().set(fleer, Position(100, 100));
+      world.componentsOf<Position>().set(target, Position(150, 100));
+      world.componentsOf<Velocity>().set(fleer, Velocity(0, 200)); // falling
+      world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(fleer);
+      final vel = world.componentsOf<Velocity>().get(fleer);
       expect(vel!.x, -100);
       expect(vel.y, 200); // y preserved
     });
@@ -146,17 +146,17 @@ void main() {
 
       final fleer = world.spawn();
       final target = 999;
-      world.storeOf<Position>().set(fleer, Position(100, 100));
-      world.storeOf<Position>().set(target, Position(150, 100));
-      world.storeOf<AIState>().set(fleer, AIState('flee'));
+      world.componentsOf<Position>().set(fleer, Position(100, 100));
+      world.componentsOf<Position>().set(target, Position(150, 100));
+      world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
       // Add a TileMap with a solid wall between fleer and target
       final map = world.spawn();
-      world.storeOf<Position>().set(map, Position(0, 0));
+      world.componentsOf<Position>().set(map, Position(0, 0));
       final tiles = List.filled(100, 0);
       // Wall at column 3 (x=96-128), row 3 (y=96-128) blocks line from (100,100) to (150,100)
       tiles[3 * 10 + 3] = 1;
-      world.storeOf<TileMap>().set(
+      world.componentsOf<TileMap>().set(
         map,
         TileMap(
           cols: 10,
@@ -170,7 +170,7 @@ void main() {
 
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(fleer);
+      final vel = world.componentsOf<Velocity>().get(fleer);
       expect(vel!.x, 0);
     });
 
@@ -182,14 +182,14 @@ void main() {
 
       final fleer = world.spawn();
       final target = 999;
-      world.storeOf<Position>().set(fleer, Position(100, 100));
-      world.storeOf<Position>().set(target, Position(150, 100));
-      world.storeOf<AIState>().set(fleer, AIState('flee'));
+      world.componentsOf<Position>().set(fleer, Position(100, 100));
+      world.componentsOf<Position>().set(target, Position(150, 100));
+      world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
       // Add a TileMap far away so it doesn't block
       final map = world.spawn();
-      world.storeOf<Position>().set(map, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(map, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         map,
         TileMap(
           cols: 10,
@@ -203,7 +203,7 @@ void main() {
 
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(fleer);
+      final vel = world.componentsOf<Velocity>().get(fleer);
       expect(vel!.x, -100);
     });
 
@@ -212,11 +212,11 @@ void main() {
 
       final fleer = world.spawn();
       // No position on fleer
-      world.storeOf<AIState>().set(fleer, AIState('flee'));
+      world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(fleer);
+      final vel = world.componentsOf<Velocity>().get(fleer);
       expect(vel, isNull);
     });
 
@@ -225,13 +225,13 @@ void main() {
 
       final fleer = world.spawn();
       final target = 999;
-      world.storeOf<Position>().set(fleer, Position(100, 100));
-      world.storeOf<Position>().set(target, Position(1000, 100)); // very far
-      world.storeOf<AIState>().set(fleer, AIState('flee'));
+      world.componentsOf<Position>().set(fleer, Position(100, 100));
+      world.componentsOf<Position>().set(target, Position(1000, 100)); // very far
+      world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(fleer);
+      final vel = world.componentsOf<Velocity>().get(fleer);
       expect(vel!.x, -100); // still flees even when far
     });
   });

@@ -25,10 +25,10 @@ void main() {
       for (var i = 0; i < 3; i++) {
         for (final (team, col) in [('red', 1), ('blue', 10)]) {
           final e = world.spawn();
-          world.storeOf<Team>().set(e, Team(team));
-          world.storeOf<ActionPoints>().set(e, ActionPoints(6, current: 0));
-          world.storeOf<GridPosition>().set(e, GridPosition(col, 3 + i));
-          world.storeOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
+          world.componentsOf<Team>().set(e, Team(team));
+          world.componentsOf<ActionPoints>().set(e, ActionPoints(6, current: 0));
+          world.componentsOf<GridPosition>().set(e, GridPosition(col, 3 + i));
+          world.componentsOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
         }
       }
       startTurnBasedGame(world, ['red', 'blue']);
@@ -64,7 +64,7 @@ void main() {
 
       final mine = [
         for (final e in clientWorld.entities.all)
-          if (clientWorld.storeOf<Team>().get(e)?.id == session.team) e,
+          if (clientWorld.componentsOf<Team>().get(e)?.id == session.team) e,
       ];
       expect(mine, hasLength(3));
       session.sendOrder(mine.first, const MoveOrder(4, 3));
@@ -72,7 +72,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 600));
       expect(session.rttMs, isNotNull);
       expect(
-        world.storeOf<GridPosition>().get(mine.first)!.col,
+        world.componentsOf<GridPosition>().get(mine.first)!.col,
         4,
         reason: 'the order reached the host and moved the unit',
       );

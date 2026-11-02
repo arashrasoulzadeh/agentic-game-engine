@@ -19,8 +19,8 @@ void main() {
     final positions = [Position(0, 0), Position(5, 0), Position(-5, 0)];
     for (var i = 0; i < 3; i++) {
       final id = [a, b, c][i];
-      world.storeOf<Position>().set(id, positions[i]);
-      world.storeOf<Collider>().set(id, Collider(10));
+      world.componentsOf<Position>().set(id, positions[i]);
+      world.componentsOf<Collider>().set(id, Collider(10));
     }
 
     var fired = 0;
@@ -34,10 +34,10 @@ void main() {
     final world = _buildWorld();
     final player = world.spawn();
     final coin = world.spawn();
-    world.storeOf<Position>().set(player, Position(0, 0));
-    world.storeOf<Collider>().set(player, Collider(10));
-    world.storeOf<Position>().set(coin, Position(5, 0));
-    world.storeOf<Collider>().set(coin, Collider(10));
+    world.componentsOf<Position>().set(player, Position(0, 0));
+    world.componentsOf<Collider>().set(player, Collider(10));
+    world.componentsOf<Position>().set(coin, Position(5, 0));
+    world.componentsOf<Collider>().set(coin, Collider(10));
 
     EntityId? other;
     world.onCollisionInvolving(player, (o) => other = o);
@@ -55,10 +55,10 @@ void main() {
       // Collider set for coin first so it's the first entry in the spatial
       // hash bucket -- CollisionEvent comes out as (coin, player), putting
       // player on the `e.b` side instead of `e.a`.
-      world.storeOf<Position>().set(coin, Position(5, 0));
-      world.storeOf<Collider>().set(coin, Collider(10));
-      world.storeOf<Position>().set(player, Position(0, 0));
-      world.storeOf<Collider>().set(player, Collider(10));
+      world.componentsOf<Position>().set(coin, Position(5, 0));
+      world.componentsOf<Collider>().set(coin, Collider(10));
+      world.componentsOf<Position>().set(player, Position(0, 0));
+      world.componentsOf<Collider>().set(player, Collider(10));
 
       EntityId? other;
       world.onCollisionInvolving(player, (o) => other = o);
@@ -75,13 +75,13 @@ void main() {
       final player = world.spawn();
       final coinA = world.spawn();
       final coinB = world.spawn();
-      world.storeOf<Position>().set(player, Position(0, 0));
-      world.storeOf<Collider>().set(player, Collider(10));
-      world.storeOf<Position>().set(coinA, Position(5, 0));
-      world.storeOf<Collider>().set(coinA, Collider(10));
+      world.componentsOf<Position>().set(player, Position(0, 0));
+      world.componentsOf<Collider>().set(player, Collider(10));
+      world.componentsOf<Position>().set(coinA, Position(5, 0));
+      world.componentsOf<Collider>().set(coinA, Collider(10));
       // coinB far away, shouldn't collide.
-      world.storeOf<Position>().set(coinB, Position(9999, 9999));
-      world.storeOf<Collider>().set(coinB, Collider(10));
+      world.componentsOf<Position>().set(coinB, Position(9999, 9999));
+      world.componentsOf<Collider>().set(coinB, Collider(10));
 
       final touched = <EntityId>{};
       world.onCollisionWithAny({
@@ -104,10 +104,10 @@ void main() {
       // Collider set for coinA first, so it ends up as `e.a` -- the
       // `group.contains(e.a)` branch, never exercised by the tests above
       // (which both put the group member on the `e.b` side).
-      world.storeOf<Position>().set(coinA, Position(0, 0));
-      world.storeOf<Collider>().set(coinA, Collider(10));
-      world.storeOf<Position>().set(player, Position(5, 0));
-      world.storeOf<Collider>().set(player, Collider(10));
+      world.componentsOf<Position>().set(coinA, Position(0, 0));
+      world.componentsOf<Collider>().set(coinA, Collider(10));
+      world.componentsOf<Position>().set(player, Position(5, 0));
+      world.componentsOf<Collider>().set(player, Collider(10));
 
       EntityId? touchedSelf;
       EntityId? touchedOther;
@@ -132,10 +132,10 @@ void main() {
       // Collider set for player first, so player ends up as `e.a` and
       // coinA (the group member) as `e.b` -- the reverse of the test
       // above, which only exercised `group.contains(e.a)`.
-      world.storeOf<Position>().set(player, Position(0, 0));
-      world.storeOf<Collider>().set(player, Collider(10));
-      world.storeOf<Position>().set(coinA, Position(5, 0));
-      world.storeOf<Collider>().set(coinA, Collider(10));
+      world.componentsOf<Position>().set(player, Position(0, 0));
+      world.componentsOf<Collider>().set(player, Collider(10));
+      world.componentsOf<Position>().set(coinA, Position(5, 0));
+      world.componentsOf<Collider>().set(coinA, Collider(10));
 
       EntityId? touchedSelf;
       EntityId? touchedOther;

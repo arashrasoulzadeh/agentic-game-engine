@@ -35,13 +35,13 @@ void main() {
 
     final chaser = world.spawn();
     final target = world.spawn();
-    world.storeOf<Position>().set(chaser, Position(0, 0));
-    world.storeOf<Position>().set(target, Position(10, 20));
-    world.storeOf<AIState>().set(chaser, AIState('chase'));
+    world.componentsOf<Position>().set(chaser, Position(0, 0));
+    world.componentsOf<Position>().set(target, Position(10, 20));
+    world.componentsOf<AIState>().set(chaser, AIState('chase'));
 
     world.step(0.016);
 
-    final vel = world.storeOf<Velocity>().get(chaser);
+    final vel = world.componentsOf<Velocity>().get(chaser);
     expect(vel, isNotNull);
     expect(vel!.x, 10);
     expect(vel.y, 20);
@@ -93,15 +93,15 @@ void main() {
     world.addSystem(AISystem(registry));
 
     final entity = world.spawn();
-    world.storeOf<AIState>().set(
+    world.componentsOf<AIState>().set(
       entity,
       AIState('waiter', memory: {'_bt_blackboard': {}}),
     );
-    world.storeOf<_Flag>().set(entity, _Flag(false));
+    world.componentsOf<_Flag>().set(entity, _Flag(false));
 
     // Hardcoded 1/60 would leave Wait running after one 0.25s step.
     world.step(0.25);
-    expect(world.storeOf<_Flag>().get(entity)!.on, isTrue);
+    expect(world.componentsOf<_Flag>().get(entity)!.on, isTrue);
   });
 
   test('StateMachineBehavior BTWait uses World.deltaTime, not 1/60', () {
@@ -137,14 +137,14 @@ void main() {
     world.addSystem(AISystem(registry));
 
     final entity = world.spawn();
-    world.storeOf<AIState>().set(
+    world.componentsOf<AIState>().set(
       entity,
       AIState('fsm', memory: {'_fsm_blackboard': {}}),
     );
-    world.storeOf<_Flag>().set(entity, _Flag(false));
+    world.componentsOf<_Flag>().set(entity, _Flag(false));
 
     world.step(0.25);
-    expect(world.storeOf<_Flag>().get(entity)!.on, isTrue);
+    expect(world.componentsOf<_Flag>().get(entity)!.on, isTrue);
   });
 
   test('BehaviorTreeSystem stashes real dt for BTWait', () {
@@ -161,8 +161,8 @@ void main() {
     world.addSystem(BehaviorTreeSystem(registry));
 
     final entity = world.spawn();
-    world.storeOf<_Flag>().set(entity, _Flag(false));
-    world.storeOf<AIState>().set(
+    world.componentsOf<_Flag>().set(entity, _Flag(false));
+    world.componentsOf<AIState>().set(
       entity,
       AIState(
         'unused',
@@ -180,7 +180,7 @@ void main() {
     );
 
     world.step(0.25);
-    expect(world.storeOf<_Flag>().get(entity)!.on, isTrue);
+    expect(world.componentsOf<_Flag>().get(entity)!.on, isTrue);
   });
 }
 
@@ -200,6 +200,6 @@ class _MarkFlagAction implements Action {
 
   @override
   void apply(World world) {
-    world.storeOf<_Flag>().get(entity)?.on = true;
+    world.componentsOf<_Flag>().get(entity)?.on = true;
   }
 }

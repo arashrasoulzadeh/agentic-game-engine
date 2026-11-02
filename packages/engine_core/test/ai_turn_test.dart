@@ -20,10 +20,10 @@ EntityId _unit(
   int atk = 3,
 }) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: hp, attack: atk));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(e, UnitStats(maxHp: hp, attack: atk));
   return e;
 }
 
@@ -41,11 +41,11 @@ void main() {
 
       w.step(0.1);
       expect(
-        w.storeOf<OrderQueue>().get(bot)!.orders.single,
+        w.componentsOf<OrderQueue>().get(bot)!.orders.single,
         isA<AttackOrder>(),
       );
       w.step(0.1);
-      expect(w.storeOf<UnitStats>().get(human)!.hp, 7);
+      expect(w.componentsOf<UnitStats>().get(human)!.hp, 7);
       w.step(0.1);
       expect(turnStateOf(w)!.activeTeam, 'red');
       expect(turnStateOf(w)!.round, 2);
@@ -55,7 +55,7 @@ void main() {
   test('AI with nothing in sight holds and still ends its turn', () {
     final w = _world();
     final fog = w.spawn();
-    w.storeOf<FogOfWar>().set(fog, FogOfWar(10, 10));
+    w.componentsOf<FogOfWar>().set(fog, FogOfWar(10, 10));
     _unit(w, 'red', 0, 0);
     _unit(w, 'blue', 9, 9);
     startTurnBasedGame(w, ['red', 'blue']);
@@ -68,15 +68,15 @@ void main() {
   test('AI cannot attack an enemy hidden by fog', () {
     final w = _world();
     final fog = w.spawn();
-    w.storeOf<FogOfWar>().set(fog, FogOfWar(10, 10));
+    w.componentsOf<FogOfWar>().set(fog, FogOfWar(10, 10));
     _unit(w, 'red', 0, 0);
     final bot = _unit(w, 'blue', 1, 0);
-    w.storeOf<Vision>().set(bot, Vision(0));
+    w.componentsOf<Vision>().set(bot, Vision(0));
     w.addSystem(VisionSystem());
     startTurnBasedGame(w, ['red', 'blue']);
     endTurn(w);
     w.step(0.1);
-    expect(w.storeOf<OrderQueue>().get(bot)?.orders ?? [], isEmpty);
+    expect(w.componentsOf<OrderQueue>().get(bot)?.orders ?? [], isEmpty);
   });
 
   test('human-controlled teams are left alone', () {
@@ -102,7 +102,7 @@ void main() {
         w.step(0.1);
       }
       expect(turnStateOf(w)!.activeTeam, 'red');
-      expect(w.storeOf<OrderQueue>().get(bot)!.orders, isNotEmpty);
+      expect(w.componentsOf<OrderQueue>().get(bot)!.orders, isNotEmpty);
     },
   );
 
@@ -117,7 +117,7 @@ void main() {
         w.step(0.1);
       }
     }
-    expect(w.storeOf<UnitStats>().get(human)!.hp, 94);
+    expect(w.componentsOf<UnitStats>().get(human)!.hp, 94);
   });
 
   test('AI does nothing after victory', () {

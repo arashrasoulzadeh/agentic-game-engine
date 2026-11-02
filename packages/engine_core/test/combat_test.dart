@@ -20,10 +20,10 @@ EntityId _unit(
   int def = 0,
 }) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(4, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(4, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(
     e,
     UnitStats(maxHp: hp, attack: atk, defense: def),
   );
@@ -57,7 +57,7 @@ void main() {
     w.events.on<UnitDamagedEvent>(dmg.add);
     submitOrder(w, a, AttackOrder(b));
     w.step(0.1);
-    expect(w.storeOf<UnitStats>().get(b)!.hp, 8);
+    expect(w.componentsOf<UnitStats>().get(b)!.hp, 8);
     expect(dmg.single.amount, 2);
   });
 
@@ -72,7 +72,7 @@ void main() {
     submitOrder(w, a, AttackOrder(b));
     w.step(0.1);
     expect(failed.single.reason, OrderFailure.invalidTarget);
-    expect(w.storeOf<UnitStats>().get(b)!.hp, 5);
+    expect(w.componentsOf<UnitStats>().get(b)!.hp, 5);
   });
 
   test(

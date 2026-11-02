@@ -24,10 +24,10 @@ World _world({bool host = true}) {
 
 EntityId _unit(World w, String team, int c, int r) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(6, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(6, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
   return e;
 }
 
@@ -88,8 +88,8 @@ void main() {
       a.sendOrder(mine, const MoveOrder(4, 1));
       await _pump(world, host, 40);
 
-      expect(world.storeOf<GridPosition>().get(mine)!.col, 4);
-      expect(a.world.storeOf<GridPosition>().get(mine)!.col, 4);
+      expect(world.componentsOf<GridPosition>().get(mine)!.col, 4);
+      expect(a.world.componentsOf<GridPosition>().get(mine)!.col, 4);
       expect(a.capture().entities, WorldSnapshot.capture(world).entities);
     },
   );
@@ -142,7 +142,7 @@ void main() {
       );
       await _pump(world, host, 15);
       expect(
-        world.storeOf<GridPosition>().get(mine)!.col,
+        world.componentsOf<GridPosition>().get(mine)!.col,
         3,
         reason: 'the connection still works after the garbage',
       );

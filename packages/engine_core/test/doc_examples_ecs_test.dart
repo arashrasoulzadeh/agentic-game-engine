@@ -9,12 +9,12 @@ void main() {
     final id = world.spawn();
     expect(id, isA<EntityId>());
 
-    world.storeOf<Position>().set(id, Position(100, 100));
-    final pos = world.storeOf<Position>().get(id);
-    final has = world.storeOf<Position>().has(id);
+    world.componentsOf<Position>().set(id, Position(100, 100));
+    final pos = world.componentsOf<Position>().get(id);
+    final has = world.componentsOf<Position>().has(id);
     expect(pos!.x, 100);
     expect(has, isTrue);
-    expect(world.storeOf<Position>().has(world.spawn()), isFalse);
+    expect(world.componentsOf<Position>().has(world.spawn()), isFalse);
   });
 
   test('a system sees every matching entity each step', () {
@@ -22,10 +22,10 @@ void main() {
     registerCoreComponents(world);
     world.addSystem(MovementSystem());
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(0, 0));
-    world.storeOf<Velocity>().set(id, Velocity(50, 0));
+    world.componentsOf<Position>().set(id, Position(0, 0));
+    world.componentsOf<Velocity>().set(id, Velocity(50, 0));
 
     world.step(1);
-    expect(world.storeOf<Position>().get(id)!.x, closeTo(50, 1e-9));
+    expect(world.componentsOf<Position>().get(id)!.x, closeTo(50, 1e-9));
   });
 }

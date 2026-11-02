@@ -94,20 +94,20 @@ void main() {
         w.step(0.05);
       }
       expect(victories, hasLength(1));
-      expect(w.storeOf<UnitStats>().length, lessThan(10));
+      expect(w.componentsOf<UnitStats>().length, lessThan(10));
     });
 
     test('units without action points are treated as always able to act', () {
       final w = _battle(ai: {'blue': AggressiveAI()}, perSide: 1);
       w.step(1.0);
       final blue = [
-        for (var i = 0; i < w.storeOf<Team>().length; i++)
-          if (w.storeOf<Team>().denseAt(i).id == 'blue')
-            w.storeOf<Team>().entityAt(i),
+        for (var i = 0; i < w.componentsOf<Team>().length; i++)
+          if (w.componentsOf<Team>().denseAt(i).id == 'blue')
+            w.componentsOf<Team>().entityAt(i),
       ].single;
-      expect(w.storeOf<ActionPoints>().has(blue), isFalse);
+      expect(w.componentsOf<ActionPoints>().has(blue), isFalse);
       expect(
-        w.storeOf<OrderQueue>().get(blue)!.orders.single,
+        w.componentsOf<OrderQueue>().get(blue)!.orders.single,
         isA<AttackOrder>(),
       );
     });
@@ -134,16 +134,16 @@ void main() {
         row: 10,
         maxHp: 10,
       );
-      w.storeOf<UnitStats>().get(weak)!.hp = 1;
+      w.componentsOf<UnitStats>().get(weak)!.hp = 1;
       final foe = spawnRealtimeUnit(w, team: 'red', col: 12, row: 10);
       TacticalAI(navigator: _nav()).playTurn(w, 'blue');
       final move =
-          w.storeOf<OrderQueue>().get(weak)!.orders.single as MoveOrder;
+          w.componentsOf<OrderQueue>().get(weak)!.orders.single as MoveOrder;
       expect(
         GridPosition(
           move.col,
           move.row,
-        ).chebyshev(w.storeOf<GridPosition>().get(foe)!),
+        ).chebyshev(w.componentsOf<GridPosition>().get(foe)!),
         greaterThan(2),
         reason: 'ran away',
       );
@@ -155,12 +155,12 @@ void main() {
 
       final w2 = World(width: 20, height: 20);
       registerCoreComponents(w2);
-      w2.storeOf<Objective>().set(w2.spawn(), Objective('hill', 15, 15));
+      w2.componentsOf<Objective>().set(w2.spawn(), Objective('hill', 15, 15));
       final marcher = spawnRealtimeUnit(w2, team: 'blue', col: 2, row: 2);
       spawnRealtimeUnit(w2, team: 'red', col: 19, row: 0);
       ObjectiveAI(navigator: _nav()).playTurn(w2, 'blue');
       final goal =
-          w2.storeOf<OrderQueue>().get(marcher)!.orders.first as MoveOrder;
+          w2.componentsOf<OrderQueue>().get(marcher)!.orders.first as MoveOrder;
       expect((goal.col, goal.row), (15, 15));
     });
   });

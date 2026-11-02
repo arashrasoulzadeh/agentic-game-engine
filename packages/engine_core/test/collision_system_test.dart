@@ -13,10 +13,10 @@ void main() {
     final world = _buildWorld();
     final a = world.spawn();
     final b = world.spawn();
-    world.storeOf<Position>().set(a, Position(0, 0));
-    world.storeOf<Collider>().set(a, Collider(10));
-    world.storeOf<Position>().set(b, Position(5, 0));
-    world.storeOf<Collider>().set(b, Collider(10));
+    world.componentsOf<Position>().set(a, Position(0, 0));
+    world.componentsOf<Collider>().set(a, Collider(10));
+    world.componentsOf<Position>().set(b, Position(5, 0));
+    world.componentsOf<Collider>().set(b, Collider(10));
 
     var collided = false;
     world.events.on<CollisionEvent>((e) => collided = true);
@@ -37,10 +37,10 @@ void main() {
       final world = _buildWorld(); // no explicit cellSize -> auto
       final a = world.spawn();
       final b = world.spawn();
-      world.storeOf<Position>().set(a, Position(0, 0));
-      world.storeOf<Collider>().set(a, Collider(100));
-      world.storeOf<Position>().set(b, Position(150, 0));
-      world.storeOf<Collider>().set(b, Collider(100));
+      world.componentsOf<Position>().set(a, Position(0, 0));
+      world.componentsOf<Collider>().set(a, Collider(100));
+      world.componentsOf<Position>().set(b, Position(150, 0));
+      world.componentsOf<Collider>().set(b, Collider(100));
 
       var collided = false;
       world.events.on<CollisionEvent>((e) => collided = true);
@@ -58,10 +58,10 @@ void main() {
     final world = _buildWorld(cellSize: 50);
     final a = world.spawn();
     final b = world.spawn();
-    world.storeOf<Position>().set(a, Position(0, 0));
-    world.storeOf<Collider>().set(a, Collider(100));
-    world.storeOf<Position>().set(b, Position(150, 0));
-    world.storeOf<Collider>().set(b, Collider(100));
+    world.componentsOf<Position>().set(a, Position(0, 0));
+    world.componentsOf<Collider>().set(a, Collider(100));
+    world.componentsOf<Position>().set(b, Position(150, 0));
+    world.componentsOf<Collider>().set(b, Collider(100));
 
     var collided = false;
     world.events.on<CollisionEvent>((e) => collided = true);
@@ -78,8 +78,8 @@ void main() {
   test('a single collider (no pairs possible) does not throw', () {
     final world = _buildWorld();
     final a = world.spawn();
-    world.storeOf<Position>().set(a, Position(0, 0));
-    world.storeOf<Collider>().set(a, Collider(5));
+    world.componentsOf<Position>().set(a, Position(0, 0));
+    world.componentsOf<Collider>().set(a, Collider(5));
 
     expect(() => world.step(0.016), returnsNormally);
   });
@@ -98,10 +98,10 @@ void main() {
       final b = world.spawn();
       final posA = Position(0, 0);
       final posB = Position(5, 0);
-      world.storeOf<Position>().set(a, posA);
-      world.storeOf<Collider>().set(a, Collider(10));
-      world.storeOf<Position>().set(b, posB);
-      world.storeOf<Collider>().set(b, Collider(10));
+      world.componentsOf<Position>().set(a, posA);
+      world.componentsOf<Collider>().set(a, Collider(10));
+      world.componentsOf<Position>().set(b, posB);
+      world.componentsOf<Collider>().set(b, Collider(10));
 
       var collisions = 0;
       world.events.on<CollisionEvent>((e) => collisions++);
@@ -146,10 +146,10 @@ void main() {
     final world = _buildWorld();
     final small1 = world.spawn();
     final small2 = world.spawn();
-    world.storeOf<Position>().set(small1, Position(-500, -500));
-    world.storeOf<Collider>().set(small1, Collider(10));
-    world.storeOf<Position>().set(small2, Position(-500, -450));
-    world.storeOf<Collider>().set(small2, Collider(10));
+    world.componentsOf<Position>().set(small1, Position(-500, -500));
+    world.componentsOf<Collider>().set(small1, Collider(10));
+    world.componentsOf<Position>().set(small2, Position(-500, -450));
+    world.componentsOf<Collider>().set(small2, Collider(10));
 
     var collisions = 0;
     world.events.on<CollisionEvent>((e) => collisions++);
@@ -165,10 +165,10 @@ void main() {
     world.destroy(small2);
     final bigA = world.spawn();
     final bigB = world.spawn();
-    world.storeOf<Position>().set(bigA, Position(0, 0));
-    world.storeOf<Collider>().set(bigA, Collider(100));
-    world.storeOf<Position>().set(bigB, Position(150, 0));
-    world.storeOf<Collider>().set(bigB, Collider(100));
+    world.componentsOf<Position>().set(bigA, Position(0, 0));
+    world.componentsOf<Collider>().set(bigA, Collider(100));
+    world.componentsOf<Position>().set(bigB, Position(150, 0));
+    world.componentsOf<Collider>().set(bigB, Collider(100));
 
     world.step(0);
     expect(
@@ -189,17 +189,17 @@ void main() {
       final world = _buildWorld();
       final a = world.spawn();
       final b = world.spawn();
-      world.storeOf<Position>().set(a, Position(0, 0));
-      world.storeOf<Collider>().set(a, Collider(10));
-      world.storeOf<Velocity>().set(a, Velocity(5, 0));
-      world.storeOf<Position>().set(b, Position(5, 0));
-      world.storeOf<Collider>().set(b, Collider(10));
-      world.storeOf<Velocity>().set(b, Velocity(-3, 2));
+      world.componentsOf<Position>().set(a, Position(0, 0));
+      world.componentsOf<Collider>().set(a, Collider(10));
+      world.componentsOf<Velocity>().set(a, Velocity(5, 0));
+      world.componentsOf<Position>().set(b, Position(5, 0));
+      world.componentsOf<Collider>().set(b, Collider(10));
+      world.componentsOf<Velocity>().set(b, Velocity(-3, 2));
 
       world.step(0);
 
-      final velA = world.storeOf<Velocity>().get(a)!;
-      final velB = world.storeOf<Velocity>().get(b)!;
+      final velA = world.componentsOf<Velocity>().get(a)!;
+      final velB = world.componentsOf<Velocity>().get(b)!;
       expect(velA.x, -3);
       expect(velA.y, 2);
       expect(velB.x, 5);
@@ -213,10 +213,10 @@ void main() {
       final world = _buildWorld();
       final a = world.spawn();
       final b = world.spawn();
-      world.storeOf<Position>().set(a, Position(0, 0));
-      world.storeOf<Collider>().set(a, Collider(10, pushable: false));
-      world.storeOf<Position>().set(b, Position(5, 0));
-      world.storeOf<Collider>().set(b, Collider(10));
+      world.componentsOf<Position>().set(a, Position(0, 0));
+      world.componentsOf<Collider>().set(a, Collider(10, pushable: false));
+      world.componentsOf<Position>().set(b, Position(5, 0));
+      world.componentsOf<Collider>().set(b, Collider(10));
 
       var collided = false;
       world.events.on<CollisionEvent>((e) => collided = true);
@@ -232,17 +232,17 @@ void main() {
       final world = _buildWorld();
       final a = world.spawn();
       final b = world.spawn();
-      world.storeOf<Position>().set(a, Position(0, 0));
-      world.storeOf<Collider>().set(a, Collider(10, pushable: false));
-      world.storeOf<Velocity>().set(a, Velocity(5, 0));
-      world.storeOf<Position>().set(b, Position(5, 0));
-      world.storeOf<Collider>().set(b, Collider(10));
-      world.storeOf<Velocity>().set(b, Velocity(-3, 2));
+      world.componentsOf<Position>().set(a, Position(0, 0));
+      world.componentsOf<Collider>().set(a, Collider(10, pushable: false));
+      world.componentsOf<Velocity>().set(a, Velocity(5, 0));
+      world.componentsOf<Position>().set(b, Position(5, 0));
+      world.componentsOf<Collider>().set(b, Collider(10));
+      world.componentsOf<Velocity>().set(b, Velocity(-3, 2));
 
       world.step(0);
 
-      final velA = world.storeOf<Velocity>().get(a)!;
-      final velB = world.storeOf<Velocity>().get(b)!;
+      final velA = world.componentsOf<Velocity>().get(a)!;
+      final velB = world.componentsOf<Velocity>().get(b)!;
       expect(
         velA.x,
         5,

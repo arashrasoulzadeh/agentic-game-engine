@@ -25,9 +25,9 @@ class CollisionSystemBenchmark extends BenchmarkBase {
       final id = world.spawn();
       final x = (i % perRow) * 8.0;
       final y = (i ~/ perRow) * 8.0;
-      world.storeOf<Position>().set(id, Position(x, y));
-      world.storeOf<Velocity>().set(id, Velocity((i.isEven ? 1 : -1) * 5.0, 0));
-      world.storeOf<Collider>().set(id, Collider(4));
+      world.componentsOf<Position>().set(id, Position(x, y));
+      world.componentsOf<Velocity>().set(id, Velocity((i.isEven ? 1 : -1) * 5.0, 0));
+      world.componentsOf<Collider>().set(id, Collider(4));
     }
   }
 

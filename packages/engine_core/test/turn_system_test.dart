@@ -9,8 +9,8 @@ World _world() {
 
 EntityId _unit(World w, String team, int ap) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
   return e;
 }
 
@@ -23,8 +23,8 @@ void main() {
     w.events.on<TurnStartedEvent>(started.add);
     startTurnBasedGame(w, ['red', 'blue']);
     w.events.flush();
-    expect(w.storeOf<ActionPoints>().get(a)!.current, 3);
-    expect(w.storeOf<ActionPoints>().get(b)!.current, 0);
+    expect(w.componentsOf<ActionPoints>().get(a)!.current, 3);
+    expect(w.componentsOf<ActionPoints>().get(b)!.current, 0);
     expect(started.single.team, 'red');
   });
 
@@ -37,12 +37,12 @@ void main() {
     w.events.on<TurnEndedEvent>(ended.add);
     endTurn(w);
     expect(turnStateOf(w)!.activeTeam, 'blue');
-    expect(w.storeOf<ActionPoints>().get(b)!.current, 2);
+    expect(w.componentsOf<ActionPoints>().get(b)!.current, 2);
     endTurn(w);
     w.events.flush();
     expect(turnStateOf(w)!.activeTeam, 'red');
     expect(turnStateOf(w)!.round, 2);
-    expect(w.storeOf<ActionPoints>().get(a)!.current, 2);
+    expect(w.componentsOf<ActionPoints>().get(a)!.current, 2);
     expect(ended.map((e) => e.team), ['red', 'blue']);
   });
 
@@ -53,7 +53,7 @@ void main() {
     startTurnBasedGame(w, ['red', 'blue']);
     expect(trySpendActionPoints(w, b, 1), isFalse);
     expect(trySpendActionPoints(w, a, 3), isFalse);
-    expect(w.storeOf<ActionPoints>().get(a)!.current, 2);
+    expect(w.componentsOf<ActionPoints>().get(a)!.current, 2);
     expect(trySpendActionPoints(w, a, 2), isTrue);
     expect(trySpendActionPoints(w, a, 1), isFalse);
   });

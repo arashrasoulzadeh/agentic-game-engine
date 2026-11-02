@@ -9,9 +9,9 @@ World _world() {
 
 EntityId _unit(World w, String team, int c, int r) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(5, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(5, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
   return e;
 }
 
@@ -28,7 +28,7 @@ void main() {
     expect(selectedEntities(w), [b]);
     selectAtCell(w, 0, 0, additive: true);
     expect(selectedEntities(w).toSet(), {a, b});
-    expect(w.storeOf<Selected>().has(x), isFalse);
+    expect(w.componentsOf<Selected>().has(x), isFalse);
   });
 
   test('empty-cell tap leaves selection untouched', () {
@@ -61,13 +61,13 @@ void main() {
     startTurnBasedGame(w, ['red', 'blue']);
     selectInBox(w, 0, 0, 1, 0);
     expect(commandSelected(w, 3, 3), 2);
-    expect(w.storeOf<OrderQueue>().get(a)!.orders.single, isA<MoveOrder>());
+    expect(w.componentsOf<OrderQueue>().get(a)!.orders.single, isA<MoveOrder>());
     expect(commandSelected(w, 4, 4), 2);
-    final q = w.storeOf<OrderQueue>().get(b)!.orders;
+    final q = w.componentsOf<OrderQueue>().get(b)!.orders;
     expect(q.single, isA<AttackOrder>());
     expect((q.single as AttackOrder).target, x);
     expect(commandSelected(w, 2, 2, replace: false), 2);
-    expect(w.storeOf<OrderQueue>().get(b)!.orders, hasLength(2));
+    expect(w.componentsOf<OrderQueue>().get(b)!.orders, hasLength(2));
   });
 
   test(
@@ -88,10 +88,10 @@ void main() {
   test('GridToWorldSystem centers entities in their cell', () {
     final w = _world();
     final a = _unit(w, 'red', 2, 3);
-    w.storeOf<Position>().set(a, Position(0, 0));
+    w.componentsOf<Position>().set(a, Position(0, 0));
     w.addSystem(GridToWorldSystem(32));
     w.step(0.1);
-    final p = w.storeOf<Position>().get(a)!;
+    final p = w.componentsOf<Position>().get(a)!;
     expect((p.x, p.y), (80.0, 112.0));
   });
 }

@@ -22,10 +22,10 @@ World _clientWorld() {
 
 EntityId _unit(World w, String team, int c, int r) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(5, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(5, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
   return e;
 }
 
@@ -171,9 +171,9 @@ void main() {
 
         a.sendOrder(mine, const MoveOrder(4, 1));
         rig.run(8);
-        expect(rig.world.storeOf<GridPosition>().get(mine)!.col, 4);
+        expect(rig.world.componentsOf<GridPosition>().get(mine)!.col, 4);
         expect(
-          a.world.storeOf<GridPosition>().get(mine)!.col,
+          a.world.componentsOf<GridPosition>().get(mine)!.col,
           4,
           reason: 'replicated to the client',
         );
@@ -213,8 +213,8 @@ void main() {
           'malformed order',
           'order not allowed now',
         ]);
-        expect(rig.world.storeOf<GridPosition>().get(blue)!.col, 10);
-        expect(rig.world.storeOf<GridPosition>().get(red)!.col, 1);
+        expect(rig.world.componentsOf<GridPosition>().get(blue)!.col, 10);
+        expect(rig.world.componentsOf<GridPosition>().get(red)!.col, 1);
         expect(rig.host.rejections, hasLength(5));
       },
     );
@@ -236,7 +236,7 @@ void main() {
       for (final r in reds) {
         a.sendOrder(
           r,
-          MoveOrder(5, rig.world.storeOf<GridPosition>().get(r)!.row),
+          MoveOrder(5, rig.world.componentsOf<GridPosition>().get(r)!.row),
         );
       }
       rig.run(10);
@@ -244,7 +244,7 @@ void main() {
       for (final bl in blues) {
         b.sendOrder(
           bl,
-          MoveOrder(6, rig.world.storeOf<GridPosition>().get(bl)!.row),
+          MoveOrder(6, rig.world.componentsOf<GridPosition>().get(bl)!.row),
         );
       }
       rig.run(60);

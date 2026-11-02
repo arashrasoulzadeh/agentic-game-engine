@@ -86,9 +86,9 @@ void main() {
       w.addSystem(OrderSystem.withNavigator(_open(costs: {(1, 0): 3})));
       EntityId unit(String t, int c, int r, int ap) {
         final e = w.spawn();
-        w.storeOf<Team>().set(e, Team(t));
-        w.storeOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
-        w.storeOf<GridPosition>().set(e, GridPosition(c, r));
+        w.componentsOf<Team>().set(e, Team(t));
+        w.componentsOf<ActionPoints>().set(e, ActionPoints(ap, current: 0));
+        w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
         return e;
       }
 
@@ -97,9 +97,9 @@ void main() {
       startTurnBasedGame(w, ['red', 'blue']);
       submitOrder(w, a, const MoveOrder(2, 0));
       w.step(0.1);
-      final p = w.storeOf<GridPosition>().get(a)!;
+      final p = w.componentsOf<GridPosition>().get(a)!;
       expect((p.col, p.row), (2, 0));
-      expect(w.storeOf<ActionPoints>().get(a)!.current, lessThan(4));
+      expect(w.componentsOf<ActionPoints>().get(a)!.current, lessThan(4));
     },
   );
 }

@@ -9,7 +9,7 @@ World _buildWorld() {
   return world;
 }
 
-int _countParticles(World world) => world.storeOf<Particle>().length;
+int _countParticles(World world) => world.componentsOf<Particle>().length;
 
 void main() {
   test(
@@ -66,13 +66,13 @@ void main() {
     world.addSystem(ParticleSystem(random: Random(1)));
 
     final emitterEntity = world.spawn();
-    world.storeOf<Position>().set(emitterEntity, Position(10, 10));
+    world.componentsOf<Position>().set(emitterEntity, Position(10, 10));
     final emitter = ParticleEmitter(
       burstCount: 5,
       lifetimeMin: 1,
       lifetimeMax: 1,
     );
-    world.storeOf<ParticleEmitter>().set(emitterEntity, emitter);
+    world.componentsOf<ParticleEmitter>().set(emitterEntity, emitter);
 
     world.step(0.016);
 
@@ -89,8 +89,8 @@ void main() {
     world.addSystem(ParticleSystem(random: Random(1)));
 
     final emitterEntity = world.spawn();
-    world.storeOf<Position>().set(emitterEntity, Position(0, 0));
-    world.storeOf<ParticleEmitter>().set(
+    world.componentsOf<Position>().set(emitterEntity, Position(0, 0));
+    world.componentsOf<ParticleEmitter>().set(
       emitterEntity,
       ParticleEmitter(rate: 10, lifetimeMin: 10, lifetimeMax: 10),
     );
@@ -110,8 +110,8 @@ void main() {
       world.addSystem(MovementSystem());
 
       final emitterEntity = world.spawn();
-      world.storeOf<Position>().set(emitterEntity, Position(50, 50));
-      world.storeOf<ParticleEmitter>().set(
+      world.componentsOf<Position>().set(emitterEntity, Position(50, 50));
+      world.componentsOf<ParticleEmitter>().set(
         emitterEntity,
         ParticleEmitter(
           burstCount: 1,
@@ -124,11 +124,11 @@ void main() {
 
       world.step(0.1);
 
-      final particles = world.storeOf<Particle>();
+      final particles = world.componentsOf<Particle>();
       expect(particles.length, 1);
       final particleEntity = particles.entityAt(0);
-      final pos = world.storeOf<Position>().get(particleEntity)!;
-      final vel = world.storeOf<Velocity>().get(particleEntity)!;
+      final pos = world.componentsOf<Position>().get(particleEntity)!;
+      final vel = world.componentsOf<Velocity>().get(particleEntity)!;
 
       expect(vel.x * vel.x + vel.y * vel.y, closeTo(100 * 100, 0.01));
       // Moved from the emitter's spawn point by roughly velocity * dt.
@@ -141,8 +141,8 @@ void main() {
     world.addSystem(ParticleSystem(random: Random(1)));
 
     final emitterEntity = world.spawn();
-    world.storeOf<Position>().set(emitterEntity, Position(0, 0));
-    world.storeOf<ParticleEmitter>().set(
+    world.componentsOf<Position>().set(emitterEntity, Position(0, 0));
+    world.componentsOf<ParticleEmitter>().set(
       emitterEntity,
       ParticleEmitter(burstCount: 3, lifetimeMin: 0.2, lifetimeMax: 0.2),
     );
@@ -159,7 +159,7 @@ void main() {
     world.addSystem(ParticleSystem(random: Random(1)));
 
     final emitterEntity = world.spawn();
-    world.storeOf<ParticleEmitter>().set(
+    world.componentsOf<ParticleEmitter>().set(
       emitterEntity,
       ParticleEmitter(burstCount: 3),
     );
@@ -196,8 +196,8 @@ void main() {
       world.addSystem(ParticleSystem(random: Random(1)));
 
       final emitterEntity = world.spawn();
-      world.storeOf<Position>().set(emitterEntity, Position(100, 100));
-      world.storeOf<ParticleEmitter>().set(
+      world.componentsOf<Position>().set(emitterEntity, Position(100, 100));
+      world.componentsOf<ParticleEmitter>().set(
         emitterEntity,
         ParticleEmitter(
           burstCount: 100,
@@ -210,8 +210,8 @@ void main() {
 
       world.step(0.01);
 
-      final particles = world.storeOf<Particle>();
-      final positions = world.storeOf<Position>();
+      final particles = world.componentsOf<Particle>();
+      final positions = world.componentsOf<Position>();
       expect(particles.length, 100);
 
       for (var i = 0; i < particles.length; i++) {
@@ -232,8 +232,8 @@ void main() {
       world.addSystem(ParticleSystem(random: Random(1)));
 
       final emitterEntity = world.spawn();
-      world.storeOf<Position>().set(emitterEntity, Position(100, 100));
-      world.storeOf<ParticleEmitter>().set(
+      world.componentsOf<Position>().set(emitterEntity, Position(100, 100));
+      world.componentsOf<ParticleEmitter>().set(
         emitterEntity,
         ParticleEmitter(
           burstCount: 100,
@@ -247,8 +247,8 @@ void main() {
 
       world.step(0.01);
 
-      final particles = world.storeOf<Particle>();
-      final positions = world.storeOf<Position>();
+      final particles = world.componentsOf<Particle>();
+      final positions = world.componentsOf<Position>();
       expect(particles.length, 100);
 
       for (var i = 0; i < particles.length; i++) {
@@ -265,8 +265,8 @@ void main() {
       world.addSystem(ParticleSystem(random: Random(1)));
 
       final emitterEntity = world.spawn();
-      world.storeOf<Position>().set(emitterEntity, Position(0, 0));
-      world.storeOf<ParticleEmitter>().set(
+      world.componentsOf<Position>().set(emitterEntity, Position(0, 0));
+      world.componentsOf<ParticleEmitter>().set(
         emitterEntity,
         ParticleEmitter(
           burstCount: 50,
@@ -282,8 +282,8 @@ void main() {
 
       world.step(0.01);
 
-      final particles = world.storeOf<Particle>();
-      final positions = world.storeOf<Position>();
+      final particles = world.componentsOf<Particle>();
+      final positions = world.componentsOf<Position>();
       expect(particles.length, 50);
 
       for (var i = 0; i < particles.length; i++) {
@@ -303,13 +303,13 @@ void main() {
 
       // Particle at (100, 0), attractor at (0, 0) with strength 100
       final particleEntity = world.spawn();
-      world.storeOf<Position>().set(particleEntity, Position(100, 0));
-      world.storeOf<Velocity>().set(particleEntity, Velocity(0, 0));
-      world.storeOf<Particle>().set(particleEntity, Particle(lifetime: 5));
+      world.componentsOf<Position>().set(particleEntity, Position(100, 0));
+      world.componentsOf<Velocity>().set(particleEntity, Velocity(0, 0));
+      world.componentsOf<Particle>().set(particleEntity, Particle(lifetime: 5));
 
       final attractorEntity = world.spawn();
-      world.storeOf<Position>().set(attractorEntity, Position(0, 0));
-      world.storeOf<ParticleForces>().set(
+      world.componentsOf<Position>().set(attractorEntity, Position(0, 0));
+      world.componentsOf<ParticleForces>().set(
         attractorEntity,
         ParticleForces(radius: 200, strength: 1000),
       );
@@ -318,8 +318,8 @@ void main() {
 
       world.step(0.1);
 
-      final pos = world.storeOf<Position>().get(particleEntity)!;
-      final vel = world.storeOf<Velocity>().get(particleEntity)!;
+      final pos = world.componentsOf<Position>().get(particleEntity)!;
+      final vel = world.componentsOf<Velocity>().get(particleEntity)!;
 
       // Particle should have moved toward attractor (negative x direction)
       expect(vel.x, lessThan(0));
@@ -332,13 +332,13 @@ void main() {
       world.addSystem(MovementSystem());
 
       final particleEntity = world.spawn();
-      world.storeOf<Position>().set(particleEntity, Position(50, 0));
-      world.storeOf<Velocity>().set(particleEntity, Velocity(0, 0));
-      world.storeOf<Particle>().set(particleEntity, Particle(lifetime: 5));
+      world.componentsOf<Position>().set(particleEntity, Position(50, 0));
+      world.componentsOf<Velocity>().set(particleEntity, Velocity(0, 0));
+      world.componentsOf<Particle>().set(particleEntity, Particle(lifetime: 5));
 
       final repellerEntity = world.spawn();
-      world.storeOf<Position>().set(repellerEntity, Position(0, 0));
-      world.storeOf<ParticleForces>().set(
+      world.componentsOf<Position>().set(repellerEntity, Position(0, 0));
+      world.componentsOf<ParticleForces>().set(
         repellerEntity,
         ParticleForces(radius: 100, strength: -1000),
       );
@@ -347,8 +347,8 @@ void main() {
 
       world.step(0.1);
 
-      final pos = world.storeOf<Position>().get(particleEntity)!;
-      final vel = world.storeOf<Velocity>().get(particleEntity)!;
+      final pos = world.componentsOf<Position>().get(particleEntity)!;
+      final vel = world.componentsOf<Velocity>().get(particleEntity)!;
 
       // Particle should be pushed away (positive x direction)
       expect(vel.x, greaterThan(0));
@@ -360,16 +360,16 @@ void main() {
       world.addSystem(MovementSystem());
 
       final particleEntity = world.spawn();
-      world.storeOf<Position>().set(particleEntity, Position(0, 0));
-      world.storeOf<Velocity>().set(particleEntity, Velocity(0, 0));
-      world.storeOf<Particle>().set(particleEntity, Particle(lifetime: 5));
+      world.componentsOf<Position>().set(particleEntity, Position(0, 0));
+      world.componentsOf<Velocity>().set(particleEntity, Velocity(0, 0));
+      world.componentsOf<Particle>().set(particleEntity, Particle(lifetime: 5));
 
       final windEntity = world.spawn();
-      world.storeOf<Position>().set(
+      world.componentsOf<Position>().set(
         windEntity,
         Position(0, 0),
       ); // Wind entity needs position
-      world.storeOf<ParticleForces>().set(
+      world.componentsOf<ParticleForces>().set(
         windEntity,
         ParticleForces(
           isWind: true,
@@ -382,7 +382,7 @@ void main() {
 
       world.step(0.1);
 
-      final vel = world.storeOf<Velocity>().get(particleEntity)!;
+      final vel = world.componentsOf<Velocity>().get(particleEntity)!;
 
       // Should have positive x velocity from wind
       expect(vel.x, greaterThan(0));
@@ -396,12 +396,12 @@ void main() {
       world.addSystem(MovementSystem());
 
       final emitterEntity = world.spawn();
-      world.storeOf<Position>().set(emitterEntity, Position(0, 0));
-      world.storeOf<Velocity>().set(
+      world.componentsOf<Position>().set(emitterEntity, Position(0, 0));
+      world.componentsOf<Velocity>().set(
         emitterEntity,
         Velocity(100, 0),
       ); // Moving right
-      world.storeOf<ParticleEmitter>().set(
+      world.componentsOf<ParticleEmitter>().set(
         emitterEntity,
         ParticleEmitter(
           burstCount: 1,
@@ -420,8 +420,8 @@ void main() {
         world.step(0.1);
       }
 
-      final particles = world.storeOf<Particle>();
-      final positions = world.storeOf<Position>();
+      final particles = world.componentsOf<Particle>();
+      final positions = world.componentsOf<Position>();
       final particleEntity = particles.entityAt(0);
       final pos = positions.get(particleEntity)!;
 

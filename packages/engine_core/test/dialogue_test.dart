@@ -127,7 +127,7 @@ void main() {
       final world = World(width: 100, height: 100);
       registerCoreComponents(world);
       final gs = world.spawn();
-      world.storeOf<GameState>().set(gs, GameState({'name': 'Test'}));
+      world.componentsOf<GameState>().set(gs, GameState({'name': 'Test'}));
 
       expect(runner.currentNode!.id, 'start');
       expect(runner.currentText(WorldView(world)), 'Hello, Test!');
@@ -142,7 +142,7 @@ void main() {
 
         // GameState with no flags set
         final gs = world.spawn();
-        world.storeOf<GameState>().set(gs, GameState({}));
+        world.componentsOf<GameState>().set(gs, GameState({}));
 
         final view = WorldView(world);
         final choices = runner.availableChoices(view);
@@ -196,7 +196,7 @@ void main() {
 
       // GameState WITHOUT the flag
       final gs1 = world.spawn();
-      world.storeOf<GameState>().set(gs1, GameState({'other_flag': true}));
+      world.componentsOf<GameState>().set(gs1, GameState({'other_flag': true}));
 
       final view1 = WorldView(world);
       final choices1 = runner.availableChoices(view1);
@@ -204,7 +204,7 @@ void main() {
       expect(choices1[0].textKey, 'choice_no');
 
       // GameState WITH the flag
-      world.storeOf<GameState>().set(gs1, GameState({'met_npc': true}));
+      world.componentsOf<GameState>().set(gs1, GameState({'met_npc': true}));
 
       final view2 = WorldView(world);
       final choices2 = runner.availableChoices(view2);
@@ -217,7 +217,7 @@ void main() {
       registerCoreComponents(world);
 
       final gs = world.spawn();
-      world.storeOf<GameState>().set(gs, GameState({}));
+      world.componentsOf<GameState>().set(gs, GameState({}));
 
       // Choose 'Yes' (index 0)
       final continued = runner.advance(world, 0);
@@ -263,7 +263,7 @@ void main() {
       registerCoreComponents(world);
 
       final gs = world.spawn();
-      world.storeOf<GameState>().set(gs, GameState({}));
+      world.componentsOf<GameState>().set(gs, GameState({}));
 
       final continued = runner.advance(world, 0);
 
@@ -278,7 +278,7 @@ void main() {
       registerCoreComponents(world);
 
       final gs = world.spawn();
-      world.storeOf<GameState>().set(gs, GameState({}));
+      world.componentsOf<GameState>().set(gs, GameState({}));
 
       runner.advance(world, 0); // move to 'rewarded'
       expect(runner.currentNode!.id, 'rewarded');
@@ -292,7 +292,7 @@ void main() {
       registerCoreComponents(world);
 
       final e = world.spawn();
-      world.storeOf<DialogueGraph>().set(e, graph);
+      world.componentsOf<DialogueGraph>().set(e, graph);
 
       final json = world.toJson();
 
@@ -315,7 +315,7 @@ void main() {
       final newView = WorldView(newWorld);
       final newGraphEntities = newView.entitiesWith<DialogueGraph>().toList();
       expect(newGraphEntities, isNotEmpty);
-      final newGraph = newWorld.storeOf<DialogueGraph>().get(
+      final newGraph = newWorld.componentsOf<DialogueGraph>().get(
         newGraphEntities.first,
       );
 
@@ -359,7 +359,7 @@ void main() {
 
         // GameState WITHOUT the flag (explicitly false)
         final gs = world.spawn();
-        world.storeOf<GameState>().set(gs, GameState({'met_npc': false}));
+        world.componentsOf<GameState>().set(gs, GameState({'met_npc': false}));
 
         final view = WorldView(world);
         final choices = runner.availableChoices(view);
@@ -431,7 +431,7 @@ void main() {
       final runner = DialogueRunner(graph: g, stringTable: strings);
       final world = World(width: 100, height: 100);
       registerCoreComponents(world);
-      world.storeOf<GameState>().set(world.spawn(), GameState({}));
+      world.componentsOf<GameState>().set(world.spawn(), GameState({}));
 
       final sounds = <String>[];
       world.events.on<PlaySoundEvent>((e) => sounds.add(e.audioKey));

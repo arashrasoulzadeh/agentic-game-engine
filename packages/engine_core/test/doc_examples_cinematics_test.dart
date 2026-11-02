@@ -7,7 +7,7 @@ void main() {
   setUp(() {
     world = World(width: 100, height: 100);
     registerCoreComponents(world);
-    world.storeOf<GameState>().set(0, GameState());
+    world.componentsOf<GameState>().set(0, GameState());
   });
 
   test('a script runs its steps in order, then announces completion', () {

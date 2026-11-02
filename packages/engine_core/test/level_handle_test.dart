@@ -33,7 +33,7 @@ void main() {
         expect(handle.entityIds, hasLength(2));
         expect(handle.named, {
           'player': handle.entityIds.firstWhere(
-            (id) => world.storeOf<Position>().get(id)!.x == 0,
+            (id) => world.componentsOf<Position>().get(id)!.x == 0,
           ),
         });
       },
@@ -101,7 +101,7 @@ void main() {
         // 1 freshly spawned by reload.
         expect(world.entities.count, 4);
         expect(handle.entityIds, hasLength(1));
-        final remaining = world.storeOf<Position>().get(
+        final remaining = world.componentsOf<Position>().get(
           handle.entityIds.single,
         )!;
         expect(remaining.x, 99);
@@ -113,7 +113,7 @@ void main() {
       () {
         final world = _buildWorld();
         final preExisting = world.spawn();
-        world.storeOf<Position>().set(preExisting, Position(500, 500));
+        world.componentsOf<Position>().set(preExisting, Position(500, 500));
 
         final handle = LevelHandle.load(world, {
           'entities': [
@@ -141,7 +141,7 @@ void main() {
         });
 
         expect(world.entities.isAlive(preExisting), isTrue);
-        expect(world.storeOf<Position>().get(preExisting)!.x, 500);
+        expect(world.componentsOf<Position>().get(preExisting)!.x, 500);
         expect(
           world.entities.count,
           3,

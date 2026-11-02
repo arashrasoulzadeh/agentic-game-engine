@@ -159,21 +159,21 @@ void main() {
         final world = _buildWorld();
         registerCoreComponents(world);
         final rig = world.spawn();
-        world.storeOf<Position>().set(rig, Position(0, 0));
+        world.componentsOf<Position>().set(rig, Position(0, 0));
 
         final system = CinematicSystem([
           TweenStep(
             duration: 2,
             onUpdate: (w, t) =>
-                w.storeOf<Position>().set(rig, Position(100 * t, 0)),
+                w.componentsOf<Position>().set(rig, Position(100 * t, 0)),
           ),
         ]);
 
         system.update(world, 1);
-        expect(world.storeOf<Position>().get(rig)!.x, 50);
+        expect(world.componentsOf<Position>().get(rig)!.x, 50);
 
         system.update(world, 1);
-        expect(world.storeOf<Position>().get(rig)!.x, 100);
+        expect(world.componentsOf<Position>().get(rig)!.x, 100);
         expect(system.isPlaying, isFalse);
       },
     );
