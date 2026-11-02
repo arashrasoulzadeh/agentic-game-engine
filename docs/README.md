@@ -31,6 +31,7 @@ flowchart LR
 | **Build a platformer** | [Tutorial 1 — a tiny platformer](tutorials/01-hello-world.md) |
 | **Build a turn-based strategy game** | [Tutorial 2 — turn-based strategy](tutorials/02-turn-based-strategy.md) |
 | **Let an AI agent play or build the game** | [Tutorial 3 — an agent-driven game](tutorials/03-agent-driven-game.md) |
+| **Write a game in a few lines** (queries, timers, save/load, tests) | [Writing games with less code](concepts/authoring.md) |
 | Understand how the engine is put together | [Architecture](concepts/architecture.md) · [ECS](concepts/ecs.md) |
 | Copy a focused snippet | [Examples](examples/README.md) |
 | Look up a component's JSON shape | [Component reference](reference/components.md) |
@@ -44,9 +45,10 @@ flowchart LR
    that serialize to JSON. `World.toJson()` is the read path and
    `World.applyPatch()` is the write path — see
    [content as data](concepts/content-as-data.md).
-2. **Systems are small and ordered.** One system, one job, run in a
-   registration order you can inspect (`world.systemOrder`) —
-   see [the ECS](concepts/ecs.md).
+2. **Systems are small and ordered.** One system, one job, run by phase and
+   then registration order, which you can inspect (`world.systemOrder`) and
+   check (`world.validateSystemOrder()`) — see [the ECS](concepts/ecs.md) and
+   [writing games with less code](concepts/authoring.md).
 3. **Agents propose, the engine disposes.** A `Behavior` reads a read-only
    `WorldView` and returns an `Action`; the engine applies it. In turn-based
    games, humans and AI alike go through `submitOrder` —

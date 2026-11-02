@@ -2,6 +2,8 @@
 
 From nothing to a running game in about five minutes.
 
+> Just want the engine API in the fewest lines? [Writing games with less code](concepts/authoring.md) is the shortest tour; `GameBuilder.create` sets up a simulation in one call.
+
 ```mermaid
 flowchart LR
     A[Install CLI] --> B[game_agent create] --> C[flutter run] --> D[Edit data / Dart]

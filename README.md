@@ -28,6 +28,21 @@ without any path to corrupting simulation state. Flutter is used only
 as the cross-platform shell (rendering, input, audio, packaging) for
 Android/iOS/Web — the simulation core has no Flutter dependency at all.
 
+## A taste
+
+```dart
+final game = GameBuilder.create(width: 320, height: 240, fixedStep: 1 / 60);
+final ball = game.spawn([Position(10, 10), Velocity(60, 0)]);
+
+game.update(1 / 60);                                   // once per frame
+for (final (id, pos) in game.world.query<Position>()) { /* ... */ }
+game.world.after(2.0, () => print('two simulated seconds'));
+final saved = game.world.save();                       // plain JSON, incl. the random stream
+```
+
+Seeded randomness, fixed timesteps, deferred `world.commands`, tags, timers, strict patch checking and a
+headless `GameTester` are covered in [Writing games with less code](docs/concepts/authoring.md).
+
 ## Packages
 
 | Package | What it is |

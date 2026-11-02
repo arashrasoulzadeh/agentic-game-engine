@@ -9,10 +9,12 @@ void main() {
     final id = world.spawn();
     expect(id, isA<EntityId>());
 
-    world.componentsOf<Position>().set(id, Position(100, 100));
-    final pos = world.componentsOf<Position>().get(id);
-    final has = world.componentsOf<Position>().has(id);
+    world.setComponent(id, Position(100, 100));
+    final pos = world.getComponent<Position>(id);
+    final has = world.hasComponent<Position>(id);
+    final all = world.componentsOf<Position>();
     expect(pos!.x, 100);
+    expect(all.length, 1);
     expect(has, isTrue);
     expect(world.componentsOf<Position>().has(world.spawn()), isFalse);
   });

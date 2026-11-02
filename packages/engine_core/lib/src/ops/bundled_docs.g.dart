@@ -7,6 +7,8 @@ const kBundledDocs = <String, String>{
 
 From nothing to a running game in about five minutes.
 
+> Just want the engine API in the fewest lines? [Writing games with less code](concepts/authoring.md) is the shortest tour; `GameBuilder.create` sets up a simulation in one call.
+
 ```mermaid
 flowchart LR
     A[Install CLI] --> B[game_agent create] --> C[flutter run] --> D[Edit data / Dart]
@@ -758,14 +760,17 @@ final id = world.spawn(); // EntityId
 
 A component is plain data with `toJson`/`fromJson` — e.g. `Position`,
 `Velocity`, `Collider` (`packages/engine_core/lib/src/physics/`). Each
-component type lives in its own `ComponentStore<T>`, reachable via
-`world.componentsOf<T>()`:
+component type lives in its own `ComponentStore<T>`. Use the per-entity calls
+for one entity and `world.componentsOf<T>()` when you loop over all of them:
 
 ```dart
-world.componentsOf<Position>().set(id, Position(100, 100));
-final pos = world.componentsOf<Position>().get(id); // Position?
-final has = world.componentsOf<Position>().has(id); // bool
+world.setComponent(id, Position(100, 100));          // throws if the entity is dead
+final pos = world.getComponent<Position>(id);        // Position?
+final has = world.hasComponent<Position>(id);        // bool
+final all = world.componentsOf<Position>();          // the whole collection
 ```
+
+(`storeOf<T>()` is the old name of `componentsOf<T>()` and is deprecated.)
 
 A component type must be **registered** before it participates in
 `World.toJson()`/`applyPatch()`/`Level.loadInto()` — see
