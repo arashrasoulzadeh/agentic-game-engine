@@ -71,7 +71,7 @@ void main() {
       expect(b.world.componentsOf<Generator>().denseAt(0).owned, 5);
       expect(
         b.world
-            .storeOf<IdleStats>()
+            .componentsOf<IdleStats>()
             .denseAt(0)
             .lifetimeEarned['coins']!
             .approxEquals(n('1e200')),
@@ -100,7 +100,7 @@ void main() {
       );
       expect(
         b.world
-            .storeOf<IdleStats>()
+            .componentsOf<IdleStats>()
             .denseAt(0)
             .lifetimeEarned['coins']!
             .approxEquals(n('21600')),

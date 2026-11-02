@@ -352,7 +352,7 @@ class UpgradeList extends StatelessWidget {
           for (final e in controller.upgradeIds)
             if (costResource == null ||
                 controller.world
-                    .storeOf<Upgrade>()
+                    .componentsOf<Upgrade>()
                     .get(e)!
                     .cost
                     .containsKey(costResource))

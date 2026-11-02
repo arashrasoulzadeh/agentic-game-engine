@@ -81,7 +81,7 @@ void main() {
       for (var i = 0; i < world.componentsOf<eng.Sprite>().length; i++)
         if (world.componentsOf<eng.Sprite>().denseAt(i).atlasId == 'nodes')
           world
-              .storeOf<Position>()
+              .componentsOf<Position>()
               .get(world.componentsOf<eng.Sprite>().entityAt(i))!
               .x,
     ];
