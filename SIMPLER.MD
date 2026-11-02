@@ -92,11 +92,12 @@ Each step lists: change -> required tests -> gate. "Docs" always means doc comme
 - [x] 2.6 `onCollisionBetween` / `onCollisionInvolving` return a `Subscription` and cancel themselves once an entity they watch is destroyed, including when its id is reused (generation check on the next collision event). `onCollisionWithAny` returns a handle but cannot auto-stop (raw id set has no generations). Tests: `event_helpers_lifetime_test.dart`.
 
 #### Phase 3: Queries and entity ergonomics
-- [ ] 3.1 `world.query<A>()`, `query2<A,B>()`, `query3<A,B,C>()` over `ArchetypeManager`, yielding tuples/records of (id, components); read-only iteration, safe with Phase 2 deferral. Tests: correctness vs naive store join, results after add/remove/destroy. Gate: G2, G3 (new benchmark `query_benchmark.dart` required).
-- [ ] 3.2 `Entity` extension type (D2): `get/set/has/remove/destroy/isAlive`. Pure sugar, no new storage. Tests: handle ops hit the world. Gate: G2.
-- [ ] 3.3 `world.spawnWith([...])` and `world.entity()` fluent builder (`.at()`, `.with()`, `.named()`); builder must go through registered components so `toJson` still works. Tests: spawned entity round-trips through `World.toJson/applyPatch`. Gate: G2.
-- [ ] 3.4 Spawn shortcuts `spawnAt(x,y)`; genre ones (`spawnSprite`, `spawnBody`) go in `engine_flutter`/`engine_platformer`, not core. Gate: G2.
-- [ ] 3.5 Tag/marker components: one `Tag`/marker helper with registered JSON. Gate: G1.
+- [x] 3.1 `world.query<A>()`, `query2<A,B>()`, `query3<A,B,C>()` (`ecs/world_query.dart`): lazy record joins driven by the smallest collection, **built on the stores, not the archetype index**. Plain iterators, not `sync*` (the generator version was 11-13x slower than the hand loop; the iterator version is ~1.7x: n=1000 18.2us vs 30.8us, n=5000 89us vs 156us, `benchmark/query_benchmark.dart`). Includes the 2.5 guard: the driving collection's length is asserted unchanged while iterating, message points at `world.commands`; non-driving collections may be mutated.
+- [x] 3.2 `Entity` extension type (`generation * 2^32 + id`, web-safe) plus world-bound `EntityRef` (`get/has/set/remove/destroy`, stale-safe). **Refines D2**: a bare int cannot carry the world, so the zero-cost type is the identity and `EntityRef` is the ergonomics. `world.entityOf(id)` (refuses dead ids), `world.isCurrent(e)`, `world.ref(e)`.
+- [x] 3.3 `world.spawnWith([...])` (all-or-nothing, exact runtime type match, duplicates rejected) and fluent `world.entity().at(x,y).add(c).build()` returning an `EntityRef`. No `.named`: names live in level JSON, not a component.
+- [x] 3.4 `world.spawnAt(x, y)`; `spawnSprite`/`spawnBody` stay out of core (DAG) and belong to `engine_flutter`/`engine_platformer` (not done).
+- [x] 3.5 `EntityTags` registered component (`tags` in `engine_schema`, docs regenerated) with `addTag/removeTag/hasTag/withTag`. Existing zero-field marker components (`Selected`, `Vip`) remain the pattern for typed markers; tags are for cheap grouping and authored JSON.
+Process note: 3.2-3.5 ran G1 per step and G2 once at the end of the phase (all green), because every change in the phase is additive.
 
 #### Phase 4: Systems
 - [ ] 4.1 `System` gains optional `enabled` and a `world.setSystemEnabled(name, bool)`; profiler names unchanged. Existing systems unaffected. Gate: G2, G3.
