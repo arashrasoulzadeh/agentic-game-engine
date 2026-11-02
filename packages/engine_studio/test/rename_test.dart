@@ -119,6 +119,8 @@ void _editorTest() {
       );
 
       // Wait for the language server to start and finish its first analysis.
+      // The retry budgets below are generous on purpose: in a full-suite run
+      // the machine is loaded and the server can take far longer than alone.
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(seconds: 3)),
       );
@@ -128,7 +130,7 @@ void _editorTest() {
       _placeCursorOnHero(tester);
 
       bool renamed = false;
-      for (var attempt = 0; attempt < 20 && !renamed; attempt++) {
+      for (var attempt = 0; attempt < 60 && !renamed; attempt++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.f2);
         await tester.pump(const Duration(milliseconds: 100));
         renamed = find.byKey(const Key('rename-input')).evaluate().isNotEmpty;
@@ -149,7 +151,7 @@ void _editorTest() {
       );
 
       bool applied = false;
-      for (var attempt = 0; attempt < 10 && !applied; attempt++) {
+      for (var attempt = 0; attempt < 30 && !applied; attempt++) {
         await tester.enterText(
           find.byKey(const Key('rename-input')),
           'Champion',

@@ -10,6 +10,11 @@ import 'package:{{PROJECT_NAME}}/main.dart';
 
 void main() {
   testWidgets('the idle game boots, taps earn coins and a generator can be bought', (tester) async {
+    // The Progress and Settings tabs are longer than the default 800x600
+    // test view; lazy lists would not build the lower panels there.
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final definition = jsonDecode(File('assets/idle_game.json').readAsStringSync()) as Map<String, dynamic>;
     final options = PlayerOptionsManager(InMemoryPlayerOptionsStorage());
     // Memory store: avoids path_provider / disk in widget tests.
