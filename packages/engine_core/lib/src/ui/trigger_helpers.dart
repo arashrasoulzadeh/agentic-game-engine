@@ -28,7 +28,7 @@ class TriggerEvent {
 /// "menu is data, not code" shift `ButtonMenuScene` made for menus.
 void installTriggerZones(World world) {
   world.events.on<CollisionEvent>((event) {
-    final zones = world.storeOf<TriggerZone>();
+    final zones = world.componentsOf<TriggerZone>();
     final zoneA = zones.get(event.a);
     if (zoneA != null) {
       world.events.emit(

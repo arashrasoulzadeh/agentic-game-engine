@@ -22,10 +22,10 @@ import '../ecs/world.dart';
 /// implementations never touch a `ComponentStore` directly for the
 /// common "which button did they tap" case.
 EntityId? hitTestButton(World world, double worldX, double worldY) {
-  final buttons = world.storeOf<Button>();
-  final positions = world.storeOf<Position>();
-  final colliders = world.storeOf<Collider>();
-  final hitBoxes = world.storeOf<ButtonHitBox>();
+  final buttons = world.componentsOf<Button>();
+  final positions = world.componentsOf<Position>();
+  final colliders = world.componentsOf<Collider>();
+  final hitBoxes = world.componentsOf<ButtonHitBox>();
 
   EntityId? hit;
   for (var i = 0; i < buttons.length; i++) {
