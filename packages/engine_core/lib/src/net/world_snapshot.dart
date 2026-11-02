@@ -161,3 +161,34 @@ class WorldDelta {
     removed: [for (final id in (json['removed'] as List)) (id as num).toInt()],
   );
 }
+
+/// Whole-world save and load as plain JSON.
+extension WorldSave on World {
+  /// The world as a JSON-encodable map: seed, tick, random position and every
+  /// entity's components. Unlike [toJson] it carries what a resume needs
+  /// (the random stream), and unlike a patch, [load] can rebuild it.
+  ///
+  /// Not saved: closure timers from [after]/[every], the system list, event
+  /// handlers and queued commands. Those are code, rebuilt by setup.
+  Map<String, dynamic> save() => {
+    'version': 1,
+    'seed': seed,
+    ...WorldSnapshot.capture(this).toJson(),
+  };
+
+  /// Replaces this world's entities and state with [data] from [save].
+  ///
+  /// Entities not in the save are destroyed; saved ones come back with their
+  /// original ids. Throws [FormatException] for data that is not a version-1
+  /// save, before touching the world.
+  void load(Map<String, dynamic> data) {
+    final version = data['version'];
+    if (version != 1) {
+      throw FormatException(
+        'Not a world save this engine can read: expected "version": 1, got '
+        '${version == null ? 'no version' : '"$version"'}.',
+      );
+    }
+    WorldSnapshot.fromJson(data).restoreInto(this);
+  }
+}
