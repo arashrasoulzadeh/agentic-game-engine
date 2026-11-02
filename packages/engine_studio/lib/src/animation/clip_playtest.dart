@@ -102,12 +102,12 @@ class _ClipPlaytestState extends State<ClipPlaytest> {
       world.addSystem(AnimationSystem());
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(160, 180));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(entity, Position(160, 180));
+      world.componentsOf<Sprite>().set(
         entity,
         Sprite(widget.atlasId, animClip.frameRegions.first),
       );
-      world.storeOf<AnimationState>().set(entity, AnimationState(animClip));
+      world.componentsOf<AnimationState>().set(entity, AnimationState(animClip));
 
       final registry = AtlasRegistry()..register(widget.atlasId, atlas);
       final camera = Camera(x: 160, y: 120, zoom: 2);
