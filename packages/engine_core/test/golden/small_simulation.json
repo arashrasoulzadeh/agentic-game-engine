@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "0": {
+      "collider": {
+        "blocksLight": false,
+        "collisionGroup": 1,
+        "collisionMask": -1,
+        "pushable": true,
+        "radius": 4.0
+      },
+      "position": {
+        "x": 33.0,
+        "y": 18.5
+      },
+      "tags": {
+        "tags": [
+          "ball"
+        ]
+      },
+      "velocity": {
+        "x": 30.0,
+        "y": 15.0
+      }
+    },
+    "1": {
+      "collider": {
+        "blocksLight": false,
+        "collisionGroup": 1,
+        "collisionMask": -1,
+        "pushable": true,
+        "radius": 4.0
+      },
+      "position": {
+        "x": 40.0,
+        "y": 20.0
+      }
+    }
+  },
+  "random": 1831565820,
+  "seed": 7,
+  "tick": 60,
+  "version": 1
+}
