@@ -73,6 +73,37 @@ class World {
 
   ComponentStore<T> storeOf<T>() => components.storeOf<T>();
 
+  /// Every [T] component in the world, as a dense collection for iteration and
+  /// bulk work. Prefer [getComponent]/[setComponent] for a single entity.
+  ///
+  /// Throws if [T] was never registered (see `registerCoreComponents` & co.).
+  ComponentStore<T> componentsOf<T>() => components.storeOf<T>();
+
+  /// The [T] on [entity], or null when it has none (or is not alive).
+  T? getComponent<T>(EntityId entity) => components.storeOf<T>().get(entity);
+
+  /// Attaches [value] as [entity]'s [T], replacing any existing one.
+  ///
+  /// Throws [StateError] when [entity] is not alive: ids are recycled, so a
+  /// component written to a dead id would silently show up on whichever entity
+  /// reuses it next.
+  void setComponent<T>(EntityId entity, T value) {
+    if (!entities.isAlive(entity)) {
+      throw StateError(
+        'Cannot set $T on entity $entity: it is not alive (destroyed, or '
+        'never spawned). Spawn it with world.spawn() first.',
+      );
+    }
+    components.storeOf<T>().set(entity, value);
+  }
+
+  /// Whether [entity] currently has a [T].
+  bool hasComponent<T>(EntityId entity) => components.storeOf<T>().has(entity);
+
+  /// Detaches [entity]'s [T]; a no-op when it has none or is not alive.
+  void removeComponent<T>(EntityId entity) =>
+      components.storeOf<T>().remove(entity);
+
   EntityId spawn() => entities.create();
 
   void destroy(EntityId id) {
