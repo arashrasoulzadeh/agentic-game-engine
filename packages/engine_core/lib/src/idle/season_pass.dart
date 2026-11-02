@@ -102,7 +102,7 @@ int claimSeasonPass(
   BigTreasury wallet, {
   String team = 'player',
 }) {
-  final store = world.storeOf<SeasonPass>();
+  final store = world.componentsOf<SeasonPass>();
   if (store.length == 0) return 0;
   final pass = store.denseAt(0);
   final xp = achievementValue(world, pass.xpStat);
@@ -117,7 +117,7 @@ int claimSeasonPass(
       }
     }
     if (tier.multiplier != null && tier.multiplier! > BigNumber.one) {
-      final mods = world.storeOf<IdleModifiers>();
+      final mods = world.componentsOf<IdleModifiers>();
       if (mods.length > 0) {
         mods.denseAt(0).stack.setMultiplier(
           'seasonPass:${pass.id}:${pass.claimed}',

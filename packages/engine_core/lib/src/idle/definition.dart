@@ -597,24 +597,24 @@ IdleGame loadIdleDefinition(World world, Map<String, dynamic> json) {
         : BigNumber.fromJson(start as Object);
   }
   final wallet = BigTreasury(amounts: amounts);
-  world.storeOf<BigTreasury>().set(world.spawn(), wallet);
-  world.storeOf<IdleStats>().set(world.spawn(), IdleStats());
-  world.storeOf<IdleModifiers>().set(world.spawn(), IdleModifiers());
+  world.componentsOf<BigTreasury>().set(world.spawn(), wallet);
+  world.componentsOf<IdleStats>().set(world.spawn(), IdleStats());
+  world.componentsOf<IdleModifiers>().set(world.spawn(), IdleModifiers());
 
   for (final g in (json['generators'] as List? ?? const [])) {
-    world.storeOf<Generator>().set(
+    world.componentsOf<Generator>().set(
       world.spawn(),
       Generator.fromJson((g as Map).cast<String, dynamic>()),
     );
   }
   for (final u in (json['upgrades'] as List? ?? const [])) {
-    world.storeOf<Upgrade>().set(
+    world.componentsOf<Upgrade>().set(
       world.spawn(),
       Upgrade.fromJson((u as Map).cast<String, dynamic>()),
     );
   }
   for (final a in (json['achievements'] as List? ?? const [])) {
-    world.storeOf<Achievement>().set(
+    world.componentsOf<Achievement>().set(
       world.spawn(),
       Achievement.fromJson((a as Map).cast<String, dynamic>()),
     );
@@ -623,43 +623,43 @@ IdleGame loadIdleDefinition(World world, Map<String, dynamic> json) {
     if (json['prestige'] is Map) json['prestige'],
     for (final r in (json['prestiges'] as List? ?? const [])) r,
   ]) {
-    world.storeOf<PrestigeRule>().set(
+    world.componentsOf<PrestigeRule>().set(
       world.spawn(),
       PrestigeRule.fromJson((rule as Map).cast<String, dynamic>()),
     );
   }
   for (final c in (json['challenges'] as List? ?? const [])) {
-    world.storeOf<Challenge>().set(
+    world.componentsOf<Challenge>().set(
       world.spawn(),
       Challenge.fromJson((c as Map).cast<String, dynamic>()),
     );
   }
   if (json['golden'] is Map) {
-    world.storeOf<GoldenEvents>().set(
+    world.componentsOf<GoldenEvents>().set(
       world.spawn(),
       GoldenEvents.fromJson((json['golden'] as Map).cast<String, dynamic>()),
     );
   }
   if (json['autoBuyer'] is Map) {
-    world.storeOf<AutoBuyer>().set(
+    world.componentsOf<AutoBuyer>().set(
       world.spawn(),
       AutoBuyer.fromJson((json['autoBuyer'] as Map).cast<String, dynamic>()),
     );
   }
   for (final r in (json['research'] as List? ?? const [])) {
-    world.storeOf<ResearchNode>().set(
+    world.componentsOf<ResearchNode>().set(
       world.spawn(),
       ResearchNode.fromJson((r as Map).cast<String, dynamic>()),
     );
   }
   for (final w in (json['timeWarps'] as List? ?? const [])) {
-    world.storeOf<TimeWarpOffer>().set(
+    world.componentsOf<TimeWarpOffer>().set(
       world.spawn(),
       TimeWarpOffer.fromJson((w as Map).cast<String, dynamic>()),
     );
   }
   if (json['seasonPass'] is Map) {
-    world.storeOf<SeasonPass>().set(
+    world.componentsOf<SeasonPass>().set(
       world.spawn(),
       SeasonPass.fromJson(
         (json['seasonPass'] as Map).cast<String, dynamic>(),

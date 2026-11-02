@@ -9,8 +9,8 @@ import 'progression.dart';
 /// game-wide [IdleModifiers]. Synergy upgrades (`Upgrade.bonusPerOwned`) scale with how many of
 /// [Upgrade.synergyOf] are owned.
 Map<String, BigNumber> computeIncome(World world) {
-  final generators = world.storeOf<Generator>();
-  final upgrades = world.storeOf<Upgrade>();
+  final generators = world.componentsOf<Generator>();
+  final upgrades = world.componentsOf<Upgrade>();
   final global = _globalMultiplier(world);
 
   final ownedById = <String, int>{
@@ -56,7 +56,7 @@ void recomputeIncome(World world, BigTreasury wallet) {
 }
 
 BigNumber _globalMultiplier(World world) {
-  final mods = world.storeOf<IdleModifiers>();
+  final mods = world.componentsOf<IdleModifiers>();
   var m = BigNumber.one;
   for (var i = 0; i < mods.length; i++) {
     m = m * mods.denseAt(i).stack.totalMultiplier;
@@ -107,7 +107,7 @@ BuyResult buyGenerator(
   int? count = 1,
   String team = 'player',
 }) {
-  final g = world.storeOf<Generator>().get(generator);
+  final g = world.componentsOf<Generator>().get(generator);
   if (g == null) return const BuyResult(0, {}, BuyFailure.nothing);
   if (missingTech(world, team, g.requires).isNotEmpty) {
     return const BuyResult(0, {}, BuyFailure.locked);
@@ -139,7 +139,7 @@ BuyResult buyUpgrade(
   EntityId upgrade, {
   String team = 'player',
 }) {
-  final u = world.storeOf<Upgrade>().get(upgrade);
+  final u = world.componentsOf<Upgrade>().get(upgrade);
   if (u == null) return const BuyResult(0, {}, BuyFailure.nothing);
   if (u.purchased) return const BuyResult(0, {}, BuyFailure.alreadyBought);
   if (challengeBlocks(world, isUpgrade: true)) {
@@ -164,8 +164,8 @@ class IdleSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final wallets = world.storeOf<BigTreasury>();
-    final stats = world.storeOf<IdleStats>();
+    final wallets = world.componentsOf<BigTreasury>();
+    final stats = world.componentsOf<IdleStats>();
     final track = stats.length == 0 ? null : stats.denseAt(0);
     for (var i = 0; i < wallets.length; i++) {
       final w = wallets.denseAt(i);

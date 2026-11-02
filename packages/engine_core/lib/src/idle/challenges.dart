@@ -67,7 +67,7 @@ const _handicapSource = 'challenge';
 
 /// The running challenge, or null.
 Challenge? activeChallenge(World world) {
-  final store = world.storeOf<Challenge>();
+  final store = world.componentsOf<Challenge>();
   for (var i = 0; i < store.length; i++) {
     if (store.denseAt(i).active) return store.denseAt(i);
   }
@@ -105,7 +105,7 @@ BigNumber _handicap(Challenge c) {
 /// and upgrades reset, run earnings cleared except prestige currencies) and puts its rules in force. Returns
 /// false if it does not exist, is already completed, or another challenge is running.
 bool startChallenge(World world, BigTreasury wallet, String id) {
-  final store = world.storeOf<Challenge>();
+  final store = world.componentsOf<Challenge>();
   Challenge? c;
   for (var i = 0; i < store.length; i++) {
     if (store.denseAt(i).id == id) c = store.denseAt(i);
@@ -113,7 +113,7 @@ bool startChallenge(World world, BigTreasury wallet, String id) {
   if (c == null || c.completed || activeChallenge(world) != null) return false;
 
   final rule = prestigeRuleOf(world);
-  final rules = world.storeOf<PrestigeRule>();
+  final rules = world.componentsOf<PrestigeRule>();
   final currencies = {
     for (var i = 0; i < rules.length; i++) rules.denseAt(i).currency,
   };
@@ -125,20 +125,20 @@ bool startChallenge(World world, BigTreasury wallet, String id) {
     ..clear()
     ..addAll(rule?.startingAmounts ?? const {})
     ..addAll(kept);
-  final gens = world.storeOf<Generator>();
+  final gens = world.componentsOf<Generator>();
   for (var i = 0; i < gens.length; i++) {
     gens.denseAt(i).owned = 0;
   }
-  final ups = world.storeOf<Upgrade>();
+  final ups = world.componentsOf<Upgrade>();
   for (var i = 0; i < ups.length; i++) {
     ups.denseAt(i).purchased = false;
   }
-  final stats = world.storeOf<IdleStats>();
+  final stats = world.componentsOf<IdleStats>();
   if (stats.length > 0) {
     stats.denseAt(0).runEarned.removeWhere((r, _) => !currencies.contains(r));
   }
   c.active = true;
-  final mods = world.storeOf<IdleModifiers>();
+  final mods = world.componentsOf<IdleModifiers>();
   if (mods.length > 0) {
     mods.denseAt(0).stack.setMultiplier(_handicapSource, _handicap(c));
   }
@@ -151,7 +151,7 @@ bool abandonChallenge(World world, BigTreasury wallet) {
   final c = activeChallenge(world);
   if (c == null) return false;
   c.active = false;
-  final mods = world.storeOf<IdleModifiers>();
+  final mods = world.componentsOf<IdleModifiers>();
   if (mods.length > 0) mods.denseAt(0).stack.remove(_handicapSource);
   recomputeIncome(world, wallet);
   return true;
@@ -167,7 +167,7 @@ String? checkChallenges(World world, BigTreasury wallet) {
   }
   c.active = false;
   c.completed = true;
-  final mods = world.storeOf<IdleModifiers>();
+  final mods = world.componentsOf<IdleModifiers>();
   if (mods.length > 0) {
     final stack = mods.denseAt(0).stack
       ..remove(_handicapSource)

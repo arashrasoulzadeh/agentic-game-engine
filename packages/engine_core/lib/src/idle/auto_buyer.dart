@@ -75,8 +75,8 @@ class AutoBuySystem extends System {
 
   @override
   void update(World world, double dt) {
-    final buyers = world.storeOf<AutoBuyer>();
-    final wallets = world.storeOf<BigTreasury>();
+    final buyers = world.componentsOf<AutoBuyer>();
+    final wallets = world.componentsOf<BigTreasury>();
     if (buyers.length == 0 || wallets.length == 0 || dt <= 0) return;
     final wallet = wallets.denseAt(0);
     for (var i = 0; i < buyers.length; i++) {

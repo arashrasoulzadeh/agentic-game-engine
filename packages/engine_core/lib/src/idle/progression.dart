@@ -177,7 +177,7 @@ const prestigeSource = 'prestige';
 
 /// The prestige rule called [id], or the first one when [id] is null; null if the game has none.
 PrestigeRule? prestigeRuleOf(World world, [String? id]) {
-  final rules = world.storeOf<PrestigeRule>();
+  final rules = world.componentsOf<PrestigeRule>();
   for (var i = 0; i < rules.length; i++) {
     if (id == null || rules.denseAt(i).id == id) return rules.denseAt(i);
   }
@@ -186,7 +186,7 @@ PrestigeRule? prestigeRuleOf(World world, [String? id]) {
 
 /// Every currency some prestige layer produces (what a run reset must not erase from the stats).
 Set<String> _prestigeCurrencies(World world) {
-  final rules = world.storeOf<PrestigeRule>();
+  final rules = world.componentsOf<PrestigeRule>();
   return {for (var i = 0; i < rules.length; i++) rules.denseAt(i).currency};
 }
 
@@ -234,13 +234,13 @@ BigNumber? performPrestige(World world, BigTreasury wallet, [String? id]) {
     ..addAll(kept);
   wallet.amounts[rule.currency] = bank;
 
-  final generators = world.storeOf<Generator>();
+  final generators = world.componentsOf<Generator>();
   for (var i = 0; i < generators.length; i++) {
     final g = generators.denseAt(i);
     if (!rule.keepGenerators.contains(g.id)) g.owned = 0;
   }
   if (!rule.keepUpgrades) {
-    final upgrades = world.storeOf<Upgrade>();
+    final upgrades = world.componentsOf<Upgrade>();
     for (var i = 0; i < upgrades.length; i++) {
       upgrades.denseAt(i).purchased = false;
     }
@@ -259,7 +259,7 @@ BigNumber? performPrestige(World world, BigTreasury wallet, [String? id]) {
     _sourceFor(rule),
     BigNumber.one + BigNumber.from(rule.bonusPerUnit) * bank,
   );
-  final rules = world.storeOf<PrestigeRule>();
+  final rules = world.componentsOf<PrestigeRule>();
   for (var i = 0; i < rules.length; i++) {
     final other = rules.denseAt(i);
     if (wiped.contains(other.currency)) mods?.stack.remove(_sourceFor(other));
@@ -338,7 +338,7 @@ BigNumber achievementValue(World world, String stat) {
     case 'event':
       return BigNumber.from(stats?.eventCounts[arg] ?? 0);
     case 'owned':
-      final gens = world.storeOf<Generator>();
+      final gens = world.componentsOf<Generator>();
       for (var i = 0; i < gens.length; i++) {
         if (gens.denseAt(i).id == arg) {
           return BigNumber.from(gens.denseAt(i).owned);
@@ -374,7 +374,7 @@ class AchievementUnlockedEvent {
 /// [AchievementUnlockedEvent] for each, and returns their ids. Call it after purchases and every few
 /// seconds - not every tick; it walks the (small) achievement list, not the world.
 List<String> checkAchievements(World world, BigTreasury wallet) {
-  final store = world.storeOf<Achievement>();
+  final store = world.componentsOf<Achievement>();
   final ids = [for (var i = 0; i < store.length; i++) store.entityAt(i)]
     ..sort();
   final unlocked = <String>[];
@@ -399,6 +399,6 @@ List<String> checkAchievements(World world, BigTreasury wallet) {
 }
 
 T? _first<T>(World world) {
-  final s = world.storeOf<T>();
+  final s = world.componentsOf<T>();
   return s.length == 0 ? null : s.denseAt(0);
 }

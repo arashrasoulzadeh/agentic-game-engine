@@ -36,7 +36,7 @@ void activateBoost(
   required BigNumber multiplier,
   required double seconds,
 }) {
-  final boosts = world.storeOf<Boost>();
+  final boosts = world.componentsOf<Boost>();
   Boost? existing;
   for (var i = 0; i < boosts.length; i++) {
     if (boosts.denseAt(i).id == id) existing = boosts.denseAt(i);
@@ -49,7 +49,7 @@ void activateBoost(
       Boost(id: id, multiplier: multiplier, remaining: seconds),
     );
   }
-  final mods = world.storeOf<IdleModifiers>();
+  final mods = world.componentsOf<IdleModifiers>();
   if (mods.length > 0) {
     mods.denseAt(0).stack.setMultiplier('boost:$id', multiplier);
   }
@@ -63,7 +63,7 @@ class BoostSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final boosts = world.storeOf<Boost>();
+    final boosts = world.componentsOf<Boost>();
     if (boosts.length == 0) return;
     final ids = [for (var i = 0; i < boosts.length; i++) boosts.entityAt(i)]
       ..sort();
@@ -72,7 +72,7 @@ class BoostSystem extends System {
       final b = boosts.get(e)!;
       b.remaining -= dt;
       if (b.remaining <= 0) {
-        final mods = world.storeOf<IdleModifiers>();
+        final mods = world.componentsOf<IdleModifiers>();
         if (mods.length > 0) {
           mods.denseAt(0).stack.remove('boost:${b.id}');
         }
@@ -81,7 +81,7 @@ class BoostSystem extends System {
       }
     }
     if (ended) {
-      final wallets = world.storeOf<BigTreasury>();
+      final wallets = world.componentsOf<BigTreasury>();
       if (wallets.length > 0) {
         recomputeIncome(world, wallets.denseAt(0));
       }
@@ -97,13 +97,13 @@ BigNumber tapEarn(
   String resource = 'coins',
   BigNumber? amount,
 }) {
-  final mods = world.storeOf<IdleModifiers>();
+  final mods = world.componentsOf<IdleModifiers>();
   final factor = mods.length == 0
       ? BigNumber.one
       : mods.denseAt(0).stack.totalMultiplier;
   final earned = (amount ?? BigNumber.one) * factor;
   wallet.add(resource, earned);
-  final stats = world.storeOf<IdleStats>();
+  final stats = world.componentsOf<IdleStats>();
   if (stats.length > 0) {
     stats.denseAt(0).taps++;
     stats.denseAt(0).credit({resource: earned});

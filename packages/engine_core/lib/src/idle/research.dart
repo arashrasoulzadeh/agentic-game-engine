@@ -81,7 +81,7 @@ BuyResult buyResearch(
   EntityId research, {
   String team = 'player',
 }) {
-  final node = world.storeOf<ResearchNode>().get(research);
+  final node = world.componentsOf<ResearchNode>().get(research);
   if (node == null) return const BuyResult(0, {}, BuyFailure.nothing);
   if (node.purchased) return const BuyResult(0, {}, BuyFailure.alreadyBought);
   if (missingTech(world, team, node.requires).isNotEmpty) {

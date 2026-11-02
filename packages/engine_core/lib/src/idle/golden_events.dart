@@ -112,7 +112,7 @@ class GoldenEventSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final store = world.storeOf<GoldenEvents>();
+    final store = world.componentsOf<GoldenEvents>();
     if (store.length == 0 || dt <= 0) return;
     final g = store.denseAt(0);
     if (g.rewards.isEmpty) return;
@@ -154,7 +154,7 @@ class GoldenEventSystem extends System {
 /// starts (replacing a running golden boost); a payout adds that many seconds of current income and
 /// counts as earnings in the stats.
 GoldenReward? claimGolden(World world, BigTreasury wallet) {
-  final store = world.storeOf<GoldenEvents>();
+  final store = world.componentsOf<GoldenEvents>();
   if (store.length == 0) return null;
   final g = store.denseAt(0);
   final index = g.offered;
@@ -178,7 +178,7 @@ GoldenReward? claimGolden(World world, BigTreasury wallet) {
       for (final e in wallet.incomePerSecond.entries) e.key: e.value * seconds,
     };
     gains.forEach(wallet.add);
-    final stats = world.storeOf<IdleStats>();
+    final stats = world.componentsOf<IdleStats>();
     if (stats.length > 0) stats.denseAt(0).credit(gains);
   }
   checkAchievements(world, wallet);

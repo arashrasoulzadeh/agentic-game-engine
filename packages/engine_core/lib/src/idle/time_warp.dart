@@ -64,7 +64,7 @@ Map<String, BigNumber> timeWarp(
   for (final e in gained.entries) {
     wallet.add(e.key, e.value);
   }
-  final stats = world.storeOf<IdleStats>();
+  final stats = world.componentsOf<IdleStats>();
   if (stats.length > 0 && gained.isNotEmpty) {
     stats.denseAt(0).credit(gained);
   }
@@ -77,7 +77,7 @@ BuyResult buyTimeWarp(
   BigTreasury wallet,
   EntityId offer,
 ) {
-  final o = world.storeOf<TimeWarpOffer>().get(offer);
+  final o = world.componentsOf<TimeWarpOffer>().get(offer);
   if (o == null) return const BuyResult(0, {}, BuyFailure.nothing);
   if (o.seconds <= 0) return const BuyResult(0, {}, BuyFailure.nothing);
   if (!wallet.spend(o.cost)) {

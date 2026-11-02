@@ -64,7 +64,7 @@ PurchaseOption? bestPurchase(
   BigNumber gainOf() =>
       (computeIncome(world)[mainResource] ?? BigNumber.zero) - main;
 
-  final gens = world.storeOf<Generator>();
+  final gens = world.componentsOf<Generator>();
   for (var i = 0; i < gens.length; i++) {
     final g = gens.denseAt(i);
     if (g.maxOwned != null && g.owned >= g.maxOwned!) continue;
@@ -83,7 +83,7 @@ PurchaseOption? bestPurchase(
       ),
     );
   }
-  final ups = world.storeOf<Upgrade>();
+  final ups = world.componentsOf<Upgrade>();
   for (var i = 0; i < ups.length; i++) {
     final u = ups.denseAt(i);
     if (u.purchased ||

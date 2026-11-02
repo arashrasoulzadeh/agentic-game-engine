@@ -89,7 +89,7 @@ SimulationReport simulateIdle(
       for (final e in wallet.incomePerSecond.entries)
         e.key: e.value * BigNumber.from(seconds),
     };
-    final stats = world.storeOf<IdleStats>();
+    final stats = world.componentsOf<IdleStats>();
     if (stats.length > 0) {
       stats.denseAt(0)
         ..credit(gains)
@@ -117,7 +117,7 @@ SimulationReport simulateIdle(
   /// Starts the next incomplete challenge; returns true when one began (the run was reset).
   bool tryStartNextChallenge() {
     if (!playChallenges || activeChallenge(world) != null) return false;
-    final store = world.storeOf<Challenge>();
+    final store = world.componentsOf<Challenge>();
     for (var i = 0; i < store.length; i++) {
       final c = store.denseAt(i);
       if (c.completed) continue;
@@ -132,7 +132,7 @@ SimulationReport simulateIdle(
   /// Prestiges the highest-index layer that meets [prestigeAt]; returns true when one fired.
   bool tryPrestige() {
     if (prestigeAt == null || activeChallenge(world) != null) return false;
-    final rules = world.storeOf<PrestigeRule>();
+    final rules = world.componentsOf<PrestigeRule>();
     // Highest layer first: otherwise a ready ascension waits forever behind repeated first-layer prestiges.
     for (var i = rules.length - 1; i >= 0; i--) {
       final rule = rules.denseAt(i);
@@ -143,7 +143,7 @@ SimulationReport simulateIdle(
         performPrestige(world, wallet, rule.id);
         final label = rule.id == 'prestige' ? 'prestige' : 'prestige ${rule.id}';
         note(
-          '$label #${world.storeOf<IdleStats>().denseAt(0).prestigeCount} (+${gain.toString()})',
+          '$label #${world.componentsOf<IdleStats>().denseAt(0).prestigeCount} (+${gain.toString()})',
         );
         nextDecade = 0;
         return true;
