@@ -76,6 +76,7 @@ export 'src/content/localization.dart';
 export 'src/ecs/system.dart';
 export 'src/ecs/system_group.dart';
 export 'src/ecs/system_presets.dart';
+export 'src/ecs/game_builder.dart';
 export 'src/ecs/function_system.dart';
 export 'src/ecs/job_system.dart' hide PathPoint;
 export 'src/ai/ai_system.dart';
