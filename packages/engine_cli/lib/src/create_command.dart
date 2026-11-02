@@ -27,9 +27,11 @@ class CreateCommand extends Command<int> {
       ..addOption(
         'template',
         defaultsTo: 'default_game',
-        allowed: ['default_game', 'strategy_game', 'idle_game'],
+        allowed: ['default_game', 'topdown_game', 'strategy_game', 'idle_game'],
         allowedHelp: {
           'default_game': 'A 2D platformer starter.',
+          'topdown_game':
+              'A top-down game: four-direction movement and pickups, core only.',
           'strategy_game': 'A turn-based strategy skirmish (engine_strategy).',
           'idle_game':
               'An idle / incremental game with generators, upgrades and prestige (engine_idle).',

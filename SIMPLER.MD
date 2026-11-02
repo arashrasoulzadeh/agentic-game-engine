@@ -133,7 +133,7 @@ Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_
 - [ ] Keep the JSON contract: fluent builders, handles and shortcuts stay sugar over plain JSON-serializable components; any new convenience API gets an operation + `game_agent` command or a documented exemption (see the table in `docs/concepts/authoring.md`).
 
 ### Tooling and onboarding
-- [ ] **CLI templates** `platformer|topdown|turnbased|idle` generating a runnable < 20-line `main` (existing: default, strategy, idle).
+- [x] `topdown_game` template shipped (core + engine_flutter only, verified offline in a scratch project: analyze clean, widget test passes). `platformer` = `default_game`, `turnbased` = `strategy_game`, `idle` = `idle_game` already existed, so no alias names were added. Still unverified: `game_agent create` against the pushed ref (G6).
 - [ ] **Cookbook**: dialogue recipe still missing (health bar, pickup, door+key, patrol, waves exist in `docs/examples`, the last four tested in `doc_examples_pickups_test.dart`).
 - [ ] **Migration guide** for downstream projects (`storeOf` -> component API) before 7.final.
 

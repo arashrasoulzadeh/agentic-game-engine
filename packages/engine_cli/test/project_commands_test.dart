@@ -8,6 +8,7 @@ import 'package:engine_cli/src/template.dart';
 import 'package:test/test.dart';
 
 void main() {
+  topdownTemplateTests();
   late Directory tmp;
   late String originalDirectory;
   late List<List<Object?>> calls;
@@ -329,8 +330,9 @@ dependencies:
     ).readAsStringSync();
     expect(pubspec, contains('packages/engine_idle'));
     expect(pubspec, isNot(contains('engine_platformer')));
-    final main =
-        File('${tmp.path}/cookie_game/lib/main.dart').readAsStringSync();
+    final main = File(
+      '${tmp.path}/cookie_game/lib/main.dart',
+    ).readAsStringSync();
     expect(main, contains('loadIdleDefinition'));
     expect(main, contains('ChallengePanel'));
     expect(main, contains('GoldenOffer'));
@@ -369,6 +371,22 @@ dependencies:
     expect(
       File('${tmp.path}/cookie_game/test/widget_test.dart').readAsStringSync(),
       contains('cookie_game'),
+    );
+  });
+}
+
+void topdownTemplateTests() {
+  test('topdown_game template needs only core and flutter packages', () {
+    final dir = Directory('templates/topdown_game');
+    final pubspec = File('${dir.path}/pubspec.yaml.tmpl').readAsStringSync();
+    expect(pubspec, contains('packages/engine_flutter'));
+    expect(pubspec, isNot(contains('engine_platformer')));
+    expect(pubspec, isNot(contains('engine_strategy')));
+    final main = File('${dir.path}/lib/main.dart.tmpl').readAsStringSync();
+    expect(main, contains('SystemPresets.core'));
+    expect(
+      File('${dir.path}/assets/game_config.json.tmpl').existsSync(),
+      isTrue,
     );
   });
 }

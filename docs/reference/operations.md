@@ -1263,7 +1263,7 @@ Implemented by `game_agent create` because it runs `flutter create` and `pub get
 | Parameter | Type | Description |
 |---|---|---|
 | `name` | string; required | |
-| `template` | enumeration; default `"default_game"`; one of `default_game`, `strategy_game`, `idle_game` | |
+| `template` | enumeration; default `"default_game"`; one of `default_game`, `topdown_game`, `strategy_game`, `idle_game` | |
 | `org` | string; default `"com.example"` | |
 | `outputDir` | string; default `"."` | |
 | `ref` | string; default `"main"` | |

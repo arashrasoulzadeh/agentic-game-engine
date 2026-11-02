@@ -75,7 +75,12 @@ List<Operation> projectOperations() => [
       Param(
         'template',
         ParamType.enumeration,
-        options: ['default_game', 'strategy_game', 'idle_game'],
+        options: [
+          'default_game',
+          'topdown_game',
+          'strategy_game',
+          'idle_game',
+        ],
         defaultValue: 'default_game',
       ),
       Param('org', ParamType.string, defaultValue: 'com.example'),

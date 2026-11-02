@@ -12,7 +12,7 @@ The engine ships as one unit. Every package under `packages/` has the same `vers
 2. Bump `version:` in **every** `packages/*/pubspec.yaml` to the same value, and move the `[Unreleased]` entries
    in `CHANGELOG.md` under the new version.
 3. Run the end-to-end check from `CLAUDE.md`: `game_agent create` for each template (`default_game`,
-   `strategy_game`, `idle_game`) against the pushed repo, then analyze and test the generated project.
+   `topdown_game`, `strategy_game`, `idle_game`) against the pushed repo, then analyze and test the generated project.
 4. Tag `vX.Y.Z` and push the tag. Generated projects pin `ref: main` unless created with `--ref`; if the
    release should pin a tag, update every self-referencing `ref:` to it **in the same commit** (see the known
    limitation in `CLAUDE.md`).

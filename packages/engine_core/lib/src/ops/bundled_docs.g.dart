@@ -2550,7 +2550,7 @@ Implemented by `game_agent create` because it runs `flutter create` and `pub get
 | Parameter | Type | Description |
 |---|---|---|
 | `name` | string; required | |
-| `template` | enumeration; default `"default_game"`; one of `default_game`, `strategy_game`, `idle_game` | |
+| `template` | enumeration; default `"default_game"`; one of `default_game`, `topdown_game`, `strategy_game`, `idle_game` | |
 | `org` | string; default `"com.example"` | |
 | `outputDir` | string; default `"."` | |
 | `ref` | string; default `"main"` | |
@@ -3224,7 +3224,7 @@ game_agent create my_game [--template strategy_game] [--org com.acme]
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--template` | `default_game` | `default_game` — a platformer starter. `strategy_game` — a turn-based skirmish against an AI (uses `engine_strategy`). `idle_game` — a playable idle/incremental game driven by `assets/idle_game.json` (uses `engine_idle`). |
+| `--template` | `default_game` | `default_game` — a platformer starter. `topdown_game` — four-direction movement and pickups using core and `engine_flutter` only. `strategy_game` — a turn-based skirmish against an AI (uses `engine_strategy`). `idle_game` — a playable idle/incremental game driven by `assets/idle_game.json` (uses `engine_idle`). |
 | `--org` | `com.example` | Reverse-domain id for Android/iOS bundles. |
 | `--output-dir` | `.` | Parent directory for the new project. |
 | `--engine-repo` | this repo\'s URL | Git URL the generated `pubspec.yaml` depends on. |
