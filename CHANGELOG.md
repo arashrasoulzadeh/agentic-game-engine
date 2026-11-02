@@ -8,6 +8,29 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added (SIMPLER: simpler game authoring in engine_core)
+- Component access on `World`: `componentsOf<T>()`, `getComponent`, `setComponent` (rejects dead
+  entities), `hasComponent`, `removeComponent`.
+- `world.query` / `query2` / `query3` joins, `Entity` handles (generation-checked) and `EntityRef`,
+  `spawnWith`, `entity()` builder, `spawnAt`, `EntityTags` (`addTag`/`withTag`...).
+- Safe mutation: `world.commands` (deferred spawn/set/remove/destroy), `EventBus` subscriptions
+  (`on` returns a `Subscription`, `once`), collision helpers that stop with their entity.
+- Systems: `setSystemEnabled`, `SystemGroup`, `SystemPhase`, `addSystem(after:)` +
+  `validateSystemOrder()`, `FunctionSystem` / `addSystemFn`, `SystemPresets.core`.
+- Determinism: `world.random` (`WorldRandom`, snapshot-able), `World(seed:)`, `FixedStepper`,
+  `world.after` / `world.every`, serializable `CountdownTimer`, `world.save()` / `world.load()`.
+- `GameBuilder.create` / `GameLoop` for one-call setup.
+
+### Changed
+- `World.storeOf<T>()` is deprecated in favour of `componentsOf<T>()` (same collection). All code,
+  tests and docs in this repo now use the new name. `ComponentRegistry.storeOf` is unchanged.
+- `EventBus.on` now returns a `Subscription` instead of `void`; a handler added during a flush no
+  longer throws `ConcurrentModificationError`.
+- `onCollisionBetween` / `onCollisionInvolving` stop automatically when their entity is destroyed.
+
+### Fixed
+- `game_agent studio validate` no longer reports `.studio/undo/` journal files as invalid levels.
+
 ### Added (sprites, effects, idle combat)
 - `SpriteStates` / `SpriteStateSystem` / `playSpriteState` — per-state sprite
   sheets (idle/attack/death) with one-shot return-to-rest, hold states and

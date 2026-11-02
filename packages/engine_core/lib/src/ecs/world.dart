@@ -175,6 +175,12 @@ class World {
     return found;
   }
 
+  /// The old name of [componentsOf].
+  @Deprecated(
+    'Use componentsOf<T>(), or getComponent/setComponent/hasComponent/'
+    'removeComponent for one entity. storeOf will be removed in a future '
+    'release.',
+  )
   ComponentStore<T> storeOf<T>() => components.storeOf<T>();
 
   /// Every [T] component in the world, as a dense collection for iteration and
