@@ -72,8 +72,8 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(100, 100));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(id, Position(100, 100));
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(radius: 80, castsShadows: true),
         );
@@ -112,8 +112,8 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(100, 100));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(id, Position(100, 100));
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(radius: 80, castsShadows: true),
         );
@@ -151,8 +151,8 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(100, 100));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(id, Position(100, 100));
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(radius: 80, castsShadows: true),
         );
@@ -193,8 +193,8 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(100, 100));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(id, Position(100, 100));
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(radius: 80, castsShadows: true),
         );
@@ -233,8 +233,8 @@ void main() {
         registerFlutterComponents(world);
 
         final spriteEntity = world.spawn();
-        world.storeOf<Position>().set(spriteEntity, Position(10, 10));
-        world.storeOf<Sprite>().set(spriteEntity, Sprite('atlas', 'region'));
+        world.componentsOf<Position>().set(spriteEntity, Position(10, 10));
+        world.componentsOf<Sprite>().set(spriteEntity, Sprite('atlas', 'region'));
 
         final stats = FrameStats();
         await tester.pumpWidget(
@@ -334,8 +334,8 @@ void main() {
         registerFlutterComponents(world);
 
         final player = world.spawn();
-        world.storeOf<Position>().set(player, Position(0, 0));
-        world.storeOf<Velocity>().set(
+        world.componentsOf<Position>().set(player, Position(0, 0));
+        world.componentsOf<Velocity>().set(
           player,
           Velocity(30, 40),
         ); // 3-4-5 triangle -> speed 50
@@ -390,7 +390,7 @@ void main() {
         registerFlutterComponents(world);
 
         final player = world.spawn();
-        world.storeOf<Position>().set(player, Position(0, 0)); // no Velocity
+        world.componentsOf<Position>().set(player, Position(0, 0)); // no Velocity
 
         final stats = FrameStats();
         await tester.pumpWidget(

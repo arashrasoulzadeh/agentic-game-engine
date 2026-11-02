@@ -96,8 +96,8 @@ void main() {
         registerCoreComponents(world);
         registerFlutterComponents(world);
         final entity = world.spawn();
-        world.storeOf<Position>().set(entity, Position(0, 0));
-        world.storeOf<ParallaxLayer>().set(
+        world.componentsOf<Position>().set(entity, Position(0, 0));
+        world.componentsOf<ParallaxLayer>().set(
           entity,
           ParallaxLayer('bg', 'sky', tileY: false, fitHeight: fitHeight),
         );
@@ -167,8 +167,8 @@ void main() {
     );
 
     final entity = world.spawn();
-    world.storeOf<Position>().set(entity, Position(0, 0));
-    world.storeOf<ParallaxLayer>().set(entity, ParallaxLayer('bg', 'sky'));
+    world.componentsOf<Position>().set(entity, Position(0, 0));
+    world.componentsOf<ParallaxLayer>().set(entity, ParallaxLayer('bg', 'sky'));
 
     await tester.pumpWidget(
       MaterialApp(
@@ -192,8 +192,8 @@ void main() {
       registerFlutterComponents(world);
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<ParallaxLayer>().set(
+      world.componentsOf<Position>().set(entity, Position(0, 0));
+      world.componentsOf<ParallaxLayer>().set(
         entity,
         ParallaxLayer('missing', 'sky'),
       );

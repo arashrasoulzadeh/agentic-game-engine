@@ -45,8 +45,8 @@ void main() {
     registerFlutterComponents(world);
 
     final mapEntity = world.spawn();
-    world.storeOf<Position>().set(mapEntity, Position(0, 0));
-    world.storeOf<TileMap>().set(
+    world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+    world.componentsOf<TileMap>().set(
       mapEntity,
       TileMap(
         cols: 4,
@@ -86,8 +86,8 @@ void main() {
       registerFlutterComponents(world);
 
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 4,
@@ -134,8 +134,8 @@ void main() {
       );
 
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 2,
@@ -181,8 +181,8 @@ void main() {
       );
 
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 2,
@@ -221,8 +221,8 @@ void main() {
       registerFlutterComponents(world);
 
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 1,
@@ -267,8 +267,8 @@ void main() {
       registerFlutterComponents(world);
 
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: cols,
@@ -313,8 +313,8 @@ void main() {
       registerCoreComponents(world);
       registerFlutterComponents(world);
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 100,
@@ -485,8 +485,8 @@ void main() {
       );
 
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 2,
@@ -566,8 +566,8 @@ void main() {
       );
 
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 1,
@@ -633,8 +633,8 @@ void main() {
         tileAnimationFps: 10, // 0.1s per frame
       );
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(mapEntity, map);
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(mapEntity, map);
 
       await tester.pumpWidget(
         MaterialApp(

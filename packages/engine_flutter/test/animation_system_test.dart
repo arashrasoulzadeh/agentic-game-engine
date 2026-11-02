@@ -14,8 +14,8 @@ void main() {
   test('advances frame after frameDurationSeconds elapses', () {
     final world = buildWorld();
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip('walk', [
@@ -27,17 +27,17 @@ void main() {
     );
 
     world.step(0.05); // not yet a full frame
-    expect(world.storeOf<Sprite>().get(id)!.region, 'frame0');
+    expect(world.componentsOf<Sprite>().get(id)!.region, 'frame0');
 
     world.step(0.06); // total 0.11 -> advances one frame
-    expect(world.storeOf<Sprite>().get(id)!.region, 'frame1');
+    expect(world.componentsOf<Sprite>().get(id)!.region, 'frame1');
   });
 
   test('loops back to frame 0 when loop is true', () {
     final world = buildWorld();
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip(
@@ -51,13 +51,13 @@ void main() {
     );
 
     world.step(0.1);
-    expect(world.storeOf<Sprite>().get(id)!.region, 'frame0');
+    expect(world.componentsOf<Sprite>().get(id)!.region, 'frame0');
   });
 
   test('stops on the last frame when loop is false', () {
     final world = buildWorld();
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
     final state = AnimationState(
       AnimationClip(
         'hit',
@@ -67,10 +67,10 @@ void main() {
       ),
       frameIndex: 1,
     );
-    world.storeOf<AnimationState>().set(id, state);
+    world.componentsOf<AnimationState>().set(id, state);
 
     world.step(0.1);
-    expect(world.storeOf<Sprite>().get(id)!.region, 'frame1');
+    expect(world.componentsOf<Sprite>().get(id)!.region, 'frame1');
     expect(state.playing, isFalse);
   });
 
@@ -92,8 +92,8 @@ void main() {
   test('writes each frame\'s offsetX/offsetY onto Sprite as it advances', () {
     final world = buildWorld();
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip(
@@ -107,7 +107,7 @@ void main() {
     );
 
     world.step(0); // AnimationSystem only writes region/offset on a step
-    final sprite = world.storeOf<Sprite>().get(id)!;
+    final sprite = world.componentsOf<Sprite>().get(id)!;
     expect(sprite.offsetX, 2);
     expect(sprite.offsetY, 10);
 
@@ -119,8 +119,8 @@ void main() {
   test('offsetX/offsetY default to 0 for a clip with no frameOffsets', () {
     final world = buildWorld();
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0', offsetY: 99));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0', offsetY: 99));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip('idle', ['frame0'], frameDurationSeconds: 0.1),
@@ -131,14 +131,14 @@ void main() {
     // every tick it's driven, same as it always wrote `region` outright
     // -- AnimationSystem owns both once an AnimationState is attached.
     world.step(0);
-    expect(world.storeOf<Sprite>().get(id)!.offsetY, 0);
+    expect(world.componentsOf<Sprite>().get(id)!.offsetY, 0);
   });
 
   test('emits AnimationFrameEvent when entering a frame with cues', () {
     final world = buildWorld();
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip(
@@ -181,8 +181,8 @@ void main() {
     () {
       final world = buildWorld();
       final id = world.spawn();
-      world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-      world.storeOf<AnimationState>().set(
+      world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+      world.componentsOf<AnimationState>().set(
         id,
         AnimationState(
           AnimationClip(
@@ -214,8 +214,8 @@ void main() {
   test('emits cues on the starting frame of a freshly attached clip', () {
     final world = buildWorld();
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip(

@@ -24,36 +24,36 @@ void main() {
   test('HitFlashSystem tints Sprite while remaining, then clears', () {
     final world = build();
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('a', 'r'));
-    world.storeOf<HitFlash>().set(id, HitFlash(remaining: 0.1));
+    world.componentsOf<Sprite>().set(id, Sprite('a', 'r'));
+    world.componentsOf<HitFlash>().set(id, HitFlash(remaining: 0.1));
 
     world.step(0.05);
-    expect(world.storeOf<Sprite>().get(id)!.tintArgb, kDefaultHitFlashTint);
-    expect(world.storeOf<HitFlash>().get(id)!.remaining, greaterThan(0));
+    expect(world.componentsOf<Sprite>().get(id)!.tintArgb, kDefaultHitFlashTint);
+    expect(world.componentsOf<HitFlash>().get(id)!.remaining, greaterThan(0));
 
     world.step(0.1);
-    expect(world.storeOf<HitFlash>().get(id)!.remaining, 0);
-    expect(world.storeOf<Sprite>().get(id)!.tintArgb, isNull);
+    expect(world.componentsOf<HitFlash>().get(id)!.remaining, 0);
+    expect(world.componentsOf<Sprite>().get(id)!.tintArgb, isNull);
   });
 
   test('flashHit refreshes remaining on an entity with HitFlash', () {
     final world = build();
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('a', 'r'));
-    world.storeOf<HitFlash>().set(id, HitFlash());
+    world.componentsOf<Sprite>().set(id, Sprite('a', 'r'));
+    world.componentsOf<HitFlash>().set(id, HitFlash());
 
     flashHit(world, id, seconds: 0.2, tintArgb: 0xFFAABBCC);
-    expect(world.storeOf<HitFlash>().get(id)!.remaining, 0.2);
-    expect(world.storeOf<HitFlash>().get(id)!.tintArgb, 0xFFAABBCC);
+    expect(world.componentsOf<HitFlash>().get(id)!.remaining, 0.2);
+    expect(world.componentsOf<HitFlash>().get(id)!.tintArgb, 0xFFAABBCC);
 
     world.step(0.01);
-    expect(world.storeOf<Sprite>().get(id)!.tintArgb, 0xFFAABBCC);
+    expect(world.componentsOf<Sprite>().get(id)!.tintArgb, 0xFFAABBCC);
   });
 
   test('flashHit is a no-op without a HitFlash component', () {
     final world = build();
     final id = world.spawn();
     flashHit(world, id);
-    expect(world.storeOf<HitFlash>().get(id), isNull);
+    expect(world.componentsOf<HitFlash>().get(id), isNull);
   });
 }

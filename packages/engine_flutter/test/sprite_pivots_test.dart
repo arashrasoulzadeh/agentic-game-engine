@@ -58,8 +58,8 @@ void main() {
     world.addSystem(SpritePivotSystem(table));
     final e = world.spawn();
     final sprite = Sprite('a_attack', '0');
-    world.storeOf<Sprite>().set(e, sprite);
-    world.storeOf<SpriteStates>().set(
+    world.componentsOf<Sprite>().set(e, sprite);
+    world.componentsOf<SpriteStates>().set(
       e,
       SpriteStates({
         'idle': const SpriteClip(atlasId: 'a_idle', frames: 1, loop: true),

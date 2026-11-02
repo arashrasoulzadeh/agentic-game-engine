@@ -58,7 +58,7 @@ void main() {
     // One Button entity per slot was actually spawned (ButtonMenuScene's
     // job); the labels themselves are read back via buttons() below,
     // same as loadAssets does to build the menu's atlas.
-    expect(world.storeOf<Button>().length, 2);
+    expect(world.componentsOf<Button>().length, 2);
     expect(menu.buttons().map((b) => b.label), [
       'Slot A (empty)',
       'Slot B (empty)',
@@ -89,8 +89,8 @@ void main() {
       final scenes = SceneController();
       await menu.populate(world, scenes, GameState());
 
-      final slotAPos = world.storeOf<Position>().get(
-        world.storeOf<Button>().entityAt(0),
+      final slotAPos = world.componentsOf<Position>().get(
+        world.componentsOf<Button>().entityAt(0),
       )!;
       menu.handleTap(world, scenes, Offset(slotAPos.x, slotAPos.y));
 
@@ -139,21 +139,21 @@ void main() {
       expect(registry.has('save_slot_thumbnail_a'), isTrue);
       expect(registry.has('save_slot_thumbnail_b'), isFalse);
 
-      final buttonEntity = world.storeOf<Button>().entityAt(0);
-      final buttonPos = world.storeOf<Position>().get(buttonEntity)!;
+      final buttonEntity = world.componentsOf<Button>().entityAt(0);
+      final buttonPos = world.componentsOf<Position>().get(buttonEntity)!;
 
       // onButtonSpawned already ran during populate (ButtonMenuScene
       // spawns buttons before loadAssets is ever called). Both slots'
       // generated-rect buttons each carry their own Sprite too (the
       // engine's own runtime-built button art), so the thumbnail is
       // found by its distinct atlas id, not by entity count alone.
-      final sprites = world.storeOf<Sprite>();
+      final sprites = world.componentsOf<Sprite>();
       expect(sprites.length, 3); // 2 buttons + 1 thumbnail
       final thumbEntity = [
         for (var i = 0; i < sprites.length; i++) sprites.entityAt(i),
       ].firstWhere((e) => sprites.get(e)!.atlasId == 'save_slot_thumbnail_a');
 
-      final thumbPos = world.storeOf<Position>().get(thumbEntity)!;
+      final thumbPos = world.componentsOf<Position>().get(thumbEntity)!;
       expect(thumbPos.x, lessThan(buttonPos.x));
       expect(thumbPos.y, buttonPos.y);
     },
@@ -168,7 +168,7 @@ void main() {
       await menu.loadAssets();
 
       // Just the 2 generated-rect buttons' own Sprites, no thumbnails.
-      expect(world.storeOf<Sprite>().length, 2);
+      expect(world.componentsOf<Sprite>().length, 2);
     },
   );
 }

@@ -33,8 +33,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(10, 10));
-      world.storeOf<Sprite>().set(id, Sprite('atlas', 'r', screenSpace: true));
+      world.componentsOf<Position>().set(id, Position(10, 10));
+      world.componentsOf<Sprite>().set(id, Sprite('atlas', 'r', screenSpace: true));
 
       // A camera pointed far from the sprite's Position -- if this were
       // world-space it'd be nowhere near the viewport; screenSpace means
@@ -63,12 +63,12 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(10, 10));
+      world.componentsOf<Position>().set(id, Position(10, 10));
       // scaleX != scaleY takes _collectSpriteItems's per-sprite fallback
       // path (drawImageRect), not the drawAtlas batch -- both need to
       // honor screenSpace independently, since they're separate code
       // paths in EngineView.
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Sprite>().set(
         id,
         Sprite('atlas', 'r', screenSpace: true, scaleX: 2, scaleY: 3),
       );

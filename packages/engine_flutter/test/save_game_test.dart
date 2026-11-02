@@ -26,8 +26,8 @@ void main() {
     () async {
       final original = _buildWorld();
       final id = original.spawn();
-      original.storeOf<Position>().set(id, Position(10, 20));
-      original.storeOf<Collider>().set(id, Collider(5));
+      original.componentsOf<Position>().set(id, Position(10, 20));
+      original.componentsOf<Collider>().set(id, Collider(5));
 
       await SaveGame.save(original);
       expect(await SaveGame.hasSave(), isTrue);
@@ -38,9 +38,9 @@ void main() {
       expect(loaded, isTrue);
       expect(restored.entities.count, 1);
       final restoredId = restored.entities.all.first;
-      expect(restored.storeOf<Position>().get(restoredId)!.x, 10);
-      expect(restored.storeOf<Position>().get(restoredId)!.y, 20);
-      expect(restored.storeOf<Collider>().get(restoredId)!.radius, 5);
+      expect(restored.componentsOf<Position>().get(restoredId)!.x, 10);
+      expect(restored.componentsOf<Position>().get(restoredId)!.y, 20);
+      expect(restored.componentsOf<Collider>().get(restoredId)!.radius, 5);
     },
   );
 
@@ -116,7 +116,7 @@ void main() {
     test('save/load round-trip works at a non-default version', () async {
       final original = _buildWorld();
       final id = original.spawn();
-      original.storeOf<Position>().set(id, Position(5, 6));
+      original.componentsOf<Position>().set(id, Position(5, 6));
 
       await SaveGame.save(original, version: 3);
       final restored = _buildWorld();
@@ -124,7 +124,7 @@ void main() {
 
       expect(loaded, isTrue);
       expect(
-        restored.storeOf<Position>().get(restored.entities.all.first)!.x,
+        restored.componentsOf<Position>().get(restored.entities.all.first)!.x,
         5,
       );
     });
@@ -152,7 +152,7 @@ void main() {
       () async {
         final original = _buildWorld();
         final id = original.spawn();
-        original.storeOf<Position>().set(id, Position(1, 1));
+        original.componentsOf<Position>().set(id, Position(1, 1));
         await SaveGame.save(original, version: 1);
 
         final restored = _buildWorld();
@@ -169,7 +169,7 @@ void main() {
         expect(loaded, isTrue);
         expect(migrateCalledWithVersion, 1);
         expect(
-          restored.storeOf<Position>().get(restored.entities.all.first)!.x,
+          restored.componentsOf<Position>().get(restored.entities.all.first)!.x,
           1,
         );
       },
@@ -207,7 +207,7 @@ void main() {
     test('save computes and stores SHA-256 checksum', () async {
       final original = _buildWorld();
       final id = original.spawn();
-      original.storeOf<Position>().set(id, Position(1, 2));
+      original.componentsOf<Position>().set(id, Position(1, 2));
 
       await SaveGame.save(original);
 
@@ -219,7 +219,7 @@ void main() {
     test('load verifies checksum and rejects corrupted data', () async {
       final original = _buildWorld();
       final id = original.spawn();
-      original.storeOf<Position>().set(id, Position(1, 2));
+      original.componentsOf<Position>().set(id, Position(1, 2));
 
       await SaveGame.save(original);
 
@@ -249,7 +249,7 @@ void main() {
       () async {
         final original = _buildWorld();
         final id = original.spawn();
-        original.storeOf<Position>().set(id, Position(1, 2));
+        original.componentsOf<Position>().set(id, Position(1, 2));
 
         await SaveGame.save(original);
 
@@ -273,7 +273,7 @@ void main() {
     test('save with thumbnail stores and retrieves base64 PNG', () async {
       final original = _buildWorld();
       final id = original.spawn();
-      original.storeOf<Position>().set(id, Position(1, 2));
+      original.componentsOf<Position>().set(id, Position(1, 2));
 
       final thumbnail = Uint8List.fromList([
         0x89,
@@ -293,7 +293,7 @@ void main() {
     test('getThumbnail returns null when no thumbnail was saved', () async {
       final original = _buildWorld();
       final id = original.spawn();
-      original.storeOf<Position>().set(id, Position(1, 2));
+      original.componentsOf<Position>().set(id, Position(1, 2));
 
       await SaveGame.save(original);
 
@@ -306,7 +306,7 @@ void main() {
     test('onCloudSync callback fires after successful load', () async {
       final original = _buildWorld();
       final id = original.spawn();
-      original.storeOf<Position>().set(id, Position(1, 2));
+      original.componentsOf<Position>().set(id, Position(1, 2));
 
       await SaveGame.save(original);
 
@@ -332,7 +332,7 @@ void main() {
     test('checksum is updated after migration', () async {
       final original = _buildWorld();
       final id = original.spawn();
-      original.storeOf<Position>().set(id, Position(1, 2));
+      original.componentsOf<Position>().set(id, Position(1, 2));
 
       await SaveGame.save(original, version: 1);
 

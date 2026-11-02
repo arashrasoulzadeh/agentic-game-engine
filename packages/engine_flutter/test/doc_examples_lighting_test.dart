@@ -13,18 +13,18 @@ void main() {
       world.addSystem(LightFlickerSystem());
 
       final torch = world.spawn();
-      world.storeOf<Position>().set(torch, Position(10, 10));
+      world.componentsOf<Position>().set(torch, Position(10, 10));
       final light = Light2D(
         radius: 120,
         intensity: 0.8,
         flickerSpeed: 3,
         flickerAmount: 0.3,
       );
-      world.storeOf<Light2D>().set(torch, light);
+      world.componentsOf<Light2D>().set(torch, light);
 
       final lamp = world.spawn();
       final steady = Light2D(radius: 80, intensity: 0.6);
-      world.storeOf<Light2D>().set(lamp, steady);
+      world.componentsOf<Light2D>().set(lamp, steady);
 
       final seen = <double>{};
       for (var i = 0; i < 60; i++) {
@@ -53,7 +53,7 @@ void main() {
       flickerSpeed: 4,
       flickerAffectsRadius: false,
     );
-    world.storeOf<Light2D>().set(e, light);
+    world.componentsOf<Light2D>().set(e, light);
     for (var i = 0; i < 20; i++) {
       world.step(1 / 30);
       expect(light.radius, 100);

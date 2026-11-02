@@ -114,7 +114,7 @@ void main() {
         GridTapResult.commanded,
       );
       expect(
-        (w.storeOf<OrderQueue>().get(mine)!.orders.single as AttackOrder)
+        (w.componentsOf<OrderQueue>().get(mine)!.orders.single as AttackOrder)
             .target,
         foe,
       );

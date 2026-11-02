@@ -31,9 +31,9 @@ void main() {
   test('rendering components round-trip through the world registry', () {
     final world = buildWorld();
     final id = world.spawn();
-    world.storeOf<Text>().set(id, Text('hello'));
-    world.storeOf<HudBar>().set(id, HudBar(value: 4, maxValue: 9));
-    world.storeOf<NineSliceSprite>().set(
+    world.componentsOf<Text>().set(id, Text('hello'));
+    world.componentsOf<HudBar>().set(id, HudBar(value: 4, maxValue: 9));
+    world.componentsOf<NineSliceSprite>().set(
       id,
       NineSliceSprite(
         'ui',
@@ -46,7 +46,7 @@ void main() {
         insetBottom: 5,
       ),
     );
-    world.storeOf<AnimationTransition>().set(
+    world.componentsOf<AnimationTransition>().set(
       id,
       AnimationTransition(
         'hero',
@@ -55,9 +55,9 @@ void main() {
         totalSeconds: 1,
       ),
     );
-    world.storeOf<Light2D>().set(id, Light2D(radius: 40));
-    world.storeOf<ScreenTint>().set(id, ScreenTint(0x880000FF));
-    world.storeOf<ClipShape>().set(id, ClipShape(radius: 25));
+    world.componentsOf<Light2D>().set(id, Light2D(radius: 40));
+    world.componentsOf<ScreenTint>().set(id, ScreenTint(0x880000FF));
+    world.componentsOf<ClipShape>().set(id, ClipShape(radius: 25));
     final data = world.components.serializeEntity(id);
     final copy = world.spawn();
     world.components.applyToEntity(copy, data);
@@ -82,7 +82,7 @@ void main() {
       final world = buildWorld();
       final system = AnimationTransitionSystem();
       expect(system.name, 'animationTransition');
-      final store = world.storeOf<AnimationTransition>();
+      final store = world.componentsOf<AnimationTransition>();
       final ids = List.generate(3, (_) => world.spawn());
       for (var i = 0; i < ids.length; i++) {
         store.set(

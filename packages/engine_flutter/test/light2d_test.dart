@@ -221,11 +221,11 @@ void main() {
       world.addSystem(LightFlickerSystem());
 
       final id = world.spawn();
-      world.storeOf<Light2D>().set(id, Light2D(radius: 100, intensity: 0.8));
+      world.componentsOf<Light2D>().set(id, Light2D(radius: 100, intensity: 0.8));
 
       world.step(0.5);
 
-      final light = world.storeOf<Light2D>().get(id)!;
+      final light = world.componentsOf<Light2D>().get(id)!;
       expect(light.radius, 100);
       expect(light.intensity, 0.8);
       expect(light.flickerElapsed, 0);
@@ -238,7 +238,7 @@ void main() {
       world.addSystem(LightFlickerSystem());
 
       final id = world.spawn();
-      world.storeOf<Light2D>().set(
+      world.componentsOf<Light2D>().set(
         id,
         Light2D(
           radius: 100,
@@ -249,7 +249,7 @@ void main() {
       );
 
       world.step(0.1);
-      final light = world.storeOf<Light2D>().get(id)!;
+      final light = world.componentsOf<Light2D>().get(id)!;
       expect(light.flickerElapsed, closeTo(0.1, 0.001));
       // Base values are unaffected -- only the live intensity/radius move.
       expect(light.baseRadius, 100);
@@ -268,14 +268,14 @@ void main() {
       world.addSystem(LightFlickerSystem());
 
       final id = world.spawn();
-      world.storeOf<Light2D>().set(
+      world.componentsOf<Light2D>().set(
         id,
         Light2D(intensity: 1, flickerSpeed: 5, flickerAmount: 2),
       );
 
       for (var i = 0; i < 50; i++) {
         world.step(0.05);
-        final light = world.storeOf<Light2D>().get(id)!;
+        final light = world.componentsOf<Light2D>().get(id)!;
         expect(light.intensity, inInclusiveRange(0, 1));
         expect(light.radius, greaterThanOrEqualTo(0));
       }
@@ -292,7 +292,7 @@ void main() {
         world.addSystem(LightFlickerSystem());
 
         final id = world.spawn();
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(
             radius: 100,
@@ -305,7 +305,7 @@ void main() {
 
         for (var i = 0; i < 20; i++) {
           world.step(0.05);
-          final light = world.storeOf<Light2D>().get(id)!;
+          final light = world.componentsOf<Light2D>().get(id)!;
           expect(
             light.radius,
             100,
@@ -314,7 +314,7 @@ void main() {
         }
         // Intensity still genuinely varies -- this isn't just "flicker
         // fully disabled", only radius is exempted.
-        final finalIntensity = world.storeOf<Light2D>().get(id)!.intensity;
+        final finalIntensity = world.componentsOf<Light2D>().get(id)!.intensity;
         expect(finalIntensity, isNot(0.8));
       },
     );
@@ -350,22 +350,22 @@ void main() {
         );
 
         final litEntity = world.spawn();
-        world.storeOf<Position>().set(litEntity, Position(0, 0));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Position>().set(litEntity, Position(0, 0));
+        world.componentsOf<Sprite>().set(
           litEntity,
           Sprite('atlas', 'lit', zIndex: 0, scaleX: 30, scaleY: 30),
         );
 
         final unlitEntity = world.spawn();
-        world.storeOf<Position>().set(unlitEntity, Position(120, 0));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Position>().set(unlitEntity, Position(120, 0));
+        world.componentsOf<Sprite>().set(
           unlitEntity,
           Sprite('atlas', 'unlit', zIndex: 1, scaleX: 30, scaleY: 30),
         );
 
         final lightEntity = world.spawn();
-        world.storeOf<Position>().set(lightEntity, Position(0, 0));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(lightEntity, Position(0, 0));
+        world.componentsOf<Light2D>().set(
           lightEntity,
           Light2D(radius: 100, intensity: 1, minZIndex: 0, maxZIndex: 0),
         );
@@ -450,8 +450,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(100, 100));
-      world.storeOf<Light2D>().set(id, Light2D(radius: 80, intensity: 1));
+      world.componentsOf<Position>().set(id, Position(100, 100));
+      world.componentsOf<Light2D>().set(id, Light2D(radius: 80, intensity: 1));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -476,7 +476,7 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<Light2D>().set(id, Light2D()); // no Position
+        world.componentsOf<Light2D>().set(id, Light2D()); // no Position
 
         await tester.pumpWidget(
           MaterialApp(
@@ -525,8 +525,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(50, 50));
-      world.storeOf<Collider>().set(id, Collider(10));
+      world.componentsOf<Position>().set(id, Position(50, 50));
+      world.componentsOf<Collider>().set(id, Collider(10));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -552,8 +552,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(100, 100));
-      world.storeOf<Light2D>().set(
+      world.componentsOf<Position>().set(id, Position(100, 100));
+      world.componentsOf<Light2D>().set(
         id,
         Light2D(radius: 80, colorArgb: 0xAAFF6600),
       );
@@ -581,8 +581,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(100, 100));
-      world.storeOf<Light2D>().set(
+      world.componentsOf<Position>().set(id, Position(100, 100));
+      world.componentsOf<Light2D>().set(
         id,
         Light2D(radius: 100, coneAngle: 1.0, coneDirection: 0.5),
       );
@@ -610,8 +610,8 @@ void main() {
         registerFlutterComponents(world);
 
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 10,
@@ -624,8 +624,8 @@ void main() {
         );
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(100, 100));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(id, Position(100, 100));
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(radius: 120, castsShadows: true),
         );
@@ -654,8 +654,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(100, 100));
-      world.storeOf<Light2D>().set(
+      world.componentsOf<Position>().set(id, Position(100, 100));
+      world.componentsOf<Light2D>().set(
         id,
         Light2D(radius: 100, coneAngle: 1.5, castsShadows: true),
       );
@@ -684,8 +684,8 @@ void main() {
         registerFlutterComponents(world);
 
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 10,
@@ -702,8 +702,8 @@ void main() {
         // the viewport rect -- the light should be culled before any
         // raycasting runs, not just clipped to nothing after the fact.
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(3000, 3000));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(id, Position(3000, 3000));
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(radius: 50, castsShadows: true),
         );
@@ -732,8 +732,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(100, 100));
-      world.storeOf<Light2D>().set(
+      world.componentsOf<Position>().set(id, Position(100, 100));
+      world.componentsOf<Light2D>().set(
         id,
         Light2D(radius: 100, castsShadows: true, shadowRayCount: 8),
       );
@@ -761,8 +761,8 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(100, 100));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(id, Position(100, 100));
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(radius: 100, castsShadows: true, shadowRayCount: 0),
         );
@@ -792,8 +792,8 @@ void main() {
         registerFlutterComponents(world);
 
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 10,
@@ -806,8 +806,8 @@ void main() {
         );
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(100, 100));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(id, Position(100, 100));
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(radius: 100, castsShadows: true, blockOneWayPlatforms: true),
         );
@@ -843,8 +843,8 @@ void main() {
         registerFlutterComponents(world);
 
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 5,
@@ -866,14 +866,14 @@ void main() {
         // (the first of shadowRayCount samples, always +x direction)
         // points straight at it. Raw distance to the wall's near edge:
         // 40 - 10 = 30.
-        world.storeOf<Position>().set(lightEntity, Position(10, 50));
+        world.componentsOf<Position>().set(lightEntity, Position(10, 50));
         final light = Light2D(
           radius: 100,
           castsShadows: true,
           shadowRayCount: 4,
           shadowSmoothingSeconds: 1.0,
         );
-        world.storeOf<Light2D>().set(lightEntity, light);
+        world.componentsOf<Light2D>().set(lightEntity, light);
 
         await tester.pumpWidget(
           MaterialApp(
@@ -917,8 +917,8 @@ void main() {
         registerFlutterComponents(world);
 
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 5,
@@ -935,13 +935,13 @@ void main() {
         );
 
         final lightEntity = world.spawn();
-        world.storeOf<Position>().set(lightEntity, Position(10, 50));
+        world.componentsOf<Position>().set(lightEntity, Position(10, 50));
         final light = Light2D(
           radius: 100,
           castsShadows: true,
           shadowRayCount: 4,
         );
-        world.storeOf<Light2D>().set(lightEntity, light);
+        world.componentsOf<Light2D>().set(lightEntity, light);
 
         await tester.pumpWidget(
           MaterialApp(
@@ -1057,9 +1057,9 @@ void main() {
         world.addSystem(MovementSystem());
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(0, 0));
-        world.storeOf<Velocity>().set(id, Velocity(1000, 0));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(1000, 0));
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(radius: 30, intensity: 1, colorArgb: 0xFFFF0000),
         );
@@ -1141,18 +1141,18 @@ void main() {
         final lightEntity = world.spawn();
         // Ray 0 of a full-circle sweep always points in the +x direction
         // (same convention the raycastTileMap-based tests above rely on).
-        world.storeOf<Position>().set(lightEntity, Position(10, 50));
+        world.componentsOf<Position>().set(lightEntity, Position(10, 50));
         final light = Light2D(
           radius: 100,
           castsShadows: true,
           shadowRayCount: 4,
           cacheShadowGeometry: true,
         );
-        world.storeOf<Light2D>().set(lightEntity, light);
+        world.componentsOf<Light2D>().set(lightEntity, light);
 
         final blockerEntity = world.spawn();
-        world.storeOf<Position>().set(blockerEntity, Position(60, 50));
-        world.storeOf<Collider>().set(
+        world.componentsOf<Position>().set(blockerEntity, Position(60, 50));
+        world.componentsOf<Collider>().set(
           blockerEntity,
           Collider(10, blocksLight: true),
         );
@@ -1186,18 +1186,18 @@ void main() {
         registerFlutterComponents(world);
 
         final lightEntity = world.spawn();
-        world.storeOf<Position>().set(lightEntity, Position(10, 50));
+        world.componentsOf<Position>().set(lightEntity, Position(10, 50));
         final light = Light2D(
           radius: 100,
           castsShadows: true,
           shadowRayCount: 4,
           cacheShadowGeometry: true,
         );
-        world.storeOf<Light2D>().set(lightEntity, light);
+        world.componentsOf<Light2D>().set(lightEntity, light);
 
         final nonBlockerEntity = world.spawn();
-        world.storeOf<Position>().set(nonBlockerEntity, Position(60, 50));
-        world.storeOf<Collider>().set(
+        world.componentsOf<Position>().set(nonBlockerEntity, Position(60, 50));
+        world.componentsOf<Collider>().set(
           nonBlockerEntity,
           Collider(10),
         ); // blocksLight defaults false
@@ -1233,19 +1233,19 @@ void main() {
         registerFlutterComponents(world);
 
         final lightEntity = world.spawn();
-        world.storeOf<Position>().set(lightEntity, Position(10, 50));
+        world.componentsOf<Position>().set(lightEntity, Position(10, 50));
         final light = Light2D(
           radius: 100,
           castsShadows: true,
           shadowRayCount: 4,
           cacheShadowGeometry: true,
         );
-        world.storeOf<Light2D>().set(lightEntity, light);
+        world.componentsOf<Light2D>().set(lightEntity, light);
 
         final blockerEntity = world.spawn();
         // Well off the +x ray, on the far side of the light entirely.
-        world.storeOf<Position>().set(blockerEntity, Position(10, -200));
-        world.storeOf<Collider>().set(
+        world.componentsOf<Position>().set(blockerEntity, Position(10, -200));
+        world.componentsOf<Collider>().set(
           blockerEntity,
           Collider(10, blocksLight: true),
         );
@@ -1277,8 +1277,8 @@ void main() {
         registerFlutterComponents(world);
 
         final oneLight = world.spawn();
-        world.storeOf<Position>().set(oneLight, Position(0, 0));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(oneLight, Position(0, 0));
+        world.componentsOf<Light2D>().set(
           oneLight,
           Light2D(radius: 100, intensity: 1),
         );
@@ -1312,8 +1312,8 @@ void main() {
         // the reveal pass alone (BlendMode.dstOut) can't push brightness
         // past what one light already achieves, since alpha floors at 0.
         final twoLights = world.spawn();
-        world.storeOf<Position>().set(twoLights, Position(0, 0));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(twoLights, Position(0, 0));
+        world.componentsOf<Light2D>().set(
           twoLights,
           Light2D(radius: 100, intensity: 1),
         );
@@ -1339,8 +1339,8 @@ void main() {
         registerCoreComponents(worldOne);
         registerFlutterComponents(worldOne);
         final singleLight = worldOne.spawn();
-        worldOne.storeOf<Position>().set(singleLight, Position(0, 0));
-        worldOne.storeOf<Light2D>().set(
+        worldOne.componentsOf<Position>().set(singleLight, Position(0, 0));
+        worldOne.componentsOf<Light2D>().set(
           singleLight,
           Light2D(radius: 100, intensity: 1, overbrightIntensity: 0.3),
         );
@@ -1375,8 +1375,8 @@ void main() {
         registerFlutterComponents(worldTwo);
         for (var i = 0; i < 2; i++) {
           final id = worldTwo.spawn();
-          worldTwo.storeOf<Position>().set(id, Position(0, 0));
-          worldTwo.storeOf<Light2D>().set(
+          worldTwo.componentsOf<Position>().set(id, Position(0, 0));
+          worldTwo.componentsOf<Light2D>().set(
             id,
             Light2D(radius: 100, intensity: 1, overbrightIntensity: 0.3),
           );
@@ -1431,8 +1431,8 @@ void main() {
           registerFlutterComponents(world);
 
           final mapEntity = world.spawn();
-          world.storeOf<Position>().set(mapEntity, Position(0, 0));
-          world.storeOf<TileMap>().set(
+          world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+          world.componentsOf<TileMap>().set(
             mapEntity,
             TileMap(
               // Solid tile at col 2, row 2 (x=[40,60], y=[40,60]) --
@@ -1453,7 +1453,7 @@ void main() {
           );
 
           final lightEntity = world.spawn();
-          world.storeOf<Position>().set(lightEntity, Position(10, 50));
+          world.componentsOf<Position>().set(lightEntity, Position(10, 50));
           final light = Light2D(
             radius: 100,
             castsShadows: true,
@@ -1461,7 +1461,7 @@ void main() {
             openAirFalloffScale: 0.3,
             cacheShadowGeometry: true,
           );
-          world.storeOf<Light2D>().set(lightEntity, light);
+          world.componentsOf<Light2D>().set(lightEntity, light);
 
           await tester.pumpWidget(
             MaterialApp(
@@ -1495,14 +1495,14 @@ void main() {
           registerFlutterComponents(world);
 
           final lightEntity = world.spawn();
-          world.storeOf<Position>().set(lightEntity, Position(50, 50));
+          world.componentsOf<Position>().set(lightEntity, Position(50, 50));
           final light = Light2D(
             radius: 100,
             castsShadows: true,
             shadowRayCount: 4,
             cacheShadowGeometry: true,
           );
-          world.storeOf<Light2D>().set(lightEntity, light);
+          world.componentsOf<Light2D>().set(lightEntity, light);
 
           await tester.pumpWidget(
             MaterialApp(
@@ -1534,9 +1534,9 @@ void main() {
 
         final light = Light2D(radius: 100, castsShadows: true);
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(50, 50));
-        world.storeOf<Light2D>().set(id, light);
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(id, Position(50, 50));
+        world.componentsOf<Light2D>().set(id, light);
+        world.componentsOf<TileMap>().set(
           world.spawn(),
           TileMap(
             cols: 5,
@@ -1583,9 +1583,9 @@ void main() {
           cacheShadowGeometry: true,
         );
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(50, 50));
-        world.storeOf<Light2D>().set(id, light);
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(id, Position(50, 50));
+        world.componentsOf<Light2D>().set(id, light);
+        world.componentsOf<TileMap>().set(
           world.spawn(),
           TileMap(
             cols: 5,
@@ -1646,9 +1646,9 @@ void main() {
           flickerAffectsRadius: false,
         );
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(50, 50));
-        world.storeOf<Light2D>().set(id, light);
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(id, Position(50, 50));
+        world.componentsOf<Light2D>().set(id, light);
+        world.componentsOf<TileMap>().set(
           world.spawn(),
           TileMap(
             cols: 5,
@@ -1714,9 +1714,9 @@ void main() {
       );
       final id = world.spawn();
       final pos = Position(50, 50);
-      world.storeOf<Position>().set(id, pos);
-      world.storeOf<Light2D>().set(id, light);
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(id, pos);
+      world.componentsOf<Light2D>().set(id, light);
+      world.componentsOf<TileMap>().set(
         world.spawn(),
         TileMap(
           cols: 5,
@@ -1772,9 +1772,9 @@ void main() {
         cacheShadowGeometry: true,
       );
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(50, 50));
-      world.storeOf<Light2D>().set(id, light);
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(id, Position(50, 50));
+      world.componentsOf<Light2D>().set(id, light);
+      world.componentsOf<TileMap>().set(
         world.spawn(),
         TileMap(
           cols: 5,
@@ -1818,9 +1818,9 @@ void main() {
           cacheShadowGeometry: true,
         );
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(50, 50));
-        world.storeOf<Light2D>().set(id, light);
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(id, Position(50, 50));
+        world.componentsOf<Light2D>().set(id, light);
+        world.componentsOf<TileMap>().set(
           world.spawn(),
           TileMap(
             cols: 5,
@@ -1887,8 +1887,8 @@ void main() {
               }),
             );
             final sprite = world.spawn();
-            world.storeOf<Position>().set(sprite, Position(0, 0));
-            world.storeOf<Sprite>().set(
+            world.componentsOf<Position>().set(sprite, Position(0, 0));
+            world.componentsOf<Sprite>().set(
               sprite,
               Sprite('atlas', 'white', zIndex: 5, scaleX: 30, scaleY: 30),
             );
@@ -1900,8 +1900,8 @@ void main() {
               // into three. Positioned off-screen so its reveal never
               // reaches the sprite either.
               final light = world.spawn();
-              world.storeOf<Position>().set(light, Position(-10000, -10000));
-              world.storeOf<Light2D>().set(
+              world.componentsOf<Position>().set(light, Position(-10000, -10000));
+              world.componentsOf<Light2D>().set(
                 light,
                 Light2D(radius: 10, intensity: 1, minZIndex: 0, maxZIndex: 0),
               );

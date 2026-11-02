@@ -13,8 +13,8 @@ void main() {
     registerFlutterComponents(world);
 
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(100, 100));
-    world.storeOf<engine.Text>().set(id, engine.Text('Hello world'));
+    world.componentsOf<Position>().set(id, Position(100, 100));
+    world.componentsOf<engine.Text>().set(id, engine.Text('Hello world'));
 
     await tester.pumpWidget(
       MaterialApp(
@@ -38,8 +38,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(10, 10));
-      world.storeOf<engine.Text>().set(
+      world.componentsOf<Position>().set(id, Position(10, 10));
+      world.componentsOf<engine.Text>().set(
         id,
         engine.Text(
           'HUD',
@@ -75,7 +75,7 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<engine.Text>().set(
+      world.componentsOf<engine.Text>().set(
         id,
         engine.Text('orphaned'),
       ); // no Position
@@ -103,8 +103,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(100, 100));
-      world.storeOf<engine.Text>().set(
+      world.componentsOf<Position>().set(id, Position(100, 100));
+      world.componentsOf<engine.Text>().set(
         id,
         engine.Text(
           'This is a long line of dialogue that should wrap onto several lines',
@@ -136,8 +136,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(100, 100));
-      world.storeOf<engine.Text>().set(id, engine.Text('unwrapped'));
+      world.componentsOf<Position>().set(id, Position(100, 100));
+      world.componentsOf<engine.Text>().set(id, engine.Text('unwrapped'));
 
       await tester.pumpWidget(
         MaterialApp(

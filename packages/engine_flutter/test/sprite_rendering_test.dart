@@ -31,15 +31,15 @@ void main() {
       // Two sprites on the same atlas, both uniform positive scale --
       // both should go through the drawAtlas batch path.
       final e1 = world.spawn();
-      world.storeOf<Position>().set(e1, Position(50, 50));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(e1, Position(50, 50));
+      world.componentsOf<Sprite>().set(
         e1,
         Sprite('atlas', 'a', scaleX: 2, scaleY: 2),
       );
 
       final e2 = world.spawn();
-      world.storeOf<Position>().set(e2, Position(100, 50));
-      world.storeOf<Sprite>().set(e2, Sprite('atlas', 'a', rotation: 0.5));
+      world.componentsOf<Position>().set(e2, Position(100, 50));
+      world.componentsOf<Sprite>().set(e2, Sprite('atlas', 'a', rotation: 0.5));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -72,8 +72,8 @@ void main() {
       // Negative scaleX (the standard horizontal-flip pattern FacingSystem
       // uses) -- RSTransform can't represent this, must fall back.
       final flipped = world.spawn();
-      world.storeOf<Position>().set(flipped, Position(50, 50));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(flipped, Position(50, 50));
+      world.componentsOf<Sprite>().set(
         flipped,
         Sprite('atlas', 'a', scaleX: -1, scaleY: 1),
       );
@@ -81,8 +81,8 @@ void main() {
       // Non-uniform scale -- also can't be expressed as one RSTransform
       // scale factor, must fall back too.
       final stretched = world.spawn();
-      world.storeOf<Position>().set(stretched, Position(100, 50));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(stretched, Position(100, 50));
+      world.componentsOf<Sprite>().set(
         stretched,
         Sprite('atlas', 'a', scaleX: 2, scaleY: 1),
       );
@@ -120,12 +120,12 @@ void main() {
       );
 
       final e1 = world.spawn();
-      world.storeOf<Position>().set(e1, Position(50, 50));
-      world.storeOf<Sprite>().set(e1, Sprite('atlasA', 'a'));
+      world.componentsOf<Position>().set(e1, Position(50, 50));
+      world.componentsOf<Sprite>().set(e1, Sprite('atlasA', 'a'));
 
       final e2 = world.spawn();
-      world.storeOf<Position>().set(e2, Position(100, 50));
-      world.storeOf<Sprite>().set(e2, Sprite('atlasB', 'b'));
+      world.componentsOf<Position>().set(e2, Position(100, 50));
+      world.componentsOf<Sprite>().set(e2, Sprite('atlasB', 'b'));
 
       await tester.pumpWidget(
         MaterialApp(

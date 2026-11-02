@@ -15,8 +15,8 @@ void main() {
       ..scroll(world, 10)
       ..scroll(world, 10);
 
-    final layers = world.storeOf<ParallaxLayer>();
-    final pos = world.storeOf<Position>();
+    final layers = world.componentsOf<ParallaxLayer>();
+    final pos = world.componentsOf<Position>();
     final xs = {
       for (var i = 0; i < layers.length; i++)
         layers.denseAt(i).atlasId: pos.get(layers.entityAt(i))!.x,

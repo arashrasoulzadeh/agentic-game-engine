@@ -12,7 +12,7 @@ void main() {
       registerFlutterComponents(world);
 
       final tintEntity = world.spawn();
-      world.storeOf<ScreenTint>().set(tintEntity, ScreenTint(0x80FF0000));
+      world.componentsOf<ScreenTint>().set(tintEntity, ScreenTint(0x80FF0000));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -37,7 +37,7 @@ void main() {
       registerFlutterComponents(world);
 
       final tintEntity = world.spawn();
-      world.storeOf<ScreenTint>().set(tintEntity, ScreenTint(0x00FF0000));
+      world.componentsOf<ScreenTint>().set(tintEntity, ScreenTint(0x00FF0000));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -61,8 +61,8 @@ void main() {
     registerCoreComponents(world);
     registerFlutterComponents(world);
 
-    world.storeOf<ScreenTint>().set(world.spawn(), ScreenTint(0x40FF0000));
-    world.storeOf<ScreenTint>().set(world.spawn(), ScreenTint(0x400000FF));
+    world.componentsOf<ScreenTint>().set(world.spawn(), ScreenTint(0x40FF0000));
+    world.componentsOf<ScreenTint>().set(world.spawn(), ScreenTint(0x400000FF));
 
     await tester.pumpWidget(
       MaterialApp(

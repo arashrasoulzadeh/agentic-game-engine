@@ -70,8 +70,8 @@ void main() {
       );
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(50, 50));
-      world.storeOf<AnimationTransition>().set(
+      world.componentsOf<Position>().set(id, Position(50, 50));
+      world.componentsOf<AnimationTransition>().set(
         id,
         AnimationTransition(
           'atlas',
@@ -103,7 +103,7 @@ void main() {
         registerFlutterComponents(world);
 
         final noPosition = world.spawn();
-        world.storeOf<AnimationTransition>().set(
+        world.componentsOf<AnimationTransition>().set(
           noPosition,
           AnimationTransition(
             'atlas',
@@ -114,8 +114,8 @@ void main() {
         );
 
         final missingAtlas = world.spawn();
-        world.storeOf<Position>().set(missingAtlas, Position(10, 10));
-        world.storeOf<AnimationTransition>().set(
+        world.componentsOf<Position>().set(missingAtlas, Position(10, 10));
+        world.componentsOf<AnimationTransition>().set(
           missingAtlas,
           AnimationTransition(
             'missing',

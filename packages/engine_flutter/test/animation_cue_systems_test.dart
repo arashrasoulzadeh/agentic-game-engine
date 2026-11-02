@@ -17,8 +17,8 @@ void main() {
     final shake = AnimationShakeSystem(camera)..attach(world);
 
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'f0'));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'f0'));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip(
@@ -51,10 +51,10 @@ void main() {
     AnimationParticleSystem().attach(world);
 
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(10, 20));
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'f0'));
-    world.storeOf<ParticleEmitter>().set(id, ParticleEmitter());
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Position>().set(id, Position(10, 20));
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'f0'));
+    world.componentsOf<ParticleEmitter>().set(id, ParticleEmitter());
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip(
@@ -73,7 +73,7 @@ void main() {
     );
 
     world.step(0.1);
-    expect(world.storeOf<ParticleEmitter>().get(id)!.burstCount, 12);
+    expect(world.componentsOf<ParticleEmitter>().get(id)!.burstCount, 12);
   });
 
   test('DialogueSfxSystem plays mapped keys from PlaySoundEvent', () {

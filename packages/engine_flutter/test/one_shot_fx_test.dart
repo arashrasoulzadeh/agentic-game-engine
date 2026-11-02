@@ -18,15 +18,15 @@ void main() {
       y: 34,
       scale: 0.5,
     );
-    final pos = world.storeOf<Position>().get(id)!;
+    final pos = world.componentsOf<Position>().get(id)!;
     expect((pos.x, pos.y), (12, 34));
-    expect(world.storeOf<Sprite>().get(id)!.scaleX, 0.5);
+    expect(world.componentsOf<Sprite>().get(id)!.scaleX, 0.5);
 
     world.step(0.05);
-    expect(world.storeOf<OneShotFx>().length, 1);
+    expect(world.componentsOf<OneShotFx>().length, 1);
     for (var i = 0; i < 10; i++) {
       world.step(0.1);
     }
-    expect(world.storeOf<OneShotFx>().length, 0);
+    expect(world.componentsOf<OneShotFx>().length, 0);
   });
 }

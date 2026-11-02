@@ -54,23 +54,23 @@ void main() {
         );
 
         final entity = world.spawn();
-        world.storeOf<Position>().set(entity, Position(0, 0));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Position>().set(entity, Position(0, 0));
+        world.componentsOf<Sprite>().set(
           entity,
           Sprite('atlas', 'white', zIndex: 0, scaleX: 100, scaleY: 100),
         );
 
         // Two overlapping lights at the same position
         final light1 = world.spawn();
-        world.storeOf<Position>().set(light1, Position(0, 0));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(light1, Position(0, 0));
+        world.componentsOf<Light2D>().set(
           light1,
           Light2D(radius: 100, intensity: 1),
         );
 
         final light2 = world.spawn();
-        world.storeOf<Position>().set(light2, Position(0, 0));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(light2, Position(0, 0));
+        world.componentsOf<Light2D>().set(
           light2,
           Light2D(radius: 100, intensity: 1),
         );
@@ -128,16 +128,16 @@ void main() {
         );
 
         final entity = world.spawn();
-        world.storeOf<Position>().set(entity, Position(0, 0));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Position>().set(entity, Position(0, 0));
+        world.componentsOf<Sprite>().set(
           entity,
           Sprite('atlas', 'white', zIndex: 0, scaleX: 100, scaleY: 100),
         );
 
         // Light with orange tint
         final light = world.spawn();
-        world.storeOf<Position>().set(light, Position(0, 0));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(light, Position(0, 0));
+        world.componentsOf<Light2D>().set(
           light,
           Light2D(radius: 100, intensity: 1, colorArgb: 0xFFFF6600),
         );
@@ -213,16 +213,16 @@ void main() {
         );
 
         final entity = world.spawn();
-        world.storeOf<Position>().set(entity, Position(0, 0));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Position>().set(entity, Position(0, 0));
+        world.componentsOf<Sprite>().set(
           entity,
           Sprite('atlas', 'white', zIndex: 0, scaleX: 100, scaleY: 100),
         );
 
         // Light WITH castsShadows - should trigger legacy path
         final light = world.spawn();
-        world.storeOf<Position>().set(light, Position(0, 0));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(light, Position(0, 0));
+        world.componentsOf<Light2D>().set(
           light,
           Light2D(radius: 100, intensity: 1, castsShadows: true),
         );
@@ -273,16 +273,16 @@ void main() {
         );
 
         final entity = world.spawn();
-        world.storeOf<Position>().set(entity, Position(0, 0));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Position>().set(entity, Position(0, 0));
+        world.componentsOf<Sprite>().set(
           entity,
           Sprite('atlas', 'white', zIndex: 0, scaleX: 100, scaleY: 100),
         );
 
         // Light WITH coneAngle - should trigger legacy path
         final light = world.spawn();
-        world.storeOf<Position>().set(light, Position(0, 0));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(light, Position(0, 0));
+        world.componentsOf<Light2D>().set(
           light,
           Light2D(
             radius: 100,
@@ -334,15 +334,15 @@ void main() {
       );
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(0, 0));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(entity, Position(0, 0));
+      world.componentsOf<Sprite>().set(
         entity,
         Sprite('atlas', 'white', zIndex: 0, scaleX: 100, scaleY: 100),
       );
 
       final light = world.spawn();
-      world.storeOf<Position>().set(light, Position(0, 0));
-      world.storeOf<Light2D>().set(light, Light2D(radius: 100, intensity: 1));
+      world.componentsOf<Position>().set(light, Position(0, 0));
+      world.componentsOf<Light2D>().set(light, Light2D(radius: 100, intensity: 1));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -386,23 +386,23 @@ void main() {
 
       // Two sprites at different zIndex
       final litEntity = world.spawn();
-      world.storeOf<Position>().set(litEntity, Position(0, 0));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(litEntity, Position(0, 0));
+      world.componentsOf<Sprite>().set(
         litEntity,
         Sprite('atlas', 'white', zIndex: 0, scaleX: 50, scaleY: 50),
       );
 
       final unlitEntity = world.spawn();
-      world.storeOf<Position>().set(unlitEntity, Position(100, 0));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(unlitEntity, Position(100, 0));
+      world.componentsOf<Sprite>().set(
         unlitEntity,
         Sprite('atlas', 'white', zIndex: 1, scaleX: 50, scaleY: 50),
       );
 
       // Light scoped to zIndex 0 only
       final light = world.spawn();
-      world.storeOf<Position>().set(light, Position(0, 0));
-      world.storeOf<Light2D>().set(
+      world.componentsOf<Position>().set(light, Position(0, 0));
+      world.componentsOf<Light2D>().set(
         light,
         Light2D(radius: 80, intensity: 1, minZIndex: 0, maxZIndex: 0),
       );

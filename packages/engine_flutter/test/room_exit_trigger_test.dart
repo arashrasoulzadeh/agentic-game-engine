@@ -24,13 +24,13 @@ void main() {
     () {
       final world = _buildWorld();
       final player = world.spawn();
-      world.storeOf<Position>().set(player, Position(0, 0));
-      world.storeOf<Collider>().set(player, Collider(10));
+      world.componentsOf<Position>().set(player, Position(0, 0));
+      world.componentsOf<Collider>().set(player, Collider(10));
 
       final door = world.spawn();
-      world.storeOf<Position>().set(door, Position(5, 0));
-      world.storeOf<Collider>().set(door, Collider(10));
-      world.storeOf<RoomExit>().set(
+      world.componentsOf<Position>().set(door, Position(5, 0));
+      world.componentsOf<Collider>().set(door, Collider(10));
+      world.componentsOf<RoomExit>().set(
         door,
         RoomExit('cave', 'doorFromOverworld'),
       );
@@ -63,12 +63,12 @@ void main() {
   test('colliding with a non-RoomExit entity is a no-op', () {
     final world = _buildWorld();
     final player = world.spawn();
-    world.storeOf<Position>().set(player, Position(0, 0));
-    world.storeOf<Collider>().set(player, Collider(10));
+    world.componentsOf<Position>().set(player, Position(0, 0));
+    world.componentsOf<Collider>().set(player, Collider(10));
 
     final coin = world.spawn();
-    world.storeOf<Position>().set(coin, Position(5, 0));
-    world.storeOf<Collider>().set(coin, Collider(10));
+    world.componentsOf<Position>().set(coin, Position(5, 0));
+    world.componentsOf<Collider>().set(coin, Collider(10));
 
     final scenes = SceneController();
     var loadCalled = false;
@@ -94,13 +94,13 @@ void main() {
   test('a RoomExit referencing an unregistered scene id throws', () {
     final world = _buildWorld();
     final player = world.spawn();
-    world.storeOf<Position>().set(player, Position(0, 0));
-    world.storeOf<Collider>().set(player, Collider(10));
+    world.componentsOf<Position>().set(player, Position(0, 0));
+    world.componentsOf<Collider>().set(player, Collider(10));
 
     final door = world.spawn();
-    world.storeOf<Position>().set(door, Position(5, 0));
-    world.storeOf<Collider>().set(door, Collider(10));
-    world.storeOf<RoomExit>().set(door, RoomExit('nowhere', 'spawn'));
+    world.componentsOf<Position>().set(door, Position(5, 0));
+    world.componentsOf<Collider>().set(door, Collider(10));
+    world.componentsOf<RoomExit>().set(door, RoomExit('nowhere', 'spawn'));
 
     final scenes = SceneController();
     scenes.attach(loadScene: (_) {}, pushOverlay: (_) {}, popOverlay: () {});

@@ -159,10 +159,10 @@ void main() {
       );
       await menu.populate(world, scenes, GameState());
 
-      final buttons = world.storeOf<Button>();
+      final buttons = world.componentsOf<Button>();
       // DONE is the last spawned button.
       final doneEntity = buttons.entityAt(buttons.length - 1);
-      final donePos = world.storeOf<Position>().get(doneEntity)!;
+      final donePos = world.componentsOf<Position>().get(doneEntity)!;
       menu.handleTap(world, scenes, Offset(donePos.x, donePos.y));
 
       expect(loaded, isA<_DoneMarkerScene>());

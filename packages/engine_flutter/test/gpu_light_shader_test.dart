@@ -50,8 +50,8 @@ void main() {
         // A short solid wall directly between the light and one of the
         // two sample points below (col 3, row 2 -> x=[60,80), y=[40,60)).
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 10,
@@ -71,8 +71,8 @@ void main() {
         // Same row as the wall (y=50) -- ray toward (150,50) passes
         // straight through unobstructed; ray toward (70,50) is blocked
         // by the wall tile at col 3.
-        world.storeOf<Position>().set(lightEntity, Position(10, 50));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(lightEntity, Position(10, 50));
+        world.componentsOf<Light2D>().set(
           lightEntity,
           Light2D(
             radius: 200,
@@ -169,8 +169,8 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(100, 100));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(id, Position(100, 100));
+        world.componentsOf<Light2D>().set(
           id,
           Light2D(radius: 80, castsShadows: true),
         );

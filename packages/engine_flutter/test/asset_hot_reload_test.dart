@@ -116,7 +116,7 @@ void main() {
     });
 
     double playerX() =>
-        world.storeOf<Position>().get(handle.named['player']!)!.x;
+        world.componentsOf<Position>().get(handle.named['player']!)!.x;
 
     test('editing the level file reloads it into the running world', () async {
       await reloader.start();

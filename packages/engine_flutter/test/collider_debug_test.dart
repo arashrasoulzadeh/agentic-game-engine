@@ -12,8 +12,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(50, 50));
-      world.storeOf<Collider>().set(id, Collider(10));
+      world.componentsOf<Position>().set(id, Position(50, 50));
+      world.componentsOf<Collider>().set(id, Collider(10));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -38,8 +38,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(50, 50));
-      world.storeOf<Collider>().set(id, Collider(10));
+      world.componentsOf<Position>().set(id, Position(50, 50));
+      world.componentsOf<Collider>().set(id, Collider(10));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -65,8 +65,8 @@ void main() {
       registerFlutterComponents(world);
 
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 3,
@@ -104,7 +104,7 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Collider>().set(id, Collider(10)); // no Position
+      world.componentsOf<Collider>().set(id, Collider(10)); // no Position
 
       await tester.pumpWidget(
         MaterialApp(

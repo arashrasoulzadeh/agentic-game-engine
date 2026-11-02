@@ -53,8 +53,8 @@ void main() {
       registerFlutterComponents(world);
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(10, 10));
-      world.storeOf<HudBar>().set(id, HudBar(value: 5, maxValue: 10));
+      world.componentsOf<Position>().set(id, Position(10, 10));
+      world.componentsOf<HudBar>().set(id, HudBar(value: 5, maxValue: 10));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -78,7 +78,7 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<HudBar>().set(
+        world.componentsOf<HudBar>().set(
           id,
           HudBar(value: 5, maxValue: 10),
         ); // no Position
@@ -106,8 +106,8 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(10, 10));
-        world.storeOf<HudBar>().set(
+        world.componentsOf<Position>().set(id, Position(10, 10));
+        world.componentsOf<HudBar>().set(
           id,
           HudBar(value: 5, maxValue: 10, zIndex: 100),
         );
@@ -135,8 +135,8 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(10, 10));
-        world.storeOf<HudBar>().set(
+        world.componentsOf<Position>().set(id, Position(10, 10));
+        world.componentsOf<HudBar>().set(
           id,
           HudBar(value: 5, maxValue: 10, screenSpace: false, zIndex: 100),
         );

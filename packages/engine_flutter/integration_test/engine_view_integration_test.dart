@@ -18,8 +18,8 @@ void main() {
 
       // TileMap
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 20,
@@ -33,16 +33,16 @@ void main() {
 
       // Player sprite
       final player = world.spawn();
-      world.storeOf<Position>().set(player, Position(400, 300));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(player, Position(400, 300));
+      world.componentsOf<Sprite>().set(
         player,
         Sprite('test_atlas', 'player_idle', zIndex: 10),
       );
 
       // Light
       final light = world.spawn();
-      world.storeOf<Position>().set(light, Position(400, 300));
-      world.storeOf<Light2D>().set(
+      world.componentsOf<Position>().set(light, Position(400, 300));
+      world.componentsOf<Light2D>().set(
         light,
         Light2D(
           radius: 200,
@@ -54,8 +54,8 @@ void main() {
 
       // Particle emitter
       final emitter = world.spawn();
-      world.storeOf<Position>().set(emitter, Position(400, 300));
-      world.storeOf<ParticleEmitter>().set(
+      world.componentsOf<Position>().set(emitter, Position(400, 300));
+      world.componentsOf<ParticleEmitter>().set(
         emitter,
         ParticleEmitter(
           rate: 10,
@@ -125,7 +125,7 @@ class _TestSceneA extends Scene {
     registerCoreComponents(world);
     registerFlutterComponents(world);
     final e = world.spawn();
-    world.storeOf<Position>().set(e, Position(100, 100));
+    world.componentsOf<Position>().set(e, Position(100, 100));
   }
 }
 
@@ -137,7 +137,7 @@ class _TestSceneB extends Scene {
     expect(state.data['score'], 100);
     expect(state.data['level'], 1);
     final e = world.spawn();
-    world.storeOf<Position>().set(e, Position(200, 200));
+    world.componentsOf<Position>().set(e, Position(200, 200));
   }
 }
 

@@ -96,7 +96,7 @@ void main() {
           w.addSystem(counter);
           final entities = [for (var i = 0; i < players; i++) w.spawn()];
           for (final e in entities) {
-            w.storeOf<Position>().set(e, Position(100.0 * (e + 1), 100));
+            w.componentsOf<Position>().set(e, Position(100.0 * (e + 1), 100));
           }
           await tester.pumpWidget(
             MaterialApp(
@@ -127,8 +127,8 @@ void main() {
     testWidgets('each camera follows its own entity', (tester) async {
       final w = world();
       final a = w.spawn(), b = w.spawn();
-      w.storeOf<Position>().set(a, Position(300, 200));
-      w.storeOf<Position>().set(b, Position(1500, 400));
+      w.componentsOf<Position>().set(a, Position(300, 200));
+      w.componentsOf<Position>().set(b, Position(1500, 400));
       final cams = [Camera(), Camera()];
       await tester.pumpWidget(
         MaterialApp(

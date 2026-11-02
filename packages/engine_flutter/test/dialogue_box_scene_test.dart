@@ -127,7 +127,7 @@ void main() {
       final textEntities = view.entitiesWith<ef_text.Text>().toList();
       expect(textEntities, isNotEmpty);
 
-      final textComponent = world.storeOf<ef_text.Text>().get(
+      final textComponent = world.componentsOf<ef_text.Text>().get(
         textEntities.first,
       )!;
       expect(textComponent.text, 'Hello, {name}!');
@@ -153,7 +153,7 @@ void main() {
       final view = WorldView(world);
       final textEntities = view.entitiesWith<ef_text.Text>().toList();
       expect(textEntities, isNotEmpty);
-      final textPos = world.storeOf<Position>().get(textEntities.first)!;
+      final textPos = world.componentsOf<Position>().get(textEntities.first)!;
 
       // Screen-space reference is a fixed 800x600, regardless of the
       // World's own (much larger) dimensions -- see
@@ -231,7 +231,7 @@ void main() {
       expect(buttons[0].label, 'No, thanks.');
 
       // Add flag
-      world.storeOf<GameState>().set(0, GameState({'met_npc': true}));
+      world.componentsOf<GameState>().set(0, GameState({'met_npc': true}));
       await tester.pump(const Duration(milliseconds: 16));
 
       buttons = sceneWithFlag.buttons();
@@ -355,7 +355,7 @@ void main() {
         await scene.populate(world, controller, gameState);
         await tester.pump(const Duration(milliseconds: 16));
 
-        final buttonsBefore = world.storeOf<Button>().length;
+        final buttonsBefore = world.componentsOf<Button>().length;
         final actionIdsBefore = scene.buttons().map((b) => b.actionId).toSet();
         expect(actionIdsBefore, {'choice_yes', 'choice_no'});
 
@@ -371,7 +371,7 @@ void main() {
         // actually destroyed, not just superseded by new ones left
         // stacked on top underneath.
         expect(scene.buttons(), isEmpty);
-        expect(world.storeOf<Button>().length, 0);
+        expect(world.componentsOf<Button>().length, 0);
       },
     );
 

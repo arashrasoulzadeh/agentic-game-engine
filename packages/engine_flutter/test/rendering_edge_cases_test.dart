@@ -74,7 +74,7 @@ void main() {
           SpriteAtlas(texture!, {'strip': const Rect.fromLTWH(0, 0, 8, 8)}),
         );
       final id = world.spawn();
-      world.storeOf<ParallaxLayer>().set(
+      world.componentsOf<ParallaxLayer>().set(
         id,
         ParallaxLayer('sky', 'strip', tileX: true, tileY: true),
       );
@@ -96,7 +96,7 @@ void main() {
     (tester) async {
       final world = buildWorld();
       final id = world.spawn();
-      world.storeOf<TileMap>().set(
+      world.componentsOf<TileMap>().set(
         id,
         TileMap(
           cols: 2,
@@ -134,8 +134,8 @@ void main() {
   ) async {
     final world = buildWorld();
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(70, 50));
-    world.storeOf<engine.Text>().set(
+    world.componentsOf<Position>().set(id, Position(70, 50));
+    world.componentsOf<engine.Text>().set(
       id,
       engine.Text(
         'ABC',

@@ -44,8 +44,8 @@ void main() {
       registerFlutterComponents(world);
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(50, 50));
-      world.storeOf<Particle>().set(
+      world.componentsOf<Position>().set(entity, Position(50, 50));
+      world.componentsOf<Particle>().set(
         entity,
         Particle(lifetime: 1, colorArgb: 0xFFFF8800),
       );
@@ -85,9 +85,9 @@ void main() {
     );
 
     final entity = world.spawn();
-    world.storeOf<Position>().set(entity, Position(50, 50));
-    world.storeOf<Particle>().set(entity, Particle(lifetime: 1));
-    world.storeOf<Sprite>().set(entity, Sprite('fx', 'spark'));
+    world.componentsOf<Position>().set(entity, Position(50, 50));
+    world.componentsOf<Particle>().set(entity, Particle(lifetime: 1));
+    world.componentsOf<Sprite>().set(entity, Sprite('fx', 'spark'));
 
     await tester.pumpWidget(
       MaterialApp(
@@ -111,10 +111,10 @@ void main() {
     registerFlutterComponents(world);
 
     final entity = world.spawn();
-    world.storeOf<Position>().set(entity, Position(0, 0));
+    world.componentsOf<Position>().set(entity, Position(0, 0));
     final particle = Particle(lifetime: 1, startAlpha: 1, endAlpha: 0);
     particle.age = 1; // fully aged out -> alpha 0
-    world.storeOf<Particle>().set(entity, particle);
+    world.componentsOf<Particle>().set(entity, particle);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -139,8 +139,8 @@ void main() {
       registerFlutterComponents(world);
 
       final redId = world.spawn();
-      world.storeOf<Position>().set(redId, Position(50, 50));
-      world.storeOf<Particle>().set(
+      world.componentsOf<Position>().set(redId, Position(50, 50));
+      world.componentsOf<Particle>().set(
         redId,
         Particle(
           lifetime: 10,
@@ -151,8 +151,8 @@ void main() {
       );
 
       final blueId = world.spawn();
-      world.storeOf<Position>().set(blueId, Position(150, 50));
-      world.storeOf<Particle>().set(
+      world.componentsOf<Position>().set(blueId, Position(150, 50));
+      world.componentsOf<Particle>().set(
         blueId,
         Particle(
           lifetime: 10,
@@ -213,12 +213,12 @@ void main() {
       registerFlutterComponents(world);
 
       final entity = world.spawn();
-      world.storeOf<Position>().set(entity, Position(50, 50));
-      world.storeOf<Particle>().set(
+      world.componentsOf<Position>().set(entity, Position(50, 50));
+      world.componentsOf<Particle>().set(
         entity,
         Particle(lifetime: 1, colorArgb: 0xFF00FF00),
       );
-      world.storeOf<Sprite>().set(entity, Sprite('missing-atlas', 'spark'));
+      world.componentsOf<Sprite>().set(entity, Sprite('missing-atlas', 'spark'));
 
       await tester.pumpWidget(
         MaterialApp(

@@ -110,8 +110,8 @@ void main() {
       world.addSystem(MovementSystem());
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(50, 50));
-      world.storeOf<Velocity>().set(id, Velocity(100, 0));
+      world.componentsOf<Position>().set(id, Position(50, 50));
+      world.componentsOf<Velocity>().set(id, Velocity(100, 0));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -134,7 +134,7 @@ void main() {
       }
 
       expect(find.byType(EngineView), findsOneWidget);
-      expect(world.storeOf<Position>().get(id)!.x, greaterThan(50));
+      expect(world.componentsOf<Position>().get(id)!.x, greaterThan(50));
     },
   );
 

@@ -69,14 +69,14 @@ void main() {
       world.addSystem(ParticleSystem());
 
       final emitterEntity = world.spawn();
-      world.storeOf<Position>().set(emitterEntity, Position(0, 0));
-      world.storeOf<ParticleEmitter>().set(
+      world.componentsOf<Position>().set(emitterEntity, Position(0, 0));
+      world.componentsOf<ParticleEmitter>().set(
         emitterEntity,
         ParticleEmitter(burstCount: 1, zIndex: 9),
       );
       world.step(0.016);
 
-      final particles = world.storeOf<Particle>();
+      final particles = world.componentsOf<Particle>();
       expect(particles.length, 1);
       expect(particles.denseAt(0).zIndex, 9);
     },
@@ -98,12 +98,12 @@ void main() {
     // Same position, different zIndex -- exercises the sort actually
     // separating them into different draw groups instead of one batch.
     final back = world.spawn();
-    world.storeOf<Position>().set(back, Position(50, 50));
-    world.storeOf<Sprite>().set(back, Sprite('atlas', 'r', zIndex: -5));
+    world.componentsOf<Position>().set(back, Position(50, 50));
+    world.componentsOf<Sprite>().set(back, Sprite('atlas', 'r', zIndex: -5));
 
     final front = world.spawn();
-    world.storeOf<Position>().set(front, Position(50, 50));
-    world.storeOf<Sprite>().set(front, Sprite('atlas', 'r', zIndex: 5));
+    world.componentsOf<Position>().set(front, Position(50, 50));
+    world.componentsOf<Sprite>().set(front, Sprite('atlas', 'r', zIndex: 5));
 
     await tester.pumpWidget(
       MaterialApp(
@@ -133,12 +133,12 @@ void main() {
       );
 
       final bg = world.spawn();
-      world.storeOf<Position>().set(bg, Position(0, 0));
-      world.storeOf<ParallaxLayer>().set(bg, ParallaxLayer('atlas', 'r'));
+      world.componentsOf<Position>().set(bg, Position(0, 0));
+      world.componentsOf<ParallaxLayer>().set(bg, ParallaxLayer('atlas', 'r'));
 
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 1,
@@ -154,8 +154,8 @@ void main() {
       // default-zIndex ParallaxLayer/TileMap, the opposite of the
       // engine's original fixed order.
       final maskSprite = world.spawn();
-      world.storeOf<Position>().set(maskSprite, Position(10, 10));
-      world.storeOf<Sprite>().set(maskSprite, Sprite('atlas', 'r', zIndex: -1));
+      world.componentsOf<Position>().set(maskSprite, Position(10, 10));
+      world.componentsOf<Sprite>().set(maskSprite, Sprite('atlas', 'r', zIndex: -1));
 
       await tester.pumpWidget(
         MaterialApp(

@@ -11,19 +11,19 @@ void main() {
       registerFlutterComponents(world);
 
       final spriteEntity = world.spawn();
-      world.storeOf<Sprite>().set(spriteEntity, Sprite('atlas', 'idle'));
+      world.componentsOf<Sprite>().set(spriteEntity, Sprite('atlas', 'idle'));
 
       final animEntity = world.spawn();
-      world.storeOf<AnimationState>().set(
+      world.componentsOf<AnimationState>().set(
         animEntity,
         AnimationState(AnimationClip('idle', ['idle_0'])),
       );
 
       final inputEntity = world.spawn();
-      world.storeOf<InputState>().set(inputEntity, InputState({'jump'}));
+      world.componentsOf<InputState>().set(inputEntity, InputState({'jump'}));
 
       final parallaxEntity = world.spawn();
-      world.storeOf<ParallaxLayer>().set(
+      world.componentsOf<ParallaxLayer>().set(
         parallaxEntity,
         ParallaxLayer('bg', 'sky'),
       );

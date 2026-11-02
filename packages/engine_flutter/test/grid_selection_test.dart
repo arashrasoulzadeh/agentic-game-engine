@@ -11,10 +11,10 @@ World _world() {
 
 EntityId _unit(World w, String team, int c, int r) {
   final e = w.spawn();
-  w.storeOf<Team>().set(e, Team(team));
-  w.storeOf<ActionPoints>().set(e, ActionPoints(5, current: 0));
-  w.storeOf<GridPosition>().set(e, GridPosition(c, r));
-  w.storeOf<Position>().set(e, Position((c + 0.5) * 32, (r + 0.5) * 32));
+  w.componentsOf<Team>().set(e, Team(team));
+  w.componentsOf<ActionPoints>().set(e, ActionPoints(5, current: 0));
+  w.componentsOf<GridPosition>().set(e, GridPosition(c, r));
+  w.componentsOf<Position>().set(e, Position((c + 0.5) * 32, (r + 0.5) * 32));
   return e;
 }
 
@@ -29,7 +29,7 @@ void main() {
       expect(c.handleTap(w, const Offset(200, 200)), GridTapResult.ignored);
       expect(c.handleTap(w, const Offset(48, 48)), GridTapResult.selected);
       expect(c.handleTap(w, const Offset(130, 40)), GridTapResult.commanded);
-      final order = w.storeOf<OrderQueue>().get(a)!.orders.single as MoveOrder;
+      final order = w.componentsOf<OrderQueue>().get(a)!.orders.single as MoveOrder;
       expect((order.col, order.row), (4, 1));
     },
   );
@@ -60,25 +60,25 @@ void main() {
       final a = _unit(w, 'red', 2, 3);
       startTurnBasedGame(w, ['red']);
       w.addSystem(SelectionMarkerSystem(32));
-      w.storeOf<Selected>().set(a, const Selected());
+      w.componentsOf<Selected>().set(a, const Selected());
       w.step(0.1);
       w.step(0.1);
-      final markers = w.storeOf<SelectionMarker>();
+      final markers = w.componentsOf<SelectionMarker>();
       expect(markers.length, 1);
       final m = markers.entityAt(0);
-      final bar = w.storeOf<HudBar>().get(m)!;
+      final bar = w.componentsOf<HudBar>().get(m)!;
       expect(bar.screenSpace, isFalse);
-      final mp = w.storeOf<Position>().get(m)!;
+      final mp = w.componentsOf<Position>().get(m)!;
       expect((mp.x, mp.y), (64.0, 3 * 32.0 + 32 - 4));
 
-      w.storeOf<Position>().get(a)!.x += 32;
+      w.componentsOf<Position>().get(a)!.x += 32;
       w.step(0.1);
-      expect(w.storeOf<Position>().get(m)!.x, 96.0);
+      expect(w.componentsOf<Position>().get(m)!.x, 96.0);
 
       clearSelection(w);
       w.step(0.1);
       expect(markers.length, 0);
-      expect(w.storeOf<HudBar>().length, 0);
+      expect(w.componentsOf<HudBar>().length, 0);
     },
   );
 
@@ -87,10 +87,10 @@ void main() {
     final a = _unit(w, 'red', 0, 0);
     startTurnBasedGame(w, ['red']);
     w.addSystem(SelectionMarkerSystem(32));
-    w.storeOf<Selected>().set(a, const Selected());
+    w.componentsOf<Selected>().set(a, const Selected());
     w.step(0.1);
     w.destroy(a);
     w.step(0.1);
-    expect(w.storeOf<SelectionMarker>().length, 0);
+    expect(w.componentsOf<SelectionMarker>().length, 0);
   });
 }

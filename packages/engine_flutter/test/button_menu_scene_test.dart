@@ -69,7 +69,7 @@ void main() {
       final world = _buildWorld();
       await menu.populate(world, SceneController(), GameState());
 
-      final buttons = world.storeOf<Button>();
+      final buttons = world.componentsOf<Button>();
       expect(buttons.length, 2);
 
       final ids = <String>{};
@@ -81,7 +81,7 @@ void main() {
       // Every button is horizontally centered on the world.
       for (var i = 0; i < buttons.length; i++) {
         final entity = buttons.entityAt(i);
-        expect(world.storeOf<Position>().get(entity)?.x, world.width / 2);
+        expect(world.componentsOf<Position>().get(entity)?.x, world.width / 2);
       }
     },
   );
@@ -106,8 +106,8 @@ void main() {
       final scenes = SceneController();
       await menu.populate(world, scenes, GameState());
 
-      final firstButtonPos = world.storeOf<Position>().get(
-        world.storeOf<Button>().entityAt(0),
+      final firstButtonPos = world.componentsOf<Position>().get(
+        world.componentsOf<Button>().entityAt(0),
       )!;
       menu.handleTap(world, scenes, Offset(firstButtonPos.x, firstButtonPos.y));
 
@@ -154,10 +154,10 @@ void main() {
         final world = _buildWorld();
         await menu.populate(world, SceneController(), GameState());
 
-        final quitId = world.storeOf<Button>().entityAt(1);
-        expect(world.storeOf<ButtonHitBox>().get(quitId)?.width, 300);
-        expect(world.storeOf<ButtonHitBox>().get(quitId)?.height, 40);
-        expect(world.storeOf<Collider>().get(quitId), isNull);
+        final quitId = world.componentsOf<Button>().entityAt(1);
+        expect(world.componentsOf<ButtonHitBox>().get(quitId)?.width, 300);
+        expect(world.componentsOf<ButtonHitBox>().get(quitId)?.height, 40);
+        expect(world.componentsOf<Collider>().get(quitId), isNull);
       },
     );
 
@@ -168,12 +168,12 @@ void main() {
         final world = _buildWorld();
         await menu.populate(world, SceneController(), GameState());
 
-        final playId = world.storeOf<Button>().entityAt(0);
+        final playId = world.componentsOf<Button>().entityAt(0);
         expect(
-          world.storeOf<Collider>().get(playId)?.radius,
+          world.componentsOf<Collider>().get(playId)?.radius,
           kMenuButtonHeight / 2,
         );
-        expect(world.storeOf<ButtonHitBox>().get(playId), isNull);
+        expect(world.componentsOf<ButtonHitBox>().get(playId), isNull);
       },
     );
 
@@ -184,8 +184,8 @@ void main() {
         final world = _buildWorld();
         await menu.populate(world, SceneController(), GameState());
 
-        final quitId = world.storeOf<Button>().entityAt(1);
-        final sprite = world.storeOf<Sprite>().get(quitId)!;
+        final quitId = world.componentsOf<Button>().entityAt(1);
+        final sprite = world.componentsOf<Sprite>().get(quitId)!;
         expect(sprite.atlasId, 'menuArt');
         expect(sprite.region, 'quitBar');
       },
@@ -216,8 +216,8 @@ void main() {
         final scenes = SceneController();
         await menu.populate(world, scenes, GameState());
 
-        final quitPos = world.storeOf<Position>().get(
-          world.storeOf<Button>().entityAt(1),
+        final quitPos = world.componentsOf<Position>().get(
+          world.componentsOf<Button>().entityAt(1),
         )!;
         // 140px right of center: inside the 300-wide hit box (half-width
         // 150) but outside a circle sized to the 40-tall box's short axis
@@ -236,10 +236,10 @@ void main() {
         final world = _buildWorld();
         await menu.populate(world, SceneController(), GameState());
 
-        final quitId = world.storeOf<Button>().entityAt(1);
-        final quitPos = world.storeOf<Position>().get(quitId)!;
+        final quitId = world.componentsOf<Button>().entityAt(1);
+        final quitPos = world.componentsOf<Position>().get(quitId)!;
 
-        final texts = world.storeOf<Text>();
+        final texts = world.componentsOf<Text>();
         EntityId? labelId;
         for (var i = 0; i < texts.length; i++) {
           if (texts.denseAt(i).text == 'QUIT') labelId = texts.entityAt(i);
@@ -250,7 +250,7 @@ void main() {
           reason: 'expected a Text entity showing the button label',
         );
 
-        final labelPos = world.storeOf<Position>().get(labelId!)!;
+        final labelPos = world.componentsOf<Position>().get(labelId!)!;
         expect(labelPos.x, quitPos.x);
         expect(labelPos.y, quitPos.y);
         expect(
@@ -270,7 +270,7 @@ void main() {
       final world = _buildWorld();
       await menu.populate(world, SceneController(), GameState());
 
-      expect(world.storeOf<Text>().length, 0);
+      expect(world.componentsOf<Text>().length, 0);
     });
   });
 }

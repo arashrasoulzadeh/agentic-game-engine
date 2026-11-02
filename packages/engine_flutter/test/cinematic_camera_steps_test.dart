@@ -124,7 +124,7 @@ void main() {
         final world = _buildWorld();
         final camera = Camera(x: 0, y: 0);
         final target = world.spawn();
-        world.storeOf<Position>().set(target, Position(300, 400));
+        world.componentsOf<Position>().set(target, Position(300, 400));
 
         final step = CameraFollowStep(camera, target, duration: 1);
         final done = step.update(world, 0.5);
@@ -139,7 +139,7 @@ void main() {
       final world = _buildWorld();
       final camera = Camera(x: 0, y: 0);
       final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(100, 0));
+      world.componentsOf<Position>().set(target, Position(100, 0));
 
       final step = CameraFollowStep(
         camera,
@@ -157,7 +157,7 @@ void main() {
       final world = _buildWorld();
       final camera = Camera();
       final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(0, 0));
+      world.componentsOf<Position>().set(target, Position(0, 0));
 
       final step = CameraFollowStep(camera, target, duration: 1);
       expect(step.update(world, 0.6), isFalse);
@@ -168,7 +168,7 @@ void main() {
       final world = _buildWorld();
       final camera = Camera(x: 0, y: 0);
       final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(42, 84));
+      world.componentsOf<Position>().set(target, Position(42, 84));
 
       CameraFollowStep(camera, target, duration: 1).skip(world);
 
@@ -191,7 +191,7 @@ void main() {
         );
 
         step.start(world);
-        final tints = world.storeOf<ScreenTint>();
+        final tints = world.componentsOf<ScreenTint>();
         expect(tints.length, 1);
         expect(Color(tints.denseAt(0).colorArgb).a, 0);
 
@@ -222,7 +222,7 @@ void main() {
 
         step.skip(world);
 
-        final tints = world.storeOf<ScreenTint>();
+        final tints = world.componentsOf<ScreenTint>();
         expect(tints.length, 1);
         expect(Color(tints.denseAt(0).colorArgb).a, closeTo(0.8, 0.01));
       },
@@ -250,15 +250,15 @@ void main() {
       down.start(world);
       down.update(world, 1); // completes at alpha 0 -- but on its OWN entity
 
-      expect(world.storeOf<ScreenTint>().length, 2);
+      expect(world.componentsOf<ScreenTint>().length, 2);
       expect(
-        Color(world.storeOf<ScreenTint>().get(up.entity!)!.colorArgb).a,
+        Color(world.componentsOf<ScreenTint>().get(up.entity!)!.colorArgb).a,
         closeTo(0.5, 0.01),
         reason:
             "the first step's entity is never touched again -- stuck at 0.5",
       );
       expect(
-        Color(world.storeOf<ScreenTint>().get(down.entity!)!.colorArgb).a,
+        Color(world.componentsOf<ScreenTint>().get(down.entity!)!.colorArgb).a,
         closeTo(0, 0.01),
       );
     });
@@ -288,12 +288,12 @@ void main() {
       down.update(world, 1);
 
       expect(
-        world.storeOf<ScreenTint>().length,
+        world.componentsOf<ScreenTint>().length,
         1,
         reason: 'one shared entity, not two',
       );
       expect(
-        Color(world.storeOf<ScreenTint>().get(flashEntity)!.colorArgb).a,
+        Color(world.componentsOf<ScreenTint>().get(flashEntity)!.colorArgb).a,
         closeTo(0, 0.01),
       );
     });

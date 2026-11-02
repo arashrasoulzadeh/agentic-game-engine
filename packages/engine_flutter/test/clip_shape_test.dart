@@ -107,22 +107,22 @@ void main() {
         // World (0,0) -> screen (200,150); world (150,0) -> screen (350,150)
         // on a 400x300 viewport at Camera() default (x:0,y:0,zoom:1).
         final insideEntity = world.spawn();
-        world.storeOf<Position>().set(insideEntity, Position(0, 0));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Position>().set(insideEntity, Position(0, 0));
+        world.componentsOf<Sprite>().set(
           insideEntity,
           Sprite('atlas', 'inside', zIndex: 0, scaleX: 20, scaleY: 20),
         );
 
         final outsideEntity = world.spawn();
-        world.storeOf<Position>().set(outsideEntity, Position(150, 0));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Position>().set(outsideEntity, Position(150, 0));
+        world.componentsOf<Sprite>().set(
           outsideEntity,
           Sprite('atlas', 'outside', zIndex: 0, scaleX: 20, scaleY: 20),
         );
 
         final clipEntity = world.spawn();
-        world.storeOf<Position>().set(clipEntity, Position(0, 0));
-        world.storeOf<ClipShape>().set(
+        world.componentsOf<Position>().set(clipEntity, Position(0, 0));
+        world.componentsOf<ClipShape>().set(
           clipEntity,
           ClipShape(radius: 40, mode: ClipShapeMode.reveal),
         );
@@ -189,22 +189,22 @@ void main() {
         );
 
         final coveredEntity = world.spawn();
-        world.storeOf<Position>().set(coveredEntity, Position(0, 0));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Position>().set(coveredEntity, Position(0, 0));
+        world.componentsOf<Sprite>().set(
           coveredEntity,
           Sprite('atlas', 'covered', zIndex: 0, scaleX: 20, scaleY: 20),
         );
 
         final clearEntity = world.spawn();
-        world.storeOf<Position>().set(clearEntity, Position(150, 0));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Position>().set(clearEntity, Position(150, 0));
+        world.componentsOf<Sprite>().set(
           clearEntity,
           Sprite('atlas', 'clear', zIndex: 0, scaleX: 20, scaleY: 20),
         );
 
         final clipEntity = world.spawn();
-        world.storeOf<Position>().set(clipEntity, Position(0, 0));
-        world.storeOf<ClipShape>().set(
+        world.componentsOf<Position>().set(clipEntity, Position(0, 0));
+        world.componentsOf<ClipShape>().set(
           clipEntity,
           ClipShape(radius: 40, mode: ClipShapeMode.cutout),
         );
@@ -260,15 +260,15 @@ void main() {
       registerFlutterComponents(world);
 
       final revealEntity = world.spawn();
-      world.storeOf<Position>().set(revealEntity, Position(100, 100));
-      world.storeOf<ClipShape>().set(
+      world.componentsOf<Position>().set(revealEntity, Position(100, 100));
+      world.componentsOf<ClipShape>().set(
         revealEntity,
         ClipShape(radius: 150, mode: ClipShapeMode.reveal),
       );
 
       final cutoutEntity = world.spawn();
-      world.storeOf<Position>().set(cutoutEntity, Position(100, 100));
-      world.storeOf<ClipShape>().set(
+      world.componentsOf<Position>().set(cutoutEntity, Position(100, 100));
+      world.componentsOf<ClipShape>().set(
         cutoutEntity,
         ClipShape(radius: 30, mode: ClipShapeMode.cutout, softness: 4),
       );
@@ -295,8 +295,8 @@ void main() {
       registerFlutterComponents(world);
 
       final clipEntity = world.spawn();
-      world.storeOf<Position>().set(clipEntity, Position(100, 100));
-      world.storeOf<ClipShape>().set(
+      world.componentsOf<Position>().set(clipEntity, Position(100, 100));
+      world.componentsOf<ClipShape>().set(
         clipEntity,
         ClipShape(isCircle: false, width: 120, height: 60),
       );
@@ -323,7 +323,7 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<ClipShape>().set(id, ClipShape()); // no Position
+        world.componentsOf<ClipShape>().set(id, ClipShape()); // no Position
 
         await tester.pumpWidget(
           MaterialApp(

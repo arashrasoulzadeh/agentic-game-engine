@@ -14,8 +14,8 @@ void main() {
     world.addSystem(MovementSystem());
 
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(50, 50));
-    world.storeOf<Velocity>().set(id, Velocity(10, 0));
+    world.componentsOf<Position>().set(id, Position(50, 50));
+    world.componentsOf<Velocity>().set(id, Velocity(10, 0));
 
     await tester.pumpWidget(
       MaterialApp(
@@ -129,7 +129,7 @@ void main() {
       registerFlutterComponents(world);
 
       final player = world.spawn();
-      world.storeOf<Position>().set(player, Position(1000, 1000));
+      world.componentsOf<Position>().set(player, Position(1000, 1000));
       final camera = Camera(x: 0, y: 0);
 
       await tester.pumpWidget(

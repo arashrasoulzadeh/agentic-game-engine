@@ -406,7 +406,7 @@ void main() {
       expect(newWorld.entities.count, 1);
       expect(secondScene.markerId, isNotNull);
       expect(
-        newWorld.storeOf<Sprite>().get(secondScene.markerId!)?.region,
+        newWorld.componentsOf<Sprite>().get(secondScene.markerId!)?.region,
         'second',
       );
     },
@@ -533,7 +533,7 @@ class _MarkerScene extends Scene {
     this.scenes = scenes;
     this.state = state;
     markerId = world.spawn();
-    world.storeOf<Sprite>().set(markerId!, Sprite('none', label));
+    world.componentsOf<Sprite>().set(markerId!, Sprite('none', label));
   }
 }
 

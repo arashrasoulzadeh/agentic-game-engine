@@ -24,8 +24,8 @@ void main() {
     world.addSystem(sfx);
 
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip(
@@ -59,8 +59,8 @@ void main() {
     sfx.attach(world);
 
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip(
@@ -111,9 +111,9 @@ void main() {
     sfx.attach(world);
 
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(40, 10));
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Position>().set(id, Position(40, 10));
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip(
@@ -150,8 +150,8 @@ void main() {
     sfx.attach(world);
 
     final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+    world.componentsOf<AnimationState>().set(
       id,
       AnimationState(
         AnimationClip(

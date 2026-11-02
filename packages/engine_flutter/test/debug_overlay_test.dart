@@ -107,8 +107,8 @@ void main() {
       final w = _world();
       final a = w.spawn();
       final b = w.spawn();
-      w.storeOf<Position>().set(a, Position(1, 2));
-      w.storeOf<Velocity>().set(b, Velocity(3, 4));
+      w.componentsOf<Position>().set(a, Position(1, 2));
+      w.componentsOf<Velocity>().set(b, Velocity(3, 4));
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -184,7 +184,7 @@ void main() {
       final w = _world();
       w.spawn();
       final e = w.spawn();
-      w.storeOf<Position>().set(e, Position(0, 0));
+      w.componentsOf<Position>().set(e, Position(0, 0));
       final stats = FrameStats()
         ..frameMs = 12
         ..recordHistory();
@@ -257,9 +257,9 @@ void main() {
       expect(DebugOverlay.pressedLabel(input), 'input: Jump, Left');
       final w = _world();
       for (var i = 0; i < 3; i++) {
-        w.storeOf<Position>().set(w.spawn(), Position(0, 0));
+        w.componentsOf<Position>().set(w.spawn(), Position(0, 0));
       }
-      w.storeOf<Velocity>().set(w.spawn(), Velocity(0, 0));
+      w.componentsOf<Velocity>().set(w.spawn(), Velocity(0, 0));
       expect(DebugOverlay.census(w), 'position 3, velocity 1');
     });
   });

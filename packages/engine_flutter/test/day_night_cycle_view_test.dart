@@ -239,8 +239,8 @@ void main() {
         // level, whose player light (radius 220, castsShadows, 40 rays,
         // blockOneWayPlatforms) this mirrors exactly.
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 40,
@@ -256,8 +256,8 @@ void main() {
         );
 
         final player = world.spawn();
-        world.storeOf<Position>().set(player, Position(300, 500));
-        world.storeOf<Light2D>().set(
+        world.componentsOf<Position>().set(player, Position(300, 500));
+        world.componentsOf<Light2D>().set(
           player,
           Light2D(
             radius: 220,

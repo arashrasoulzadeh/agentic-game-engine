@@ -71,8 +71,8 @@ void main() {
       );
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(10, 10));
-      world.storeOf<NineSliceSprite>().set(
+      world.componentsOf<Position>().set(id, Position(10, 10));
+      world.componentsOf<NineSliceSprite>().set(
         id,
         NineSliceSprite(
           'panel',
@@ -116,10 +116,10 @@ void main() {
         );
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(10, 10));
+        world.componentsOf<Position>().set(id, Position(10, 10));
         // width/height smaller than insetLeft+insetRight/insetTop+insetBottom
         // -- the center/opposite-edge cells would come out negative size.
-        world.storeOf<NineSliceSprite>().set(
+        world.componentsOf<NineSliceSprite>().set(
           id,
           NineSliceSprite(
             'panel',
@@ -156,8 +156,8 @@ void main() {
         registerFlutterComponents(world);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(10, 10));
-        world.storeOf<NineSliceSprite>().set(
+        world.componentsOf<Position>().set(id, Position(10, 10));
+        world.componentsOf<NineSliceSprite>().set(
           id,
           NineSliceSprite(
             'missing',
@@ -202,7 +202,7 @@ void main() {
       );
 
       final id = world.spawn();
-      world.storeOf<NineSliceSprite>().set(
+      world.componentsOf<NineSliceSprite>().set(
         id,
         NineSliceSprite(
           'panel',

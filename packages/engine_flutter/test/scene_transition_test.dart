@@ -21,10 +21,10 @@ void main() {
         ),
         covering: true,
       );
-      world.storeOf<SceneTransition>().set(entity, transition);
+      world.componentsOf<SceneTransition>().set(entity, transition);
       transition.start(world);
 
-      final tintStore = world.storeOf<ScreenTint>();
+      final tintStore = world.componentsOf<ScreenTint>();
       expect(tintStore.length, 1);
       expect(tintStore.denseAt(0).colorArgb >>> 24, 0);
 
@@ -52,10 +52,10 @@ void main() {
         ),
         covering: false,
       );
-      world.storeOf<SceneTransition>().set(entity, transition);
+      world.componentsOf<SceneTransition>().set(entity, transition);
       transition.start(world);
 
-      final tintStore = world.storeOf<ScreenTint>();
+      final tintStore = world.componentsOf<ScreenTint>();
       expect(tintStore.denseAt(0).colorArgb >>> 24, 255);
 
       transition.update(0.5, world);
@@ -72,10 +72,10 @@ void main() {
         ),
         covering: true,
       );
-      world.storeOf<SceneTransition>().set(entity, transition);
+      world.componentsOf<SceneTransition>().set(entity, transition);
       transition.start(world);
 
-      final clipStore = world.storeOf<ClipShape>();
+      final clipStore = world.componentsOf<ClipShape>();
       expect(clipStore.length, 1);
       final startRadius = clipStore.denseAt(0).radius;
       expect(startRadius, greaterThan(0));
@@ -100,10 +100,10 @@ void main() {
         ),
         covering: false,
       );
-      world.storeOf<SceneTransition>().set(entity, transition);
+      world.componentsOf<SceneTransition>().set(entity, transition);
       transition.start(world);
 
-      final clipStore = world.storeOf<ClipShape>();
+      final clipStore = world.componentsOf<ClipShape>();
       expect(clipStore.denseAt(0).radius, 0);
 
       transition.update(0.5, world);
@@ -120,7 +120,7 @@ void main() {
         ),
         covering: true,
       );
-      world.storeOf<SceneTransition>().set(entity, transition);
+      world.componentsOf<SceneTransition>().set(entity, transition);
       // Not started -- isRunning is still false, so the system must
       // leave it alone instead of crashing on a null tween.
       final system = SceneTransitionSystem();
@@ -156,7 +156,7 @@ void main() {
           covering: true,
         );
         transition.start(world);
-        world.storeOf<SceneTransition>().set(entity, transition);
+        world.componentsOf<SceneTransition>().set(entity, transition);
 
         final json = world.toJson();
         final restored = World(width: 800, height: 600);
@@ -169,7 +169,7 @@ void main() {
         restored.spawn();
         restored.applyPatch(json);
 
-        final restoredTransition = restored.storeOf<SceneTransition>().denseAt(
+        final restoredTransition = restored.componentsOf<SceneTransition>().denseAt(
           0,
         );
         expect(restoredTransition.covering, isTrue);
