@@ -21,13 +21,13 @@ class WorldView {
   double get height => _world.height;
   int get tick => _world.tick;
 
-  T? component<T>(EntityId entity) => _world.storeOf<T>().get(entity);
+  T? component<T>(EntityId entity) => _world.componentsOf<T>().get(entity);
 
-  bool hasComponent<T>(EntityId entity) => _world.storeOf<T>().has(entity);
+  bool hasComponent<T>(EntityId entity) => _world.componentsOf<T>().has(entity);
 
   /// All entities carrying component [T], in no particular order.
   Iterable<EntityId> entitiesWith<T>() sync* {
-    final store = _world.storeOf<T>();
+    final store = _world.componentsOf<T>();
     for (var i = 0; i < store.length; i++) {
       yield store.entityAt(i);
     }
@@ -42,8 +42,8 @@ class WorldView {
   /// cheaper. For three or more components, chain a `.where(...)`
   /// using `hasComponent<C>` on the result.
   Iterable<EntityId> entitiesWithAll<A, B>() sync* {
-    final storeA = _world.storeOf<A>();
-    final storeB = _world.storeOf<B>();
+    final storeA = _world.componentsOf<A>();
+    final storeB = _world.componentsOf<B>();
     if (storeA.length <= storeB.length) {
       for (var i = 0; i < storeA.length; i++) {
         final id = storeA.entityAt(i);
@@ -67,7 +67,7 @@ class WorldView {
     EntityId? exclude,
     double? maxDistance,
   }) {
-    final positions = _world.storeOf<Position>();
+    final positions = _world.componentsOf<Position>();
     EntityId? best;
     var bestDistSq = double.infinity;
     final maxDistSq = maxDistance == null
@@ -105,7 +105,7 @@ class WorldView {
     double radius, {
     EntityId? exclude,
   }) sync* {
-    final positions = _world.storeOf<Position>();
+    final positions = _world.componentsOf<Position>();
     final radiusSq = radius * radius;
     for (var i = 0; i < positions.length; i++) {
       final id = positions.entityAt(i);
