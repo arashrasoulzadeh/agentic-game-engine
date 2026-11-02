@@ -85,26 +85,52 @@ void main() {
       expect(offset2.distance, greaterThan(offset1.distance));
     });
 
-    test('Camera.shake frequency parameter', () {
-      final camera = Camera(random: Random(1));
-      camera.shake(magnitude: 20, duration: 0.5, frequency: 10.0);
-
-      final offsets = <double>[];
-      for (int i = 0; i < 20; i++) {
-        camera.update(0.016);
-        offsets.add(camera.shakeOffset.distance);
-      }
-
-      // Higher frequency should produce more oscillations
-      int signChanges = 0;
-      for (int i = 1; i < offsets.length; i++) {
-        if ((offsets[i] - offsets[i - 1]).sign !=
-            (offsets[i - 1] - (i >= 2 ? offsets[i - 2] : 0)).sign) {
-          signChanges++;
+    test(
+      'frequency swings smoothly at that rate; null keeps random jitter',
+      () {
+        final camera = Camera(random: Random(1));
+        camera.shake(
+          magnitude: 20,
+          duration: 10,
+          frequency: 5,
+          decay: 0,
+          axis: ShakeAxis.x,
+        );
+        final xs = <double>[];
+        for (var i = 0; i < 100; i++) {
+          camera.update(0.01);
+          xs.add(camera.shakeOffset.dx);
         }
-      }
-      expect(signChanges, greaterThan(5));
-    });
+        // 1 second at 5 Hz: about 10 zero crossings, and never a jump larger
+        // than the wave allows between 10 ms frames.
+        var crossings = 0;
+        for (var i = 1; i < xs.length; i++) {
+          if (xs[i - 1].sign != xs[i].sign) crossings++;
+          expect(
+            (xs[i] - xs[i - 1]).abs(),
+            lessThan(20 * 2 * pi * 5 * 0.01 + 1e-6),
+          );
+        }
+        expect(crossings, inInclusiveRange(9, 11));
+        expect(xs.reduce(max), closeTo(20, 0.5));
+
+        final jitter = Camera(random: Random(1))
+          ..shake(magnitude: 20, duration: 10, decay: 0, axis: ShakeAxis.x);
+        final js = <double>[];
+        for (var i = 0; i < 100; i++) {
+          jitter.update(0.01);
+          js.add(jitter.shakeOffset.dx);
+        }
+        final big = [
+          for (var i = 1; i < js.length; i++) (js[i] - js[i - 1]).abs(),
+        ].where((d) => d > 20 * 2 * pi * 5 * 0.01).length;
+        expect(
+          big,
+          greaterThan(10),
+          reason: 'random jitter jumps frame to frame',
+        );
+      },
+    );
 
     test('Camera.shake decay > 1 decays faster than linear (decay: 1.0)', () {
       // Per Camera.shake's own doc comment: "decay curve exponent (1.0 =

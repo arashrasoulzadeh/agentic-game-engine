@@ -9,7 +9,9 @@ class _ShakeEffect {
   final double magnitude;
   final double duration;
   double remaining;
-  final double frequency;
+  final double? frequency;
+  final double phaseX;
+  final double phaseY;
   final double decay;
   final bool impulse;
   final ShakeAxis axis;
@@ -17,7 +19,9 @@ class _ShakeEffect {
   _ShakeEffect({
     required this.magnitude,
     required this.duration,
-    this.frequency = 1.0,
+    this.frequency,
+    this.phaseX = 0,
+    this.phaseY = 0,
     this.decay = 1.0,
     this.impulse = false,
     this.axis = ShakeAxis.both,
@@ -45,6 +49,10 @@ class _ShakeEffect {
   }
 
   double get currentMagnitude => magnitude * falloff;
+
+  /// Smooth offset for a given axis phase at the current elapsed time.
+  double wave(double phase) =>
+      sin(2 * pi * frequency! * (duration - remaining) + phase);
 }
 
 /// World-to-screen viewport transform. One camera per `EngineView` — not
@@ -78,9 +86,10 @@ class Camera {
   ///
   /// [magnitude] - maximum offset in world units (before `zoom`)
   /// [duration] - duration in seconds
-  /// [frequency] - accepted for API stability but currently has no effect:
-  /// jitter is re-rolled every frame rather than oscillated (audited; changing
-  /// it would alter every existing shake's look)
+  /// [frequency] - oscillations per second. When set, the camera swings
+  /// smoothly (a sine per axis, random phase) instead of re-rolling random
+  /// jitter every frame. `null` (default) keeps the original per-frame random
+  /// jitter, so existing shakes look unchanged.
   /// [decay] - decay curve exponent (1.0 = linear, >1 = faster decay, <1 = slower)
   /// [impulse] - if true, sharp impulse decay; if false, sustained shake
   /// [axis] - which axis to shake (default ShakeAxis.both)
@@ -88,7 +97,7 @@ class Camera {
   void shake({
     required double magnitude,
     required double duration,
-    double frequency = 1.0,
+    double? frequency,
     double decay = 1.0,
     bool impulse = false,
     ShakeAxis axis = ShakeAxis.both,
@@ -102,6 +111,10 @@ class Camera {
         magnitude: magnitude,
         duration: duration,
         frequency: frequency,
+        // Drawn only for oscillating shakes so legacy seeded sequences are
+        // untouched.
+        phaseX: frequency == null ? 0 : _random.nextDouble() * 2 * pi,
+        phaseY: frequency == null ? 0 : _random.nextDouble() * 2 * pi,
         decay: decay,
         impulse: impulse,
         axis: axis,
@@ -135,8 +148,12 @@ class Camera {
       if (mag <= 0) continue;
 
       // Apply frequency by using a time-based oscillator
-      final jitterX = (_random.nextDouble() * 2 - 1) * mag;
-      final jitterY = (_random.nextDouble() * 2 - 1) * mag;
+      final jitterX = shake.frequency == null
+          ? (_random.nextDouble() * 2 - 1) * mag
+          : shake.wave(shake.phaseX) * mag;
+      final jitterY = shake.frequency == null
+          ? (_random.nextDouble() * 2 - 1) * mag
+          : shake.wave(shake.phaseY) * mag;
 
       if (shake.axis == ShakeAxis.x) {
         totalOffsetX += jitterX;

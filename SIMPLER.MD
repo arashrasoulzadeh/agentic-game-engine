@@ -104,7 +104,7 @@ Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `leve
 
 ### Input and UI (`engine_flutter`)
 Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_system.dart` and cinematic camera steps exist; `core/content/action_aliases.dart` may overlap.
-- [ ] **Action mapping and UI wiring.** Camera audited: `followSmooth` shipped; finding: `shake(frequency:)` has never had an effect (documented, not changed; decide whether to implement). (`Input` facade shipped in `input_facade.dart`: `justPressed/justReleased/isDown/axis` over `InputState`; keyboard, touch and gamepad already all write the same named actions.)
+- [ ] **Action mapping and UI wiring.** Camera audited: `followSmooth` shipped and `shake(frequency:)` now oscillates when set (null keeps the original random jitter). (`Input` facade shipped in `input_facade.dart`: `justPressed/justReleased/isDown/axis` over `InputState`; keyboard, touch and gamepad already all write the same named actions.)
 
 ### Errors and debugging
 `WorldPatchException` is the model for message quality.
