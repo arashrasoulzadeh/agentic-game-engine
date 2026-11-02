@@ -77,8 +77,8 @@ class CallbackStep extends CinematicStep {
 ///   duration: 2,
 ///   easing: EasingType.easeInOutQuad,
 ///   onUpdate: (world, t) {
-///     final pos = world.storeOf<Position>().get(cameraRig)!;
-///     world.storeOf<Position>().set(
+///     final pos = world.componentsOf<Position>().get(cameraRig)!;
+///     world.componentsOf<Position>().set(
 ///       cameraRig,
 ///       Position(startX + (endX - startX) * t, startY + (endY - startY) * t),
 ///     );
@@ -143,8 +143,8 @@ class MoveCameraStep extends CinematicStep {
 
   @override
   void start(World world) {
-    final camEntity = cameraEntity ?? (world.storeOf<EntityId>().get(0) ?? 0);
-    final camPos = world.storeOf<Position>().get(camEntity);
+    final camEntity = cameraEntity ?? (world.componentsOf<EntityId>().get(0) ?? 0);
+    final camPos = world.componentsOf<Position>().get(camEntity);
     if (camPos == null) return;
 
     _startX = camPos.x;
@@ -154,7 +154,7 @@ class MoveCameraStep extends CinematicStep {
     _endY = _startY;
 
     if (followEntity != null) {
-      final targetPos = world.storeOf<Position>().get(followEntity!);
+      final targetPos = world.componentsOf<Position>().get(followEntity!);
       if (targetPos != null) {
         _endX = targetPos.x;
         _endY = targetPos.y;
@@ -177,15 +177,15 @@ class MoveCameraStep extends CinematicStep {
     _tween.elapsed += dt;
     final t = _tween.value.clamp(0.0, 1.0);
 
-    final camEntity = cameraEntity ?? (world.storeOf<EntityId>().get(0) ?? 0);
-    final camPos = world.storeOf<Position>().get(camEntity);
+    final camEntity = cameraEntity ?? (world.componentsOf<EntityId>().get(0) ?? 0);
+    final camPos = world.componentsOf<Position>().get(camEntity);
     if (camPos == null) return _tween.isComplete;
 
     // If following entity, update target dynamically
     double endX = _endX;
     double endY = _endY;
     if (followEntity != null) {
-      final targetPos = world.storeOf<Position>().get(followEntity!);
+      final targetPos = world.componentsOf<Position>().get(followEntity!);
       if (targetPos != null) {
         endX = targetPos.x;
         endY = targetPos.y;
@@ -195,28 +195,28 @@ class MoveCameraStep extends CinematicStep {
     final newX = _startX + (endX - _startX) * t;
     final newY = _startY + (endY - _startY) * t;
 
-    world.storeOf<Position>().set(camEntity, Position(newX, newY));
+    world.componentsOf<Position>().set(camEntity, Position(newX, newY));
 
     return _tween.isComplete;
   }
 
   @override
   void skip(World world) {
-    final camEntity = cameraEntity ?? (world.storeOf<EntityId>().get(0) ?? 0);
-    final camPos = world.storeOf<Position>().get(camEntity);
+    final camEntity = cameraEntity ?? (world.componentsOf<EntityId>().get(0) ?? 0);
+    final camPos = world.componentsOf<Position>().get(camEntity);
     if (camPos == null) return;
 
     double endX = _endX;
     double endY = _endY;
     if (followEntity != null) {
-      final targetPos = world.storeOf<Position>().get(followEntity!);
+      final targetPos = world.componentsOf<Position>().get(followEntity!);
       if (targetPos != null) {
         endX = targetPos.x;
         endY = targetPos.y;
       }
     }
 
-    world.storeOf<Position>().set(camEntity, Position(endX, endY));
+    world.componentsOf<Position>().set(camEntity, Position(endX, endY));
   }
 }
 
@@ -284,7 +284,7 @@ class SetFlagStep extends CinematicStep {
 
   @override
   void start(World world) {
-    final state = world.storeOf<GameState>().get(0);
+    final state = world.componentsOf<GameState>().get(0);
     if (state != null) {
       state.data[flag] = value;
     }
@@ -313,7 +313,7 @@ class FollowEntityStep extends CinematicStep {
   bool update(World world, double dt) {
     _elapsed += dt;
 
-    final targetPos = world.storeOf<Position>().get(targetEntity);
+    final targetPos = world.componentsOf<Position>().get(targetEntity);
     if (targetPos != null) {
       // Emit event for engine_flutter's camera to follow
       world.events.emit(_FollowCameraEvent(targetEntity));
