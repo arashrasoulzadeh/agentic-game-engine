@@ -146,7 +146,10 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   late final GameState _gameState;
   late Future<_LoadedGame> _future;
   bool _paused = false;
-  _LoadedGame? _overlay;
+
+  /// Pushed overlays, bottom first; only the last one takes taps, the ones
+  /// beneath stay visible but frozen.
+  final List<_LoadedGame> _overlays = [];
 
   /// The in-flight snapshot transition: the outgoing scene's frame, its config,
   /// and a completer `_loadSceneWithTransition` awaits. Null when none.
@@ -189,10 +192,16 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   /// Also drops any active overlay — a full scene switch makes whatever
   /// was paused underneath it moot.
   void _loadScene(Scene next) {
+    final outgoing = _future;
+    final dropped = List<_LoadedGame>.of(_overlays);
     setState(() {
       _future = _load(next);
-      _overlay = null;
+      _overlays.clear();
     });
+    for (final overlay in dropped.reversed) {
+      overlay.scene.onExit(overlay.world);
+    }
+    outgoing.then((l) => l.scene.onExit(l.world), onError: (_) {});
   }
 
   /// Loads [next] with an optional [transition] effect, in two phases
@@ -278,18 +287,21 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   /// Loads [overlay] into its own small `World` (via the same `_load`
   /// every scene uses) without touching `_future` at all — the base
   /// scene's `World` just keeps existing, frozen (see `build`'s
-  /// `paused: _paused || _overlay != null`), so popping the overlay
+  /// `paused: _paused || _overlays.isNotEmpty`), so popping the overlay
   /// resumes it exactly where it left off. This is the whole mechanism
   /// behind `SceneController.pushOverlay`'s "pause without losing
   /// state" contract.
   Future<void> _pushOverlay(Scene overlay) async {
     final loaded = await _load(overlay);
     if (!mounted) return;
-    setState(() => _overlay = loaded);
+    setState(() => _overlays.add(loaded));
   }
 
   void _popOverlay() {
-    setState(() => _overlay = null);
+    if (_overlays.isEmpty) return;
+    late final _LoadedGame popped;
+    setState(() => popped = _overlays.removeLast());
+    popped.scene.onExit(popped.world);
   }
 
   /// Snapshots the base scene's `EngineView` (see
@@ -411,6 +423,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     final camera = scene.createCamera(world)
       ..shakeIntensity = widget.game.screenShakeIntensity;
     final inputController = widget.game.createInputController();
+    scene.onEnter(world);
     return _LoadedGame(world, atlasRegistry, camera, inputController, scene);
   }
 
@@ -508,7 +521,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
             child: widget.game.buildLoadingScreen(context),
           );
         }
-        final overlay = _overlay;
+        final overlay = _overlays.isEmpty ? null : _overlays.last;
         final engineView = RepaintBoundary(
           key: _engineViewRepaintKey,
           child: EngineView(
@@ -583,8 +596,23 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
               buttons: widget.game.onScreenButtons(),
               atlasRegistry: loaded.atlasRegistry,
             ),
+          for (final under in _overlays.take(
+            _overlays.isEmpty ? 0 : _overlays.length - 1,
+          ))
+            EngineView(
+              key: ObjectKey(under),
+              world: under.world,
+              atlasRegistry: under.atlasRegistry,
+              camera: under.camera,
+              paused: true,
+              backgroundColor: const Color(0x99101018),
+              maxFps: widget.game.config.maxFps,
+              fixedTimestepSeconds: widget.game.config.fixedTimestepSeconds,
+              singlePassLighting: widget.game.config.singlePassLighting,
+            ),
           if (overlay != null)
             EngineView(
+              key: ObjectKey(overlay),
               world: overlay.world,
               atlasRegistry: overlay.atlasRegistry,
               camera: overlay.camera,

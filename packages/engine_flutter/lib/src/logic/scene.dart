@@ -119,6 +119,19 @@ abstract class Scene {
   /// Called once per frame with the time delta and current world.
   /// Default implementation does nothing.
   void update(double dt, World world) {}
+
+  /// Called once, after `populate`/`loadAssets`, when this scene becomes the
+  /// one the player sees (a base scene finished loading, or an overlay was
+  /// pushed). The place to start music or reset per-visit state without
+  /// putting it in `populate`, which also runs for loads the player never
+  /// reaches. Does nothing by default.
+  void onEnter(World world) {}
+
+  /// Called once when this scene stops being shown for good: replaced by
+  /// `loadScene`, or its overlay was popped (or dropped by a `loadScene`).
+  /// Not called when something is merely pushed on top, since it resumes
+  /// afterwards. Does nothing by default.
+  void onExit(World world) {}
 }
 
 /// Handed to every `Scene.populate` call so in-scene logic can switch to

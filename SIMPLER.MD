@@ -120,7 +120,7 @@ Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_
 - [ ] **Input recording and replay**: `ReplayRecorder` exists; wire inputs + `world.random` seed so a bug can be reproduced headlessly.
 
 ### Scenes and game flow (stay in `engine_flutter`, D5)
-- [ ] Scene stack (`push/pop/replace` with enter/exit hooks), scene = level + systems + UI, built-in transitions. Do not create a second `Scene` type; `scene.dart`, `scene_transition.dart` already exist.
+- [ ] **Scene = level + systems + UI bundle** and **base-scene stack** (`push/pop` of full scenes with the one beneath resuming). Overlay stack with `onEnter/onExit` hooks shipped; transitions already exist.
 
 ### Hierarchy
 - [ ] **Named lookup**: `world.find('player')`. Names live only in level JSON (`LevelHandle.named`), not on the world; decide whether to add a registered `Name` component (then `find` is a store scan) or keep names a level concern. `world.withTag(...)` already covers the by-label case. (`Parent`, `addChild`, `childrenOf`, `worldPositionOf` and cascading destroy shipped.)
