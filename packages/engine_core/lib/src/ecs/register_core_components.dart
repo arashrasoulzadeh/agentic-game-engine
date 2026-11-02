@@ -6,6 +6,7 @@ import '../content/game_state.dart';
 import '../content/inventory.dart';
 import 'countdown_timer.dart';
 import 'hierarchy.dart';
+import '../content/prefab_registry.dart';
 import 'name.dart';
 import 'tags.dart';
 import 'world.dart';
@@ -227,6 +228,12 @@ void registerCoreComponents(World world) {
     (p) => p.toJson(),
     Parent.fromJson,
     schema: parentSchema,
+  );
+  world.components.register<PrefabRef>(
+    'prefabRef',
+    (r) => r.toJson(),
+    PrefabRef.fromJson,
+    schema: prefabRefSchema,
   );
   world.components.register<Name>(
     'name',

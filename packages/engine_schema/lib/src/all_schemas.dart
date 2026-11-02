@@ -37,6 +37,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'selected': selectedSchema,
   'tags': tagsSchema,
   'name': nameSchema,
+  'prefabRef': prefabRefSchema,
   'parent': parentSchema,
   'countdownTimer': countdownTimerSchema,
   'unitStats': unitStatsSchema,

@@ -211,6 +211,10 @@ const tagsSchema = ComponentSchema('tags', [
   FieldSchema('tags', FieldType.list, required: true),
 ]);
 
+const prefabRefSchema = ComponentSchema('prefabRef', [
+  FieldSchema('name', FieldType.string, required: true),
+]);
+
 const nameSchema = ComponentSchema('name', [
   FieldSchema('value', FieldType.string, required: true),
 ]);

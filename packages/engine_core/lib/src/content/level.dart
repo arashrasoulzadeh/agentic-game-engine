@@ -1,6 +1,7 @@
 import '../ecs/engine_error.dart';
 import '../ecs/entity.dart';
 import '../ecs/name.dart';
+import 'prefab_registry.dart';
 import '../ecs/world.dart';
 
 /// Thrown when level JSON fails validation. Carries a specific,
@@ -54,12 +55,22 @@ class Level {
   /// checked first (unknown name, not an object, or rejected by its own
   /// `fromJson`) and a [LevelLoadException] lists every problem with its
   /// `entities[i].components.name` path; nothing is spawned in that case.
+  ///
+  /// With [defaults], a field a component's schema gives a default is filled in
+  /// when the level leaves it out (`{"position": {"x": 5}}` gets `y: 0`), so
+  /// authors write only what differs. Fields without a declared default are
+  /// still required. With [prefabs], entities carrying a `prefabRef` are
+  /// replaced by that prefab (see [PrefabRegistry.expandRefs]); a named
+  /// placeholder's name moves to the prefab's first entity.
   static Map<String, EntityId> loadInto(
     World world,
     Map<String, dynamic> json, {
     bool strict = false,
+    PrefabRegistry? prefabs,
+    bool defaults = false,
   }) {
-    final entities = validate(json);
+    var entities = validate(json);
+    if (defaults) entities = _withDefaults(world, entities);
     if (strict) {
       final problems = <ErrorProblem>[];
       for (var i = 0; i < entities.length; i++) {
@@ -87,14 +98,27 @@ class Level {
       }
     }
     final named = <String, EntityId>{};
+    final spawned = <EntityId>[];
     for (final entityJson in entities) {
       final id = world.spawn();
+      spawned.add(id);
       final components =
           entityJson['components'] as Map<String, dynamic>? ?? const {};
       world.components.applyToEntity(id, components);
       if (entityJson['name'] case final String name) {
         named[name] = id;
         if (world.components.isRegistered('name')) world.setName(id, name);
+      }
+    }
+    if (prefabs != null) {
+      final replaced = prefabs.expandRefs(world, only: spawned);
+      for (final entry in named.entries.toList()) {
+        final instance = replaced[entry.value];
+        if (instance == null) continue;
+        named[entry.key] = instance.root;
+        if (world.components.isRegistered('name')) {
+          world.setName(instance.root, entry.key);
+        }
       }
     }
     return named;
@@ -112,6 +136,29 @@ class Level {
   }
 
   /// Validates [json] and returns its `entities` list, cast, on success.
+  static List<Map<String, dynamic>> _withDefaults(
+    World world,
+    List<Map<String, dynamic>> entities,
+  ) {
+    return [
+      for (final entity in entities)
+        {
+          ...entity,
+          if (entity['components'] case final Map<String, dynamic> components)
+            'components': {
+              for (final entry in components.entries)
+                entry.key: _fill(world, entry.key, entry.value),
+            },
+        },
+    ];
+  }
+
+  static Object? _fill(World world, String name, Object? value) {
+    final schema = world.components.schemaFor(name);
+    if (schema == null || value is! Map) return value;
+    return {...schema.defaults, ...value.cast<String, dynamic>()};
+  }
+
   /// Exposed separately so tools (e.g. a CLI lint command) can validate
   /// a level file without loading it into a live World.
   static List<Map<String, dynamic>> validate(Map<String, dynamic> json) {

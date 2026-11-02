@@ -89,10 +89,10 @@ Each item gets its own mini-spec appended here before work starts (files, tests,
 
 ### Levels, prefabs and assets
 Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `level_validator.dart`, `tmx_import/export.dart`, `AssetHotReload` exist.
-- [ ] **Asset loading**: `Level.fromAsset('levels/1.json')`.
+- [x] **Asset loading**: `LevelAsset.read/load` in `engine_flutter` (`await LevelAsset.load(world, 'assets/levels/1.json', strict: true)`). It lives there, not as `Level.fromAsset`, because `engine_core` cannot touch the Flutter asset bundle.
 - [x] Prefab audit: `Prefab` (data, `prefab.*` operations) existed but had no runtime spawn. `PrefabRegistry.register/registerJson/spawn(world, name, x, y)` shipped; it validates every component up front. **Finding:** `Level.loadInto` (via `applyToEntity`) silently skips unknown component names, so a typo in a level drops the component without a word. See the validation item below.
-- [ ] **Auto-spawn from prefab** (`PrefabRef` component).
-- [ ] **Component defaults on level load**.
+- [x] **Auto-spawn from prefab**: `PrefabRef` component (`prefabRef: {name}`) plus `PrefabRegistry.expandRefs(world, only:)`; `Level.loadInto(prefabs: registry)` expands the placeholders it just loaded at their `Position`, and a named placeholder's name moves to the prefab's first entity. Without a registry placeholders are left alone.
+- [x] **Component defaults on level load**: opt-in `Level.loadInto(defaults: true)` fills schema-declared defaults (`{"position": {"x": 5}}` gets `y: 0`); authored values win; fields with no declared default stay required; works with `strict`.
 - [x] **Validation with fixes**: strict load (`Level.loadInto(strict: true)`), `LevelValidator` (used by `project.doctor`, `level.validate`, studio) and `checkComponent` all say `did you mean "position"?` for a typo'd component name; a missing required field says `y is missing (add "y": 0)`; a mistyped enum value suggests the closest option. `project.doctor` already uses the schema validator, which is stricter than strict load, so no second validator was added.
 - [ ] **Tiled mapping polish** and **hot-reload friendliness**.
 

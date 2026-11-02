@@ -1,4 +1,5 @@
 import '../ecs/entity.dart';
+import '../physics/position.dart';
 import '../ecs/world.dart';
 import 'level.dart';
 import 'prefab.dart';
@@ -15,6 +16,21 @@ class PrefabInstance {
 
   /// The first entity, the usual "main" one of a prefab.
   EntityId get root => ids.first;
+}
+
+/// Marks an entity as a placeholder for the prefab [name]: authored in a level
+/// as `{"prefabRef": {"name": "torch"}, "position": {...}}`, and replaced by the
+/// real entities when [PrefabRegistry.expandRefs] runs (or a level is loaded with
+/// `prefabs:`). Lets a level reference a prefab without repeating its contents.
+class PrefabRef {
+  final String name;
+
+  const PrefabRef(this.name);
+
+  Map<String, dynamic> toJson() => {'name': name};
+
+  factory PrefabRef.fromJson(Map<String, dynamic> json) =>
+      PrefabRef(json['name'] as String);
 }
 
 /// Named [Prefab]s a game can spawn into a live world: `registry.spawn(world,
@@ -50,15 +66,8 @@ class PrefabRegistry {
     double y, {
     Set<String> takenNames = const {},
   }) {
-    final prefab = _prefabs[name];
-    if (prefab == null) {
-      throw ArgumentError.value(
-        name,
-        'name',
-        'No prefab registered under this name. Known: '
-            '${names.isEmpty ? '(none)' : names.join(', ')}.',
-      );
-    }
+    spawnCheck(name);
+    final prefab = _prefabs[name]!;
     final entities = prefab.instantiate(x, y, taken: takenNames);
     Level.validate({
       'entities': [for (final e in entities) e.toJson()],
@@ -87,5 +96,42 @@ class PrefabRegistry {
       if (e.name != null) named[e.name!] = id;
     }
     return PrefabInstance(ids, named);
+  }
+
+  /// Replaces every [PrefabRef] placeholder (all of them, or only those in
+  /// [only]) with its prefab, spawned at the placeholder's `Position` (the
+  /// origin if it has none), then destroys the placeholder. Returns the
+  /// placeholder id mapped to what replaced it. An unknown prefab name throws
+  /// before anything is changed.
+  Map<EntityId, PrefabInstance> expandRefs(
+    World world, {
+    Iterable<EntityId>? only,
+  }) {
+    final refs = world.componentsOf<PrefabRef>();
+    final wanted = only?.toSet();
+    final todo = <EntityId, String>{
+      for (var i = 0; i < refs.length; i++)
+        if (wanted == null || wanted.contains(refs.entityAt(i)))
+          refs.entityAt(i): refs.denseAt(i).name,
+    };
+    todo.values.toSet().forEach(spawnCheck);
+    final out = <EntityId, PrefabInstance>{};
+    for (final entry in todo.entries) {
+      final at = world.getComponent<Position>(entry.key);
+      out[entry.key] = spawn(world, entry.value, at?.x ?? 0, at?.y ?? 0);
+      world.destroy(entry.key);
+    }
+    return out;
+  }
+
+  /// Throws the unknown-name [ArgumentError] [spawn] would.
+  void spawnCheck(String name) {
+    if (has(name)) return;
+    throw ArgumentError.value(
+      name,
+      'name',
+      'No prefab registered under this name. Known: '
+          '${names.isEmpty ? '(none)' : names.join(', ')}.',
+    );
   }
 }
