@@ -73,7 +73,7 @@ Each item gets its own mini-spec appended here before work starts (files, tests,
 
 ### Entity and component ergonomics
 - [x] Component defaults: `Position()` and `Velocity()` default to zero (optional positional, source compatible). Deliberately not done: a default `Collider` radius (no value is right for every game; the radius is a size decision) and lenient JSON (`{"x": 1}` still fails, which strict level loading relies on).
-- [ ] **Component pooling** for high-churn components (particles); measure first with `particle_system_benchmark`.
+- [x] **Component pooling: measured, not worth it.** `particle_system_benchmark` steady state is 67 us (10 emitters), 655 us (100), 3360 us (500), about 1.1 us per live particle per step for spawn, move and age together. `entity_churn` shows a full spawn+destroy costs about 0.16 us, so allocation is not the bottleneck; reusing the per-tick `expired` list changed nothing. Revisit only if a profile shows GC pauses in a real game.
 - [ ] **Rename conceptually**: remove remaining "store" wording from public docs and error messages (`ComponentStore` may stay as the internal type).
 
 ### Systems
