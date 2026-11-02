@@ -203,7 +203,7 @@ class _RunStateMachineAction implements Action {
 
   @override
   void apply(World world) {
-    final aiState = world.storeOf<AIState>().get(entity);
+    final aiState = world.componentsOf<AIState>().get(entity);
     if (aiState == null) return;
 
     // Get or create the state machine's blackboard
@@ -245,7 +245,7 @@ class StateMachineSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final states = world.storeOf<AIState>();
+    final states = world.componentsOf<AIState>();
     for (var i = 0; i < states.length; i++) {
       final entity = states.entityAt(i);
       final state = states.denseAt(i);

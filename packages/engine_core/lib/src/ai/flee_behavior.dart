@@ -63,7 +63,7 @@ class _SetVelocityXAction implements Action {
 
   @override
   void apply(World world) {
-    final store = world.storeOf<Velocity>();
+    final store = world.componentsOf<Velocity>();
     final existing = store.get(entity);
     store.set(entity, Velocity(vx, existing?.y ?? 0));
   }

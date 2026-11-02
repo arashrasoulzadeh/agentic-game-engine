@@ -18,7 +18,7 @@ class AISystem implements System {
 
   @override
   void update(World world, double dt) {
-    final states = world.storeOf<AIState>();
+    final states = world.componentsOf<AIState>();
     if (states.length == 0) return;
 
     final view = WorldView(world);

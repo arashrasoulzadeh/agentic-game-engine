@@ -767,7 +767,7 @@ class BehaviorTreeSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final states = world.storeOf<AIState>();
+    final states = world.componentsOf<AIState>();
     for (var i = 0; i < states.length; i++) {
       final entity = states.entityAt(i);
       final state = states.denseAt(i);
@@ -808,7 +808,7 @@ class _RunTreeAction implements Action {
   void apply(World world) {
     // We need to store per-entity blackboard state
     // Use AIState.memory as the blackboard
-    final aiState = world.storeOf<AIState>().get(entity);
+    final aiState = world.componentsOf<AIState>().get(entity);
     if (aiState == null) return;
 
     final rawBlackboard = aiState.memory['_bt_blackboard'];

@@ -15,6 +15,6 @@ class SetVelocityAction implements Action {
 
   @override
   void apply(World world) {
-    world.storeOf<Velocity>().set(entity, Velocity(vx, vy));
+    world.componentsOf<Velocity>().set(entity, Velocity(vx, vy));
   }
 }

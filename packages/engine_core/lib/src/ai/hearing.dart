@@ -83,7 +83,7 @@ class HearingSystem implements System {
   @override
   void update(World world, double dt) {
     // Ages the memory so behaviours can give up on stale sounds (InvestigateBehavior.timeout).
-    final states = world.storeOf<AIState>();
+    final states = world.componentsOf<AIState>();
     for (var i = 0; i < states.length; i++) {
       final heard = states.denseAt(i).memory['lastHeardSound'];
       if (heard is Map && dt > 0) {
@@ -104,9 +104,9 @@ class HearingSystem implements System {
   }
 
   void _processSound(World world, SoundEvent sound) {
-    final positions = world.storeOf<Position>();
-    final hearings = world.storeOf<HearingComponent>();
-    final aiStates = world.storeOf<AIState>();
+    final positions = world.componentsOf<Position>();
+    final hearings = world.componentsOf<HearingComponent>();
+    final aiStates = world.componentsOf<AIState>();
 
     if (hearings.length == 0) return;
 
