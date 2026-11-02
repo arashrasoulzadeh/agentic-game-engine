@@ -1,4 +1,5 @@
 export 'src/audio/audio_manager.dart';
+export 'src/audio/game_audio.dart';
 export 'src/audio/animation_sfx_system.dart';
 export 'src/audio/dialogue_sfx_system.dart';
 export 'src/audio/install_animation_cue_systems.dart';

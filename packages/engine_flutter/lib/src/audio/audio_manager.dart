@@ -5,6 +5,8 @@ import 'package:audioplayers/audioplayers.dart';
 
 import 'package:engine_core/engine_core.dart';
 
+import 'game_audio.dart' show AudioOutput;
+
 /// Volume/stereo-balance for a sound at [sourceX]/[sourceY] as heard from
 /// [listenerX]/[listenerY] (typically the camera's world position) —
 /// pure math, no `audioplayers` dependency, so it's directly unit-
@@ -290,7 +292,7 @@ bool checkLineOfSightSync({
 /// the pooling benefit past [_maxPoolSize] of them at once. Music
 /// still uses a single persistent player since a game typically has
 /// one music track playing at a time.
-class AudioManager {
+class AudioManager implements AudioOutput {
   final AudioPlayer _music = AudioPlayer();
 
   /// Idle, ready-to-reuse `AudioPlayer`s — populated as sounds finish
@@ -307,6 +309,7 @@ class AudioManager {
   /// actually overlaps at once," not a measured/tuned value.
   static const _maxPoolSize = 8;
 
+  @override
   Future<void> playSound(String assetPath, {double volume = 1.0}) =>
       _play(assetPath, volume: volume);
 
@@ -397,6 +400,7 @@ class AudioManager {
     await player.play(AssetSource(assetPath), volume: volume, balance: balance);
   }
 
+  @override
   Future<void> playMusic(
     String assetPath, {
     double volume = 1.0,
@@ -406,6 +410,7 @@ class AudioManager {
     await _music.play(AssetSource(assetPath), volume: volume);
   }
 
+  @override
   Future<void> stopMusic() => _music.stop();
 
   Future<void> setMusicVolume(double volume) => _music.setVolume(volume);
