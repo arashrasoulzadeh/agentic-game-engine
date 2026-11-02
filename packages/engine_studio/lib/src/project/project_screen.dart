@@ -21,6 +21,7 @@ import 'project_tree.dart';
 import 'studio_project.dart';
 import 'studio_terminal.dart';
 import 'pub_get.dart';
+import 'git_panel.dart';
 import 'git_status.dart';
 
 /// A project window: the file manager on the left, and the file you pick open on
@@ -71,6 +72,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
   AtlasInfo? _atlasOpen;
   bool _problemsOpen = false;
   bool _searchOpen = false;
+  bool _gitOpen = false;
   bool _terminalOpen = false;
   final TextEditingController _searchController = TextEditingController();
   List<ProjectMatch> _searchResults = const [];
@@ -85,6 +87,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
     _searchOpen = true;
     _problemsOpen = false;
     _assetsOpen = false;
+    _gitOpen = false;
   });
 
   void _toggleProblems() => setState(() {
@@ -92,6 +95,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
     if (_problemsOpen) {
       _searchOpen = false;
       _assetsOpen = false;
+      _gitOpen = false;
     }
   });
 
@@ -100,6 +104,17 @@ class _ProjectScreenState extends State<ProjectScreen> {
     if (_assetsOpen) {
       _searchOpen = false;
       _problemsOpen = false;
+      _gitOpen = false;
+    }
+  });
+
+  void _toggleGit() => setState(() {
+    _gitOpen = !_gitOpen;
+    if (_gitOpen) {
+      _searchOpen = false;
+      _problemsOpen = false;
+      _assetsOpen = false;
+      _refreshGit();
     }
   });
 
@@ -258,6 +273,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
               icon: const Icon(Icons.source_outlined),
             ),
             IconButton(
+              key: const Key('project-git-panel'),
+              tooltip: StudioStrings.t('git.title'),
+              onPressed: _toggleGit,
+              icon: Icon(_gitOpen ? Icons.difference : Icons.difference_outlined),
+            ),
+            IconButton(
               key: const Key('project-pub-get'),
               tooltip: StudioStrings.t('project.pubGet'),
               onPressed: _pubGet,
@@ -306,6 +327,20 @@ class _ProjectScreenState extends State<ProjectScreen> {
                                 _atlasOpen = atlas;
                                 _open = null;
                               }),
+                              onOpenFile: (path) => setState(() {
+                                _open = path;
+                                _atlasOpen = null;
+                                _jumpLine = 0;
+                                _jumpCharacter = 0;
+                              }),
+                            )
+                          : _gitOpen
+                          ? GitPanel(
+                              projectRoot: widget.project.root,
+                              changes: _git,
+                              gitRunner: widget.gitRunner,
+                              onClose: _toggleGit,
+                              onRefresh: _refreshGit,
                               onOpenFile: (path) => setState(() {
                                 _open = path;
                                 _atlasOpen = null;

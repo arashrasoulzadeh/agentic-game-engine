@@ -57,18 +57,82 @@ Map<String, GitChange> parseGitStatus(String porcelain) {
 typedef GitRunner =
     Future<String?> Function(List<String> arguments, String workingDirectory);
 
-/// Runs the real `git` in [workingDirectory]; null when git is missing or the command fails.
-Future<String?> runGit(List<String> arguments, String workingDirectory) async {
+/// Runs the real `git` in [workingDirectory]; null when git is missing or the
+/// command's exit code is not in [okCodes] (`git diff` uses 1 when there is a
+/// diff, so callers that want the patch pass `{0, 1}`).
+Future<String?> runGit(
+  List<String> arguments,
+  String workingDirectory, {
+  Set<int> okCodes = const {0},
+}) async {
   try {
     final r = await Process.run(
       'git',
       arguments,
       workingDirectory: workingDirectory,
     );
-    return r.exitCode == 0 ? r.stdout as String : null;
+    return okCodes.contains(r.exitCode) ? r.stdout as String : null;
   } on Object {
     return null;
   }
+}
+
+/// Unified diff for one project-relative [path], or empty when git has nothing
+/// to show. Untracked files return their contents prefixed with `untracked`.
+Future<String> readGitDiff(
+  String projectRoot,
+  String path, {
+  GitRunner? run,
+}) async {
+  final runner =
+      run ??
+      (args, dir) => runGit(args, dir, okCodes: const {0, 1});
+  final unstaged = await runner(['diff', '--', path], projectRoot);
+  if (unstaged != null && unstaged.trim().isNotEmpty) return unstaged;
+  final staged = await runner(['diff', '--cached', '--', path], projectRoot);
+  if (staged != null && staged.trim().isNotEmpty) return staged;
+  try {
+    final file = File('$projectRoot/$path');
+    if (file.existsSync()) {
+      return 'untracked\n${file.readAsStringSync()}';
+    }
+  } on Object {
+    // Binary or unreadable: still report that git had no textual diff.
+  }
+  return '';
+}
+
+/// Outcome of `git add -A` + `git commit -m` in [projectRoot].
+class GitCommitResult {
+  final bool ok;
+  final String output;
+
+  const GitCommitResult(this.ok, this.output);
+}
+
+/// Stages every change in [projectRoot] and commits with [message].
+///
+/// Empty messages are refused without touching git. A missing git binary or a
+/// failed `add`/`commit` (nothing to commit, hook, …) returns [ok] false.
+Future<GitCommitResult> commitGitAll(
+  String projectRoot,
+  String message, {
+  GitRunner? run,
+}) async {
+  final msg = message.trim();
+  if (msg.isEmpty) {
+    return const GitCommitResult(false, 'Commit message is empty.');
+  }
+  final runner = run ?? runGit;
+  final add = await runner(['add', '-A'], projectRoot);
+  if (add == null) {
+    return const GitCommitResult(false, 'git add failed.');
+  }
+  final committed = await runner(['commit', '-m', msg], projectRoot);
+  if (committed == null) {
+    return const GitCommitResult(false, 'git commit failed.');
+  }
+  return GitCommitResult(true, committed);
 }
 
 /// The changed files in [projectRoot]'s repository, relative to [projectRoot]; empty when it is not a git

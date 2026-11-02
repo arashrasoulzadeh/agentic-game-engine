@@ -89,6 +89,68 @@ void main() {
     );
   });
 
+  group('readGitDiff', () {
+    test('prefers unstaged, then staged, then untracked file text', () async {
+      expect(
+        await readGitDiff(
+          '/p',
+          'a.txt',
+          run: (args, dir) async {
+            if (args[0] == 'diff' && args[1] == '--') return 'unstaged\n';
+            return '';
+          },
+        ),
+        'unstaged\n',
+      );
+      expect(
+        await readGitDiff(
+          '/p',
+          'a.txt',
+          run: (args, dir) async {
+            if (args.contains('--cached')) return 'staged\n';
+            return '';
+          },
+        ),
+        'staged\n',
+      );
+    });
+  });
+
+  group('commitGitAll', () {
+    test('refuses an empty message without running git', () async {
+      var ran = false;
+      final r = await commitGitAll(
+        '/p',
+        '  ',
+        run: (a, d) async {
+          ran = true;
+          return '';
+        },
+      );
+      expect(r.ok, isFalse);
+      expect(r.output, contains('empty'));
+      expect(ran, isFalse);
+    });
+
+    test('add then commit with the trimmed message', () async {
+      final calls = <List<String>>[];
+      final r = await commitGitAll(
+        '/p',
+        '  hello  ',
+        run: (args, dir) async {
+          calls.add(args);
+          return args.first == 'commit' ? '[main abc] hello\n' : '';
+        },
+      );
+      expect(r.ok, isTrue);
+      expect(calls, [
+        ['add', '-A'],
+        ['commit', '-m', 'hello'],
+      ]);
+      expect(r.output, contains('hello'));
+    });
+  });
+
   test('folderHasChanges looks inside the folder only', () {
     const c = {'assets/levels/a.json': GitChange.modified};
     expect(folderHasChanges(c, 'assets'), isTrue);
