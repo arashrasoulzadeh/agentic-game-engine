@@ -24,6 +24,9 @@ class WorldCommands {
   /// How many changes are waiting.
   int get length => _queue.length;
 
+  /// Drops every queued change without applying it (used by [World.dispose]).
+  void clear() => _queue = [];
+
   /// Creates an entity right away and returns its id, so later commands (and
   /// your own code) can refer to it. Creating is safe mid-iteration: it does
   /// not move any existing component. The entity has no components yet.

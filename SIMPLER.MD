@@ -74,11 +74,6 @@ Each item gets its own mini-spec appended here before work starts (files, tests,
 ### Quick start and spawn
 - [ ] **Genre spawn shortcuts**: `spawnSprite(...)` in `engine_flutter` and `spawnBody(...)` in `engine_platformer` (they cannot live in core: DAG). Core `spawnAt` exists.
 
-### Smarter world
-- [ ] **Batch operations**: set or remove several components on one entity efficiently.
-- [ ] **Event sugar**: `world.on<E>`, `world.once<E>`, `world.onCollision(...)` wrappers over `EventBus` (handles and `once` exist on the bus; collision helpers exist in `ecs/event_helpers.dart` and are leak-safe).
-- [ ] **Dispose properly**: `World.dispose()` only shuts down the job system; it should also clear event handlers, systems and timers.
-
 ### Entity and component ergonomics
 - [ ] **Component defaults**: `static const defaults` or builder constructors (`Collider()` with a sensible radius).
 - [ ] **Component pooling** for high-churn components (particles); measure first with `particle_system_benchmark`.

@@ -234,6 +234,44 @@ class World {
   /// [WorldCommands]. Use this instead of mutating while you iterate.
   late final WorldCommands commands = WorldCommands(this);
 
+  /// Subscribes [handler] to events of exactly type [E]; shorthand for
+  /// `events.on<E>`. Cancel the returned subscription to stop listening.
+  Subscription on<E>(void Function(E event) handler) => events.on<E>(handler);
+
+  /// Like [on] but unsubscribes itself after the first event.
+  Subscription once<E>(void Function(E event) handler) =>
+      events.once<E>(handler);
+
+  /// Sets every component in [values] on [entity] in one call, each stored
+  /// under its runtime type. All-or-nothing: a dead entity or an unregistered
+  /// type throws before anything is written.
+  void setComponents(EntityId entity, Iterable<Object> values) {
+    if (!entities.isAlive(entity)) {
+      throw StateError('Cannot set components on entity $entity: not alive.');
+    }
+    final list = values.toList();
+    final seen = <Type>{};
+    for (final v in list) {
+      if (components.getRegistration(v.runtimeType) == null) {
+        throw ArgumentError.value(
+          v,
+          'values',
+          'Component type ${v.runtimeType} is not registered.',
+        );
+      }
+      if (!seen.add(v.runtimeType)) {
+        throw ArgumentError.value(
+          v,
+          'values',
+          'Component type ${v.runtimeType} appears more than once.',
+        );
+      }
+    }
+    for (final v in list) {
+      components.getRegistration(v.runtimeType)!.store.set(entity, v);
+    }
+  }
+
   WorldTimers? _timers;
 
   /// Calls [callback] once, after [seconds] of simulated time (the `dt` given
@@ -485,11 +523,18 @@ class World {
     }
   }
 
-  /// Shuts down the job system and releases isolate resources.
-  /// Call this when the world is no longer needed (e.g., scene change).
+  /// Shuts down the job system and drops everything that could keep the world
+  /// alive or act on it later: event handlers, systems, timers and queued
+  /// commands. Entities and components are left readable so a final save or
+  /// debug dump still works. Call this when the world is no longer needed
+  /// (e.g., scene change); safe to call more than once.
   void dispose() {
     _jobSystem?.shutdown();
     _jobSystem = null;
+    events.clearHandlers();
+    _systems.clear();
+    _timers = null;
+    commands.clear();
   }
 }
 
