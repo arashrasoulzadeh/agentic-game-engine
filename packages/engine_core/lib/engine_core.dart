@@ -61,6 +61,7 @@ export 'src/command/tile_commands.dart';
 export 'src/command/composite_command.dart';
 export 'src/command/prefab_commands.dart';
 export 'src/content/prefab.dart';
+export 'src/content/prefab_registry.dart';
 export 'src/content/brush.dart';
 export 'src/command/command_history.dart';
 export 'src/validation/level_validator.dart';

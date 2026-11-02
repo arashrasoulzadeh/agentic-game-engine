@@ -90,10 +90,10 @@ Each item gets its own mini-spec appended here before work starts (files, tests,
 ### Levels, prefabs and assets
 Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `level_validator.dart`, `tmx_import/export.dart`, `AssetHotReload` exist.
 - [ ] **Asset loading**: `Level.fromAsset('levels/1.json')`.
-- [ ] **Prefab registry audit**: compare the existing prefab API with `register('enemy', {...})` / `spawn('enemy', pos)`.
+- [x] Prefab audit: `Prefab` (data, `prefab.*` operations) existed but had no runtime spawn. `PrefabRegistry.register/registerJson/spawn(world, name, x, y)` shipped; it validates every component up front. **Finding:** `Level.loadInto` (via `applyToEntity`) silently skips unknown component names, so a typo in a level drops the component without a word. See the validation item below.
 - [ ] **Auto-spawn from prefab** (`PrefabRef` component).
 - [ ] **Component defaults on level load**.
-- [ ] **Validation with fixes**: messages like "missing Position on entity 'player', add {...}"; extend `level_validator.dart`, do not add a second validator.
+- [ ] **Validation with fixes** (including: warn or fail on unknown component names in `Level.loadInto`; today it silently skips them, by design for forward-compatible patches, so it needs an opt-in strict mode): messages like "missing Position on entity 'player', add {...}"; extend `level_validator.dart`, do not add a second validator.
 - [ ] **Tiled mapping polish** and **hot-reload friendliness**.
 
 ### Physics, collision and movement
