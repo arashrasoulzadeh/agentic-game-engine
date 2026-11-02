@@ -20,6 +20,10 @@ pubspec.yaml.
 - Determinism: `world.random` (`WorldRandom`, snapshot-able), `World(seed:)`, `FixedStepper`,
   `world.after` / `world.every`, serializable `CountdownTimer`, `world.save()` / `world.load()`.
 - `GameBuilder.create` / `GameLoop` for one-call setup.
+- `package:engine_core/engine_core_testing.dart`: `GameTester` (headless ticks, `tickUntil`, `component<T>`,
+  `record<E>`, canonical `snapshotText`) and `expectGolden`.
+- `game_agent project doctor` (`project.doctor`): content problems, layout and `engine_*` dependency wiring;
+  exits 1 on an error. `world.patch` gained `strict` and `dryRun`; `World.checkPatch`, `World.debug()`.
 
 ### Changed
 - `World.storeOf<T>()` is deprecated in favour of `componentsOf<T>()` (same collection). All code,
@@ -29,6 +33,9 @@ pubspec.yaml.
 - `onCollisionBetween` / `onCollisionInvolving` stop automatically when their entity is destroyed.
 
 ### Fixed
+- `CreditsEntry` has a const constructor, so the `const [CreditsEntry(...)]` lists in the default and strategy
+  templates compile; the idle template hides the engine `Text` component where it clashes with Flutter's and
+  imports `MemorySaveStore` in its test. All three templates now analyze clean against the current engine.
 - `game_agent studio validate` no longer reports `.studio/undo/` journal files as invalid levels.
 
 ### Added (sprites, effects, idle combat)

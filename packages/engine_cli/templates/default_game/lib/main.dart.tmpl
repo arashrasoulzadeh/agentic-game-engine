@@ -89,9 +89,9 @@ class MainScene extends Scene {
     final named = Level.loadInto(world, levelJson);
 
     _player = named['player']!;
-    world.storeOf<InputState>().set(_player, game._inputController.state);
-    world.storeOf<Health>().set(_player, Health(current: 100, max: 100));
-    world.storeOf<Inventory>().set(_player, Inventory({'coin': 0}));
+    world.setComponent<InputState>(_player, game._inputController.state);
+    world.setComponent<Health>(_player, Health(current: 100, max: 100));
+    world.setComponent<Inventory>(_player, Inventory({'coin': 0}));
 
     final behaviors = BehaviorRegistry()
       ..register('patrol', PatrolBehavior(minX: 280, maxX: 480, speed: 60));
@@ -110,9 +110,9 @@ class MainScene extends Scene {
     spawnHealthHudBar(world, source: _player, x: 20, y: 20, width: 200, height: 20);
 
     final coin = world.spawn();
-    world.storeOf<Position>().set(coin, Position(450, 380));
-    world.storeOf<Collider>().set(coin, Collider(8));
-    world.storeOf<Sprite>().set(coin, Sprite('default', 'coin'));
+    world.setComponent<Position>(coin, Position(450, 380));
+    world.setComponent<Collider>(coin, Collider(8));
+    world.setComponent<Sprite>(coin, Sprite('default', 'coin'));
     dealPickupOnTouch(world, {coin}, 'coin');
 
     if (diskAssets != null) {

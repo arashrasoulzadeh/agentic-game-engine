@@ -159,7 +159,7 @@ class CreditsEntry {
   final String text;
   final CreditsStyle? style;
 
-  CreditsEntry(this.text, {this.style});
+  const CreditsEntry(this.text, {this.style});
 }
 
 /// Text styling for credits entries.

@@ -71,7 +71,7 @@ class SkirmishScene extends Scene {
         as Map<String, dynamic>;
     Level.loadInto(world, levelJson);
 
-    final map = world.storeOf<TileMap>().denseAt(0);
+    final map = world.componentsOf<TileMap>().denseAt(0);
     final nav = GridNavigator.fromTileMap(map, terrainCosts: {_forest: 3});
     installStrategySystems(
       world,
@@ -91,18 +91,18 @@ class SkirmishScene extends Scene {
     );
 
     _label = world.spawn();
-    world.storeOf<Position>().set(_label, Position(_grid * _cell / 2, _grid * _cell + _cell / 2));
-    world.storeOf<Text>().set(_label, Text('red to move -- tap here to end turn (Esc: pause)'));
+    world.setComponent<Position>(_label, Position(_grid * _cell / 2, _grid * _cell + _cell / 2));
+    world.setComponent<Text>(_label, Text('red to move -- tap here to end turn (Esc: pause)'));
 
     startTurnBasedGame(world, ['red', 'blue']);
 
     world.events.on<TurnStartedEvent>((e) {
       clearSelection(world);
-      world.storeOf<Text>().get(_label)!.text =
+      world.getComponent<Text>(_label)!.text =
           e.team == 'red' ? 'your move -- tap here to end turn' : 'blue is thinking...';
     });
     world.events.on<VictoryEvent>((e) {
-      world.storeOf<Text>().get(_label)!.text = '${e.team} wins!';
+      world.getComponent<Text>(_label)!.text = '${e.team} wins!';
     });
   }
 

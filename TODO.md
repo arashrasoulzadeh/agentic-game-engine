@@ -56,6 +56,14 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
       behavior-tree runners hardcode `1/60` instead of the tick's `dt`
       (`World.deltaTime` + runners/`BehaviorTreeSystem` set `_dt`).
 
+## Template health (found while verifying SIMPLER 9.3)
+- [ ] **`create --template idle_game` widget test fails**: `test/widget_test.dart` expects a widget with key
+      `timewarp-hour` on the Progress tab, which the generated app does not show (the same failure happens
+      against the engine as it was before the SIMPLER work, so it is not a regression). Either the template's
+      `assets/idle_game.json` needs a time warp with id `hour` or the test should look for what is there.
+- [ ] CI's templates job is the only automatic check that templates compile and pass their own tests; run the
+      scratch-project check from SIMPLER.MD (9.3) locally when you change a template or the engine API.
+
 ## Game-dev workflow
 
 Agent create → edit → verify path is shippable for all three templates:

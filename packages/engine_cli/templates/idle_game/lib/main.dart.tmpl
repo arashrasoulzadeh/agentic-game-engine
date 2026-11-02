@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:engine_core/engine_core.dart';
-import 'package:engine_flutter/engine_flutter.dart';
+import 'package:engine_flutter/engine_flutter.dart' hide Text;
 import 'package:engine_idle/engine_idle.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -166,7 +166,7 @@ class _IdleHomeState extends State<IdleHome> {
         offline: game.offline,
         notifier: LogReturnNotifier(),
         whileAway: () {
-          final buyers = c.world.storeOf<AutoBuyer>();
+          final buyers = c.world.componentsOf<AutoBuyer>();
           if (buyers.length == 0) return;
           runAutoBuyer(c.world, c.wallet, buyers.denseAt(0));
         },
