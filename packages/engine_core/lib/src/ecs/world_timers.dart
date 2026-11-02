@@ -2,6 +2,7 @@
 class TimerHandle {
   final double _interval;
   final void Function() _callback;
+  void Function(double dt)? _frame;
   double _remaining;
   bool _active = true;
 
@@ -38,6 +39,11 @@ class WorldTimers {
     return _add(TimerHandle._(seconds, seconds, callback));
   }
 
+  TimerHandle frame(void Function(double dt) callback) {
+    final t = TimerHandle._(0, 0, () {}).._frame = callback;
+    return _add(t);
+  }
+
   TimerHandle _add(TimerHandle timer) {
     _timers.add(timer);
     return timer;
@@ -52,6 +58,10 @@ class WorldTimers {
     final current = List<TimerHandle>.of(_timers);
     for (final timer in current) {
       if (!timer._active) continue;
+      if (timer._frame != null) {
+        timer._frame!(dt);
+        continue;
+      }
       timer._remaining -= dt;
       while (timer._active && timer._remaining <= _epsilon) {
         timer._callback();

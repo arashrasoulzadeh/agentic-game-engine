@@ -4,6 +4,12 @@
 /// string id instead of embedding a `Behavior` instance directly.
 enum EasingType { linear, easeInQuad, easeOutQuad, easeInOutQuad }
 
+/// Applies an easing curve to [t] in 0..1 (the same curves `Tween` uses).
+extension EasingApply on EasingType {
+  /// Eased value for linear progress [t].
+  double apply(double t) => _ease(this, t);
+}
+
 double _ease(EasingType type, double t) {
   switch (type) {
     case EasingType.linear:

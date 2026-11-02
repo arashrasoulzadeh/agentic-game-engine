@@ -122,8 +122,6 @@ Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_
 - [ ] Minimal barrel exports (advanced/internal to subpaths), consistent naming, remove redundancy, extension methods over bloating classes, dartdoc examples on public API.
 
 ### Time and tweens
-- [ ] **Tween helper**: `world.tween(entity, (Position p) => p.x, to: 100, duration: 0.3, ease: Ease.outQuad)` as a friendly constructor over the existing serializable `Tween` component and `TweenSystem`.
-- [ ] **Coroutine-style sequences**: `world.sequence([wait(1), () => spawn(...), wait(2)])`.
 - [ ] **Input recording and replay**: `ReplayRecorder` exists; wire inputs + `world.random` seed so a bug can be reproduced headlessly.
 
 ### Scenes and game flow (stay in `engine_flutter`, D5)

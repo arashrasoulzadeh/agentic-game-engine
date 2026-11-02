@@ -234,6 +234,11 @@ class World {
   /// [WorldCommands]. Use this instead of mutating while you iterate.
   late final WorldCommands commands = WorldCommands(this);
 
+  /// Calls [callback] with the simulated `dt` at the start of every step until
+  /// cancelled. The primitive under [WorldMotion.tween]; runtime-only.
+  TimerHandle onStep(void Function(double dt) callback) =>
+      (_timers ??= WorldTimers()).frame(callback);
+
   /// Subscribes [handler] to events of exactly type [E]; shorthand for
   /// `events.on<E>`. Cancel the returned subscription to stop listening.
   Subscription on<E>(void Function(E event) handler) => events.on<E>(handler);
