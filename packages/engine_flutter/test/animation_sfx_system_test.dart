@@ -123,7 +123,9 @@ void main() {
           loop: false,
           frameEvents: [
             [],
-            [const AnimationEvent('sfx', {'id': 'foot.wav'})],
+            [
+              const AnimationEvent('sfx', {'id': 'foot.wav'}),
+            ],
           ],
         ),
       ),

@@ -193,19 +193,18 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Game.viewportConfig reaches EngineView through GameRunner',
-    (tester) async {
-      final game = _ViewportConfigGame();
-      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
-      await tester.pump();
-      await tester.pump();
+  testWidgets('Game.viewportConfig reaches EngineView through GameRunner', (
+    tester,
+  ) async {
+    final game = _ViewportConfigGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump();
+    await tester.pump();
 
-      final engineView = tester.widget<EngineView>(find.byType(EngineView));
-      expect(engineView.viewportConfig?.targetAspectRatio, 9 / 16);
-      expect(_DefaultCallbacksGame().viewportConfig, isNull);
-    },
-  );
+    final engineView = tester.widget<EngineView>(find.byType(EngineView));
+    expect(engineView.viewportConfig?.targetAspectRatio, 9 / 16);
+    expect(_DefaultCallbacksGame().viewportConfig, isNull);
+  });
 
   testWidgets(
     "GameConfig.showAutoTileBitmask reaches EngineView through GameRunner",

@@ -64,7 +64,9 @@ void main() {
           loop: false,
           frameEvents: [
             [],
-            [const AnimationEvent('particle', {'count': 12})],
+            [
+              const AnimationEvent('particle', {'count': 12}),
+            ],
           ],
         ),
       ),

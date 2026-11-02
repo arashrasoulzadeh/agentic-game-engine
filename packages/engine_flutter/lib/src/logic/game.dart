@@ -514,7 +514,8 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
           child: EngineView(
             world: loaded.world,
             atlasRegistry: loaded.atlasRegistry,
-            camera: loaded.camera..shakeIntensity = widget.game.screenShakeIntensity,
+            camera: loaded.camera
+              ..shakeIntensity = widget.game.screenShakeIntensity,
             inputController: loaded.inputController,
             cameraFollowEntity: loaded.scene.cameraFollowEntity(loaded.world),
             backgroundColor: widget.game.config.backgroundColor,

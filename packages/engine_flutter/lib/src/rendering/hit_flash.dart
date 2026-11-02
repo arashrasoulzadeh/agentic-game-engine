@@ -21,20 +21,17 @@ class HitFlash {
   /// ARGB modulate color while [remaining] > 0.
   int tintArgb;
 
-  HitFlash({
-    this.remaining = 0,
-    this.tintArgb = kDefaultHitFlashTint,
-  });
+  HitFlash({this.remaining = 0, this.tintArgb = kDefaultHitFlashTint});
 
   Map<String, dynamic> toJson() => {
-        'remaining': remaining,
-        'tintArgb': tintArgb,
-      };
+    'remaining': remaining,
+    'tintArgb': tintArgb,
+  };
 
   factory HitFlash.fromJson(Map<String, dynamic> json) => HitFlash(
-        remaining: (json['remaining'] as num?)?.toDouble() ?? 0,
-        tintArgb: (json['tintArgb'] as num?)?.toInt() ?? kDefaultHitFlashTint,
-      );
+    remaining: (json['remaining'] as num?)?.toDouble() ?? 0,
+    tintArgb: (json['tintArgb'] as num?)?.toInt() ?? kDefaultHitFlashTint,
+  );
 }
 
 /// Starts (or refreshes) a hit flash on [entity]. No-op if the entity has

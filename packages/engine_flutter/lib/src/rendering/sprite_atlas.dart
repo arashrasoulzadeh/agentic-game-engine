@@ -94,10 +94,7 @@ class SpriteAtlas {
   /// One region named [region] covering the whole [image] — backgrounds
   /// and other non-sheet art that still want an atlas id for
   /// `ParallaxLayer` / `Sprite`.
-  factory SpriteAtlas.fromFullImage(
-    ui.Image image, {
-    String region = 'full',
-  }) {
+  factory SpriteAtlas.fromFullImage(ui.Image image, {String region = 'full'}) {
     return SpriteAtlas(image, {
       region: ui.Rect.fromLTWH(
         0,

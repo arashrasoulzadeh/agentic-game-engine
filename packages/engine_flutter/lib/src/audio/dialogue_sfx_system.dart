@@ -19,10 +19,8 @@ class DialogueSfxSystem implements System {
   bool _attached = false;
 
   /// Production constructor — wires [AudioManager.playSound].
-  DialogueSfxSystem(
-    AudioManager audio, {
-    this.soundIds = const {},
-  }) : _playSound = audio.playSound;
+  DialogueSfxSystem(AudioManager audio, {this.soundIds = const {}})
+    : _playSound = audio.playSound;
 
   /// Test / custom playback without constructing [AudioManager].
   DialogueSfxSystem.custom({

@@ -176,35 +176,40 @@ void main() {
     expect(seen[2].type, 'hitbox_off');
   });
 
-  test('does not re-emit frame events while staying on the last non-loop frame', () {
-    final world = buildWorld();
-    final id = world.spawn();
-    world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
-    world.storeOf<AnimationState>().set(
-      id,
-      AnimationState(
-        AnimationClip(
-          'hit',
-          ['frame0', 'frame1'],
-          frameDurationSeconds: 0.1,
-          loop: false,
-          frameEvents: [
-            [],
-            [const AnimationEvent('sfx', {'id': 'impact'})],
-          ],
+  test(
+    'does not re-emit frame events while staying on the last non-loop frame',
+    () {
+      final world = buildWorld();
+      final id = world.spawn();
+      world.storeOf<Sprite>().set(id, Sprite('atlas', 'frame0'));
+      world.storeOf<AnimationState>().set(
+        id,
+        AnimationState(
+          AnimationClip(
+            'hit',
+            ['frame0', 'frame1'],
+            frameDurationSeconds: 0.1,
+            loop: false,
+            frameEvents: [
+              [],
+              [
+                const AnimationEvent('sfx', {'id': 'impact'}),
+              ],
+            ],
+          ),
+          frameIndex: 0,
         ),
-        frameIndex: 0,
-      ),
-    );
+      );
 
-    var count = 0;
-    world.events.on<AnimationFrameEvent>((_) => count++);
+      var count = 0;
+      world.events.on<AnimationFrameEvent>((_) => count++);
 
-    world.step(0.1);
-    expect(count, 1);
-    world.step(0.1);
-    expect(count, 1);
-  });
+      world.step(0.1);
+      expect(count, 1);
+      world.step(0.1);
+      expect(count, 1);
+    },
+  );
 
   test('emits cues on the starting frame of a freshly attached clip', () {
     final world = buildWorld();
@@ -219,7 +224,9 @@ void main() {
           frameDurationSeconds: 0.1,
           loop: false,
           frameEvents: [
-            [const AnimationEvent('sfx', {'id': 'unsheathe'})],
+            [
+              const AnimationEvent('sfx', {'id': 'unsheathe'}),
+            ],
             [],
           ],
         ),

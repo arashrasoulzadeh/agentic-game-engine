@@ -123,8 +123,7 @@ class AnimationClip {
     if (frameOffsetsY != null) 'frameOffsetsY': frameOffsetsY,
     if (frameEvents != null)
       'frameEvents': [
-        for (final frame in frameEvents!)
-          [for (final e in frame) e.toJson()],
+        for (final frame in frameEvents!) [for (final e in frame) e.toJson()],
       ],
   };
 

@@ -43,7 +43,8 @@ class AnimationSfxSystem implements System {
     required double listenerY,
     double maxDistance,
     double volume,
-  })? _playPositional;
+  })?
+  _playPositional;
 
   bool _attached = false;
 
@@ -69,7 +70,8 @@ class AnimationSfxSystem implements System {
       required double listenerY,
       double maxDistance,
       double volume,
-    })? playPositional,
+    })?
+    playPositional,
     this.soundIds = const {},
     this.positional = false,
     this.listenerAt,
