@@ -311,6 +311,37 @@ class World {
   /// counter, so this is the practical stand-in for "where is my memory
   /// going": a runaway `particle` or `soundEvent` count shows up here long
   /// before it shows up as a frame spike. Zero-count components are omitted.
+  /// A short human-readable summary of the world for logs and bug reports:
+  /// tick, seed, entity and component counts, the system order (disabled
+  /// systems marked) and any [validateSystemOrder] problems.
+  ///
+  /// Meant to be read, not parsed; use [toJson] or [save] for data.
+  String debug() {
+    final counts = componentCounts();
+    final components = counts.keys.toList()..sort();
+    final systems = [
+      for (final e in _systems)
+        '${e.system.name}${e.enabled ? '' : ' (disabled)'}',
+    ];
+    final problems = validateSystemOrder();
+    final out = StringBuffer()
+      ..writeln(
+        'World ${width.toStringAsFixed(0)}x${height.toStringAsFixed(0)}'
+        ' tick=$_tick seed=$seed entities=${entities.count}',
+      )
+      ..writeln(
+        'components: ${components.isEmpty ? '(none)' : [for (final c in components) '$c=${counts[c]}'].join(', ')}',
+      )
+      ..writeln(
+        'systems: ${systems.isEmpty ? '(none)' : systems.join(' -> ')}',
+      );
+    if (!commands.isEmpty) out.writeln('queued commands: ${commands.length}');
+    for (final problem in problems) {
+      out.writeln('order problem: $problem');
+    }
+    return out.toString().trimRight();
+  }
+
   Map<String, int> componentCounts() => {
     for (final r in components.all)
       if (r.store.length > 0) r.name: r.store.length,
