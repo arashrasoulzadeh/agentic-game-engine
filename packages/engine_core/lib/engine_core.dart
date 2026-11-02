@@ -88,6 +88,7 @@ export 'src/ecs/world.dart';
 export 'src/ecs/world_commands.dart';
 export 'src/ecs/world_query.dart';
 export 'src/ecs/entity_handle.dart';
+export 'src/ecs/entity_builder.dart';
 export 'src/ecs/world_profiler.dart';
 export 'src/net/world_snapshot.dart';
 export 'src/net/lobby.dart';
