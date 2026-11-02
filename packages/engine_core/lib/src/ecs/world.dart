@@ -68,7 +68,20 @@ class World {
   /// Returns the archetype manager for optimized queries.
   ArchetypeManager get archetypes => components.archetypeManager;
 
-  void addSystem(System system) => _systems.add(_SystemEntry(system));
+  /// Registers [system] to run in [step].
+  ///
+  /// Systems run ordered by [phase] first, then in the order they were added
+  /// within a phase. The default [SystemPhase.physics] is shared by everything
+  /// registered without a phase, so code that never mentions phases keeps its
+  /// exact insertion order.
+  void addSystem(System system, {SystemPhase phase = SystemPhase.physics}) {
+    final entry = _SystemEntry(system, phase);
+    var at = _systems.length;
+    while (at > 0 && _systems[at - 1].phase.index > phase.index) {
+      at--;
+    }
+    _systems.insert(at, entry);
+  }
 
   List<String> get systemOrder => _systems.map((e) => e.system.name).toList();
 
@@ -274,7 +287,17 @@ class World {
 
 class _SystemEntry {
   final System system;
+  final SystemPhase phase;
   bool enabled = true;
 
-  _SystemEntry(this.system);
+  _SystemEntry(this.system, this.phase);
 }
+
+/// Coarse stages of one [World.step], run in this order.
+///
+/// Most systems belong in [physics], the default, and rely on insertion order
+/// there. Use the others to say "before everything" ([prePhysics]: input,
+/// AI decisions), "after the simulation settled" ([postPhysics]: damage
+/// resolution, animation selection) or "last" ([late]: camera, HUD) without
+/// having to register in exactly the right place.
+enum SystemPhase { prePhysics, physics, postPhysics, late }
