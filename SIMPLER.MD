@@ -1,80 +1,128 @@
 # SIMPLER
 
-Goal: Refactor the engine to be smarter and easier for game developers to write games with less boilerplate, fewer footguns, and clearer APIs. 
+Goal: Refactor the engine to be smarter and easier for game developers to write games with less boilerplate, fewer footguns, and clearer APIs.
 
-Focus on DX over coverage of every internal type.
+Focus on DX over coverage of every internal type. Every change must keep `dart analyze --fatal-infos` clean and all tests passing.
+
+## Philosophy
+- [ ] **Components only**: Everything attachable to entities is a component. Never speak of "stores" in public API. Think in `getComponent/setComponent/hasComponent/removeComponent`.
+- [ ] **Convention over configuration**: Sensible defaults everywhere. A minimal game should work with < 20 lines of code.
+- [ ] **Explicit over magic**: When magic is used, it's discoverable and documented. No hidden global state.
+- [ ] **Pure core**: `engine_core` stays Flutter-free. All platform integration goes in `engine_flutter`.
+- [ ] **Data-driven friendly**: JSON/level data should be easy to load and spawn without manual wiring for every type.
 
 ## Quick Start DX
-- [ ] **One-line world setup**: Add a helper like `Game.create(width: ..., height: ...)` that auto-calls `registerCoreComponents(world)` and sets up sensible defaults.
-- [ ] **System presets**: Add `installCoreSystems(world)`, `installPlatformerSystems(world)`, `installTopdownSystems(world)`, `installTurnBasedSystems(world)`. Bundle common systems in the right order instead of manually adding them one by one.
-- [ ] **Entity builder**: Allow `world.spawn()` to be fluent (`world.spawn()..with(Position(0,0))..with(Velocity(10,0))`) or add `world.create([Position(...), Velocity(...), ...])` to create an entity with components in one call.
-- [ ] **Sensible defaults**: Give common components (like `Collider`) reasonable defaults so new devs don't have to guess values.
+- [ ] **Game facade**: Add `Game` class in `engine_core` with `Game.create(width, height, {systems})` that auto-registers components, adds sensible system presets, and exposes `world`, `update(dt)`, `spawn()`, etc.
+- [ ] **Auto-register on demand**: Allow components to self-register or auto-register when first used. Eliminate the need to manually call `registerCoreComponents` in most cases.
+- [ ] **System presets**: Add `SystemPresets.core(world)`, `SystemPresets.platformer(world)`, `SystemPresets.topdown(world)`, `SystemPresets.turnBased(world)`, `SystemPresets.idle(world)`. Each adds systems in correct dependency order with one call.
+- [ ] **Entity factory**: Add `world.entity()` returning a fluent builder, or `world.spawnWith([Component1(...), Component2(...)])`. Support `..add()`, `..withX()`, chaining.
+- [ ] **Spawn shortcuts**: `world.spawnAt(x,y)` creates entity with `Position(x,y)`. `world.spawnSprite(...)`, `world.spawnBody(...)` for common patterns.
+- [ ] **Minimal hello-world**: Test that a bouncing sprite can be made in < 15 lines with new API.
 
-## Smarter Core API
-- [ ] **Shortcuts on World**: Add `world.get<T>(id)`, `world.set<T>(id, comp)`, `world.has<T>(id)`, `world.remove<T>(id)`. Hide `storeOf<T>()` behind these cleaner helpers.
-- [ ] **Unified entity API**: Let devs work with entities without needing to juggle raw `EntityId` + stores constantly.
-- [ ] **Event sugar**: Simplify `World.events` usage. Add helpers like `world.onCollision((a,b)=>...)`, `world.on<T>((e)=>...)` to avoid verbose boilerplate.
-- [ ] **Step wrapper**: Consider `game.update(dt)` as a higher level than calling `world.step(dt)` directly.
-- [ ] **Easier serialization**: Simplify `toJson()/applyPatch()` into a cleaner `game.save()` / `game.load()` flow.
+## Component-Centric API (No "Store" Leaks)
+- [ ] **Rename conceptually**: In all public APIs, comments, docs, errors - use "component" not "store". `ComponentStore` can remain as internal impl but never exposed as "Store API".
+- [ ] **World component access**: Add `world.getComponent<T>(id)`, `world.setComponent<T>(id, T value)`, `world.hasComponent<T>(id)`, `world.removeComponent<T>(id)`. Add `world.component<T>(id)` as shorthand returning nullable.
+- [ ] **Entity handle**: Create lightweight `Entity` or `EntityRef` with `get<T>()`, `set<T>(v)`, `has<T>()`, `remove<T>()`, `destroy()`. Pass these around instead of raw ints where ergonomic.
+- [ ] **Component container access**: `world.components<T>()` returns the component collection for iteration/querying. `world.allComponents<T>()` for dense iteration.
+- [ ] **Query helpers**: Add `world.query<T>()`, `world.query2<A,B>()`, `world.query3<A,B,C>()` returning iterators/tuples. Hide archetype complexity.
+- [ ] **Migrate incrementally**: Replace `storeOf<T>()` with component-centric APIs on every file touched. Don't add new `storeOf` usages.
+- [ ] **Deprecation path**: Mark `storeOf` deprecated with clear migration message pointing to component APIs.
 
-## Components & Registration
-- [ ] **Less registration boilerplate**: Reduce the need to manually register every custom component. Explore codegen or a simpler registration path.
-- [ ] **Convention over config**: If a component follows a simple `toJson/fromJson` pattern, allow auto-registration.
-- [ ] **Smarter schemas**: Only require schemas where actually needed. Don't force them for every single component.
-- [ ] **Cleaner `registerCoreComponents`**: Keep it but make room for user components to be registered more ergonomically.
+## Smarter World API
+- [ ] **Shortcuts**: `world.get<T>(id)`, `world.set<T>(id, T)`, `world.has<T>(id)`, `world.del<T>(id)` as ultra-short aliases.
+- [ ] **Batch operations**: Support setting/removing multiple components efficiently.
+- [ ] **Event sugar**: `world.on<E>((e) => {})`, `world.onCollision((a,b,e) => {})`, `world.once<E>((e)=>{})`. Auto-unsubscribe helpers.
+- [ ] **Update wrapper**: `world.update(dt)` as alias to `step(dt)` with clearer naming for game devs.
+- [ ] **Lifecycle**: `world.start()`, `world.pause()`, `world.stop()` helpers for game loops.
+- [ ] **Save/Load**: `world.save()` returning `Map<String,dynamic>`, `world.load(data)` as cleaner than raw `toJson/applyPatch`.
+- [ ] **Dispose properly**: Ensure all resources cleaned up, job system shut down.
 
-## Systems
-- [ ] **System groups**: Allow grouping related systems (`SystemGroup`) and adding them in one go.
-- [ ] **Auto ordering**: Prevent common footguns like adding `CollisionSystem` before `MovementSystem`. Either enforce ordering, warn, or have presets handle it.
-- [ ] **Lifecycle hooks**: Consider `onStart`, `onStop` on systems for cleaner setup/teardown.
-- [ ] **Fewer global systems**: Make optional systems truly optional and easy to opt-in/out of.
+## Entity & Component Ergonomics
+- [ ] **Fluent API everywhere**: `world.spawn().at(10,20).with(Velocity(5,0)).with(Collider(8))`.
+- [ ] **Component defaults**: Allow components to have `static const defaults` or builder constructors. `Collider()` with sensible radius.
+- [ ] **Attach/detach**: `entity.add<Component>(value)`, `entity.remove<Component>()` clear and chainable.
+- [ ] **Optional components**: Make missing components return null gracefully, avoid crashes.
+- [ ] **Tags as components**: Simple marker components should be trivial to add/remove.
+- [ ] **Component pools**: Consider pooling for high-churn components (particles) to reduce allocations.
 
-## AI, Behaviors & Behavior Trees
-- [ ] **Fluent BT API**: Replace verbose `BTSequence(children: [...])` nesting with a readable DSL like `BT.seq([BT.leaf('idle'), BT.wait(1)])` or builder pattern.
-- [ ] **BT helpers**: Add shortcuts for common patterns (`BT.ifThen`, `BT.whileRunning`, `BT.repeatForever`) to cut down on nesting.
-- [ ] **Simpler Behavior creation**: Make it easier to write inline behaviors without needing to create full classes for trivial ones (closures/functions where reasonable).
-- [ ] **Smarter AIState**: Hide `_bt_root`, `_bt_blackboard` keys behind helpers like `ai.setTree(tree)`, `ai.getBlackboard()`.
-- [ ] **WorldView ergonomics**: Keep it read-only but add more practical query helpers for common game logic.
+## Systems Refactor
+- [ ] **System ordering enforced**: Core dependencies (Movement before Collision) enforced or auto-sorted.
+- [ ] **System groups**: `SystemGroup([sys1, sys2])` can be added as one unit.
+- [ ] **Phase-based systems**: `updatePhase` (prePhysics, physics, postPhysics, late) for better organization.
+- [ ] **Conditional systems**: Enable/disable systems easily without removing them.
+- [ ] **System context**: Pass `dt`, `world` cleanly. Consider `System.update(context)`.
+- [ ] **ECS queries built-in**: Systems can declare queries (`query of: [Position, Velocity]`) and iterate efficiently.
+- [ ] **Less boilerplate**: Function-based systems or mixins to reduce class ceremony.
 
-## Levels, Prefabs & Content
-- [ ] **One-liner loading**: `Level.loadInto(world, 'assets/level.json')` or support loading from assets directly.
-- [ ] **Prefab API**: Make spawning prefabs dead simple (`world.spawnPrefab('enemy', x: 10, y: 20)`) with sensible defaults.
-- [ ] **Safer validation errors**: `Level.validate` throws `LevelLoadException` but errors should be human-readable and point to the exact fix.
-- [ ] **Data-driven without boilerplate**: Let developers focus on level data, not wiring up every component type.
-- [ ] **Component defaults on load**: Apply sensible defaults when spawning from level JSON to avoid "missing required component" errors.
+## AI, Behavior Trees & State Machines
+- [ ] **Fluent BT DSL**: `BT.sequence([BT.ifHasTarget(...), BT.chase(), BT.wait(0.5)])` much cleaner than deep nesting.
+- [ ] **BT node factories**: `BT.leaf('idle')`, `BT.selector([...])`, `BT.repeat(n, child)`, `BT.forever(child)`.
+- [ ] **Inline behaviors**: `Behavior((view, self) => MoveAction(...))` for trivial cases without full classes.
+- [ ] **BT helpers**: `BT.inRange(radius, child)`, `BT.seeTarget(child)`, `BT.random([children])`, `BT.cooldown(sec, child)`.
+- [ ] **AI helpers**: `ai.setBehavior('chase')`, `ai.runTree(root)`, hide memory keys.
+- [ ] **Blackboard sugar**: `blackboard.get/set/has/inc` with type safety.
+- [ ] **Steering made easy**: `Steer.seek(arrive(wander(...)))` composable.
+- [ ] **State machine DSL**: Cleaner JSON or builder API.
 
-## Turn-Based & Strategy
-- [ ] **Game mode factory**: Add `TurnBasedGame.create(world, config: ...)` to wire up turn state, orders, selection, combat, vision in one call.
-- [ ] **Unified commands**: Simplify issuing orders. Instead of manually building `MoveOrder` objects everywhere, add `unit.moveTo(x,y)`, `unit.attack(target)`.
-- [ ] **Selection helpers**: Make selecting units and issuing commands feel natural for RTS-style games.
-- [ ] **Less ceremony**: Hide grid/footprint/order queue plumbing behind higher level APIs where possible.
+## Levels, Prefabs & Assets
+- [ ] **Asset loading**: Integrate with Flutter/assets or simple file loading. `Level.fromAsset('levels/1.json')`.
+- [ ] **Prefab registry**: `PrefabRegistry` with `register('enemy', {...})`, `spawn('enemy', pos)`.
+- [ ] **Auto-spawn from prefab**: Attach `PrefabRef` component and have system spawn it, or just call directly.
+- [ ] **Component defaults on spawn**: Level loader fills missing defaults intelligently.
+- [ ] **Validation with fixes**: Errors say "missing Position on entity 'player', add {\"type\":\"position\",\"x\":0,\"y\":0}".
+- [ ] **Tiled integration smoother**: Easier mapping from Tiled objects/tiles to components/prefabs.
+- [ ] **Hot reload friendly**: Level/prefab changes easy to reload in dev.
 
-## UI, Input & Integration
-- [ ] **Input abstraction**: Consider a simple `Input` helper on `World`/`Game` to avoid reaching into platform-specific details.
-- [ ] **Trigger helpers**: Make `TriggerZone` easier to use with callbacks.
-- [ ] **Button API**: Simplify hit testing and wiring up buttons.
-- [ ] **Flutter integration polish**: Make `engine_flutter` integration feel natural with minimal glue code.
+## Physics, Collision & Movement
+- [ ] **Simple movement**: `Movement.move(entity, dir * speed * dt)` helpers.
+- [ ] **Collision callbacks**: Easier to react to collisions without manual event wiring.
+- [ ] **Tilemap helpers**: `tilemap.isSolid(x,y)`, `tilemap.getTile(x,y)` with world/tile coords conversion.
+- [ ] **Raycast API**: Simpler `world.raycast(from, to)` returning hits.
+- [ ] **Spatial queries**: `world.findNear(pos, radius)` returns entities/components easily.
 
+## Turn-Based Simplification
+- [ ] **One-call setup**: `TurnGame.setup(world)` wires everything.
+- [ ] **Action API**: `unit.do(MoveTo(x,y))`, `unit.do(Attack(target))` queued automatically.
+- [ ] **Turn flow**: `game.nextTurn()`, `game.endPlayerTurn()` with callbacks.
+- [ ] **Selection**: `game.select(entity)`, `game.selectAll([ids])`, `game.commandSelected(action)`.
+- [ ] **AI turns**: Opt-in, simple to customize.
 
-## Component-Centric API (Component, not Store)
-- [ ] **Everything is a component**: Don't think in terms of "stores of components". Think in terms of components attached to entities. 
-- [ ] **No "Store" in public API**: Avoid `storeOf`, `Store`, "key", or "name" when referring to component access. Use component-centric terminology everywhere.
-- [ ] **Use component accessors**: Prefer `getComponent<T>(id)`, `setComponent<T>(id, value)`, `hasComponent<T>(id)`, `removeComponent<T>(id)`. Use `world.component<T>()` or `world.components<T>()` to access component containers.
-- [ ] **Migrate as you go**: When touching any code during refactor, replace `storeOf<T>()` with the component-centric equivalents. Don't introduce new `store`-based APIs.
-- [ ] **Keep implementation detail hidden**: If `ComponentStore` remains internally, don't let "Store" leak into public-facing method names, comments, or docs.
-- [ ] **Fluent entity access**: Where possible, allow working with components directly on entity handles (`entity.get<T>()`, `entity.set<T>()`, `entity.has<T>()`).
+## Input & UI
+- [ ] **Input manager**: `Input.isPressed(Key.up)`, `Input.getAxis()`, unified across platforms.
+- [ ] **Action mapping**: Bind keys/buttons to game actions.
+- [ ] **UI helpers**: Simpler button/trigger wiring with callbacks.
+- [ ] **Camera helpers**: Follow target, bounds, shake.
 
-## General Cleanup
-- [ ] **Barrel exports**: Clean up `engine_core.dart` so common imports are minimal (`import 'package:engine_core/engine_core.dart';` should cover most game code).
-- [ ] **Consistent naming**: Unify naming across similar APIs (e.g. `addSystem` vs others).
-- [ ] **Smarter errors**: Replace cryptic errors with actionable messages (especially registry lookups, missing components).
-- [ ] **Remove dead APIs**: Deprecate or remove confusing/unused APIs that add complexity.
-- [ ] **Stronger type safety**: Leverage Dart's type system to prevent common mistakes at compile time.
-- [ ] **Docs for common flows**: Make the "happy path" obvious (spawn entity, add system, run loop) with minimal steps.
-- [ ] **Keep core pure**: Don't leak Flutter into `engine_core`. Keep boundaries clean.
+## Error Messages & Debugging
+- [ ] **Actionable errors**: Every "component not found" says how to fix it.
+- [ ] **Type-aware errors**: When wrong type passed, show expected vs got clearly.
+- [ ] **Dev mode warnings**: Warn about common mistakes (system order, missing registration) in debug.
+- [ ] **World inspector helpers**: `world.debug()` prints entity/component summary.
+- [ ] **Assertions**: Helpful asserts in debug, stripped in release.
+
+## API Surface Cleanup
+- [ ] **Barrel exports minimal**: `engine_core.dart` exports only what game devs need. Move advanced/internal to subpaths.
+- [ ] **Consistent naming**: Pick one style and apply everywhere (camelCase methods, clear names).
+- [ ] **Remove redundancy**: Eliminate duplicate/confusing APIs.
+- [ ] **Type inference friendly**: APIs should work well with Dart's inference.
+- [ ] **Extension methods**: Use extensions to add ergonomics without bloating classes.
+- [ ] **Documentation**: Every public API has clear dartdoc with examples.
+
+## Performance Without Complexity
+- [ ] **Query optimization**: Archetype queries fast but hidden behind simple API.
+- [ ] **Avoid allocations in hot paths**: Where possible, but don't sacrifice DX.
+- [ ] **Pooling helpers**: Easy to pool objects/components.
+- [ ] **Profiling optional**: `WorldProfiler` exists but not required.
+
+## Migration Strategy
+- [ ] **Backward compatible first**: Add new APIs, deprecate old ones gradually.
+- [ ] **Touch files to migrate**: When editing, migrate `storeOf` -> component APIs.
+- [ ] **Tests guide migration**: Keep all tests green, update them to nicer APIs over time.
+- [ ] **Incremental**: Don't big-bang rewrite. Improve API surface piece by piece.
 
 ## Validation
-- [ ] **Refactor doesn't break existing tests**: All `dart test` must still pass after changes.
-- [ ] **New APIs have tests**: Add tests for any new ergonomic helpers introduced.
-- [ ] **Analyze stays clean**: `dart analyze --fatal-infos` must pass.
-- [ ] **Try writing a tiny game**: Sanity check by writing a minimal topdown/platformer using the new simplified APIs to ensure it's actually nicer.
+- [ ] **All tests pass**: `cd packages/engine_core && dart test` after every major change.
+- [ ] **Analyze clean**: `dart analyze --fatal-infos` always green.
+- [ ] **Tiny game test**: Write a minimal platformer/topdown using new APIs - if it's clumsy, simplify more.
+- [ ] **Flutter still works**: Check `packages/engine_flutter` compiles if touched.
+- [ ] **No core Flutter deps**: `grep -r "flutter" packages/engine_core/lib` returns nothing.
