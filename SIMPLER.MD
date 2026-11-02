@@ -82,10 +82,10 @@ Each item gets its own mini-spec appended here before work starts (files, tests,
 
 ### AI, behavior trees and state machines
 `ai/behavior_tree.dart` already has the node classes and `BTNode.fromJson`; the factories below are sugar over them, JSON shape unchanged. `BT.inRange/seeTarget/ifHasTarget` need `WorldView` access (check what `BTContext` exposes first).
-- [ ] **Tree conditions** `BT.inRange`, `BT.seeTarget`, `BT.ifHasTarget`: need `WorldView` queries from `BTContext` (the `BT` factories, `registerFn` and blackboard `has/inc/remove` shipped). Express them as registered behaviors first and see if a factory earns its place.
-- [ ] **AI helpers**: `ai.setBehavior`, `ai.runTree`.
-- [ ] **Steering combinators**: composable `Steer.seek(arrive(wander(...)))` over existing `steering.dart`.
-- [ ] **State machine DSL**: cleaner JSON or builder over `state_machine.dart`.
+- [x] **Tree conditions**, done as registered behaviors (the plan's first step; no new node type needed): `registry.registerCondition(id, test)`, `registerInRange(id, target: 'player', range: 80)` (uses `world.find`), `registerHas<T>(id)`; a condition is a leaf that succeeds or fails, so it composes with `BT.sequence`/`BT.selector`.
+- [x] **AI helpers**: `world.setBehavior(entity, id, behaviors:, keepMemory:)` (unknown id fails immediately when a registry is given) and `world.runTree(entity, tree, behaviors:)` (registers the tree as `tree@<entity>` and points `AIState` at it).
+- [x] **Steering combinators**: `Steer.seek/flee/arrive/wander` rules over `SteerContext`, composed with `Steer.blend` (weighted, speed-capped), `Steer.firstMoving`, `Steer.onlyWhen(Steer.within(r), rule)`.
+- [x] **State machine DSL**: `StateMachineBuilder` (`state`, `transition`, `start`, `build`); `build` rejects undeclared states, duplicate states and a state with both a tree and a behavior, instead of leaving the machine silently idle.
 
 ### Levels, prefabs and assets
 Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `level_validator.dart`, `tmx_import/export.dart`, `AssetHotReload` exist.

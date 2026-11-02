@@ -284,3 +284,90 @@ class StateMachineSystem implements System {
     }
   }
 }
+
+/// Builds a [StateMachine] without hand-assembling [FSMState] maps, and checks
+/// the wiring at [build] time so a typo'd state name fails there instead of
+/// leaving the machine silently idle.
+///
+/// ```dart
+/// final guard = (StateMachineBuilder('guard')
+///       ..state('patrol', tree: BT.leaf('patrol'))
+///       ..state('chase', tree: BT.leaf('chase'))
+///       ..transition('patrol', 'chase', when: sees, name: 'seesPlayer')
+///       ..transition('chase', 'patrol', when: lost, name: 'lostPlayer'))
+///     .build();
+/// ```
+class StateMachineBuilder {
+  StateMachineBuilder(this.id);
+
+  /// The machine's id.
+  final String id;
+
+  final Map<String, FSMState> _states = {};
+  final List<(String, String, FSMTransition)> _transitions = [];
+  String? _initial;
+
+  /// Declares state [name], running [tree] or [behavior] while active (at
+  /// most one; neither makes a state that does nothing). The first state
+  /// declared is the start state unless [start] says otherwise.
+  void state(String name, {BTNode? tree, Behavior? behavior}) {
+    if (tree != null && behavior != null) {
+      throw ArgumentError(
+        'State "$name" takes a tree or a behavior, not both.',
+      );
+    }
+    if (_states.containsKey(name)) {
+      throw ArgumentError('State "$name" is declared twice.');
+    }
+    _states[name] = FSMState(
+      name: name,
+      behaviorTree: tree,
+      behavior: behavior,
+    );
+  }
+
+  /// Moves from [from] to [to] when [when] returns true. [name] is the key the
+  /// condition is saved under in JSON (see [FSMTransition.conditionName]).
+  /// Transitions of one state are tried in the order they were added.
+  void transition(
+    String from,
+    String to, {
+    required bool Function(BTContext) when,
+    String? name,
+  }) => _transitions.add((
+    from,
+    to,
+    FSMTransition(to, when, conditionName: name),
+  ));
+
+  /// Sets the start state.
+  void start(String name) => _initial = name;
+
+  /// The finished machine. Throws [ArgumentError] when no state was declared,
+  /// or a transition or [start] names a state that was not.
+  StateMachine build() {
+    if (_states.isEmpty) {
+      throw ArgumentError('Machine "$id" has no states.');
+    }
+    String known() => _states.keys.join(', ');
+    if (_initial != null && !_states.containsKey(_initial)) {
+      throw ArgumentError(
+        'Start state "$_initial" is not declared. Known: ${known()}.',
+      );
+    }
+    for (final (from, to, _) in _transitions) {
+      for (final name in [from, to]) {
+        if (!_states.containsKey(name)) {
+          throw ArgumentError(
+            'Transition $from -> $to names an undeclared state "$name". '
+            'Known: ${known()}.',
+          );
+        }
+      }
+    }
+    for (final (from, to, transition) in _transitions) {
+      _states[from]!.transitions[to] = transition;
+    }
+    return StateMachine(id: id, states: _states, initialState: _initial);
+  }
+}
