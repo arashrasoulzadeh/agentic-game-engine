@@ -168,14 +168,31 @@ List<Operation> worldOperations() => [
     summary: 'Change entities in a world with a snapshot-shaped patch.',
     description:
         'The same patch `World.applyPatch` takes: `{entities: [{id, components: {name: json}}]}`. Affects only the '
-        'in-memory world.',
+        'in-memory world. By default dead entities and unknown component names are skipped silently; `strict` makes '
+        'any problem an error (nothing is applied), and `dryRun` only reports the problems with their paths and '
+        'applies nothing.',
     kind: OperationKind.read,
     scope: OperationScope.pure,
-    params: const [_worldId, Param('patch', ParamType.json, required: true)],
+    params: const [
+      _worldId,
+      Param('patch', ParamType.json, required: true),
+      Param('strict', ParamType.boolean, defaultValue: false),
+      Param('dryRun', ParamType.boolean, defaultValue: false),
+    ],
     handler: (ctx, a) {
       final world = _world(ctx, a);
+      final patch = (a['patch']! as Map).cast<String, dynamic>();
+      if (a['dryRun'] == true) {
+        final problems = world.checkPatch(patch);
+        return OpOutcome.data({
+          'applied': false,
+          'dryRun': true,
+          'ok': problems.isEmpty,
+          'problems': [for (final p in problems) p.toJson()],
+        });
+      }
       try {
-        world.applyPatch((a['patch']! as Map).cast<String, dynamic>());
+        world.applyPatch(patch, strict: a['strict'] == true);
       } on WorldPatchException catch (e) {
         throw OpError(ErrorCode.validationFailed, e.toString());
       } on ComponentApplyException catch (e) {

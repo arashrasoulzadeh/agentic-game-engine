@@ -17,6 +17,22 @@ import 'world_timers.dart';
 /// `TypeError` from a failed cast. Per-component problems (a bad
 /// `fromJson`) throw `ComponentApplyException` instead, from
 /// `ComponentRegistry.applyToEntity`.
+/// One thing wrong with a patch, found by [World.checkPatch].
+class PatchProblem {
+  /// Where in the patch, e.g. `entities[2].components.position`.
+  final String path;
+
+  /// What is wrong, with enough detail to fix it.
+  final String message;
+
+  const PatchProblem(this.path, this.message);
+
+  Map<String, String> toJson() => {'path': path, 'message': message};
+
+  @override
+  String toString() => ' - $path: $message';
+}
+
 class WorldPatchException implements Exception {
   final String message;
   WorldPatchException(this.message);
@@ -311,12 +327,99 @@ class World {
     ],
   };
 
+  /// Everything wrong with [patch], without applying any of it; empty means
+  /// `applyPatch(patch, strict: true)` would succeed.
+  ///
+  /// Reports a missing or malformed `entities` list, ids that are not ints or
+  /// not alive (the lenient apply skips these silently), `components` that are
+  /// not an object, unknown component names, and component data its own
+  /// `fromJson` rejects.
+  List<PatchProblem> checkPatch(Map<String, dynamic> patch) {
+    final problems = <PatchProblem>[];
+    final rawEntities = patch['entities'];
+    if (rawEntities == null) {
+      return [
+        const PatchProblem(
+          'entities',
+          'missing: a patch needs an '
+              '"entities" list',
+        ),
+      ];
+    }
+    if (rawEntities is! List) {
+      return [
+        PatchProblem(
+          'entities',
+          'must be a list, got ${rawEntities.runtimeType}',
+        ),
+      ];
+    }
+    for (var i = 0; i < rawEntities.length; i++) {
+      final at = 'entities[$i]';
+      final raw = rawEntities[i];
+      if (raw is! Map) {
+        problems.add(
+          PatchProblem(at, 'must be an object, got ${raw.runtimeType}'),
+        );
+        continue;
+      }
+      final id = raw['id'];
+      if (id is! int) {
+        problems.add(
+          PatchProblem('$at.id', 'must be an int, got ${id.runtimeType}'),
+        );
+        continue;
+      }
+      if (!entities.isAlive(id)) {
+        problems.add(
+          PatchProblem(
+            '$at.id',
+            'entity $id is not alive (a lenient apply would skip it)',
+          ),
+        );
+        continue;
+      }
+      final comps = raw['components'];
+      if (comps == null) continue;
+      if (comps is! Map) {
+        problems.add(
+          PatchProblem(
+            '$at.components',
+            'must be an object, got ${comps.runtimeType}',
+          ),
+        );
+        continue;
+      }
+      for (final entry in comps.entries) {
+        final reason = components.checkComponent('${entry.key}', entry.value);
+        if (reason != null) {
+          problems.add(PatchProblem('$at.components.${entry.key}', reason));
+        }
+      }
+    }
+    return problems;
+  }
+
   /// Applies a snapshot produced by [toJson] (or a partial patch with a
   /// subset of entities/components) — the agent-facing write path.
   /// Throws [WorldPatchException] on a malformed patch shape, or
   /// [ComponentApplyException] if a named component's own JSON is bad
   /// — never a bare, contextless `TypeError`.
-  void applyPatch(Map<String, dynamic> patch) {
+  ///
+  /// Lenient by default: entities that are not alive are skipped and unknown
+  /// component names ignored, so a forward-compatible patch still lands. Pass
+  /// `strict: true` to instead throw a [WorldPatchException] listing every
+  /// problem (see [checkPatch]) before anything is changed.
+  void applyPatch(Map<String, dynamic> patch, {bool strict = false}) {
+    if (strict) {
+      final problems = checkPatch(patch);
+      if (problems.isNotEmpty) {
+        throw WorldPatchException(
+          '${problems.length} problem${problems.length == 1 ? '' : 's'} in '
+          'patch, nothing applied:\n${problems.join('\n')}',
+        );
+      }
+    }
     final rawEntities = patch['entities'];
     if (rawEntities == null) return;
     if (rawEntities is! List) {

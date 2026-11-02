@@ -136,6 +136,24 @@ class ComponentRegistry {
     return out;
   }
 
+  /// Whether [value] could be applied as component [name], without applying
+  /// it: null when it is fine, otherwise a one-line reason (unknown name, not
+  /// an object, or the component's own `fromJson` rejecting it).
+  String? checkComponent(String name, Object? value) {
+    final reg = _byName[name];
+    if (reg == null) {
+      return 'unknown component "$name" (registered: '
+          '${(_byName.keys.toList()..sort()).join(', ')})';
+    }
+    if (value is! Map) return 'expected an object, got ${value.runtimeType}';
+    try {
+      reg.fromJson(value.cast<String, dynamic>());
+    } catch (cause) {
+      return '$cause';
+    }
+    return null;
+  }
+
   /// Applies {name: json} component data onto [entity], creating or
   /// overwriting each named component. Unknown names are skipped rather
   /// than throwing, so partial/forward-compatible patches from an agent

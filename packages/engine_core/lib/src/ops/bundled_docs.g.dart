@@ -3098,7 +3098,7 @@ REST: `POST /v1/world/discard` · MCP tool: `world.discard` · JSON-RPC method: 
 
 Change entities in a world with a snapshot-shaped patch.
 
-The same patch `World.applyPatch` takes: `{entities: [{id, components: {name: json}}]}`. Affects only the in-memory world.
+The same patch `World.applyPatch` takes: `{entities: [{id, components: {name: json}}]}`. Affects only the in-memory world. By default dead entities and unknown component names are skipped silently; `strict` makes any problem an error (nothing is applied), and `dryRun` only reports the problems with their paths and applies nothing.
 
 *read*.
 
@@ -3106,6 +3106,8 @@ The same patch `World.applyPatch` takes: `{entities: [{id, components: {name: js
 |---|---|---|
 | `worldId` | string; required | |
 | `patch` | json; required | |
+| `strict` | boolean; default `false` | |
+| `dryRun` | boolean; default `false` | |
 
 ```bash
 game_agent world patch <worldId>

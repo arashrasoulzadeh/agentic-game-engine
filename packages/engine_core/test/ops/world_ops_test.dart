@@ -23,6 +23,7 @@ const moving = {
 };
 
 void main() {
+  worldPatchModeTests();
   test(
     'build, step, snapshot: movement advances the moving entity only',
     () async {
@@ -145,3 +146,75 @@ void main() {
 }
 
 World _world() => World(width: 10, height: 10);
+
+void worldPatchModeTests() {
+  test(
+    'world.patch dryRun reports problems with paths and changes nothing',
+    () async {
+      final s = await Scratch.create();
+      final built = await s.map('world.build', {'json': moving});
+      final id = built['worldId']! as String;
+      final q =
+          await s.data('world.query', {'worldId': id, 'component': 'position'})
+              as List;
+      final entityId = (q.first as Map)['id'];
+      final out = await s.map('world.patch', {
+        'worldId': id,
+        'dryRun': true,
+        'patch': {
+          'entities': [
+            {
+              'id': entityId,
+              'components': {
+                'warp': {},
+                'position': {'x': 77.0, 'y': 0.0},
+              },
+            },
+            {'id': 9999},
+          ],
+        },
+      });
+      expect(out['applied'], isFalse);
+      expect(out['ok'], isFalse);
+      final paths = [
+        for (final p in out['problems']! as List) (p as Map)['path'],
+      ];
+      expect(paths, ['entities[0].components.warp', 'entities[1].id']);
+      final unchanged =
+          await s.data('world.query', {
+                'worldId': id,
+                'component': 'position',
+                'where': {'x': 77.0},
+              })
+              as List;
+      expect(unchanged, isEmpty);
+    },
+  );
+
+  test(
+    'world.patch strict fails on a dead entity but lenient skips it',
+    () async {
+      final s = await Scratch.create();
+      final id =
+          (await s.map('world.build', {'json': moving}))['worldId']! as String;
+      final patch = {
+        'entities': [
+          {'id': 9999},
+        ],
+      };
+      expect(
+        await s.failure('world.patch', {
+          'worldId': id,
+          'strict': true,
+          'patch': patch,
+        }),
+        ErrorCode.validationFailed,
+      );
+      final lenient = await s.map('world.patch', {
+        'worldId': id,
+        'patch': patch,
+      });
+      expect(lenient['applied'], isTrue);
+    },
+  );
+}
