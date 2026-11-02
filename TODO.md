@@ -57,10 +57,7 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
       (`World.deltaTime` + runners/`BehaviorTreeSystem` set `_dt`).
 
 ## Template health (found while verifying SIMPLER 9.3)
-- [ ] **`create --template idle_game` widget test fails**: `test/widget_test.dart` expects a widget with key
-      `timewarp-hour` on the Progress tab, which the generated app does not show (the same failure happens
-      against the engine as it was before the SIMPLER work, so it is not a regression). Either the template's
-      `assets/idle_game.json` needs a time warp with id `hour` or the test should look for what is there.
+- [x] **`create --template idle_game` widget test** fixed: the test now sets a tall view (the lazy lists never built the lower panels in 800x600).
 - [ ] CI's templates job is the only automatic check that templates compile and pass their own tests; run the
       scratch-project check from SIMPLER.MD (9.3) locally when you change a template or the engine API.
 

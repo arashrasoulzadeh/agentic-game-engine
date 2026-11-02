@@ -75,6 +75,7 @@ nav:
       - Releasing to the stores: releasing.md
       - Releasing the engine: engine-releasing.md
       - FAQ & troubleshooting: faq.md
+      - Migrating from storeOf: migrating-from-storeof.md
   - Tutorials:
       - Overview: tutorials/README.md
       - "1 · A tiny platformer": tutorials/01-hello-world.md

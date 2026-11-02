@@ -60,13 +60,13 @@ Latest: world_step 7.5/68.7 us and collision 180/1813 us (at baseline); **entity
 - D6 10% benchmark threshold.
 
 ## Open follow-ups from Phases 0-9
-- [ ] **7.final** Remove `World.storeOf` (deprecated, no callers except two shim tests). Owner-approved separate step, after one release, because downstream projects pin `ref: main`. Also drop the two shim tests and the deprecation entry in `CHANGELOG.md`. This is the answer to "what is the deprecation window".
-- [ ] **DECISION: seed `ParticleSystem` by default.** It defaults to an unseeded `Random()` (allowlisted in `core_purity_test.dart`), so a world with particles is not reproducible unless the caller passes `random:`. Seeding makes particle visuals identical between runs. `SystemPresets.core` already seeds it from `world.seed`.
-- [ ] **Idle template widget test fails** (`timewarp-hour` key not found); also failed before this work. Logged in `TODO.md` ("Template health").
+- [ ] **7.final** (migration guide shipped: `docs/migrating-from-storeof.md`; still waiting for a tagged release, since `v0.1.0` is only local) Remove `World.storeOf` (deprecated, no callers except two shim tests). Owner-approved separate step, after one release, because downstream projects pin `ref: main`. Also drop the two shim tests and the deprecation entry in `CHANGELOG.md`. This is the answer to "what is the deprecation window".
+- [x] **`ParticleSystem` is seeded by default** (`Random(0)`), so a world with particles is reproducible; the `core_purity_test.dart` allowlist is now empty. Pass a differently seeded `random:` for varied visuals.
+- [x] **Idle template widget test fixed.** The generated app was fine; the test used the default 800x600 view, so lazy lists never built the time warp and the save button was off-screen. The test now sets a tall view. Verified in an offline scratch project (analyze clean, test passes).
 - [ ] **Unverified in this environment**: `mkdocs build --strict` (not installable offline; CI `docs` job is the first real check) and `game_agent create` against the pushed ref (G6).
-- [ ] **Flaky `engine_studio` `rename_test`**: cause not found.
+- [x] **`engine_studio` `rename_test` flake**: passes alone (6/6), so the cause is load: it drives a real analysis server with fixed retry budgets that ran out when the full suite loaded the machine. Budgets raised (20 to 60 and 10 to 30 attempts); no slower when the server is quick.
 - [ ] Optional: tutorials 01/03/04 and getting-started still use `componentsOf<T>().set/get` (correct, just older style); hot call sites could move to `getComponent`/`setComponent` where it reads better (note `setComponent` rejects dead entities, a behavior change, so gate each directory).
-- [ ] Optional cleanup: move `registerCoreComponents` out of `engine_core.dart` into its own file so `game_builder.dart` does not import the barrel.
+- [x] `registerCoreComponents` moved to `lib/src/ecs/register_core_components.dart` (still exported from the barrel); `game_builder.dart` no longer imports the barrel.
 
 ## Phase 10: Remaining backlog (each independent; pick one at a time, same step contract)
 Each item gets its own mini-spec appended here before work starts (files, tests, gate). Status notes record what already exists so nothing is rebuilt.

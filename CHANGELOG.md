@@ -27,7 +27,7 @@ pubspec.yaml.
 
 ### Changed
 - `World.storeOf<T>()` is deprecated in favour of `componentsOf<T>()` (same collection). All code,
-  tests and docs in this repo now use the new name. `ComponentRegistry.storeOf` is unchanged.
+  tests and docs in this repo now use the new name. `ComponentRegistry.storeOf` is unchanged. See [the migration guide](docs/migrating-from-storeof.md).
 - `EventBus.on` now returns a `Subscription` instead of `void`; a handler added during a flush no
   longer throws `ConcurrentModificationError`.
 - `onCollisionBetween` / `onCollisionInvolving` stop automatically when their entity is destroyed.

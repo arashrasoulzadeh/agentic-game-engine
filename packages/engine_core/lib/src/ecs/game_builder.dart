@@ -4,7 +4,7 @@ import 'entity_builder.dart';
 import 'fixed_stepper.dart';
 import 'system_presets.dart';
 import 'world.dart';
-import '../../engine_core.dart' show registerCoreComponents;
+import 'register_core_components.dart';
 
 /// One-call setup for a simulation: a [World] with components registered,
 /// the core systems installed and an optional fixed-timestep loop.
