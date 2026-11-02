@@ -151,6 +151,10 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   /// beneath stay visible but frozen.
   final List<_LoadedGame> _overlays = [];
 
+  /// Scenes suspended by `pushScene`, newest last, each with the overlays it
+  /// had; popping restores them untouched.
+  final List<(Future<_LoadedGame>, List<_LoadedGame>)> _suspended = [];
+
   /// The in-flight snapshot transition: the outgoing scene's frame, its config,
   /// and a completer `_loadSceneWithTransition` awaits. Null when none.
   (ui.Image, SceneTransitionConfig, Completer<void>)? _snapshotTransition;
@@ -180,6 +184,8 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
       pushOverlay: _pushOverlay,
       popOverlay: _popOverlay,
       loadSceneWithTransition: _loadSceneWithTransition,
+      pushScene: _pushScene,
+      popScene: _popScene,
       captureScreenshot: _captureScreenshot,
     );
     _gameState = widget.game.createInitialState();
@@ -197,6 +203,31 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     setState(() {
       _future = _load(next);
       _overlays.clear();
+    });
+    for (final overlay in dropped.reversed) {
+      overlay.scene.onExit(overlay.world);
+    }
+    outgoing.then((l) => l.scene.onExit(l.world), onError: (_) {});
+  }
+
+  void _pushScene(Scene next) {
+    _suspended.add((_future, List.of(_overlays)));
+    setState(() {
+      _future = _load(next);
+      _overlays.clear();
+    });
+  }
+
+  void _popScene() {
+    if (_suspended.isEmpty) return;
+    final outgoing = _future;
+    final dropped = List<_LoadedGame>.of(_overlays);
+    final (restored, restoredOverlays) = _suspended.removeLast();
+    setState(() {
+      _future = restored;
+      _overlays
+        ..clear()
+        ..addAll(restoredOverlays);
     });
     for (final overlay in dropped.reversed) {
       overlay.scene.onExit(overlay.world);

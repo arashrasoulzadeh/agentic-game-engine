@@ -148,6 +148,8 @@ class SceneController {
   _loadSceneWithTransition;
   void Function(Scene overlay)? _pushOverlay;
   void Function()? _popOverlay;
+  void Function(Scene next)? _pushScene;
+  void Function()? _popScene;
   Future<Uint8List?> Function({double pixelRatio})? _captureScreenshot;
 
   /// Wired up by `GameRunner`; not for a game to call directly.
@@ -158,7 +160,11 @@ class SceneController {
     void Function(Scene next, SceneTransitionConfig? transition)?
     loadSceneWithTransition,
     Future<Uint8List?> Function({double pixelRatio})? captureScreenshot,
+    void Function(Scene next)? pushScene,
+    void Function()? popScene,
   }) {
+    _pushScene = pushScene;
+    _popScene = popScene;
     _loadScene = loadScene;
     _pushOverlay = pushOverlay;
     _popOverlay = popOverlay;
@@ -218,6 +224,35 @@ class SceneController {
   /// Call [popOverlay] (typically from the overlay's own "Resume"
   /// button) to remove it and let the paused scene keep going exactly
   /// where it left off.
+  /// Shows [next] full-screen but keeps the current scene alive underneath
+  /// (its `World` is not rebuilt), so [popScene] returns to it exactly where
+  /// it was: a shop screen over a level, a map over a dungeon. The suspended
+  /// scene is frozen and gets no `onExit`. Unlike `loadScene`, which discards
+  /// the scene it replaces, nothing is lost. A `loadScene` from the pushed
+  /// scene replaces only that scene; the suspended one stays below.
+  void pushScene(Scene next) {
+    final push = _pushScene;
+    if (push == null) {
+      throw StateError(
+        'SceneController.pushScene called before it was attached to a running GameRunner',
+      );
+    }
+    push(next);
+  }
+
+  /// Leaves the scene shown now (its `onExit` runs) and brings back the one
+  /// that [pushScene] suspended, with its `World`, camera and any overlays
+  /// exactly as they were. A no-op when nothing is suspended.
+  void popScene() {
+    final pop = _popScene;
+    if (pop == null) {
+      throw StateError(
+        'SceneController.popScene called before it was attached to a running GameRunner',
+      );
+    }
+    pop();
+  }
+
   void pushOverlay(Scene overlay) {
     final pushOverlay = _pushOverlay;
     if (pushOverlay == null) {
