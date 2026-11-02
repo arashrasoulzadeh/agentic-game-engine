@@ -211,6 +211,10 @@ const tagsSchema = ComponentSchema('tags', [
   FieldSchema('tags', FieldType.list, required: true),
 ]);
 
+const nameSchema = ComponentSchema('name', [
+  FieldSchema('value', FieldType.string, required: true),
+]);
+
 const parentSchema = ComponentSchema('parent', [
   FieldSchema('entity', FieldType.int, min: 0, required: true),
 ]);

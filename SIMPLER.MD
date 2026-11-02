@@ -74,11 +74,11 @@ Each item gets its own mini-spec appended here before work starts (files, tests,
 ### Entity and component ergonomics
 - [x] Component defaults: `Position()` and `Velocity()` default to zero (optional positional, source compatible). Deliberately not done: a default `Collider` radius (no value is right for every game; the radius is a size decision) and lenient JSON (`{"x": 1}` still fails, which strict level loading relies on).
 - [x] **Component pooling: measured, not worth it.** `particle_system_benchmark` steady state is 67 us (10 emitters), 655 us (100), 3360 us (500), about 1.1 us per live particle per step for spawn, move and age together. `entity_churn` shows a full spawn+destroy costs about 0.16 us, so allocation is not the bottleneck; reusing the per-tick `expired` list changed nothing. Revisit only if a profile shows GC pauses in a real game.
-- [ ] **Rename conceptually**: remove remaining "store" wording from public docs and error messages (`ComponentStore` may stay as the internal type).
+- [x] **Rename conceptually**: public docs and messages already say `componentsOf`/"component"; remaining "store" is the `ComponentStore` type name (kept as the internal type, documented in `docs/concepts/ecs.md`) and local variable names. Nothing user-facing left to rename.
 
 ### Systems
-- [ ] **System context**: `System.update(context)`. **Blocked by design**: 65 classes `implements System`, so any new member breaks them; needs a migration plan or a wrapper type.
-- [ ] **Systems declare their queries** (`query of: [Position, Velocity]`); `query/query2/query3` exist, this is only the declaration sugar.
+- [x] **System context**: declined. 65 classes `implements System`, so a new member breaks them all, and `FunctionSystem`/`addSystemFn` plus `WorldView` already give systems a narrow context. Revisit only if a wrapper type is needed by a concrete feature.
+- [x] **Systems declare their queries**: declined. `query of: [Position, Velocity]` cannot be typed in Dart (a list of `Type`s loses the element types), so a declaration would add ceremony without safety; `query<A>/query2<A,B>/query3<A,B,C>` already are the declaration and give typed results.
 
 ### AI, behavior trees and state machines
 `ai/behavior_tree.dart` already has the node classes and `BTNode.fromJson`; the factories below are sugar over them, JSON shape unchanged. `BT.inRange/seeTarget/ifHasTarget` need `WorldView` access (check what `BTContext` exposes first).
@@ -121,7 +121,7 @@ Audited by probing ~20 common mistakes. Good already: unregistered component, de
 - [ ] **Scene = level + systems + UI bundle** (idea only; a `Scene` already bundles populate + assets + camera). Overlay stack, `onEnter/onExit` and full-scene `pushScene/popScene` (suspended world kept alive) shipped; transitions already exist.
 
 ### Hierarchy
-- [ ] **Named lookup**: `world.find('player')`. Names live only in level JSON (`LevelHandle.named`), not on the world; decide whether to add a registered `Name` component (then `find` is a store scan) or keep names a level concern. `world.withTag(...)` already covers the by-label case. (`Parent`, `addChild`, `childrenOf`, `worldPositionOf` and cascading destroy shipped.)
+- [x] **Named lookup**: decided to add a registered `Name` component (not keep names a level concern). `world.find('player')` (lowest id wins on duplicates), `nameOf`, `setName`; `Level.loadInto` gives every entity with a `name` key this component (skipped when `name` is not registered). `find` is a scan: look up once and keep the id. `world.withTag(...)` still covers many-entities labels.
 
 ### Testing
 - [ ] **`GameTester.press(action)`** and component matchers (`hasComponent<Dead>()`); **test builders** (`TestWorld.withPlayer()`). The `engine_flutter/lib/src/testing/` directory is empty and is the home for a Flutter-side harness.
@@ -133,7 +133,7 @@ Audited by probing ~20 common mistakes. Good already: unregistered component, de
 ### Tooling and onboarding
 - [x] `topdown_game` template shipped (core + engine_flutter only, verified offline in a scratch project: analyze clean, widget test passes). `platformer` = `default_game`, `turnbased` = `strategy_game`, `idle` = `idle_game` already existed, so no alias names were added. Still unverified: `game_agent create` against the pushed ref (G6).
 - [ ] **Cookbook**: dialogue recipe still missing (health bar, pickup, door+key, patrol, waves exist in `docs/examples`, the last four tested in `doc_examples_pickups_test.dart`).
-- [ ] **Migration guide** for downstream projects (`storeOf` -> component API) before 7.final.
+- [x] **Migration guide** for `storeOf` shipped: `docs/migrating-from-storeof.md`.
 
 ### Content polish
 - [ ] (`GameAudio` shipped: `sfx/music` by name, `silent()` for headless, unknown names throw even then.) **particles preset** with pooling, (`SaveMigrations` shipped: chained version steps plus rename/add helpers, plugs into `SaveGame.load(migrate:)` via `forVersion`) debug overlay audited: FPS, graphs, entity counts, collider outlines (`GameConfig.showColliderDebug`) and system timings already existed; `DebugOverlay(panels:)` now toggles sections and adds a `World.debug()` panel.

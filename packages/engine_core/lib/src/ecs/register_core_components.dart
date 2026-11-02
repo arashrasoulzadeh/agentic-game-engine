@@ -6,6 +6,7 @@ import '../content/game_state.dart';
 import '../content/inventory.dart';
 import 'countdown_timer.dart';
 import 'hierarchy.dart';
+import 'name.dart';
 import 'tags.dart';
 import 'world.dart';
 import '../physics/collider.dart';
@@ -226,6 +227,12 @@ void registerCoreComponents(World world) {
     (p) => p.toJson(),
     Parent.fromJson,
     schema: parentSchema,
+  );
+  world.components.register<Name>(
+    'name',
+    (n) => n.toJson(),
+    Name.fromJson,
+    schema: nameSchema,
   );
   world.components.register<EntityTags>(
     'tags',

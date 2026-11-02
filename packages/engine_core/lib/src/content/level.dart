@@ -1,5 +1,6 @@
 import '../ecs/engine_error.dart';
 import '../ecs/entity.dart';
+import '../ecs/name.dart';
 import '../ecs/world.dart';
 
 /// Thrown when level JSON fails validation. Carries a specific,
@@ -93,6 +94,7 @@ class Level {
       world.components.applyToEntity(id, components);
       if (entityJson['name'] case final String name) {
         named[name] = id;
+        if (world.components.isRegistered('name')) world.setName(id, name);
       }
     }
     return named;
