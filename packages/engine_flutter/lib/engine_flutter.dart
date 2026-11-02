@@ -39,6 +39,7 @@ export 'src/logic/game_config.dart';
 export 'src/input/gamepad_bindings_storage.dart';
 export 'src/ui/gamepad_remap_menu_scene.dart';
 export 'src/input/input.dart';
+export 'src/input/input_facade.dart';
 export 'src/input/input_bindings_storage.dart';
 export 'src/input/on_screen_controls.dart';
 export 'src/ui/grid_selection.dart';
