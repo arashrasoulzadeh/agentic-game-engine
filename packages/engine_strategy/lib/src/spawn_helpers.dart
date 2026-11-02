@@ -31,22 +31,22 @@ EntityId spawnStrategyUnit(
   String? spriteRegion,
 }) {
   final id = world.spawn();
-  world.storeOf<Team>().set(id, Team(team));
-  world.storeOf<GridPosition>().set(id, GridPosition(col, row));
-  world.storeOf<Position>().set(id, Position((col + 0.5) * cellSize, (row + 0.5) * cellSize));
+  world.componentsOf<Team>().set(id, Team(team));
+  world.componentsOf<GridPosition>().set(id, GridPosition(col, row));
+  world.componentsOf<Position>().set(id, Position((col + 0.5) * cellSize, (row + 0.5) * cellSize));
   if (realtime != null) {
     // Real-time units act on speed and cooldowns, not action points.
-    world.storeOf<RealtimeStats>().set(id, realtime);
+    world.componentsOf<RealtimeStats>().set(id, realtime);
   } else {
-    world.storeOf<ActionPoints>().set(id, ActionPoints(actionPoints, current: 0));
+    world.componentsOf<ActionPoints>().set(id, ActionPoints(actionPoints, current: 0));
   }
-  world.storeOf<UnitStats>().set(id, UnitStats(maxHp: maxHp, attack: attack, defense: defense));
+  world.componentsOf<UnitStats>().set(id, UnitStats(maxHp: maxHp, attack: attack, defense: defense));
   if (attackRange != null || attackCost != null) {
-    world.storeOf<AttackProfile>().set(id, AttackProfile(range: attackRange ?? 1, cost: attackCost ?? 1));
+    world.componentsOf<AttackProfile>().set(id, AttackProfile(range: attackRange ?? 1, cost: attackCost ?? 1));
   }
-  if (visionRange != null) world.storeOf<Vision>().set(id, Vision(visionRange));
+  if (visionRange != null) world.componentsOf<Vision>().set(id, Vision(visionRange));
   if (atlasId != null && spriteRegion != null) {
-    world.storeOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
+    world.componentsOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
   }
   return id;
 }

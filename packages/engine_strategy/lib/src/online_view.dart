@@ -113,8 +113,8 @@ class OnlineStrategyViewState extends State<OnlineStrategyView> {
     final unit = _selected;
     if (unit == null || !world.entities.isAlive(unit)) return;
 
-    final grid = world.storeOf<GridPosition>();
-    final teams = world.storeOf<Team>();
+    final grid = world.componentsOf<GridPosition>();
+    final teams = world.componentsOf<Team>();
     EntityId? enemy;
     for (var i = 0; i < grid.length; i++) {
       final e = grid.entityAt(i);

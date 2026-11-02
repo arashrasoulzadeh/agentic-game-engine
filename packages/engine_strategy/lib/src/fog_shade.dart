@@ -74,7 +74,7 @@ class FogShadeSystem extends System {
   void update(World world, double dt) {
     final fog = fogOf(world);
     if (fog == null) return;
-    final cells = world.storeOf<FogShadeCell>();
+    final cells = world.componentsOf<FogShadeCell>();
     if (cells.length != fog.cols * fog.rows) {
       for (var i = cells.length - 1; i >= 0; i--) {
         world.destroy(cells.entityAt(i));
@@ -90,7 +90,7 @@ class FogShadeSystem extends System {
               : FogCellState.unknown;
       if (state == cell.state) continue;
       cell.state = state;
-      world.storeOf<Sprite>().get(cells.entityAt(i))?.region = _regionFor(state);
+      world.componentsOf<Sprite>().get(cells.entityAt(i))?.region = _regionFor(state);
     }
     if (hideEnemies) _updateEnemies(world);
   }
@@ -106,9 +106,9 @@ class FogShadeSystem extends System {
     for (var r = 0; r < fog.rows; r++) {
       for (var c = 0; c < fog.cols; c++) {
         final id = world.spawn();
-        world.storeOf<FogShadeCell>().set(id, FogShadeCell(c, r, FogCellState.unknown));
-        world.storeOf<Position>().set(id, Position((c + 0.5) * cellSize, (r + 0.5) * cellSize));
-        world.storeOf<Sprite>().set(
+        world.componentsOf<FogShadeCell>().set(id, FogShadeCell(c, r, FogCellState.unknown));
+        world.componentsOf<Position>().set(id, Position((c + 0.5) * cellSize, (r + 0.5) * cellSize));
+        world.componentsOf<Sprite>().set(
               id,
               Sprite(atlasId, unknownRegion)
                 ..scaleX = scale
@@ -120,9 +120,9 @@ class FogShadeSystem extends System {
   }
 
   void _updateEnemies(World world) {
-    final teams = world.storeOf<Team>();
-    final sprites = world.storeOf<Sprite>();
-    final hidden = world.storeOf<FogHidden>();
+    final teams = world.componentsOf<Team>();
+    final sprites = world.componentsOf<Sprite>();
+    final hidden = world.componentsOf<FogHidden>();
     for (var i = 0; i < teams.length; i++) {
       final e = teams.entityAt(i);
       if (teams.denseAt(i).id == team) continue;

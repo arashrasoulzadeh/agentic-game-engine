@@ -32,8 +32,8 @@ class SmoothGridToWorldSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final grid = world.storeOf<GridPosition>();
-    final positions = world.storeOf<Position>();
+    final grid = world.componentsOf<GridPosition>();
+    final positions = world.componentsOf<Position>();
     final maxStep = cellsPerSecond * cellSize * dt;
     for (var i = 0; i < grid.length; i++) {
       final p = positions.get(grid.entityAt(i));

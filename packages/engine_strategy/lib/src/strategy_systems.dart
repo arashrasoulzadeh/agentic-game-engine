@@ -64,7 +64,7 @@ EntityId? installStrategySystems(
   EntityId? fogEntity;
   if (fog) {
     fogEntity = world.spawn();
-    world.storeOf<FogOfWar>().set(fogEntity, FogOfWar(navigator.cols, navigator.rows));
+    world.componentsOf<FogOfWar>().set(fogEntity, FogOfWar(navigator.cols, navigator.rows));
     world.addSystem(VisionSystem(blocksSight: blocksSight ?? (_, _) => false));
   }
   world.addSystem(OrderSystem.withNavigator(
@@ -179,7 +179,7 @@ RealtimeInstall installRealtimeStrategySystems(
   EntityId? fogEntity;
   if (fog) {
     fogEntity = world.spawn();
-    world.storeOf<FogOfWar>().set(fogEntity, FogOfWar(navigator.cols, navigator.rows));
+    world.componentsOf<FogOfWar>().set(fogEntity, FogOfWar(navigator.cols, navigator.rows));
     world.addSystem(VisionSystem(blocksSight: blocksSight ?? (_, _) => false));
   }
   final fields = FlowFieldCache(navigator);

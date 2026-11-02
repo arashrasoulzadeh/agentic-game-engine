@@ -36,14 +36,14 @@ class MoveRangeHighlightSystem extends System {
   void update(World world, double dt) {
     final selected = selectedEntities(world);
     final unit = selected.length == 1 ? selected.single : null;
-    final grid = world.storeOf<GridPosition>();
+    final grid = world.componentsOf<GridPosition>();
     final pos = unit == null ? null : grid.get(unit);
-    final points = unit == null ? null : world.storeOf<ActionPoints>().get(unit);
+    final points = unit == null ? null : world.componentsOf<ActionPoints>().get(unit);
     final key = pos == null || points == null ? '' : '$unit:${pos.col},${pos.row}:${points.current}';
     if (key == _key) return;
     _key = key;
 
-    final markers = world.storeOf<MoveRangeMarker>();
+    final markers = world.componentsOf<MoveRangeMarker>();
     for (final id in [for (var i = 0; i < markers.length; i++) markers.entityAt(i)]) {
       world.destroy(id);
     }
@@ -59,9 +59,9 @@ class MoveRangeHighlightSystem extends System {
 
     for (final cell in navigator.reachable(pos, points.current, blocked: occupied).keys) {
       final id = world.spawn();
-      world.storeOf<MoveRangeMarker>().set(id, const MoveRangeMarker());
-      world.storeOf<Position>().set(id, Position((cell.$1 + 0.5) * cellSize, (cell.$2 + 0.5) * cellSize));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<MoveRangeMarker>().set(id, const MoveRangeMarker());
+      world.componentsOf<Position>().set(id, Position((cell.$1 + 0.5) * cellSize, (cell.$2 + 0.5) * cellSize));
+      world.componentsOf<Sprite>().set(
             id,
             Sprite(atlasId, region)
               ..scaleX = cellSize / spriteSize
