@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  cameraSmoothFollowTests();
   test('worldToScreen centers the camera position in the viewport', () {
     final camera = Camera(x: 0, y: 0, zoom: 1);
     final screen = camera.worldToScreen(0, 0, const Size(800, 600));
@@ -131,5 +132,38 @@ void main() {
         expect(backToWorld.dy, closeTo(worldPoint.dy, 1e-9));
       },
     );
+  });
+}
+
+void cameraSmoothFollowTests() {
+  test('followSmooth halves the remaining distance every halfLife', () {
+    final camera = Camera();
+    camera.followSmooth(100, 0, 0.15, halfLife: 0.15);
+    expect(camera.x, closeTo(50, 1e-9));
+    camera.followSmooth(100, 0, 0.15, halfLife: 0.15);
+    expect(camera.x, closeTo(75, 1e-9));
+  });
+
+  test('followSmooth is frame-rate independent', () {
+    final a = Camera(), b = Camera();
+    a.followSmooth(100, 0, 0.2);
+    for (var i = 0; i < 4; i++) {
+      b.followSmooth(100, 0, 0.05);
+    }
+    expect(a.x, closeTo(b.x, 1e-9));
+  });
+
+  test('followSmooth clamps to world bounds and snaps with halfLife 0', () {
+    final camera = Camera();
+    camera.followSmooth(
+      1000,
+      0,
+      1,
+      halfLife: 0,
+      viewportSize: const Size(100, 100),
+      worldWidth: 400,
+      worldHeight: 400,
+    );
+    expect(camera.x, 350);
   });
 }

@@ -78,7 +78,9 @@ class Camera {
   ///
   /// [magnitude] - maximum offset in world units (before `zoom`)
   /// [duration] - duration in seconds
-  /// [frequency] - oscillations per second (default 1.0)
+  /// [frequency] - accepted for API stability but currently has no effect:
+  /// jitter is re-rolled every frame rather than oscillated (audited; changing
+  /// it would alter every existing shake's look)
   /// [decay] - decay curve exponent (1.0 = linear, >1 = faster decay, <1 = slower)
   /// [impulse] - if true, sharp impulse decay; if false, sustained shake
   /// [axis] - which axis to shake (default ShakeAxis.both)
@@ -161,6 +163,33 @@ class Camera {
   }) {
     x = worldX;
     y = worldY;
+    _clampToWorld(viewportSize, worldWidth, worldHeight);
+  }
+
+  /// Eases toward ([worldX], [worldY]) instead of snapping, independent of
+  /// frame rate: the remaining distance halves every [halfLife] seconds
+  /// (0.1 is snappy, 0.5 is lazy). Call it each frame with that frame's [dt];
+  /// bounds clamp exactly as in [follow]. A [halfLife] of 0 or less snaps.
+  void followSmooth(
+    double worldX,
+    double worldY,
+    double dt, {
+    double halfLife = 0.15,
+    Size? viewportSize,
+    double? worldWidth,
+    double? worldHeight,
+  }) {
+    final t = halfLife <= 0 ? 1.0 : 1 - pow(0.5, dt / halfLife).toDouble();
+    x += (worldX - x) * t;
+    y += (worldY - y) * t;
+    _clampToWorld(viewportSize, worldWidth, worldHeight);
+  }
+
+  void _clampToWorld(
+    Size? viewportSize,
+    double? worldWidth,
+    double? worldHeight,
+  ) {
     if (viewportSize == null || worldWidth == null || worldHeight == null) {
       return;
     }
