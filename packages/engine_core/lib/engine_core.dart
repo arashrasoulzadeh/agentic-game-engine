@@ -74,6 +74,7 @@ export 'src/content/action_aliases.dart';
 export 'src/content/analytics.dart';
 export 'src/content/localization.dart';
 export 'src/ecs/system.dart';
+export 'src/ecs/system_group.dart';
 export 'src/ecs/job_system.dart' hide PathPoint;
 export 'src/ai/ai_system.dart';
 export 'src/physics/collision_system.dart';
