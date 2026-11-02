@@ -13,9 +13,9 @@ class MovementSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final positions = world.storeOf<Position>();
-    final velocities = world.storeOf<Velocity>();
-    final colliders = world.storeOf<Collider>();
+    final positions = world.componentsOf<Position>();
+    final velocities = world.componentsOf<Velocity>();
+    final colliders = world.componentsOf<Collider>();
 
     for (var i = 0; i < velocities.length; i++) {
       final entity = velocities.entityAt(i);

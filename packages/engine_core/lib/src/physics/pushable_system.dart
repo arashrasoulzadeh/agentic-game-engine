@@ -27,10 +27,10 @@ class PushableSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final positions = world.storeOf<Position>();
-    final velocities = world.storeOf<Velocity>();
-    final colliders = world.storeOf<Collider>();
-    final pushables = world.storeOf<Pushable>();
+    final positions = world.componentsOf<Position>();
+    final velocities = world.componentsOf<Velocity>();
+    final colliders = world.componentsOf<Collider>();
+    final pushables = world.componentsOf<Pushable>();
 
     for (var i = 0; i < pushables.length; i++) {
       final entity = pushables.entityAt(i);

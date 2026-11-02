@@ -145,8 +145,8 @@ RaycastHit? raycastEntities(
   required double toY,
   EntityId? exclude,
 }) {
-  final positions = world.storeOf<Position>();
-  final colliders = world.storeOf<Collider>();
+  final positions = world.componentsOf<Position>();
+  final colliders = world.componentsOf<Collider>();
 
   final dx = toX - fromX;
   final dy = toY - fromY;

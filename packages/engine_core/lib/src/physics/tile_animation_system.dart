@@ -14,7 +14,7 @@ class TileAnimationSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final maps = world.storeOf<TileMap>();
+    final maps = world.componentsOf<TileMap>();
     for (var i = 0; i < maps.length; i++) {
       maps.denseAt(i).animationElapsed += dt;
     }
