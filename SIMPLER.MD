@@ -97,7 +97,7 @@ Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `leve
 - [ ] **Tiled mapping polish** and **hot-reload friendliness**.
 
 ### Physics, collision and movement
-- [ ] **Simple movement helpers** (`Movement.move(entity, dir * speed * dt)`). (`world.raycast`, `world.findNear` and `TileMap` world-coordinate helpers shipped; `findNear` is an O(n) scan, per-frame work should use `SpatialHash`.)
+- [x] (`world.move`, `moveToward`, `aimVelocity` shipped.) (`world.raycast`, `world.findNear` and `TileMap` world-coordinate helpers shipped; `findNear` is an O(n) scan, per-frame work should use `SpatialHash`.)
 
 ### Turn-based (lives in `engine_strategy`)
 - [ ] `TurnGame.setup(world)`, `unit.do(MoveTo/Attack)` via `OrderQueue`, `game.nextTurn()/endPlayerTurn()` callbacks, `game.select/selectAll/commandSelected`, opt-in AI turns.

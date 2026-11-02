@@ -69,6 +69,7 @@ export 'src/content/string_table.dart';
 export 'src/physics/pathfinding.dart';
 export 'src/physics/raycast.dart';
 export 'src/physics/world_spatial.dart';
+export 'src/physics/world_movement.dart';
 export 'src/physics/spatial_hash.dart';
 export 'src/physics/procedural_generation.dart';
 export 'src/content/player_options.dart';
