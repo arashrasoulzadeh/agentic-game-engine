@@ -22,7 +22,7 @@ class PositionHistory {
 
   /// Records every entity's `Position` at `world.tick`.
   void record(World world) {
-    final store = world.storeOf<Position>();
+    final store = world.componentsOf<Position>();
     _add(world.tick, {
       for (var i = 0; i < store.length; i++)
         store.entityAt(i): _P(store.denseAt(i).x, store.denseAt(i).y),

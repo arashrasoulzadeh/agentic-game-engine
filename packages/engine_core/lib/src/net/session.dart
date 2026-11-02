@@ -206,7 +206,7 @@ class HostSession {
       reject('no such unit');
       return;
     }
-    if (world.storeOf<Team>().get(unit)?.id != slot.team) {
+    if (world.componentsOf<Team>().get(unit)?.id != slot.team) {
       reject('not your unit');
       return;
     }
