@@ -4,7 +4,7 @@
 
 Every built-in component and the exact JSON shape it serializes to — what you see in `World.toJson()` and what `applyPatch` / `Level.loadInto` accept. This page is generated from `engine_schema`, the same schemas the studio and `game_agent lint` validate against, so it is always current.
 
-**94 components** across 4 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer) · [engine_idle](#engine_idle)
+**95 components** across 4 packages. Jump to: [engine_core](#engine_core) · [engine_flutter](#engine_flutter) · [engine_platformer](#engine_platformer) · [engine_idle](#engine_idle)
 
 ## engine_core
 
@@ -248,6 +248,14 @@ Genre-general data. Registered by `registerCoreComponents`.
 ### `selected`
 
 A marker: present or absent, no fields.
+
+### `countdownTimer`
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | `string` | required |
+| `remaining` | `double` | required; 0 to ∞ |
+| `interval` | `double` | may be null; 0 to ∞ |
 
 ### `tags`
 

@@ -36,6 +36,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'orderQueue': orderQueueSchema,
   'selected': selectedSchema,
   'tags': tagsSchema,
+  'countdownTimer': countdownTimerSchema,
   'unitStats': unitStatsSchema,
   'attackProfile': attackProfileSchema,
   'realtimeStats': realtimeStatsSchema,

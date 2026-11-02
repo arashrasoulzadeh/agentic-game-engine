@@ -201,6 +201,12 @@ const orderQueueSchema = ComponentSchema('orderQueue', [
 
 const selectedSchema = ComponentSchema('selected', []);
 
+const countdownTimerSchema = ComponentSchema('countdownTimer', [
+  FieldSchema('name', FieldType.string, required: true),
+  FieldSchema('remaining', FieldType.double, required: true, min: 0),
+  FieldSchema('interval', FieldType.double, min: 0, optional: true),
+]);
+
 const tagsSchema = ComponentSchema('tags', [
   FieldSchema('tags', FieldType.list, required: true),
 ]);
