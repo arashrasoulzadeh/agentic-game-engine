@@ -100,7 +100,7 @@ Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `leve
 - [x] (`world.move`, `moveToward`, `aimVelocity` shipped.) (`world.raycast`, `world.findNear` and `TileMap` world-coordinate helpers shipped; `findNear` is an O(n) scan, per-frame work should use `SpatialHash`.)
 
 ### Turn-based (lives in `engine_strategy`)
-- [ ] `TurnGame.setup(world)`, `unit.do(MoveTo/Attack)` via `OrderQueue`, `game.nextTurn()/endPlayerTurn()` callbacks, `game.select/selectAll/commandSelected`, opt-in AI turns.
+- [x] `TurnGame` shipped (`setup`, `spawnUnit`, `start`, `moveTo/attack/defend`, `select/selectAll/commandSelected`, `endTurn`, `activeTeam/round/winner`, `onTurnStarted/onTurnEnded`), a thin wrapper over the existing functions. Not done: a `unit.do(...)` per-entity handle (use `TurnGame.moveTo(unit, ...)`), and the AI is still configured through `aiTeams`.
 
 ### Input and UI (`engine_flutter`)
 Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_system.dart` and cinematic camera steps exist; `core/content/action_aliases.dart` may overlap.
