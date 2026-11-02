@@ -16,7 +16,7 @@ void main() {
   test('SpriteHealthBar shrinks its fill from the left edge with Health', () {
     final world = buildWorld();
     final owner = world.spawn();
-    world.storeOf<Health>().set(owner, Health(current: 100, max: 100));
+    world.componentsOf<Health>().set(owner, Health(current: 100, max: 100));
     final bar = SpriteHealthBar.spawn(
       world,
       atlasId: 'ui_bars',
@@ -25,22 +25,22 @@ void main() {
       top: 4,
       width: 107, // scale 1 against the 107px frame
     );
-    final sprites = world.storeOf<eng.Sprite>();
-    final pos = world.storeOf<Position>();
+    final sprites = world.componentsOf<eng.Sprite>();
+    final pos = world.componentsOf<Position>();
     // entity 1 = frame, 2 = fill
-    final fillId = world.storeOf<eng.Sprite>().entityAt(1);
+    final fillId = world.componentsOf<eng.Sprite>().entityAt(1);
     double fillW() => sprites.get(fillId)!.scaleX * BarsArt.fillSize.w;
 
     expect(fillW(), closeTo(BarsArt.innerWidth, 1e-6));
     final leftEdgeFull = pos.get(fillId)!.x - fillW() / 2;
 
-    world.storeOf<Health>().get(owner)!.current = 25;
+    world.componentsOf<Health>().get(owner)!.current = 25;
     bar.sync();
     expect(fillW(), closeTo(BarsArt.innerWidth * 0.25, 1e-6));
     // the left edge stays put while the right edge retreats
     expect(pos.get(fillId)!.x - fillW() / 2, closeTo(leftEdgeFull, 1e-6));
 
-    world.storeOf<Health>().get(owner)!.current = 0;
+    world.componentsOf<Health>().get(owner)!.current = 0;
     bar.sync();
     expect(fillW(), 0);
 
@@ -63,7 +63,7 @@ void main() {
       nodeSize: 8,
     );
     List<String> regions() {
-      final s = world.storeOf<eng.Sprite>();
+      final s = world.componentsOf<eng.Sprite>();
       return [
         for (var i = 0; i < s.length; i++)
           if (s.denseAt(i).atlasId == 'nodes') s.denseAt(i).region,
@@ -78,11 +78,11 @@ void main() {
 
     // nodes span the given width, evenly
     final xs = [
-      for (var i = 0; i < world.storeOf<eng.Sprite>().length; i++)
-        if (world.storeOf<eng.Sprite>().denseAt(i).atlasId == 'nodes')
+      for (var i = 0; i < world.componentsOf<eng.Sprite>().length; i++)
+        if (world.componentsOf<eng.Sprite>().denseAt(i).atlasId == 'nodes')
           world
               .storeOf<Position>()
-              .get(world.storeOf<eng.Sprite>().entityAt(i))!
+              .get(world.componentsOf<eng.Sprite>().entityAt(i))!
               .x,
     ];
     expect(xs.first, 10);
@@ -99,7 +99,7 @@ void main() {
       backdropWidth: 128,
       backdropHeight: 78,
     );
-    double scale() => world.storeOf<eng.Sprite>().denseAt(0).scaleX;
+    double scale() => world.componentsOf<eng.Sprite>().denseAt(0).scaleX;
 
     expect(scale(), 0);
     caption.show(world, 'hello world');

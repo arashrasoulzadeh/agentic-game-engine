@@ -48,11 +48,11 @@ void main() {
     final hero = fighter(world, 'hero');
     fighter(world, 'enemy', x: 120);
     world.step(0.01);
-    expect(world.storeOf<Sprite>().get(hero)!.atlasId, 'hero_attack');
+    expect(world.componentsOf<Sprite>().get(hero)!.atlasId, 'hero_attack');
     for (var i = 0; i < 6; i++) {
       world.step(0.1);
     }
-    expect(world.storeOf<SpriteStates>().get(hero)!.current, 'idle');
+    expect(world.componentsOf<SpriteStates>().get(hero)!.current, 'idle');
   });
 
   test('a fighter whose health runs out plays death and stays down', () {
@@ -60,13 +60,13 @@ void main() {
     fighter(world, 'hero', attack: 500);
     final enemy = fighter(world, 'enemy', hp: 10, x: 120);
     world.step(0.01);
-    expect(world.storeOf<Sprite>().get(enemy)!.atlasId, 'enemy_death');
+    expect(world.componentsOf<Sprite>().get(enemy)!.atlasId, 'enemy_death');
     expect(spriteStateFinished(world, enemy, 'death'), isFalse);
     for (var i = 0; i < 10; i++) {
       world.step(0.2);
     }
     expect(spriteStateFinished(world, enemy, 'death'), isTrue);
-    expect(world.storeOf<Sprite>().get(enemy)!.region, '2');
+    expect(world.componentsOf<Sprite>().get(enemy)!.region, '2');
   });
 
   test('AutoCombatSystem.enabled = false holds fire', () {
@@ -75,10 +75,10 @@ void main() {
     final hero = fighter(world, 'hero', attack: 500);
     final enemy = fighter(world, 'enemy', hp: 10, x: 120);
     world.step(0.5);
-    expect(world.storeOf<Health>().get(enemy)!.current, 10);
-    expect(world.storeOf<SpriteStates>().get(hero)!.current, 'idle');
+    expect(world.componentsOf<Health>().get(enemy)!.current, 10);
+    expect(world.componentsOf<SpriteStates>().get(hero)!.current, 'idle');
     combat.enabled = true;
     world.step(0.1);
-    expect(world.storeOf<Health>().get(enemy)!.current, 0);
+    expect(world.componentsOf<Health>().get(enemy)!.current, 0);
   });
 }

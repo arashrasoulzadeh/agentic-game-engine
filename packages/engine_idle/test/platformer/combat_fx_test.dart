@@ -42,11 +42,11 @@ void main() {
     spawn(world, 'enemy', 10, hp: 5);
     world.step(0.01);
     // two sparks (both fighters hit) + one fatal smoke
-    expect(world.storeOf<OneShotFx>().length, 3);
+    expect(world.componentsOf<OneShotFx>().length, 3);
     for (var i = 0; i < 10; i++) {
       world.step(0.1);
     }
-    expect(world.storeOf<OneShotFx>().length, 0);
+    expect(world.componentsOf<OneShotFx>().length, 0);
   });
 
   test('effects sit on the defender silhouette, on the attacker side', () {
@@ -63,8 +63,8 @@ void main() {
     spawn(world, 'enemy', 120);
     world.step(0.01);
 
-    final pos = world.storeOf<Position>();
-    final fx = world.storeOf<OneShotFx>();
+    final pos = world.componentsOf<Position>();
+    final fx = world.componentsOf<OneShotFx>();
     var found = false;
     for (var i = 0; i < fx.length; i++) {
       final p = pos.get(fx.entityAt(i))!;
@@ -82,12 +82,12 @@ void main() {
     installCombatFx(world, const CombatFx(hitBurst: 7));
     final hero = spawn(world, 'hero', 10);
     final enemy = spawn(world, 'enemy', 100);
-    world.storeOf<ParticleEmitter>()
+    world.componentsOf<ParticleEmitter>()
       ..set(hero, ParticleEmitter())
       ..set(enemy, ParticleEmitter());
     world.step(0.01);
-    expect(world.storeOf<ParticleEmitter>().get(hero)!.burstCount, 7);
-    expect(world.storeOf<ParticleEmitter>().get(enemy)!.burstCount, 7);
+    expect(world.componentsOf<ParticleEmitter>().get(hero)!.burstCount, 7);
+    expect(world.componentsOf<ParticleEmitter>().get(enemy)!.burstCount, 7);
   });
 
   test('spawnFighter attaches the impact emitter it is given', () {
@@ -105,6 +105,6 @@ void main() {
       frameCount: 1,
       impactParticles: ParticleEmitter(colorArgb: 0xFFFFD27A),
     );
-    expect(world.storeOf<ParticleEmitter>().get(e)!.colorArgb, 0xFFFFD27A);
+    expect(world.componentsOf<ParticleEmitter>().get(e)!.colorArgb, 0xFFFFD27A);
   });
 }

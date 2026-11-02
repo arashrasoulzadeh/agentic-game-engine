@@ -16,10 +16,10 @@ _Game _game({String coins = '1000'}) {
   registerCoreComponents(w);
   registerIdleComponents(w);
   final wallet = BigTreasury(amounts: {'coins': n(coins)});
-  w.storeOf<BigTreasury>().set(w.spawn(), wallet);
+  w.componentsOf<BigTreasury>().set(w.spawn(), wallet);
 
   final cursor = w.spawn();
-  w.storeOf<Generator>().set(
+  w.componentsOf<Generator>().set(
     cursor,
     Generator(
       id: 'cursor',
@@ -28,7 +28,7 @@ _Game _game({String coins = '1000'}) {
     ),
   );
   final farm = w.spawn();
-  w.storeOf<Generator>().set(
+  w.componentsOf<Generator>().set(
     farm,
     Generator(
       id: 'farm',
@@ -55,7 +55,7 @@ Upgrade _upgrade(
     cost: {'coins': n(cost)},
     requires: requires,
   );
-  w.storeOf<Upgrade>().set(e, u);
+  w.componentsOf<Upgrade>().set(e, u);
   return u;
 }
 
@@ -63,7 +63,7 @@ void main() {
   group('milestones', () {
     test('reached milestones multiply that generator and stack', () {
       final g = _game();
-      final cursor = g.world.storeOf<Generator>().get(g.cursor)!;
+      final cursor = g.world.componentsOf<Generator>().get(g.cursor)!;
       cursor.milestones.addAll([Milestone(10, n('2')), Milestone(20, n('3'))]);
       cursor.owned = 9;
       expect(computeIncome(g.world)['coins']!.approxEquals(n('0.9')), isTrue);
@@ -88,8 +88,8 @@ void main() {
   group('income', () {
     test('owned x output, summed over generators', () {
       final g = _game();
-      g.world.storeOf<Generator>().get(g.cursor)!.owned = 10;
-      g.world.storeOf<Generator>().get(g.farm)!.owned = 2;
+      g.world.componentsOf<Generator>().get(g.cursor)!.owned = 10;
+      g.world.componentsOf<Generator>().get(g.farm)!.owned = 2;
       expect(
         computeIncome(g.world)['coins']!.approxEquals(n('11')),
         isTrue,
@@ -101,8 +101,8 @@ void main() {
       'purchased upgrades multiply their target (or all); unpurchased ones do not',
       () {
         final g = _game();
-        g.world.storeOf<Generator>().get(g.cursor)!.owned = 10;
-        g.world.storeOf<Generator>().get(g.farm)!.owned = 1;
+        g.world.componentsOf<Generator>().get(g.cursor)!.owned = 10;
+        g.world.componentsOf<Generator>().get(g.farm)!.owned = 1;
         final doubleCursor = _upgrade(g.world);
         _upgrade(g.world, target: 'all', mult: '3').purchased = false;
         expect(
@@ -122,11 +122,11 @@ void main() {
 
     test('game-wide modifiers (prestige, boosts) multiply everything', () {
       final g = _game();
-      g.world.storeOf<Generator>().get(g.farm)!.owned = 2;
+      g.world.componentsOf<Generator>().get(g.farm)!.owned = 2;
       final mods = IdleModifiers()
         ..stack.setMultiplier('prestige', n('4'))
         ..stack.setMultiplier('boost', n('2'));
-      g.world.storeOf<IdleModifiers>().set(g.world.spawn(), mods);
+      g.world.componentsOf<IdleModifiers>().set(g.world.spawn(), mods);
       expect(
         computeIncome(g.world)['coins']!.approxEquals(n('80')),
         isTrue,
@@ -142,8 +142,8 @@ void main() {
 
     test('synergy upgrades scale with owned count of synergyOf', () {
       final g = _game();
-      g.world.storeOf<Generator>().get(g.cursor)!.owned = 10;
-      g.world.storeOf<Generator>().get(g.farm)!.owned = 1;
+      g.world.componentsOf<Generator>().get(g.cursor)!.owned = 10;
+      g.world.componentsOf<Generator>().get(g.farm)!.owned = 1;
       // farms: 5/s base; +1% per cursor → 5 * (1 + 0.01*10) = 5.5
       final syn = Upgrade(
         id: 'syn',
@@ -152,7 +152,7 @@ void main() {
         synergyOf: 'cursor',
         cost: {'coins': n('1')},
       )..purchased = true;
-      g.world.storeOf<Upgrade>().set(g.world.spawn(), syn);
+      g.world.componentsOf<Upgrade>().set(g.world.spawn(), syn);
       expect(
         computeIncome(g.world)['coins']!.approxEquals(n('6.5')),
         isTrue,
@@ -172,7 +172,7 @@ void main() {
         final r = buyGenerator(g.world, g.wallet, g.cursor);
         expect(r.ok, isTrue);
         expect(r.spent['coins'], n('10'));
-        expect(g.world.storeOf<Generator>().get(g.cursor)!.owned, 1);
+        expect(g.world.componentsOf<Generator>().get(g.cursor)!.owned, 1);
         expect(g.wallet.of('coins'), n('990'));
         expect(g.wallet.rateOf('coins').approxEquals(n('0.1')), isTrue);
       },
@@ -195,7 +195,7 @@ void main() {
       expect(fail.ok, isFalse);
       expect(fail.failure, BuyFailure.unaffordable);
       expect(poor.wallet.of('coins'), n('50'), reason: 'nothing taken');
-      expect(poor.world.storeOf<Generator>().get(poor.cursor)!.owned, 0);
+      expect(poor.world.componentsOf<Generator>().get(poor.cursor)!.owned, 0);
     });
 
     test('max buys as many as the budget affords, exactly', () {
@@ -228,7 +228,7 @@ void main() {
       () {
         final g = _game();
         final locked = g.world.spawn();
-        g.world.storeOf<Generator>().set(
+        g.world.componentsOf<Generator>().set(
           locked,
           Generator(
             id: 'lab',
@@ -260,7 +260,7 @@ void main() {
         buyGenerator(g.world, g.wallet, g.cursor, count: 10);
         final before = g.wallet.rateOf('coins');
         final e = g.world.spawn();
-        g.world.storeOf<Upgrade>().set(
+        g.world.componentsOf<Upgrade>().set(
           e,
           Upgrade(
             id: 'x2',
@@ -284,15 +284,15 @@ void main() {
     test('too poor, or locked, buys nothing', () {
       final g = _game(coins: '5');
       final e = g.world.spawn();
-      g.world.storeOf<Upgrade>().set(
+      g.world.componentsOf<Upgrade>().set(
         e,
         Upgrade(id: 'x', multiplier: n('2'), cost: {'coins': n('50')}),
       );
       expect(buyUpgrade(g.world, g.wallet, e).failure, BuyFailure.unaffordable);
-      expect(g.world.storeOf<Upgrade>().get(e)!.purchased, isFalse);
+      expect(g.world.componentsOf<Upgrade>().get(e)!.purchased, isFalse);
 
       final locked = g.world.spawn();
-      g.world.storeOf<Upgrade>().set(
+      g.world.componentsOf<Upgrade>().set(
         locked,
         Upgrade(id: 'y', multiplier: n('2'), requires: ['magic']),
       );

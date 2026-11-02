@@ -19,7 +19,7 @@ void main() {
     ); // throws with every problem if the JSON is wrong
     world.addSystem(IdleSystem()); // accrues income each step
 
-    final cursor = world.storeOf<Generator>().entityAt(0);
+    final cursor = world.componentsOf<Generator>().entityAt(0);
     expect(buyGenerator(world, game.wallet, cursor).ok, isTrue); // x1
     game.wallet.add('coins', BigNumber.from(1000));
     final r = buyGenerator(
@@ -42,7 +42,7 @@ void main() {
     final controller = IdleController(world: world);
 
     controller.wallet.add('coins', BigNumber.parse('5e6'));
-    world.storeOf<IdleStats>().denseAt(0).credit({
+    world.componentsOf<IdleStats>().denseAt(0).credit({
       'coins': BigNumber.parse('4e6'),
     });
     expect(controller.prestige(), BigNumber.from(2)); // floor(sqrt(4e6 / 1e6))

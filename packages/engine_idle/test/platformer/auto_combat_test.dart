@@ -47,7 +47,7 @@ void main() {
     for (var i = 0; i < 20; i++) {
       world.step(0.1);
     }
-    expect(world.storeOf<Health>().get(enemy)!.current, lessThan(50));
+    expect(world.componentsOf<Health>().get(enemy)!.current, lessThan(50));
   });
 
   test('hit uses engine flashHit / HitFlashSystem for red tint', () {
@@ -78,13 +78,13 @@ void main() {
     );
 
     world.step(0.05);
-    expect(world.storeOf<Sprite>().get(enemy)!.tintArgb, kDefaultHitFlashTint);
-    expect(world.storeOf<Sprite>().get(hero)!.tintArgb, kDefaultHitFlashTint);
+    expect(world.componentsOf<Sprite>().get(enemy)!.tintArgb, kDefaultHitFlashTint);
+    expect(world.componentsOf<Sprite>().get(hero)!.tintArgb, kDefaultHitFlashTint);
 
-    world.storeOf<HitFlash>().get(enemy)!.remaining = 0;
-    world.storeOf<HitFlash>().get(hero)!.remaining = 0;
+    world.componentsOf<HitFlash>().get(enemy)!.remaining = 0;
+    world.componentsOf<HitFlash>().get(hero)!.remaining = 0;
     world.step(0.01);
-    expect(world.storeOf<Sprite>().get(enemy)!.tintArgb, isNull);
-    expect(world.storeOf<Sprite>().get(hero)!.tintArgb, isNull);
+    expect(world.componentsOf<Sprite>().get(enemy)!.tintArgb, isNull);
+    expect(world.componentsOf<Sprite>().get(hero)!.tintArgb, isNull);
   });
 }

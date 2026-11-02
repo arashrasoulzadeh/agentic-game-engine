@@ -10,11 +10,11 @@ game({List<String> rules = const ['noUpgrades'], String reward = '3'}) {
   registerCoreComponents(w);
   registerIdleComponents(w);
   final wallet = BigTreasury(amounts: {'coins': n('1000')});
-  w.storeOf<BigTreasury>().set(w.spawn(), wallet);
-  w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
-  w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
+  w.componentsOf<BigTreasury>().set(w.spawn(), wallet);
+  w.componentsOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+  w.componentsOf<IdleStats>().set(w.spawn(), IdleStats());
   final cursor = w.spawn();
-  w.storeOf<Generator>().set(
+  w.componentsOf<Generator>().set(
     cursor,
     Generator(
       id: 'cursor',
@@ -23,7 +23,7 @@ game({List<String> rules = const ['noUpgrades'], String reward = '3'}) {
     ),
   );
   final up = w.spawn();
-  w.storeOf<Upgrade>().set(
+  w.componentsOf<Upgrade>().set(
     up,
     Upgrade(
       id: 'x2',
@@ -39,8 +39,8 @@ game({List<String> rules = const ['noUpgrades'], String reward = '3'}) {
     goalAtLeast: n('500'),
     reward: n(reward),
   );
-  w.storeOf<Challenge>().set(w.spawn(), c);
-  w.storeOf<PrestigeRule>().set(
+  w.componentsOf<Challenge>().set(w.spawn(), c);
+  w.componentsOf<PrestigeRule>().set(
     w.spawn(),
     PrestigeRule(
       currency: 'gems',
@@ -55,13 +55,13 @@ game({List<String> rules = const ['noUpgrades'], String reward = '3'}) {
 void main() {
   test('starting restarts the run with the restriction in force', () {
     final g = game();
-    g.world.storeOf<Generator>().get(g.cursor)!.owned = 5;
-    g.world.storeOf<Upgrade>().get(g.up)!.purchased = true;
+    g.world.componentsOf<Generator>().get(g.cursor)!.owned = 5;
+    g.world.componentsOf<Upgrade>().get(g.up)!.purchased = true;
     g.wallet.add('gems', n('7'));
     expect(startChallenge(g.world, g.wallet, 'frugal'), isTrue);
     expect(g.c.active, isTrue);
-    expect(g.world.storeOf<Generator>().get(g.cursor)!.owned, 0);
-    expect(g.world.storeOf<Upgrade>().get(g.up)!.purchased, isFalse);
+    expect(g.world.componentsOf<Generator>().get(g.cursor)!.owned, 0);
+    expect(g.world.componentsOf<Upgrade>().get(g.up)!.purchased, isFalse);
     expect(
       g.wallet.of('coins'),
       n('50'),
@@ -94,7 +94,7 @@ void main() {
 
   test('incomeMultiplier is a handicap that ends with the challenge', () {
     final g = game(rules: ['incomeMultiplier:0.1']);
-    g.world.storeOf<Generator>().get(g.cursor)!.owned = 10;
+    g.world.componentsOf<Generator>().get(g.cursor)!.owned = 10;
     recomputeIncome(g.world, g.wallet);
     expect(g.wallet.rateOf('coins'), n('10'));
     startChallenge(g.world, g.wallet, 'frugal');
@@ -113,9 +113,9 @@ void main() {
       startChallenge(g.world, g.wallet, 'frugal');
       buyGenerator(g.world, g.wallet, g.cursor, count: 2);
       final before = g.wallet.rateOf('coins');
-      g.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('499')});
+      g.world.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('499')});
       expect(checkChallenges(g.world, g.wallet), isNull, reason: 'one short');
-      g.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('1')});
+      g.world.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('1')});
       expect(checkAchievements(g.world, g.wallet), isEmpty);
       expect(g.c.completed, isTrue);
       expect(g.c.active, isFalse);
@@ -139,7 +139,7 @@ void main() {
     'only one challenge runs at a time, unknown ids and abandon without one are refused',
     () {
       final g = game();
-      g.world.storeOf<Challenge>().set(
+      g.world.componentsOf<Challenge>().set(
         g.world.spawn(),
         Challenge(id: 'other', goalStat: 'taps', goalAtLeast: n('10')),
       );
@@ -198,7 +198,7 @@ void main() {
       final w = World(width: 4, height: 4);
       registerCoreComponents(w);
       loadIdleDefinition(w, j);
-      expect(w.storeOf<Challenge>().denseAt(0).rules, hasLength(3));
+      expect(w.componentsOf<Challenge>().denseAt(0).rules, hasLength(3));
     });
 
     test('bad rules and fields are reported with their path', () {

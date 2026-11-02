@@ -14,10 +14,10 @@ IdleController _fresh() {
   final w = World(width: 10, height: 10);
   registerCoreComponents(w);
   registerIdleComponents(w);
-  w.storeOf<BigTreasury>().set(w.spawn(), BigTreasury());
-  w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
-  w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
-  w.storeOf<Generator>().set(
+  w.componentsOf<BigTreasury>().set(w.spawn(), BigTreasury());
+  w.componentsOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+  w.componentsOf<IdleStats>().set(w.spawn(), IdleStats());
+  w.componentsOf<Generator>().set(
     w.spawn(),
     Generator(
       id: 'cursor',
@@ -57,9 +57,9 @@ void main() {
         clock: () => DateTime.utc(2026, 1, 1, 15),
       ).load();
 
-      expect(c.world.storeOf<Generator>().denseAt(0).owned, 12);
+      expect(c.world.componentsOf<Generator>().denseAt(0).owned, 12);
       expect(c.wallet.of('gems'), n('3'));
-      expect(c.world.storeOf<IdleStats>().denseAt(0).prestigeCount, 1);
+      expect(c.world.componentsOf<IdleStats>().denseAt(0).prestigeCount, 1);
       expect(summary, isNotNull, reason: 'three hours passed since the save');
       c.stop();
     });

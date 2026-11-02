@@ -12,11 +12,11 @@ game() {
   final wallet = BigTreasury();
   final mods = IdleModifiers();
   final stats = IdleStats();
-  w.storeOf<BigTreasury>().set(w.spawn(), wallet);
-  w.storeOf<IdleModifiers>().set(w.spawn(), mods);
-  w.storeOf<IdleStats>().set(w.spawn(), stats);
+  w.componentsOf<BigTreasury>().set(w.spawn(), wallet);
+  w.componentsOf<IdleModifiers>().set(w.spawn(), mods);
+  w.componentsOf<IdleStats>().set(w.spawn(), stats);
   final g = w.spawn();
-  w.storeOf<Generator>().set(
+  w.componentsOf<Generator>().set(
     g,
     Generator(
       id: 'g',
@@ -84,7 +84,7 @@ void main() {
         reason: 'ended',
       );
       expect(g.mods.stack.sources, isNot(contains('boost:x2')));
-      expect(g.world.storeOf<Boost>().length, 0);
+      expect(g.world.componentsOf<Boost>().length, 0);
     });
 
     test(
@@ -107,7 +107,7 @@ void main() {
           multiplier: n('2'),
           seconds: 10,
         );
-        expect(g.world.storeOf<Boost>().length, 1);
+        expect(g.world.componentsOf<Boost>().length, 1);
         g.world.step(8);
         expect(
           g.wallet.rateOf('coins').approxEquals(n('20')),

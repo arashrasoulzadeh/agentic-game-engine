@@ -14,13 +14,13 @@ IdleController _newGame() {
   final w = World(width: 10, height: 10);
   registerCoreComponents(w);
   registerIdleComponents(w);
-  w.storeOf<BigTreasury>().set(
+  w.componentsOf<BigTreasury>().set(
     w.spawn(),
     BigTreasury(amounts: {'coins': n('100')}),
   );
-  w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
-  w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
-  w.storeOf<Generator>().set(
+  w.componentsOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+  w.componentsOf<IdleStats>().set(w.spawn(), IdleStats());
+  w.componentsOf<Generator>().set(
     w.spawn(),
     Generator(
       id: 'g',
@@ -61,14 +61,14 @@ void main() {
     () {
       final a = _newGame();
       a.buy(a.generatorIds.first, count: 5);
-      a.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('1e200')});
+      a.world.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('1e200')});
       a.tick(10);
       final s = session(a)..save();
 
       final b = _newGame();
       session(b).load();
       expect(b.wallet.of('coins').approxEquals(a.wallet.of('coins')), isTrue);
-      expect(b.world.storeOf<Generator>().denseAt(0).owned, 5);
+      expect(b.world.componentsOf<Generator>().denseAt(0).owned, 5);
       expect(
         b.world
             .storeOf<IdleStats>()
@@ -165,7 +165,7 @@ void main() {
       final before = c.wallet.of('coins');
       s.doubleOffline(summary);
       expect(c.wallet.of('coins'), before + summary.gained['coins']!);
-      final stats = c.world.storeOf<IdleStats>().denseAt(0);
+      final stats = c.world.componentsOf<IdleStats>().denseAt(0);
       expect(stats.lifetimeEarned['coins'], summary.gained['coins']! * n('2'));
       c.stop();
     },
@@ -274,7 +274,7 @@ void main() {
 
       final b = _newGame();
       session(b).importCode(code);
-      expect(b.world.storeOf<Generator>().denseAt(0).owned, 3);
+      expect(b.world.componentsOf<Generator>().denseAt(0).owned, 3);
 
       final c = _newGame();
       final before = c.wallet.of('coins');
@@ -363,7 +363,7 @@ void main() {
         clock: clock.call,
       );
       expect(await sB.syncCloud(cloud), CloudSyncResult.pulled);
-      expect(fresh.world.storeOf<Generator>().denseAt(0).owned, 3);
+      expect(fresh.world.componentsOf<Generator>().denseAt(0).owned, 3);
       expect(storeB.read(), isNotNull, reason: 'also kept locally');
       fresh.stop();
     });
@@ -392,11 +392,11 @@ void main() {
       // Device A syncs again: the cloud is newer, so it is pulled.
       clock.now = clock.now.add(const Duration(hours: 1));
       expect(await sA.syncCloud(cloud), CloudSyncResult.pulled);
-      expect(a.world.storeOf<Generator>().denseAt(0).owned, 5);
+      expect(a.world.componentsOf<Generator>().denseAt(0).owned, 5);
 
       // With a resolver that refuses the cloud copy, the local one is pushed instead.
       clock.now = clock.now.add(const Duration(hours: 1));
-      a.world.storeOf<Generator>().denseAt(0).owned = 4;
+      a.world.componentsOf<Generator>().denseAt(0).owned = 4;
       sA.save();
       var asked = 0;
       final r = await sA.syncCloud(
@@ -452,7 +452,7 @@ void main() {
       await tester.tap(find.byKey(const Key('save-import')));
       await tester.pump();
       expect(find.text('Game loaded.'), findsOneWidget);
-      expect(b.world.storeOf<Generator>().denseAt(0).owned, 4);
+      expect(b.world.componentsOf<Generator>().denseAt(0).owned, 4);
 
       await tester.enterText(
         find.byKey(const Key('save-input')),
@@ -462,7 +462,7 @@ void main() {
       await tester.pump();
       expect(find.textContaining('damaged'), findsOneWidget);
       expect(
-        b.world.storeOf<Generator>().denseAt(0).owned,
+        b.world.componentsOf<Generator>().denseAt(0).owned,
         4,
         reason: 'a bad code changes nothing',
       );

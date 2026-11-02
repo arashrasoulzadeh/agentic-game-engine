@@ -61,12 +61,12 @@ void main() {
       expect(game.wallet.of('gems'), BigNumber.zero);
       expect(game.offline.cap, const Duration(hours: 4));
       expect(game.offline.efficiency, 0.5);
-      expect(w.storeOf<Generator>().length, 2);
-      expect(w.storeOf<Upgrade>().length, 1);
-      expect(w.storeOf<Achievement>().length, 2);
-      expect(w.storeOf<PrestigeRule>().length, 1);
+      expect(w.componentsOf<Generator>().length, 2);
+      expect(w.componentsOf<Upgrade>().length, 1);
+      expect(w.componentsOf<Achievement>().length, 2);
+      expect(w.componentsOf<PrestigeRule>().length, 1);
 
-      final cursor = w.storeOf<Generator>().entityAt(0);
+      final cursor = w.componentsOf<Generator>().entityAt(0);
       game.wallet.add('coins', n('100'));
       expect(buyGenerator(w, game.wallet, cursor).ok, isTrue);
     },
@@ -165,7 +165,7 @@ void main() {
         final w = World(width: 4, height: 4);
         registerCoreComponents(w);
         loadIdleDefinition(w, layered);
-        expect(w.storeOf<PrestigeRule>().length, 2);
+        expect(w.componentsOf<PrestigeRule>().length, 2);
         expect(prestigeRuleOf(w, 'ascend')!.currency, 'stars');
         expect(prestigeRuleOf(w)!.id, 'prestige');
 
@@ -265,7 +265,7 @@ void main() {
         final w = World(width: 4, height: 4);
         registerCoreComponents(w);
         loadIdleDefinition(w, j);
-        final g = w.storeOf<GoldenEvents>().denseAt(0);
+        final g = w.componentsOf<GoldenEvents>().denseAt(0);
         expect(
           (g.meanInterval, g.lifetime, g.rewards.length),
           (120.0, 12.0, 2),

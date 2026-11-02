@@ -9,10 +9,10 @@ BigNumber n(String s) => BigNumber.parse(s);
   registerCoreComponents(w);
   registerIdleComponents(w);
   final wallet = BigTreasury(amounts: {'coins': n('0')});
-  w.storeOf<BigTreasury>().set(w.spawn(), wallet);
-  w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
-  w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
-  w.storeOf<Generator>().set(
+  w.componentsOf<BigTreasury>().set(w.spawn(), wallet);
+  w.componentsOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+  w.componentsOf<IdleStats>().set(w.spawn(), IdleStats());
+  w.componentsOf<Generator>().set(
     w.spawn(),
     Generator(
       id: 'g',
@@ -22,7 +22,7 @@ BigNumber n(String s) => BigNumber.parse(s);
     ),
   );
   recomputeIncome(w, wallet);
-  w.storeOf<GoldenEvents>().set(
+  w.componentsOf<GoldenEvents>().set(
     w.spawn(),
     GoldenEvents(
       meanInterval: 100,
@@ -50,7 +50,7 @@ void main() {
       final sys = GoldenEventSystem(DeterministicRandom(1));
       final offers = <double>[];
       g.world.events.on<GoldenOfferedEvent>((e) => offers.add(e.lifetime));
-      final store = g.world.storeOf<GoldenEvents>();
+      final store = g.world.componentsOf<GoldenEvents>();
 
       var t = 0.0;
       while (store.denseAt(0).offered == null && t < 200) {
@@ -77,7 +77,7 @@ void main() {
       final seen = <int?>[];
       for (var i = 0; i < 2000; i++) {
         sys.update(g.world, 1);
-        final o = g.world.storeOf<GoldenEvents>().denseAt(0).offered;
+        final o = g.world.componentsOf<GoldenEvents>().denseAt(0).offered;
         if (o != null) {
           seen.add(i * 10 + o);
           claimGolden(g.world, g.wallet);
@@ -96,7 +96,7 @@ void main() {
         GoldenReward(kind: 'boost', multiplier: BigNumber.from(7), seconds: 30),
       ],
     );
-    final store = g.world.storeOf<GoldenEvents>();
+    final store = g.world.componentsOf<GoldenEvents>();
     store.denseAt(0)
       ..offered = 0
       ..offerRemaining = 5;
@@ -113,13 +113,13 @@ void main() {
 
   test('claiming a payout adds seconds of income and counts it as earned', () {
     final g = game(rewards: [GoldenReward(kind: 'payout', seconds: 60)]);
-    g.world.storeOf<GoldenEvents>().denseAt(0)
+    g.world.componentsOf<GoldenEvents>().denseAt(0)
       ..offered = 0
       ..offerRemaining = 5;
     claimGolden(g.world, g.wallet);
     expect(g.wallet.of('coins'), n('600'));
     expect(
-      g.world.storeOf<IdleStats>().denseAt(0).lifetimeEarned['coins'],
+      g.world.componentsOf<IdleStats>().denseAt(0).lifetimeEarned['coins'],
       n('600'),
     );
   });
@@ -145,6 +145,6 @@ void main() {
     for (var i = 0; i < 500; i++) {
       sys.update(g.world, 1);
     }
-    expect(g.world.storeOf<GoldenEvents>().denseAt(0).offered, isNull);
+    expect(g.world.componentsOf<GoldenEvents>().denseAt(0).offered, isNull);
   });
 }

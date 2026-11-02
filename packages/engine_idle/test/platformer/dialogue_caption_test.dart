@@ -19,16 +19,16 @@ void main() {
   });
 
   String onScreen() {
-    final texts = world.storeOf<eng.Text>();
+    final texts = world.componentsOf<eng.Text>();
     return texts.denseAt(0).text;
   }
 
   test('sits where its style says, right-to-left', () {
-    final p = world.storeOf<Position>().denseAt(0);
+    final p = world.componentsOf<Position>().denseAt(0);
     expect((p.x, p.y), (90, 160));
-    expect(world.storeOf<eng.Text>().denseAt(0).rtl, isTrue);
-    expect(world.storeOf<eng.Text>().denseAt(0).fontSize, 7.5);
-    expect(world.storeOf<eng.Text>().denseAt(0).screenSpace, isFalse);
+    expect(world.componentsOf<eng.Text>().denseAt(0).rtl, isTrue);
+    expect(world.componentsOf<eng.Text>().denseAt(0).fontSize, 7.5);
+    expect(world.componentsOf<eng.Text>().denseAt(0).screenSpace, isFalse);
   });
 
   test('types in through the dialogue runner, character by character', () {

@@ -30,11 +30,11 @@ void main() {
   registerCoreComponents(w);
   registerIdleComponents(w);
   final wallet = BigTreasury(amounts: {'coins': n('1e30')});
-  w.storeOf<BigTreasury>().set(w.spawn(), wallet);
-  w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
-  w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
+  w.componentsOf<BigTreasury>().set(w.spawn(), wallet);
+  w.componentsOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+  w.componentsOf<IdleStats>().set(w.spawn(), IdleStats());
   for (var i = 0; i < 1000; i++) {
-    w.storeOf<Generator>().set(
+    w.componentsOf<Generator>().set(
       w.spawn(),
       Generator(
         id: 'g$i',

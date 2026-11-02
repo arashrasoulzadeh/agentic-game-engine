@@ -17,13 +17,13 @@ void main() {
     final w = World(width: 10, height: 10);
     registerCoreComponents(w);
     registerIdleComponents(w);
-    w.storeOf<BigTreasury>().set(
+    w.componentsOf<BigTreasury>().set(
       w.spawn(),
       BigTreasury(amounts: {'coins': n('100000')}),
     );
-    w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
-    w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
-    w.storeOf<Generator>().set(
+    w.componentsOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+    w.componentsOf<IdleStats>().set(w.spawn(), IdleStats());
+    w.componentsOf<Generator>().set(
       w.spawn(),
       Generator(
         id: 'cursor',
@@ -31,7 +31,7 @@ void main() {
         output: {'coins': n('1')},
       ),
     );
-    w.storeOf<Upgrade>().set(
+    w.componentsOf<Upgrade>().set(
       w.spawn(),
       Upgrade(
         id: 'x2',
@@ -40,7 +40,7 @@ void main() {
         cost: {'coins': n('50')},
       ),
     );
-    w.storeOf<PrestigeRule>().set(
+    w.componentsOf<PrestigeRule>().set(
       w.spawn(),
       PrestigeRule(currency: 'gems', basedOn: 'coins', divisor: n('100')),
     );
@@ -73,7 +73,7 @@ void main() {
   test('upgrades and prestige are reported', () {
     c.buy(c.generatorIds.first);
     c.buyUpgradeById(c.upgradeIds.first);
-    c.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
+    c.world.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
     c.prestige();
     expect(events.map((e) => e.name), [
       IdleAnalytics.purchaseEvent,

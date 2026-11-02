@@ -28,13 +28,13 @@ void main() {
     final w = World(width: 10, height: 10);
     registerCoreComponents(w);
     registerIdleComponents(w);
-    w.storeOf<BigTreasury>().set(
+    w.componentsOf<BigTreasury>().set(
       w.spawn(),
       BigTreasury(amounts: {'coins': n('100')}),
     );
-    w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
-    w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
-    w.storeOf<Generator>().set(
+    w.componentsOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+    w.componentsOf<IdleStats>().set(w.spawn(), IdleStats());
+    w.componentsOf<Generator>().set(
       w.spawn(),
       Generator(
         id: 'cursor',
@@ -62,13 +62,13 @@ void main() {
     final w = World(width: 10, height: 10);
     registerCoreComponents(w);
     registerIdleComponents(w);
-    w.storeOf<BigTreasury>().set(
+    w.componentsOf<BigTreasury>().set(
       w.spawn(),
       BigTreasury(amounts: {'coins': n('1000')}),
     );
-    w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
-    w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
-    w.storeOf<ResearchNode>().set(
+    w.componentsOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+    w.componentsOf<IdleStats>().set(w.spawn(), IdleStats());
+    w.componentsOf<ResearchNode>().set(
       w.spawn(),
       ResearchNode(id: 'mining', name: 'Mining', cost: {'coins': n('100')}),
     );

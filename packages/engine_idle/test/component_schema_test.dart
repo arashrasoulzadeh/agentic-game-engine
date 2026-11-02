@@ -99,9 +99,9 @@ void main() {
     registerCoreComponents(w2);
     registerIdleComponents(w2);
     snap.restoreInto(w2);
-    expect(w2.storeOf<Generator>().get(e)!.owned, 3);
+    expect(w2.componentsOf<Generator>().get(e)!.owned, 3);
     expect(
-      w2.storeOf<Generator>().get(e)!.cost.costOfNext(0),
+      w2.componentsOf<Generator>().get(e)!.cost.costOfNext(0),
       BigNumber.parse('10'),
     );
   });

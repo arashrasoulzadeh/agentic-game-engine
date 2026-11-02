@@ -11,11 +11,11 @@ class _Game {
     registerCoreComponents(world);
     registerIdleComponents(world);
     wallet = BigTreasury(amounts: {'coins': n(coins)});
-    world.storeOf<BigTreasury>().set(world.spawn(), wallet);
-    world.storeOf<IdleStats>().set(world.spawn(), stats);
-    world.storeOf<IdleModifiers>().set(world.spawn(), mods);
+    world.componentsOf<BigTreasury>().set(world.spawn(), wallet);
+    world.componentsOf<IdleStats>().set(world.spawn(), stats);
+    world.componentsOf<IdleModifiers>().set(world.spawn(), mods);
     cursor = world.spawn();
-    world.storeOf<Generator>().set(
+    world.componentsOf<Generator>().set(
       cursor,
       Generator(
         id: 'cursor',
@@ -46,7 +46,7 @@ class _Game {
       keepUpgrades: keepUpgrades,
       keepGenerators: keepGenerators,
     );
-    world.storeOf<PrestigeRule>().set(world.spawn(), rule);
+    world.componentsOf<PrestigeRule>().set(world.spawn(), rule);
     return rule;
   }
 }
@@ -57,7 +57,7 @@ void main() {
     _Game layered() {
       final g = _Game();
       g.addRule();
-      g.world.storeOf<PrestigeRule>().set(
+      g.world.componentsOf<PrestigeRule>().set(
         g.world.spawn(),
         PrestigeRule(
           id: 'ascend',
@@ -124,7 +124,7 @@ void main() {
         final g = layered();
         g.stats.credit({'coins': n('4e12')});
         performPrestige(g.world, g.wallet);
-        final mods = g.world.storeOf<IdleModifiers>().denseAt(0).stack;
+        final mods = g.world.componentsOf<IdleModifiers>().denseAt(0).stack;
         expect(mods.sources, contains('prestige'));
         expect(mods.sources, isNot(contains('prestige:ascend')));
         performPrestige(g.world, g.wallet, 'ascend');
@@ -171,7 +171,7 @@ void main() {
       'recordIdleEvent counts and unlocks event: achievements, surviving a save',
       () {
         final g = _Game();
-        g.world.storeOf<Achievement>().set(
+        g.world.componentsOf<Achievement>().set(
           g.world.spawn(),
           Achievement(id: 'slayer', stat: 'event:dragon', atLeast: n('3')),
         );
@@ -271,7 +271,7 @@ void main() {
       g.stats.credit({'coins': n('4e12')});
       buyGenerator(g.world, g.wallet, g.cursor, count: 5);
       final upgrade = g.world.spawn();
-      g.world.storeOf<Upgrade>().set(
+      g.world.componentsOf<Upgrade>().set(
         upgrade,
         Upgrade(id: 'x2', multiplier: n('2'), purchased: true),
       );
@@ -286,8 +286,8 @@ void main() {
         n('10'),
         reason: 'back to the starting amount',
       );
-      expect(g.world.storeOf<Generator>().get(g.cursor)!.owned, 0);
-      expect(g.world.storeOf<Upgrade>().get(upgrade)!.purchased, isFalse);
+      expect(g.world.componentsOf<Generator>().get(g.cursor)!.owned, 0);
+      expect(g.world.componentsOf<Upgrade>().get(upgrade)!.purchased, isFalse);
       expect(
         g.stats.runEarned.keys,
         ['gems'],
@@ -343,12 +343,12 @@ void main() {
       g.addRule(keepUpgrades: true);
       g.stats.credit({'coins': n('1e6')});
       final e = g.world.spawn();
-      g.world.storeOf<Upgrade>().set(
+      g.world.componentsOf<Upgrade>().set(
         e,
         Upgrade(id: 'u', multiplier: n('2'), purchased: true),
       );
       performPrestige(g.world, g.wallet);
-      expect(g.world.storeOf<Upgrade>().get(e)!.purchased, isTrue);
+      expect(g.world.componentsOf<Upgrade>().get(e)!.purchased, isTrue);
     });
 
     test('keepGenerators keeps only the named generators', () {
@@ -356,7 +356,7 @@ void main() {
       g.addRule(keepGenerators: ['cursor']);
       g.stats.credit({'coins': n('1e6')});
       final other = g.world.spawn();
-      g.world.storeOf<Generator>().set(
+      g.world.componentsOf<Generator>().set(
         other,
         Generator(
           id: 'farm',
@@ -364,11 +364,11 @@ void main() {
           cost: GeometricCost(base: n('10'), growth: 1.1),
         ),
       );
-      final cursor = g.world.storeOf<Generator>().get(g.cursor)!;
+      final cursor = g.world.componentsOf<Generator>().get(g.cursor)!;
       cursor.owned = 7;
       performPrestige(g.world, g.wallet);
       expect(cursor.owned, 7);
-      expect(g.world.storeOf<Generator>().get(other)!.owned, 0);
+      expect(g.world.componentsOf<Generator>().get(other)!.owned, 0);
     });
 
     test('without a rule or stats it does nothing', () {
@@ -407,7 +407,7 @@ void main() {
         atLeast: n(atLeast),
         reward: n(reward),
       );
-      g.world.storeOf<Achievement>().set(g.world.spawn(), a);
+      g.world.componentsOf<Achievement>().set(g.world.spawn(), a);
       return a;
     }
 

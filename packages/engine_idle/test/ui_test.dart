@@ -10,11 +10,11 @@ IdleController _controller({String coins = '1000', int generators = 2}) {
   registerCoreComponents(w);
   registerIdleComponents(w);
   final wallet = BigTreasury(amounts: {'coins': n(coins)});
-  w.storeOf<BigTreasury>().set(w.spawn(), wallet);
-  w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
-  w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
+  w.componentsOf<BigTreasury>().set(w.spawn(), wallet);
+  w.componentsOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+  w.componentsOf<IdleStats>().set(w.spawn(), IdleStats());
   for (var i = 0; i < generators; i++) {
-    w.storeOf<Generator>().set(
+    w.componentsOf<Generator>().set(
       w.spawn(),
       Generator(
         id: 'gen$i',
@@ -130,7 +130,7 @@ void main() {
       'lists a challenge, starts it after confirming, and shows it running with an Abandon button',
       (tester) async {
         final c = _controller();
-        c.world.storeOf<Challenge>().set(
+        c.world.componentsOf<Challenge>().set(
           c.world.spawn(),
           Challenge(
             id: 'frugal',
@@ -167,7 +167,7 @@ void main() {
       tester,
     ) async {
       final c = _controller();
-      final stats = c.world.storeOf<IdleStats>().denseAt(0);
+      final stats = c.world.componentsOf<IdleStats>().denseAt(0);
       stats.taps = 7;
       stats.prestigeCount = 2;
       stats.secondsPlayed = 3660;
@@ -185,7 +185,7 @@ void main() {
         await tester.pumpWidget(_app(ChallengePanel(controller: c)));
         expect(find.byType(ListTile), findsNothing);
 
-        c.world.storeOf<Challenge>().set(
+        c.world.componentsOf<Challenge>().set(
           c.world.spawn(),
           Challenge(
             id: 'done',
@@ -205,7 +205,7 @@ void main() {
   group('golden offer', () {
     IdleController withGolden() {
       final c = _controller(coins: '0');
-      c.world.storeOf<GoldenEvents>().set(
+      c.world.componentsOf<GoldenEvents>().set(
         c.world.spawn(),
         GoldenEvents(
           meanInterval: 60,
@@ -227,7 +227,7 @@ void main() {
         );
         expect(find.byKey(const Key('golden-offer')), findsNothing);
 
-        final g = c.world.storeOf<GoldenEvents>().denseAt(0)
+        final g = c.world.componentsOf<GoldenEvents>().denseAt(0)
           ..offered = 0
           ..offerRemaining = 7.2;
         c.refresh();
@@ -255,7 +255,7 @@ void main() {
 
     testWidgets('describe names the reward', (tester) async {
       final c = withGolden();
-      c.world.storeOf<GoldenEvents>().denseAt(0)
+      c.world.componentsOf<GoldenEvents>().denseAt(0)
         ..offered = 0
         ..offerRemaining = 3;
       await tester.pumpWidget(
@@ -270,11 +270,11 @@ void main() {
   group('prestige panel and achievements', () {
     IdleController game() {
       final c = _controller(coins: '0');
-      c.world.storeOf<PrestigeRule>().set(
+      c.world.componentsOf<PrestigeRule>().set(
         c.world.spawn(),
         PrestigeRule(currency: 'gems', basedOn: 'coins', divisor: n('100')),
       );
-      c.world.storeOf<Achievement>().set(
+      c.world.componentsOf<Achievement>().set(
         c.world.spawn(),
         Achievement(
           id: 'rich',
@@ -299,7 +299,7 @@ void main() {
         );
         expect(find.textContaining('Earn more coins'), findsOneWidget);
 
-        c.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
+        c.world.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
         c.wallet.add('coins', n('10000'));
         c.refresh();
         await tester.pump();
@@ -324,12 +324,12 @@ void main() {
       tester,
     ) async {
       final c = game();
-      c.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('250')});
+      c.world.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('250')});
       await tester.pumpWidget(_app(AchievementList(controller: c)));
       expect(find.text('Rich'), findsOneWidget);
       expect(find.text('250 / 1.00K'), findsOneWidget);
 
-      c.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('5000')});
+      c.world.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('5000')});
       c.tap();
       await tester.pump();
       expect(find.text('Done'), findsOneWidget);
@@ -339,7 +339,7 @@ void main() {
       'a second layer gets its own panel with its own keys and prestiges that layer',
       (tester) async {
         final c = game();
-        c.world.storeOf<PrestigeRule>().set(
+        c.world.componentsOf<PrestigeRule>().set(
           c.world.spawn(),
           PrestigeRule(
             id: 'ascend',
@@ -349,7 +349,7 @@ void main() {
           ),
         );
         c.wallet.add('gems', n('9'));
-        c.world.storeOf<IdleStats>().denseAt(0).credit({'gems': n('9')});
+        c.world.componentsOf<IdleStats>().denseAt(0).credit({'gems': n('9')});
         c.refresh();
         await tester.pumpWidget(
           _app(
@@ -419,7 +419,7 @@ void main() {
             builder: (context, _) {
               builds++;
               return Text(
-                '${c.world.storeOf<Generator>().get(c.generatorIds.first)!.owned}',
+                '${c.world.componentsOf<Generator>().get(c.generatorIds.first)!.owned}',
                 key: const Key('owned'),
               );
             },
@@ -471,7 +471,7 @@ void main() {
       'shows progress to the next milestone, and nothing once all are reached',
       (tester) async {
         final c = _controller(generators: 1);
-        final g = c.world.storeOf<Generator>().get(c.generatorIds.first)!;
+        final g = c.world.componentsOf<Generator>().get(c.generatorIds.first)!;
         g.milestones.addAll([Milestone(10, n('2')), Milestone(25, n('3'))]);
         g.owned = 4;
         await tester.pumpWidget(_app(GeneratorList(controller: c)));
@@ -576,7 +576,7 @@ void main() {
       tester,
     ) async {
       final c = _controller();
-      c.world.storeOf<Generator>().set(
+      c.world.componentsOf<Generator>().set(
         c.world.spawn(),
         Generator(
           id: 'lab',
@@ -627,7 +627,7 @@ void main() {
       tester,
     ) async {
       final c = _controller(coins: '500');
-      c.world.storeOf<Upgrade>().set(
+      c.world.componentsOf<Upgrade>().set(
         c.world.spawn(),
         Upgrade(
           id: 'x2',
@@ -647,7 +647,7 @@ void main() {
 
     testWidgets('too expensive means a disabled button', (tester) async {
       final c = _controller(coins: '5');
-      c.world.storeOf<Upgrade>().set(
+      c.world.componentsOf<Upgrade>().set(
         c.world.spawn(),
         Upgrade(id: 'x2', multiplier: n('2'), cost: {'coins': n('200')}),
       );
@@ -665,11 +665,11 @@ void main() {
     ) async {
       final c = _controller(coins: '500');
       c.wallet.amounts['gems'] = n('10');
-      c.world.storeOf<Upgrade>().set(
+      c.world.componentsOf<Upgrade>().set(
         c.world.spawn(),
         Upgrade(id: 'coin_up', multiplier: n('2'), cost: {'coins': n('10')}),
       );
-      c.world.storeOf<Upgrade>().set(
+      c.world.componentsOf<Upgrade>().set(
         c.world.spawn(),
         Upgrade(id: 'gem_up', multiplier: n('2'), cost: {'gems': n('5')}),
       );
@@ -687,13 +687,13 @@ void main() {
     final w = World(width: 10, height: 10);
     registerCoreComponents(w);
     registerIdleComponents(w);
-    w.storeOf<BigTreasury>().set(
+    w.componentsOf<BigTreasury>().set(
       w.spawn(),
       BigTreasury(amounts: {'coins': n('100000')}),
     );
-    w.storeOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
-    w.storeOf<IdleStats>().set(w.spawn(), IdleStats());
-    w.storeOf<Generator>().set(
+    w.componentsOf<IdleModifiers>().set(w.spawn(), IdleModifiers());
+    w.componentsOf<IdleStats>().set(w.spawn(), IdleStats());
+    w.componentsOf<Generator>().set(
       w.spawn(),
       Generator(
         id: 'cursor',
@@ -701,7 +701,7 @@ void main() {
         output: {'coins': n('1')},
       ),
     );
-    w.storeOf<Upgrade>().set(
+    w.componentsOf<Upgrade>().set(
       w.spawn(),
       Upgrade(
         id: 'x2',
@@ -710,7 +710,7 @@ void main() {
         cost: {'coins': n('50')},
       ),
     );
-    w.storeOf<PrestigeRule>().set(
+    w.componentsOf<PrestigeRule>().set(
       w.spawn(),
       PrestigeRule(currency: 'gems', basedOn: 'coins', divisor: n('100')),
     );
@@ -727,7 +727,7 @@ void main() {
     c.buy(c.generatorIds.first);
     c.tap();
     c.buyUpgradeById(c.upgradeIds.first);
-    w.storeOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
+    w.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
     c.prestige();
     expect(heard, ['buy', 'tap', 'upgrade', 'prestige']);
     c.dispose();
@@ -881,11 +881,11 @@ void main() {
     tester,
   ) async {
     final c = _controller(coins: '5');
-    c.world.storeOf<PrestigeRule>().set(
+    c.world.componentsOf<PrestigeRule>().set(
       c.world.spawn(),
       PrestigeRule(currency: 'gems', basedOn: 'coins', divisor: n('100')),
     );
-    c.world.storeOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
+    c.world.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
     var heard = 0;
     c.addListener(() => heard++);
     expect(c.prestige(), n('10'));

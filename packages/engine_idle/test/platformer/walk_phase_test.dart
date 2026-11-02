@@ -12,7 +12,7 @@ void main() {
 
   EntityId at(double x, double y) {
     final e = world.spawn();
-    world.storeOf<Position>().set(e, Position(x, y));
+    world.componentsOf<Position>().set(e, Position(x, y));
     return e;
   }
 
@@ -44,9 +44,9 @@ void main() {
 
       expect(finished, isTrue);
       expect(walk.active, isFalse);
-      expect(world.storeOf<Position>().get(enemy)!.x, closeTo(100, 1e-6));
-      expect(world.storeOf<Position>().get(hero)!.y, 200);
-      expect(world.storeOf<Position>().has(corpse), isFalse);
+      expect(world.componentsOf<Position>().get(enemy)!.x, closeTo(100, 1e-6));
+      expect(world.componentsOf<Position>().get(hero)!.y, 200);
+      expect(world.componentsOf<Position>().has(corpse), isFalse);
     },
   );
 
@@ -56,8 +56,8 @@ void main() {
       world.step(0.016);
       if (walk.update(world)) break;
     }
-    final layers = world.storeOf<ParallaxLayer>();
-    final x = world.storeOf<Position>().get(layers.entityAt(0))!.x;
+    final layers = world.componentsOf<ParallaxLayer>();
+    final x = world.componentsOf<Position>().get(layers.entityAt(0))!.x;
     expect(x, closeTo(-200, 1e-6)); // speed 1 x distance 200, to the left
   });
 
@@ -69,7 +69,7 @@ void main() {
       world.step(0.016);
       elapsed += 0.016;
       final done = walk.update(world);
-      if (world.storeOf<Position>().get(hero)!.y < 200) seenLift = true;
+      if (world.componentsOf<Position>().get(hero)!.y < 200) seenLift = true;
       if (done) break;
     }
     expect(seenLift, isTrue);
