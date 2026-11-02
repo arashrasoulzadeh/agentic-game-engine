@@ -208,7 +208,9 @@ class StudioImportTmxCommand extends Command<int> {
 }
 
 /// The engine-owned level files under a project's `assets/levels` folder, sorted
-/// so every command reads them in the same order.
+/// so every command reads them in the same order. `.studio` is skipped: the CLI
+/// journals writes in `.studio/undo/` next to the level it edits, and those
+/// entries are JSON but not levels (validating them reported a bogus error).
 List<File> _levelFiles(String projectDir) {
   final dir = Directory(p.join(projectDir, 'assets', 'levels'));
   if (!dir.existsSync()) return [];
@@ -216,6 +218,9 @@ List<File> _levelFiles(String projectDir) {
       .listSync(recursive: true)
       .whereType<File>()
       .where((f) => f.path.endsWith('.json'))
+      .where(
+        (f) => !p.split(p.relative(f.path, from: dir.path)).contains('.studio'),
+      )
       .toList()
     ..sort((a, b) => a.path.compareTo(b.path));
 }
