@@ -8,6 +8,7 @@ import 'job_system.dart';
 import 'world_profiler.dart';
 import 'world_commands.dart';
 import 'world_random.dart';
+import 'world_timers.dart';
 
 /// Thrown by [World.applyPatch] when the patch's own shape is wrong —
 /// `entities` not a list, an entry not an object, a missing/malformed
@@ -211,6 +212,19 @@ class World {
   /// [WorldCommands]. Use this instead of mutating while you iterate.
   late final WorldCommands commands = WorldCommands(this);
 
+  WorldTimers? _timers;
+
+  /// Calls [callback] once, after [seconds] of simulated time (the `dt` given
+  /// to [step]), on the step it comes due; 0 means the next step. Runtime-only:
+  /// closures are not saved or snapshotted (see `CountdownTimer` for that).
+  TimerHandle after(double seconds, void Function() callback) =>
+      (_timers ??= WorldTimers()).after(seconds, callback);
+
+  /// Calls [callback] every [seconds] of simulated time until cancelled; a
+  /// long step fires it once per elapsed interval. Runtime-only like [after].
+  TimerHandle every(double seconds, void Function() callback) =>
+      (_timers ??= WorldTimers()).every(seconds, callback);
+
   EntityId spawn() => entities.create();
 
   /// Incarnation counter of [id]; see [EntityManager.generationOf].
@@ -229,6 +243,7 @@ class World {
   /// by the caller (engine_flutter's ticker) — World just executes dt.
   void step(double dt) {
     _deltaTime = dt;
+    _timers?.advance(dt);
     final profiler = this.profiler;
     if (profiler == null) {
       for (final entry in _systems) {
