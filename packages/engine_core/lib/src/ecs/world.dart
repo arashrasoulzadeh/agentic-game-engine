@@ -33,7 +33,7 @@ class World {
   final EntityManager entities = EntityManager();
   final ComponentRegistry components = ComponentRegistry();
   final EventBus events = EventBus();
-  final List<System> _systems = [];
+  final List<_SystemEntry> _systems = [];
 
   /// Job system for multithreaded work (collision broadphase, pathfinding, etc.).
   /// Lazy-initialized on first access.
@@ -68,9 +68,45 @@ class World {
   /// Returns the archetype manager for optimized queries.
   ArchetypeManager get archetypes => components.archetypeManager;
 
-  void addSystem(System system) => _systems.add(system);
+  void addSystem(System system) => _systems.add(_SystemEntry(system));
 
-  List<String> get systemOrder => _systems.map((s) => s.name).toList();
+  List<String> get systemOrder => _systems.map((e) => e.system.name).toList();
+
+  /// Turns every system named [name] on or off without removing it.
+  ///
+  /// A disabled system is skipped by [step] (it keeps its place in
+  /// [systemOrder]) and picks up again, with whatever state it holds, when
+  /// re-enabled. Throws [ArgumentError] when no system has that name, with the
+  /// registered names, since a typo would otherwise silently do nothing.
+  void setSystemEnabled(String name, bool enabled) {
+    var found = false;
+    for (final entry in _systems) {
+      if (entry.system.name == name) {
+        entry.enabled = enabled;
+        found = true;
+      }
+    }
+    if (!found) {
+      throw ArgumentError.value(
+        name,
+        'name',
+        'No system named "$name". Registered: ${systemOrder.join(', ')}.',
+      );
+    }
+  }
+
+  /// Whether the system named [name] runs in [step]. False if it is disabled
+  /// or unknown; with several systems of that name, true only if all are on.
+  bool isSystemEnabled(String name) {
+    var found = false;
+    for (final entry in _systems) {
+      if (entry.system.name == name) {
+        found = true;
+        if (!entry.enabled) return false;
+      }
+    }
+    return found;
+  }
 
   ComponentStore<T> storeOf<T>() => components.storeOf<T>();
 
@@ -129,8 +165,9 @@ class World {
     _deltaTime = dt;
     final profiler = this.profiler;
     if (profiler == null) {
-      for (final system in _systems) {
-        system.update(this, dt);
+      for (final entry in _systems) {
+        if (!entry.enabled) continue;
+        entry.system.update(this, dt);
         commands.apply();
       }
       events.flush();
@@ -144,7 +181,9 @@ class World {
   void _profiledStep(WorldProfiler profiler, double dt) {
     final whole = Stopwatch()..start();
     final timer = Stopwatch();
-    for (final system in _systems) {
+    for (final entry in _systems) {
+      if (!entry.enabled) continue;
+      final system = entry.system;
       timer
         ..reset()
         ..start();
@@ -231,4 +270,11 @@ class World {
     _jobSystem?.shutdown();
     _jobSystem = null;
   }
+}
+
+class _SystemEntry {
+  final System system;
+  bool enabled = true;
+
+  _SystemEntry(this.system);
 }
