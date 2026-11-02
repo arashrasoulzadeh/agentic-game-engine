@@ -8,9 +8,9 @@ One page of the calls you'll use most. Each section links to the full story.
 final world = World(width: 800, height: 600);
 registerCoreComponents(world);                 // + registerFlutterComponents / registerPlatformerComponents
 final e = world.spawn();
-world.storeOf<Position>().set(e, Position(10, 20));
-world.storeOf<Position>().get(e);              // Position? (null if absent)
-world.storeOf<Position>().has(e);
+world.componentsOf<Position>().set(e, Position(10, 20));
+world.componentsOf<Position>().get(e);              // Position? (null if absent)
+world.componentsOf<Position>().has(e);
 world.destroy(e);
 world.addSystem(MySystem());                   // order = registration order
 world.step(1 / 60);                            // run all systems, flush events
@@ -23,7 +23,7 @@ world.toJson();  world.applyPatch(json);       // read / write everything
 ## Iterating a component store
 
 ```dart
-final store = world.storeOf<Position>();
+final store = world.componentsOf<Position>();
 for (var i = 0; i < store.length; i++) {
   final entity = store.entityAt(i);
   final pos = store.denseAt(i);

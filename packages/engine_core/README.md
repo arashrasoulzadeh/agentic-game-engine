@@ -30,12 +30,12 @@ final world = World(width: 800, height: 480);
 registerCoreComponents(world); // Position, Velocity, Collider, AIState, TileMap
 
 final id = world.spawn();
-world.storeOf<Position>().set(id, Position(100, 50));
-world.storeOf<Velocity>().set(id, Velocity(0, 0));
+world.componentsOf<Position>().set(id, Position(100, 50));
+world.componentsOf<Velocity>().set(id, Velocity(0, 0));
 ```
 
 Entities are plain integer ids. Components are plain data classes,
-stored in a sparse-set `ComponentStore<T>` per type — `world.storeOf<T>()`
+stored in a sparse-set `ComponentStore<T>` per type — `world.componentsOf<T>()`
 gets you the store for `T`, with `.get(id)`, `.set(id, value)`,
 `.has(id)`, `.remove(id)`, and dense iteration (`.length`, `.entityAt(i)`,
 `.denseAt(i)`) for systems that scan every instance of a component.
@@ -91,7 +91,7 @@ system-ordering rules for a platformer (`GravitySystem` →
 world.addSystem(TweenSystem());
 
 final shake = world.spawn();
-world.storeOf<Tween>().set(shake, Tween(
+world.componentsOf<Tween>().set(shake, Tween(
   from: -4, to: 4, duration: 0.08,
   pingPong: true, easing: EasingType.easeInOutQuad,
 ));
@@ -121,8 +121,8 @@ world.addSystem(ParticleSystem());
 world.addSystem(MovementSystem()); // moves particles via their Velocity
 
 final emitter = world.spawn();
-world.storeOf<Position>().set(emitter, Position(100, 100));
-world.storeOf<ParticleEmitter>().set(emitter, ParticleEmitter(burstCount: 20));
+world.componentsOf<Position>().set(emitter, Position(100, 100));
+world.componentsOf<ParticleEmitter>().set(emitter, ParticleEmitter(burstCount: 20));
 ```
 
 `ParticleSystem` spawns particles with `Position`/`Velocity` (a random
@@ -216,7 +216,7 @@ class ChaseBehavior implements Behavior {
 
 final behaviors = BehaviorRegistry()..register('chase', ChaseBehavior());
 world.addSystem(AISystem(behaviors));
-world.storeOf<AIState>().set(enemyId, AIState('chase'));
+world.componentsOf<AIState>().set(enemyId, AIState('chase'));
 ```
 
 A `Behavior` only ever sees a **read-only** `WorldView` — it cannot
@@ -264,7 +264,7 @@ final behaviors = BehaviorRegistry()
     requireLineOfSight: true, // don't flee through walls
   ));
 world.addSystem(AISystem(behaviors));
-world.storeOf<AIState>().set(enemyId, AIState('flee'));
+world.componentsOf<AIState>().set(enemyId, AIState('flee'));
 ```
 
 Flees horizontally from `target` at `speed`. Only touches `Velocity.x` (leaves `.y` alone so it doesn't fight gravity/jump). `minDistance` stops the flee once the entity is far enough; `requireLineOfSight` makes it pause when a `TileMap` wall blocks the view to the target.
@@ -287,7 +287,7 @@ final tree = BTSequence(id: 'root', children: [
   BTRepeater(count: null, child: BTWait(id: 'idle', duration: 2.0)),
 ]);
 
-world.storeOf<AIState>().set(enemyId, AIState(
+world.componentsOf<AIState>().set(enemyId, AIState(
   'behaviorTree',
   memory: {'_bt_root': tree.toJson()},
 ));

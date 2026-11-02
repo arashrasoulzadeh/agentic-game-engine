@@ -145,10 +145,10 @@ are identical on every machine in a lockstep game.
 ```dart
 installRealtimeStrategySystems(world, navigator: nav, cellSize: 32, production: true);
 
-world.storeOf<Treasury>().set(world.spawn(),
+world.componentsOf<Treasury>().set(world.spawn(),
     Treasury('red', amounts: {'gold': 100}, incomePerSecond: {'gold': 1.5}));
 
-world.storeOf<Producer>().set(barracks, Producer(
+world.componentsOf<Producer>().set(barracks, Producer(
   cost: {'gold': 30},
   seconds: 8,
   template: {                                   // what it makes: plain component JSON

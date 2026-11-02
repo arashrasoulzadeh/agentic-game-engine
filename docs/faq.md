@@ -31,7 +31,7 @@ world.components.register<Poison>('poison', (p) => p.toJson(), Poison.fromJson);
 ```
 
 and for built-ins call the package's `register…Components(world)`.
-A `StateError` from `storeOf<X>()` means `X` was never registered.
+A `StateError` from `componentsOf<X>()` means `X` was never registered.
 
 ### `applyPatch` ignored my entity
 It only updates entities that are **alive**; it never spawns. Spawn first

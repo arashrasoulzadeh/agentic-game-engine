@@ -22,7 +22,7 @@ world.step(1 / 60);                                       // VisionSystem runs
 Now query it:
 
 ```dart
-final fog = world.storeOf<FogOfWar>().get(fogEntity)!;
+final fog = world.componentsOf<FogOfWar>().get(fogEntity)!;
 
 fog.isVisible('red', 3, 3);        // true  — inside the circle, clear line
 fog.isVisible('red', 5, 3);        // false — behind the wall at (4, 3)

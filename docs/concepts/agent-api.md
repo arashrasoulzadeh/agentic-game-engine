@@ -73,7 +73,7 @@ class TakeDamageAction implements Action {
   @override
   void apply(World world) {
     // this is the one place allowed to actually mutate World
-    final health = world.storeOf<Health>().get(target);
+    final health = world.componentsOf<Health>().get(target);
     // ...
   }
 }
@@ -97,7 +97,7 @@ behaviors.register('patrol', PatrolBehavior(waypoints: [...]));
 world.addSystem(AISystem(behaviors));
 
 final enemy = world.spawn();
-world.storeOf<AIState>().set(enemy, AIState('patrol'));
+world.componentsOf<AIState>().set(enemy, AIState('patrol'));
 ```
 
 `AIState.memory` is a free-form JSON-serializable blackboard (a

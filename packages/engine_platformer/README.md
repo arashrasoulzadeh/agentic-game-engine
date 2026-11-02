@@ -168,7 +168,7 @@ set anything else directly on the component after spawning:
 ```dart
 final player = spawnPlayer(world, x: 40, y: 40, input: input.state, jumpSpeed: 500);
 
-final controller = world.storeOf<PlatformerController>().get(player)!;
+final controller = world.componentsOf<PlatformerController>().get(player)!;
 controller.coyoteTimeSeconds = 0.1;      // still counts as grounded briefly after walking off a ledge
 controller.jumpBufferSeconds = 0.15;     // a jump pressed just before landing still fires on landing
 controller.maxAirJumps = 1;              // a standard double jump
@@ -200,7 +200,7 @@ controller.ledgeGrabEnabled = true;      // LedgeGrabSystem: grab a wall's top e
   only while already falling (`Velocity.y > 0`), the standard "floaty
   rise, snappy fall" platformer feel without changing jump height/reach
   (which `Gravity.scale` alone would, since it applies equally to both):
-  `world.storeOf<Gravity>().get(player)!.fallMultiplier = 1.6;`.
+  `world.componentsOf<Gravity>().get(player)!.fallMultiplier = 1.6;`.
 - **Dash** (`dashSpeed`/`dashDurationSeconds`, plus
   `dashRequested`/`DashSystem`) — one dash per ground contact by
   default; set `dashRequested = true` from your own input code (or use
@@ -276,7 +276,7 @@ quick-start example above uses. For anything not covered by the naming
 convention, build `MovementAnimationSet` directly:
 
 ```dart
-world.storeOf<MovementAnimationSet>().set(playerId, MovementAnimationSet(
+world.componentsOf<MovementAnimationSet>().set(playerId, MovementAnimationSet(
   idle: AnimationClip('idle', ['idle_0', 'idle_1'], frameDurationSeconds: 0.2),
   walk: AnimationClip('walk', ['walk_0', 'walk_1', 'walk_2'], frameDurationSeconds: 0.1),
   jump: AnimationClip('jump', ['jump_0']),
@@ -359,7 +359,7 @@ stability/poise meter, and a precise-deflect (parry) mechanic:
 
 ```dart
 // Guarding: set isGuarding = true to block incoming hits
-final health = world.storeOf<Health>().get(enemy)!;
+final health = world.componentsOf<Health>().get(enemy)!;
 health.isGuarding = true;
 health.guardDamageReduction = 1.0; // 1.0 = fully block, 0.5 = 50% reduction
 health.stability = 100;
@@ -367,13 +367,13 @@ health.maxStability = 100;
 health.guardBreakStunSeconds = 1.0; // stun duration on guard break
 
 // Parrying: add Parry component, call requestParry() on parry input
-world.storeOf<Parry>().set(player, Parry(
+world.componentsOf<Parry>().set(player, Parry(
   parryWindowSeconds: 0.15,
   parryStunSeconds: 0.5,
   parryCooldownSeconds: 0.5,
 ));
 // In your input handling:
-world.storeOf<Parry>().get(player)!.requestParry();
+world.componentsOf<Parry>().get(player)!.requestParry();
 ```
 
 - **Guarding**: When `isGuarding` is true and `canGuard` (not dead,
@@ -399,7 +399,7 @@ preserved when `isGuarding = false` and no `Parry` component exists.
 
 ```dart
 final player = spawnPlayer(world, x: 40, y: 40, input: input.state, maxHealth: 100);
-world.storeOf<Weapon>().set(player, Weapon(kind: WeaponKind.melee, damage: 15));
+world.componentsOf<Weapon>().set(player, Weapon(kind: WeaponKind.melee, damage: 15));
 installProjectileDamage(world); // needed for melee *and* ranged Weapons -- see below
 
 // Elsewhere, bind an action name (defaults to "attack") in your InputController:
@@ -444,7 +444,7 @@ cover (a thrown grenade, a boss's telegraphed shot):
 ### Multi-hit melee combo chains
 
 ```dart
-world.storeOf<Weapon>().set(player, Weapon(
+world.componentsOf<Weapon>().set(player, Weapon(
   kind: WeaponKind.melee,
   damage: 10,
   comboCount: 3,
@@ -466,7 +466,7 @@ are optional arrays in `comboDamageMultipliers`, `comboCooldowns`,
 ## Enemy combat AI with telegraph states
 
 ```dart
-world.storeOf<EnemyCombat>().set(enemy, EnemyCombat(
+world.componentsOf<EnemyCombat>().set(enemy, EnemyCombat(
   state: EnemyCombatState.idle,
   detectionRange: 300,
   engageRange: 200,
@@ -477,7 +477,7 @@ world.storeOf<EnemyCombat>().set(enemy, EnemyCombat(
   repositionDuration: 1.0,
   // optional per-entity overrides via AIState.memory
 ));
-world.storeOf<AIState>().set(enemy, AIState('enemyCombat'));
+world.componentsOf<AIState>().set(enemy, AIState('enemyCombat'));
 // Behavior runs via EnemyCombatBehavior (register in BehaviorRegistry)
 ```
 
@@ -535,9 +535,9 @@ trackCheckpoints(world, player);
 respawnOnDeath(world, player, fallbackX: 40, fallbackY: 40);
 
 final checkpoint = world.spawn();
-world.storeOf<Position>().set(checkpoint, Position(500, 40));
-world.storeOf<Collider>().set(checkpoint, Collider(16));
-world.storeOf<Checkpoint>().set(checkpoint, Checkpoint('cp1'));
+world.componentsOf<Position>().set(checkpoint, Position(500, 40));
+world.componentsOf<Collider>().set(checkpoint, Collider(16));
+world.componentsOf<Checkpoint>().set(checkpoint, Checkpoint('cp1'));
 ```
 
 `trackCheckpoints` listens for the player touching any `Checkpoint`
@@ -554,8 +554,8 @@ first.
 final player = spawnPlayer(world, x: 0, y: 0, input: input.state, startingInventory: {'coin': 0});
 
 final coin = world.spawn();
-world.storeOf<Position>().set(coin, Position(200, 40));
-world.storeOf<Collider>().set(coin, Collider(8));
+world.componentsOf<Position>().set(coin, Position(200, 40));
+world.componentsOf<Collider>().set(coin, Collider(8));
 dealPickupOnTouch(world, {coin}, 'coin');
 ```
 

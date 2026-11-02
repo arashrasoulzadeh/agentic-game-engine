@@ -99,8 +99,8 @@ class MainScene extends Scene {
     // Core + Flutter components are already registered by GameRunner.
     world.addSystem(MovementSystem());
     final player = world.spawn();
-    world.storeOf<Position>().set(player, Position(100, 100));
-    world.storeOf<Velocity>().set(player, Velocity(0, 0));
+    world.componentsOf<Position>().set(player, Position(100, 100));
+    world.componentsOf<Velocity>().set(player, Velocity(0, 0));
   }
 }
 
@@ -114,7 +114,7 @@ void main() => runGame(MyGame());
 | `GameState` | Survives scene switches (score, unlocks). |
 | `runGame` | Starts the Flutter shell. |
 
-New to `World`, `spawn` and `storeOf`? Read the [ECS guide](concepts/ecs.md).
+New to `World`, `spawn` and `componentsOf`? Read the [ECS guide](concepts/ecs.md).
 
 ## 4. Keep going
 

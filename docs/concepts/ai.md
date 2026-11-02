@@ -36,7 +36,7 @@ final tree = {
   ],
 };
 
-world.storeOf<AIState>().set(guard, AIState('tree', memory: {'_bt_root': tree}));
+world.componentsOf<AIState>().set(guard, AIState('tree', memory: {'_bt_root': tree}));
 world.addSystem(BehaviorTreeSystem(behaviors));
 ```
 
@@ -87,7 +87,7 @@ world.addSystem(StateMachineSystem(behaviors, conditions: {
   'player_visible': (ctx) => canSee(ctx.view, ctx.entity),
   'player_lost': (ctx) => !canSee(ctx.view, ctx.entity),
 }));
-world.storeOf<AIState>().set(guard, AIState('fsm', memory: {'_fsm_root': json}));
+world.componentsOf<AIState>().set(guard, AIState('fsm', memory: {'_fsm_root': json}));
 ```
 
 Each step the system tries the current state's transitions in order (the first whose
@@ -117,7 +117,7 @@ return a zero velocity or keep the speed exactly; none move anything - you apply
 
 ```dart
 world.addSystem(HearingSystem());
-world.storeOf<HearingComponent>().set(guard, HearingComponent(range: 200));
+world.componentsOf<HearingComponent>().set(guard, HearingComponent(range: 200));
 
 world.events.emit(const SoundEvent(x: 150, y: 100, loudness: 120, tag: 'footstep'));
 // next step: guard's AIState.memory['lastHeardSound'] == {x: 150, y: 100, loudness: 120, tag: 'footstep'}

@@ -23,8 +23,8 @@ along with gameplay.
 `Light2D` is a component. Give it to an entity that has a `Position`:
 
 ```dart
-world.storeOf<Position>().set(torch, Position(320, 200));
-world.storeOf<Light2D>().set(torch, Light2D(radius: 120, intensity: 0.8));
+world.componentsOf<Position>().set(torch, Position(320, 200));
+world.componentsOf<Light2D>().set(torch, Light2D(radius: 120, intensity: 0.8));
 ```
 
 | Field | Meaning |
@@ -63,7 +63,7 @@ A torch that gutters:
 
 ```dart
 world.addSystem(LightFlickerSystem());
-world.storeOf<Light2D>().set(
+world.componentsOf<Light2D>().set(
   torch,
   Light2D(radius: 120, intensity: 0.8, flickerSpeed: 3, flickerAmount: 0.3),
 );

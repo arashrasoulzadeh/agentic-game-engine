@@ -17,12 +17,12 @@ final id = world.spawn(); // EntityId
 A component is plain data with `toJson`/`fromJson` — e.g. `Position`,
 `Velocity`, `Collider` (`packages/engine_core/lib/src/physics/`). Each
 component type lives in its own `ComponentStore<T>`, reachable via
-`world.storeOf<T>()`:
+`world.componentsOf<T>()`:
 
 ```dart
-world.storeOf<Position>().set(id, Position(100, 100));
-final pos = world.storeOf<Position>().get(id); // Position?
-final has = world.storeOf<Position>().has(id); // bool
+world.componentsOf<Position>().set(id, Position(100, 100));
+final pos = world.componentsOf<Position>().get(id); // Position?
+final has = world.componentsOf<Position>().has(id); // bool
 ```
 
 A component type must be **registered** before it participates in
@@ -64,8 +64,8 @@ final world = World(width: 800, height: 600);
 registerCoreComponents(world); // Position, Velocity, ... (needed once per world)
 world.addSystem(MovementSystem());
 final id = world.spawn();
-world.storeOf<Position>().set(id, Position(0, 0));
-world.storeOf<Velocity>().set(id, Velocity(50, 0));
+world.componentsOf<Position>().set(id, Position(0, 0));
+world.componentsOf<Velocity>().set(id, Velocity(50, 0));
 ```
 
 `GameRunner` (in `engine_flutter`) creates one `World` per `Scene` and

@@ -9,8 +9,8 @@ points all apply to it.
 class FocusFireAI implements TurnAI {
   @override
   void playTurn(World world, String team) {
-    final teams = world.storeOf<Team>();
-    final stats = world.storeOf<UnitStats>();
+    final teams = world.componentsOf<Team>();
+    final stats = world.componentsOf<UnitStats>();
 
     // 1. Pick a target among enemies this team can actually see.
     EntityId? weakest;
@@ -59,7 +59,7 @@ round.
 
 - `playTurn` runs once per round per team. It can queue several orders per
   unit; they run in order.
-- Clear a unit's old orders first (`world.storeOf<OrderQueue>().get(unit)?.orders.clear()`)
+- Clear a unit's old orders first (`world.componentsOf<OrderQueue>().get(unit)?.orders.clear()`)
   if it may still hold one from last turn — `AggressiveAI` does this.
 - To use an LLM, build the observation from `world.toJson()` and parse the
   reply with `Order.fromJson` — see [Tutorial 3](../tutorials/03-agent-driven-game.md).

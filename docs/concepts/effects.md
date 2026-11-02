@@ -15,7 +15,7 @@ animating: read `tween.value` wherever you want it (an alpha, a scale, a positio
 world.addSystem(TweenSystem());
 
 final fade = world.spawn();
-world.storeOf<Tween>().set(
+world.componentsOf<Tween>().set(
   fade,
   Tween(from: 1, to: 0, duration: 2, easing: EasingType.easeOutQuad),
 );
@@ -37,8 +37,8 @@ emits, applies forces, ages and removes them.
 world.addSystem(ParticleSystem(random: Random(1)));   // seed it for reproducible effects
 
 final fire = world.spawn();
-world.storeOf<Position>().set(fire, Position(100, 100));
-world.storeOf<ParticleEmitter>().set(
+world.componentsOf<Position>().set(fire, Position(100, 100));
+world.componentsOf<ParticleEmitter>().set(
   fire,
   ParticleEmitter(burstCount: 20, lifetimeMin: 0.5, lifetimeMax: 0.5),
 );

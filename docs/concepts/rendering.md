@@ -26,7 +26,7 @@ reference. This is what keeps it agent-authorable content, same as
 every other component.
 
 ```dart
-world.storeOf<Sprite>().set(id, Sprite('characters', 'player_idle'));
+world.componentsOf<Sprite>().set(id, Sprite('characters', 'player_idle'));
 ```
 
 `screenSpace` (default `false`) switches a sprite between world space

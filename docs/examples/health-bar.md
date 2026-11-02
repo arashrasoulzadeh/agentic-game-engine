@@ -31,9 +31,9 @@ final enemyBar = spawnHealthHudBar(
 
 // screenSpace: false means Position isn't auto-followed — update it
 // yourself each tick (e.g. in a small custom System) to track the enemy:
-world.storeOf<Position>().set(
+world.componentsOf<Position>().set(
   enemyBar,
-  Position(world.storeOf<Position>().get(enemy)!.x, world.storeOf<Position>().get(enemy)!.y - 20),
+  Position(world.componentsOf<Position>().get(enemy)!.x, world.componentsOf<Position>().get(enemy)!.y - 20),
 );
 ```
 

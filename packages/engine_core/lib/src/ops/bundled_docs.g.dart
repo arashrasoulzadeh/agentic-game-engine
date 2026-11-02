@@ -104,8 +104,8 @@ class MainScene extends Scene {
     // Core + Flutter components are already registered by GameRunner.
     world.addSystem(MovementSystem());
     final player = world.spawn();
-    world.storeOf<Position>().set(player, Position(100, 100));
-    world.storeOf<Velocity>().set(player, Velocity(0, 0));
+    world.componentsOf<Position>().set(player, Position(100, 100));
+    world.componentsOf<Velocity>().set(player, Velocity(0, 0));
   }
 }
 
@@ -119,7 +119,7 @@ void main() => runGame(MyGame());
 | `GameState` | Survives scene switches (score, unlocks). |
 | `runGame` | Starts the Flutter shell. |
 
-New to `World`, `spawn` and `storeOf`? Read the [ECS guide](concepts/ecs.md).
+New to `World`, `spawn` and `componentsOf`? Read the [ECS guide](concepts/ecs.md).
 
 ## 4. Keep going
 
@@ -259,7 +259,7 @@ final tileMap = TileMap(
   solidTileIds: {1}, // tile id 1 is solid; 0 is empty/passable
 );
 final groundEntity = world.spawn();
-world.storeOf<TileMap>().set(groundEntity, tileMap);
+world.componentsOf<TileMap>().set(groundEntity, tileMap);
 ```
 
 `TileMap` also supports `oneWayTileIds` (platforms you can jump up
@@ -302,11 +302,11 @@ keeps this bar\'s `HudBar.value`/`maxValue` synced from the player\'s
 
 ```dart
 final coinId = world.spawn();
-world.storeOf<Position>().set(coinId, Position(450, 380));
-world.storeOf<Collider>().set(coinId, Collider(8));
-world.storeOf<Sprite>().set(coinId, Sprite(\'items\', \'coin\')); // if you have an atlas loaded
+world.componentsOf<Position>().set(coinId, Position(450, 380));
+world.componentsOf<Collider>().set(coinId, Collider(8));
+world.componentsOf<Sprite>().set(coinId, Sprite(\'items\', \'coin\')); // if you have an atlas loaded
 
-world.storeOf<Inventory>().set(player, Inventory({\'coin\': 0}));
+world.componentsOf<Inventory>().set(player, Inventory({\'coin\': 0}));
 dealPickupOnTouch(world, {coinId}, \'coin\');
 ```
 
@@ -759,12 +759,12 @@ final id = world.spawn(); // EntityId
 A component is plain data with `toJson`/`fromJson` — e.g. `Position`,
 `Velocity`, `Collider` (`packages/engine_core/lib/src/physics/`). Each
 component type lives in its own `ComponentStore<T>`, reachable via
-`world.storeOf<T>()`:
+`world.componentsOf<T>()`:
 
 ```dart
-world.storeOf<Position>().set(id, Position(100, 100));
-final pos = world.storeOf<Position>().get(id); // Position?
-final has = world.storeOf<Position>().has(id); // bool
+world.componentsOf<Position>().set(id, Position(100, 100));
+final pos = world.componentsOf<Position>().get(id); // Position?
+final has = world.componentsOf<Position>().has(id); // bool
 ```
 
 A component type must be **registered** before it participates in
@@ -806,8 +806,8 @@ final world = World(width: 800, height: 600);
 registerCoreComponents(world); // Position, Velocity, ... (needed once per world)
 world.addSystem(MovementSystem());
 final id = world.spawn();
-world.storeOf<Position>().set(id, Position(0, 0));
-world.storeOf<Velocity>().set(id, Velocity(50, 0));
+world.componentsOf<Position>().set(id, Position(0, 0));
+world.componentsOf<Velocity>().set(id, Velocity(50, 0));
 ```
 
 `GameRunner` (in `engine_flutter`) creates one `World` per `Scene` and
@@ -3410,9 +3410,9 @@ One page of the calls you\'ll use most. Each section links to the full story.
 final world = World(width: 800, height: 600);
 registerCoreComponents(world);                 // + registerFlutterComponents / registerPlatformerComponents
 final e = world.spawn();
-world.storeOf<Position>().set(e, Position(10, 20));
-world.storeOf<Position>().get(e);              // Position? (null if absent)
-world.storeOf<Position>().has(e);
+world.componentsOf<Position>().set(e, Position(10, 20));
+world.componentsOf<Position>().get(e);              // Position? (null if absent)
+world.componentsOf<Position>().has(e);
 world.destroy(e);
 world.addSystem(MySystem());                   // order = registration order
 world.step(1 / 60);                            // run all systems, flush events
@@ -3425,7 +3425,7 @@ world.toJson();  world.applyPatch(json);       // read / write everything
 ## Iterating a component store
 
 ```dart
-final store = world.storeOf<Position>();
+final store = world.componentsOf<Position>();
 for (var i = 0; i < store.length; i++) {
   final entity = store.entityAt(i);
   final pos = store.denseAt(i);

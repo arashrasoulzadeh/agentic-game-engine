@@ -51,7 +51,7 @@ final session = IdleSession(
   store: BrowserSaveStore(),
   offline: game.offline,
   whileAway: () {
-    final buyers = world.storeOf<AutoBuyer>();
+    final buyers = world.componentsOf<AutoBuyer>();
     if (buyers.length > 0) runAutoBuyer(world, controller.wallet, buyers.denseAt(0));
   },
 )..load()..startAutosave();

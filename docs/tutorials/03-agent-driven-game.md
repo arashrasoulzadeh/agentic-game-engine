@@ -42,10 +42,10 @@ World buildGame() {
 
   EntityId unit(String team, int col, int row, {int hp = 10, int attack = 4}) {
     final id = world.spawn();
-    world.storeOf<Team>().set(id, Team(team));
-    world.storeOf<GridPosition>().set(id, GridPosition(col, row));
-    world.storeOf<ActionPoints>().set(id, ActionPoints(4, current: 0));
-    world.storeOf<UnitStats>().set(id, UnitStats(maxHp: hp, attack: attack));
+    world.componentsOf<Team>().set(id, Team(team));
+    world.componentsOf<GridPosition>().set(id, GridPosition(col, row));
+    world.componentsOf<ActionPoints>().set(id, ActionPoints(4, current: 0));
+    world.componentsOf<UnitStats>().set(id, UnitStats(maxHp: hp, attack: attack));
     return id;
   }
 

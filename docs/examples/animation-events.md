@@ -23,8 +23,8 @@ final attack = AnimationClip(
   ],
 );
 
-world.storeOf<AnimationState>().set(player, AnimationState(attack));
-world.storeOf<ParticleEmitter>().set(player, ParticleEmitter()); // for particle cues
+world.componentsOf<AnimationState>().set(player, AnimationState(attack));
+world.componentsOf<ParticleEmitter>().set(player, ParticleEmitter()); // for particle cues
 world.addSystem(AnimationSystem());
 
 // Or wire each bridge yourself — installAnimationCueSystems does both:
@@ -36,7 +36,7 @@ installAnimationCueSystems(
 );
 
 // Melee that opens only during hitbox_on … hitbox_off:
-world.storeOf<Weapon>().set(
+world.componentsOf<Weapon>().set(
   player,
   Weapon(kind: WeaponKind.melee, meleeHitboxFromAnimation: true),
 );

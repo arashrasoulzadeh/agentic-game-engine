@@ -319,12 +319,12 @@ final speed = baseSpeed * inputState.axis('moveX').abs().clamp(0.3, 1.0);
 
 ```dart
 final sky = world.spawn();
-world.storeOf<Position>().set(sky, Position(0, 0));
-world.storeOf<ParallaxLayer>().set(sky, ParallaxLayer('bg', 'sky', scrollFactorX: 0.2));
+world.componentsOf<Position>().set(sky, Position(0, 0));
+world.componentsOf<ParallaxLayer>().set(sky, ParallaxLayer('bg', 'sky', scrollFactorX: 0.2));
 
 final mountains = world.spawn();
-world.storeOf<Position>().set(mountains, Position(0, 40));
-world.storeOf<ParallaxLayer>().set(mountains, ParallaxLayer('bg', 'mountains', scrollFactorX: 0.5));
+world.componentsOf<Position>().set(mountains, Position(0, 40));
+world.componentsOf<ParallaxLayer>().set(mountains, ParallaxLayer('bg', 'mountains', scrollFactorX: 0.5));
 ```
 
 `ParallaxLayer` is an atlas region (same `atlasId`/`region` idea as
@@ -341,8 +341,8 @@ appear once (a fixed logo, say) instead of tiled.
 
 ```dart
 final emitter = world.spawn();
-world.storeOf<Position>().set(emitter, Position(playerX, playerY));
-world.storeOf<ParticleEmitter>().set(emitter, ParticleEmitter(
+world.componentsOf<Position>().set(emitter, Position(playerX, playerY));
+world.componentsOf<ParticleEmitter>().set(emitter, ParticleEmitter(
   burstCount: 20,          // one-shot -- set again for another burst
   speedMin: 60, speedMax: 160,
   lifetimeMin: 0.3, lifetimeMax: 0.6,
@@ -372,8 +372,8 @@ it) — has a `zIndex` (an `int`, default `0`). `EngineView` draws lower
 regardless of which kind of renderable it is:
 
 ```dart
-world.storeOf<Sprite>().set(id, Sprite('atlas', 'idle', zIndex: 10)); // draws in front of...
-world.storeOf<ParallaxLayer>().set(bg, ParallaxLayer('atlas', 'sky', zIndex: -10)); // ...this
+world.componentsOf<Sprite>().set(id, Sprite('atlas', 'idle', zIndex: 10)); // draws in front of...
+world.componentsOf<ParallaxLayer>().set(bg, ParallaxLayer('atlas', 'sky', zIndex: -10)); // ...this
 ```
 
 Ties (the common case: everything left at the default `0`) fall back to
@@ -399,12 +399,12 @@ the scene through this shape" — see `ClipShape` below for that.
 
 ```dart
 final spotlight = world.spawn();
-world.storeOf<Position>().set(spotlight, Position(playerX, playerY));
-world.storeOf<ClipShape>().set(spotlight, ClipShape(radius: 80)); // reveal (default)
+world.componentsOf<Position>().set(spotlight, Position(playerX, playerY));
+world.componentsOf<ClipShape>().set(spotlight, ClipShape(radius: 80)); // reveal (default)
 
 final vignette = world.spawn();
-world.storeOf<Position>().set(vignette, Position(viewportCenterX, viewportCenterY));
-world.storeOf<ClipShape>().set(
+world.componentsOf<Position>().set(vignette, Position(viewportCenterX, viewportCenterY));
+world.componentsOf<ClipShape>().set(
     vignette, ClipShape(radius: 400, mode: ClipShapeMode.cutout, softness: 40));
 ```
 
@@ -424,8 +424,8 @@ cost when no `ClipShape` of a given mode exists in the world.
 
 ```dart
 final torch = world.spawn();
-world.storeOf<Position>().set(torch, Position(torchX, torchY));
-world.storeOf<Light2D>().set(torch, Light2D(
+world.componentsOf<Position>().set(torch, Position(torchX, torchY));
+world.componentsOf<Light2D>().set(torch, Light2D(
   radius: 160,
   intensity: 0.9,
   colorArgb: 0x88FF8800,   // warm orange tint; alpha is tint strength

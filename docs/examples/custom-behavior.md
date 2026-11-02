@@ -35,7 +35,7 @@ class FleeWhenHurtBehavior implements Behavior {
 
 ```dart
 behaviors.register('flee-when-hurt', FleeWhenHurtBehavior(fleeToX: 50));
-world.storeOf<AIState>().set(bossId, AIState('flee-when-hurt'));
+world.componentsOf<AIState>().set(bossId, AIState('flee-when-hurt'));
 ```
 
 ## Carrying state between ticks: `AIState.memory`

@@ -192,9 +192,9 @@ Capture points turn "kill everything" into "hold the map".
 
 ```dart
 final flag = world.spawn();
-world.storeOf<Objective>().set(flag, Objective('hill', 6, 6));
+world.componentsOf<Objective>().set(flag, Objective('hill', 6, 6));
 // optional: win by holding every objective for 3 of your consecutive turns
-world.storeOf<ObjectiveRules>().set(world.spawn(), ObjectiveRules(holdTurnsToWin: 3));
+world.componentsOf<ObjectiveRules>().set(world.spawn(), ObjectiveRules(holdTurnsToWin: 3));
 ```
 
 A team captures an objective by **standing on it when its turn begins** (resolved
@@ -224,10 +224,10 @@ carrier, and a `Vip` retreats from nearby enemies instead of fighting.
   `FlagRules(capturesToWin: 3)` the first team to that many wins.
 
 ```dart
-world.storeOf<Vip>().set(king, const Vip());
-world.storeOf<Flag>().set(world.spawn(), Flag('red flag', 'red', 10, 0));
-world.storeOf<DeliveryZone>().set(world.spawn(), const DeliveryZone('blue', 0, 10));
-world.storeOf<FlagRules>().set(world.spawn(), FlagRules(capturesToWin: 3));
+world.componentsOf<Vip>().set(king, const Vip());
+world.componentsOf<Flag>().set(world.spawn(), Flag('red flag', 'red', 10, 0));
+world.componentsOf<DeliveryZone>().set(world.spawn(), const DeliveryZone('blue', 0, 10));
+world.componentsOf<FlagRules>().set(world.spawn(), FlagRules(capturesToWin: 3));
 ```
 
 Flags and zones carry their own `col`/`row` instead of a `GridPosition`, so they are

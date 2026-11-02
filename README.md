@@ -129,7 +129,7 @@ class MainScene extends Scene {
   ) async {
     // World already built + core/Flutter components registered for you.
     world.addSystem(MovementSystem());
-    world.storeOf<Position>().set(world.spawn(), Position(0, 0));
+    world.componentsOf<Position>().set(world.spawn(), Position(0, 0));
     // ...
   }
 }

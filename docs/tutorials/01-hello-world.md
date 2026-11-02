@@ -86,7 +86,7 @@ final tileMap = TileMap(
   solidTileIds: {1}, // tile id 1 is solid; 0 is empty/passable
 );
 final groundEntity = world.spawn();
-world.storeOf<TileMap>().set(groundEntity, tileMap);
+world.componentsOf<TileMap>().set(groundEntity, tileMap);
 ```
 
 `TileMap` also supports `oneWayTileIds` (platforms you can jump up
@@ -129,11 +129,11 @@ keeps this bar's `HudBar.value`/`maxValue` synced from the player's
 
 ```dart
 final coinId = world.spawn();
-world.storeOf<Position>().set(coinId, Position(450, 380));
-world.storeOf<Collider>().set(coinId, Collider(8));
-world.storeOf<Sprite>().set(coinId, Sprite('items', 'coin')); // if you have an atlas loaded
+world.componentsOf<Position>().set(coinId, Position(450, 380));
+world.componentsOf<Collider>().set(coinId, Collider(8));
+world.componentsOf<Sprite>().set(coinId, Sprite('items', 'coin')); // if you have an atlas loaded
 
-world.storeOf<Inventory>().set(player, Inventory({'coin': 0}));
+world.componentsOf<Inventory>().set(player, Inventory({'coin': 0}));
 dealPickupOnTouch(world, {coinId}, 'coin');
 ```
 
