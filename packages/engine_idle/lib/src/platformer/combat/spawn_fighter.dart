@@ -29,8 +29,8 @@ EntityId spawnFighter(
 }) {
   final regions = [for (var i = 0; i < frameCount; i++) '$i'];
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(x, y));
-  world.storeOf<Sprite>().set(
+  world.componentsOf<Position>().set(id, Position(x, y));
+  world.componentsOf<Sprite>().set(
     id,
     Sprite(
       atlasId,
@@ -40,13 +40,13 @@ EntityId spawnFighter(
       zIndex: zIndex,
     ),
   );
-  world.storeOf<AnimationState>().set(
+  world.componentsOf<AnimationState>().set(
     id,
     AnimationState(
       AnimationClip('idle', regions, frameDurationSeconds: 0.15, loop: true),
     ),
   );
-  world.storeOf<SpriteStates>().set(
+  world.componentsOf<SpriteStates>().set(
     id,
     SpriteStates({
       'idle': SpriteClip(
@@ -59,10 +59,10 @@ EntityId spawnFighter(
     }),
   );
   if (impactParticles != null) {
-    world.storeOf<ParticleEmitter>().set(id, impactParticles);
+    world.componentsOf<ParticleEmitter>().set(id, impactParticles);
   }
-  world.storeOf<CombatRole>().set(id, CombatRole(side));
-  world.storeOf<CombatStats>().set(
+  world.componentsOf<CombatRole>().set(id, CombatRole(side));
+  world.componentsOf<CombatStats>().set(
     id,
     CombatStats(
       maxHp: hp,
@@ -71,7 +71,7 @@ EntityId spawnFighter(
       armor: armor,
     ),
   );
-  world.storeOf<Health>().set(id, Health(current: hp, max: hp));
-  world.storeOf<HitFlash>().set(id, HitFlash());
+  world.componentsOf<Health>().set(id, Health(current: hp, max: hp));
+  world.componentsOf<HitFlash>().set(id, HitFlash());
   return id;
 }

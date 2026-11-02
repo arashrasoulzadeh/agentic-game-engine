@@ -29,15 +29,15 @@ class DialogueCaption {
        _backdropH = backdropHeight / backdropSourceHeight {
     if (backdropAtlasId != null) {
       _backdrop = world.spawn();
-      world.storeOf<Position>().set(_backdrop!, Position(style.x, style.y));
-      world.storeOf<eng.Sprite>().set(
+      world.componentsOf<Position>().set(_backdrop!, Position(style.x, style.y));
+      world.componentsOf<eng.Sprite>().set(
         _backdrop!,
         eng.Sprite(backdropAtlasId, 'full', scaleX: 0, scaleY: 0, zIndex: 119),
       );
     }
     _entity = world.spawn();
-    world.storeOf<Position>().set(_entity, Position(style.x, style.y));
-    world.storeOf<eng.Text>().set(
+    world.componentsOf<Position>().set(_entity, Position(style.x, style.y));
+    world.componentsOf<eng.Text>().set(
       _entity,
       eng.Text(
         '',
@@ -149,13 +149,13 @@ class DialogueCaption {
     _open = (_open + (wantOpen ? 1 : -1) * dt * 5).clamp(0.0, 1.0);
     // Ease-out so it snaps open and settles.
     final k = 1 - (1 - _open) * (1 - _open);
-    world.storeOf<eng.Sprite>().get(id)
+    world.componentsOf<eng.Sprite>().get(id)
       ?..scaleX = _backdropW * k
       ..scaleY = _backdropH * k;
   }
 
   void _set(World world, String text) {
     _shown = text;
-    world.storeOf<eng.Text>().get(_entity)?.text = text;
+    world.componentsOf<eng.Text>().get(_entity)?.text = text;
   }
 }

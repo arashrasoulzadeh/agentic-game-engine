@@ -16,8 +16,8 @@ class AutoCombatSystem extends System {
   @override
   void update(World world, double dt) {
     if (!enabled) return;
-    final roles = world.storeOf<CombatRole>();
-    final health = world.storeOf<Health>();
+    final roles = world.componentsOf<CombatRole>();
+    final health = world.componentsOf<Health>();
 
     EntityId? hero;
     EntityId? enemy;
@@ -35,13 +35,13 @@ class AutoCombatSystem extends System {
   }
 
   void _tick(World world, double dt, EntityId attacker, EntityId defender) {
-    final stats = world.storeOf<CombatStats>();
+    final stats = world.componentsOf<CombatStats>();
     final s = stats.get(attacker)!;
     s.cooldown -= dt;
     if (s.cooldown > 0) return;
     s.cooldown = 1.0 / s.attackSpeed.clamp(0.05, 10);
     final raw = s.attack - stats.get(defender)!.armor;
-    final hp = world.storeOf<Health>().get(defender)!;
+    final hp = world.componentsOf<Health>().get(defender)!;
     final dmg = raw < 1 ? 1.0 : raw;
     hp.current = (hp.current - dmg).clamp(0, hp.max);
     playSpriteState(world, attacker, 'attack');
@@ -50,7 +50,7 @@ class AutoCombatSystem extends System {
       FighterHit(
         attacker: attacker,
         defender: defender,
-        attackerSide: world.storeOf<CombatRole>().get(attacker)!.side,
+        attackerSide: world.componentsOf<CombatRole>().get(attacker)!.side,
         damage: dmg,
         fatal: hp.current <= 0,
       ),

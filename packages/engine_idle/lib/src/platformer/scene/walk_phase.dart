@@ -50,7 +50,7 @@ class WalkPhase {
     required EntityId enemy,
     EntityId? corpse,
   }) {
-    final pos = world.storeOf<Position>();
+    final pos = world.componentsOf<Position>();
     _hero = hero;
     _enemy = enemy;
     _corpse = corpse;
@@ -59,7 +59,7 @@ class WalkPhase {
     _enemyX = (pos.get(enemy)?.x ?? 0) - distance;
     _enemyY = pos.get(enemy)?.y ?? 0;
     _walk = world.spawn();
-    world.storeOf<Tween>().set(
+    world.componentsOf<Tween>().set(
       _walk!,
       Tween(
         from: 0,
@@ -69,7 +69,7 @@ class WalkPhase {
       ),
     );
     _bob = world.spawn();
-    world.storeOf<Tween>().set(
+    world.componentsOf<Tween>().set(
       _bob!,
       Tween(from: 0, to: bobHeight, duration: 0.12, pingPong: true),
     );
@@ -77,9 +77,9 @@ class WalkPhase {
 
   /// Applies this tick's progress. Returns true on the tick the walk ends.
   bool update(World world) {
-    final walk = _walk == null ? null : world.storeOf<Tween>().get(_walk!);
-    final bob = _bob == null ? null : world.storeOf<Tween>().get(_bob!);
-    final pos = world.storeOf<Position>();
+    final walk = _walk == null ? null : world.componentsOf<Tween>().get(_walk!);
+    final bob = _bob == null ? null : world.componentsOf<Tween>().get(_bob!);
+    final pos = world.componentsOf<Position>();
     final h = _hero == null ? null : pos.get(_hero!);
     final e = _enemy == null ? null : pos.get(_enemy!);
     if (walk == null || bob == null || h == null || e == null) return false;

@@ -203,7 +203,7 @@ class IdleSession {
           );
     if (summary.isEmpty) return null;
     controller.analytics?.offlineReturn(summary);
-    final stats = controller.world.storeOf<IdleStats>();
+    final stats = controller.world.componentsOf<IdleStats>();
     if (stats.length > 0) {
       stats.denseAt(0).credit(summary.gained);
     }
@@ -218,7 +218,7 @@ class IdleSession {
     for (final e in summary.gained.entries) {
       controller.wallet.add(e.key, e.value);
     }
-    final stats = controller.world.storeOf<IdleStats>();
+    final stats = controller.world.componentsOf<IdleStats>();
     if (stats.length > 0) stats.denseAt(0).credit(summary.gained);
     checkAchievements(controller.world, controller.wallet);
     controller.refresh();
@@ -340,7 +340,7 @@ class IdleSession {
   }
 
   bool _hasProgress() {
-    final stats = controller.world.storeOf<IdleStats>();
+    final stats = controller.world.componentsOf<IdleStats>();
     if (stats.length == 0) return true;
     final s = stats.denseAt(0);
     return s.lifetimeEarned.isNotEmpty || s.taps > 0 || s.secondsPlayed > 0;

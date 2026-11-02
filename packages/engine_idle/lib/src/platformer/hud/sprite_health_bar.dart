@@ -72,17 +72,17 @@ class SpriteHealthBar {
   }) {
     final s = width / BarsArt.frame.width;
     final frame = world.spawn();
-    world.storeOf<Position>().set(
+    world.componentsOf<Position>().set(
       frame,
       Position(left + width / 2, top + BarsArt.frame.height * s / 2),
     );
-    world.storeOf<Sprite>().set(
+    world.componentsOf<Sprite>().set(
       frame,
       Sprite(atlasId, 'frame', scaleX: s, scaleY: s, zIndex: zIndex),
     );
     final fillEntity = world.spawn();
-    world.storeOf<Position>().set(fillEntity, Position(left, top));
-    world.storeOf<Sprite>().set(
+    world.componentsOf<Position>().set(fillEntity, Position(left, top));
+    world.componentsOf<Sprite>().set(
       fillEntity,
       Sprite(atlasId, 'fill_$fill', scaleX: 0, scaleY: s, zIndex: zIndex + 1),
     );
@@ -94,20 +94,20 @@ class SpriteHealthBar {
 
   /// Recolours the fill (e.g. `boss` for the boss encounter).
   void setFill(String fill) {
-    _world.storeOf<Sprite>().get(_fill)?.region = 'fill_$fill';
+    _world.componentsOf<Sprite>().get(_fill)?.region = 'fill_$fill';
   }
 
   /// Resizes the fill to the source's current health.
   void sync() {
-    final hp = _world.storeOf<Health>().get(_source);
+    final hp = _world.componentsOf<Health>().get(_source);
     final fraction = hp == null || hp.max <= 0
         ? 0.0
         : (hp.current / hp.max).clamp(0.0, 1.0);
     final fillW = BarsArt.innerWidth * _s * fraction;
-    _world.storeOf<Position>().get(_fill)
+    _world.componentsOf<Position>().get(_fill)
       ?..x = _left + BarsArt.innerLeft * _s + fillW / 2
       ..y = _top + (BarsArt.innerTop + BarsArt.innerHeight / 2) * _s;
-    _world.storeOf<Sprite>().get(_fill)
+    _world.componentsOf<Sprite>().get(_fill)
       ?..scaleX = fillW / BarsArt.fillSize.w
       ..scaleY = BarsArt.innerHeight * _s / BarsArt.fillSize.h;
   }

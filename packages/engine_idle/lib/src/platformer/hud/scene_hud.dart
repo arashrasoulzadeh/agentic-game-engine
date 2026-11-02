@@ -24,14 +24,14 @@ class SceneHud {
   );
 
   void sync(World world, {required String status, required String enemy}) {
-    world.storeOf<eng.Text>().get(_status)?.text = status;
-    world.storeOf<eng.Text>().get(_enemy)?.text = enemy;
+    world.componentsOf<eng.Text>().get(_status)?.text = status;
+    world.componentsOf<eng.Text>().get(_enemy)?.text = enemy;
   }
 
   static EntityId _text(World world, HudTextStyle style, String text) {
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(style.x, style.y));
-    world.storeOf<eng.Text>().set(
+    world.componentsOf<Position>().set(id, Position(style.x, style.y));
+    world.componentsOf<eng.Text>().set(
       id,
       eng.Text(
         text,

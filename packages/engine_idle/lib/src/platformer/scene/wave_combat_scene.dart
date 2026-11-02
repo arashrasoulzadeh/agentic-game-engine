@@ -459,8 +459,8 @@ class WaveCombatScene extends Scene {
       return;
     }
 
-    final heroHp = world.storeOf<Health>().get(h);
-    final enemyHp = world.storeOf<Health>().get(e);
+    final heroHp = world.componentsOf<Health>().get(h);
+    final enemyHp = world.componentsOf<Health>().get(e);
     if (heroHp != null && heroHp.current <= 0) {
       if (!_deathPlayed(world, h, dt)) return;
       return _finish(world, config.fallenMessage);

@@ -98,7 +98,7 @@ class AchievementList extends StatelessWidget {
       listenable: controller,
       urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
-        final store = controller.world.storeOf<Achievement>();
+        final store = controller.world.componentsOf<Achievement>();
         final ids = [for (var i = 0; i < store.length; i++) store.entityAt(i)]
           ..sort();
         return ListView(children: [for (final e in ids) _row(store.get(e)!)]);
@@ -470,7 +470,7 @@ class GoldenOffer extends StatelessWidget {
       listenable: controller,
       urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
-        final store = controller.world.storeOf<GoldenEvents>();
+        final store = controller.world.componentsOf<GoldenEvents>();
         if (store.length == 0) return const SizedBox.shrink();
         final g = store.denseAt(0);
         final offered = g.offered;
@@ -516,7 +516,7 @@ class ChallengePanel extends StatelessWidget {
       listenable: controller,
       urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
-        final store = controller.world.storeOf<Challenge>();
+        final store = controller.world.componentsOf<Challenge>();
         if (store.length == 0) return const SizedBox.shrink();
         final running = activeChallenge(controller.world);
         return Column(
@@ -603,7 +603,7 @@ class StatsPanel extends StatelessWidget {
       listenable: controller,
       urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
-        final store = controller.world.storeOf<IdleStats>();
+        final store = controller.world.componentsOf<IdleStats>();
         if (store.length == 0) return const SizedBox.shrink();
         final s = store.denseAt(0);
         final lifetime = s.lifetimeEarned.entries
@@ -676,7 +676,7 @@ class ResearchPanel extends StatelessWidget {
   }
 
   Widget _row(EntityId entity) {
-    final n = controller.world.storeOf<ResearchNode>().get(entity)!;
+    final n = controller.world.componentsOf<ResearchNode>().get(entity)!;
     final locked = missingTech(
       controller.world,
       controller.team,
@@ -719,7 +719,7 @@ class SeasonPassPanel extends StatelessWidget {
       listenable: controller,
       urgentOf: () => controller.urgentGeneration,
       builder: (context, _) {
-        final store = controller.world.storeOf<SeasonPass>();
+        final store = controller.world.componentsOf<SeasonPass>();
         if (store.length == 0) {
           return const SizedBox.shrink(key: Key('season-pass-empty'));
         }
@@ -831,7 +831,7 @@ class TimeWarpPanel extends StatelessWidget {
   }
 
   Widget _row(EntityId entity) {
-    final o = controller.world.storeOf<TimeWarpOffer>().get(entity)!;
+    final o = controller.world.componentsOf<TimeWarpOffer>().get(entity)!;
     final cost = o.cost.entries
         .map((c) => '${controller.format(c.value)} ${c.key}')
         .join(', ');

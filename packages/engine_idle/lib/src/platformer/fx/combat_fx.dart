@@ -31,14 +31,14 @@ const _fxArtPixels = 48.0;
 /// at the feet. Without it they fall back to the entity's centre.
 void installCombatFx(World world, CombatFx fx, {PivotTable? pivots}) {
   world.events.on<FighterHit>((hit) {
-    final pos = world.storeOf<Position>();
+    final pos = world.componentsOf<Position>();
     final p = pos.get(hit.defender);
     final from = pos.get(hit.attacker);
-    final sprite = world.storeOf<Sprite>().get(hit.defender);
-    final states = world.storeOf<SpriteStates>().get(hit.defender);
+    final sprite = world.componentsOf<Sprite>().get(hit.defender);
+    final states = world.componentsOf<SpriteStates>().get(hit.defender);
     if (p == null || sprite == null) return;
     if (fx.hitBurst > 0) {
-      world.storeOf<ParticleEmitter>().get(hit.defender)?.burstCount +=
+      world.componentsOf<ParticleEmitter>().get(hit.defender)?.burstCount +=
           fx.hitBurst;
     }
 

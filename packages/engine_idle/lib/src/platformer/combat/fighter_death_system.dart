@@ -11,8 +11,8 @@ class FighterDeathSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final states = world.storeOf<SpriteStates>();
-    final health = world.storeOf<Health>();
+    final states = world.componentsOf<SpriteStates>();
+    final health = world.componentsOf<Health>();
     for (var i = 0; i < states.length; i++) {
       final e = states.entityAt(i);
       final hp = health.get(e);

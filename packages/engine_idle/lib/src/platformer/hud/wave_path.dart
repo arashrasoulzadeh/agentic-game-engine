@@ -26,8 +26,8 @@ class WavePath {
   }) {
     if (lineAtlasId != null) {
       final line = world.spawn();
-      world.storeOf<Position>().set(line, Position((left + right) / 2, y));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(line, Position((left + right) / 2, y));
+      world.componentsOf<Sprite>().set(
         line,
         Sprite(
           lineAtlasId,
@@ -45,8 +45,8 @@ class WavePath {
       final x = count == 1
           ? (left + right) / 2
           : left + (right - left) * i / (count - 1);
-      world.storeOf<Position>().set(id, Position(x, y));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(id, Position(x, y));
+      world.componentsOf<Sprite>().set(
         id,
         Sprite(
           nodesAtlasId,
@@ -64,7 +64,7 @@ class WavePath {
   /// Marks encounters before [current] cleared, [current] highlighted and the
   /// rest locked; the last node always shows the boss.
   void update(int current, double nodeSize) {
-    final sprites = _world.storeOf<Sprite>();
+    final sprites = _world.componentsOf<Sprite>();
     for (var i = 0; i < _nodes.length; i++) {
       final sprite = sprites.get(_nodes[i]);
       if (sprite == null) continue;

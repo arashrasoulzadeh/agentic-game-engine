@@ -32,7 +32,7 @@ class IdleController extends ChangeNotifier {
   /// The game's resources: the world's first [BigTreasury]. Looked up each time rather than held, so
   /// restoring a save (which replaces the component) never leaves the controller on a stale copy.
   BigTreasury get wallet {
-    final store = world.storeOf<BigTreasury>();
+    final store = world.componentsOf<BigTreasury>();
     if (store.length == 0) {
       throw StateError(
         'The world has no BigTreasury; add one before using IdleController.',
@@ -166,7 +166,7 @@ class IdleController extends ChangeNotifier {
     final r = buyGenerator(world, wallet, generator, count: count, team: team);
     if (r.ok) {
       analytics?.purchase(
-        world.storeOf<Generator>().get(generator)!.id,
+        world.componentsOf<Generator>().get(generator)!.id,
         r.bought,
         r.spent,
       );
@@ -182,7 +182,7 @@ class IdleController extends ChangeNotifier {
     final r = buyUpgrade(world, wallet, upgrade, team: team);
     if (r.ok) {
       analytics?.purchase(
-        world.storeOf<Upgrade>().get(upgrade)!.id,
+        world.componentsOf<Upgrade>().get(upgrade)!.id,
         r.bought,
         r.spent,
       );
@@ -208,7 +208,7 @@ class IdleController extends ChangeNotifier {
     if (gain != null) {
       analytics?.prestige(
         gain,
-        world.storeOf<IdleStats>().denseAt(0).prestigeCount,
+        world.componentsOf<IdleStats>().denseAt(0).prestigeCount,
       );
       sfx?.onPrestige?.call();
       _notifyUrgent();
@@ -262,13 +262,13 @@ class IdleController extends ChangeNotifier {
 
   /// Every generator entity in a stable order.
   List<EntityId> get generatorIds {
-    final s = world.storeOf<Generator>();
+    final s = world.componentsOf<Generator>();
     return [for (var i = 0; i < s.length; i++) s.entityAt(i)]..sort();
   }
 
   /// Every upgrade entity in a stable order.
   List<EntityId> get upgradeIds {
-    final s = world.storeOf<Upgrade>();
+    final s = world.componentsOf<Upgrade>();
     return [for (var i = 0; i < s.length; i++) s.entityAt(i)]..sort();
   }
 
@@ -277,19 +277,19 @@ class IdleController extends ChangeNotifier {
 
   /// Prestige layer ids in store order (one [PrestigePanel] per id).
   List<String> get prestigeRuleIds {
-    final s = world.storeOf<PrestigeRule>();
+    final s = world.componentsOf<PrestigeRule>();
     return [for (var i = 0; i < s.length; i++) s.denseAt(i).id];
   }
 
   /// Research node entities in a stable order.
   List<EntityId> get researchIds {
-    final s = world.storeOf<ResearchNode>();
+    final s = world.componentsOf<ResearchNode>();
     return [for (var i = 0; i < s.length; i++) s.entityAt(i)]..sort();
   }
 
   /// Time-warp offer entities in a stable order.
   List<EntityId> get timeWarpIds {
-    final s = world.storeOf<TimeWarpOffer>();
+    final s = world.componentsOf<TimeWarpOffer>();
     return [for (var i = 0; i < s.length; i++) s.entityAt(i)]..sort();
   }
 

@@ -205,7 +205,7 @@ class GeneratorRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final g = controller.world.storeOf<Generator>().get(entity);
+    final g = controller.world.componentsOf<Generator>().get(entity);
     if (g == null) return const SizedBox.shrink();
     final wallet = controller.wallet;
     final locked = missingTech(
@@ -376,7 +376,7 @@ class UpgradeList extends StatelessWidget {
           itemCount: ids.length,
           itemBuilder: (context, i) {
             final e = ids[i];
-            final u = controller.world.storeOf<Upgrade>().get(e)!;
+            final u = controller.world.componentsOf<Upgrade>().get(e)!;
             final locked = missingTech(
               controller.world,
               controller.team,
