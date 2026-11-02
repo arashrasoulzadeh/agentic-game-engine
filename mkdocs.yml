@@ -117,6 +117,7 @@ nav:
       - Save & restore a turn-based game: examples/save-restore-turn-game.md
       - Enemy with patrol AI: examples/spawn-enemy-with-patrol-ai.md
       - Health bar: examples/health-bar.md
+      - Pickups, doors, patrols and waves: examples/pickups-doors-waves.md
       - Custom Behavior: examples/custom-behavior.md
       - Save / load: examples/save-load.md
   - Reference:

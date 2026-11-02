@@ -134,7 +134,7 @@ Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_
 
 ### Tooling and onboarding
 - [ ] **CLI templates** `platformer|topdown|turnbased|idle` generating a runnable < 20-line `main` (existing: default, strategy, idle).
-- [ ] **Cookbook** recipes (health bar, pickup, door+key, enemy patrol, dialogue) in `docs/examples` or `docs/tutorials`, each backed by a test.
+- [ ] **Cookbook**: dialogue recipe still missing (health bar, pickup, door+key, patrol, waves exist in `docs/examples`, the last four tested in `doc_examples_pickups_test.dart`).
 - [ ] **Migration guide** for downstream projects (`storeOf` -> component API) before 7.final.
 
 ### Content polish
