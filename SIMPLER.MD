@@ -100,11 +100,15 @@ Each step lists: change -> required tests -> gate. "Docs" always means doc comme
 Process note: 3.2-3.5 ran G1 per step and G2 once at the end of the phase (all green), because every change in the phase is additive.
 
 #### Phase 4: Systems
-- [ ] 4.1 `System` gains optional `enabled` and a `world.setSystemEnabled(name, bool)`; profiler names unchanged. Existing systems unaffected. Gate: G2, G3.
-- [ ] 4.2 `SystemGroup` (one `addSystem`); preserves unique child names. Gate: G2.
-- [ ] 4.3 Phases (`prePhysics/physics/postPhysics/late`) as an optional `System.phase` with default; ordering = (phase, insertion). Regression tests for the known order hazards (JumpSystem vs tile grounding, Movement before Collision). Gate: G2, G3.
-- [ ] 4.4 Order validation: `world.validateSystemOrder()` returns problems (missing required predecessor), used by `game_agent lint`/doctor. Gate: G2, G5 if an op is added.
-- [ ] 4.5 Function-based systems (`system('name', (world, dt) {...})`). Gate: G1.
+**Design constraint for the whole phase:** 65 classes `implements System`, so any new member on `System` breaks all of them. Everything below lives on `World` (an internal entry wrapper) or in new classes, and `System` is unchanged.
+- [x] 4.0 Golden installer orders added first (`engine_platformer/test/system_order_golden_test.dart`, `engine_strategy/test/system_order_golden_test.dart`) so the ordering work below could prove it changed nothing for existing callers.
+- [x] 4.1 `world.setSystemEnabled(name, bool)` / `isSystemEnabled`: skipped in `step` (also profiled), keeps its place, unknown names throw listing the registered ones, same-name systems toggle together.
+- [x] 4.2 `SystemGroup(name, children)`: one system to the world, children run in order with `world.commands` applied after each, nests, children unmodifiable.
+- [x] 4.3 `SystemPhase { prePhysics, physics, postPhysics, late }` via `addSystem(system, phase:)`; default `physics` so unchanged call sites keep insertion order (stable sort within a phase).
+- [x] 4.4 `addSystem(after: [...])` declarations (no reordering) and `world.validateSystemOrder()` returning sentences for missing or later-running predecessors, phase-aware. Ready for lint/doctor (9.2).
+- [x] 4.5 `FunctionSystem` and `world.addSystemFn(name, fn, phase:, after:)`.
+Gates: engine_core 1425 tests; all packages green (platformer 352, strategy 47 with the new goldens). G3 median of 3: world_step 7.34/68.1us (baseline 7.33/67.7), collision 180/1813us (177/1798).
+Not done here: the installers (`installPlatformerSystems`, `installStrategySystems`) do not yet declare `after:` or phases; that is Phase 6 (presets) and must keep the golden orders passing.
 
 #### Phase 5: Determinism and time (applies findings under "Determinism")
 - [ ] 5.1 Attach `DeterministicRandom` to `World` (`world.random`), make its stream position snapshot-able (store seed + draw count or state), include it in `WorldSnapshot` only if that does not break the net/rollback tests (`rollback_session`). Tests: snapshot/restore reproduces the same next draws. Gate: G2.
