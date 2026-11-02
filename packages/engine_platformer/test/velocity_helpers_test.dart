@@ -15,11 +15,11 @@ void main() {
 
     test('sets the x component, preserving an existing y component', () {
       final id = world.spawn();
-      world.storeOf<Velocity>().set(id, Velocity(0, -250));
+      world.componentsOf<Velocity>().set(id, Velocity(0, -250));
 
       setVelocityX(world, id, 40);
 
-      final vel = world.storeOf<Velocity>().get(id)!;
+      final vel = world.componentsOf<Velocity>().get(id)!;
       expect(vel.x, 40);
       expect(
         vel.y,
@@ -33,7 +33,7 @@ void main() {
 
       setVelocityX(world, id, 25);
 
-      final vel = world.storeOf<Velocity>().get(id)!;
+      final vel = world.componentsOf<Velocity>().get(id)!;
       expect(vel.x, 25);
       expect(vel.y, 0);
     });

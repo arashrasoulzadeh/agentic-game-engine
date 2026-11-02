@@ -28,8 +28,8 @@ TileMap _wallMap() => TileMap(
 
 EntityId _spawnMap(World world) {
   final mapEntity = world.spawn();
-  world.storeOf<Position>().set(mapEntity, Position(0, 0));
-  world.storeOf<TileMap>().set(mapEntity, _wallMap());
+  world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+  world.componentsOf<TileMap>().set(mapEntity, _wallMap());
   return mapEntity;
 }
 
@@ -39,11 +39,11 @@ EntityId _spawnMap(World world) {
 /// `LedgeGrabSystem` should recognize as grabbable.
 EntityId _spawnAtLedge(World world, {bool ledgeGrabEnabled = true}) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(94, 105));
-  world.storeOf<Velocity>().set(id, Velocity(0, 40));
-  world.storeOf<Collider>().set(id, Collider(5));
-  world.storeOf<InputState>().set(id, InputState());
-  world.storeOf<PlatformerController>().set(
+  world.componentsOf<Position>().set(id, Position(94, 105));
+  world.componentsOf<Velocity>().set(id, Velocity(0, 40));
+  world.componentsOf<Collider>().set(id, Collider(5));
+  world.componentsOf<InputState>().set(id, InputState());
+  world.componentsOf<PlatformerController>().set(
     id,
     PlatformerController(
       ledgeGrabEnabled: ledgeGrabEnabled,
@@ -67,11 +67,11 @@ void main() {
         world.step(0.016);
 
         expect(
-          world.storeOf<PlatformerController>().get(id)!.ledgeGrabbing,
+          world.componentsOf<PlatformerController>().get(id)!.ledgeGrabbing,
           isFalse,
         );
         expect(
-          world.storeOf<Velocity>().get(id)!.y,
+          world.componentsOf<Velocity>().get(id)!.y,
           40,
           reason: 'vel left untouched',
         );
@@ -86,14 +86,14 @@ void main() {
 
       world.step(0.016);
 
-      final controller = world.storeOf<PlatformerController>().get(id)!;
+      final controller = world.componentsOf<PlatformerController>().get(id)!;
       expect(controller.ledgeGrabbing, isTrue);
       expect(controller.grounded, isFalse);
-      final vel = world.storeOf<Velocity>().get(id)!;
+      final vel = world.componentsOf<Velocity>().get(id)!;
       expect(vel.x, 0);
       expect(vel.y, 0);
       // ledgeTopY (100) + radius (5).
-      expect(world.storeOf<Position>().get(id)!.y, 105);
+      expect(world.componentsOf<Position>().get(id)!.y, 105);
       // Mantle target precomputed at grab time.
       expect(controller.ledgeMantleTargetX, 94 + 1 * (20 * 0.6));
       expect(controller.ledgeMantleTargetY, 100 - 5);
@@ -103,13 +103,13 @@ void main() {
       final world = _buildWorld();
       _spawnMap(world);
       final id = _spawnAtLedge(world);
-      world.storeOf<PlatformerController>().get(id)!.grounded = true;
+      world.componentsOf<PlatformerController>().get(id)!.grounded = true;
       world.addSystem(LedgeGrabSystem(id));
 
       world.step(0.016);
 
       expect(
-        world.storeOf<PlatformerController>().get(id)!.ledgeGrabbing,
+        world.componentsOf<PlatformerController>().get(id)!.ledgeGrabbing,
         isFalse,
       );
     });
@@ -119,8 +119,8 @@ void main() {
       () {
         final world = _buildWorld();
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 10,
@@ -138,7 +138,7 @@ void main() {
         world.step(0.016);
 
         expect(
-          world.storeOf<PlatformerController>().get(id)!.ledgeGrabbing,
+          world.componentsOf<PlatformerController>().get(id)!.ledgeGrabbing,
           isFalse,
         );
       },
@@ -147,13 +147,13 @@ void main() {
     test('does not grab without headroom above the entity itself', () {
       final world = _buildWorld();
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
       final tiles = [
         for (var row = 0; row < 10; row++)
           for (var col = 0; col < 10; col++)
             (col == 5 && row >= 5) || (col == 4 && row == 4) ? 1 : 0,
       ];
-      world.storeOf<TileMap>().set(
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 10,
@@ -170,7 +170,7 @@ void main() {
       world.step(0.016);
 
       expect(
-        world.storeOf<PlatformerController>().get(id)!.ledgeGrabbing,
+        world.componentsOf<PlatformerController>().get(id)!.ledgeGrabbing,
         isFalse,
       );
     });
@@ -181,25 +181,25 @@ void main() {
         final world = _buildWorld();
         _spawnMap(world);
         final id = _spawnAtLedge(world);
-        final input = world.storeOf<InputState>().get(id)!;
+        final input = world.componentsOf<InputState>().get(id)!;
         world.addSystem(LedgeGrabSystem(id));
 
         world.step(0.016); // grab
         expect(
-          world.storeOf<PlatformerController>().get(id)!.ledgeGrabbing,
+          world.componentsOf<PlatformerController>().get(id)!.ledgeGrabbing,
           isTrue,
         );
 
         input.pressedActions.add('up');
         world.step(0.016); // mantle
 
-        final controller = world.storeOf<PlatformerController>().get(id)!;
+        final controller = world.componentsOf<PlatformerController>().get(id)!;
         expect(controller.ledgeGrabbing, isFalse);
         expect(controller.grounded, isTrue);
-        final pos = world.storeOf<Position>().get(id)!;
+        final pos = world.componentsOf<Position>().get(id)!;
         expect(pos.x, 94 + 1 * (20 * 0.6));
         expect(pos.y, 100 - 5);
-        final vel = world.storeOf<Velocity>().get(id)!;
+        final vel = world.componentsOf<Velocity>().get(id)!;
         expect(vel.x, 0);
         expect(vel.y, 0);
       },
@@ -209,7 +209,7 @@ void main() {
       final world = _buildWorld();
       _spawnMap(world);
       final id = _spawnAtLedge(world);
-      final input = world.storeOf<InputState>().get(id)!;
+      final input = world.componentsOf<InputState>().get(id)!;
       world.addSystem(LedgeGrabSystem(id));
 
       world.step(0.016);
@@ -217,37 +217,37 @@ void main() {
       world.step(0.016);
 
       expect(
-        world.storeOf<PlatformerController>().get(id)!.ledgeGrabbing,
+        world.componentsOf<PlatformerController>().get(id)!.ledgeGrabbing,
         isFalse,
       );
-      expect(world.storeOf<PlatformerController>().get(id)!.grounded, isTrue);
+      expect(world.componentsOf<PlatformerController>().get(id)!.grounded, isTrue);
     });
 
     test('dropping on down input releases the grab without repositioning', () {
       final world = _buildWorld();
       _spawnMap(world);
       final id = _spawnAtLedge(world);
-      final input = world.storeOf<InputState>().get(id)!;
+      final input = world.componentsOf<InputState>().get(id)!;
       world.addSystem(LedgeGrabSystem(id));
 
       world.step(0.016); // grab
-      final grabbedPos = world.storeOf<Position>().get(id)!;
+      final grabbedPos = world.componentsOf<Position>().get(id)!;
       expect(grabbedPos.y, 105);
 
       input.pressedActions.add('down');
-      world.storeOf<Velocity>().get(id)!.y =
+      world.componentsOf<Velocity>().get(id)!.y =
           77; // simulate gravity resuming next tick
       world.step(0.016); // drop
 
-      final controller = world.storeOf<PlatformerController>().get(id)!;
+      final controller = world.componentsOf<PlatformerController>().get(id)!;
       expect(controller.ledgeGrabbing, isFalse);
       expect(
-        world.storeOf<Position>().get(id)!.y,
+        world.componentsOf<Position>().get(id)!.y,
         105,
         reason: 'no teleport on drop',
       );
       expect(
-        world.storeOf<Velocity>().get(id)!.y,
+        world.componentsOf<Velocity>().get(id)!.y,
         77,
         reason:
             'drop leaves velocity alone -- LedgeGrabSystem does not re-freeze it',
@@ -263,15 +263,15 @@ void main() {
         world.addSystem(LedgeGrabSystem(id));
 
         world.step(0.016); // grab
-        world.storeOf<Velocity>().get(id)!.y =
+        world.componentsOf<Velocity>().get(id)!.y =
             999; // something else tried to move it
         world.step(0.016); // still hanging
 
         expect(
-          world.storeOf<PlatformerController>().get(id)!.ledgeGrabbing,
+          world.componentsOf<PlatformerController>().get(id)!.ledgeGrabbing,
           isTrue,
         );
-        expect(world.storeOf<Velocity>().get(id)!.y, 0);
+        expect(world.componentsOf<Velocity>().get(id)!.y, 0);
       },
     );
 
@@ -283,18 +283,18 @@ void main() {
 
       world.step(0.016); // grab
       expect(
-        world.storeOf<PlatformerController>().get(id)!.ledgeGrabbing,
+        world.componentsOf<PlatformerController>().get(id)!.ledgeGrabbing,
         isTrue,
       );
 
-      world.storeOf<PlatformerController>().get(id)!.hitstunSeconds = 0.5;
-      world.storeOf<Velocity>().get(id)!.y = 250; // a knockback impulse
+      world.componentsOf<PlatformerController>().get(id)!.hitstunSeconds = 0.5;
+      world.componentsOf<Velocity>().get(id)!.y = 250; // a knockback impulse
       world.step(0.016);
 
-      final controller = world.storeOf<PlatformerController>().get(id)!;
+      final controller = world.componentsOf<PlatformerController>().get(id)!;
       expect(controller.ledgeGrabbing, isFalse);
       expect(
-        world.storeOf<Velocity>().get(id)!.y,
+        world.componentsOf<Velocity>().get(id)!.y,
         250,
         reason: 'not overridden back to 0 once the grab is released',
       );

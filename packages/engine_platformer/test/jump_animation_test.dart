@@ -70,15 +70,15 @@ void main() {
       final world = _buildWorld();
       world.addSystem(JumpAnimationSystem());
       final id = world.spawn();
-      world.storeOf<PlatformerController>().set(
+      world.componentsOf<PlatformerController>().set(
         id,
         PlatformerController(grounded: false),
       );
-      world.storeOf<Velocity>().set(id, Velocity(0, -500));
+      world.componentsOf<Velocity>().set(id, Velocity(0, -500));
 
       world.step(0.016); // should not throw, and touches nothing
 
-      expect(world.storeOf<AnimationState>().has(id), isFalse);
+      expect(world.componentsOf<AnimationState>().has(id), isFalse);
     });
 
     test(
@@ -87,16 +87,16 @@ void main() {
         final world = _buildWorld();
         world.addSystem(JumpAnimationSystem());
         final id = world.spawn();
-        world.storeOf<JumpAnimationSet>().set(id, _set());
-        world.storeOf<PlatformerController>().set(
+        world.componentsOf<JumpAnimationSet>().set(id, _set());
+        world.componentsOf<PlatformerController>().set(
           id,
           PlatformerController(grounded: true),
         );
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
 
         world.step(0.016);
 
-        expect(world.storeOf<AnimationState>().has(id), isFalse);
+        expect(world.componentsOf<AnimationState>().has(id), isFalse);
       },
     );
 
@@ -106,20 +106,20 @@ void main() {
         final world = _buildWorld();
         world.addSystem(JumpAnimationSystem());
         final id = world.spawn();
-        world.storeOf<JumpAnimationSet>().set(id, _set(startHoldSeconds: 0.05));
+        world.componentsOf<JumpAnimationSet>().set(id, _set(startHoldSeconds: 0.05));
         final controller = PlatformerController(grounded: false);
-        world.storeOf<PlatformerController>().set(id, controller);
-        world.storeOf<Velocity>().set(id, Velocity(0, -500)); // fast ascent
+        world.componentsOf<PlatformerController>().set(id, controller);
+        world.componentsOf<Velocity>().set(id, Velocity(0, -500)); // fast ascent
 
         world.step(0.02); // liftoff tick
-        expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+        expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
           'jump_0',
         ]);
 
         world.step(
           0.02,
         ); // well under startHoldSeconds (0.05) -- must still be holding start
-        expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+        expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
           'jump_0',
         ]);
 
@@ -131,7 +131,7 @@ void main() {
           world.step(0.02);
         }
         expect(
-          world.storeOf<AnimationState>().get(id)!.clip.frameRegions,
+          world.componentsOf<AnimationState>().get(id)!.clip.frameRegions,
           ['jump_1', 'jump_2'],
           reason:
               'fast upward velocity should read as rising once the start hold expires',
@@ -143,37 +143,37 @@ void main() {
       final world = _buildWorld();
       world.addSystem(JumpAnimationSystem());
       final id = world.spawn();
-      world.storeOf<JumpAnimationSet>().set(id, _set(startHoldSeconds: 0));
-      world.storeOf<PlatformerController>().set(
+      world.componentsOf<JumpAnimationSet>().set(id, _set(startHoldSeconds: 0));
+      world.componentsOf<PlatformerController>().set(
         id,
         PlatformerController(grounded: false),
       );
       final vel = Velocity(0, -500);
-      world.storeOf<Velocity>().set(id, vel);
+      world.componentsOf<Velocity>().set(id, vel);
 
       world.step(
         0.016,
       ); // liftoff tick always shows start, regardless of startHoldSeconds
-      expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+      expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
         'jump_0',
       ]);
       world.step(
         0.016,
       ); // startHoldSeconds is 0, so this tick re-evaluates by velocity
-      expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+      expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
         'jump_1',
         'jump_2',
       ]);
 
       vel.y = 0; // at the apex
       world.step(0.016);
-      expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+      expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
         'jump_3',
       ]);
 
       vel.y = 500; // falling
       world.step(0.016);
-      expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+      expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
         'jump_4',
       ]);
     });
@@ -184,7 +184,7 @@ void main() {
         final world = _buildWorld();
         world.addSystem(JumpAnimationSystem());
         final id = world.spawn();
-        world.storeOf<JumpAnimationSet>().set(
+        world.componentsOf<JumpAnimationSet>().set(
           id,
           _set(
             startHoldSeconds: 0,
@@ -193,30 +193,30 @@ void main() {
           ),
         );
         final controller = PlatformerController(grounded: false);
-        world.storeOf<PlatformerController>().set(id, controller);
-        world.storeOf<Velocity>().set(id, Velocity(0, 500)); // falling
+        world.componentsOf<PlatformerController>().set(id, controller);
+        world.componentsOf<Velocity>().set(id, Velocity(0, 500)); // falling
 
         world.step(0.016); // liftoff tick always shows start first
-        expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+        expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
           'jump_0',
         ]);
         world.step(
           0.016,
         ); // now past the (zero) start hold -- velocity picks falling
-        expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+        expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
           'jump_4',
         ]);
 
         controller.grounded = true; // touchdown
         world.step(0.016);
         expect(
-          world.storeOf<AnimationState>().get(id)!.clip.frameRegions,
+          world.componentsOf<AnimationState>().get(id)!.clip.frameRegions,
           ['jump_5'],
           reason: 'landing impact pose on the touchdown tick',
         );
 
         world.step(0.02); // still under landingHoldSeconds (0.03)
-        expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+        expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
           'jump_5',
         ]);
 
@@ -225,13 +225,13 @@ void main() {
         // ticks) -- stop there rather than overshooting past its own hold
         // too, since completedHoldSeconds is short enough to blow through
         // in just a couple more arbitrary steps.
-        final phaseState = world.storeOf<JumpAnimationPhaseState>().get(id)!;
+        final phaseState = world.componentsOf<JumpAnimationPhaseState>().get(id)!;
         for (var i = 0; i < 5 && phaseState.phase != 'completed'; i++) {
           world.step(0.02);
         }
         expect(phaseState.phase, 'completed');
         expect(
-          world.storeOf<AnimationState>().get(id)!.clip.frameRegions,
+          world.componentsOf<AnimationState>().get(id)!.clip.frameRegions,
           ['jump_6'],
           reason:
               'recovers to the completed/standing pose once the landing hold expires',
@@ -247,7 +247,7 @@ void main() {
         final world = _buildWorld();
         world.addSystem(JumpAnimationSystem());
         final id = world.spawn();
-        world.storeOf<JumpAnimationSet>().set(
+        world.componentsOf<JumpAnimationSet>().set(
           id,
           _set(
             startHoldSeconds: 0,
@@ -256,9 +256,9 @@ void main() {
           ),
         );
         final controller = PlatformerController(grounded: false);
-        world.storeOf<PlatformerController>().set(id, controller);
+        world.componentsOf<PlatformerController>().set(id, controller);
         final vel = Velocity(0, 500); // falling
-        world.storeOf<Velocity>().set(id, vel);
+        world.componentsOf<Velocity>().set(id, vel);
 
         world.step(0.016); // liftoff -- 'start'
         world.step(0.016); // now falling
@@ -266,7 +266,7 @@ void main() {
         controller.grounded = true; // touchdown
         world.step(0.016);
         expect(
-          world.storeOf<JumpAnimationPhaseState>().get(id)!.phase,
+          world.componentsOf<JumpAnimationPhaseState>().get(id)!.phase,
           'landing',
         );
 
@@ -276,7 +276,7 @@ void main() {
         vel.x = 200;
         world.step(0.016);
         expect(
-          world.storeOf<JumpAnimationPhaseState>().get(id)!.phase,
+          world.componentsOf<JumpAnimationPhaseState>().get(id)!.phase,
           isNull,
           reason:
               'hands control back to MovementAnimationSystem immediately '
@@ -292,20 +292,20 @@ void main() {
         final world = _buildWorld();
         world.addSystem(JumpAnimationSystem());
         final id = world.spawn();
-        world.storeOf<JumpAnimationSet>().set(
+        world.componentsOf<JumpAnimationSet>().set(
           id,
           _set(startHoldSeconds: 0, landingHoldSeconds: 1),
         );
         final controller = PlatformerController(grounded: false);
-        world.storeOf<PlatformerController>().set(id, controller);
-        world.storeOf<Velocity>().set(id, Velocity(0, 500));
+        world.componentsOf<PlatformerController>().set(id, controller);
+        world.componentsOf<Velocity>().set(id, Velocity(0, 500));
 
         world.step(0.016);
         world.step(0.016);
         controller.grounded = true;
         world.step(0.016);
         expect(
-          world.storeOf<JumpAnimationPhaseState>().get(id)!.phase,
+          world.componentsOf<JumpAnimationPhaseState>().get(id)!.phase,
           'landing',
         );
 
@@ -313,7 +313,7 @@ void main() {
           0.016,
         ); // still no horizontal velocity -- hold should continue
         expect(
-          world.storeOf<JumpAnimationPhaseState>().get(id)!.phase,
+          world.componentsOf<JumpAnimationPhaseState>().get(id)!.phase,
           'landing',
         );
       },
@@ -327,24 +327,24 @@ void main() {
         world.addSystem(MovementAnimationSystem());
         world.addSystem(JumpAnimationSystem());
         final id = world.spawn();
-        world.storeOf<MovementAnimationSet>().set(
+        world.componentsOf<MovementAnimationSet>().set(
           id,
           MovementAnimationSet(
             idle: AnimationClip('idle', ['idle_0']),
             walk: AnimationClip('walk', ['walk_0']),
           ),
         );
-        world.storeOf<JumpAnimationSet>().set(id, _set(startHoldSeconds: 0));
-        world.storeOf<PlatformerController>().set(
+        world.componentsOf<JumpAnimationSet>().set(id, _set(startHoldSeconds: 0));
+        world.componentsOf<PlatformerController>().set(
           id,
           PlatformerController(grounded: false),
         );
-        world.storeOf<Velocity>().set(id, Velocity(0, -500));
+        world.componentsOf<Velocity>().set(id, Velocity(0, -500));
 
         world.step(
           0.016,
         ); // liftoff tick: JumpAnimationSystem should win with 'start'
-        expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+        expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
           'jump_0',
         ]);
 
@@ -352,7 +352,7 @@ void main() {
         // MovementAnimationSystem alone (no MovementAnimationSet.jump) would
         // have picked 'idle' here (vel.x is 0) -- JumpAnimationSystem running
         // after it must win instead.
-        expect(world.storeOf<AnimationState>().get(id)!.clip.frameRegions, [
+        expect(world.componentsOf<AnimationState>().get(id)!.clip.frameRegions, [
           'jump_1',
           'jump_2',
         ]);
@@ -363,24 +363,24 @@ void main() {
       final world = _buildWorld();
       world.addSystem(JumpAnimationSystem());
       final id = world.spawn();
-      world.storeOf<JumpAnimationSet>().set(id, _set(startHoldSeconds: 0));
-      world.storeOf<PlatformerController>().set(
+      world.componentsOf<JumpAnimationSet>().set(id, _set(startHoldSeconds: 0));
+      world.componentsOf<PlatformerController>().set(
         id,
         PlatformerController(grounded: false),
       );
-      world.storeOf<Velocity>().set(id, Velocity(0, -500));
+      world.componentsOf<Velocity>().set(id, Velocity(0, -500));
 
       world.step(0.016); // liftoff -- 'start'
       world.step(
         0.016,
       ); // now 'rising' (a real phase change, resets playback once)
-      final firstState = world.storeOf<AnimationState>().get(id)!;
+      final firstState = world.componentsOf<AnimationState>().get(id)!;
       expect(firstState.clip.frameRegions, ['jump_1', 'jump_2']);
       firstState.frameIndex = 1;
       firstState.elapsed = 0.03;
 
       world.step(0.016); // still rising -- should not have reset playback again
-      final secondState = world.storeOf<AnimationState>().get(id)!;
+      final secondState = world.componentsOf<AnimationState>().get(id)!;
       expect(secondState.frameIndex, 1);
       expect(
         secondState.elapsed,

@@ -143,8 +143,8 @@ void main() {
       () {
         final world = buildWorld();
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 1,
@@ -160,19 +160,19 @@ void main() {
         // Resting near the tile's left edge: t=(2-0)/40=0.05, floor =
         // 40+(0-40)*0.05 = 38, so a radius-10 circle rests with its
         // center at y=28.
-        world.storeOf<Position>().set(id, Position(2, 28));
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
-        world.storeOf<Collider>().set(id, Collider(10));
-        world.storeOf<PlatformerController>().set(id, PlatformerController());
+        world.componentsOf<Position>().set(id, Position(2, 28));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<Collider>().set(id, Collider(10));
+        world.componentsOf<PlatformerController>().set(id, PlatformerController());
 
         world.step(0.016);
-        final controller = world.storeOf<PlatformerController>().get(id)!;
+        final controller = world.componentsOf<PlatformerController>().get(id)!;
         expect(controller.grounded, isTrue);
 
         // Move to the tile's right edge (higher ground -- smaller y) and
         // resolve again from the old (lower) height; the ramp should pull
         // it up, not block it.
-        final pos = world.storeOf<Position>().get(id)!;
+        final pos = world.componentsOf<Position>().get(id)!;
         pos.x = 38;
         pos.y = 28; // still at the old, now-too-low height
         world.step(0.016);

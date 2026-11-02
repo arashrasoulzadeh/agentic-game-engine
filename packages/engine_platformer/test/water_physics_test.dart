@@ -45,20 +45,20 @@ void main() {
         world.addSystem(WaterPhysicsSystem());
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(0, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, 500));
-        world.storeOf<Collider>().set(id, Collider(10));
+        world.componentsOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 500));
+        world.componentsOf<Collider>().set(id, Collider(10));
         final controller = PlatformerController();
-        world.storeOf<PlatformerController>().set(id, controller);
+        world.componentsOf<PlatformerController>().set(id, controller);
 
         final zoneEntity = world.spawn();
-        world.storeOf<Position>().set(zoneEntity, Position(1000, 1000));
-        world.storeOf<WaterZone>().set(zoneEntity, WaterZone(50, 50));
+        world.componentsOf<Position>().set(zoneEntity, Position(1000, 1000));
+        world.componentsOf<WaterZone>().set(zoneEntity, WaterZone(50, 50));
 
         world.step(0.016);
 
         expect(controller.inWater, isFalse);
-        expect(world.storeOf<Velocity>().get(id)!.y, 500);
+        expect(world.componentsOf<Velocity>().get(id)!.y, 500);
       },
     );
 
@@ -69,15 +69,15 @@ void main() {
         world.addSystem(WaterPhysicsSystem());
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(0, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, 500));
-        world.storeOf<Collider>().set(id, Collider(10));
+        world.componentsOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 500));
+        world.componentsOf<Collider>().set(id, Collider(10));
         final controller = PlatformerController();
-        world.storeOf<PlatformerController>().set(id, controller);
+        world.componentsOf<PlatformerController>().set(id, controller);
 
         final zoneEntity = world.spawn();
-        world.storeOf<Position>().set(zoneEntity, Position(0, 0));
-        world.storeOf<WaterZone>().set(
+        world.componentsOf<Position>().set(zoneEntity, Position(0, 0));
+        world.componentsOf<WaterZone>().set(
           zoneEntity,
           WaterZone(100, 100, maxFallSpeed: 60),
         );
@@ -85,7 +85,7 @@ void main() {
         world.step(0.016);
 
         expect(controller.inWater, isTrue);
-        expect(world.storeOf<Velocity>().get(id)!.y, 60);
+        expect(world.componentsOf<Velocity>().get(id)!.y, 60);
       },
     );
 
@@ -94,15 +94,15 @@ void main() {
       world.addSystem(WaterPhysicsSystem());
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 20));
-      world.storeOf<Collider>().set(id, Collider(10));
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 20));
+      world.componentsOf<Collider>().set(id, Collider(10));
       final controller = PlatformerController();
-      world.storeOf<PlatformerController>().set(id, controller);
+      world.componentsOf<PlatformerController>().set(id, controller);
 
       final zoneEntity = world.spawn();
-      world.storeOf<Position>().set(zoneEntity, Position(0, 0));
-      world.storeOf<WaterZone>().set(
+      world.componentsOf<Position>().set(zoneEntity, Position(0, 0));
+      world.componentsOf<WaterZone>().set(
         zoneEntity,
         WaterZone(100, 100, maxFallSpeed: 60),
       );
@@ -110,7 +110,7 @@ void main() {
       world.step(0.016);
 
       expect(
-        world.storeOf<Velocity>().get(id)!.y,
+        world.componentsOf<Velocity>().get(id)!.y,
         20,
         reason: 'already slower than the buoyancy cap -- nothing to clamp',
       );
@@ -123,22 +123,22 @@ void main() {
         world.addSystem(WaterPhysicsSystem());
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(0, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, 500));
-        world.storeOf<Collider>().set(id, Collider(10));
+        world.componentsOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 500));
+        world.componentsOf<Collider>().set(id, Collider(10));
         final controller = PlatformerController(jumpRequested: true);
-        world.storeOf<PlatformerController>().set(id, controller);
+        world.componentsOf<PlatformerController>().set(id, controller);
 
         final zoneEntity = world.spawn();
-        world.storeOf<Position>().set(zoneEntity, Position(0, 0));
-        world.storeOf<WaterZone>().set(
+        world.componentsOf<Position>().set(zoneEntity, Position(0, 0));
+        world.componentsOf<WaterZone>().set(
           zoneEntity,
           WaterZone(100, 100, swimUpSpeed: 150),
         );
 
         world.step(0.016);
 
-        expect(world.storeOf<Velocity>().get(id)!.y, -150);
+        expect(world.componentsOf<Velocity>().get(id)!.y, -150);
         expect(
           controller.jumpRequested,
           isFalse,
@@ -155,28 +155,28 @@ void main() {
         world.addSystem(WaterPhysicsSystem());
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(0, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
-        world.storeOf<Collider>().set(id, Collider(10));
+        world.componentsOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<Collider>().set(id, Collider(10));
         final controller = PlatformerController();
-        world.storeOf<PlatformerController>().set(id, controller);
+        world.componentsOf<PlatformerController>().set(id, controller);
 
         final zoneEntity = world.spawn();
-        world.storeOf<Position>().set(zoneEntity, Position(0, 0));
-        world.storeOf<WaterZone>().set(
+        world.componentsOf<Position>().set(zoneEntity, Position(0, 0));
+        world.componentsOf<WaterZone>().set(
           zoneEntity,
           WaterZone(100, 100, swimUpSpeed: 150),
         );
 
         controller.jumpRequested = true;
         world.step(0.016);
-        expect(world.storeOf<Velocity>().get(id)!.y, -150);
+        expect(world.componentsOf<Velocity>().get(id)!.y, -150);
 
         // Simulate a second press after the first stroke -- another
         // stroke fires, not a no-op the way a held single-jump would be.
         controller.jumpRequested = true;
         world.step(0.016);
-        expect(world.storeOf<Velocity>().get(id)!.y, -150);
+        expect(world.componentsOf<Velocity>().get(id)!.y, -150);
       },
     );
 
@@ -187,11 +187,11 @@ void main() {
         world.addSystem(WaterPhysicsSystem());
 
         final id = world.spawn();
-        world.storeOf<PlatformerController>().set(id, PlatformerController());
+        world.componentsOf<PlatformerController>().set(id, PlatformerController());
 
         final zoneEntity = world.spawn();
-        world.storeOf<Position>().set(zoneEntity, Position(0, 0));
-        world.storeOf<WaterZone>().set(zoneEntity, WaterZone(100, 100));
+        world.componentsOf<Position>().set(zoneEntity, Position(0, 0));
+        world.componentsOf<WaterZone>().set(zoneEntity, WaterZone(100, 100));
 
         expect(() => world.step(0.016), returnsNormally);
       },
@@ -202,16 +202,16 @@ void main() {
       world.addSystem(WaterPhysicsSystem());
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 500));
-      world.storeOf<Collider>().set(id, Collider(10));
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 500));
+      world.componentsOf<Collider>().set(id, Collider(10));
       final controller = PlatformerController();
-      world.storeOf<PlatformerController>().set(id, controller);
+      world.componentsOf<PlatformerController>().set(id, controller);
 
       world.step(0.016);
 
       expect(controller.inWater, isFalse);
-      expect(world.storeOf<Velocity>().get(id)!.y, 500);
+      expect(world.componentsOf<Velocity>().get(id)!.y, 500);
     });
   });
 
@@ -221,17 +221,17 @@ void main() {
       () {
         final world = _buildWorld();
         final player = world.spawn();
-        world.storeOf<Position>().set(player, Position(0, 0));
-        world.storeOf<Velocity>().set(player, Velocity(0, 0));
-        world.storeOf<Collider>().set(player, Collider(10));
-        world.storeOf<InputState>().set(player, InputState());
-        world.storeOf<Gravity>().set(player, Gravity());
+        world.componentsOf<Position>().set(player, Position(0, 0));
+        world.componentsOf<Velocity>().set(player, Velocity(0, 0));
+        world.componentsOf<Collider>().set(player, Collider(10));
+        world.componentsOf<InputState>().set(player, InputState());
+        world.componentsOf<Gravity>().set(player, Gravity());
         final controller = PlatformerController();
-        world.storeOf<PlatformerController>().set(player, controller);
+        world.componentsOf<PlatformerController>().set(player, controller);
 
         final zoneEntity = world.spawn();
-        world.storeOf<Position>().set(zoneEntity, Position(0, 0));
-        world.storeOf<WaterZone>().set(
+        world.componentsOf<Position>().set(zoneEntity, Position(0, 0));
+        world.componentsOf<WaterZone>().set(
           zoneEntity,
           WaterZone(200, 200, maxFallSpeed: 50),
         );
@@ -244,7 +244,7 @@ void main() {
 
         expect(controller.inWater, isTrue);
         expect(
-          world.storeOf<Velocity>().get(player)!.y,
+          world.componentsOf<Velocity>().get(player)!.y,
           lessThanOrEqualTo(50),
           reason:
               'gravity would otherwise have accelerated well past this over 30 ticks',

@@ -27,17 +27,17 @@ void main() {
         world.addSystem(AISystem(registry));
 
         final left = world.spawn();
-        world.storeOf<Position>().set(left, Position(0, 0));
-        world.storeOf<Velocity>().set(left, Velocity(0, 0));
-        world.storeOf<AIState>().set(
+        world.componentsOf<Position>().set(left, Position(0, 0));
+        world.componentsOf<Velocity>().set(left, Velocity(0, 0));
+        world.componentsOf<AIState>().set(
           left,
           AIState('patrol', memory: {'dir': 1.0}),
         );
 
         final right = world.spawn();
-        world.storeOf<Position>().set(right, Position(10, 0));
-        world.storeOf<Velocity>().set(right, Velocity(0, 0));
-        world.storeOf<AIState>().set(
+        world.componentsOf<Position>().set(right, Position(10, 0));
+        world.componentsOf<Velocity>().set(right, Velocity(0, 0));
+        world.componentsOf<AIState>().set(
           right,
           AIState('patrol', memory: {'dir': 1.0}),
         );
@@ -48,8 +48,8 @@ void main() {
         // together they are, the more the avoidance push pulls them
         // apart -- left should end up moving slower rightward (pushed
         // left) than right (pushed further right), not identically.
-        final leftVx = world.storeOf<Velocity>().get(left)!.x;
-        final rightVx = world.storeOf<Velocity>().get(right)!.x;
+        final leftVx = world.componentsOf<Velocity>().get(left)!.x;
+        final rightVx = world.componentsOf<Velocity>().get(right)!.x;
         expect(leftVx, lessThan(rightVx));
         expect(
           leftVx,
@@ -78,13 +78,13 @@ void main() {
         world.addSystem(AISystem(registry));
 
         final player = world.spawn();
-        world.storeOf<Position>().set(player, Position(10, 0));
+        world.componentsOf<Position>().set(player, Position(10, 0));
         // No AIState on the player -- not part of the "AI pack".
 
         final enemy = world.spawn();
-        world.storeOf<Position>().set(enemy, Position(0, 0));
-        world.storeOf<Velocity>().set(enemy, Velocity(0, 0));
-        world.storeOf<AIState>().set(
+        world.componentsOf<Position>().set(enemy, Position(0, 0));
+        world.componentsOf<Velocity>().set(enemy, Velocity(0, 0));
+        world.componentsOf<AIState>().set(
           enemy,
           AIState('patrol', memory: {'dir': 1.0}),
         );
@@ -92,7 +92,7 @@ void main() {
         world.step(0.1);
 
         expect(
-          world.storeOf<Velocity>().get(enemy)!.x,
+          world.componentsOf<Velocity>().get(enemy)!.x,
           50,
           reason:
               'unaffected by the nearby player -- only PatrolBehavior\'s own speed',
@@ -113,23 +113,23 @@ void main() {
       world.addSystem(AISystem(registry));
 
       final far = world.spawn();
-      world.storeOf<Position>().set(far, Position(500, 0));
-      world.storeOf<AIState>().set(
+      world.componentsOf<Position>().set(far, Position(500, 0));
+      world.componentsOf<AIState>().set(
         far,
         AIState('patrol', memory: {'dir': 1.0}),
       );
 
       final enemy = world.spawn();
-      world.storeOf<Position>().set(enemy, Position(0, 0));
-      world.storeOf<Velocity>().set(enemy, Velocity(0, 0));
-      world.storeOf<AIState>().set(
+      world.componentsOf<Position>().set(enemy, Position(0, 0));
+      world.componentsOf<Velocity>().set(enemy, Velocity(0, 0));
+      world.componentsOf<AIState>().set(
         enemy,
         AIState('patrol', memory: {'dir': 1.0}),
       );
 
       world.step(0.1);
 
-      expect(world.storeOf<Velocity>().get(enemy)!.x, 50);
+      expect(world.componentsOf<Velocity>().get(enemy)!.x, 50);
     });
 
     test(
@@ -144,7 +144,7 @@ void main() {
         world.addSystem(AISystem(registry));
 
         final id = world.spawn();
-        world.storeOf<AIState>().set(id, AIState('patrol'));
+        world.componentsOf<AIState>().set(id, AIState('patrol'));
         // no Position set
 
         expect(() => world.step(0.1), returnsNormally);

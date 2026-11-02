@@ -167,19 +167,19 @@ void main() {
       final world = _buildWorld();
 
       final gravityEntity = world.spawn();
-      world.storeOf<Gravity>().set(gravityEntity, Gravity(scale: 2));
+      world.componentsOf<Gravity>().set(gravityEntity, Gravity(scale: 2));
 
       final platformEntity = world.spawn();
-      world.storeOf<PlatformBody>().set(platformEntity, PlatformBody(10, 20));
+      world.componentsOf<PlatformBody>().set(platformEntity, PlatformBody(10, 20));
 
       final controllerEntity = world.spawn();
-      world.storeOf<PlatformerController>().set(
+      world.componentsOf<PlatformerController>().set(
         controllerEntity,
         PlatformerController(),
       );
 
       final animSetEntity = world.spawn();
-      world.storeOf<MovementAnimationSet>().set(
+      world.componentsOf<MovementAnimationSet>().set(
         animSetEntity,
         MovementAnimationSet(
           idle: AnimationClip('idle', ['idle_0']),
@@ -188,22 +188,22 @@ void main() {
       );
 
       final healthEntity = world.spawn();
-      world.storeOf<Health>().set(healthEntity, Health(current: 5, max: 5));
+      world.componentsOf<Health>().set(healthEntity, Health(current: 5, max: 5));
 
       final checkpointEntity = world.spawn();
-      world.storeOf<Checkpoint>().set(checkpointEntity, Checkpoint('cp1'));
+      world.componentsOf<Checkpoint>().set(checkpointEntity, Checkpoint('cp1'));
 
       final lastCheckpointEntity = world.spawn();
-      world.storeOf<LastCheckpoint>().set(
+      world.componentsOf<LastCheckpoint>().set(
         lastCheckpointEntity,
         LastCheckpoint(1, 2),
       );
 
       final inventoryEntity = world.spawn();
-      world.storeOf<Inventory>().set(inventoryEntity, Inventory({'coin': 3}));
+      world.componentsOf<Inventory>().set(inventoryEntity, Inventory({'coin': 3}));
 
       final jumpSetEntity = world.spawn();
-      world.storeOf<JumpAnimationSet>().set(
+      world.componentsOf<JumpAnimationSet>().set(
         jumpSetEntity,
         JumpAnimationSet.fromRegions(
           start: ['jump_0'],
@@ -216,7 +216,7 @@ void main() {
       );
 
       final jumpPhaseEntity = world.spawn();
-      world.storeOf<JumpAnimationPhaseState>().set(
+      world.componentsOf<JumpAnimationPhaseState>().set(
         jumpPhaseEntity,
         JumpAnimationPhaseState(phase: 'peak', elapsed: 0.1),
       );

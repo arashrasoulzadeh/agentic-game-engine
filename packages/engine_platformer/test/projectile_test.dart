@@ -30,14 +30,14 @@ void main() {
       final world = _buildWorld();
       final id = spawnProjectile(world, x: 0, y: 0, vx: 100, vy: 0, damage: 10);
 
-      expect(world.storeOf<Position>().get(id), isNotNull);
-      expect(world.storeOf<Velocity>().get(id)!.x, 100);
-      expect(world.storeOf<Collider>().get(id), isNotNull);
-      expect(world.storeOf<Projectile>().get(id)!.damage, 10);
+      expect(world.componentsOf<Position>().get(id), isNotNull);
+      expect(world.componentsOf<Velocity>().get(id)!.x, 100);
+      expect(world.componentsOf<Collider>().get(id), isNotNull);
+      expect(world.componentsOf<Projectile>().get(id)!.damage, 10);
 
       world.step(0.1);
       expect(
-        world.storeOf<Position>().get(id)!.x,
+        world.componentsOf<Position>().get(id)!.x,
         10,
       ); // moved via ordinary MovementSystem
     },
@@ -70,10 +70,10 @@ void main() {
         installProjectileDamage(world);
 
         final target = world.spawn();
-        world.storeOf<Position>().set(target, Position(100, 0));
-        world.storeOf<Velocity>().set(target, Velocity(0, 0));
-        world.storeOf<Collider>().set(target, Collider(10));
-        world.storeOf<Health>().set(target, Health(current: 50, max: 50));
+        world.componentsOf<Position>().set(target, Position(100, 0));
+        world.componentsOf<Velocity>().set(target, Velocity(0, 0));
+        world.componentsOf<Collider>().set(target, Collider(10));
+        world.componentsOf<Health>().set(target, Health(current: 50, max: 50));
 
         final projectile = spawnProjectile(
           world,
@@ -86,7 +86,7 @@ void main() {
 
         world.step(0.016);
 
-        expect(world.storeOf<Health>().get(target)!.current, 35);
+        expect(world.componentsOf<Health>().get(target)!.current, 35);
         expect(world.entities.isAlive(projectile), isFalse);
       },
     );
@@ -96,10 +96,10 @@ void main() {
       installProjectileDamage(world);
 
       final owner = world.spawn();
-      world.storeOf<Position>().set(owner, Position(100, 0));
-      world.storeOf<Velocity>().set(owner, Velocity(0, 0));
-      world.storeOf<Collider>().set(owner, Collider(10));
-      world.storeOf<Health>().set(owner, Health(current: 50, max: 50));
+      world.componentsOf<Position>().set(owner, Position(100, 0));
+      world.componentsOf<Velocity>().set(owner, Velocity(0, 0));
+      world.componentsOf<Collider>().set(owner, Collider(10));
+      world.componentsOf<Health>().set(owner, Health(current: 50, max: 50));
 
       final projectile = spawnProjectile(
         world,
@@ -114,7 +114,7 @@ void main() {
       world.step(0.016);
 
       expect(
-        world.storeOf<Health>().get(owner)!.current,
+        world.componentsOf<Health>().get(owner)!.current,
         50,
         reason: 'unaffected by its own projectile',
       );
@@ -132,9 +132,9 @@ void main() {
         installProjectileDamage(world);
 
         final prop = world.spawn();
-        world.storeOf<Position>().set(prop, Position(100, 0));
-        world.storeOf<Velocity>().set(prop, Velocity(0, 0));
-        world.storeOf<Collider>().set(prop, Collider(10));
+        world.componentsOf<Position>().set(prop, Position(100, 0));
+        world.componentsOf<Velocity>().set(prop, Velocity(0, 0));
+        world.componentsOf<Collider>().set(prop, Collider(10));
         // No Health on `prop`.
 
         final projectile = spawnProjectile(
@@ -159,10 +159,10 @@ void main() {
         installProjectileDamage(world);
 
         final target = world.spawn();
-        world.storeOf<Position>().set(target, Position(100, 0));
-        world.storeOf<Velocity>().set(target, Velocity(0, 0));
-        world.storeOf<Collider>().set(target, Collider(10));
-        world.storeOf<Health>().set(target, Health(current: 100, max: 100));
+        world.componentsOf<Position>().set(target, Position(100, 0));
+        world.componentsOf<Velocity>().set(target, Velocity(0, 0));
+        world.componentsOf<Collider>().set(target, Collider(10));
+        world.componentsOf<Health>().set(target, Health(current: 100, max: 100));
 
         spawnProjectile(
           world,
@@ -183,7 +183,7 @@ void main() {
 
         world.step(0.016);
 
-        expect(world.storeOf<Health>().get(target)!.current, 80);
+        expect(world.componentsOf<Health>().get(target)!.current, 80);
         expect(world.entities.isAlive(second), isFalse);
       },
     );

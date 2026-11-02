@@ -34,14 +34,14 @@ EntityId _spawnPatroller(
   Map<String, dynamic>? memory,
 }) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(x, y));
-  world.storeOf<Velocity>().set(id, Velocity(0, 0));
-  world.storeOf<Collider>().set(id, Collider(12));
+  world.componentsOf<Position>().set(id, Position(x, y));
+  world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+  world.componentsOf<Collider>().set(id, Collider(12));
   if (affectedByGravity) {
-    world.storeOf<Gravity>().set(id, Gravity(scale: 1));
-    world.storeOf<PlatformerController>().set(id, PlatformerController());
+    world.componentsOf<Gravity>().set(id, Gravity(scale: 1));
+    world.componentsOf<PlatformerController>().set(id, PlatformerController());
   }
-  world.storeOf<AIState>().set(
+  world.componentsOf<AIState>().set(
     id,
     AIState(
       'patrol',
@@ -53,7 +53,7 @@ EntityId _spawnPatroller(
 
 TileMap _createFloorMap(World world, {double y = 1000, double tileSize = 40}) {
   final mapEntity = world.spawn();
-  world.storeOf<Position>().set(mapEntity, Position(0, 0));
+  world.componentsOf<Position>().set(mapEntity, Position(0, 0));
   final rows = (y / tileSize).floor() + 1;
   final cols = 50;
   final tiles = <int>[];
@@ -62,7 +62,7 @@ TileMap _createFloorMap(World world, {double y = 1000, double tileSize = 40}) {
       tiles.add((row == rows - 1) ? 1 : 0);
     }
   }
-  world.storeOf<TileMap>().set(
+  world.componentsOf<TileMap>().set(
     mapEntity,
     TileMap(
       cols: cols,
@@ -73,7 +73,7 @@ TileMap _createFloorMap(World world, {double y = 1000, double tileSize = 40}) {
       solidTileIds: {1},
     ),
   );
-  return world.storeOf<TileMap>().get(mapEntity)!;
+  return world.componentsOf<TileMap>().get(mapEntity)!;
 }
 
 void main() {
@@ -97,11 +97,11 @@ void main() {
         // 40 steps to fully settle under this world's gravity scale).
         for (int i = 0; i < 60; i++) world.step(0.016);
 
-        final pos = world.storeOf<Position>().get(patroller)!;
+        final pos = world.componentsOf<Position>().get(patroller)!;
         expect(pos.y, closeTo(1000 - 12, 5)); // on floor (collider radius 12)
 
         // Patrol right initially
-        final vel = world.storeOf<Velocity>().get(patroller)!;
+        final vel = world.componentsOf<Velocity>().get(patroller)!;
         expect(vel.x, greaterThan(0));
       });
 
@@ -122,7 +122,7 @@ void main() {
         for (int i = 0; i < 30; i++) world.step(0.016);
 
         // Should be moving left (flipped at maxX)
-        final vel = world.storeOf<Velocity>().get(patroller)!;
+        final vel = world.componentsOf<Velocity>().get(patroller)!;
         expect(vel.x, lessThan(0));
       });
 
@@ -143,7 +143,7 @@ void main() {
         for (int i = 0; i < 30; i++) world.step(0.016);
 
         // Should be moving right (flipped at minX)
-        final vel = world.storeOf<Velocity>().get(patroller)!;
+        final vel = world.componentsOf<Velocity>().get(patroller)!;
         expect(vel.x, greaterThan(0));
       });
 
@@ -151,7 +151,7 @@ void main() {
         final world = _buildWorld(avoidLedges: true);
         // Floor with a gap at x=240-280
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
         final tiles = <int>[];
         for (var row = 0; row < 25; row++) {
           for (var col = 0; col < 50; col++) {
@@ -163,7 +163,7 @@ void main() {
             }
           }
         }
-        world.storeOf<TileMap>().set(
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 50,
@@ -191,9 +191,9 @@ void main() {
         for (int i = 0; i < 90; i++) world.step(0.016);
 
         // Should have flipped left before falling into gap
-        final pos = world.storeOf<Position>().get(patroller)!;
+        final pos = world.componentsOf<Position>().get(patroller)!;
         expect(pos.x, lessThan(240)); // stopped before gap
-        final vel = world.storeOf<Velocity>().get(patroller)!;
+        final vel = world.componentsOf<Velocity>().get(patroller)!;
         expect(vel.x, lessThan(0)); // moving left
       });
 
@@ -214,7 +214,7 @@ void main() {
         for (int i = 0; i < 40; i++) world.step(0.016);
 
         // Should patrol normally without premature flip
-        final vel = world.storeOf<Velocity>().get(patroller)!;
+        final vel = world.componentsOf<Velocity>().get(patroller)!;
         // Direction depends on starting position vs bounds
         expect(vel.x != 0, isTrue);
       });
@@ -238,7 +238,7 @@ void main() {
         final directions = <int>[];
         for (int i = 0; i < 20; i++) {
           world.step(0.016);
-          final vel = world.storeOf<Velocity>().get(patroller)!;
+          final vel = world.componentsOf<Velocity>().get(patroller)!;
           if (vel.x > 0) directions.add(1);
           if (vel.x < 0) directions.add(-1);
         }
@@ -273,7 +273,7 @@ void main() {
         final positions = <double>[];
         for (int i = 0; i < 500; i++) {
           world.step(0.016);
-          positions.add(world.storeOf<Position>().get(patroller)!.x);
+          positions.add(world.componentsOf<Position>().get(patroller)!.x);
         }
 
         // Should oscillate between 150 and 350
@@ -300,7 +300,7 @@ void main() {
         for (int i = 0; i < 30; i++) world.step(0.016);
 
         // Should use memory values (150-350, speed 60) not constructor (100-200, 100)
-        final pos = world.storeOf<Position>().get(patroller)!;
+        final pos = world.componentsOf<Position>().get(patroller)!;
         expect(pos.x, greaterThan(150));
         expect(pos.x, lessThan(350));
       });

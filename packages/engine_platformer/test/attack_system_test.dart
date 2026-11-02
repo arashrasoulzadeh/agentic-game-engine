@@ -33,12 +33,12 @@ World _buildWorldNoAttackSystem() {
 
 EntityId _spawnAttacker(World world, Weapon weapon, {double facingSign = 1}) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(100, 100));
-  world.storeOf<PlatformerController>().set(
+  world.componentsOf<Position>().set(id, Position(100, 100));
+  world.componentsOf<PlatformerController>().set(
     id,
     PlatformerController(facingSign: facingSign),
   );
-  world.storeOf<Weapon>().set(id, weapon);
+  world.componentsOf<Weapon>().set(id, weapon);
   return id;
 }
 
@@ -56,20 +56,20 @@ void main() {
         );
         final attacker = _spawnAttacker(world, weapon, facingSign: 1);
 
-        world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+        world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
         world.step(0.016);
 
-        final projectiles = world.storeOf<Projectile>();
+        final projectiles = world.componentsOf<Projectile>();
         expect(projectiles.length, 1);
         final hitboxId = projectiles.entityAt(0);
         expect(projectiles.get(hitboxId)!.damage, 15);
         expect(projectiles.get(hitboxId)!.owner, attacker);
 
-        final pos = world.storeOf<Position>().get(hitboxId)!;
+        final pos = world.componentsOf<Position>().get(hitboxId)!;
         expect(pos.x, 130); // 100 + meleeRange(30) * facingSign(1)
         expect(pos.y, 100);
 
-        final vel = world.storeOf<Velocity>().get(hitboxId)!;
+        final vel = world.componentsOf<Velocity>().get(hitboxId)!;
         expect(vel.x, 0);
         expect(vel.y, 0);
       },
@@ -80,11 +80,11 @@ void main() {
       final weapon = Weapon(kind: WeaponKind.melee, meleeRange: 30);
       final attacker = _spawnAttacker(world, weapon, facingSign: -1);
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
-      final projectiles = world.storeOf<Projectile>();
-      final pos = world.storeOf<Position>().get(projectiles.entityAt(0))!;
+      final projectiles = world.componentsOf<Projectile>();
+      final pos = world.componentsOf<Position>().get(projectiles.entityAt(0))!;
       expect(pos.x, 70); // 100 + 30 * -1
     });
 
@@ -93,12 +93,12 @@ void main() {
       final weapon = Weapon(kind: WeaponKind.melee, meleeDurationSeconds: 0.1);
       final attacker = _spawnAttacker(world, weapon);
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.05);
-      expect(world.storeOf<Projectile>().length, 1);
+      expect(world.componentsOf<Projectile>().length, 1);
 
       world.step(0.1); // total elapsed 0.15s > 0.1s lifetime
-      expect(world.storeOf<Projectile>().length, 0);
+      expect(world.componentsOf<Projectile>().length, 0);
     });
   });
 
@@ -114,14 +114,14 @@ void main() {
         );
         final attacker = _spawnAttacker(world, weapon, facingSign: 1);
 
-        world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+        world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
         world.step(0.016);
 
-        final projectiles = world.storeOf<Projectile>();
+        final projectiles = world.componentsOf<Projectile>();
         expect(projectiles.length, 1);
         final id = projectiles.entityAt(0);
         expect(projectiles.get(id)!.damage, 8);
-        expect(world.storeOf<Velocity>().get(id)!.x, 500);
+        expect(world.componentsOf<Velocity>().get(id)!.x, 500);
       },
     );
 
@@ -130,11 +130,11 @@ void main() {
       final weapon = Weapon(kind: WeaponKind.ranged, projectileSpeed: 500);
       final attacker = _spawnAttacker(world, weapon, facingSign: -1);
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
-      final id = world.storeOf<Projectile>().entityAt(0);
-      expect(world.storeOf<Velocity>().get(id)!.x, -500);
+      final id = world.componentsOf<Projectile>().entityAt(0);
+      expect(world.componentsOf<Velocity>().get(id)!.x, -500);
     });
   });
 
@@ -147,18 +147,18 @@ void main() {
       // shorter default lifetime would expire mid-test and undercount.
       final weapon = Weapon(kind: WeaponKind.ranged, cooldownSeconds: 1.0);
       final attacker = _spawnAttacker(world, weapon);
-      final weaponStore = world.storeOf<Weapon>();
+      final weaponStore = world.componentsOf<Weapon>();
 
       weaponStore.get(attacker)!.attackRequested = true;
       world.step(0.1);
-      expect(world.storeOf<Projectile>().length, 1);
+      expect(world.componentsOf<Projectile>().length, 1);
 
       weaponStore.get(attacker)!.attackRequested = true;
       world.step(
         0.1,
       ); // only 0.2s since the first shot, well under 1.0s cooldown
       expect(
-        world.storeOf<Projectile>().length,
+        world.componentsOf<Projectile>().length,
         1,
         reason: 'still on cooldown',
       );
@@ -167,7 +167,7 @@ void main() {
       world.step(1.0);
       weaponStore.get(attacker)!.attackRequested = true;
       world.step(0.1);
-      expect(world.storeOf<Projectile>().length, 2);
+      expect(world.componentsOf<Projectile>().length, 2);
     });
 
     test(
@@ -175,19 +175,19 @@ void main() {
       () {
         final world = _buildWorld();
         final attacker = world.spawn();
-        world.storeOf<Position>().set(attacker, Position(0, 0));
-        world.storeOf<PlatformerController>().set(
+        world.componentsOf<Position>().set(attacker, Position(0, 0));
+        world.componentsOf<PlatformerController>().set(
           attacker,
           PlatformerController(),
         );
-        world.storeOf<Weapon>().set(attacker, Weapon());
+        world.componentsOf<Weapon>().set(attacker, Weapon());
         final input = InputState();
-        world.storeOf<InputState>().set(attacker, input);
+        world.componentsOf<InputState>().set(attacker, input);
 
         input.pressedActions.add('attack');
         world.step(0.016);
 
-        expect(world.storeOf<Projectile>().length, 1);
+        expect(world.componentsOf<Projectile>().length, 1);
       },
     );
   });
@@ -197,12 +197,12 @@ void main() {
     () {
       final world = _buildWorld();
       final attacker = world.spawn();
-      world.storeOf<Weapon>().set(attacker, Weapon());
+      world.componentsOf<Weapon>().set(attacker, Weapon());
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
-      expect(world.storeOf<Projectile>().length, 0);
+      expect(world.componentsOf<Projectile>().length, 0);
     },
   );
 
@@ -222,17 +222,17 @@ void main() {
       final attacker = _spawnAttacker(world, weapon, facingSign: 1);
 
       final enemy = world.spawn();
-      world.storeOf<Position>().set(
+      world.componentsOf<Position>().set(
         enemy,
         Position(115, 100),
       ); // within the hitbox's radius
-      world.storeOf<Collider>().set(enemy, Collider(5));
-      world.storeOf<Health>().set(enemy, Health(current: 30, max: 30));
+      world.componentsOf<Collider>().set(enemy, Collider(5));
+      world.componentsOf<Health>().set(enemy, Health(current: 30, max: 30));
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
-      expect(world.storeOf<Health>().get(enemy)!.current, 10);
+      expect(world.componentsOf<Health>().get(enemy)!.current, 10);
     },
   );
 
@@ -241,8 +241,8 @@ void main() {
       final world = _buildWorldNoAttackSystem();
       // Wall at x=120 (between attacker at 100 and attack range)
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 10,
@@ -274,11 +274,11 @@ void main() {
       // Add AttackSystem with line of sight required
       world.addSystem(AttackSystem(requireLineOfSight: true));
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
       // Should not fire because wall blocks line of sight
-      expect(world.storeOf<Projectile>().length, 0);
+      expect(world.componentsOf<Projectile>().length, 0);
     });
 
     test('melee: allows attack when no wall blocks line of sight', () {
@@ -295,13 +295,13 @@ void main() {
 
       world.addSystem(AttackSystem(requireLineOfSight: true));
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
       // Should fire because no wall in the attack direction
-      expect(world.storeOf<Projectile>().length, 1);
-      final projectiles = world.storeOf<Projectile>();
-      final pos = world.storeOf<Position>().get(projectiles.entityAt(0))!;
+      expect(world.componentsOf<Projectile>().length, 1);
+      final projectiles = world.componentsOf<Projectile>();
+      final pos = world.componentsOf<Position>().get(projectiles.entityAt(0))!;
       expect(pos.x, 70); // 100 + 30 * -1
     });
 
@@ -319,11 +319,11 @@ void main() {
 
       world.addSystem(AttackSystem(requireLineOfSight: true));
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
       // Should not fire because wall blocks line of sight to max range
-      expect(world.storeOf<Projectile>().length, 0);
+      expect(world.componentsOf<Projectile>().length, 0);
     });
 
     test('ranged: allows attack when no wall in direction', () {
@@ -339,13 +339,13 @@ void main() {
 
       world.addSystem(AttackSystem(requireLineOfSight: true));
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
       // Should fire because no wall in the attack direction
-      expect(world.storeOf<Projectile>().length, 1);
-      final projectiles = world.storeOf<Projectile>();
-      final vel = world.storeOf<Velocity>().get(projectiles.entityAt(0))!;
+      expect(world.componentsOf<Projectile>().length, 1);
+      final projectiles = world.componentsOf<Projectile>();
+      final vel = world.componentsOf<Velocity>().get(projectiles.entityAt(0))!;
       expect(vel.x, -500);
     });
 
@@ -362,19 +362,19 @@ void main() {
       // Default: requireLineOfSight = false
       world.addSystem(AttackSystem());
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
       // Should fire even through wall
-      expect(world.storeOf<Projectile>().length, 1);
+      expect(world.componentsOf<Projectile>().length, 1);
     });
 
     test('one-way platforms do not block line of sight by default', () {
       final world = _buildWorld();
       // One-way platform at col 3 (x=120-160)
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 10,
@@ -399,11 +399,11 @@ void main() {
 
       world.addSystem(AttackSystem(requireLineOfSight: true));
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
       // Should fire because one-way tiles don't block line of sight by default
-      expect(world.storeOf<Projectile>().length, 1);
+      expect(world.componentsOf<Projectile>().length, 1);
     });
   });
 
@@ -413,8 +413,8 @@ void main() {
       () {
         final world = _buildWorld();
         final attacker = world.spawn();
-        world.storeOf<Position>().set(attacker, Position(0, 0));
-        world.storeOf<PlatformerController>().set(
+        world.componentsOf<Position>().set(attacker, Position(0, 0));
+        world.componentsOf<PlatformerController>().set(
           attacker,
           PlatformerController(),
         );
@@ -424,15 +424,15 @@ void main() {
           cooldownSeconds: 0.5,
           meleeDurationSeconds: 10.0,
         );
-        world.storeOf<Weapon>().set(attacker, weapon);
+        world.componentsOf<Weapon>().set(attacker, weapon);
         final input = InputState();
-        world.storeOf<InputState>().set(attacker, input);
+        world.componentsOf<InputState>().set(attacker, input);
 
         // Press attack
         input.pressedActions.add('attack');
         world.step(0.016);
         expect(
-          world.storeOf<Projectile>().length,
+          world.componentsOf<Projectile>().length,
           1,
           reason: 'first attack fires',
         );
@@ -440,7 +440,7 @@ void main() {
         // Keep attack pressed - should NOT fire again due to cooldown
         world.step(0.016);
         expect(
-          world.storeOf<Projectile>().length,
+          world.componentsOf<Projectile>().length,
           1,
           reason: 'still on cooldown',
         );
@@ -450,7 +450,7 @@ void main() {
         input.pressedActions.add('attack');
         world.step(0.016);
         expect(
-          world.storeOf<Projectile>().length,
+          world.componentsOf<Projectile>().length,
           1,
           reason: 're-press within cooldown blocked',
         );
@@ -460,7 +460,7 @@ void main() {
         input.pressedActions.add('attack');
         world.step(0.016);
         expect(
-          world.storeOf<Projectile>().length,
+          world.componentsOf<Projectile>().length,
           2,
           reason: 'fires after cooldown expires',
         );
@@ -470,8 +470,8 @@ void main() {
     test('rapid press/release of attack does not bypass cooldown', () {
       final world = _buildWorld();
       final attacker = world.spawn();
-      world.storeOf<Position>().set(attacker, Position(0, 0));
-      world.storeOf<PlatformerController>().set(
+      world.componentsOf<Position>().set(attacker, Position(0, 0));
+      world.componentsOf<PlatformerController>().set(
         attacker,
         PlatformerController(),
       );
@@ -481,9 +481,9 @@ void main() {
         cooldownSeconds: 0.3,
         meleeDurationSeconds: 10.0,
       );
-      world.storeOf<Weapon>().set(attacker, weapon);
+      world.componentsOf<Weapon>().set(attacker, weapon);
       final input = InputState();
-      world.storeOf<InputState>().set(attacker, input);
+      world.componentsOf<InputState>().set(attacker, input);
 
       // Rapid press/release cycle
       for (int i = 0; i < 10; i++) {
@@ -494,7 +494,7 @@ void main() {
       }
 
       // Should only have fired once (first press)
-      expect(world.storeOf<Projectile>().length, 1);
+      expect(world.componentsOf<Projectile>().length, 1);
     });
   });
 
@@ -506,8 +506,8 @@ void main() {
     }
 
     void attachAttackClip(World world, EntityId attacker) {
-      world.storeOf<Sprite>().set(attacker, Sprite('atlas', 'a0'));
-      world.storeOf<AnimationState>().set(
+      world.componentsOf<Sprite>().set(attacker, Sprite('atlas', 'a0'));
+      world.componentsOf<AnimationState>().set(
         attacker,
         AnimationState(
           AnimationClip(
@@ -535,11 +535,11 @@ void main() {
       final attacker = _spawnAttacker(world, weapon);
       attachAttackClip(world, attacker);
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
 
-      expect(world.storeOf<Projectile>().length, 0);
-      expect(world.storeOf<Weapon>().get(attacker)!.meleePendingHitbox, isTrue);
+      expect(world.componentsOf<Projectile>().length, 0);
+      expect(world.componentsOf<Weapon>().get(attacker)!.meleePendingHitbox, isTrue);
     });
 
     test('spawns on hitbox_on and destroys on hitbox_off', () {
@@ -554,20 +554,20 @@ void main() {
       final attacker = _spawnAttacker(world, weapon);
       attachAttackClip(world, attacker);
 
-      world.storeOf<Weapon>().get(attacker)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(attacker)!.attackRequested = true;
       world.step(0.016);
-      expect(world.storeOf<Projectile>().length, 0);
+      expect(world.componentsOf<Projectile>().length, 0);
 
       world.step(0.1); // enter frame 1 → hitbox_on
-      expect(world.storeOf<Projectile>().length, 1);
-      final hitboxId = world.storeOf<Projectile>().entityAt(0);
-      expect(world.storeOf<Position>().get(hitboxId)!.x, 130);
-      expect(world.storeOf<Weapon>().get(attacker)!.meleePendingHitbox, isFalse);
-      expect(world.storeOf<Weapon>().get(attacker)!.meleeActiveHitbox, hitboxId);
+      expect(world.componentsOf<Projectile>().length, 1);
+      final hitboxId = world.componentsOf<Projectile>().entityAt(0);
+      expect(world.componentsOf<Position>().get(hitboxId)!.x, 130);
+      expect(world.componentsOf<Weapon>().get(attacker)!.meleePendingHitbox, isFalse);
+      expect(world.componentsOf<Weapon>().get(attacker)!.meleeActiveHitbox, hitboxId);
 
       world.step(0.1); // enter frame 2 → hitbox_off
-      expect(world.storeOf<Projectile>().length, 0);
-      expect(world.storeOf<Weapon>().get(attacker)!.meleeActiveHitbox, isNull);
+      expect(world.componentsOf<Projectile>().length, 0);
+      expect(world.componentsOf<Weapon>().get(attacker)!.meleeActiveHitbox, isNull);
     });
 
     test('ignores hitbox_on when no pending animation-gated swing', () {
@@ -581,7 +581,7 @@ void main() {
 
       // Advance into hitbox_on without ever requesting an attack.
       world.step(0.1);
-      expect(world.storeOf<Projectile>().length, 0);
+      expect(world.componentsOf<Projectile>().length, 0);
     });
   });
 }

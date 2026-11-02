@@ -23,10 +23,10 @@ EntityId _spawnController(
   required double y,
 }) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(x, y));
-  world.storeOf<Velocity>().set(id, Velocity(0, 0));
-  world.storeOf<Collider>().set(id, Collider(10));
-  world.storeOf<PlatformerController>().set(id, controller);
+  world.componentsOf<Position>().set(id, Position(x, y));
+  world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+  world.componentsOf<Collider>().set(id, Collider(10));
+  world.componentsOf<PlatformerController>().set(id, controller);
   return id;
 }
 
@@ -43,8 +43,8 @@ EntityId _spawnOnFloor(World world, PlatformerController controller) {
   // otherwise reach and flip velocity sign, masquerading as a
   // JumpSystem bug.
   final floor = world.spawn();
-  world.storeOf<Position>().set(floor, Position(500, 5110));
-  world.storeOf<PlatformBody>().set(floor, PlatformBody(200, 20));
+  world.componentsOf<Position>().set(floor, Position(500, 5110));
+  world.componentsOf<PlatformBody>().set(floor, PlatformBody(200, 20));
   return _spawnController(world, controller, x: 500, y: 5099); // top(5100) - 1
 }
 
@@ -53,7 +53,7 @@ EntityId _spawnOnFloor(World world, PlatformerController controller) {
 /// simulating "just left the ground" without touching the controller's
 /// state directly.
 void _liftOffFloor(World world, EntityId id) {
-  world.storeOf<Position>().get(id)!.y -= 500;
+  world.componentsOf<Position>().get(id)!.y -= 500;
 }
 
 void main() {
@@ -66,7 +66,7 @@ void main() {
       controller.jumpRequested = true;
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, -300);
+      expect(world.componentsOf<Velocity>().get(id)!.y, -300);
     });
 
     test(
@@ -81,7 +81,7 @@ void main() {
         controller.jumpRequested = true;
         world.step(0.016);
 
-        expect(world.storeOf<Velocity>().get(id)!.y, 0);
+        expect(world.componentsOf<Velocity>().get(id)!.y, 0);
       },
     );
   });
@@ -101,7 +101,7 @@ void main() {
       controller.jumpRequested = true;
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, -300);
+      expect(world.componentsOf<Velocity>().get(id)!.y, -300);
     });
 
     test('a jump does not fire once the coyote window has passed', () {
@@ -118,7 +118,7 @@ void main() {
       controller.jumpRequested = true;
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, 0);
+      expect(world.componentsOf<Velocity>().get(id)!.y, 0);
     });
   });
 
@@ -132,19 +132,19 @@ void main() {
       // Starts well above the floor -- not grounded.
       final id = _spawnController(world, controller, x: 500, y: 100);
       final floor = world.spawn();
-      world.storeOf<Position>().set(floor, Position(500, 510));
-      world.storeOf<PlatformBody>().set(floor, PlatformBody(200, 20));
+      world.componentsOf<Position>().set(floor, Position(500, 510));
+      world.componentsOf<PlatformBody>().set(floor, PlatformBody(200, 20));
 
       controller.jumpRequested = true;
       world.step(0.016); // still airborne; buffered, no jump yet
-      expect(world.storeOf<Velocity>().get(id)!.y, 0);
+      expect(world.componentsOf<Velocity>().get(id)!.y, 0);
 
       controller.jumpRequested = false;
-      world.storeOf<Position>().get(id)!.y =
+      world.componentsOf<Position>().get(id)!.y =
           499; // "lands" on the floor this tick
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, -300);
+      expect(world.componentsOf<Velocity>().get(id)!.y, -300);
     });
   });
 
@@ -160,7 +160,7 @@ void main() {
       final world = _buildWorld();
       final controller = PlatformerController(jumpSpeed: 300, maxAirJumps: 1);
       final id = _spawnOnFloor(world, controller);
-      final vel = world.storeOf<Velocity>().get(id)!;
+      final vel = world.componentsOf<Velocity>().get(id)!;
 
       controller.jumpRequested = true;
       world.step(dt); // ground jump
@@ -184,7 +184,7 @@ void main() {
       final world = _buildWorld();
       final controller = PlatformerController(jumpSpeed: 300, maxAirJumps: 1);
       final id = _spawnOnFloor(world, controller);
-      final vel = world.storeOf<Velocity>().get(id)!;
+      final vel = world.componentsOf<Velocity>().get(id)!;
 
       controller.jumpRequested = true;
       world.step(dt); // ground jump
@@ -195,7 +195,7 @@ void main() {
       expect(vel.y, -300);
 
       // Land again: reset position/velocity directly onto the floor.
-      final pos = world.storeOf<Position>().get(id)!;
+      final pos = world.componentsOf<Position>().get(id)!;
       pos.y = 5099; // top(5100) - 1, matching _spawnOnFloor's floor
       vel.y = 0;
       world.step(dt); // grounded -- resets airJumpsUsed
@@ -218,8 +218,8 @@ void main() {
     // resolved side-collision, not be hand-set.
     EntityId spawnWallTouching(World world, PlatformerController controller) {
       final wall = world.spawn();
-      world.storeOf<Position>().set(wall, Position(480, 500));
-      world.storeOf<PlatformBody>().set(wall, PlatformBody(40, 200));
+      world.componentsOf<Position>().set(wall, Position(480, 500));
+      world.componentsOf<PlatformBody>().set(wall, PlatformBody(40, 200));
       return _spawnController(world, controller, x: 505, y: 500);
     }
 
@@ -234,7 +234,7 @@ void main() {
       controller.jumpRequested = true;
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(id)!;
+      final vel = world.componentsOf<Velocity>().get(id)!;
       expect(vel.y, -300);
       expect(
         vel.x,
@@ -252,7 +252,7 @@ void main() {
       controller.jumpRequested = true;
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, 0);
+      expect(world.componentsOf<Velocity>().get(id)!.y, 0);
     });
   });
 
@@ -261,14 +261,14 @@ void main() {
       final world = _buildWorld();
       final controller = PlatformerController(wallSlideMaxFallSpeed: 50);
       final wall = world.spawn();
-      world.storeOf<Position>().set(wall, Position(480, 500));
-      world.storeOf<PlatformBody>().set(wall, PlatformBody(40, 200));
+      world.componentsOf<Position>().set(wall, Position(480, 500));
+      world.componentsOf<PlatformBody>().set(wall, PlatformBody(40, 200));
       final id = _spawnController(world, controller, x: 505, y: 500);
-      world.storeOf<Velocity>().get(id)!.y = 400; // falling fast
+      world.componentsOf<Velocity>().get(id)!.y = 400; // falling fast
 
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, 50);
+      expect(world.componentsOf<Velocity>().get(id)!.y, 50);
     });
 
     test(
@@ -277,14 +277,14 @@ void main() {
         final world = _buildWorld();
         final controller = PlatformerController();
         final wall = world.spawn();
-        world.storeOf<Position>().set(wall, Position(480, 500));
-        world.storeOf<PlatformBody>().set(wall, PlatformBody(40, 200));
+        world.componentsOf<Position>().set(wall, Position(480, 500));
+        world.componentsOf<PlatformBody>().set(wall, PlatformBody(40, 200));
         final id = _spawnController(world, controller, x: 505, y: 500);
-        world.storeOf<Velocity>().get(id)!.y = 400;
+        world.componentsOf<Velocity>().get(id)!.y = 400;
 
         world.step(0.016);
 
-        expect(world.storeOf<Velocity>().get(id)!.y, 400);
+        expect(world.componentsOf<Velocity>().get(id)!.y, 400);
       },
     );
   });
@@ -294,14 +294,14 @@ void main() {
       final world = _buildWorld();
       final controller = PlatformerController(jumpSpeed: 300);
       final id = _spawnController(world, controller, x: 500, y: 500);
-      world.storeOf<Velocity>().get(id)!.y = -300;
+      world.componentsOf<Velocity>().get(id)!.y = -300;
 
       controller.jumpRequested = true;
       world.step(0.016); // held
       controller.jumpRequested = false;
       world.step(0.016); // released
 
-      expect(world.storeOf<Velocity>().get(id)!.y, -300);
+      expect(world.componentsOf<Velocity>().get(id)!.y, -300);
     });
 
     test(
@@ -313,17 +313,17 @@ void main() {
           jumpCutMultiplier: 0.5,
         );
         final id = _spawnController(world, controller, x: 500, y: 500);
-        world.storeOf<Velocity>().get(id)!.y = -300;
+        world.componentsOf<Velocity>().get(id)!.y = -300;
 
         controller.jumpRequested = true;
         world.step(
           0.016,
         ); // held this tick -> no cut yet, just records jumpHeldLastTick
-        expect(world.storeOf<Velocity>().get(id)!.y, -300);
+        expect(world.componentsOf<Velocity>().get(id)!.y, -300);
 
         controller.jumpRequested = false;
         world.step(0.016); // released -> cut fires once
-        expect(world.storeOf<Velocity>().get(id)!.y, -150);
+        expect(world.componentsOf<Velocity>().get(id)!.y, -150);
       },
     );
 
@@ -334,7 +334,7 @@ void main() {
         jumpCutMultiplier: 0.5,
       );
       final id = _spawnController(world, controller, x: 500, y: 500);
-      world.storeOf<Velocity>().get(id)!.y = -300;
+      world.componentsOf<Velocity>().get(id)!.y = -300;
 
       controller.jumpRequested = true;
       world.step(0.016);
@@ -342,7 +342,7 @@ void main() {
       world.step(0.016); // cut fires -> -150
       world.step(0.016); // still not held -> should NOT cut again
 
-      expect(world.storeOf<Velocity>().get(id)!.y, -150);
+      expect(world.componentsOf<Velocity>().get(id)!.y, -150);
     });
 
     test('does not cut while the jump button is still held', () {
@@ -352,14 +352,14 @@ void main() {
         jumpCutMultiplier: 0.5,
       );
       final id = _spawnController(world, controller, x: 500, y: 500);
-      world.storeOf<Velocity>().get(id)!.y = -300;
+      world.componentsOf<Velocity>().get(id)!.y = -300;
 
       controller.jumpRequested = true;
       world.step(0.016);
       controller.jumpRequested = true;
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, -300);
+      expect(world.componentsOf<Velocity>().get(id)!.y, -300);
     });
 
     test('does not cut while not ascending (Velocity.y >= 0)', () {
@@ -369,14 +369,14 @@ void main() {
         jumpCutMultiplier: 0.5,
       );
       final id = _spawnController(world, controller, x: 500, y: 500);
-      world.storeOf<Velocity>().get(id)!.y = 100; // falling, not jumping
+      world.componentsOf<Velocity>().get(id)!.y = 100; // falling, not jumping
 
       controller.jumpRequested = true;
       world.step(0.016);
       controller.jumpRequested = false;
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, greaterThan(0));
+      expect(world.componentsOf<Velocity>().get(id)!.y, greaterThan(0));
     });
   });
 }

@@ -21,7 +21,7 @@ World _buildWorld() {
 
 TileMap _createFloorMap(World world, {double y = 1000, double tileSize = 40}) {
   final mapEntity = world.spawn();
-  world.storeOf<Position>().set(mapEntity, Position(0, 0));
+  world.componentsOf<Position>().set(mapEntity, Position(0, 0));
   final rows = (y / tileSize).floor() + 1;
   final cols = 50;
   final tiles = <int>[];
@@ -30,7 +30,7 @@ TileMap _createFloorMap(World world, {double y = 1000, double tileSize = 40}) {
       tiles.add((row == rows - 1) ? 1 : 0);
     }
   }
-  world.storeOf<TileMap>().set(
+  world.componentsOf<TileMap>().set(
     mapEntity,
     TileMap(
       cols: cols,
@@ -41,7 +41,7 @@ TileMap _createFloorMap(World world, {double y = 1000, double tileSize = 40}) {
       solidTileIds: {1},
     ),
   );
-  return world.storeOf<TileMap>().get(mapEntity)!;
+  return world.componentsOf<TileMap>().get(mapEntity)!;
 }
 
 EntityId _spawnInvestigator(
@@ -53,13 +53,13 @@ EntityId _spawnInvestigator(
   bool avoidGaps = true,
 }) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(x, y));
-  world.storeOf<Velocity>().set(id, Velocity(0, 0));
-  world.storeOf<Collider>().set(id, Collider(12));
-  world.storeOf<Gravity>().set(id, Gravity(scale: 1));
-  world.storeOf<PlatformerController>().set(id, PlatformerController());
-  world.storeOf<AIState>().set(id, AIState('investigate'));
-  world.storeOf<HearingComponent>().set(id, HearingComponent(range: 300));
+  world.componentsOf<Position>().set(id, Position(x, y));
+  world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+  world.componentsOf<Collider>().set(id, Collider(12));
+  world.componentsOf<Gravity>().set(id, Gravity(scale: 1));
+  world.componentsOf<PlatformerController>().set(id, PlatformerController());
+  world.componentsOf<AIState>().set(id, AIState('investigate'));
+  world.componentsOf<HearingComponent>().set(id, HearingComponent(range: 300));
   return id;
 }
 
@@ -95,7 +95,7 @@ void main() {
       Action decideWith(double age, {double? timeout}) {
         final world = _buildWorld();
         final id = _spawnInvestigator(world, x: 100, y: 200);
-        world.storeOf<AIState>().get(id)!.memory['lastHeardSound'] = {
+        world.componentsOf<AIState>().get(id)!.memory['lastHeardSound'] = {
           'x': 900.0,
           'y': 200.0,
           'age': age,
@@ -122,22 +122,22 @@ void main() {
                 .memory['lastHeardSound'],
             isNull,
           );
-          expect(_lastWorld.storeOf<Velocity>().get(_lastId)!.x, 0);
+          expect(_lastWorld.componentsOf<Velocity>().get(_lastId)!.x, 0);
         },
       );
 
       test('a fresh sound is still pursued', () {
         decideWith(2, timeout: 5);
         expect(
-          _lastWorld.storeOf<AIState>().get(_lastId)!.memory['lastHeardSound'],
+          _lastWorld.componentsOf<AIState>().get(_lastId)!.memory['lastHeardSound'],
           isNotNull,
         );
-        expect(_lastWorld.storeOf<Velocity>().get(_lastId)!.x, greaterThan(0));
+        expect(_lastWorld.componentsOf<Velocity>().get(_lastId)!.x, greaterThan(0));
       });
 
       test('without a timeout an old sound is pursued forever', () {
         decideWith(9999);
-        expect(_lastWorld.storeOf<Velocity>().get(_lastId)!.x, greaterThan(0));
+        expect(_lastWorld.componentsOf<Velocity>().get(_lastId)!.x, greaterThan(0));
       });
 
       test('HearingSystem ages a remembered sound each update', () {
@@ -149,7 +149,7 @@ void main() {
         }
         world.events.emit(SoundEvent(x: 300, y: 388, loudness: 250));
         world.step(0.016);
-        final memory = world.storeOf<AIState>().get(id)!.memory;
+        final memory = world.componentsOf<AIState>().get(id)!.memory;
         expect(memory['lastHeardSound']['age'], 0.0);
         for (var i = 0; i < 2; i++) {
           world.step(0.5);
@@ -174,7 +174,7 @@ void main() {
         world.step(0.016);
 
         // Check AIState.memory was updated
-        final aiState = world.storeOf<AIState>().get(investigator)!;
+        final aiState = world.componentsOf<AIState>().get(investigator)!;
         final soundData = aiState.memory['lastHeardSound'];
         expect(soundData, isNotNull);
         expect(soundData['x'], 300);
@@ -191,7 +191,7 @@ void main() {
         world.step(0.016);
 
         // InvestigateBehavior should now move toward the sound
-        final vel = world.storeOf<Velocity>().get(investigator)!;
+        final vel = world.componentsOf<Velocity>().get(investigator)!;
         expect(vel.x, greaterThan(0), reason: 'should move right toward sound');
       });
 
@@ -211,7 +211,7 @@ void main() {
         world.events.emit(SoundEvent(x: 500, y: 400, loudness: 100));
         world.step(0.016);
 
-        final aiState = world.storeOf<AIState>().get(investigator)!;
+        final aiState = world.componentsOf<AIState>().get(investigator)!;
         expect(
           aiState.memory['lastHeardSound'],
           isNull,
@@ -230,7 +230,7 @@ void main() {
         world.events.emit(SoundEvent(x: 300, y: 400, loudness: 50));
         world.step(0.016);
 
-        final aiState = world.storeOf<AIState>().get(investigator)!;
+        final aiState = world.componentsOf<AIState>().get(investigator)!;
         expect(
           aiState.memory['lastHeardSound'],
           isNull,
@@ -242,8 +242,8 @@ void main() {
         final world = _buildWorld();
         // TileMap with solid wall between investigator and sound
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 10,
@@ -265,7 +265,7 @@ void main() {
         world.events.emit(SoundEvent(x: 220, y: 200, loudness: 200));
         world.step(0.016);
 
-        final aiState = world.storeOf<AIState>().get(investigator)!;
+        final aiState = world.componentsOf<AIState>().get(investigator)!;
         expect(
           aiState.memory['lastHeardSound'],
           isNull,
@@ -295,8 +295,8 @@ void main() {
         // the order of 200 steps, not a handful.
         for (int i = 0; i < 300; i++) world.step(0.016);
 
-        final pos = world.storeOf<Position>().get(investigator)!;
-        final vel = world.storeOf<Velocity>().get(investigator)!;
+        final pos = world.componentsOf<Position>().get(investigator)!;
+        final vel = world.componentsOf<Velocity>().get(investigator)!;
 
         // Should be near the sound position and stopped (or nearly stopped)
         expect(
@@ -314,7 +314,7 @@ void main() {
         final world = _buildWorld();
         // Floor with gap at x=240-320
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
         final tiles = <int>[];
         for (var row = 0; row < 10; row++) {
           for (var col = 0; col < 12; col++) {
@@ -326,7 +326,7 @@ void main() {
             }
           }
         }
-        world.storeOf<TileMap>().set(
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 12,
@@ -354,7 +354,7 @@ void main() {
         // Move toward sound
         for (int i = 0; i < 30; i++) world.step(0.016);
 
-        final pos = world.storeOf<Position>().get(investigator)!;
+        final pos = world.componentsOf<Position>().get(investigator)!;
         // Should stop before the gap (x=240)
         expect(
           pos.x,
@@ -367,7 +367,7 @@ void main() {
         final world = _buildWorld();
         // Floor with gap at x=240-320
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
         final tiles = <int>[];
         for (var row = 0; row < 10; row++) {
           for (var col = 0; col < 12; col++) {
@@ -378,7 +378,7 @@ void main() {
             }
           }
         }
-        world.storeOf<TileMap>().set(
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 12,
@@ -406,7 +406,7 @@ void main() {
         // Move toward sound
         for (int i = 0; i < 30; i++) world.step(0.016);
 
-        final pos = world.storeOf<Position>().get(investigator)!;
+        final pos = world.componentsOf<Position>().get(investigator)!;
         // Without avoidGaps, may walk into the gap
         expect(pos.x, greaterThan(100), reason: 'should move toward sound');
       });
@@ -423,7 +423,7 @@ void main() {
           SoundEvent(x: 200, y: 388, loudness: 100, tag: 'first'),
         );
         world.step(0.016);
-        var aiState = world.storeOf<AIState>().get(investigator)!;
+        var aiState = world.componentsOf<AIState>().get(investigator)!;
         expect(aiState.memory['lastHeardSound']['tag'], 'first');
 
         // Second sound
@@ -436,7 +436,7 @@ void main() {
           SoundEvent(x: 150, y: 388, loudness: 100, tag: 'second'),
         );
         world.step(0.016);
-        aiState = world.storeOf<AIState>().get(investigator)!;
+        aiState = world.componentsOf<AIState>().get(investigator)!;
         expect(aiState.memory['lastHeardSound']['tag'], 'second');
       });
 
@@ -445,18 +445,18 @@ void main() {
         _createFloorMap(world, y: 400);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(100, 200));
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
-        world.storeOf<Collider>().set(id, Collider(12));
-        world.storeOf<Gravity>().set(id, Gravity(scale: 1));
-        world.storeOf<PlatformerController>().set(id, PlatformerController());
-        world.storeOf<AIState>().set(id, AIState('investigate'));
+        world.componentsOf<Position>().set(id, Position(100, 200));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<Collider>().set(id, Collider(12));
+        world.componentsOf<Gravity>().set(id, Gravity(scale: 1));
+        world.componentsOf<PlatformerController>().set(id, PlatformerController());
+        world.componentsOf<AIState>().set(id, AIState('investigate'));
         // NO HearingComponent
 
         world.events.emit(SoundEvent(x: 200, y: 400, loudness: 200));
         world.step(0.016);
 
-        final aiState = world.storeOf<AIState>().get(id)!;
+        final aiState = world.componentsOf<AIState>().get(id)!;
         expect(aiState.memory['lastHeardSound'], isNull);
       });
 
@@ -465,12 +465,12 @@ void main() {
         _createFloorMap(world, y: 400);
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(100, 200));
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
-        world.storeOf<Collider>().set(id, Collider(12));
-        world.storeOf<Gravity>().set(id, Gravity(scale: 1));
-        world.storeOf<PlatformerController>().set(id, PlatformerController());
-        world.storeOf<HearingComponent>().set(id, HearingComponent(range: 300));
+        world.componentsOf<Position>().set(id, Position(100, 200));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<Collider>().set(id, Collider(12));
+        world.componentsOf<Gravity>().set(id, Gravity(scale: 1));
+        world.componentsOf<PlatformerController>().set(id, PlatformerController());
+        world.componentsOf<HearingComponent>().set(id, HearingComponent(range: 300));
         // NO AIState
 
         world.events.emit(SoundEvent(x: 200, y: 400, loudness: 200));

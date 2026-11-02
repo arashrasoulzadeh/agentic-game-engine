@@ -46,14 +46,14 @@ void main() {
         startingInventory: {'coin': 5},
       );
 
-      expect(world.storeOf<Inventory>().get(id)?.count('coin'), 5);
+      expect(world.componentsOf<Inventory>().get(id)?.count('coin'), 5);
     },
   );
 
   test('spawnPlayer without startingInventory attaches no Inventory', () {
     final world = _buildWorld();
     final id = spawnPlayer(world, x: 0, y: 0, input: InputState());
-    expect(world.storeOf<Inventory>().get(id), isNull);
+    expect(world.componentsOf<Inventory>().get(id), isNull);
   });
 
   test(
@@ -61,7 +61,7 @@ void main() {
     () {
       final world = _buildWorld();
       final player = world.spawn();
-      world.storeOf<Inventory>().set(player, Inventory());
+      world.componentsOf<Inventory>().set(player, Inventory());
 
       ItemCollectedEvent? fired;
       world.events.on<ItemCollectedEvent>((e) => fired = e);
@@ -69,7 +69,7 @@ void main() {
       collectItem(world, player, 'coin', amount: 3);
       world.step(0);
 
-      expect(world.storeOf<Inventory>().get(player)!.count('coin'), 3);
+      expect(world.componentsOf<Inventory>().get(player)!.count('coin'), 3);
       expect(fired?.holder, player);
       expect(fired?.itemId, 'coin');
       expect(fired?.amount, 3);
@@ -79,13 +79,13 @@ void main() {
   test('collectItem accumulates across multiple calls', () {
     final world = _buildWorld();
     final player = world.spawn();
-    world.storeOf<Inventory>().set(player, Inventory());
+    world.componentsOf<Inventory>().set(player, Inventory());
 
     collectItem(world, player, 'coin');
     collectItem(world, player, 'coin');
     collectItem(world, player, 'key', amount: 2);
 
-    final inventory = world.storeOf<Inventory>().get(player)!;
+    final inventory = world.componentsOf<Inventory>().get(player)!;
     expect(inventory.count('coin'), 2);
     expect(inventory.count('key'), 2);
   });
@@ -108,18 +108,18 @@ void main() {
     () {
       final world = _buildWorld();
       final player = world.spawn();
-      world.storeOf<Position>().set(player, Position(0, 0));
-      world.storeOf<Collider>().set(player, Collider(10));
-      world.storeOf<Inventory>().set(player, Inventory());
+      world.componentsOf<Position>().set(player, Position(0, 0));
+      world.componentsOf<Collider>().set(player, Collider(10));
+      world.componentsOf<Inventory>().set(player, Inventory());
 
       final coin = world.spawn();
-      world.storeOf<Position>().set(coin, Position(5, 0));
-      world.storeOf<Collider>().set(coin, Collider(10));
+      world.componentsOf<Position>().set(coin, Position(5, 0));
+      world.componentsOf<Collider>().set(coin, Collider(10));
 
       dealPickupOnTouch(world, {coin}, 'coin');
       world.step(0.016);
 
-      expect(world.storeOf<Inventory>().get(player)!.count('coin'), 1);
+      expect(world.componentsOf<Inventory>().get(player)!.count('coin'), 1);
       expect(world.entities.isAlive(coin), isFalse);
     },
   );
@@ -129,18 +129,18 @@ void main() {
     () {
       final world = _buildWorld();
       final player = world.spawn();
-      world.storeOf<Position>().set(player, Position(0, 0));
-      world.storeOf<Collider>().set(player, Collider(10));
-      world.storeOf<Inventory>().set(player, Inventory());
+      world.componentsOf<Position>().set(player, Position(0, 0));
+      world.componentsOf<Collider>().set(player, Collider(10));
+      world.componentsOf<Inventory>().set(player, Inventory());
 
       final lever = world.spawn();
-      world.storeOf<Position>().set(lever, Position(5, 0));
-      world.storeOf<Collider>().set(lever, Collider(10));
+      world.componentsOf<Position>().set(lever, Position(5, 0));
+      world.componentsOf<Collider>().set(lever, Collider(10));
 
       dealPickupOnTouch(world, {lever}, 'lever-pulls', destroyOnCollect: false);
       world.step(0.016);
 
-      expect(world.storeOf<Inventory>().get(player)!.count('lever-pulls'), 1);
+      expect(world.componentsOf<Inventory>().get(player)!.count('lever-pulls'), 1);
       expect(world.entities.isAlive(lever), isTrue);
     },
   );

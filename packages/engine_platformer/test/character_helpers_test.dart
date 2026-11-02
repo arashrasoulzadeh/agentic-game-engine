@@ -59,8 +59,8 @@ void main() {
           animations: animations,
         );
 
-        expect(world.storeOf<MovementAnimationSet>().get(id), same(animations));
-        expect(world.storeOf<AnimationState>().get(id)!.clip.name, 'idle');
+        expect(world.componentsOf<MovementAnimationSet>().get(id), same(animations));
+        expect(world.componentsOf<AnimationState>().get(id)!.clip.name, 'idle');
       },
     );
 
@@ -81,16 +81,16 @@ void main() {
           animations: animations,
         );
 
-        expect(world.storeOf<MovementAnimationSet>().get(id), same(animations));
-        expect(world.storeOf<AnimationState>().get(id)!.clip.name, 'idle');
+        expect(world.componentsOf<MovementAnimationSet>().get(id), same(animations));
+        expect(world.componentsOf<AnimationState>().get(id)!.clip.name, 'idle');
       },
     );
 
     test('animations is optional -- no components attached when omitted', () {
       final world = _buildWorld();
       final id = spawnPlayer(world, x: 0, y: 0, input: InputState());
-      expect(world.storeOf<MovementAnimationSet>().get(id), isNull);
-      expect(world.storeOf<AnimationState>().get(id), isNull);
+      expect(world.componentsOf<MovementAnimationSet>().get(id), isNull);
+      expect(world.componentsOf<AnimationState>().get(id), isNull);
     });
   });
 }

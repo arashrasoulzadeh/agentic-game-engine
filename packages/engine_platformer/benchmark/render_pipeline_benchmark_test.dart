@@ -43,8 +43,8 @@ void main() {
     registerPlatformerComponents(world);
 
     final mapEntity = world.spawn();
-    world.storeOf<Position>().set(mapEntity, Position(0, 0));
-    world.storeOf<TileMap>().set(
+    world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+    world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 200,
@@ -77,7 +77,7 @@ void main() {
     // own investigation traced through -- castsShadows + a real ray
     // count, the single most expensive known per-frame lighting cost,
     // so this benchmark actually exercises it either way.
-    world.storeOf<Light2D>().set(
+    world.componentsOf<Light2D>().set(
         player, Light2D(radius: 150, castsShadows: true, shadowRayCount: 40));
 
     final behaviors = BehaviorRegistry();

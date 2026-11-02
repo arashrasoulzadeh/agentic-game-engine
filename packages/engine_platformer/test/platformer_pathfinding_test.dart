@@ -24,8 +24,8 @@ TileMap _createMap(
   for (final row in grid) {
     tiles.addAll(row);
   }
-  world.storeOf<Position>().set(mapEntity, Position(0, 0));
-  world.storeOf<TileMap>().set(
+  world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+  world.componentsOf<TileMap>().set(
     mapEntity,
     TileMap(
       cols: cols,
@@ -37,7 +37,7 @@ TileMap _createMap(
       oneWayTileIds: oneWayTiles,
     ),
   );
-  return world.storeOf<TileMap>().get(mapEntity)!;
+  return world.componentsOf<TileMap>().get(mapEntity)!;
 }
 
 void main() {

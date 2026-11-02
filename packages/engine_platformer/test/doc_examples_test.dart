@@ -33,12 +33,12 @@ void main() {
   });
 
   test('step 2: the player exists and falls under gravity', () {
-    final y0 = world.storeOf<Position>().get(player)!.y;
+    final y0 = world.componentsOf<Position>().get(player)!.y;
     for (var i = 0; i < 10; i++) {
       world.step(1 / 60);
     }
-    expect(world.storeOf<Position>().get(player)!.y, greaterThan(y0));
-    expect(world.storeOf<Health>().get(player)!.max, 100);
+    expect(world.componentsOf<Position>().get(player)!.y, greaterThan(y0));
+    expect(world.componentsOf<Health>().get(player)!.max, 100);
   });
 
   test('step 3: a solid tile floor stops the player', () {
@@ -51,12 +51,12 @@ void main() {
       solidTileIds: {1},
     );
     final groundEntity = world.spawn();
-    world.storeOf<TileMap>().set(groundEntity, tileMap);
+    world.componentsOf<TileMap>().set(groundEntity, tileMap);
 
     for (var i = 0; i < 240; i++) {
       world.step(1 / 60);
     }
-    final y = world.storeOf<Position>().get(player)!.y;
+    final y = world.componentsOf<Position>().get(player)!.y;
     expect(
       y,
       lessThan(13 * 32),
@@ -79,7 +79,7 @@ void main() {
       maxHealth: 20,
     );
     expect(world.entities.isAlive(enemy), isTrue);
-    expect(world.storeOf<Health>().get(enemy)!.max, 20);
+    expect(world.componentsOf<Health>().get(enemy)!.max, 20);
   });
 
   test('step 5: a health bar HUD follows the player', () {
@@ -96,17 +96,17 @@ void main() {
 
   test('step 6: touching a pickup adds it to the inventory', () {
     final coinId = world.spawn();
-    world.storeOf<Position>().set(coinId, Position(450, 380));
-    world.storeOf<Collider>().set(coinId, Collider(8));
-    world.storeOf<Sprite>().set(coinId, Sprite('items', 'coin'));
+    world.componentsOf<Position>().set(coinId, Position(450, 380));
+    world.componentsOf<Collider>().set(coinId, Collider(8));
+    world.componentsOf<Sprite>().set(coinId, Sprite('items', 'coin'));
 
-    world.storeOf<Inventory>().set(player, Inventory({'coin': 0}));
+    world.componentsOf<Inventory>().set(player, Inventory({'coin': 0}));
     dealPickupOnTouch(world, {coinId}, 'coin');
 
-    world.storeOf<Position>().set(player, Position(450, 380));
+    world.componentsOf<Position>().set(player, Position(450, 380));
     world.step(1 / 60);
     expect(
-      world.storeOf<Inventory>().get(player)!.items['coin'],
+      world.componentsOf<Inventory>().get(player)!.items['coin'],
       greaterThan(0),
     );
   });

@@ -19,17 +19,17 @@ void main() {
         final world = _buildWorld();
         final id = world.spawn();
         final input = InputState();
-        world.storeOf<Position>().set(id, Position(0, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
-        world.storeOf<InputState>().set(id, input);
+        world.componentsOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<InputState>().set(id, input);
         final controller = PlatformerController(grounded: true);
-        world.storeOf<PlatformerController>().set(id, controller);
+        world.componentsOf<PlatformerController>().set(id, controller);
         world.addSystem(PlatformerInputSystem(id, moveSpeed: 100));
 
         input.pressedActions.add('right');
         world.step(0.016);
 
-        expect(world.storeOf<Velocity>().get(id)!.x, 100);
+        expect(world.componentsOf<Velocity>().get(id)!.x, 100);
       },
     );
 
@@ -39,20 +39,20 @@ void main() {
         final world = _buildWorld();
         final id = world.spawn();
         final input = InputState();
-        world.storeOf<Position>().set(id, Position(0, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
-        world.storeOf<InputState>().set(id, input);
+        world.componentsOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<InputState>().set(id, input);
         final controller = PlatformerController(
           grounded: true,
           groundFriction: 0.1,
         );
-        world.storeOf<PlatformerController>().set(id, controller);
+        world.componentsOf<PlatformerController>().set(id, controller);
         world.addSystem(PlatformerInputSystem(id, moveSpeed: 100));
 
         input.pressedActions.add('right');
         world.step(0.016);
 
-        final vx = world.storeOf<Velocity>().get(id)!.x;
+        final vx = world.componentsOf<Velocity>().get(id)!.x;
         expect(vx, greaterThan(0));
         expect(
           vx,
@@ -66,20 +66,20 @@ void main() {
       final world = _buildWorld();
       final id = world.spawn();
       final input = InputState();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<InputState>().set(id, input);
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<InputState>().set(id, input);
       final controller = PlatformerController(
         grounded: false,
         groundFriction: 0.1,
       );
-      world.storeOf<PlatformerController>().set(id, controller);
+      world.componentsOf<PlatformerController>().set(id, controller);
       world.addSystem(PlatformerInputSystem(id, moveSpeed: 100));
 
       input.pressedActions.add('right');
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.x, 100);
+      expect(world.componentsOf<Velocity>().get(id)!.x, 100);
     });
   });
 
@@ -94,17 +94,17 @@ void main() {
       final world = buildWithLadder();
       final id = world.spawn();
       final input = InputState();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<InputState>().set(id, input);
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<InputState>().set(id, input);
       final controller = PlatformerController(onLadder: true);
-      world.storeOf<PlatformerController>().set(id, controller);
+      world.componentsOf<PlatformerController>().set(id, controller);
       world.addSystem(LadderSystem(id));
 
       input.pressedActions.add('up');
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, isNot(lessThan(0)));
+      expect(world.componentsOf<Velocity>().get(id)!.y, isNot(lessThan(0)));
     });
 
     test(
@@ -113,17 +113,17 @@ void main() {
         final world = buildWithLadder();
         final id = world.spawn();
         final input = InputState();
-        world.storeOf<Position>().set(id, Position(0, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, 999));
-        world.storeOf<InputState>().set(id, input);
+        world.componentsOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 999));
+        world.componentsOf<InputState>().set(id, input);
         final controller = PlatformerController(onLadder: true, climbSpeed: 80);
-        world.storeOf<PlatformerController>().set(id, controller);
+        world.componentsOf<PlatformerController>().set(id, controller);
         world.addSystem(LadderSystem(id));
 
         input.pressedActions.add('up');
         world.step(0.016);
 
-        expect(world.storeOf<Velocity>().get(id)!.y, -80);
+        expect(world.componentsOf<Velocity>().get(id)!.y, -80);
       },
     );
 
@@ -138,18 +138,18 @@ void main() {
         final world = buildWithLadder();
         final id = world.spawn();
         final input = InputState();
-        world.storeOf<Position>().set(id, Position(0, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, -300));
-        world.storeOf<InputState>().set(id, input);
+        world.componentsOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, -300));
+        world.componentsOf<InputState>().set(id, input);
         final controller = PlatformerController(onLadder: true, climbSpeed: 80);
-        world.storeOf<PlatformerController>().set(id, controller);
+        world.componentsOf<PlatformerController>().set(id, controller);
         world.addSystem(LadderSystem(id));
 
         world.step(0.016);
 
-        expect(world.storeOf<Velocity>().get(id)!.y, -300);
+        expect(world.componentsOf<Velocity>().get(id)!.y, -300);
         expect(
-          world.storeOf<PlatformerController>().get(id)!.grounded,
+          world.componentsOf<PlatformerController>().get(id)!.grounded,
           isFalse,
         );
       },
@@ -161,21 +161,21 @@ void main() {
         final world = buildWithLadder();
         final id = world.spawn();
         final input = InputState();
-        world.storeOf<Position>().set(id, Position(0, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, -80));
-        world.storeOf<InputState>().set(id, input);
+        world.componentsOf<Position>().set(id, Position(0, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, -80));
+        world.componentsOf<InputState>().set(id, input);
         final controller = PlatformerController(onLadder: true, climbSpeed: 80);
-        world.storeOf<PlatformerController>().set(id, controller);
+        world.componentsOf<PlatformerController>().set(id, controller);
         world.addSystem(LadderSystem(id));
 
         input.pressedActions.add('up');
         world.step(0.016);
-        expect(world.storeOf<Velocity>().get(id)!.y, -80);
+        expect(world.componentsOf<Velocity>().get(id)!.y, -80);
 
         input.pressedActions.remove('up');
-        world.storeOf<Velocity>().get(id)!.y = 42;
+        world.componentsOf<Velocity>().get(id)!.y = 42;
         world.step(0.016);
-        expect(world.storeOf<Velocity>().get(id)!.y, 42);
+        expect(world.componentsOf<Velocity>().get(id)!.y, 42);
       },
     );
 
@@ -183,18 +183,18 @@ void main() {
       final world = buildWithLadder();
       final id = world.spawn();
       final input = InputState();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<InputState>().set(id, input);
-      world.storeOf<Gravity>().set(id, Gravity());
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<InputState>().set(id, input);
+      world.componentsOf<Gravity>().set(id, Gravity());
       final controller = PlatformerController(onLadder: false, climbSpeed: 80);
-      world.storeOf<PlatformerController>().set(id, controller);
+      world.componentsOf<PlatformerController>().set(id, controller);
       world.addSystem(LadderSystem(id));
 
       input.pressedActions.add('up');
       world.step(0.1);
 
-      expect(world.storeOf<Velocity>().get(id)!.y, greaterThan(0));
+      expect(world.componentsOf<Velocity>().get(id)!.y, greaterThan(0));
     });
   });
 }

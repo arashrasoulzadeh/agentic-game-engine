@@ -19,15 +19,15 @@ void main() {
         final world = _buildWorld();
         world.addSystem(FacingSystem());
         final id = world.spawn();
-        world.storeOf<Sprite>().set(id, Sprite('atlas', 'idle', scaleX: -1));
-        world.storeOf<Velocity>().set(id, Velocity(50, 0));
+        world.componentsOf<Sprite>().set(id, Sprite('atlas', 'idle', scaleX: -1));
+        world.componentsOf<Velocity>().set(id, Velocity(50, 0));
 
         world.step(0.016);
-        expect(world.storeOf<Sprite>().get(id)!.scaleX, 1);
+        expect(world.componentsOf<Sprite>().get(id)!.scaleX, 1);
 
-        world.storeOf<Velocity>().set(id, Velocity(-50, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(-50, 0));
         world.step(0.016);
-        expect(world.storeOf<Sprite>().get(id)!.scaleX, -1);
+        expect(world.componentsOf<Sprite>().get(id)!.scaleX, -1);
       },
     );
 
@@ -35,14 +35,14 @@ void main() {
       final world = _buildWorld();
       world.addSystem(FacingSystem());
       final id = world.spawn();
-      world.storeOf<Sprite>().set(id, Sprite('atlas', 'idle', scaleX: 1));
-      world.storeOf<Velocity>().set(id, Velocity(-50, 0));
+      world.componentsOf<Sprite>().set(id, Sprite('atlas', 'idle', scaleX: 1));
+      world.componentsOf<Velocity>().set(id, Velocity(-50, 0));
       world.step(0.016);
-      expect(world.storeOf<Sprite>().get(id)!.scaleX, -1);
+      expect(world.componentsOf<Sprite>().get(id)!.scaleX, -1);
 
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
       world.step(0.016);
-      expect(world.storeOf<Sprite>().get(id)!.scaleX, -1);
+      expect(world.componentsOf<Sprite>().get(id)!.scaleX, -1);
     });
   });
 
@@ -53,18 +53,18 @@ void main() {
       final id = world.spawn();
       final idle = AnimationClip('idle', ['idle_0']);
       final walk = AnimationClip('walk', ['walk_0', 'walk_1']);
-      world.storeOf<MovementAnimationSet>().set(
+      world.componentsOf<MovementAnimationSet>().set(
         id,
         MovementAnimationSet(idle: idle, walk: walk, moveThreshold: 5),
       );
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
 
       world.step(0.016);
-      expect(world.storeOf<AnimationState>().get(id)!.clip.name, 'idle');
+      expect(world.componentsOf<AnimationState>().get(id)!.clip.name, 'idle');
 
-      world.storeOf<Velocity>().set(id, Velocity(50, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(50, 0));
       world.step(0.016);
-      expect(world.storeOf<AnimationState>().get(id)!.clip.name, 'walk');
+      expect(world.componentsOf<AnimationState>().get(id)!.clip.name, 'walk');
     });
 
     test('uses the jump clip while airborne, when provided', () {
@@ -74,18 +74,18 @@ void main() {
       final idle = AnimationClip('idle', ['idle_0']);
       final walk = AnimationClip('walk', ['walk_0']);
       final jump = AnimationClip('jump', ['jump_0']);
-      world.storeOf<MovementAnimationSet>().set(
+      world.componentsOf<MovementAnimationSet>().set(
         id,
         MovementAnimationSet(idle: idle, walk: walk, jump: jump),
       );
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<PlatformerController>().set(
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<PlatformerController>().set(
         id,
         PlatformerController(grounded: false),
       );
 
       world.step(0.016);
-      expect(world.storeOf<AnimationState>().get(id)!.clip.name, 'jump');
+      expect(world.componentsOf<AnimationState>().get(id)!.clip.name, 'jump');
     });
 
     test('does not reset an already-playing clip of the same name', () {
@@ -93,18 +93,18 @@ void main() {
       world.addSystem(MovementAnimationSystem());
       final id = world.spawn();
       final walk = AnimationClip('walk', ['walk_0', 'walk_1']);
-      world.storeOf<MovementAnimationSet>().set(
+      world.componentsOf<MovementAnimationSet>().set(
         id,
         MovementAnimationSet(idle: AnimationClip('idle', ['i']), walk: walk),
       );
-      world.storeOf<Velocity>().set(id, Velocity(50, 0));
-      world.storeOf<AnimationState>().set(
+      world.componentsOf<Velocity>().set(id, Velocity(50, 0));
+      world.componentsOf<AnimationState>().set(
         id,
         AnimationState(walk, frameIndex: 1, elapsed: 0.05),
       );
 
       world.step(0.016);
-      final state = world.storeOf<AnimationState>().get(id)!;
+      final state = world.componentsOf<AnimationState>().get(id)!;
       expect(state.frameIndex, 1, reason: 'should not have reset playback');
       expect(state.elapsed, 0.05);
     });
@@ -117,20 +117,20 @@ void main() {
         final id = world.spawn();
         final idle = AnimationClip('idle', ['idle_0']);
         final walk = AnimationClip('walk', ['walk_0']);
-        world.storeOf<MovementAnimationSet>().set(
+        world.componentsOf<MovementAnimationSet>().set(
           id,
           MovementAnimationSet(idle: idle, walk: walk),
         );
-        world.storeOf<Sprite>().set(id, Sprite('atlas', 'idle_0'));
-        world.storeOf<AnimationState>().set(id, AnimationState(idle));
-        world.storeOf<Velocity>().set(
+        world.componentsOf<Sprite>().set(id, Sprite('atlas', 'idle_0'));
+        world.componentsOf<AnimationState>().set(id, AnimationState(idle));
+        world.componentsOf<Velocity>().set(
           id,
           Velocity(50, 0),
         ); // triggers idle -> walk
 
         world.step(0.016);
 
-        expect(world.storeOf<AnimationTransition>().has(id), isFalse);
+        expect(world.componentsOf<AnimationTransition>().has(id), isFalse);
       },
     );
 
@@ -142,26 +142,26 @@ void main() {
         final id = world.spawn();
         final idle = AnimationClip('idle', ['idle_0']);
         final walk = AnimationClip('walk', ['walk_0']);
-        world.storeOf<MovementAnimationSet>().set(
+        world.componentsOf<MovementAnimationSet>().set(
           id,
           MovementAnimationSet(idle: idle, walk: walk),
         );
-        world.storeOf<Sprite>().set(
+        world.componentsOf<Sprite>().set(
           id,
           Sprite('atlas', 'idle_0', scaleX: 2, scaleY: 2, zIndex: 3),
         );
-        world.storeOf<AnimationState>().set(
+        world.componentsOf<AnimationState>().set(
           id,
           AnimationState(idle, crossfadeSeconds: 0.2),
         );
-        world.storeOf<Velocity>().set(
+        world.componentsOf<Velocity>().set(
           id,
           Velocity(50, 0),
         ); // triggers idle -> walk
 
         world.step(0.016);
 
-        final transition = world.storeOf<AnimationTransition>().get(id);
+        final transition = world.componentsOf<AnimationTransition>().get(id);
         expect(transition, isNotNull);
         expect(transition!.atlasId, 'atlas');
         expect(
@@ -176,7 +176,7 @@ void main() {
         expect(transition.totalSeconds, 0.2);
 
         // crossfadeSeconds carries forward onto the new AnimationState.
-        expect(world.storeOf<AnimationState>().get(id)!.crossfadeSeconds, 0.2);
+        expect(world.componentsOf<AnimationState>().get(id)!.crossfadeSeconds, 0.2);
       },
     );
   });
@@ -186,7 +186,7 @@ void main() {
       final world = _buildWorld();
       world.addSystem(AnimationTransitionSystem());
       final id = world.spawn();
-      world.storeOf<AnimationTransition>().set(
+      world.componentsOf<AnimationTransition>().set(
         id,
         AnimationTransition(
           'atlas',
@@ -198,12 +198,12 @@ void main() {
 
       world.step(0.2);
       expect(
-        world.storeOf<AnimationTransition>().get(id)!.remainingSeconds,
+        world.componentsOf<AnimationTransition>().get(id)!.remainingSeconds,
         closeTo(0.1, 0.001),
       );
 
       world.step(0.2);
-      expect(world.storeOf<AnimationTransition>().has(id), isFalse);
+      expect(world.componentsOf<AnimationTransition>().has(id), isFalse);
     });
   });
 

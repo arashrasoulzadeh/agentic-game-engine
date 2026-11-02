@@ -27,8 +27,8 @@ class TileCollisionBenchmark extends BenchmarkBase {
     const rows = 10;
     final tiles = List<int>.generate(cols * rows, (i) => i >= cols * (rows - 1) ? 1 : 0);
     final mapEntity = world.spawn();
-    world.storeOf<Position>().set(mapEntity, Position(0, 0));
-    world.storeOf<TileMap>().set(
+    world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+    world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: cols,
@@ -42,10 +42,10 @@ class TileCollisionBenchmark extends BenchmarkBase {
 
     for (var i = 0; i < entityCount; i++) {
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position((i % cols) * 16.0, 100));
-      world.storeOf<Velocity>().set(id, Velocity(0, 20));
-      world.storeOf<Collider>().set(id, Collider(6));
-      world.storeOf<PlatformerController>().set(id, PlatformerController());
+      world.componentsOf<Position>().set(id, Position((i % cols) * 16.0, 100));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 20));
+      world.componentsOf<Collider>().set(id, Collider(6));
+      world.componentsOf<PlatformerController>().set(id, PlatformerController());
     }
   }
 

@@ -19,12 +19,12 @@ void main() {
       final input = InputState();
       final id = spawnPlayer(world, x: 10, y: 20, input: input, jumpSpeed: 400);
 
-      expect(world.storeOf<Position>().get(id), isNotNull);
-      expect(world.storeOf<Velocity>().get(id), isNotNull);
-      expect(world.storeOf<Collider>().get(id), isNotNull);
-      expect(world.storeOf<Gravity>().get(id), isNotNull);
-      expect(world.storeOf<PlatformerController>().get(id)!.jumpSpeed, 400);
-      expect(identical(world.storeOf<InputState>().get(id), input), isTrue);
+      expect(world.componentsOf<Position>().get(id), isNotNull);
+      expect(world.componentsOf<Velocity>().get(id), isNotNull);
+      expect(world.componentsOf<Collider>().get(id), isNotNull);
+      expect(world.componentsOf<Gravity>().get(id), isNotNull);
+      expect(world.componentsOf<PlatformerController>().get(id)!.jumpSpeed, 400);
+      expect(identical(world.componentsOf<InputState>().get(id), input), isTrue);
     },
   );
 
@@ -38,16 +38,16 @@ void main() {
       atlasId: 'atlas',
       spriteRegion: 'player_idle',
     );
-    expect(world.storeOf<Sprite>().get(id)?.region, 'player_idle');
+    expect(world.componentsOf<Sprite>().get(id)?.region, 'player_idle');
   });
 
   test('spawnEnemy wires up AIState and skips Gravity by default', () {
     final world = _buildWorld();
     final id = spawnEnemy(world, x: 5, y: 5, behaviorId: 'patrol');
 
-    expect(world.storeOf<AIState>().get(id)!.behaviorId, 'patrol');
-    expect(world.storeOf<Gravity>().get(id), isNull);
-    expect(world.storeOf<PlatformerController>().get(id), isNull);
+    expect(world.componentsOf<AIState>().get(id)!.behaviorId, 'patrol');
+    expect(world.componentsOf<Gravity>().get(id), isNull);
+    expect(world.componentsOf<PlatformerController>().get(id), isNull);
   });
 
   test(
@@ -62,8 +62,8 @@ void main() {
         affectedByGravity: true,
       );
 
-      expect(world.storeOf<Gravity>().get(id), isNotNull);
-      expect(world.storeOf<PlatformerController>().get(id), isNotNull);
+      expect(world.componentsOf<Gravity>().get(id), isNotNull);
+      expect(world.componentsOf<PlatformerController>().get(id), isNotNull);
     },
   );
 
@@ -77,7 +77,7 @@ void main() {
       atlasId: 'atlas',
       spriteRegion: 'enemy_idle',
     );
-    expect(world.storeOf<Sprite>().get(id)?.region, 'enemy_idle');
+    expect(world.componentsOf<Sprite>().get(id)?.region, 'enemy_idle');
   });
 
   test('spawnEnemy attaches Health when maxHealth is given', () {
@@ -90,7 +90,7 @@ void main() {
       maxHealth: 30,
     );
 
-    final health = world.storeOf<Health>().get(id);
+    final health = world.componentsOf<Health>().get(id);
     expect(health?.current, 30);
     expect(health?.max, 30);
   });
@@ -105,18 +105,18 @@ void main() {
 
       input.pressedActions.add('right');
       world.step(0.016);
-      expect(world.storeOf<Velocity>().get(id)!.x, 100);
+      expect(world.componentsOf<Velocity>().get(id)!.x, 100);
 
       input.pressedActions
         ..remove('right')
         ..add('left');
       world.step(0.016);
-      expect(world.storeOf<Velocity>().get(id)!.x, -100);
+      expect(world.componentsOf<Velocity>().get(id)!.x, -100);
 
       input.pressedActions.add('jump');
       world.step(0.016);
       expect(
-        world.storeOf<PlatformerController>().get(id)!.jumpRequested,
+        world.componentsOf<PlatformerController>().get(id)!.jumpRequested,
         isTrue,
       );
     },

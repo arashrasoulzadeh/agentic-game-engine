@@ -47,18 +47,18 @@ void main() {
       world.addSystem(HealthHudSystem());
 
       final player = world.spawn();
-      world.storeOf<Health>().set(player, Health(current: 40, max: 100));
+      world.componentsOf<Health>().set(player, Health(current: 40, max: 100));
 
       final bar = spawnHealthHudBar(world, source: player, x: 10, y: 10);
       expect(
-        world.storeOf<HudBar>().get(bar)!.value,
+        world.componentsOf<HudBar>().get(bar)!.value,
         0,
         reason: 'not synced until the first step',
       );
 
       world.step(0.016);
 
-      final hudBar = world.storeOf<HudBar>().get(bar)!;
+      final hudBar = world.componentsOf<HudBar>().get(bar)!;
       expect(hudBar.value, 40);
       expect(hudBar.maxValue, 100);
     });
@@ -69,15 +69,15 @@ void main() {
 
       final player = world.spawn();
       final health = Health(current: 100, max: 100);
-      world.storeOf<Health>().set(player, health);
+      world.componentsOf<Health>().set(player, health);
       final bar = spawnHealthHudBar(world, source: player, x: 10, y: 10);
 
       world.step(0.016);
-      expect(world.storeOf<HudBar>().get(bar)!.value, 100);
+      expect(world.componentsOf<HudBar>().get(bar)!.value, 100);
 
       health.current = 25;
       world.step(0.016);
-      expect(world.storeOf<HudBar>().get(bar)!.value, 25);
+      expect(world.componentsOf<HudBar>().get(bar)!.value, 25);
     });
 
     test(
@@ -90,7 +90,7 @@ void main() {
         final bar = spawnHealthHudBar(world, source: source, x: 10, y: 10);
 
         expect(() => world.step(0.016), returnsNormally);
-        expect(world.storeOf<HudBar>().get(bar)!.value, 0);
+        expect(world.componentsOf<HudBar>().get(bar)!.value, 0);
       },
     );
   });

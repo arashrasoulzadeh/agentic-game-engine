@@ -12,9 +12,9 @@ World _buildWorld() {
 
 EntityId _spawn(World world, Gravity gravity, {double vy = 0}) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(0, 0));
-  world.storeOf<Velocity>().set(id, Velocity(0, vy));
-  world.storeOf<Gravity>().set(id, gravity);
+  world.componentsOf<Position>().set(id, Position(0, 0));
+  world.componentsOf<Velocity>().set(id, Velocity(0, vy));
+  world.componentsOf<Gravity>().set(id, gravity);
   return id;
 }
 
@@ -42,8 +42,8 @@ void main() {
 
       world.step(0.1);
 
-      final risingDelta = world.storeOf<Velocity>().get(rising)!.y - (-100);
-      final fallingDelta = world.storeOf<Velocity>().get(falling)!.y - 100;
+      final risingDelta = world.componentsOf<Velocity>().get(rising)!.y - (-100);
+      final fallingDelta = world.componentsOf<Velocity>().get(falling)!.y - 100;
       expect(risingDelta, fallingDelta);
     },
   );
@@ -58,9 +58,9 @@ void main() {
       world.step(0.1);
 
       // Rising: plain gravity (1000 * 0.1 = 100) applied on top of -100.
-      expect(world.storeOf<Velocity>().get(rising)!.y, -100 + 100);
+      expect(world.componentsOf<Velocity>().get(rising)!.y, -100 + 100);
       // Falling: fallMultiplier doubles it (1000 * 2 * 0.1 = 200) on top of 100.
-      expect(world.storeOf<Velocity>().get(falling)!.y, 100 + 200);
+      expect(world.componentsOf<Velocity>().get(falling)!.y, 100 + 200);
     },
   );
 
@@ -71,22 +71,22 @@ void main() {
     world.step(0.1);
 
     // 1000 * 0.5 * 2 * 0.1 = 100, on top of the initial 50.
-    expect(world.storeOf<Velocity>().get(id)!.y, 50 + 100);
+    expect(world.componentsOf<Velocity>().get(id)!.y, 50 + 100);
   });
 
   test('a grounded entity is skipped regardless of fallMultiplier', () {
     final world = _buildWorld();
     final id = world.spawn();
-    world.storeOf<Position>().set(id, Position(0, 0));
-    world.storeOf<Velocity>().set(id, Velocity(0, 100));
-    world.storeOf<Gravity>().set(id, Gravity(fallMultiplier: 3));
-    world.storeOf<PlatformerController>().set(
+    world.componentsOf<Position>().set(id, Position(0, 0));
+    world.componentsOf<Velocity>().set(id, Velocity(0, 100));
+    world.componentsOf<Gravity>().set(id, Gravity(fallMultiplier: 3));
+    world.componentsOf<PlatformerController>().set(
       id,
       PlatformerController(grounded: true),
     );
 
     world.step(0.1);
 
-    expect(world.storeOf<Velocity>().get(id)!.y, 100);
+    expect(world.componentsOf<Velocity>().get(id)!.y, 100);
   });
 }

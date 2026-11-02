@@ -25,11 +25,11 @@ void main() {
         maxHealth: 20,
       );
 
-      final health = world.storeOf<Health>().get(id);
+      final health = world.componentsOf<Health>().get(id);
       expect(health?.current, 20);
       expect(health?.max, 20);
 
-      final last = world.storeOf<LastCheckpoint>().get(id);
+      final last = world.componentsOf<LastCheckpoint>().get(id);
       expect(last?.x, 40);
       expect(last?.y, 60);
     },
@@ -49,21 +49,21 @@ void main() {
       trackCheckpoints(world, player);
 
       final checkpointEntity = world.spawn();
-      world.storeOf<Position>().set(checkpointEntity, Position(205, 300));
-      world.storeOf<Collider>().set(checkpointEntity, Collider(10));
-      world.storeOf<Checkpoint>().set(checkpointEntity, Checkpoint('cp1'));
-      world.storeOf<Position>().get(player)!
+      world.componentsOf<Position>().set(checkpointEntity, Position(205, 300));
+      world.componentsOf<Collider>().set(checkpointEntity, Collider(10));
+      world.componentsOf<Checkpoint>().set(checkpointEntity, Checkpoint('cp1'));
+      world.componentsOf<Position>().get(player)!
         ..x = 200
         ..y = 300;
-      world.storeOf<Collider>().set(player, Collider(10));
+      world.componentsOf<Collider>().set(player, Collider(10));
 
       world.step(0);
 
-      final last = world.storeOf<LastCheckpoint>().get(player)!;
+      final last = world.componentsOf<LastCheckpoint>().get(player)!;
       expect(last.x, 205);
       expect(last.y, 300);
       expect(
-        world.storeOf<Checkpoint>().get(checkpointEntity)!.activated,
+        world.componentsOf<Checkpoint>().get(checkpointEntity)!.activated,
         isTrue,
       );
     },
@@ -80,18 +80,18 @@ void main() {
         input: InputState(),
         maxHealth: 10,
       );
-      world.storeOf<LastCheckpoint>().set(player, LastCheckpoint(150, 75));
-      world.storeOf<Position>().get(player)!.x = 999;
-      world.storeOf<Velocity>().get(player)!.x = 50;
-      world.storeOf<Health>().get(player)!.current = 2;
+      world.componentsOf<LastCheckpoint>().set(player, LastCheckpoint(150, 75));
+      world.componentsOf<Position>().get(player)!.x = 999;
+      world.componentsOf<Velocity>().get(player)!.x = 50;
+      world.componentsOf<Health>().get(player)!.current = 2;
 
       respawnPlayer(world, player, fallbackX: 0, fallbackY: 0);
 
-      final pos = world.storeOf<Position>().get(player)!;
+      final pos = world.componentsOf<Position>().get(player)!;
       expect(pos.x, 150);
       expect(pos.y, 75);
-      expect(world.storeOf<Velocity>().get(player)!.x, 0);
-      expect(world.storeOf<Health>().get(player)!.current, 10);
+      expect(world.componentsOf<Velocity>().get(player)!.x, 0);
+      expect(world.componentsOf<Health>().get(player)!.current, 10);
     },
   );
 
@@ -100,11 +100,11 @@ void main() {
     () {
       final world = _buildWorld();
       final player = world.spawn();
-      world.storeOf<Position>().set(player, Position(999, 999));
+      world.componentsOf<Position>().set(player, Position(999, 999));
 
       respawnPlayer(world, player, fallbackX: 5, fallbackY: 9);
 
-      final pos = world.storeOf<Position>().get(player)!;
+      final pos = world.componentsOf<Position>().get(player)!;
       expect(pos.x, 5);
       expect(pos.y, 9);
     },
@@ -119,15 +119,15 @@ void main() {
       input: InputState(),
       maxHealth: 10,
     );
-    world.storeOf<LastCheckpoint>().set(player, LastCheckpoint(300, 400));
+    world.componentsOf<LastCheckpoint>().set(player, LastCheckpoint(300, 400));
     respawnOnDeath(world, player, fallbackX: 0, fallbackY: 0);
 
     damageEntity(world, player, 100, invincibilitySeconds: 0);
     world.step(0);
 
-    final pos = world.storeOf<Position>().get(player)!;
+    final pos = world.componentsOf<Position>().get(player)!;
     expect(pos.x, 300);
     expect(pos.y, 400);
-    expect(world.storeOf<Health>().get(player)!.current, 10);
+    expect(world.componentsOf<Health>().get(player)!.current, 10);
   });
 }

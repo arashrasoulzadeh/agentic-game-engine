@@ -37,7 +37,7 @@ void main() {
   test('does nothing while health stays above every phase threshold', () {
     final world = _buildWorld();
     final boss = world.spawn();
-    world.storeOf<Health>().set(boss, Health(current: 100, max: 100));
+    world.componentsOf<Health>().set(boss, Health(current: 100, max: 100));
     final system = BossPhaseSystem(boss, [
       BossPhase(healthFraction: 0.5, patternId: 'enraged'),
     ]);
@@ -57,7 +57,7 @@ void main() {
       final world = _buildWorld();
       final boss = world.spawn();
       final health = Health(current: 100, max: 100);
-      world.storeOf<Health>().set(boss, health);
+      world.componentsOf<Health>().set(boss, health);
       final system = BossPhaseSystem(boss, [
         BossPhase(healthFraction: 0.5, patternId: 'enraged'),
       ]);
@@ -82,7 +82,7 @@ void main() {
       final world = _buildWorld();
       final boss = world.spawn();
       final health = Health(current: 100, max: 100);
-      world.storeOf<Health>().set(boss, health);
+      world.componentsOf<Health>().set(boss, health);
       final system = BossPhaseSystem(boss, [
         BossPhase(healthFraction: 0.5, patternId: 'enraged'),
       ]);
@@ -114,7 +114,7 @@ void main() {
       final world = _buildWorld();
       final boss = world.spawn();
       final health = Health(current: 100, max: 100);
-      world.storeOf<Health>().set(boss, health);
+      world.componentsOf<Health>().set(boss, health);
       final system = BossPhaseSystem(boss, [
         BossPhase(healthFraction: 0.75, patternId: 'phase1'),
         BossPhase(healthFraction: 0.5, patternId: 'phase2'),
@@ -142,7 +142,7 @@ void main() {
       final world = _buildWorld();
       final boss = world.spawn();
       final health = Health(current: 100, max: 100);
-      world.storeOf<Health>().set(boss, health);
+      world.componentsOf<Health>().set(boss, health);
       final system = BossPhaseSystem(boss, [
         BossPhase(healthFraction: 0.75, patternId: 'phase1'),
         BossPhase(healthFraction: 0.5, patternId: 'phase2'),
@@ -176,7 +176,7 @@ void main() {
       final world = _buildWorld();
       final boss = world.spawn();
       final health = Health(current: 100, max: 100);
-      world.storeOf<Health>().set(boss, health);
+      world.componentsOf<Health>().set(boss, health);
       final system = BossPhaseSystem(boss, [
         BossPhase(healthFraction: 0.5, patternId: 'x'),
       ]);
@@ -195,7 +195,7 @@ void main() {
         final world = _buildWorld();
         final boss = world.spawn();
         final health = Health(current: 100, max: 100);
-        world.storeOf<Health>().set(boss, health);
+        world.componentsOf<Health>().set(boss, health);
         var built = 0;
         final system = BossPhaseSystem(boss, [
           BossPhase(

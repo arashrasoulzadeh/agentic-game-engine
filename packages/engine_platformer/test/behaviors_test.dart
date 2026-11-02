@@ -19,19 +19,19 @@ void main() {
       world.addSystem(MovementSystem());
 
       final id = world.spawn();
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<AIState>().set(id, AIState('patrol', memory: {'dir': 1.0}));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<AIState>().set(id, AIState('patrol', memory: {'dir': 1.0}));
 
       // AISystem runs before MovementSystem, so a behavior's decide()
       // sees the position as of the *start* of this tick (last tick's
       // resolved movement) — placing the entity already at the bound,
       // not "about to reach it", is what triggers an immediate flip.
-      world.storeOf<Position>().set(id, Position(100, 0));
+      world.componentsOf<Position>().set(id, Position(100, 0));
 
       world.step(0.1);
-      final state = world.storeOf<AIState>().get(id)!;
+      final state = world.componentsOf<AIState>().get(id)!;
       expect(state.memory['dir'], -1.0);
-      expect(world.storeOf<Velocity>().get(id)!.x, -50);
+      expect(world.componentsOf<Velocity>().get(id)!.x, -50);
     });
 
     test('does nothing for an entity missing Position/AIState data', () {
@@ -41,7 +41,7 @@ void main() {
       world.addSystem(AISystem(registry));
 
       final id = world.spawn();
-      world.storeOf<AIState>().set(id, AIState('patrol'));
+      world.componentsOf<AIState>().set(id, AIState('patrol'));
       // no Position set
 
       expect(() => world.step(0.1), returnsNormally);
@@ -58,9 +58,9 @@ void main() {
         world.addSystem(AISystem(registry));
 
         final id = world.spawn();
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
-        world.storeOf<Position>().set(id, Position(500, 0));
-        world.storeOf<AIState>().set(
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<Position>().set(id, Position(500, 0));
+        world.componentsOf<AIState>().set(
           id,
           AIState(
             'patrol',
@@ -70,7 +70,7 @@ void main() {
 
         world.step(0.1);
 
-        final state = world.storeOf<AIState>().get(id)!;
+        final state = world.componentsOf<AIState>().get(id)!;
         expect(
           state.memory['dir'],
           -1.0,
@@ -78,7 +78,7 @@ void main() {
               'at memory-overridden maxX (500), not the behavior default (100)',
         );
         expect(
-          world.storeOf<Velocity>().get(id)!.x,
+          world.componentsOf<Velocity>().get(id)!.x,
           -20,
           reason: 'memory-overridden speed (20), not the behavior default (50)',
         );
@@ -96,12 +96,12 @@ void main() {
         world.addSystem(MovementSystem());
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(50, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
-        world.storeOf<AIState>().set(id, AIState('patrol'));
+        world.componentsOf<Position>().set(id, Position(50, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<AIState>().set(id, AIState('patrol'));
 
         expect(() => world.step(0.1), returnsNormally);
-        expect(world.storeOf<Velocity>().get(id)!.x, 0);
+        expect(world.componentsOf<Velocity>().get(id)!.x, 0);
       },
     );
 
@@ -115,9 +115,9 @@ void main() {
         world.addSystem(AISystem(registry));
 
         final id = world.spawn();
-        world.storeOf<Position>().set(id, Position(10, 0));
-        world.storeOf<Velocity>().set(id, Velocity(0, 0));
-        world.storeOf<AIState>().set(
+        world.componentsOf<Position>().set(id, Position(10, 0));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<AIState>().set(
           id,
           AIState('patrol', memory: {'dir': 1.0, 'minX': 400, 'maxX': 700}),
         );
@@ -125,7 +125,7 @@ void main() {
         world.step(0.1);
 
         expect(
-          world.storeOf<Velocity>().get(id)!.x,
+          world.componentsOf<Velocity>().get(id)!.x,
           50,
           reason:
               'speed falls back to the constructor default when memory omits it',
@@ -139,8 +139,8 @@ void main() {
         // Solid ground row across cols 0-4, a gap at col 5, solid again
         // cols 6-9 -- tileWidth/Height 20, so the pit spans x=[100,120).
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 10,
@@ -166,10 +166,10 @@ void main() {
           final id = world.spawn();
           // Feet (Position.y + Collider.radius) sit right at the ground
           // row's bottom edge (y=20), directly over the pit at col 5.
-          world.storeOf<Position>().set(id, Position(105, 0));
-          world.storeOf<Velocity>().set(id, Velocity(0, 0));
-          world.storeOf<Collider>().set(id, Collider(12));
-          world.storeOf<AIState>().set(
+          world.componentsOf<Position>().set(id, Position(105, 0));
+          world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+          world.componentsOf<Collider>().set(id, Collider(12));
+          world.componentsOf<AIState>().set(
             id,
             AIState('patrol', memory: {'dir': 1.0}),
           );
@@ -177,7 +177,7 @@ void main() {
           world.step(0.1);
 
           expect(
-            world.storeOf<Velocity>().get(id)!.x,
+            world.componentsOf<Velocity>().get(id)!.x,
             50,
             reason:
                 'no ledge awareness -- keeps walking in the current direction '
@@ -200,17 +200,17 @@ void main() {
           final id = world.spawn();
           // Just before the pit (col 5, x=[100,120)) -- ledgeCheckAheadDistance
           // (default 24) looking ahead from x=90 reaches x=114, over the gap.
-          world.storeOf<Position>().set(id, Position(90, 0));
-          world.storeOf<Velocity>().set(id, Velocity(0, 0));
-          world.storeOf<Collider>().set(id, Collider(12));
-          world.storeOf<AIState>().set(
+          world.componentsOf<Position>().set(id, Position(90, 0));
+          world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+          world.componentsOf<Collider>().set(id, Collider(12));
+          world.componentsOf<AIState>().set(
             id,
             AIState('patrol', memory: {'dir': 1.0}),
           );
 
           world.step(0.1);
 
-          final state = world.storeOf<AIState>().get(id)!;
+          final state = world.componentsOf<AIState>().get(id)!;
           expect(
             state.memory['dir'],
             -1.0,
@@ -218,7 +218,7 @@ void main() {
                 'no ground ahead within ledgeCheckAheadDistance -- turns around '
                 'before reaching the pit, not just at minX/maxX',
           );
-          expect(world.storeOf<Velocity>().get(id)!.x, -50);
+          expect(world.componentsOf<Velocity>().get(id)!.x, -50);
         },
       );
 
@@ -234,10 +234,10 @@ void main() {
           world.addSystem(AISystem(registry));
 
           final id = world.spawn();
-          world.storeOf<Position>().set(id, Position(20, 0));
-          world.storeOf<Velocity>().set(id, Velocity(0, 0));
-          world.storeOf<Collider>().set(id, Collider(12));
-          world.storeOf<AIState>().set(
+          world.componentsOf<Position>().set(id, Position(20, 0));
+          world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+          world.componentsOf<Collider>().set(id, Collider(12));
+          world.componentsOf<AIState>().set(
             id,
             AIState('patrol', memory: {'dir': 1.0}),
           );
@@ -245,7 +245,7 @@ void main() {
           world.step(0.1);
 
           expect(
-            world.storeOf<Velocity>().get(id)!.x,
+            world.componentsOf<Velocity>().get(id)!.x,
             50,
             reason:
                 'solid ground the whole look-ahead distance -- no reason to flip',
@@ -265,13 +265,13 @@ void main() {
           world.addSystem(AISystem(registry));
 
           final id = world.spawn();
-          world.storeOf<Position>().set(
+          world.componentsOf<Position>().set(
             id,
             Position(30, 0),
           ); // at maxX, solid ground
-          world.storeOf<Velocity>().set(id, Velocity(0, 0));
-          world.storeOf<Collider>().set(id, Collider(12));
-          world.storeOf<AIState>().set(
+          world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+          world.componentsOf<Collider>().set(id, Collider(12));
+          world.componentsOf<AIState>().set(
             id,
             AIState('patrol', memory: {'dir': 1.0}),
           );
@@ -279,7 +279,7 @@ void main() {
           world.step(0.1);
 
           expect(
-            world.storeOf<Velocity>().get(id)!.x,
+            world.componentsOf<Velocity>().get(id)!.x,
             -50,
             reason:
                 'the authored range still bounds it even when the ledge check '
@@ -294,23 +294,23 @@ void main() {
     test('moves toward the target on the x axis only', () {
       final world = _buildWorld();
       final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(200, 0));
+      world.componentsOf<Position>().set(target, Position(200, 0));
 
       final registry = BehaviorRegistry()
         ..register('follow', FollowBehavior(target: target, speed: 40));
       world.addSystem(AISystem(registry));
 
       final follower = world.spawn();
-      world.storeOf<Position>().set(follower, Position(0, 0));
-      world.storeOf<Velocity>().set(
+      world.componentsOf<Position>().set(follower, Position(0, 0));
+      world.componentsOf<Velocity>().set(
         follower,
         Velocity(0, -999),
       ); // e.g. falling
-      world.storeOf<AIState>().set(follower, AIState('follow'));
+      world.componentsOf<AIState>().set(follower, AIState('follow'));
 
       world.step(0.016);
 
-      final vel = world.storeOf<Velocity>().get(follower)!;
+      final vel = world.componentsOf<Velocity>().get(follower)!;
       expect(vel.x, 40);
       expect(
         vel.y,
@@ -322,19 +322,19 @@ void main() {
     test('stops once within stopDistance', () {
       final world = _buildWorld();
       final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(2, 0));
+      world.componentsOf<Position>().set(target, Position(2, 0));
 
       final registry = BehaviorRegistry()
         ..register('follow', FollowBehavior(target: target, stopDistance: 5));
       world.addSystem(AISystem(registry));
 
       final follower = world.spawn();
-      world.storeOf<Position>().set(follower, Position(0, 0));
-      world.storeOf<Velocity>().set(follower, Velocity(0, 0));
-      world.storeOf<AIState>().set(follower, AIState('follow'));
+      world.componentsOf<Position>().set(follower, Position(0, 0));
+      world.componentsOf<Velocity>().set(follower, Velocity(0, 0));
+      world.componentsOf<AIState>().set(follower, AIState('follow'));
 
       world.step(0.016);
-      expect(world.storeOf<Velocity>().get(follower)!.x, 0);
+      expect(world.componentsOf<Velocity>().get(follower)!.x, 0);
     });
 
     test(
@@ -348,31 +348,31 @@ void main() {
         world.addSystem(AISystem(registry));
 
         final follower = world.spawn();
-        world.storeOf<Position>().set(follower, Position(0, 0));
-        world.storeOf<Velocity>().set(follower, Velocity(5, 0));
-        world.storeOf<AIState>().set(follower, AIState('follow'));
+        world.componentsOf<Position>().set(follower, Position(0, 0));
+        world.componentsOf<Velocity>().set(follower, Velocity(5, 0));
+        world.componentsOf<AIState>().set(follower, AIState('follow'));
 
         world.step(0.016);
-        expect(world.storeOf<Velocity>().get(follower)!.x, 0);
+        expect(world.componentsOf<Velocity>().get(follower)!.x, 0);
       },
     );
 
     test('stops once outside maxDistance', () {
       final world = _buildWorld();
       final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(1000, 0));
+      world.componentsOf<Position>().set(target, Position(1000, 0));
 
       final registry = BehaviorRegistry()
         ..register('follow', FollowBehavior(target: target, maxDistance: 50));
       world.addSystem(AISystem(registry));
 
       final follower = world.spawn();
-      world.storeOf<Position>().set(follower, Position(0, 0));
-      world.storeOf<Velocity>().set(follower, Velocity(0, 0));
-      world.storeOf<AIState>().set(follower, AIState('follow'));
+      world.componentsOf<Position>().set(follower, Position(0, 0));
+      world.componentsOf<Velocity>().set(follower, Velocity(0, 0));
+      world.componentsOf<AIState>().set(follower, AIState('follow'));
 
       world.step(0.016);
-      expect(world.storeOf<Velocity>().get(follower)!.x, 0);
+      expect(world.componentsOf<Velocity>().get(follower)!.x, 0);
     });
 
     test(
@@ -380,8 +380,8 @@ void main() {
       () {
         final world = _buildWorld();
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 3,
@@ -393,27 +393,27 @@ void main() {
           ),
         );
         final target = world.spawn();
-        world.storeOf<Position>().set(target, Position(100, 20));
+        world.componentsOf<Position>().set(target, Position(100, 20));
 
         final registry = BehaviorRegistry()
           ..register('follow', FollowBehavior(target: target, speed: 40));
         world.addSystem(AISystem(registry));
 
         final follower = world.spawn();
-        world.storeOf<Position>().set(follower, Position(0, 20));
-        world.storeOf<Velocity>().set(follower, Velocity(0, 0));
-        world.storeOf<AIState>().set(follower, AIState('follow'));
+        world.componentsOf<Position>().set(follower, Position(0, 20));
+        world.componentsOf<Velocity>().set(follower, Velocity(0, 0));
+        world.componentsOf<AIState>().set(follower, AIState('follow'));
 
         world.step(0.016);
-        expect(world.storeOf<Velocity>().get(follower)!.x, 40);
+        expect(world.componentsOf<Velocity>().get(follower)!.x, 40);
       },
     );
 
     test('requireLineOfSight: true stops chasing when a wall blocks sight', () {
       final world = _buildWorld();
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 3,
@@ -425,7 +425,7 @@ void main() {
         ),
       );
       final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(100, 20));
+      world.componentsOf<Position>().set(target, Position(100, 20));
 
       final registry = BehaviorRegistry()
         ..register(
@@ -435,19 +435,19 @@ void main() {
       world.addSystem(AISystem(registry));
 
       final follower = world.spawn();
-      world.storeOf<Position>().set(follower, Position(0, 20));
-      world.storeOf<Velocity>().set(follower, Velocity(0, 0));
-      world.storeOf<AIState>().set(follower, AIState('follow'));
+      world.componentsOf<Position>().set(follower, Position(0, 20));
+      world.componentsOf<Velocity>().set(follower, Velocity(0, 0));
+      world.componentsOf<AIState>().set(follower, AIState('follow'));
 
       world.step(0.016);
-      expect(world.storeOf<Velocity>().get(follower)!.x, 0);
+      expect(world.componentsOf<Velocity>().get(follower)!.x, 0);
     });
 
     test('requireLineOfSight: true still chases once sight is clear', () {
       final world = _buildWorld();
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 3,
@@ -458,7 +458,7 @@ void main() {
         ),
       );
       final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(100, 20));
+      world.componentsOf<Position>().set(target, Position(100, 20));
 
       final registry = BehaviorRegistry()
         ..register(
@@ -468,12 +468,12 @@ void main() {
       world.addSystem(AISystem(registry));
 
       final follower = world.spawn();
-      world.storeOf<Position>().set(follower, Position(0, 20));
-      world.storeOf<Velocity>().set(follower, Velocity(0, 0));
-      world.storeOf<AIState>().set(follower, AIState('follow'));
+      world.componentsOf<Position>().set(follower, Position(0, 20));
+      world.componentsOf<Velocity>().set(follower, Velocity(0, 0));
+      world.componentsOf<AIState>().set(follower, AIState('follow'));
 
       world.step(0.016);
-      expect(world.storeOf<Velocity>().get(follower)!.x, 40);
+      expect(world.componentsOf<Velocity>().get(follower)!.x, 40);
     });
 
     group('jumpAcrossGaps', () {
@@ -482,8 +482,8 @@ void main() {
         // Solid ground at cols 0-2, gap at col 3, solid at col 4
         // tileWidth/Height 40, so gap spans x=[120,160)
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 5,
@@ -507,7 +507,7 @@ void main() {
       test('off by default -- stops at gap edge, does not jump', () {
         final world = buildWorldWithGroundAndPit();
         final target = world.spawn();
-        world.storeOf<Position>().set(target, Position(200, 0));
+        world.componentsOf<Position>().set(target, Position(200, 0));
 
         final registry = BehaviorRegistry()
           ..register(
@@ -522,19 +522,19 @@ void main() {
         world.addSystem(JumpSystem());
 
         final follower = world.spawn();
-        world.storeOf<Position>().set(follower, Position(80, 0));
-        world.storeOf<Velocity>().set(follower, Velocity(0, 0));
-        world.storeOf<Collider>().set(follower, Collider(12));
-        world.storeOf<PlatformerController>().set(
+        world.componentsOf<Position>().set(follower, Position(80, 0));
+        world.componentsOf<Velocity>().set(follower, Velocity(0, 0));
+        world.componentsOf<Collider>().set(follower, Collider(12));
+        world.componentsOf<PlatformerController>().set(
           follower,
           PlatformerController(jumpSpeed: 300),
         );
-        world.storeOf<AIState>().set(follower, AIState('follow'));
+        world.componentsOf<AIState>().set(follower, AIState('follow'));
 
         letLand(world, follower); // let it land on ground first
         world.step(0.016);
         // Should stop before the gap (at x ~ 116, before gap at 120)
-        final vel = world.storeOf<Velocity>().get(follower)!;
+        final vel = world.componentsOf<Velocity>().get(follower)!;
         expect(vel.x, 0);
         expect(vel.y, 0);
       });
@@ -542,7 +542,7 @@ void main() {
       test('on: requests a jump when approaching a gap', () {
         final world = buildWorldWithGroundAndPit();
         final target = world.spawn();
-        world.storeOf<Position>().set(target, Position(200, 0));
+        world.componentsOf<Position>().set(target, Position(200, 0));
 
         final registry = BehaviorRegistry()
           ..register(
@@ -562,20 +562,20 @@ void main() {
         world.addSystem(JumpSystem());
 
         final follower = world.spawn();
-        world.storeOf<Position>().set(follower, Position(80, 0));
-        world.storeOf<Velocity>().set(follower, Velocity(0, 0));
-        world.storeOf<Collider>().set(follower, Collider(12));
-        world.storeOf<PlatformerController>().set(
+        world.componentsOf<Position>().set(follower, Position(80, 0));
+        world.componentsOf<Velocity>().set(follower, Velocity(0, 0));
+        world.componentsOf<Collider>().set(follower, Collider(12));
+        world.componentsOf<PlatformerController>().set(
           follower,
           PlatformerController(jumpSpeed: 300),
         );
-        world.storeOf<AIState>().set(follower, AIState('follow'));
+        world.componentsOf<AIState>().set(follower, AIState('follow'));
 
         letLand(world, follower); // let it land on ground first
         // Step once: AI detects gap, requests jump, JumpSystem fires it
         world.step(0.016);
         // Check that jump was fired (velocity.y should be negative)
-        final vel = world.storeOf<Velocity>().get(follower)!;
+        final vel = world.componentsOf<Velocity>().get(follower)!;
         expect(
           vel.y,
           lessThan(0),
@@ -594,8 +594,8 @@ void main() {
         // Wider gap: 2 empty tiles (80px wide)
         final world = _buildWorld();
         final mapEntity = world.spawn();
-        world.storeOf<Position>().set(mapEntity, Position(0, 0));
-        world.storeOf<TileMap>().set(
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
           mapEntity,
           TileMap(
             cols: 6,
@@ -607,7 +607,7 @@ void main() {
           ),
         );
         final target = world.spawn();
-        world.storeOf<Position>().set(target, Position(240, 0));
+        world.componentsOf<Position>().set(target, Position(240, 0));
 
         final registry = BehaviorRegistry()
           ..register(
@@ -627,19 +627,19 @@ void main() {
         world.addSystem(JumpSystem());
 
         final follower = world.spawn();
-        world.storeOf<Position>().set(follower, Position(80, 0));
-        world.storeOf<Velocity>().set(follower, Velocity(0, 0));
-        world.storeOf<Collider>().set(follower, Collider(12));
-        world.storeOf<PlatformerController>().set(
+        world.componentsOf<Position>().set(follower, Position(80, 0));
+        world.componentsOf<Velocity>().set(follower, Velocity(0, 0));
+        world.componentsOf<Collider>().set(follower, Collider(12));
+        world.componentsOf<PlatformerController>().set(
           follower,
           PlatformerController(jumpSpeed: 300),
         );
-        world.storeOf<AIState>().set(follower, AIState('follow'));
+        world.componentsOf<AIState>().set(follower, AIState('follow'));
 
         letLand(world, follower); // let it land on ground first
         world.step(0.016);
         // Should NOT request a jump (gap too wide for this jumpSpeed)
-        final controller = world.storeOf<PlatformerController>().get(follower)!;
+        final controller = world.componentsOf<PlatformerController>().get(follower)!;
         expect(
           controller.jumpRequested,
           isFalse,
@@ -664,19 +664,19 @@ void main() {
       world.addSystem(AISystem(registry));
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<AIState>().set(id, AIState('pathFollow'));
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<AIState>().set(id, AIState('pathFollow'));
       // PathFollowBehavior's movement decisions (jump/ladder/drop-through
       // checks) all read PlatformerController, so it bails out to a no-op
       // without one -- a PlatformerPathPoint path is inherently a
       // platformer character's route, so this is as real a test fixture
       // requirement as Position/Velocity.
-      world.storeOf<PlatformerController>().set(id, PlatformerController());
+      world.componentsOf<PlatformerController>().set(id, PlatformerController());
 
       world.step(0.016);
       expect(
-        world.storeOf<Velocity>().get(id)!.x,
+        world.componentsOf<Velocity>().get(id)!.x,
         40,
         reason: 'heading toward the first waypoint',
       );
@@ -693,18 +693,18 @@ void main() {
       world.addSystem(AISystem(registry));
 
       final id = world.spawn();
-      world.storeOf<Position>().set(
+      world.componentsOf<Position>().set(
         id,
         Position(0, 0),
       ); // already within arriveDistance of waypoint 1
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<AIState>().set(id, AIState('pathFollow'));
-      world.storeOf<PlatformerController>().set(id, PlatformerController());
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<AIState>().set(id, AIState('pathFollow'));
+      world.componentsOf<PlatformerController>().set(id, PlatformerController());
 
       world.step(0.016);
       expect(behavior.currentTarget, path[1]);
       expect(
-        world.storeOf<Velocity>().get(id)!.x,
+        world.componentsOf<Velocity>().get(id)!.x,
         40,
         reason: 'now heading toward waypoint 2',
       );
@@ -720,13 +720,13 @@ void main() {
       world.addSystem(AISystem(registry));
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(0, 0));
-      world.storeOf<AIState>().set(id, AIState('pathFollow'));
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+      world.componentsOf<AIState>().set(id, AIState('pathFollow'));
 
       world.step(0.016);
       expect(behavior.currentTarget, isNull);
-      expect(world.storeOf<Velocity>().get(id)!.x, 0);
+      expect(world.componentsOf<Velocity>().get(id)!.x, 0);
     });
 
     test('an empty path stops immediately', () {
@@ -736,12 +736,12 @@ void main() {
       world.addSystem(AISystem(registry));
 
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<Velocity>().set(id, Velocity(5, 0));
-      world.storeOf<AIState>().set(id, AIState('pathFollow'));
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<Velocity>().set(id, Velocity(5, 0));
+      world.componentsOf<AIState>().set(id, AIState('pathFollow'));
 
       world.step(0.016);
-      expect(world.storeOf<Velocity>().get(id)!.x, 0);
+      expect(world.componentsOf<Velocity>().get(id)!.x, 0);
     });
   });
 }

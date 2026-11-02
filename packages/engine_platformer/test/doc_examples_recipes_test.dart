@@ -49,18 +49,18 @@ void main() {
       world.addSystem(AISystem(behaviors));
 
       final bossId = world.spawn();
-      world.storeOf<Position>().set(bossId, Position(300, 0));
-      world.storeOf<Velocity>().set(bossId, Velocity(0, 0));
-      world.storeOf<Health>().set(bossId, Health(current: 100, max: 100));
-      world.storeOf<AIState>().set(bossId, AIState('flee-when-hurt'));
+      world.componentsOf<Position>().set(bossId, Position(300, 0));
+      world.componentsOf<Velocity>().set(bossId, Velocity(0, 0));
+      world.componentsOf<Health>().set(bossId, Health(current: 100, max: 100));
+      world.componentsOf<AIState>().set(bossId, AIState('flee-when-hurt'));
 
       world.step(1 / 60);
-      expect(world.storeOf<Velocity>().get(bossId)!.x, 0, reason: 'healthy');
+      expect(world.componentsOf<Velocity>().get(bossId)!.x, 0, reason: 'healthy');
 
-      world.storeOf<Health>().get(bossId)!.current = 20;
+      world.componentsOf<Health>().get(bossId)!.current = 20;
       world.step(1 / 60);
       expect(
-        world.storeOf<Velocity>().get(bossId)!.x,
+        world.componentsOf<Velocity>().get(bossId)!.x,
         -100,
         reason: 'flees toward x = 50 (to the left)',
       );
@@ -70,12 +70,12 @@ void main() {
       final world2 = World(width: 10, height: 10);
       registerCoreComponents(world2);
       final e = world2.spawn();
-      world2.storeOf<AIState>().set(e, AIState('count'));
+      world2.componentsOf<AIState>().set(e, AIState('count'));
       final b = _Countdown();
       for (var i = 0; i < 3; i++) {
         b.decide(WorldView(world2), e);
       }
-      expect(world2.storeOf<AIState>().get(e)!.memory['ticksLeft'], 57);
+      expect(world2.componentsOf<AIState>().get(e)!.memory['ticksLeft'], 57);
     });
   });
 
@@ -101,7 +101,7 @@ void main() {
         backgroundColorArgb: 0x80000000,
       );
       expect(world.entities.isAlive(bar), isTrue);
-      expect(world.storeOf<Health>().get(player)!.max, 100);
+      expect(world.componentsOf<Health>().get(player)!.max, 100);
     });
 
     test(
@@ -123,15 +123,15 @@ void main() {
           height: 6,
           screenSpace: false,
         );
-        world.storeOf<Position>().get(enemy)!.x = 150;
-        world.storeOf<Position>().set(
+        world.componentsOf<Position>().get(enemy)!.x = 150;
+        world.componentsOf<Position>().set(
           enemyBar,
           Position(
-            world.storeOf<Position>().get(enemy)!.x,
-            world.storeOf<Position>().get(enemy)!.y - 20,
+            world.componentsOf<Position>().get(enemy)!.x,
+            world.componentsOf<Position>().get(enemy)!.y - 20,
           ),
         );
-        expect(world.storeOf<Position>().get(enemyBar)!.x, 150);
+        expect(world.componentsOf<Position>().get(enemyBar)!.x, 150);
       },
     );
   });
@@ -158,12 +158,12 @@ void main() {
         );
         world.addSystem(AISystem(behaviors));
 
-        expect(world.storeOf<Gravity>().has(guard), isTrue);
-        expect(world.storeOf<PlatformerController>().has(guard), isTrue);
-        expect(world.storeOf<Health>().get(guard)!.max, 30);
+        expect(world.componentsOf<Gravity>().has(guard), isTrue);
+        expect(world.componentsOf<PlatformerController>().has(guard), isTrue);
+        expect(world.componentsOf<Health>().get(guard)!.max, 30);
 
         world.step(1 / 60);
-        expect(world.storeOf<Velocity>().get(guard)!.x.abs(), 50);
+        expect(world.componentsOf<Velocity>().get(guard)!.x.abs(), 50);
       },
     );
 
@@ -194,14 +194,14 @@ void main() {
       AnimationParticleSystem().attach(world);
 
       final player = world.spawn();
-      world.storeOf<Position>().set(player, Position(100, 100));
-      world.storeOf<PlatformerController>().set(
+      world.componentsOf<Position>().set(player, Position(100, 100));
+      world.componentsOf<PlatformerController>().set(
         player,
         PlatformerController(facingSign: 1),
       );
-      world.storeOf<Sprite>().set(player, Sprite('atlas', 'atk_0'));
-      world.storeOf<ParticleEmitter>().set(player, ParticleEmitter());
-      world.storeOf<Weapon>().set(
+      world.componentsOf<Sprite>().set(player, Sprite('atlas', 'atk_0'));
+      world.componentsOf<ParticleEmitter>().set(player, ParticleEmitter());
+      world.componentsOf<Weapon>().set(
         player,
         Weapon(
           kind: WeaponKind.melee,
@@ -211,7 +211,7 @@ void main() {
           cooldownSeconds: 1,
         ),
       );
-      world.storeOf<AnimationState>().set(
+      world.componentsOf<AnimationState>().set(
         player,
         AnimationState(
           AnimationClip(
@@ -237,16 +237,16 @@ void main() {
         ),
       );
 
-      world.storeOf<Weapon>().get(player)!.attackRequested = true;
+      world.componentsOf<Weapon>().get(player)!.attackRequested = true;
       world.step(0.016);
-      expect(world.storeOf<Projectile>().length, 0);
+      expect(world.componentsOf<Projectile>().length, 0);
 
       world.step(0.06); // frame 1 — sfx
       expect(plays, ['sfx/sword.wav']);
 
       world.step(0.06); // frame 2 — hitbox_on + shake + particle
-      expect(world.storeOf<Projectile>().length, 1);
-      expect(world.storeOf<ParticleEmitter>().get(player)!.burstCount, 10);
+      expect(world.componentsOf<Projectile>().length, 1);
+      expect(world.componentsOf<ParticleEmitter>().get(player)!.burstCount, 10);
       camera.update(0);
       expect(
         camera.shakeOffset.dx != 0 || camera.shakeOffset.dy != 0,
@@ -254,7 +254,7 @@ void main() {
       );
 
       world.step(0.06); // frame 3 — hitbox_off
-      expect(world.storeOf<Projectile>().length, 0);
+      expect(world.componentsOf<Projectile>().length, 0);
     });
   });
 
@@ -274,9 +274,9 @@ void main() {
         );
         installPlatformerSystems(world, player: player, behaviors: behaviors);
 
-        expect(world.storeOf<Health>().get(player)!.max, 100);
-        expect(world.storeOf<Inventory>().has(player), isTrue);
-        expect(world.storeOf<LastCheckpoint>().has(player), isTrue);
+        expect(world.componentsOf<Health>().get(player)!.max, 100);
+        expect(world.componentsOf<Inventory>().has(player), isTrue);
+        expect(world.componentsOf<LastCheckpoint>().has(player), isTrue);
         expect(world.systemOrder, contains('ai'));
 
         final bar = spawnHealthHudBar(
@@ -287,10 +287,10 @@ void main() {
           width: 200,
           height: 20,
         );
-        world.storeOf<Health>().get(player)!.current = 40;
+        world.componentsOf<Health>().get(player)!.current = 40;
         world.step(1 / 60);
         expect(
-          world.storeOf<HudBar>().get(bar)!.value,
+          world.componentsOf<HudBar>().get(bar)!.value,
           40,
           reason: 'HealthHudSystem keeps the bar in sync',
         );
@@ -306,9 +306,9 @@ void main() {
         maxHealth: 100,
       );
       damageEntity(world, player, 30);
-      expect(world.storeOf<Health>().get(player)!.current, 70);
+      expect(world.componentsOf<Health>().get(player)!.current, 70);
       healEntity(world, player, 10);
-      expect(world.storeOf<Health>().get(player)!.current, 80);
+      expect(world.componentsOf<Health>().get(player)!.current, 80);
     });
 
     test(
@@ -325,17 +325,17 @@ void main() {
         trackCheckpoints(world, player);
         respawnOnDeath(world, player, fallbackX: 100, fallbackY: 100);
 
-        world.storeOf<Position>().set(player, Position(500, 500));
+        world.componentsOf<Position>().set(player, Position(500, 500));
         damageEntity(world, player, 1000);
         world.events.flush();
 
-        final pos = world.storeOf<Position>().get(player)!;
+        final pos = world.componentsOf<Position>().get(player)!;
         expect(
           (pos.x, pos.y),
           (10, 20),
           reason: 'back at the spawn checkpoint',
         );
-        expect(world.storeOf<Health>().get(player)!.current, 100);
+        expect(world.componentsOf<Health>().get(player)!.current, 100);
       },
     );
   });

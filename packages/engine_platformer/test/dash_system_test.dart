@@ -14,9 +14,9 @@ World _buildWorld() {
 
 EntityId _spawn(World world, PlatformerController controller) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(500, 500));
-  world.storeOf<Velocity>().set(id, Velocity(0, 0));
-  world.storeOf<PlatformerController>().set(id, controller);
+  world.componentsOf<Position>().set(id, Position(500, 500));
+  world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+  world.componentsOf<PlatformerController>().set(id, controller);
   return id;
 }
 
@@ -29,7 +29,7 @@ void main() {
     controller.dashRequested = true;
     world.step(0.016);
 
-    expect(world.storeOf<Velocity>().get(id)!.x, 0);
+    expect(world.componentsOf<Velocity>().get(id)!.x, 0);
   });
 
   test('a dash sets Velocity.x to dashSpeed * facingSign for its duration', () {
@@ -40,7 +40,7 @@ void main() {
       facingSign: 1,
     );
     final id = _spawn(world, controller);
-    final vel = world.storeOf<Velocity>().get(id)!;
+    final vel = world.componentsOf<Velocity>().get(id)!;
 
     controller.dashRequested = true;
     world.step(0.04);
@@ -59,7 +59,7 @@ void main() {
     controller.dashRequested = true;
     world.step(0.016);
 
-    expect(world.storeOf<Velocity>().get(id)!.x, -400);
+    expect(world.componentsOf<Velocity>().get(id)!.x, -400);
   });
 
   test(
@@ -99,11 +99,11 @@ void main() {
     registerPlatformerComponents(world);
     final id = world.spawn();
     final input = InputState();
-    world.storeOf<Position>().set(id, Position(0, 0));
-    world.storeOf<Velocity>().set(id, Velocity(0, 0));
-    world.storeOf<InputState>().set(id, input);
+    world.componentsOf<Position>().set(id, Position(0, 0));
+    world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+    world.componentsOf<InputState>().set(id, input);
     final controller = PlatformerController();
-    world.storeOf<PlatformerController>().set(id, controller);
+    world.componentsOf<PlatformerController>().set(id, controller);
     world.addSystem(PlatformerInputSystem(id));
 
     input.pressedActions.add('left');

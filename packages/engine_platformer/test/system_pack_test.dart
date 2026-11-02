@@ -117,8 +117,8 @@ void main() {
       installPlatformerSystems(world, player: player);
 
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 2,
@@ -133,7 +133,7 @@ void main() {
       input.pressedActions.add('jump');
       world.step(0.016);
 
-      expect(world.storeOf<Velocity>().get(player)!.y, -300);
+      expect(world.componentsOf<Velocity>().get(player)!.y, -300);
     },
   );
 }
@@ -173,8 +173,8 @@ void multiplayerTests() {
     for (var i = 0; i < 10; i++) {
       world.step(1 / 60);
     }
-    expect(world.storeOf<Position>().get(p1)!.x, lessThan(100));
-    expect(world.storeOf<Position>().get(p2)!.x, greaterThan(300));
+    expect(world.componentsOf<Position>().get(p1)!.x, lessThan(100));
+    expect(world.componentsOf<Position>().get(p2)!.x, greaterThan(300));
   });
 
   test('a single player still gets exactly one of each system', () {
