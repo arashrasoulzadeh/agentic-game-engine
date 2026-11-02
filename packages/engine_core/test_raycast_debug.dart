@@ -6,8 +6,8 @@ void main() {
   
   // Create a TileMap with a wall at col 3
   final mapEntity = world.spawn();
-  world.storeOf<Position>().set(mapEntity, Position(0, 0));
-  world.storeOf<TileMap>().set(mapEntity, TileMap(
+  world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+  world.componentsOf<TileMap>().set(mapEntity, TileMap(
     cols: 10, rows: 5, tileWidth: 40, tileHeight: 40,
     tiles: [
       for (var row = 0; row < 5; row++)

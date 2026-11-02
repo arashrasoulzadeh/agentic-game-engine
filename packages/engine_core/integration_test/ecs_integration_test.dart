@@ -14,23 +14,23 @@ void main() {
 
       // Two entities moving toward each other
       final a = world.spawn();
-      world.storeOf<Position>().set(a, Position(100, 100));
-      world.storeOf<Velocity>().set(a, Velocity(100, 0));
-      world.storeOf<Collider>().set(a, Collider(20));
+      world.componentsOf<Position>().set(a, Position(100, 100));
+      world.componentsOf<Velocity>().set(a, Velocity(100, 0));
+      world.componentsOf<Collider>().set(a, Collider(20));
 
       final b = world.spawn();
-      world.storeOf<Position>().set(b, Position(300, 100));
-      world.storeOf<Velocity>().set(b, Velocity(-100, 0));
-      world.storeOf<Collider>().set(b, Collider(20));
+      world.componentsOf<Position>().set(b, Position(300, 100));
+      world.componentsOf<Velocity>().set(b, Velocity(-100, 0));
+      world.componentsOf<Collider>().set(b, Collider(20));
 
       // Particle emitter
       final emitter = world.spawn();
-      world.storeOf<Position>().set(emitter, Position(400, 100));
-      world.storeOf<ParticleEmitter>().set(emitter, ParticleEmitter(rate: 5, speedMin: 10, speedMax: 20));
+      world.componentsOf<Position>().set(emitter, Position(400, 100));
+      world.componentsOf<ParticleEmitter>().set(emitter, ParticleEmitter(rate: 5, speedMin: 10, speedMax: 20));
 
       // Tween
       final tweenEntity = world.spawn();
-      world.storeOf<Tween>().set(tweenEntity, Tween(
+      world.componentsOf<Tween>().set(tweenEntity, Tween(
         from: 0, to: 100, duration: 1.0, easing: EasingType.easeInOutQuad,
       ));
 
@@ -40,8 +40,8 @@ void main() {
       }
 
       // Entities should have collided and bounced
-      final velA = world.storeOf<Velocity>().get(a)!;
-      final velB = world.storeOf<Velocity>().get(b)!;
+      final velA = world.componentsOf<Velocity>().get(a)!;
+      final velB = world.componentsOf<Velocity>().get(b)!;
 
       // They should have swapped velocities (roughly)
       expect(velA.x, lessThan(0));
@@ -53,7 +53,7 @@ void main() {
       expect(particles.length, greaterThan(0));
 
       // Tween should have progressed
-      final tween = world.storeOf<Tween>().get(tweenEntity)!;
+      final tween = world.componentsOf<Tween>().get(tweenEntity)!;
       expect(tween.value, greaterThan(0));
     });
 
@@ -63,22 +63,22 @@ void main() {
 
       // Create entity with core component types
       final e = world.spawn();
-      world.storeOf<Position>().set(e, Position(123, 456));
-      world.storeOf<Velocity>().set(e, Velocity(10, -20));
-      world.storeOf<Collider>().set(e, Collider(15));
-      world.storeOf<AIState>().set(e, AIState('test_behavior', memory: {'key': 'value'}));
-      world.storeOf<ParticleEmitter>().set(e, ParticleEmitter(rate: 5, burstCount: 10));
-      world.storeOf<Tween>().set(e, Tween(from: 0, to: 1, duration: 0.5));
-      world.storeOf<Button>().set(e, Button('test'));
-      world.storeOf<ButtonHitBox>().set(e, ButtonHitBox(50, 30));
-      world.storeOf<RoomExit>().set(e, RoomExit('next_room', 'spawn_here'));
-      world.storeOf<TriggerZone>().set(e, TriggerZone('my_trigger'));
-      world.storeOf<Pushable>().set(e, Pushable());
+      world.componentsOf<Position>().set(e, Position(123, 456));
+      world.componentsOf<Velocity>().set(e, Velocity(10, -20));
+      world.componentsOf<Collider>().set(e, Collider(15));
+      world.componentsOf<AIState>().set(e, AIState('test_behavior', memory: {'key': 'value'}));
+      world.componentsOf<ParticleEmitter>().set(e, ParticleEmitter(rate: 5, burstCount: 10));
+      world.componentsOf<Tween>().set(e, Tween(from: 0, to: 1, duration: 0.5));
+      world.componentsOf<Button>().set(e, Button('test'));
+      world.componentsOf<ButtonHitBox>().set(e, ButtonHitBox(50, 30));
+      world.componentsOf<RoomExit>().set(e, RoomExit('next_room', 'spawn_here'));
+      world.componentsOf<TriggerZone>().set(e, TriggerZone('my_trigger'));
+      world.componentsOf<Pushable>().set(e, Pushable());
 
       // TileMap
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(mapEntity, TileMap(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(mapEntity, TileMap(
         cols: 10, rows: 10, tileWidth: 32, tileHeight: 32,
         tiles: List.generate(100, (i) => i % 2),
         solidTileIds: {1},
@@ -123,7 +123,7 @@ void main() {
 
       // Target entity (just Position, no AIState)
       final target = world.spawn();
-      world.storeOf<Position>().set(target, Position(400, 300));
+      world.componentsOf<Position>().set(target, Position(400, 300));
 
       final registry = BehaviorRegistry()
         ..register('chase', _ChaseBehavior())
@@ -133,25 +133,25 @@ void main() {
 
       // Chaser
       final chaser = world.spawn();
-      world.storeOf<Position>().set(chaser, Position(100, 100));
-      world.storeOf<Velocity>().set(chaser, Velocity(0, 0));
-      world.storeOf<AIState>().set(chaser, AIState('chase'));
+      world.componentsOf<Position>().set(chaser, Position(100, 100));
+      world.componentsOf<Velocity>().set(chaser, Velocity(0, 0));
+      world.componentsOf<AIState>().set(chaser, AIState('chase'));
 
       // Fleer
       final fleer = world.spawn();
-      world.storeOf<Position>().set(fleer, Position(450, 300));
-      world.storeOf<Velocity>().set(fleer, Velocity(0, 0));
-      world.storeOf<AIState>().set(fleer, AIState('flee'));
+      world.componentsOf<Position>().set(fleer, Position(450, 300));
+      world.componentsOf<Velocity>().set(fleer, Velocity(0, 0));
+      world.componentsOf<AIState>().set(fleer, AIState('flee'));
 
       world.step(0.1);
 
       // Chaser moves toward target
-      final chaserVel = world.storeOf<Velocity>().get(chaser)!;
+      final chaserVel = world.componentsOf<Velocity>().get(chaser)!;
       expect(chaserVel.x, greaterThan(0));
       expect(chaserVel.y, greaterThan(0));
 
       // Fleer moves away from target
-      final fleerVel = world.storeOf<Velocity>().get(fleer)!;
+      final fleerVel = world.componentsOf<Velocity>().get(fleer)!;
       expect(fleerVel.x, greaterThan(0)); // target is at x=400, fleer at x=450 -> flees right
 
       // WorldView queries
