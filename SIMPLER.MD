@@ -72,7 +72,7 @@ Latest: world_step 7.5/68.7 us and collision 180/1813 us (at baseline); **entity
 Each item gets its own mini-spec appended here before work starts (files, tests, gate). Status notes record what already exists so nothing is rebuilt.
 
 ### Entity and component ergonomics
-- [ ] **Component defaults**: `static const defaults` or builder constructors (`Collider()` with a sensible radius).
+- [x] Component defaults: `Position()` and `Velocity()` default to zero (optional positional, source compatible). Deliberately not done: a default `Collider` radius (no value is right for every game; the radius is a size decision) and lenient JSON (`{"x": 1}` still fails, which strict level loading relies on).
 - [ ] **Component pooling** for high-churn components (particles); measure first with `particle_system_benchmark`.
 - [ ] **Rename conceptually**: remove remaining "store" wording from public docs and error messages (`ComponentStore` may stay as the internal type).
 

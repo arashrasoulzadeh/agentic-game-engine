@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 
+/// Units per second. Both components default to 0, so `Velocity()` is "at
+/// rest", the usual starting value for something a system will push around.
 class Velocity {
   double x, y;
-  Velocity(this.x, this.y);
+  Velocity([this.x = 0, this.y = 0]);
 
   double get magnitude => math.sqrt(x * x + y * y);
 
