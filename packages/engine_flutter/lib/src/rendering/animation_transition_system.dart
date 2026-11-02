@@ -11,7 +11,7 @@ class AnimationTransitionSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final transitions = world.storeOf<AnimationTransition>();
+    final transitions = world.componentsOf<AnimationTransition>();
     final done = <EntityId>[];
     for (var i = 0; i < transitions.length; i++) {
       final entity = transitions.entityAt(i);

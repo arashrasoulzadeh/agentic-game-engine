@@ -34,7 +34,7 @@ void installRoomExitTrigger(
   required Map<String, SceneFactory> scenesById,
 }) {
   world.onCollisionInvolving(player, (other) {
-    final exit = world.storeOf<RoomExit>().get(other);
+    final exit = world.componentsOf<RoomExit>().get(other);
     if (exit == null) return;
 
     final factory = scenesById[exit.targetSceneId];

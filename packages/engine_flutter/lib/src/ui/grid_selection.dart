@@ -32,9 +32,9 @@ class SelectionMarkerSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final markers = world.storeOf<SelectionMarker>();
-    final selected = world.storeOf<Selected>();
-    final positions = world.storeOf<Position>();
+    final markers = world.componentsOf<SelectionMarker>();
+    final selected = world.componentsOf<Selected>();
+    final positions = world.componentsOf<Position>();
     final markerByOwner = <int, int>{};
     final stale = <int>[];
     for (var i = 0; i < markers.length; i++) {
@@ -56,9 +56,9 @@ class SelectionMarkerSystem extends System {
       var marker = markerByOwner[owner];
       if (marker == null) {
         marker = world.spawn();
-        world.storeOf<SelectionMarker>().set(marker, SelectionMarker(owner));
-        world.storeOf<Position>().set(marker, Position(0, 0));
-        world.storeOf<HudBar>().set(
+        world.componentsOf<SelectionMarker>().set(marker, SelectionMarker(owner));
+        world.componentsOf<Position>().set(marker, Position(0, 0));
+        world.componentsOf<HudBar>().set(
           marker,
           HudBar(
             value: 1,

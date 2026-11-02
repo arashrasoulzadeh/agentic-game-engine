@@ -42,7 +42,7 @@ void flashHit(
   double seconds = kDefaultHitFlashSeconds,
   int? tintArgb,
 }) {
-  final flash = world.storeOf<HitFlash>().get(entity);
+  final flash = world.componentsOf<HitFlash>().get(entity);
   if (flash == null) return;
   flash.remaining = seconds;
   if (tintArgb != null) flash.tintArgb = tintArgb;
@@ -55,8 +55,8 @@ class HitFlashSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final flashes = world.storeOf<HitFlash>();
-    final sprites = world.storeOf<Sprite>();
+    final flashes = world.componentsOf<HitFlash>();
+    final sprites = world.componentsOf<Sprite>();
     for (var i = 0; i < flashes.length; i++) {
       final entity = flashes.entityAt(i);
       final flash = flashes.denseAt(i);

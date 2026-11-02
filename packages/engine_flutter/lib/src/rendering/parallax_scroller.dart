@@ -40,8 +40,8 @@ class ParallaxScroller {
     final layers = <({EntityId id, double speed})>[];
     for (final spec in specs) {
       final id = world.spawn();
-      world.storeOf<Position>().set(id, Position(0, 0));
-      world.storeOf<ParallaxLayer>().set(
+      world.componentsOf<Position>().set(id, Position(0, 0));
+      world.componentsOf<ParallaxLayer>().set(
         id,
         ParallaxLayer(
           spec.atlasId(atlasPrefix),
@@ -60,7 +60,7 @@ class ParallaxScroller {
 
   /// Moves every layer left by [distance] world units × its speed.
   void scroll(World world, double distance) {
-    final pos = world.storeOf<Position>();
+    final pos = world.componentsOf<Position>();
     for (final l in _layers) {
       final p = pos.get(l.id);
       if (p != null) p.x -= distance * l.speed;

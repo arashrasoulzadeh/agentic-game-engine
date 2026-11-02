@@ -151,18 +151,18 @@ class SceneTransition {
         _screenTintEntity = world.spawn();
         final startColor =
             (config.fadeColorArgb & 0x00FFFFFF) | ((covering ? 0 : 255) << 24);
-        world.storeOf<ScreenTint>().set(
+        world.componentsOf<ScreenTint>().set(
           _screenTintEntity!,
           ScreenTint(startColor),
         );
         break;
       case SceneTransitionType.iris:
         _clipShapeEntity = world.spawn();
-        world.storeOf<Position>().set(
+        world.componentsOf<Position>().set(
           _clipShapeEntity!,
           Position(cameraX, cameraY),
         );
-        world.storeOf<ClipShape>().set(
+        world.componentsOf<ClipShape>().set(
           _clipShapeEntity!,
           ClipShape(
             isCircle: true,
@@ -202,14 +202,14 @@ class SceneTransition {
         if (_screenTintEntity != null) {
           final alpha = (coverAmount * 255).round().clamp(0, 255);
           final color = (config.fadeColorArgb & 0x00FFFFFF) | (alpha << 24);
-          world.storeOf<ScreenTint>().get(_screenTintEntity!)?.colorArgb =
+          world.componentsOf<ScreenTint>().get(_screenTintEntity!)?.colorArgb =
               color;
         }
         break;
       case SceneTransitionType.iris:
         if (_clipShapeEntity != null) {
           final radius = _maxRadius(world) * (1 - coverAmount);
-          world.storeOf<ClipShape>().get(_clipShapeEntity!)?.radius = radius;
+          world.componentsOf<ClipShape>().get(_clipShapeEntity!)?.radius = radius;
         }
         break;
       default:
@@ -264,7 +264,7 @@ class SceneTransitionSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final transitions = world.storeOf<SceneTransition>();
+    final transitions = world.componentsOf<SceneTransition>();
     for (var i = 0; i < transitions.length; i++) {
       final transition = transitions.denseAt(i);
       if (transition.isRunning) {

@@ -22,8 +22,8 @@ class AnimationSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final states = world.storeOf<AnimationState>();
-    final sprites = world.storeOf<Sprite>();
+    final states = world.componentsOf<AnimationState>();
+    final sprites = world.componentsOf<Sprite>();
 
     for (var i = 0; i < states.length; i++) {
       final entity = states.entityAt(i);

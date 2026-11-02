@@ -179,7 +179,7 @@ class CameraFollowStep extends CinematicStep {
   @override
   bool update(World world, double dt) {
     _elapsed += dt;
-    final pos = world.storeOf<Position>().get(target);
+    final pos = world.componentsOf<Position>().get(target);
     if (pos != null) {
       if (smoothing >= 1.0) {
         camera.x = pos.x;
@@ -194,7 +194,7 @@ class CameraFollowStep extends CinematicStep {
 
   @override
   void skip(World world) {
-    final pos = world.storeOf<Position>().get(target);
+    final pos = world.componentsOf<Position>().get(target);
     if (pos != null) {
       camera.x = pos.x;
       camera.y = pos.y;
@@ -261,7 +261,7 @@ class ScreenTintStep extends CinematicStep {
       duration: duration,
       easing: easing,
     );
-    world.storeOf<ScreenTint>().set(
+    world.componentsOf<ScreenTint>().set(
       entity!,
       ScreenTint(_withAlpha(colorArgb, fromAlpha)),
     );
@@ -270,7 +270,7 @@ class ScreenTintStep extends CinematicStep {
   @override
   bool update(World world, double dt) {
     _tween.elapsed += dt;
-    world.storeOf<ScreenTint>().get(entity!)?.colorArgb = _withAlpha(
+    world.componentsOf<ScreenTint>().get(entity!)?.colorArgb = _withAlpha(
       colorArgb,
       _tween.value,
     );
@@ -280,7 +280,7 @@ class ScreenTintStep extends CinematicStep {
   @override
   void skip(World world) {
     if (entity == null) start(world);
-    world.storeOf<ScreenTint>().get(entity!)?.colorArgb = _withAlpha(
+    world.componentsOf<ScreenTint>().get(entity!)?.colorArgb = _withAlpha(
       colorArgb,
       toAlpha,
     );

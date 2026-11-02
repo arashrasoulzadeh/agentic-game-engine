@@ -25,7 +25,7 @@ class AnimationParticleSystem implements System {
     _attached = true;
     world.events.on<AnimationFrameEvent>((event) {
       if (event.type != 'particle') return;
-      final emitter = world.storeOf<ParticleEmitter>().get(event.entity);
+      final emitter = world.componentsOf<ParticleEmitter>().get(event.entity);
       if (emitter == null) return;
       final count = (event.data['count'] as num?)?.toInt() ?? 8;
       if (count <= 0) return;

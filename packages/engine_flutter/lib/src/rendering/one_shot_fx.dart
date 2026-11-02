@@ -30,12 +30,12 @@ EntityId spawnFx(
   int zIndex = 30,
 }) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(x, y));
-  world.storeOf<Sprite>().set(
+  world.componentsOf<Position>().set(id, Position(x, y));
+  world.componentsOf<Sprite>().set(
     id,
     Sprite(clip.atlasId, '0', scaleX: scale, scaleY: scale, zIndex: zIndex),
   );
-  world.storeOf<AnimationState>().set(
+  world.componentsOf<AnimationState>().set(
     id,
     AnimationState(
       AnimationClip(
@@ -46,7 +46,7 @@ EntityId spawnFx(
       ),
     ),
   );
-  world.storeOf<OneShotFx>().set(id, OneShotFx());
+  world.componentsOf<OneShotFx>().set(id, OneShotFx());
   return id;
 }
 
@@ -58,8 +58,8 @@ class OneShotFxSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final fx = world.storeOf<OneShotFx>();
-    final anims = world.storeOf<AnimationState>();
+    final fx = world.componentsOf<OneShotFx>();
+    final anims = world.componentsOf<AnimationState>();
     final done = <EntityId>[
       for (var i = 0; i < fx.length; i++)
         if (!(anims.get(fx.entityAt(i))?.playing ?? false)) fx.entityAt(i),

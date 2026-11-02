@@ -130,8 +130,8 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
       final bg = world.spawn();
       final bgHeight = _kScreenHeight * 0.3;
       final bgY = _kScreenHeight - bgHeight / 2;
-      world.storeOf<Position>().set(bg, Position(_kScreenWidth / 2, bgY));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(bg, Position(_kScreenWidth / 2, bgY));
+      world.componentsOf<Sprite>().set(
         bg,
         Sprite(
           dialogueBoxAtlasId!,
@@ -148,11 +148,11 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     // Add dialogue text as a Text entity (screen-space, at bottom)
     textEntityId = world.spawn();
     final textY = _kScreenHeight - 120; // Near bottom
-    world.storeOf<Position>().set(
+    world.componentsOf<Position>().set(
       textEntityId!,
       Position(_kScreenWidth / 2, textY),
     );
-    world.storeOf<Text>().set(
+    world.componentsOf<Text>().set(
       textEntityId!,
       Text(
         runner.visibleText(WorldView(world)) ?? '',
@@ -240,11 +240,11 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     // Just create the sprite with the atlas ID and region.
     // Resolution happens at render time via EngineView's AtlasRegistry.
     final portraitEntity = world.spawn();
-    world.storeOf<Position>().set(
+    world.componentsOf<Position>().set(
       portraitEntity,
       Position(100, 100),
     ); // Top-left by default
-    world.storeOf<Sprite>().set(
+    world.componentsOf<Sprite>().set(
       portraitEntity,
       Sprite(
         atlasId,
@@ -268,7 +268,7 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
 
     // Update the text entity with the new visible text
     if (textEntityId != null) {
-      final textStore = world.storeOf<Text>();
+      final textStore = world.componentsOf<Text>();
       final textComponent = textStore.get(textEntityId!);
       if (textComponent != null) {
         final newVisibleText = runner.visibleText(view) ?? '';
@@ -335,8 +335,8 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
     if (portraitEntityId == null) {
       // Create new portrait
       final portraitEntity = world.spawn();
-      world.storeOf<Position>().set(portraitEntity, Position(100, 100));
-      world.storeOf<Sprite>().set(
+      world.componentsOf<Position>().set(portraitEntity, Position(100, 100));
+      world.componentsOf<Sprite>().set(
         portraitEntity,
         Sprite(
           atlasId,
@@ -350,7 +350,7 @@ abstract class DialogueBoxScene extends ButtonMenuScene {
       portraitEntityId = portraitEntity;
     } else {
       // Update existing portrait
-      final spriteStore = world.storeOf<Sprite>();
+      final spriteStore = world.componentsOf<Sprite>();
       final sprite = spriteStore.get(portraitEntityId!);
       if (sprite != null) {
         spriteStore.set(

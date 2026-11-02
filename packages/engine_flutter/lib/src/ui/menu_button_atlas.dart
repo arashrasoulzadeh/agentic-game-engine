@@ -138,36 +138,36 @@ SpawnedMenuButton spawnMenuButton(
   double labelFontSize = 20,
 }) {
   final id = world.spawn();
-  world.storeOf<Position>().set(id, Position(position.dx, position.dy));
-  world.storeOf<Button>().set(id, Button(actionId));
+  world.componentsOf<Position>().set(id, Position(position.dx, position.dy));
+  world.componentsOf<Button>().set(id, Button(actionId));
 
   EntityId? labelId;
   if (atlasId != null && region != null) {
-    world.storeOf<ButtonHitBox>().set(
+    world.componentsOf<ButtonHitBox>().set(
       id,
       ButtonHitBox(width ?? kMenuButtonWidth, height ?? kMenuButtonHeight),
     );
-    world.storeOf<Sprite>().set(
+    world.componentsOf<Sprite>().set(
       id,
       Sprite(atlasId, region, scaleX: scaleX, scaleY: scaleY),
     );
     if (label.isNotEmpty) {
       labelId = world.spawn();
-      world.storeOf<Position>().set(
+      world.componentsOf<Position>().set(
         labelId,
         Position(position.dx, position.dy),
       );
-      world.storeOf<txt.Text>().set(
+      world.componentsOf<txt.Text>().set(
         labelId,
         txt.Text(label, fontSize: labelFontSize, colorArgb: labelColorArgb),
       );
     }
   } else {
-    world.storeOf<Collider>().set(
+    world.componentsOf<Collider>().set(
       id,
       Collider((height ?? kMenuButtonHeight) / 2),
     );
-    world.storeOf<Sprite>().set(id, Sprite(kMenuButtonAtlasId, label));
+    world.componentsOf<Sprite>().set(id, Sprite(kMenuButtonAtlasId, label));
   }
   return (button: id, label: labelId);
 }

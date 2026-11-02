@@ -268,7 +268,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
       cameraX: world.width / 2,
       cameraY: world.height / 2,
     );
-    world.storeOf<SceneTransition>().set(entity, sceneTransition);
+    world.componentsOf<SceneTransition>().set(entity, sceneTransition);
     await Future.delayed(
       Duration(milliseconds: (transition.duration * 1000).round()),
     );

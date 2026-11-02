@@ -26,7 +26,7 @@ class LightFlickerSystem implements System {
 
   @override
   void update(World world, double dt) {
-    final lights = world.storeOf<Light2D>();
+    final lights = world.componentsOf<Light2D>();
     for (var i = 0; i < lights.length; i++) {
       final light = lights.denseAt(i);
       if (light.flickerSpeed <= 0) continue;

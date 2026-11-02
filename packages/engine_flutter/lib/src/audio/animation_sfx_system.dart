@@ -111,7 +111,7 @@ class AnimationSfxSystem implements System {
 
   void _play(World world, EntityId entity, String asset, double volume) {
     if (positional) {
-      final pos = world.storeOf<Position>().get(entity);
+      final pos = world.componentsOf<Position>().get(entity);
       final playPositional = _playPositional;
       if (pos != null && playPositional != null) {
         final listener =

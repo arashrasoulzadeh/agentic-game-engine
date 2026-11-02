@@ -399,8 +399,8 @@ class _EngineViewState extends State<EngineView>
     _frameStats.frameMs = dt * 1000;
     _frameStats.recordHistory();
     _frameStats.entities = widget.world.entities.count;
-    _frameStats.sprites = widget.world.storeOf<Sprite>().length;
-    _frameStats.particles = widget.world.storeOf<Particle>().length;
+    _frameStats.sprites = widget.world.componentsOf<Sprite>().length;
+    _frameStats.particles = widget.world.componentsOf<Particle>().length;
 
     // Call optional post-tick callback for scene-specific logic
     if (widget.stepsWorld) widget.onPostTick?.call(dt, widget.world);
@@ -429,7 +429,7 @@ class _EngineViewState extends State<EngineView>
 
     final followId = widget.cameraFollowEntity;
     if (followId != null) {
-      final pos = widget.world.storeOf<Position>().get(followId);
+      final pos = widget.world.componentsOf<Position>().get(followId);
       if (pos != null) {
         final box = context.findRenderObject() as RenderBox?;
         widget.camera.follow(
@@ -440,7 +440,7 @@ class _EngineViewState extends State<EngineView>
           worldHeight: widget.world.height,
         );
       }
-      final vel = widget.world.storeOf<Velocity>().get(followId);
+      final vel = widget.world.componentsOf<Velocity>().get(followId);
       _frameStats.followedSpeed = vel == null
           ? null
           : sqrt(vel.x * vel.x + vel.y * vel.y);
@@ -479,7 +479,7 @@ class _EngineViewState extends State<EngineView>
   /// "snapshot" silently track the live value instead of the moment it
   /// was taken). Only fixed-timestep mode calls this.
   Map<EntityId, Position> _snapshotPositions() {
-    final positions = widget.world.storeOf<Position>();
+    final positions = widget.world.componentsOf<Position>();
     final snapshot = <EntityId, Position>{};
     for (var i = 0; i < positions.length; i++) {
       final entity = positions.entityAt(i);
@@ -498,7 +498,7 @@ class _EngineViewState extends State<EngineView>
 
   /// fps/tick/entity-sprite-particle counts, plus memory where
   /// available (not on web — see `debug_memory.dart`). Reads
-  /// `storeOf<TileMap>`/`storeOf<Particle>` the same as the painter
+  /// `componentsOf<TileMap>`/`componentsOf<Particle>` the same as the painter
   /// does, so it assumes the same `registerCoreComponents`/
   /// `registerFlutterComponents` precondition `EngineView` already has.
   String _debugText() {
@@ -507,8 +507,8 @@ class _EngineViewState extends State<EngineView>
       'fps: ${_fps.toStringAsFixed(0)}',
       'tick: ${world.tick}',
       'entities: ${world.entities.count}',
-      'sprites: ${world.storeOf<Sprite>().length}',
-      'particles: ${world.storeOf<Particle>().length}',
+      'sprites: ${world.componentsOf<Sprite>().length}',
+      'particles: ${world.componentsOf<Particle>().length}',
       if (_memoryBytes case final mem?)
         'mem: ${(mem / (1024 * 1024)).toStringAsFixed(1)} MB',
       // One line per FrameStats field here (unlike FrameStats.toString()
@@ -873,8 +873,8 @@ class _EnginePainter extends CustomPainter {
     final paintStopwatch = Stopwatch()..start();
     frameStats?.lightingMs =
         0; // accumulated across every _drawLighting call this frame
-    final positions = world.storeOf<Position>();
-    final clipShapes = world.storeOf<ClipShape>();
+    final positions = world.componentsOf<Position>();
+    final clipShapes = world.componentsOf<ClipShape>();
     final reveals = <_ClipShapeInfo>[];
     final cutouts = <_ClipShapeInfo>[];
     for (var i = 0; i < clipShapes.length; i++) {
@@ -1032,7 +1032,7 @@ class _EnginePainter extends CustomPainter {
     ComponentStore<Position> positions,
     List<_DrawItem> items,
   ) {
-    final lights = world.storeOf<Light2D>();
+    final lights = world.componentsOf<Light2D>();
     final boundaries = <int>{};
     for (var i = 0; i < lights.length; i++) {
       final light = lights.denseAt(i);
@@ -1120,7 +1120,7 @@ class _EnginePainter extends CustomPainter {
     Size size,
     ComponentStore<Position> positions,
   ) {
-    final lights = world.storeOf<Light2D>();
+    final lights = world.componentsOf<Light2D>();
     final infos = <_LightRenderInfo>[];
     for (var i = 0; i < lights.length; i++) {
       final entity = lights.entityAt(i);
@@ -1159,7 +1159,7 @@ class _EnginePainter extends CustomPainter {
     bool Function(Light2D)? lightFilter,
   }) {
     final lightingStopwatch = Stopwatch()..start();
-    final lights = world.storeOf<Light2D>();
+    final lights = world.componentsOf<Light2D>();
     final fullRect = Offset.zero & size;
 
     // Single-pass shader path: enabled when singlePassLighting=true,
@@ -1535,8 +1535,8 @@ class _EnginePainter extends CustomPainter {
   /// still gets the closest, most visually-significant ones rather
   /// than an arbitrary subset.
   List<Offset> _gpuLightSegmentsFor(_LightRenderInfo info, Size size) {
-    final tileMaps = world.storeOf<TileMap>();
-    final mapPositions = world.storeOf<Position>();
+    final tileMaps = world.componentsOf<TileMap>();
+    final mapPositions = world.componentsOf<Position>();
     final segments = <Offset>[];
 
     for (
@@ -1648,7 +1648,7 @@ class _EnginePainter extends CustomPainter {
   /// `ScreenTintStep` mid-fade-in) entirely rather than drawing a
   /// no-op rect every frame.
   void _drawScreenTint(Canvas canvas, Size size) {
-    final tints = world.storeOf<ScreenTint>();
+    final tints = world.componentsOf<ScreenTint>();
     if (tints.length == 0) return;
     final fullRect = Offset.zero & size;
     for (var i = 0; i < tints.length; i++) {
@@ -1874,9 +1874,9 @@ class _EnginePainter extends CustomPainter {
   /// Empty (allocates nothing but a `const []`, effectively) the
   /// common case: no entity in the world is tagged at all.
   List<_LightBlocker> _collectLightBlockingColliders(EntityId lightEntity) {
-    final colliders = world.storeOf<Collider>();
+    final colliders = world.componentsOf<Collider>();
     if (colliders.length == 0) return const [];
-    final positions = world.storeOf<Position>();
+    final positions = world.componentsOf<Position>();
     final blockers = <_LightBlocker>[];
     for (var c = 0; c < colliders.length; c++) {
       final entity = colliders.entityAt(c);
@@ -1907,8 +1907,8 @@ class _EnginePainter extends CustomPainter {
     final toY = worldPos.y + sin(angle) * maxRadius;
     var nearest = maxRadius;
 
-    final tileMaps = world.storeOf<TileMap>();
-    final mapPositions = world.storeOf<Position>();
+    final tileMaps = world.componentsOf<TileMap>();
+    final mapPositions = world.componentsOf<Position>();
     for (var m = 0; m < tileMaps.length; m++) {
       final mapEntity = tileMaps.entityAt(m);
       final map = tileMaps.denseAt(m);
@@ -2004,7 +2004,7 @@ class _EnginePainter extends CustomPainter {
     Size size,
     ComponentStore<Position> positions,
   ) {
-    final colliders = world.storeOf<Collider>();
+    final colliders = world.componentsOf<Collider>();
     if (colliders.length == 0) return;
     final paint = Paint()
       ..color = const Color(0xFF00FF00)
@@ -2035,7 +2035,7 @@ class _EnginePainter extends CustomPainter {
     Size size,
     ComponentStore<Position> positions,
   ) {
-    final tileMaps = world.storeOf<TileMap>();
+    final tileMaps = world.componentsOf<TileMap>();
     final solidPath = Path();
     final oneWayPath = Path();
     final slopePath = Path();
@@ -2181,7 +2181,7 @@ class _EnginePainter extends CustomPainter {
     ComponentStore<Position> positions,
     List<_LightRenderInfo> lights,
   ) {
-    final sprites = world.storeOf<Sprite>();
+    final sprites = world.componentsOf<Sprite>();
     if (sprites.length == 0) return order;
 
     final indicesByZ = <int, List<int>>{};
@@ -2323,7 +2323,7 @@ class _EnginePainter extends CustomPainter {
     ComponentStore<Position> positions,
     List<_LightRenderInfo> lights,
   ) {
-    final sprites = world.storeOf<Sprite>();
+    final sprites = world.componentsOf<Sprite>();
     if (sprites.length == 0 || lights.isEmpty) return order;
 
     // Collect indices of sprites with normal maps
@@ -2668,7 +2668,7 @@ class _EnginePainter extends CustomPainter {
     Size size,
     ComponentStore<Position> positions,
   ) {
-    final transitions = world.storeOf<AnimationTransition>();
+    final transitions = world.componentsOf<AnimationTransition>();
     for (var i = 0; i < transitions.length; i++) {
       final entity = transitions.entityAt(i);
       final transition = transitions.denseAt(i);
@@ -2735,13 +2735,13 @@ class _EnginePainter extends CustomPainter {
     Size size,
     ComponentStore<Position> positions,
   ) {
-    final particles = world.storeOf<Particle>();
+    final particles = world.componentsOf<Particle>();
     if (particles.length == 0) return order;
 
     // Skipped entirely (not just an empty per-particle lookup) when no
     // particle in the world could possibly have a Sprite attached --
     // the common case, since ParticleSystem itself never attaches one.
-    final sprites = world.storeOf<Sprite>();
+    final sprites = world.componentsOf<Sprite>();
     final anySpriteParticles = sprites.length > 0;
 
     final indicesByZ = <int, List<int>>{};
@@ -2890,7 +2890,7 @@ class _EnginePainter extends CustomPainter {
     Size size,
     ComponentStore<Position> positions,
   ) {
-    final layers = world.storeOf<ParallaxLayer>();
+    final layers = world.componentsOf<ParallaxLayer>();
     if (layers.length == 0) return order;
 
     for (var i = 0; i < layers.length; i++) {
@@ -2999,7 +2999,7 @@ class _EnginePainter extends CustomPainter {
     Size size,
     ComponentStore<Position> positions,
   ) {
-    final tileMaps = world.storeOf<TileMap>();
+    final tileMaps = world.componentsOf<TileMap>();
     for (var m = 0; m < tileMaps.length; m++) {
       final mapEntity = tileMaps.entityAt(m);
       final map = tileMaps.denseAt(m);
@@ -3213,7 +3213,7 @@ class _EnginePainter extends CustomPainter {
     Size size,
     ComponentStore<Position> positions,
   ) {
-    final texts = world.storeOf<txt.Text>();
+    final texts = world.componentsOf<txt.Text>();
     for (var i = 0; i < texts.length; i++) {
       final entity = texts.entityAt(i);
       final text = texts.denseAt(i);
@@ -3299,7 +3299,7 @@ class _EnginePainter extends CustomPainter {
     Size size,
     ComponentStore<Position> positions,
   ) {
-    final bars = world.storeOf<HudBar>();
+    final bars = world.componentsOf<HudBar>();
     for (var i = 0; i < bars.length; i++) {
       final entity = bars.entityAt(i);
       final bar = bars.denseAt(i);
@@ -3350,7 +3350,7 @@ class _EnginePainter extends CustomPainter {
     int order,
     ComponentStore<Position> positions,
   ) {
-    final sprites = world.storeOf<NineSliceSprite>();
+    final sprites = world.componentsOf<NineSliceSprite>();
     for (var i = 0; i < sprites.length; i++) {
       final entity = sprites.entityAt(i);
       final nine = sprites.denseAt(i);

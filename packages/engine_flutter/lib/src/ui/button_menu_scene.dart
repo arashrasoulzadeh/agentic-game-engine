@@ -230,7 +230,7 @@ abstract class ButtonMenuScene extends Scene {
   void handleTap(World world, SceneController scenes, Offset worldPosition) {
     final hit = hitTestButton(world, worldPosition.dx, worldPosition.dy);
     if (hit == null) return;
-    final actionId = world.storeOf<Button>().get(hit)?.actionId;
+    final actionId = world.componentsOf<Button>().get(hit)?.actionId;
     if (actionId != null) onButtonPressed(actionId, scenes);
   }
 }

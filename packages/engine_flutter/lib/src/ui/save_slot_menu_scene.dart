@@ -145,14 +145,14 @@ abstract class SaveSlotMenuScene extends ButtonMenuScene {
     final scale = thumbnailWidth / image.width;
     final buttonWidth = spec.width ?? kMenuButtonWidth;
     final entity = world.spawn();
-    world.storeOf<Position>().set(
+    world.componentsOf<Position>().set(
       entity,
       Position(
         position.dx - buttonWidth / 2 - thumbnailGap - thumbnailWidth / 2,
         position.dy,
       ),
     );
-    world.storeOf<Sprite>().set(
+    world.componentsOf<Sprite>().set(
       entity,
       Sprite(
         _thumbnailAtlasId(spec.actionId),

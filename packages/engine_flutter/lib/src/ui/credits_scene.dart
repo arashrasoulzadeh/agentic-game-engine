@@ -73,8 +73,8 @@ abstract class CreditsScene extends Scene {
     for (final entry in credits) {
       final style = entry.style ?? defaultStyle;
       final textEntity = world.spawn();
-      world.storeOf<Position>().set(textEntity, Position(world.width / 2, y));
-      world.storeOf<Text>().set(
+      world.componentsOf<Position>().set(textEntity, Position(world.width / 2, y));
+      world.componentsOf<Text>().set(
         textEntity,
         Text(
           entry.text,
@@ -91,11 +91,11 @@ abstract class CreditsScene extends Scene {
     // Add skip hint if enabled
     if (showSkipHint) {
       final hintEntity = world.spawn();
-      world.storeOf<Position>().set(
+      world.componentsOf<Position>().set(
         hintEntity,
         Position(world.width / 2, y + 40),
       );
-      world.storeOf<Text>().set(
+      world.componentsOf<Text>().set(
         hintEntity,
         Text(
           skipHintText,
@@ -117,7 +117,7 @@ abstract class CreditsScene extends Scene {
     final scrollDistance = _elapsedTime * scrollSpeed;
 
     // Update positions of all credit lines
-    final posStore = world.storeOf<Position>();
+    final posStore = world.componentsOf<Position>();
     for (final line in _lines) {
       final pos = posStore.get(line.entity);
       if (pos != null) {

@@ -138,8 +138,8 @@ class SpritePivotSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final states = world.storeOf<SpriteStates>();
-    final sprites = world.storeOf<Sprite>();
+    final states = world.componentsOf<SpriteStates>();
+    final sprites = world.componentsOf<Sprite>();
     for (var i = 0; i < states.length; i++) {
       final sprite = sprites.get(states.entityAt(i));
       final ref = states.denseAt(i).clips[referenceState];

@@ -108,7 +108,7 @@ class SpriteStates {
 /// Asks [entity] to switch to [state]. Ignored once it is in a hold state,
 /// and when it has no such clip (e.g. an enemy without a `hit` sheet).
 void playSpriteState(World world, EntityId entity, String state) {
-  final s = world.storeOf<SpriteStates>().get(entity);
+  final s = world.componentsOf<SpriteStates>().get(entity);
   if (s == null ||
       s.holdStates.contains(s.current) ||
       !s.clips.containsKey(state)) {
@@ -119,8 +119,8 @@ void playSpriteState(World world, EntityId entity, String state) {
 
 /// True once [entity] is in [state] and that clip has played its last frame.
 bool spriteStateFinished(World world, EntityId entity, String state) {
-  final s = world.storeOf<SpriteStates>().get(entity);
-  final a = world.storeOf<AnimationState>().get(entity);
+  final s = world.componentsOf<SpriteStates>().get(entity);
+  final a = world.componentsOf<AnimationState>().get(entity);
   return s != null && s.current == state && a != null && !a.playing;
 }
 
@@ -132,8 +132,8 @@ class SpriteStateSystem extends System {
 
   @override
   void update(World world, double dt) {
-    final states = world.storeOf<SpriteStates>();
-    final anims = world.storeOf<AnimationState>();
+    final states = world.componentsOf<SpriteStates>();
+    final anims = world.componentsOf<AnimationState>();
     for (var i = 0; i < states.length; i++) {
       final e = states.entityAt(i);
       final s = states.denseAt(i);
@@ -149,12 +149,12 @@ class SpriteStateSystem extends System {
 
   void _play(World world, EntityId e, SpriteStates s, String state) {
     final clip = s.clips[state];
-    final sprite = world.storeOf<Sprite>().get(e);
+    final sprite = world.componentsOf<Sprite>().get(e);
     if (clip == null || sprite == null) return;
     s.current = state;
     sprite.atlasId = clip.atlasId;
     sprite.region = '0';
-    world.storeOf<AnimationState>().set(
+    world.componentsOf<AnimationState>().set(
       e,
       AnimationState(
         AnimationClip(
