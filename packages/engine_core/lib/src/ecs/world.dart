@@ -7,6 +7,7 @@ import 'archetype.dart';
 import 'job_system.dart';
 import 'world_profiler.dart';
 import 'world_commands.dart';
+import 'world_random.dart';
 
 /// Thrown by [World.applyPatch] when the patch's own shape is wrong —
 /// `entities` not a list, an entry not an object, a missing/malformed
@@ -63,7 +64,18 @@ class World {
   double _deltaTime = 0;
   double get deltaTime => _deltaTime;
 
-  World({required this.width, required this.height});
+  /// Creates a world. [seed] starts [random]; the default is a fixed 0 so a
+  /// world is reproducible unless you ask otherwise: pass a varying seed for a
+  /// game that should play differently each run (and record it to replay).
+  World({required this.width, required this.height, this.seed = 0})
+    : random = WorldRandom(seed);
+
+  /// The seed [random] started from.
+  final int seed;
+
+  /// The simulation's random numbers. Draw from this, not `dart:math`, so
+  /// runs are reproducible and a rollback restores the stream.
+  final WorldRandom random;
 
   /// Returns the archetype manager for optimized queries.
   ArchetypeManager get archetypes => components.archetypeManager;

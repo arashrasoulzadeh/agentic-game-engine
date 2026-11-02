@@ -15,14 +15,22 @@ class WorldSnapshot {
   final int tick;
   final Map<EntityId, Map<String, dynamic>> entities;
 
-  WorldSnapshot(this.tick, Map<EntityId, Map<String, dynamic>> entities)
-    : entities = Map.unmodifiable(entities);
+  /// The world's [WorldRandom.state] when captured, so restoring a snapshot
+  /// (rollback, undo) repeats the same random draws. Null for snapshots built
+  /// from network data, which never carry the server's stream.
+  final int? randomState;
+
+  WorldSnapshot(
+    this.tick,
+    Map<EntityId, Map<String, dynamic>> entities, {
+    this.randomState,
+  }) : entities = Map.unmodifiable(entities);
 
   factory WorldSnapshot.capture(World world) {
     return WorldSnapshot(world.tick, {
       for (final id in world.entities.all)
         id: _copy(world.components.serializeEntity(id)),
-    });
+    }, randomState: world.random.state);
   }
 
   /// Rebuilds [world] to match this snapshot exactly: entities not in it are
@@ -45,11 +53,14 @@ class WorldSnapshot {
       world.components.applyToEntity(id, _copy(entry.value));
     }
     world.setTick(tick);
+    final random = randomState;
+    if (random != null) world.random.state = random;
   }
 
   Map<String, dynamic> toJson() => {
     'tick': tick,
     'entities': {for (final e in entities.entries) '${e.key}': e.value},
+    if (randomState != null) 'random': randomState,
   };
 
   factory WorldSnapshot.fromJson(Map<String, dynamic> json) =>
@@ -58,7 +69,7 @@ class WorldSnapshot {
           int.parse(e.key as String): _copy(
             (e.value as Map).cast<String, dynamic>(),
           ),
-      });
+      }, randomState: (json['random'] as num?)?.toInt());
 
   static Map<String, dynamic> _copy(Map<String, dynamic> m) =>
       (jsonDecode(jsonEncode(m)) as Map).cast<String, dynamic>();
