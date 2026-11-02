@@ -1,6 +1,7 @@
 import 'package:engine_schema/engine_schema.dart';
 
 import 'dev_warnings.dart';
+import 'engine_error.dart';
 import 'component_store.dart';
 import 'entity.dart';
 import 'archetype.dart';
@@ -13,11 +14,25 @@ import 'archetype.dart';
 /// level file or `World.applyPatch` call gets "component 'health' on
 /// entity 3 is broken", not a bare, contextless `TypeError` from deep
 /// inside some component's `fromJson`.
-class ComponentApplyException implements Exception {
+class ComponentApplyException implements EngineError {
   final String componentName;
   final EntityId entity;
   final Object cause;
   ComponentApplyException(this.componentName, this.entity, this.cause);
+
+  @override
+  String get code => 'component_invalid';
+
+  @override
+  String get message => '$cause';
+
+  @override
+  Map<String, Object?> toJson() => {
+    'code': code,
+    'message': message,
+    'entity': entity,
+    'component': componentName,
+  };
 
   @override
   String toString() =>

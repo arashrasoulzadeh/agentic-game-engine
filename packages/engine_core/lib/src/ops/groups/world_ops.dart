@@ -193,10 +193,12 @@ List<Operation> worldOperations() => [
       }
       try {
         world.applyPatch(patch, strict: a['strict'] == true);
-      } on WorldPatchException catch (e) {
-        throw OpError(ErrorCode.validationFailed, e.toString());
-      } on ComponentApplyException catch (e) {
-        throw OpError(ErrorCode.validationFailed, e.toString());
+      } on EngineError catch (e) {
+        throw OpError(
+          ErrorCode.validationFailed,
+          e.toString(),
+          details: e.toJson(),
+        );
       }
       return OpOutcome.data({
         'applied': true,

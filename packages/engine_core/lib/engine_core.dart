@@ -1,4 +1,5 @@
 export 'src/ecs/action.dart';
+export 'src/ecs/engine_error.dart';
 export 'src/ai/set_velocity_action.dart';
 export 'src/ai/flee_behavior.dart';
 export 'src/ai/steering.dart';

@@ -2,6 +2,7 @@ import 'component_registry.dart';
 import 'component_store.dart';
 import 'entity.dart';
 import 'dev_warnings.dart';
+import 'engine_error.dart';
 import 'event_bus.dart';
 import 'hierarchy.dart' show destroyChildrenOf;
 import 'system.dart';
@@ -20,24 +21,27 @@ import 'world_timers.dart';
 /// `fromJson`) throw `ComponentApplyException` instead, from
 /// `ComponentRegistry.applyToEntity`.
 /// One thing wrong with a patch, found by [World.checkPatch].
-class PatchProblem {
-  /// Where in the patch, e.g. `entities[2].components.position`.
-  final String path;
+typedef PatchProblem = ErrorProblem;
 
-  /// What is wrong, with enough detail to fix it.
+class WorldPatchException implements EngineError {
+  @override
   final String message;
 
-  const PatchProblem(this.path, this.message);
+  /// Every located problem when the patch was rejected as a whole (strict
+  /// mode); empty for a single structural fault described by [message].
+  final List<ErrorProblem> problems;
 
-  Map<String, String> toJson() => {'path': path, 'message': message};
+  WorldPatchException(this.message, {this.problems = const []});
 
   @override
-  String toString() => ' - $path: $message';
-}
+  String get code => 'patch_invalid';
 
-class WorldPatchException implements Exception {
-  final String message;
-  WorldPatchException(this.message);
+  @override
+  Map<String, Object?> toJson() => {
+    'code': code,
+    'message': message,
+    if (problems.isNotEmpty) 'problems': [for (final p in problems) p.toJson()],
+  };
 
   @override
   String toString() => 'WorldPatchException: $message';
@@ -524,6 +528,7 @@ class World {
         throw WorldPatchException(
           '${problems.length} problem${problems.length == 1 ? '' : 's'} in '
           'patch, nothing applied:\n${problems.join('\n')}',
+          problems: problems,
         );
       }
     }

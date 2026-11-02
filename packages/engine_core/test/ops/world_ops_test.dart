@@ -110,6 +110,40 @@ void main() {
     );
   });
 
+  test('a rejected world.patch returns machine-readable details', () async {
+    final s = await Scratch.create();
+    final built = await s.map('world.build', {'json': moving});
+    final id = built['worldId']! as String;
+    final entityId =
+        ((await s.data('world.query', {
+                  'worldId': id,
+                  'component': 'position',
+                })
+                as List)
+            .first
+            as Map)['id'];
+    final r = await s.call('world.patch', {
+      'worldId': id,
+      'strict': true,
+      'patch': {
+        'entities': [
+          {
+            'id': entityId,
+            'components': {
+              'positon': {'x': 1, 'y': 2},
+            },
+          },
+        ],
+      },
+    });
+    expect(r.ok, isFalse);
+    final details = r.error!.details!;
+    expect(details['code'], 'patch_invalid');
+    final problems = (details['problems']! as List).cast<Map>();
+    expect(problems.single['path'], 'entities[0].components.positon');
+    expect(problems.single['message'], contains('did you mean'));
+  });
+
   test('bad systems, the world cap and expiry', () async {
     final s = await Scratch.create();
     expect(

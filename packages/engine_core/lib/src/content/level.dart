@@ -1,3 +1,4 @@
+import '../ecs/engine_error.dart';
 import '../ecs/entity.dart';
 import '../ecs/world.dart';
 
@@ -5,9 +6,25 @@ import '../ecs/world.dart';
 /// human/agent-readable path to the bad field rather than a generic
 /// "invalid JSON" — a content-authoring agent needs to know exactly
 /// what to fix.
-class LevelLoadException implements Exception {
+class LevelLoadException implements EngineError {
+  @override
   final String message;
-  LevelLoadException(this.message);
+
+  /// Every located problem when strict loading rejected the level; empty for
+  /// a single structural fault described by [message].
+  final List<ErrorProblem> problems;
+
+  LevelLoadException(this.message, {this.problems = const []});
+
+  @override
+  String get code => 'level_invalid';
+
+  @override
+  Map<String, Object?> toJson() => {
+    'code': code,
+    'message': message,
+    if (problems.isNotEmpty) 'problems': [for (final p in problems) p.toJson()],
+  };
 
   @override
   String toString() => 'LevelLoadException: $message';
@@ -43,7 +60,7 @@ class Level {
   }) {
     final entities = validate(json);
     if (strict) {
-      final problems = <String>[];
+      final problems = <ErrorProblem>[];
       for (var i = 0; i < entities.length; i++) {
         final components =
             entities[i]['components'] as Map<String, dynamic>? ?? const {};
@@ -53,7 +70,9 @@ class Level {
             entry.value,
           );
           if (problem != null) {
-            problems.add('entities[$i].components.${entry.key}: $problem');
+            problems.add(
+              ErrorProblem('entities[$i].components.${entry.key}', problem),
+            );
           }
         }
       }
@@ -61,7 +80,8 @@ class Level {
         throw LevelLoadException(
           'Level has ${problems.length} invalid component '
           '${problems.length == 1 ? 'entry' : 'entries'}:\n  '
-          '${problems.join('\n  ')}',
+          '${problems.map((p) => '${p.path}: ${p.message}').join('\n  ')}',
+          problems: problems,
         );
       }
     }
