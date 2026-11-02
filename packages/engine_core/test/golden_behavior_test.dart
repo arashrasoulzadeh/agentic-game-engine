@@ -115,7 +115,7 @@ void main() {
       },
     );
 
-    test('handlers cannot be removed: clearHandlers is all or nothing', () {
+    test('clearHandlers cancels every handler', () {
       final world = _world();
       var hits = 0;
       world.events.on<_Ping>((_) => hits++);
