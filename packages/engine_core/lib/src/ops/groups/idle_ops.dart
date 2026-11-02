@@ -269,7 +269,7 @@ List<Operation> idleOperations() => [
       } else {
         recomputeIncome(world, game.wallet);
       }
-      final gens = world.storeOf<Generator>();
+      final gens = world.componentsOf<Generator>();
       return OpOutcome.data({
         'afterSeconds': seconds,
         'wallet': {
@@ -325,7 +325,7 @@ List<Operation> idleOperations() => [
       registerCoreComponents(world);
       final game = loadIdleDefinition(world, json);
       final owned = (a['owned'] as Map?) ?? const {};
-      final gens = world.storeOf<Generator>();
+      final gens = world.componentsOf<Generator>();
       for (var i = 0; i < gens.length; i++) {
         final g = gens.denseAt(i);
         final n = owned[g.id];

@@ -50,10 +50,10 @@ TurnAI _aiFor(String kind, GridNavigator nav) => switch (kind) {
 };
 
 GridNavigator _navigator(World world) {
-  final maps = world.storeOf<TileMap>();
+  final maps = world.componentsOf<TileMap>();
   if (maps.length > 0) return GridNavigator.fromTileMap(maps.denseAt(0));
   var maxCol = 7, maxRow = 7;
-  final grids = world.storeOf<GridPosition>();
+  final grids = world.componentsOf<GridPosition>();
   for (var i = 0; i < grids.length; i++) {
     final g = grids.denseAt(i);
     if (g.col > maxCol) maxCol = g.col;
@@ -69,8 +69,8 @@ GridNavigator _navigator(World world) {
 List<String> _teams(World world) {
   final seen = <String>{};
   final order = <String>[];
-  final teams = world.storeOf<Team>();
-  final stats = world.storeOf<UnitStats>();
+  final teams = world.componentsOf<Team>();
+  final stats = world.componentsOf<UnitStats>();
   for (var i = 0; i < teams.length; i++) {
     final e = teams.entityAt(i);
     if (stats.get(e) == null) continue;
