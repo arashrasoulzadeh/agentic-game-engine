@@ -71,9 +71,6 @@ Latest: world_step 7.5/68.7 us and collision 180/1813 us (at baseline); **entity
 ## Phase 10: Remaining backlog (each independent; pick one at a time, same step contract)
 Each item gets its own mini-spec appended here before work starts (files, tests, gate). Status notes record what already exists so nothing is rebuilt.
 
-### Quick start and spawn
-- [ ] **Genre spawn shortcuts**: `spawnSprite(...)` in `engine_flutter` and `spawnBody(...)` in `engine_platformer` (they cannot live in core: DAG). Core `spawnAt` exists.
-
 ### Entity and component ergonomics
 - [ ] **Component defaults**: `static const defaults` or builder constructors (`Collider()` with a sensible radius).
 - [ ] **Component pooling** for high-churn components (particles); measure first with `particle_system_benchmark`.

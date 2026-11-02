@@ -23,8 +23,14 @@ void main() {
       expect(world.componentsOf<Velocity>().get(id), isNotNull);
       expect(world.componentsOf<Collider>().get(id), isNotNull);
       expect(world.componentsOf<Gravity>().get(id), isNotNull);
-      expect(world.componentsOf<PlatformerController>().get(id)!.jumpSpeed, 400);
-      expect(identical(world.componentsOf<InputState>().get(id), input), isTrue);
+      expect(
+        world.componentsOf<PlatformerController>().get(id)!.jumpSpeed,
+        400,
+      );
+      expect(
+        identical(world.componentsOf<InputState>().get(id), input),
+        isTrue,
+      );
     },
   );
 

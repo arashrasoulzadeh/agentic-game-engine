@@ -143,3 +143,20 @@ EntityId spawnEnemy(
   _attachHealth(world, id, maxHealth);
   return id;
 }
+
+/// Spawns a plain physics body: `Position`, `Velocity`, `Collider(radius)`
+/// and, unless [gravity] is false, `Gravity`. Use it for crates, projectiles
+/// and other things that fall and collide but need no controller or health;
+/// [spawnPlayer] and [spawnEnemy] are the characters.
+EntityId spawnBody(
+  World world,
+  double x,
+  double y,
+  double radius, {
+  bool gravity = true,
+}) => world.spawnWith([
+  Position(x, y),
+  Velocity(0, 0),
+  Collider(radius),
+  if (gravity) Gravity(),
+]);

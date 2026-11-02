@@ -1,3 +1,5 @@
+import 'package:engine_core/engine_core.dart';
+
 /// Data-only sprite reference: which atlas, which named region, and a
 /// simple transform. Resolved against an `AtlasRegistry` at render time,
 /// which keeps this component plain-JSON serializable for agent authoring.
@@ -125,3 +127,14 @@ class Sprite {
     tintArgb: (json['tintArgb'] as num?)?.toInt(),
   );
 }
+
+/// Spawns an entity drawn as [region] of atlas [atlasId], centered at
+/// ([x], [y]). The common "a thing on screen" case in one call; add more
+/// components with `world.setComponent` afterwards.
+EntityId spawnSprite(
+  World world,
+  double x,
+  double y,
+  String atlasId,
+  String region,
+) => world.spawnWith([Position(x, y), Sprite(atlasId, region)]);
