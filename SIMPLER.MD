@@ -4,367 +4,159 @@ Goal: Refactor the engine to be smarter and easier for game developers to write 
 
 Focus on DX over coverage of every internal type. Every change must keep `dart analyze --fatal-infos` clean and all tests passing.
 
+**Phases 0-9 are done and removed from this file** (history: `git log`, `CHANGELOG.md`, `docs/concepts/authoring.md`). What shipped: `getComponent/setComponent/hasComponent/removeComponent` + `componentsOf<T>()`, `query/query2/query3`, `Entity`/`EntityRef`, `spawnWith`/fluent builder/`spawnAt`, `EntityTags`, `EventBus` subscriptions, `world.commands`, entity generations, system phases/groups/enable flags/`after:`/`validateSystemOrder`, `FunctionSystem`, `world.random`/`World(seed:)`, `FixedStepper`, `world.after/every`, `CountdownTimer`, `SystemPresets.core`, `GameBuilder`/`GameLoop`, `world.save()/load()`, `checkPatch`/strict `applyPatch`, `world.debug()`, `engine_core_testing` (`GameTester`, `expectGolden`), `project.doctor`, the authoring guide, the `storeOf` -> `componentsOf` migration and migrated templates.
+
 ## HOW TO USE THIS FILE (read first)
-The phased plan below is the **executable** part. Everything after "Backlog reference" is the unphased idea list the phases draw from. Do steps strictly in order; a step may start only when every earlier step in its phase is committed and its gate is green. Items marked **DECISION** need the owner's answer first; do not guess.
+Everything below is **open work**. Do steps strictly in order within a phase; a step may start only when every earlier step is committed and its gate is green. Items marked **DECISION** need the owner's answer first; do not guess.
 
 ### Agent protocol
 1. One step = one commit. Never batch steps. Commit only when its gate is green (CLAUDE.md allows commit+push per completed TODO item).
 2. Before editing: re-read the files you will touch (they change). Check `git status`; do not mix your work with unrelated uncommitted changes.
-3. Every step ships: code, doc comments on every new public member (the *why*), and a test that **fails without the change** (verify by running it against the pre-change code or by reasoning in the commit message). Bug fix = regression test.
+3. Every step ships: code, doc comments on every new public member (the *why*), and a test that **fails without the change**. Bug fix = regression test.
 4. Backward compatible first: add new API, mark old `@Deprecated('use X')`, never delete in the same step as the replacement.
 5. If a gate fails, fix forward in the same step or `git restore` the step's files. Never weaken or delete an existing test to get green; never commit red.
 6. Never un-gitignore `test_game/`; never add a sample app. Keep `engine_core` Flutter-free; respect the DAG `engine_core -> engine_flutter -> engine_platformer` (genre-general data in core, genre logic in the genre package).
-7. New component => register in the right `register*Components` with `toJson/fromJson` + schema. New operation => follow the add-operation checklist in `TODO.md` (agent-API section), add the 1:1 `game_agent` command, regenerate `docs/reference/operations.md`.
-8. Doc edits that feed bundled docs => regenerate with `cd packages/engine_core && dart run tool/gen_bundled_docs.dart`.
-9. Commit message: explain *why* (what broke / how found / why fix works), end with the attribution line the session was given.
-10. Stop and ask the owner when: a DECISION is unresolved, a step needs a backward dependency, a benchmark regresses past the threshold, or a gate is red for a reason outside the step.
+7. New component => register in the right `register*Components` with `toJson/fromJson` + schema. New operation => follow the add-operation checklist in `TODO.md` (agent-API section), add the 1:1 `game_agent` command, regenerate the reference docs (G5).
+8. Commit message: explain *why* (what broke / how found / why fix works), end with the attribution line the session was given.
+9. Stop and ask the owner when: a DECISION is unresolved, a step needs a backward dependency, a benchmark regresses past the threshold, or a gate is red for a reason outside the step.
 
 ### Environment (this machine)
 - `export PATH="$PATH:/Users/arashrasoulzadeh/develop/flutter/bin"`; pub.dev is unreachable: use `--no-pub`/`--offline`.
-- `rm`/`cp` are interactive aliases: use `rm -f`; copy with python. `dart format` reflows whole files: format only files you touched.
+- `rm`/`cp` are interactive aliases: use `rm -f`; copy with python. `dart format` reflows whole files: format only files you touched, never `dart format lib`.
+- macOS BSD `sed` has no `\b`; there is no `timeout` command.
 - Read test verdicts with: `... 2>&1 | tr '\r' '\n' | grep -E 'All tests passed|Some tests failed'`.
-- `engine_core`, `engine_cli`, `engine_schema` use `dart test`; the rest use `flutter test` (with `flutter_test`).
+- `engine_core`, `engine_cli`, `engine_schema` use `dart test`; the rest use `flutter test`.
+- Known flake: `engine_studio` `rename_test` ("Found 2 widgets with key rename-file-use.dart") fails intermittently on full runs; rerun before concluding anything.
 
 ### Gates (a step names which it needs)
-- **G1 core**: `cd packages/engine_core && dart analyze --fatal-infos && dart test`
-- **G2 all packages**: G1 plus the same analyze/test in `engine_cli`, `engine_schema` (`dart`) and `engine_flutter`, `engine_platformer`, `engine_strategy`, `engine_idle` (`flutter analyze --fatal-infos --no-pub && flutter test --no-pub`). Required for any change to an exported core API.
-- **G3 perf**: run `packages/engine_core/benchmark/{world_step,entity_churn,collision_system,world_view,particle_system}_benchmark.dart` and `packages/engine_platformer/benchmark/*` before and after; allowed regression 10% (owner may change). Required for anything in `World`, `ComponentStore`, archetypes, event bus, systems loop, or any new per-entity wrapper.
-- **G4 core purity**: `grep -rE "import 'package:flutter|import 'dart:ui" packages/engine_core/lib` must print nothing (a plain `grep -i flutter` also matches doc comments, so it is not usable); `grep -rE "Random\(|DateTime\.now" packages/engine_core/lib` must only hit `deterministic_random.dart` (plus any file allow-listed by Phase 7).
-- **G5 docs/ops**: when ops/docs changed, regenerate with `cd packages/engine_core && dart run tool/gen_bundled_docs.dart` and `cd packages/engine_api && dart run tool/gen_api_docs.dart > ../../docs/reference/operations.md`; `git diff` shows only intended regeneration (a drift test fails if stale).
-- **G6 end-to-end**: for CLI or cross-package dependency changes, run `game_agent create` against the pushed ref (or scratch copy offline) and confirm the generated project analyzes and tests.
+- **G1 core**: `cd packages/engine_core && dart analyze --fatal-infos && dart test` (includes the purity test: no Flutter/`dart:ui` import, no `DateTime.now` or unseeded `Random()` in simulation dirs).
+- **G2 all packages**: G1 plus analyze/test in `engine_cli`, `engine_schema` (`dart`), `engine_api` and `engine_flutter`, `engine_platformer`, `engine_strategy`, `engine_idle`, `engine_studio` (`flutter analyze --fatal-infos --no-pub && flutter test --no-pub`). Required for any change to an exported core API.
+- **G3 perf**: run `packages/engine_core/benchmark/{world_step,entity_churn,collision_system,world_view,particle_system,query}_benchmark.dart` and `packages/engine_platformer/benchmark/*` before and after; allowed regression 10%. Required for anything in `World`, `ComponentStore`, archetypes, event bus, systems loop, or any new per-entity wrapper.
+- **G5 docs/ops**: when ops/docs/components changed, regenerate: `cd packages/engine_core && dart run tool/gen_bundled_docs.dart`; `cd packages/engine_api && dart run tool/gen_api_docs.dart > ../../docs/reference/operations.md` and `... --transports > ../../docs/reference/transports.md`; `cd packages/engine_schema && dart run tool/gen_component_docs.dart > ../../docs/reference/components.md`. Regenerate bundled docs **last** (it embeds the others) and commit all together; drift tests fail otherwise.
+- **G6 end-to-end**: for CLI, template or cross-package dependency changes, run `game_agent create` against the pushed ref (or a scratch copy offline with local path overrides) and confirm the generated project analyzes and tests.
 
-### Baseline (measured 2026-11-02, working tree with 18 uncommitted/untracked files from other work)
-| Package | analyze --fatal-infos | tests |
-|---|---|---|
-| engine_core | clean | 1302 pass |
-| engine_schema | clean | 18 pass |
-| engine_flutter | clean | 551 pass |
-| engine_platformer | clean | 348 pass |
-| engine_strategy | clean | 46 pass |
-| engine_idle | clean | 196 pass |
-| engine_cli | clean | 131 pass (was 129 + 1 fail; see 0.2) |
-| engine_api | clean | 61 pass |
-| engine_studio | clean | 449 pass (445 + 4 new GitPanel tests) |
-(engine_core is 1322 with the 20 golden tests from 0.6.) The numbers above were re-measured on a clean HEAD (the two uncommitted alias files in `world.dart`/`component_registry.dart` were stashed and restored).
+### Current baseline (2026-11-02, clean tree)
+Tests: engine_core 1531, engine_cli 132, engine_schema 18, engine_api 61, engine_flutter 552, engine_platformer 352, engine_strategy 47, engine_idle 196, engine_studio 449; analyze `--fatal-infos` clean everywhere.
 
-Benchmark baseline (single run, 2026-11-02, this machine; lower is better; expect noise, so for G3 compare the median of 3 runs before vs after, same session, same load):
+Benchmarks (median of 3; lower is better; judge regressions on small/medium, the large sizes are noisy):
 | Benchmark | small | medium | large |
 |---|---|---|---|
 | world_step (movement only, n=100/1000/5000) | 7.3 us | 67.7 us | 358.5 us |
 | entity_churn (spawn+destroy, n=100/1000/5000) | 1654 us | 16738 us | 84422 us |
-| collision_system (packed, n=100/1000/5000) | 177 us | 1798 us | 509476 us (superlinear; very noisy) |
+| collision_system (packed, n=100/1000/5000) | 177 us | 1798 us | 509476 us |
 | world_view nearestWithPosition (50/200/1000) | 58.5 us | 662 us | 13849 us |
 | particle_system (emitters=10/100/500) | 63.4 us | 621 us | 3327 us |
 | platformer full_pipeline (enemies=10/100/500) | 50.0 us | 672 us | 3240 us |
 | platformer tile_collision (n=50/500/2000) | 238 us | 2311 us | 9215 us |
-Run commands: core `cd packages/engine_core && dart run benchmark/<name>_benchmark.dart`; platformer needs the Flutter engine (`dart run` fails on dart:ui): `cd packages/engine_platformer && flutter test --no-pub benchmark/<name>_benchmark.dart`. macOS has no `timeout` command. The 10% threshold (D6) is tighter than run-to-run noise on the large sizes, so judge regressions on small/medium sizes and repeat before concluding.
+Run: core `cd packages/engine_core && dart run benchmark/<name>_benchmark.dart`; platformer `cd packages/engine_platformer && flutter test --no-pub benchmark/<name>_benchmark.dart`.
+Latest: world_step 7.5/68.7 us and collision 180/1813 us (at baseline); **entity_churn about +4% / +5% over baseline** (generation counter on destroy). If it passes 10%, optimize `EntityManager.destroy` before adding anything to that path.
 
-### Decisions (D1-D6 CONFIRMED by owner 2026-11-02: defaults in bold accepted)
-- **D1 canonical collection accessor.** `World.components` is already the `ComponentRegistry` field, so the name is taken. **Keep `world.componentsOf<T>()` as the one public collection accessor; remove `component<T>()` and `getComponentStore<T>()` aliases; deprecate `storeOf<T>()`.** Value access is `getComponent/setComponent/hasComponent/removeComponent`; skip the `get/set/has/del` short aliases (API-explosion rule).
-- **D2 Entity handle.** **Extension type `Entity(EntityId)` (zero-cost), keep `typedef EntityId = int`.**
-- **D3 core facade name.** `Game` exists in `engine_flutter`. **Name the core one `GameBuilder` (setup) and leave Flutter's `Game` untouched.**
-- **D4 auto-registration.** **Explicit registration stays for JSON loading; `GameBuilder` registers defaults for you; no hidden global registration.**
-- **D5 scenes.** **Stay in `engine_flutter`; core gets no `Scene` type.**
-- **D6 benchmark threshold.** **10% on the benchmarks named in G3.**
+### Decisions (confirmed by owner 2026-11-02)
+- D1 `componentsOf<T>()` is the one collection accessor; no `get/set/has/del` short aliases.
+- D2 `Entity` extension type is the identity; `EntityRef` carries the ergonomics.
+- D3 core facade is `GameBuilder`/`GameLoop`; engine_flutter's `Game` is untouched.
+- D4 registration stays explicit for JSON loading; `GameBuilder` registers defaults; no hidden global registration.
+- D5 scenes stay in `engine_flutter`; core gets no `Scene` type.
+- D6 10% benchmark threshold.
 
-### Phased plan
-Each step lists: change -> required tests -> gate. "Docs" always means doc comments; extra docs are named.
+## Open follow-ups from Phases 0-9
+- [ ] **7.final** Remove `World.storeOf` (deprecated, no callers except two shim tests). Owner-approved separate step, after one release, because downstream projects pin `ref: main`. Also drop the two shim tests and the deprecation entry in `CHANGELOG.md`. This is the answer to "what is the deprecation window".
+- [ ] **DECISION: seed `ParticleSystem` by default.** It defaults to an unseeded `Random()` (allowlisted in `core_purity_test.dart`), so a world with particles is not reproducible unless the caller passes `random:`. Seeding makes particle visuals identical between runs. `SystemPresets.core` already seeds it from `world.seed`.
+- [ ] **Idle template widget test fails** (`timewarp-hour` key not found); also failed before this work. Logged in `TODO.md` ("Template health").
+- [ ] **Unverified in this environment**: `mkdocs build --strict` (not installable offline; CI `docs` job is the first real check) and `game_agent create` against the pushed ref (G6).
+- [ ] **Flaky `engine_studio` `rename_test`**: cause not found.
+- [ ] Optional: tutorials 01/03/04 and getting-started still use `componentsOf<T>().set/get` (correct, just older style); hot call sites could move to `getComponent`/`setComponent` where it reads better (note `setComponent` rejects dead entities, a behavior change, so gate each directory).
+- [ ] Optional cleanup: move `registerCoreComponents` out of `engine_core.dart` into its own file so `game_builder.dart` does not import the barrel.
 
-#### Phase 0: Stabilize (no new API)
-- [x] 0.1 Tree clean. The 16 validated files were committed; the two alias-WIP files (`world.dart`, `component_registry.dart`) were discarded by owner decision since Phase 1.1 re-implements the needed part (`getComponent/setComponent/hasComponent/removeComponent`, `componentsOf<T>()`) with docs and tests. The registry-level `get/set/has/remove` aliases are intentionally not carried over.
-- [x] 0.2 Diagnosed `first_level_tutorial_test`: real bug, pre-existing on clean HEAD. `game_agent studio` writes its undo journal to `.studio/undo/` next to the level it edits (`assets/levels/.studio/undo/*.json`), and `validate` then scanned those journal files as levels ("missing required key entities"). Fixed in `studio_command.dart` `_levelFiles` (skips `.studio`), regression test `engine_cli/test/level_files_journal_test.dart`. `engine_cli` now green (131).
-- [x] 0.3 Benchmark baseline recorded (table above).
-- [x] 0.4 Confirmed regeneration commands (no step 0.4 guess needed): operations reference = `cd packages/engine_api && dart run tool/gen_api_docs.dart > ../../docs/reference/operations.md` (from `docs/contributing-docs.md`; a drift test fails when stale); bundled docs = `cd packages/engine_core && dart run tool/gen_bundled_docs.dart`. Use these in G5.
-- [x] 0.6 Golden-behavior tests added: `packages/engine_core/test/golden_behavior_test.dart` (20 tests) pins event ordering, destroy-during-iteration and id reuse exactly as they behave today, so Phases 2/3 can show precisely what they change. Findings it locks (correcting earlier notes): events from systems are delivered after all systems ran; a handler-emitted event is delivered in a later round of the same flush; handlers match on exact runtime type; the 20-round cascade cap **defers** the remainder to the next flush (nothing is dropped); forward destroy-while-iterating skips every other entity; a stale id aliases the entity that reused the id and reports alive; ids are reused last-freed-first. When a later phase intentionally changes one of these, update that test in the same commit and say why in the message.
-- [x] 0.5 Owner answers D1-D6: defaults accepted 2026-11-02.
+## Phase 10: Remaining backlog (each independent; pick one at a time, same step contract)
+Each item gets its own mini-spec appended here before work starts (files, tests, gate). Status notes record what already exists so nothing is rebuilt.
 
-#### Phase 1: Component access cleanup (applies D1)
-- [x] 1.1 `World` gains `componentsOf<T>()`, `getComponent`, `setComponent`, `hasComponent`, `removeComponent` (documented, tested in `world_component_access_test.dart`). **Plan change: `storeOf` is NOT deprecated here.** `dart analyze --fatal-infos` treats `deprecated_member_use` as a failure and there are ~250 `storeOf` call sites, so deprecating now would turn every gate red. Deprecation moves to 7.final, after the migration has driven the call sites to zero. The in-flight extra aliases (`component`, `getComponentStore`, registry-level `get/set/has/remove`) were never committed and are not added.
-- [x] 1.2 Dead-entity semantics: `setComponent` on a dead or never-spawned id throws `StateError` naming the entity (ids are recycled, so a stale write would leak onto the next entity that reuses the id); `getComponent`/`hasComponent`/`removeComponent` on a dead id are null/false/no-op. Raw `storeOf<T>().set` is unchanged and still allows writes to dead ids (pinned by the golden id-reuse tests); migrating call sites in Phase 7 therefore *tightens* behavior, so each migrated directory must be gate-checked.
-- [x] 1.3 Destroy safety tests: all stores, archetype index and serialization forget a destroyed entity. **Finding for Phase 3:** the archetype index is only updated by registry-level writes (`applyJson`/`removeEntity`), not by `store.set`/`setComponent`, so `world.archetypes` is *not* a reliable source for `query<A,B>` today. 3.1 must either make `setComponent`/`removeComponent` notify the archetype manager (cost: it recomputes the entity's type set over every registration, which needs a G3 benchmark) or build queries on the stores directly (iterate the smallest store, check `has` on the others). Pinned by a test so this cannot be forgotten.
+### Quick start and spawn
+- [ ] **Genre spawn shortcuts**: `spawnSprite(...)` in `engine_flutter` and `spawnBody(...)` in `engine_platformer` (they cannot live in core: DAG). Core `spawnAt` exists.
 
-#### Phase 2: Safe mutation foundations (needed before fluent APIs)
-- [x] 2.1 Done in 0.6 (`golden_behavior_test.dart`, "destroy during iteration" group).
-- [x] 2.2 `EventBus.on` returns a `Subscription` (`cancel`, `isActive`); `once<T>`; cancel and add are safe during a flush (removal deferred, index iteration); a handler added mid-flush used to throw `ConcurrentModificationError` and now first sees the next event; `clearHandlers` deactivates handlers. Tests: `event_bus_subscription_test.dart`. Dispatch order, exact-runtime-type matching and the cascade cap are unchanged.
-- [x] 2.3 `EntityManager.generationOf/isCurrent` + `World.generationOf` (bumped on destroy only; runtime-only, not serialized; `ensureAlive` and snapshot restore behave as before, restore invalidates handles to removed entities). Tests: `entity_generation_test.dart`. Phase 3.2's `Entity` handle should pack `(generation, id)`; the arithmetic form `generation * 4294967296 + id` keeps web (53-bit) ints exact.
-- [x] 2.4 `world.commands` (`WorldCommands`: `spawn` immediate, queued `set/remove/destroy`, `apply`), applied after every system and after the event flush, generation-guarded, first error rethrown after the rest ran. Tests: `world_commands_test.dart`.
-- [~] 2.5 **Plan change, deferred to Phase 3.1.** A debug assert for "store mutated while iterated" is not implementable on today's API: iteration is a hand-written `for (i < store.length) store.denseAt(i)` loop, so the store cannot know a loop is running, and asserting on "destroy during a system" would fire for many legitimate existing systems. The guard belongs on the new `query` iterators (3.1): they can record the store length at start and assert it is unchanged, pointing at `world.commands`.
-- [x] 2.6 `onCollisionBetween` / `onCollisionInvolving` return a `Subscription` and cancel themselves once an entity they watch is destroyed, including when its id is reused (generation check on the next collision event). `onCollisionWithAny` returns a handle but cannot auto-stop (raw id set has no generations). Tests: `event_helpers_lifetime_test.dart`.
+### Smarter world
+- [ ] **Batch operations**: set or remove several components on one entity efficiently.
+- [ ] **Event sugar**: `world.on<E>`, `world.once<E>`, `world.onCollision(...)` wrappers over `EventBus` (handles and `once` exist on the bus; collision helpers exist in `ecs/event_helpers.dart` and are leak-safe).
+- [ ] **Dispose properly**: `World.dispose()` only shuts down the job system; it should also clear event handlers, systems and timers.
 
-#### Phase 3: Queries and entity ergonomics
-- [x] 3.1 `world.query<A>()`, `query2<A,B>()`, `query3<A,B,C>()` (`ecs/world_query.dart`): lazy record joins driven by the smallest collection, **built on the stores, not the archetype index**. Plain iterators, not `sync*` (the generator version was 11-13x slower than the hand loop; the iterator version is ~1.7x: n=1000 18.2us vs 30.8us, n=5000 89us vs 156us, `benchmark/query_benchmark.dart`). Includes the 2.5 guard: the driving collection's length is asserted unchanged while iterating, message points at `world.commands`; non-driving collections may be mutated.
-- [x] 3.2 `Entity` extension type (`generation * 2^32 + id`, web-safe) plus world-bound `EntityRef` (`get/has/set/remove/destroy`, stale-safe). **Refines D2**: a bare int cannot carry the world, so the zero-cost type is the identity and `EntityRef` is the ergonomics. `world.entityOf(id)` (refuses dead ids), `world.isCurrent(e)`, `world.ref(e)`.
-- [x] 3.3 `world.spawnWith([...])` (all-or-nothing, exact runtime type match, duplicates rejected) and fluent `world.entity().at(x,y).add(c).build()` returning an `EntityRef`. No `.named`: names live in level JSON, not a component.
-- [x] 3.4 `world.spawnAt(x, y)`; `spawnSprite`/`spawnBody` stay out of core (DAG) and belong to `engine_flutter`/`engine_platformer` (not done).
-- [x] 3.5 `EntityTags` registered component (`tags` in `engine_schema`, docs regenerated) with `addTag/removeTag/hasTag/withTag`. Existing zero-field marker components (`Selected`, `Vip`) remain the pattern for typed markers; tags are for cheap grouping and authored JSON.
-Process note: 3.2-3.5 ran G1 per step and G2 once at the end of the phase (all green), because every change in the phase is additive.
+### Entity and component ergonomics
+- [ ] **Component defaults**: `static const defaults` or builder constructors (`Collider()` with a sensible radius).
+- [ ] **Component pooling** for high-churn components (particles); measure first with `particle_system_benchmark`.
+- [ ] **Rename conceptually**: remove remaining "store" wording from public docs and error messages (`ComponentStore` may stay as the internal type).
 
-#### Phase 4: Systems
-**Design constraint for the whole phase:** 65 classes `implements System`, so any new member on `System` breaks all of them. Everything below lives on `World` (an internal entry wrapper) or in new classes, and `System` is unchanged.
-- [x] 4.0 Golden installer orders added first (`engine_platformer/test/system_order_golden_test.dart`, `engine_strategy/test/system_order_golden_test.dart`) so the ordering work below could prove it changed nothing for existing callers.
-- [x] 4.1 `world.setSystemEnabled(name, bool)` / `isSystemEnabled`: skipped in `step` (also profiled), keeps its place, unknown names throw listing the registered ones, same-name systems toggle together.
-- [x] 4.2 `SystemGroup(name, children)`: one system to the world, children run in order with `world.commands` applied after each, nests, children unmodifiable.
-- [x] 4.3 `SystemPhase { prePhysics, physics, postPhysics, late }` via `addSystem(system, phase:)`; default `physics` so unchanged call sites keep insertion order (stable sort within a phase).
-- [x] 4.4 `addSystem(after: [...])` declarations (no reordering) and `world.validateSystemOrder()` returning sentences for missing or later-running predecessors, phase-aware. Ready for lint/doctor (9.2).
-- [x] 4.5 `FunctionSystem` and `world.addSystemFn(name, fn, phase:, after:)`.
-Gates: engine_core 1425 tests; all packages green (platformer 352, strategy 47 with the new goldens). G3 median of 3: world_step 7.34/68.1us (baseline 7.33/67.7), collision 180/1813us (177/1798).
-Not done here: the installers (`installPlatformerSystems`, `installStrategySystems`) do not yet declare `after:` or phases; that is Phase 6 (presets) and must keep the golden orders passing.
+### Systems
+- [ ] **System context**: `System.update(context)`. **Blocked by design**: 65 classes `implements System`, so any new member breaks them; needs a migration plan or a wrapper type.
+- [ ] **Systems declare their queries** (`query of: [Position, Velocity]`); `query/query2/query3` exist, this is only the declaration sugar.
 
-#### Phase 5: Determinism and time (applies findings under "Determinism")
-- [x] 5.1 `world.random` (`WorldRandom`, 32-bit mulberry32, state is one int) and `World(seed:)` (default 0). **Plan change:** `DeterministicRandom` wraps `dart:math`, whose state cannot be read, so it could not be snapshotted; it is left untouched (existing replays keep their sequences) and `WorldRandom` is the new simulation stream. Saved in `WorldSnapshot.randomState` (capture, `restoreInto`, JSON); network deltas and filtered snapshots deliberately omit it. Proven identical to canonical JS mulberry32 under node, and the dart2js build under node printed the same values (web-safe). **Not yet in `World.toJson()`**: the RNG position is therefore not part of a plain save; 6.3 (`world.save()/load()`) must decide whether to include it.
-- [x] 5.2 `FixedStepper(step, maxStepsPerFrame:)` with `advance(frameDt, onStep)`, `alpha`, `reset`; 1 second is exactly 60 steps at 30/60/144 fps; excess time beyond the cap is dropped (no spiral of death).
-- [x] 5.3 `world.after/every` (`TimerHandle`): simulated-time closure timers advanced at the start of `step`, registration order, per-interval catch-up, runtime-only. Plus the serializable form: `CountdownTimer` component (`countdownTimer` in `engine_schema`, docs regenerated), `CountdownTimerSystem` (**must be added to the world**; Phase 6 presets should add it) and `CountdownTimerFired` event. One timer per entity.
-- [x] 5.4 `test/core_purity_test.dart` (G4 as a test, mutation-checked): no Flutter/`dart:ui` import in `lib`; no `DateTime.now` and no unseeded `Random()` in simulation dirs. **Finding:** `ParticleSystem` defaults to an unseeded `Random()`, so a world with particles is not reproducible unless the caller passes `random:`. Allowlisted with a test that fails when the exception becomes unnecessary. **Follow-up needing an owner decision:** default `ParticleSystem` to a seeded stream (e.g. from `world.random`)? It changes particle visuals from run to run to identical.
-Gates: engine_core 1463 tests; every other package green. G3: world_step 7.34/68.1us (baseline 7.33/67.7) unchanged; **entity_churn drifting up**: median of 3 now 1731/17970us vs baseline 1654/16738 (+4.6% / +7.4%), close to the 10% limit and cumulative since Phase 2 (generation counter on destroy, plus noise). Watch it in Phase 6/7; if it passes 10%, optimize `EntityManager.destroy` (it does a set remove, list add and generation increment) before adding more to that path.
+### AI, behavior trees and state machines
+`ai/behavior_tree.dart` already has the node classes and `BTNode.fromJson`; the factories below are sugar over them, JSON shape unchanged. `BT.inRange/seeTarget/ifHasTarget` need `WorldView` access (check what `BTContext` exposes first).
+- [ ] **Fluent BT DSL / factories**: `BT.sequence`, `BT.selector`, `BT.leaf`, `BT.repeat(n, child)`, `BT.forever`, `BT.wait`, `BT.cooldown`, `BT.random`, `BT.inRange`, `BT.seeTarget`.
+- [ ] **Inline behaviors**: `Behavior((view, self) => ...)` for trivial cases.
+- [ ] **AI helpers and blackboard sugar**: `ai.setBehavior`, `ai.runTree`, typed `blackboard.get/set/has/inc`.
+- [ ] **Steering combinators**: composable `Steer.seek(arrive(wander(...)))` over existing `steering.dart`.
+- [ ] **State machine DSL**: cleaner JSON or builder over `state_machine.dart`.
 
-#### Phase 6: Presets and the core builder
-- [x] 6.1 `SystemPresets.core(world, {behaviors})` (`ecs/system_presets.dart`): `countdownTimer` (+ `ai`) pre-physics; `movement` -> `collision` -> `pushable`, `tileAnimation`, `tween`; `particle` late; `collision`/`pushable` declare `after:` so `validateSystemOrder()` stays meaningful; particles use `Random(world.seed)`. **Plan change:** no per-genre `SystemPresets.platformer/topdown/turnBased/idle`. Dart extensions cannot add static members to a class, and `installPlatformerSystems` / `installStrategySystems` already ARE those presets (golden-pinned); a second spelling would be alias sprawl. A `topdown` preset has no code to wrap yet. `engine_idle` has no installer to wrap.
-- [x] 6.2 `GameBuilder.create({width,height,seed,fixedStep,behaviors,presets,register})` returns a `GameLoop` (`update`, `pause`, `resume`, `stop`, `spawnAt/spawn/entity` shortcuts). D3 held: `GameBuilder`/`GameLoop`, engine_flutter's `Game` untouched. Hello-world tests: a bouncing ball (core, ~10 lines) and a moving `Sprite` (`engine_flutter/test/game_builder_flutter_test.dart`) using `register: [registerFlutterComponents]`. `game_builder.dart` imports `registerCoreComponents` from the barrel (a legal cycle, because that function lives in `engine_core.dart`); moving it into its own file is a cleanup for Phase 7+.
-- [x] 6.3 `world.save()` / `world.load(data)` (extension in `net/world_snapshot.dart`): version-1 JSON with seed, tick, **random position**, all entities; load restores original ids, destroys extras, validates the version first. This resolves the Phase 5 question: the RNG position is in `save()`, not in `toJson()` (shape unchanged). **Skipped on purpose:** the `world.update(dt)` alias (`GameLoop.update` is the entry point; a second name for `World.step` is alias sprawl) and `world.start()` (= `GameLoop.resume`).
-Gates: engine_core 1485 tests; all other packages green (flutter 552). G3 median of 3: world_step 7.48/68.7us (baseline 7.33/67.7); entity_churn 1715/17516us vs 1654/16738 (+3.7% / +4.6%, back down from +7%; run-to-run noise is ~5%).
+### Levels, prefabs and assets
+Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `level_validator.dart`, `tmx_import/export.dart`, `AssetHotReload` exist.
+- [ ] **Asset loading**: `Level.fromAsset('levels/1.json')`.
+- [ ] **Prefab registry audit**: compare the existing prefab API with `register('enemy', {...})` / `spawn('enemy', pos)`.
+- [ ] **Auto-spawn from prefab** (`PrefabRef` component).
+- [ ] **Component defaults on level load**.
+- [ ] **Validation with fixes**: messages like "missing Position on entity 'player', add {...}"; extend `level_validator.dart`, do not add a second validator.
+- [ ] **Tiled mapping polish** and **hot-reload friendliness**.
 
-#### Phase 7: Migration (mechanical, per directory, one commit each)
-Order: `ecs/` -> `physics/` -> `ui/` -> `content/` -> `ai/` -> `turn/` -> `idle/` -> `net/` -> `engine_flutter` -> `engine_platformer` -> `engine_strategy` -> `engine_idle` -> `engine_studio`.
-- [x] 7.n Migrated by a receiver-aware script (`World.storeOf<T>()` -> `componentsOf<T>()`; `ComponentRegistry.storeOf` left alone), one commit per core `lib/src` directory (ecs, physics, ui, content, ai, turn, idle, net, ops, rendering), then one per package for lib, tests/benchmarks and integration tests, then docs. **Deliberate scope decision:** pure rename only. Converting `.set(...)` call sites to `setComponent` would make them reject dead entities (a behavior change) and was *not* done; `.get/.has/.remove` chains were left as `componentsOf<T>().get(...)` rather than rewritten, to keep every commit provably behavior-neutral. A later, optional pass can move hot call sites to `getComponent` etc. where it reads better. Lessons: the first pass missed multi-line receivers (`world\n.storeOf<T>()`; one was in `engine_idle/lib`), and `git add` with a missing pathspec silently staged nothing, so commits were re-done with `git add -u`.
-  - Counts: ~660 lib and ~2,850 test/benchmark call sites plus 25 markdown files; remaining `storeOf` mentions are the `World.storeOf` shim itself, `ComponentRegistry.storeOf`, and the two shim tests in `world_component_access_test.dart`.
-  - Gates: every directory/package commit ran analyze `--fatal-infos` and the package suite; the final full gate is green (core 1485, flutter 552, platformer 352, strategy 47, idle 196, studio 449, cli 131, api 61, schema 18). G3 after the migration: world_step 7.35/68.1us, collision 180/1813us (at baseline).
-- [x] 7.deprecate `World.storeOf` is `@Deprecated` (message names the replacements). `--fatal-infos` stays green because nothing in the repo calls it except the two shim tests, which carry an explicit ignore. `CHANGELOG.md` updated.
-- [ ] 7.final **Removal of `World.storeOf` is a separate, owner-approved step after one release** (downstream projects pin `ref: main`). Not done.
+### Physics, collision and movement
+`world.raycast` and `world.findNear` are extension wrappers over `raycast.dart` / `spatial_hash.dart`; check whether the hash is rebuilt per step before calling `findNear` cheap.
+- [ ] **Simple movement helpers**, **tilemap helpers** (`isSolid(x,y)`, tile/world coordinate conversion), **`world.raycast(from, to)`**, **`world.findNear(pos, radius)`**.
 
-#### Phase 8: Agent/API parity and documentation
-- [x] 8.1 Parity decisions made and published in the "What agents can call and what stays code" table of `docs/concepts/authoring.md`. Outcome: **no new operations**, on purpose. The data-level conveniences (spawn, tags, timers) are ordinary registered components already reachable through `level.add_entity`, `level.set_field`, `world.build`, `world.patch`; the only gap that was real, patch validation, became 8.2. `validateSystemOrder` is wired to `game_agent doctor` in 9.2 (which needs the 1:1 operation + command).
-- [x] 8.2 `World.checkPatch` -> `List<PatchProblem(path, message)>` (missing/non-list entities, non-object entity, non-int id, dead id, non-object components, unknown component name listing the registered ones, data `fromJson` rejects), `applyPatch(strict: true)` (all-or-nothing, one exception listing every problem; default stays lenient), `ComponentRegistry.checkComponent`; `world.patch` operation gained `strict` and `dryRun` (dryRun returns `ok` + `problems`). `docs/reference/operations.md` and bundled docs regenerated; CLI/API parity tests green.
-- [x] 8.3 `World.debug()`: one-screen text (tick, seed, entities, per-component counts, system order with disabled marked, queued commands, order problems).
-- [x] 8.4 New guide `docs/concepts/authoring.md` (nav entry in `mkdocs.yml`) covering GameBuilder, components, spawning, tags, queries, commands, systems/phases, time/random/timers, save/load/check/debug and the code-vs-agent table; every snippet is mirrored in `engine_core/test/doc_examples_authoring_test.dart` (9 tests). Cheatsheet's first block now uses `getComponent/setComponent/spawnWith/save/load`; bundled docs regenerated. Not done: rewriting tutorials 01/03/04 and getting-started to the new API (they still use `componentsOf<T>().set/get`, which is correct and tested, just older style), and `mkdocs build` was not run here (not installed in this environment).
-Gates: core 1507, cli 131, schema 18, api 61, flutter 552, platformer 352, strategy 47, idle 196, studio 449; analyze clean everywhere.
+### Turn-based (lives in `engine_strategy`)
+- [ ] `TurnGame.setup(world)`, `unit.do(MoveTo/Attack)` via `OrderQueue`, `game.nextTurn()/endPlayerTurn()` callbacks, `game.select/selectAll/commandSelected`, opt-in AI turns.
 
-#### Phase 9: Testing harness and tooling
-- [x] 9.1 `package:engine_core/engine_core_testing.dart` (separate entry point; uses `dart:io`, no test-framework dependency): `GameTester` (`tick`, `advance`, `tickUntil` that fails with `world.debug()` instead of hanging, `component<T>` whose error lists what the entity does have, `record<E>`, `snapshotText`, `describe`), `canonicalJson`, `expectGolden(path, text)` (creates a missing golden, first-differing-line failure, `UPDATE_GOLDENS=1` refresh). First real golden: `test/golden/small_simulation.json`. 14 tests.
-- [x] 9.2 `project.doctor` / `game_agent project doctor`: content (shared collector with `project.problems`), layout, and `engine_*` dependency agreement (one git url + ref; git/path mix warns; a mismatch is an error because pub cannot solve it, the CLAUDE.md known limitation). Output `{ok, checks:[{name,status,detail}]}`; CLI exits 1 when `ok` is false. **Plan change:** the system-order check is NOT in doctor: it needs the game's code, so it is asserted in tests with `GameTester` (documented). `operations.md`, `transports.md` (91 -> 92 operations) and bundled docs regenerated. *Process slip:* commit `18c4e10` left `bundled_docs.g.dart` stale after `transports.md` was regenerated, so core's docs-drift test failed at that commit; fixed in the 9.3 commit below.
-- [x] 9.3 Templates migrated to the new API (`setComponent`, `getComponent`, `componentsOf`; no `storeOf` left; the `.tmpl` files had been missed by the Phase 7 script, which only handled `.dart` files). **Verification (G6 offline):** a script (`verify_templates.py`, kept in the session scratchpad) copies each template, fills the placeholders, swaps the git dependencies for local path dependencies plus `dependency_overrides`, runs `flutter pub get --offline`, `flutter analyze` and the template's own `flutter test`. Findings: all three templates were **already broken before this work** (confirmed by building the old idle template against the engine at `0cd3661` in a worktree): `const [CreditsEntry(...)]` with a non-const constructor, an ambiguous `Text` import in the idle template, and a missing `MemorySaveStore` import in its test. Fixed (`CreditsEntry` const constructor; `hide Text`; the import). Now: all three analyze clean; default and strategy widget tests pass; **the idle template's widget test still fails** (`timewarp-hour` key not found, also failing against the old engine). Recorded in `TODO.md` ("Template health"), not fixed here.
-Gates: core 1531, cli 132, api 61, schema 18, flutter 552, platformer 352, strategy 47, idle 196, studio 449; analyze clean everywhere. Not run: CI's real `game_agent create` against the pushed ref (pub.dev/GitHub unreachable from here).
+### Input and UI (`engine_flutter`)
+Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_system.dart` and cinematic camera steps exist; `core/content/action_aliases.dart` may overlap.
+- [ ] **`Input` facade** (`Input.isPressed(Key.up)`, `getAxis`), **action mapping**, **UI button/trigger wiring**, **`Camera.follow/bounds/shake` audit**.
 
-#### Phase 10: Remaining backlog (each independent; pick one at a time, same step contract)
-`BT.*` factory DSL, steering combinators, `Input` facade, `Camera.follow/shake` audit, parent/child hierarchy, particle pooling (benchmark-led), save versioning/migrations, audio sugar, prefab-registry audit, Tiled mapping polish, turn-based `TurnGame`, debug overlay additions. Each gets its own mini-spec appended here before work starts (files, tests, gate).
+### Errors and debugging
+`WorldPatchException` is the model for message quality.
+- [ ] **Actionable errors**: every "component not found" says how to fix it.
+- [ ] **Type-aware errors**: expected vs got.
+- [ ] **Dev-mode warnings** beyond system order (missing registration) and helpful debug-only asserts.
+- [ ] **Machine-readable errors**: code, entity, component, suggested fix, in addition to the human message.
 
-### Definition of done for the whole effort
-G2 green on a clean tree; G3 within threshold; G4 clean; G5 regenerated; G6 passing; no `storeOf` outside the deprecated shim; the hello-world test exists; every new public member documented.
+### API surface cleanup
+- [ ] Minimal barrel exports (advanced/internal to subpaths), consistent naming, remove redundancy, extension methods over bloating classes, dartdoc examples on public API.
 
-## Backlog reference (unphased idea list; the phases above draw from this)
+### Time and tweens
+- [ ] **Tween helper**: `world.tween(entity, (Position p) => p.x, to: 100, duration: 0.3, ease: Ease.outQuad)` as a friendly constructor over the existing serializable `Tween` component and `TweenSystem`.
+- [ ] **Coroutine-style sequences**: `world.sequence([wait(1), () => spawn(...), wait(2)])`.
+- [ ] **Input recording and replay**: `ReplayRecorder` exists; wire inputs + `world.random` seed so a bug can be reproduced headlessly.
 
-## Current state (verified against code, 2026-11-02)
-Read before picking items; several "new" ideas below already exist in part. Each section also carries a `> Status:` note.
-- **Exists already**: `DeterministicRandom`, `ReplayRecorder`, `WorldSnapshot` (rollback/net), `Tween` + `TweenSystem`, `BTCooldown/BTWait/BTTimer/BTRandomSelector/...` nodes, archetype iteration (`ArchetypeManager`), `SpatialHash`, `raycast.dart`, `CommandHistory` (editor undo), `Scene` + `scene_transition` + menu scenes (`engine_flutter`), `AudioManager`, `debug_overlay`, `save_game`, `Camera`, `World.toJson/applyPatch/componentCounts/systemOrder/profiler`, per-component `ComponentSchema`, `world.query/patch/snapshot/step` operations, `game_agent create --template`, `game_agent lint`, `doc_examples_*_test.dart` compiled-doc tests.
-- **Does not exist**: a `Game` facade in `engine_core`, `world.after/every`, `EventBus.once/off`, command buffer, entity generations, parent/child, system phases/groups/enable flags, `SystemPresets`, fluent entity builder, `query2/3`, `BT.*` factory DSL, `game_agent doctor`, a headless test harness (`engine_flutter/lib/src/testing/` is empty).
-- **In flight (uncommitted)**: `world.dart` now has `component<T>()`, `getComponentStore<T>()`, `storeOf<T>()`, `componentsOf<T>()` all returning the store, plus `getComponent/setComponent/hasComponent/removeComponent`. See the naming warning under Component-Centric API.
-- **Scale of migration**: `storeOf` is used in roughly 30 files in `engine_core/lib` alone (heaviest: `turn/order_system.dart`, `idle/definition.dart`, `content/cinematic.dart`, `turn/gathering.dart`).
+### Scenes and game flow (stay in `engine_flutter`, D5)
+- [ ] Scene stack (`push/pop/replace` with enter/exit hooks), scene = level + systems + UI, built-in transitions. Do not create a second `Scene` type; `scene.dart`, `scene_transition.dart` already exist.
 
-## Philosophy
-- [ ] **Components only**: Everything attachable to entities is a component. Never speak of "stores" in public API. Think in `getComponent/setComponent/hasComponent/removeComponent`.
-- [ ] **Convention over configuration**: Sensible defaults everywhere. A minimal game should work with < 20 lines of code.
-- [ ] **Explicit over magic**: When magic is used, it's discoverable and documented. No hidden global state.
-- [ ] **Pure core**: `engine_core` stays Flutter-free. All platform integration goes in `engine_flutter`.
-- [ ] **Data-driven friendly**: JSON/level data should be easy to load and spawn without manual wiring for every type.
+### Hierarchy
+- [ ] **Parent/child** with local vs world `Position` and cascading destroy (a registered `Parent` component; today `World.destroy` removes one entity).
+- [ ] **Named lookup**: `world.find('player')`, `world.findAll(tag: 'enemy')`, reusing the level `"name"` mechanism and `EntityTags`.
 
-## Quick Start DX
-> Status: `Game` already exists as an **abstract class in `engine_flutter`** (`logic/game.dart`), so a core `Game` needs a different name (e.g. `GameBuilder`/`GameSetup`) or an explicit relationship (core `Game` that the Flutter one extends), or two public `Game` types will clash for consumers importing both. Genre install helpers exist per package (`installPlatformerSystems`, `installStrategySystems`); `SystemPresets` should wrap those, not duplicate them, and respect the DAG (core cannot call platformer/strategy installers; presets for those live in their packages).
-- [ ] **Game facade**: Add `Game` class in `engine_core` with `Game.create(width, height, {systems})` that auto-registers components, adds sensible system presets, and exposes `world`, `update(dt)`, `spawn()`, etc.
-- [ ] **Auto-register on demand**: Allow components to self-register or auto-register when first used. Eliminate the need to manually call `registerCoreComponents` in most cases.
-- [ ] **System presets**: Add `SystemPresets.core(world)`, `SystemPresets.platformer(world)`, `SystemPresets.topdown(world)`, `SystemPresets.turnBased(world)`, `SystemPresets.idle(world)`. Each adds systems in correct dependency order with one call.
-- [ ] **Entity factory**: Add `world.entity()` returning a fluent builder, or `world.spawnWith([Component1(...), Component2(...)])`. Support `..add()`, `..withX()`, chaining.
-- [ ] **Spawn shortcuts**: `world.spawnAt(x,y)` creates entity with `Position(x,y)`. `world.spawnSprite(...)`, `world.spawnBody(...)` for common patterns.
-- [ ] **Minimal hello-world**: Test that a bouncing sprite can be made in < 15 lines with new API.
+### Testing
+- [ ] **`GameTester.press(action)`** and component matchers (`hasComponent<Dead>()`); **test builders** (`TestWorld.withPlayer()`). The `engine_flutter/lib/src/testing/` directory is empty and is the home for a Flutter-side harness.
 
-## Component-Centric API (No "Store" Leaks)
-> Status: `World.getComponent/setComponent/hasComponent/removeComponent` already exist (uncommitted). **Naming collision**: `world.component<T>()` currently returns the whole store, but the item below wants `component<T>(id)` returning a nullable value. Pick one before more code depends on it. Also the uncommitted diff adds four aliases for the same store accessor (`component`, `getComponentStore`, `storeOf`, `componentsOf`), which is the API-explosion problem this file warns about; keep one canonical name and deprecate the rest. Archetype iteration exists (`Archetype.dense<T>()`, `ArchetypeEntity.get<T>()`) but is not wrapped by `query/query2/query3`. `Entity` is currently only `typedef EntityId = int`; `EntityManager` recycles ids with no generation counter.
-- [ ] **Decide canonical store accessor name** and remove the three redundant aliases from `World` (and from `ComponentRegistry` if mirrored) before the deprecation pass.
-- [ ] **Resolve `component<T>()` vs `component<T>(id)`** (return type conflict) in one decision, recorded here.
-- [ ] **Rename conceptually**: In all public APIs, comments, docs, errors - use "component" not "store". `ComponentStore` can remain as internal impl but never exposed as "Store API".
-- [ ] **World component access**: Add `world.getComponent<T>(id)`, `world.setComponent<T>(id, T value)`, `world.hasComponent<T>(id)`, `world.removeComponent<T>(id)`. Add `world.component<T>(id)` as shorthand returning nullable.
-- [ ] **Entity handle**: Create lightweight `Entity` or `EntityRef` with `get<T>()`, `set<T>(v)`, `has<T>()`, `remove<T>()`, `destroy()`. Pass these around instead of raw ints where ergonomic.
-- [ ] **Component container access**: `world.components<T>()` returns the component collection for iteration/querying. `world.allComponents<T>()` for dense iteration.
-- [ ] **Query helpers**: Add `world.query<T>()`, `world.query2<A,B>()`, `world.query3<A,B,C>()` returning iterators/tuples. Hide archetype complexity.
-- [ ] **Migrate incrementally**: Replace `storeOf<T>()` with component-centric APIs on every file touched. Don't add new `storeOf` usages.
-- [ ] **Deprecation path**: Mark `storeOf` deprecated with clear migration message pointing to component APIs.
+### Agent-friendliness
+- [ ] **Self-describing schema**: check what `schema_ops` returns before adding `world.describe()`.
+- [ ] Keep the JSON contract: fluent builders, handles and shortcuts stay sugar over plain JSON-serializable components; any new convenience API gets an operation + `game_agent` command or a documented exemption (see the table in `docs/concepts/authoring.md`).
 
-## Smarter World API
-> Status: `EventBus` has only `on<T>`, `emit`, `flush`, `clearHandlers`. There is **no unsubscribe, no `once`**, so `world.on` auto-unsubscribe needs `on` to return a handle first. Handlers are keyed by `event.runtimeType` (a subclass event will not reach a base-type handler); document or fix. Flush caps at 20 cascade rounds and defers the remainder to the next flush (pinned in `golden_behavior_test.dart`); a runaway self-emitting handler therefore never terminates a step's flush cleanly, so dev mode should warn. `World.step` already exists (add `update` as an alias only if you accept another alias). `onCollisionBetween/Involving/WithAny` already exist in `ecs/event_helpers.dart`, so the "collision callbacks" item is mostly done: expose them via the facade and add unsubscribe. `World.dispose()` exists and shuts down the job system only; it does not clear event handlers or systems.
-- [ ] **Return a subscription handle from `EventBus.on`** (prerequisite for `once`, `off`, scene-scoped listeners).
-- [ ] **Leak guard**: `onCollision*` helpers register forever and are never removed when the entity dies; tie them to entity lifetime.
-- [ ] **Shortcuts**: `world.get<T>(id)`, `world.set<T>(id, T)`, `world.has<T>(id)`, `world.del<T>(id)` as ultra-short aliases.
-- [ ] **Batch operations**: Support setting/removing multiple components efficiently.
-- [ ] **Event sugar**: `world.on<E>((e) => {})`, `world.onCollision((a,b,e) => {})`, `world.once<E>((e)=>{})`. Auto-unsubscribe helpers.
-- [ ] **Update wrapper**: `world.update(dt)` as alias to `step(dt)` with clearer naming for game devs.
-- [ ] **Lifecycle**: `world.start()`, `world.pause()`, `world.stop()` helpers for game loops.
-- [ ] **Save/Load**: `world.save()` returning `Map<String,dynamic>`, `world.load(data)` as cleaner than raw `toJson/applyPatch`.
-- [ ] **Dispose properly**: Ensure all resources cleaned up, job system shut down.
+### Tooling and onboarding
+- [ ] **CLI templates** `platformer|topdown|turnbased|idle` generating a runnable < 20-line `main` (existing: default, strategy, idle).
+- [ ] **Cookbook** recipes (health bar, pickup, door+key, enemy patrol, dialogue) in `docs/examples` or `docs/tutorials`, each backed by a test.
+- [ ] **Migration guide** for downstream projects (`storeOf` -> component API) before 7.final.
 
-## Entity & Component Ergonomics
-- [ ] **Fluent API everywhere**: `world.spawn().at(10,20).with(Velocity(5,0)).with(Collider(8))`.
-- [ ] **Component defaults**: Allow components to have `static const defaults` or builder constructors. `Collider()` with sensible radius.
-- [ ] **Attach/detach**: `entity.add<Component>(value)`, `entity.remove<Component>()` clear and chainable.
-- [ ] **Optional components**: Make missing components return null gracefully, avoid crashes.
-- [ ] **Tags as components**: Simple marker components should be trivial to add/remove.
-- [ ] **Component pools**: Consider pooling for high-churn components (particles) to reduce allocations.
+### Content polish
+- [ ] **Audio sugar** (`game.sfx('jump')`, headless no-op), **particles preset** with pooling, **save versioning** with per-component migrations (check `save_codec.dart` for an existing version field first), **debug overlay** additions (FPS, collider outlines, system timings).
 
-## Systems Refactor
-> Status: `System` is just `{ String get name; void update(World, double dt) }`; `World` keeps a flat `_systems` list in insertion order and exposes `systemOrder` (names only). No phases, groups, enable flags or dependency declarations exist. `WorldProfiler` already times each system by `name`, so any group/phase wrapper must keep unique, stable names. `installPlatformerSystems` has an `includeAnimation` flag that CLAUDE.md names as the one accepted flag exception; phases should replace such flags rather than add more. Order bugs are historically real here (`JumpSystem` vs tile grounding), so auto-ordering needs a regression test per declared dependency.
-- [ ] **System ordering enforced**: Core dependencies (Movement before Collision) enforced or auto-sorted.
-- [ ] **System groups**: `SystemGroup([sys1, sys2])` can be added as one unit.
-- [ ] **Phase-based systems**: `updatePhase` (prePhysics, physics, postPhysics, late) for better organization.
-- [ ] **Conditional systems**: Enable/disable systems easily without removing them.
-- [ ] **System context**: Pass `dt`, `world` cleanly. Consider `System.update(context)`.
-- [ ] **ECS queries built-in**: Systems can declare queries (`query of: [Position, Velocity]`) and iterate efficiently.
-- [ ] **Less boilerplate**: Function-based systems or mixins to reduce class ceremony.
-
-## AI, Behavior Trees & State Machines
-> Status: `ai/behavior_tree.dart` already has node classes `BTSequence/Selector/Parallel/Inverter/Repeater/Succeeder/Failer/Leaf/Wait/Cooldown/RandomSelector/RandomSequence/UntilSuccess/UntilFailure/Timeout/Throttle/Timer` plus `BTNode.fromJson`, and `BehaviorTreeGraph` (graph editor) compiles to it. So `BT.cooldown`, `BT.random`, `BT.wait`, `BT.repeat` are **factories over existing nodes**, not new nodes; keep JSON shape unchanged. `steering.dart`, `flee_behavior.dart`, `state_machine.dart` exist; the "composable Steer" item is about combinators, not new behaviors. `BT.inRange/seeTarget/ifHasTarget` are new and need `WorldView` access (check what `BTContext` exposes before promising them).
-- [ ] **Fluent BT DSL**: `BT.sequence([BT.ifHasTarget(...), BT.chase(), BT.wait(0.5)])` much cleaner than deep nesting.
-- [ ] **BT node factories**: `BT.leaf('idle')`, `BT.selector([...])`, `BT.repeat(n, child)`, `BT.forever(child)`.
-- [ ] **Inline behaviors**: `Behavior((view, self) => MoveAction(...))` for trivial cases without full classes.
-- [ ] **BT helpers**: `BT.inRange(radius, child)`, `BT.seeTarget(child)`, `BT.random([children])`, `BT.cooldown(sec, child)`.
-- [ ] **AI helpers**: `ai.setBehavior('chase')`, `ai.runTree(root)`, hide memory keys.
-- [ ] **Blackboard sugar**: `blackboard.get/set/has/inc` with type safety.
-- [ ] **Steering made easy**: `Steer.seek(arrive(wander(...)))` composable.
-- [ ] **State machine DSL**: Cleaner JSON or builder API.
-
-## Levels, Prefabs & Assets
-> Status: `content/prefab.dart` (+ `command/prefab_commands.dart`, `ops/groups/prefab_ops.dart`), `Level.loadInto`, `LevelDocument`, `level_validator.dart`, `tmx_import/export.dart`, and `AssetHotReload` (`engine_flutter/logic/asset_hot_reload.dart`) already exist. Treat "Prefab registry", "Tiled integration" and "Hot reload friendly" as **audit-and-polish**, not greenfield: check the existing prefab API against the proposed `register/spawn` shape first. The "validation with fixes" item should extend `level_validator.dart` messages (and the `problems_ops` output) rather than add a second validator.
-- [ ] **Asset loading**: Integrate with Flutter/assets or simple file loading. `Level.fromAsset('levels/1.json')`.
-- [ ] **Prefab registry**: `PrefabRegistry` with `register('enemy', {...})`, `spawn('enemy', pos)`.
-- [ ] **Auto-spawn from prefab**: Attach `PrefabRef` component and have system spawn it, or just call directly.
-- [ ] **Component defaults on spawn**: Level loader fills missing defaults intelligently.
-- [ ] **Validation with fixes**: Errors say "missing Position on entity 'player', add {\"type\":\"position\",\"x\":0,\"y\":0}".
-- [ ] **Tiled integration smoother**: Easier mapping from Tiled objects/tiles to components/prefabs.
-- [ ] **Hot reload friendly**: Level/prefab changes easy to reload in dev.
-
-## Physics, Collision & Movement
-> Status: `physics/raycast.dart` (`RaycastHit`), `spatial_hash.dart`, `pathfinding.dart`, `collision_system.dart` exist, so `world.raycast` and `world.findNear` are **extension-method wrappers** (`on World`, same pattern as `CollisionEventHelpers`), not new engines. Check whether the spatial hash is rebuilt per step or persistent before exposing `findNear` as cheap.
-- [ ] **Simple movement**: `Movement.move(entity, dir * speed * dt)` helpers.
-- [ ] **Collision callbacks**: Easier to react to collisions without manual event wiring.
-- [ ] **Tilemap helpers**: `tilemap.isSolid(x,y)`, `tilemap.getTile(x,y)` with world/tile coords conversion.
-- [ ] **Raycast API**: Simpler `world.raycast(from, to)` returning hits.
-- [ ] **Spatial queries**: `world.findNear(pos, radius)` returns entities/components easily.
-
-## Turn-Based Simplification
-> Status: `installStrategySystems`/`spawnStrategyUnit` (`engine_strategy`), `OrderQueue`, `selection.dart`, `turn_system.dart`, `ai_turn.dart` exist. `TurnGame.setup`, `unit.do(...)` and `game.select(...)` should wrap these (orders already queue via `OrderQueue`). Lives in `engine_strategy`, not core, where it needs Flutter-side wiring.
-- [ ] **One-call setup**: `TurnGame.setup(world)` wires everything.
-- [ ] **Action API**: `unit.do(MoveTo(x,y))`, `unit.do(Attack(target))` queued automatically.
-- [ ] **Turn flow**: `game.nextTurn()`, `game.endPlayerTurn()` with callbacks.
-- [ ] **Selection**: `game.select(entity)`, `game.selectAll([ids])`, `game.commandSelected(action)`.
-- [ ] **AI turns**: Opt-in, simple to customize.
-
-## Input & UI
-> Status: `InputState`, input bindings storage, gamepad manager/remap menus, on-screen controls, `Camera`, `animation_shake_system.dart`, `cinematic_camera_steps.dart` (pan/zoom/shake/follow steps) all exist in `engine_flutter`. "Input manager", "action mapping" and "camera helpers" are therefore mostly **unification and discoverability** work (one `Input.isPressed(...)` facade over existing bindings; `camera.follow/shake` on `Camera` itself, if not already there). `core/content/action_aliases.dart` exists, so check overlap before adding another mapping layer.
-- [ ] **Input manager**: `Input.isPressed(Key.up)`, `Input.getAxis()`, unified across platforms.
-- [ ] **Action mapping**: Bind keys/buttons to game actions.
-- [ ] **UI helpers**: Simpler button/trigger wiring with callbacks.
-- [ ] **Camera helpers**: Follow target, bounds, shake.
-
-## Error Messages & Debugging
-> Status: `WorldPatchException` already gives indexed messages ("entities[i].id must be an int, got ..."), the model to copy. `World.componentCounts()`, `WorldProfiler` and `engine_flutter` `debug_overlay.dart`/`debug_memory.dart` exist, so `world.debug()` is a thin text summary over `componentCounts` + `systemOrder` + `entities.count`. Note `applyPatch` silently skips dead entity ids (`if (!entities.isAlive(rawId)) continue;`) and returns early when `entities` is missing; the dry-run/strict mode should report these.
-- [ ] **Actionable errors**: Every "component not found" says how to fix it.
-- [ ] **Type-aware errors**: When wrong type passed, show expected vs got clearly.
-- [ ] **Dev mode warnings**: Warn about common mistakes (system order, missing registration) in debug.
-- [ ] **World inspector helpers**: `world.debug()` prints entity/component summary.
-- [ ] **Assertions**: Helpful asserts in debug, stripped in release.
-
-## API Surface Cleanup
-- [ ] **Barrel exports minimal**: `engine_core.dart` exports only what game devs need. Move advanced/internal to subpaths.
-- [ ] **Consistent naming**: Pick one style and apply everywhere (camelCase methods, clear names).
-- [ ] **Remove redundancy**: Eliminate duplicate/confusing APIs.
-- [ ] **Type inference friendly**: APIs should work well with Dart's inference.
-- [ ] **Extension methods**: Use extensions to add ergonomics without bloating classes.
-- [ ] **Documentation**: Every public API has clear dartdoc with examples.
-
-## Performance Without Complexity
-- [ ] **Query optimization**: Archetype queries fast but hidden behind simple API.
-- [ ] **Avoid allocations in hot paths**: Where possible, but don't sacrifice DX.
-- [ ] **Pooling helpers**: Easy to pool objects/components.
-- [ ] **Profiling optional**: `WorldProfiler` exists but not required.
-
-## Time, Timers & Tweens (suggested)
-> Status: `rendering/tween.dart` + `tween_system.dart` already provide a serializable `Tween` component and system, so the tween item is "friendly constructor over the existing component", not a new system. Timers: no `world.after/every` exist; BT has `BTWait/BTCooldown/BTTimer` but only inside trees. A timer component must be registered (JSON-serializable) per CLAUDE.md or it silently won't save/snapshot.
-- [ ] **Timers without systems**: `world.after(1.5, () => ...)`, `world.every(0.5, ...)`, cancellable handles. Backed by a component/system so they serialize or at least die with the world.
-- [ ] **Tween helper**: `world.tween(entity, (Position p) => p.x, to: 100, duration: 0.3, ease: Ease.outQuad)` for juice (UI, pickups, screen shake) without hand-written systems.
-- [ ] **Cooldown component**: One shared `Cooldown` / `Timer` component instead of each feature (attack, jump buffer, invuln) rolling its own float.
-- [ ] **Coroutine-style sequences**: `world.sequence([wait(1), () => spawn(...), wait(2)])` for cutscenes/scripted events.
-
-## Determinism, Replay & Randomness (suggested)
-> Status: `DeterministicRandom(seed)` (`ecs/deterministic_random.dart`), `ReplayRecorder` (`ecs/replay_recorder.dart`, generic per-frame JSON) and `WorldSnapshot.capture/restore` (`net/world_snapshot.dart`, used by `rollback_session.dart`) **already exist**, plus `World.setTick`. Gaps: the RNG is not attached to `World` (and its internal `Random` state is not serializable, only the seed, so snapshots do not capture mid-stream position); no fixed-timestep accumulator; `rollback_session` is the consumer to align with. Rewrite items as "wire existing pieces onto `World`/`Game`" plus "make RNG state snapshot-able". Also audit for `Random()`/`DateTime.now()` in `engine_core/lib` (a grep found none outside `DeterministicRandom`, but re-run it as a CI check).
-- [ ] **Seeded RNG on the world**: `world.random` (seeded, serializable state). Ban bare `Random()` in engine code so runs are reproducible.
-- [ ] **Injectable clock**: No `DateTime.now()` in simulation; time only enters through `update(dt)`.
-- [ ] **Fixed-timestep option**: `Game.create(fixedStep: 1/60)` with accumulator so physics doesn't depend on frame rate.
-- [ ] **Input recording / replay**: Record inputs + seed, replay to reproduce bugs. Great for agents verifying behavior headlessly.
-- [ ] **Snapshot / rewind**: `world.snapshot()` / `world.restore(s)` (cheap undo, tests, turn-based "undo move").
-
-## Scenes & Game Flow (suggested)
-> Status: `Scene` (`engine_flutter/logic/scene.dart`), `scene_transition.dart`, `snapshot_transition.dart` and menu/settings/save-slot/credits scenes already exist, and TODO.md ("Mobarez sample follow-ups") already plans menus and save slots from them. So scenes are **not** a core concept today. Decide: keep them in `engine_flutter` (they render), or extract a Flutter-free `SceneStack` interface into core. Do not create a second `Scene` type.
-- [ ] **Scene stack**: `game.push(PauseScene())`, `game.pop()`, `game.replace(...)` with enter/exit hooks. Menu -> play -> game-over without custom state enums.
-- [ ] **Scene = level + systems + UI**: A scene bundles which systems run, so presets and levels compose.
-- [ ] **Transitions**: Fade/slide between scenes as a built-in.
-
-## Safe Mutation (suggested)
-> Status: `World.destroy` removes components immediately and `EntityManager` recycles ids LIFO (`_free.removeLast()`), so a stale id can silently alias a newly spawned entity; events are the only deferred mechanism (`EventBus.flush` after all systems). **Naming warning**: `lib/src/command/` (`EditCommand`, `CommandHistory`) is the *editor undo* system; a runtime command buffer should be named differently (e.g. `DeferredOps`/`WorldCommands`) to avoid confusion. Dense stores swap-remove (`ComponentStore.remove`), so destroying while iterating `denseAt(i)` skips entities, which is the concrete bug the command buffer fixes; add a regression test showing it.
-- [ ] **Command buffer**: `world.commands.spawn/destroy/set` deferred to end of system/step so destroying during iteration never corrupts queries. Make it the default inside systems.
-- [ ] **Clear failure on mid-iteration mutation**: In debug, throw with a message pointing to the command buffer rather than silently skipping entities.
-- [ ] **Entity ID safety**: Generation-checked handles so a stale `Entity` for a destroyed id is detectably dead, not a different new entity.
-
-## Hierarchy & Transforms (suggested)
-> Status: confirmed absent (no parent/child or local/world transform types). `Level.loadInto` already supports entity `"name"` lookup (see `content/level.dart`), so `world.find('player')` should reuse that mechanism. A new `Parent` component must be registered and must handle `World.destroy` cascading, which today removes only the one entity.
-- [ ] **Parent/child**: `entity.addChild(other)` with local vs world `Position`, auto-destroy children with parent (weapons, shadows, attached emitters).
-- [ ] **Named lookup**: `world.find('player')`, `world.findAll(tag: 'enemy')` for common cases without queries.
-
-## Testing DX (suggested)
-> Status: `engine_core/test` already has `doc_examples_*_test.dart` (compiled/exercised doc examples), `builder_test.dart`, determinism and snapshot tests; `engine_flutter/lib/src/testing/` exists but is **empty**, a ready home for the Flutter-side harness. A Flutter-free `GameTester` belongs in `engine_core` (e.g. `engine_core_testing.dart` entry point, like the existing `engine_core_ops/idle/io` split) so it is not pulled into production barrels. Golden snapshots can use `WorldSnapshot` rather than a new format.
-- [ ] **Headless test harness**: `GameTester` / `testGame(...)` with `tick(n)`, `advance(seconds)`, `press(action)`, and matchers like `expect(entity, hasComponent<Dead>())`.
-- [ ] **Golden world snapshots**: Compare `world.save()` against checked-in JSON after N ticks for regression tests.
-- [ ] **Test builders**: `TestWorld.withPlayer()` etc. so tests of new features don't repeat setup.
-
-## Agent-Friendliness (suggested; core design goal of the repo)
-> Status: every registered component already carries a `ComponentSchema` (`engine_schema`), and `ops/json_schema.dart` + `schema_ops.dart` + `world.query/patch/snapshot/step/build/discard` operations exist, so "self-describing schema" is partly done: check what `schema_ops` already returns before adding `world.describe()`. Dry-run exists at the CLI/op level (`apply: false` / `--dry-run` in `ops_cli.dart`) but **not** on `World.applyPatch`. Each new op must follow the add-operation checklist in `TODO.md` and regenerate `docs/reference/operations.md`.
-- [ ] **Self-describing schema**: `world.describe()` / generated JSON Schema for every registered component, so an agent can discover valid shapes instead of guessing.
-- [ ] **Dry-run patches**: `world.applyPatch(p, dryRun: true)` returns what would change plus validation errors.
-- [ ] **Errors are machine-readable**: Structured error (code, entity, component, suggested fix) in addition to the human message; feeds the "Actionable errors" item.
-- [ ] **Operation registry parity**: Every new convenience API (spawnAt, prefab spawn, timers) gets an operation + `game_agent` command per the 1:1 rule in CLAUDE.md, or an explicit documented exemption.
-- [ ] **Keep JSON contract**: Fluent builders, entity handles and shortcuts must be sugar over plain JSON-serializable components, never a parallel non-serializable path.
-
-## Tooling & Onboarding (suggested)
-> Status: `game_agent create --template` already exists (templates incl. `strategy_game`, `idle_game`; list the rest from `docs/reference/cli.md`), as does `game_agent lint` and `upgrade`. Missing: `doctor`. `docs/` already has `tutorials/`, `examples/`, `reference/cheatsheet.md`, `faq.md`, so the "cookbook" belongs in `docs/examples` or `docs/tutorials` rather than a new `docs/cookbook/`. Doc examples are already tested via `doc_examples_*_test.dart`; extend that pattern rather than adding a doc-extraction tool. Bundled docs are generated into `ops/bundled_docs.g.dart`, so doc edits require regenerating it.
-- [ ] **Templates in the CLI**: `game_agent create --template platformer|topdown|turnbased|idle` generating a runnable < 20-line `main`.
-- [ ] **`game_agent doctor`**: Checks registration gaps, system-order problems, bad level data, dependency-ref mismatch (see CLAUDE.md known limitation).
-- [ ] **Compiled doc examples**: Dartdoc code samples extracted and compiled in CI so the "Documentation with examples" item cannot rot.
-- [ ] **Cookbook**: `docs/cookbook/` with short recipes (health bar, pickup, door+key, enemy patrol, dialogue) each backed by a test.
-- [ ] **Migration codemod/guide**: Script or doc listing `storeOf` -> component API replacements so downstream projects can move fast.
-
-## Content Polish (suggested)
-> Status: `AudioManager`, `AnimationSfxSystem`/`DialogueSfxSystem`, `ParticleEmitter`/`ParticleSystem`/`particle_forces`, `save_game.dart` + `save_codec.dart` and `debug_overlay.dart` exist. Remaining value is facade sugar (`game.sfx('jump')`) and **save versioning/migrations** (check `save_codec.dart` for an existing version field before adding one). Particle pooling: measure first with the existing benchmarks.
-- [ ] **Audio sugar**: `game.sfx('jump')`, `game.music('theme')` with name registry and graceful no-op when headless.
-- [ ] **Particles preset**: `world.emit(Particles.burst(...))` using pooling.
-- [ ] **Save versioning**: Version field plus per-component migration functions so old saves load after component shape changes.
-- [ ] **Debug overlay**: Toggleable FPS, entity count, collider outlines, system timings in `engine_flutter`.
-
-## Risks & Guardrails (suggested)
-- [ ] **Benchmark gate**: Re-run `packages/engine_core/benchmark/` and `packages/engine_platformer/benchmark/` for any query/world/system change; fluent wrappers must not allocate in hot loops.
-- [ ] **Avoid API explosion**: `get`/`getComponent`/`component`/`storeOf` all coexisting is itself a DX bug. Pick the canonical name (suggest `get/set/has/remove`), keep others as documented deprecated aliases with a removal version.
-- [ ] **DAG check**: Anything touching `Game`, scenes or input must keep `engine_core` Flutter-free; Flutter-only parts (Input, audio) go behind interfaces in core.
-- [ ] **Definition of done per item**: Doc comment, test that fails without it, TODO.md/operations.md updated, `storeOf` usages in touched files migrated.
-
-## Open Questions (suggested)
-- [ ] Should `Entity` be a handle object or an extension type over `int` (zero-cost)?
-- [ ] Do auto-registered components still work with JSON load order guarantees, or must registration stay explicit for loaded levels?
-- [ ] Is `Game` a thin facade over `World` or the new primary entry point (affects what docs lead with)?
-- [ ] What is the deprecation window for `storeOf` given downstream generated projects pin `ref: main`?
-
-## Migration Strategy
-- [ ] **Backward compatible first**: Add new APIs, deprecate old ones gradually.
-- [ ] **Touch files to migrate**: When editing, migrate `storeOf` -> component APIs.
-- [ ] **Tests guide migration**: Keep all tests green, update them to nicer APIs over time.
-- [ ] **Incremental**: Don't big-bang rewrite. Improve API surface piece by piece.
-
-## Validation
-- [ ] **All tests pass**: `cd packages/engine_core && dart test` after every major change.
-- [ ] **Analyze clean**: `dart analyze --fatal-infos` always green.
-- [ ] **Tiny game test**: Write a minimal platformer/topdown using new APIs - if it's clumsy, simplify more.
-- [ ] **Flutter still works**: Check `packages/engine_flutter` compiles if touched.
-- [ ] **No core Flutter deps**: `grep -r "flutter" packages/engine_core/lib` returns nothing.
+## Standing guardrails
+- Components only in public API wording; convention over configuration (a minimal game in < 20 lines); explicit over magic; `engine_core` stays Flutter-free; data-driven friendly.
+- Fluent wrappers must not allocate in hot loops: run G3 for anything on a hot path.
+- No API explosion: one canonical name per concept, others deprecated with a removal plan.
+- Anything touching input, audio or scenes keeps `engine_core` Flutter-free; Flutter-only parts go behind interfaces in core.
+- Definition of done per item: doc comment, test that fails without it, `TODO.md` and reference docs updated, `storeOf` not used in touched files.
+- Definition of done for the whole effort: G2 green on a clean tree, G3 within threshold, G5 regenerated, G6 passing, no `storeOf` outside the deprecated shim (then none at all after 7.final).
