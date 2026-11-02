@@ -5,20 +5,24 @@ One page of the calls you'll use most. Each section links to the full story.
 ## Worlds, entities, components
 
 ```dart
-final world = World(width: 800, height: 600);
+final world = World(width: 800, height: 600, seed: 1);
 registerCoreComponents(world);                 // + registerFlutterComponents / registerPlatformerComponents
-final e = world.spawn();
-world.componentsOf<Position>().set(e, Position(10, 20));
-world.componentsOf<Position>().get(e);              // Position? (null if absent)
-world.componentsOf<Position>().has(e);
+final e = world.spawnWith([Position(10, 20)]); // or world.spawn() / world.spawnAt(x, y)
+world.setComponent(e, Velocity(5, 0));
+world.getComponent<Position>(e);               // Position? (null if absent)
+world.hasComponent<Position>(e);
+world.removeComponent<Velocity>(e);
 world.destroy(e);
-world.addSystem(MySystem());                   // order = registration order
+world.addSystem(MySystem());                   // order = phase, then registration order
 world.step(1 / 60);                            // run all systems, flush events
 world.systemOrder;                             // ['orders', 'turn', …]
 world.toJson();  world.applyPatch(json);       // read / write everything
+world.save();    world.load(data);             // whole world incl. the random stream
 ```
 
-→ [ECS](../concepts/ecs.md) · [content as data](../concepts/content-as-data.md)
+Shortest start: `GameBuilder.create(width: 320, height: 240, fixedStep: 1 / 60)`.
+
+→ [Writing games with less code](../concepts/authoring.md) · [ECS](../concepts/ecs.md) · [content as data](../concepts/content-as-data.md)
 
 ## Iterating a component store
 
