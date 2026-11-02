@@ -74,8 +74,16 @@ class World {
   /// within a phase. The default [SystemPhase.physics] is shared by everything
   /// registered without a phase, so code that never mentions phases keeps its
   /// exact insertion order.
-  void addSystem(System system, {SystemPhase phase = SystemPhase.physics}) {
-    final entry = _SystemEntry(system, phase);
+  ///
+  /// [after] names systems that must run before this one. It does not reorder
+  /// anything; [validateSystemOrder] reports when the real order breaks it, so
+  /// a hand-built system list cannot silently drift into a known bad order.
+  void addSystem(
+    System system, {
+    SystemPhase phase = SystemPhase.physics,
+    List<String> after = const [],
+  }) {
+    final entry = _SystemEntry(system, phase, after);
     var at = _systems.length;
     while (at > 0 && _systems[at - 1].phase.index > phase.index) {
       at--;
@@ -84,6 +92,39 @@ class World {
   }
 
   List<String> get systemOrder => _systems.map((e) => e.system.name).toList();
+
+  /// Problems with the current system order, as readable sentences; empty when
+  /// every `after:` declaration is satisfied.
+  ///
+  /// Reports a declared predecessor that is not registered at all, and one that
+  /// is registered but runs later than the system that needs it (including
+  /// because of its phase).
+  List<String> validateSystemOrder() {
+    final problems = <String>[];
+    for (var i = 0; i < _systems.length; i++) {
+      final entry = _systems[i];
+      for (final needed in entry.after) {
+        var lastAt = -1;
+        for (var j = 0; j < _systems.length; j++) {
+          if (_systems[j].system.name == needed) lastAt = j;
+        }
+        if (lastAt == -1) {
+          problems.add(
+            '"${entry.system.name}" must run after "$needed", but no system '
+            'named "$needed" is registered. Registered: '
+            '${systemOrder.join(', ')}.',
+          );
+        } else if (lastAt > i) {
+          problems.add(
+            '"${entry.system.name}" (position ${i + 1}) must run after '
+            '"$needed", but "$needed" runs later (position ${lastAt + 1}). '
+            'Register "$needed" first or move it to an earlier phase.',
+          );
+        }
+      }
+    }
+    return problems;
+  }
 
   /// Turns every system named [name] on or off without removing it.
   ///
@@ -290,7 +331,9 @@ class _SystemEntry {
   final SystemPhase phase;
   bool enabled = true;
 
-  _SystemEntry(this.system, this.phase);
+  final List<String> after;
+
+  _SystemEntry(this.system, this.phase, [this.after = const []]);
 }
 
 /// Coarse stages of one [World.step], run in this order.
