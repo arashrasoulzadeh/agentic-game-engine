@@ -117,7 +117,7 @@ void main() {
           decideWith(6, timeout: 5);
           expect(
             _lastWorld
-                .storeOf<AIState>()
+                .componentsOf<AIState>()
                 .get(_lastId)!
                 .memory['lastHeardSound'],
             isNull,

@@ -33,8 +33,8 @@ void main() {
 
       // TileMap floor
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 20,
@@ -67,7 +67,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
       await tester.pump(const Duration(milliseconds: 16));
 
-      final posAfterMove = world.storeOf<Position>().get(player)!;
+      final posAfterMove = world.componentsOf<Position>().get(player)!;
       expect(posAfterMove.x, greaterThan(200));
 
       // Jump
@@ -75,7 +75,7 @@ void main() {
       input.pressedActions.add('jump');
       await tester.pump(const Duration(milliseconds: 16));
 
-      final velAfterJump = world.storeOf<Velocity>().get(player)!;
+      final velAfterJump = world.componentsOf<Velocity>().get(player)!;
       expect(velAfterJump.y, lessThan(0)); // moving up
 
       // Wait for landing
@@ -83,7 +83,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 16));
       }
 
-      final controller = world.storeOf<PlatformerController>().get(player)!;
+      final controller = world.componentsOf<PlatformerController>().get(player)!;
       expect(controller.grounded, isTrue);
     });
 
@@ -123,8 +123,8 @@ void main() {
 
       // Floor
       final mapEntity = world.spawn();
-      world.storeOf<Position>().set(mapEntity, Position(0, 0));
-      world.storeOf<TileMap>().set(
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
         mapEntity,
         TileMap(
           cols: 20,
@@ -158,7 +158,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 16));
       }
 
-      final enemyPos = world.storeOf<Position>().get(enemy)!;
+      final enemyPos = world.componentsOf<Position>().get(enemy)!;
       expect(enemyPos.x, greaterThan(100));
       expect(enemyPos.x, lessThan(300));
     });
