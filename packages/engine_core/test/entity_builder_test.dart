@@ -91,4 +91,11 @@ void main() {
     expect(b.build, throwsA(isA<ArgumentError>()));
     expect(world.entities.count, 0);
   });
+
+  test('spawnAt makes an entity with only a Position', () {
+    final world = _world();
+    final id = world.spawnAt(3, 4);
+    expect(world.getComponent<Position>(id)!.y, 4);
+    expect(world.components.serializeEntity(id).keys, ['position']);
+  });
 }

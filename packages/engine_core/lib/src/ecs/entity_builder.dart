@@ -44,6 +44,9 @@ extension EntitySpawning on World {
     return id;
   }
 
+  /// Spawns an entity with a [Position] at ([x], [y]).
+  EntityId spawnAt(double x, double y) => spawnWith([Position(x, y)]);
+
   /// Starts a fluent description of a new entity; nothing exists until
   /// [EntityBuilder.build].
   ///
