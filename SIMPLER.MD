@@ -65,7 +65,7 @@ Latest: world_step 7.5/68.7 us and collision 180/1813 us (at baseline); **entity
 - [x] **Idle template widget test fixed.** The generated app was fine; the test used the default 800x600 view, so lazy lists never built the time warp and the save button was off-screen. The test now sets a tall view. Verified in an offline scratch project (analyze clean, test passes).
 - [ ] **Unverified in this environment**: `mkdocs build --strict` (not installable offline; CI `docs` job is the first real check) and `game_agent create` against the pushed ref (G6).
 - [x] **`engine_studio` `rename_test` flake**: passes alone (6/6), so the cause is load: it drives a real analysis server with fixed retry budgets that ran out when the full suite loaded the machine. Budgets raised (20 to 60 and 10 to 30 attempts); no slower when the server is quick.
-- [ ] Optional: tutorials 01/03/04 and getting-started still use `componentsOf<T>().set/get` (correct, just older style); hot call sites could move to `getComponent`/`setComponent` where it reads better (note `setComponent` rejects dead entities, a behavior change, so gate each directory).
+- [x] Tutorials 01/03/04 and getting-started now use `setComponent`/`getComponent` (all spawned entities are alive, so the dead-entity check never fires).
 - [x] `registerCoreComponents` moved to `lib/src/ecs/register_core_components.dart` (still exported from the barrel); `game_builder.dart` no longer imports the barrel.
 
 ## Phase 10: Remaining backlog (each independent; pick one at a time, same step contract)

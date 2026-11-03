@@ -101,8 +101,8 @@ class MainScene extends Scene {
     // Core + Flutter components are already registered by GameRunner.
     world.addSystem(MovementSystem());
     final player = world.spawn();
-    world.componentsOf<Position>().set(player, Position(100, 100));
-    world.componentsOf<Velocity>().set(player, Velocity(0, 0));
+    world.setComponent(player, Position(100, 100));
+    world.setComponent(player, Velocity(0, 0));
   }
 }
 

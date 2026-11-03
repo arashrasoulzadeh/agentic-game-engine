@@ -44,10 +44,10 @@ Future<void> main() async {
   for (var i = 0; i < 3; i++) {
     for (final (team, col) in [('red', 1), ('blue', 10)]) {
       final e = world.spawn();
-      world.componentsOf<Team>().set(e, Team(team));
-      world.componentsOf<ActionPoints>().set(e, ActionPoints(6, current: 0));
-      world.componentsOf<GridPosition>().set(e, GridPosition(col, 3 + i));
-      world.componentsOf<UnitStats>().set(e, UnitStats(maxHp: 10, attack: 3));
+      world.setComponent(e, Team(team));
+      world.setComponent(e, ActionPoints(6, current: 0));
+      world.setComponent(e, GridPosition(col, 3 + i));
+      world.setComponent(e, UnitStats(maxHp: 10, attack: 3));
     }
   }
   startTurnBasedGame(world, ['red', 'blue']);
@@ -86,7 +86,7 @@ Future<void> main() async {
   await Future<void>.delayed(const Duration(seconds: 1));
   final mine = [
     for (final e in world.entities.all)
-      if (world.componentsOf<Team>().get(e)?.id == session.team) e,
+      if (world.getComponent<Team>(e)?.id == session.team) e,
   ];
   session.sendOrder(mine.first, const MoveOrder(4, 3));
 }
