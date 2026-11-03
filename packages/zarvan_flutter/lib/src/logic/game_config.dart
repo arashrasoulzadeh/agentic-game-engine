@@ -123,6 +123,12 @@ class GameConfig {
   /// See [packedAtlasId].
   final String? packedAtlasManifest;
 
+  /// Project-relative directory of source images for the packed atlas.
+  /// When set (together with [packedAtlasImage]), `zarvan build-release`
+  /// runs `zarvan pack-assets` on it before building, so the atlas is made
+  /// by the build and never by hand. Ignored at runtime.
+  final String? packedAtlasSource;
+
   const GameConfig({
     this.title = 'Game',
     this.orientation = GameOrientation.auto,
@@ -143,6 +149,7 @@ class GameConfig {
     this.packedAtlasId,
     this.packedAtlasImage,
     this.packedAtlasManifest,
+    this.packedAtlasSource,
   });
 
   Map<String, dynamic> toJson() => {
@@ -166,6 +173,7 @@ class GameConfig {
     if (packedAtlasId != null) 'packedAtlasId': packedAtlasId,
     if (packedAtlasImage != null) 'packedAtlasImage': packedAtlasImage,
     if (packedAtlasManifest != null) 'packedAtlasManifest': packedAtlasManifest,
+    if (packedAtlasSource != null) 'packedAtlasSource': packedAtlasSource,
   };
 
   factory GameConfig.fromJson(Map<String, dynamic> json) => GameConfig(
@@ -196,6 +204,7 @@ class GameConfig {
     packedAtlasId: json['packedAtlasId'] as String?,
     packedAtlasImage: json['packedAtlasImage'] as String?,
     packedAtlasManifest: json['packedAtlasManifest'] as String?,
+    packedAtlasSource: json['packedAtlasSource'] as String?,
   );
 
   /// Loads a `GameConfig` from a bundled JSON asset, e.g.

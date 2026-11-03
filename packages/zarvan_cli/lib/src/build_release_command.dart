@@ -7,6 +7,7 @@ import 'package:yaml/yaml.dart';
 
 import 'release_plan.dart';
 
+import 'build_pack.dart';
 import 'engine_commit.dart';
 
 /// Builds a signed release Android App Bundle (AAB) and/or iOS IPA.
@@ -146,6 +147,9 @@ class BuildReleaseCommand extends Command<int> {
     final engineCommit = resolveEngineCommit(projectDir.path);
     final resolvedBuildName = buildName ?? pubspecBuildName;
     final resolvedBuildNumber = buildNumber ?? pubspecBuildNumber;
+
+    final packed = await packConfiguredAtlas(projectDir.path, dryRun: dryRun);
+    if (packed != null && packed != 0) return packed;
 
     if (buildAndroid) {
       final result = await _buildAndroid(

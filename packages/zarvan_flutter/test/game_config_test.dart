@@ -159,6 +159,7 @@ void main() {
     expect(config.packedAtlasId, isNull);
     expect(config.packedAtlasImage, isNull);
     expect(config.packedAtlasManifest, isNull);
+    expect(config.packedAtlasSource, isNull);
     final json = config.toJson();
     expect(json.containsKey('packedAtlasId'), isFalse);
     expect(json.containsKey('packedAtlasImage'), isFalse);
@@ -177,5 +178,15 @@ void main() {
     expect(restored.packedAtlasId, 'packed');
     expect(restored.packedAtlasImage, 'assets/packed/atlas.png');
     expect(restored.packedAtlasManifest, 'assets/packed/atlas.json');
+  });
+
+  test('packedAtlasSource round-trips through JSON', () {
+    final config = GameConfig.fromJson({
+      'worldWidth': 10,
+      'worldHeight': 10,
+      'packedAtlasSource': 'art',
+    });
+    expect(config.packedAtlasSource, 'art');
+    expect(config.toJson()['packedAtlasSource'], 'art');
   });
 }

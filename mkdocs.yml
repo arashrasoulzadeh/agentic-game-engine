@@ -121,6 +121,7 @@ nav:
       - Architecture: concepts/architecture.md
       - The ECS: concepts/ecs.md
       - Splash screen and loading: concepts/splash-screen.md
+      - Build-time asset optimisation: concepts/build-time-assets.md
       - Writing games with less code: concepts/authoring.md
       - Content as data: concepts/content-as-data.md
       - Localization: concepts/localization.md
