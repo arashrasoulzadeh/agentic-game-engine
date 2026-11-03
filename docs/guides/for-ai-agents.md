@@ -7,7 +7,7 @@ needs to **read** a ZARVAN world, **change** it, or **play** in it, safely.
 
 | Resource | Use |
 |---|---|
-| [`/llms.txt`](../llms.txt) | Index of every documentation page with a one-line description. |
+| `/llms.txt` (site root) | Index of every documentation page with a one-line description. |
 | [Operations reference](../reference/operations.md) | Every operation, with the same name on CLI, MCP, REST and JSON-RPC. Generated from the registry, so always current. |
 | [Components reference](../reference/components.md) | The exact JSON shape of every built-in component. Generated from `zarvan_schema`. |
 | [Events](../reference/events.md) | Event types and when they fire. |
