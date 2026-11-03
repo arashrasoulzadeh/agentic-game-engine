@@ -39,6 +39,75 @@ void main() {
     });
 
     testWidgets(
+      'an untinted GPU light lifts the ambient darkness like a CPU light instead of painting a white disc '
+      '(regression: a Samsung SM-S731B release build showed a solid white disc)',
+      (tester) async {
+        final world = World(width: 400, height: 300);
+        registerCoreComponents(world);
+        registerFlutterComponents(world);
+        final lightEntity = world.spawn();
+        world.componentsOf<Position>().set(lightEntity, Position(0, 0));
+        world.componentsOf<Light2D>().set(
+          lightEntity,
+          Light2D(
+            radius: 120,
+            intensity: 1,
+            castsShadows: true,
+            useGpuShadows: true,
+          ),
+        );
+
+        final boundaryKey = UniqueKey();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Center(
+              child: SizedBox(
+                width: 400,
+                height: 300,
+                child: RepaintBoundary(
+                  key: boundaryKey,
+                  child: EngineView(
+                    world: world,
+                    atlasRegistry: AtlasRegistry(),
+                    camera: Camera(),
+                    backgroundColor: const Color(0xFF3B6B3A),
+                    ambientBrightness: 0,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.runAsync(() async {
+          for (var i = 0; i < 50 && GpuLightShader.shader() == null; i++) {
+            await Future<void>.delayed(const Duration(milliseconds: 20));
+          }
+        });
+        await tester.pump(const Duration(milliseconds: 16));
+        await tester.pump(const Duration(milliseconds: 16));
+
+        final lit = await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(200, 150)),
+        );
+        final dark = await tester.runAsync(
+          () => _pixelAt(tester, boundaryKey, const Offset(5, 5)),
+        );
+        // World (0,0) is the screen centre. The scene colour shows through, neither white nor black.
+        expect(
+          lit!.g,
+          greaterThan(lit.r),
+          reason: 'the lit pixel is the green background, not white',
+        );
+        expect(lit.r, lessThan(0.5));
+        expect(
+          dark!.g,
+          lessThan(0.05),
+          reason: 'outside the radius ambientBrightness 0 stays dark',
+        );
+      },
+    );
+
+    testWidgets(
       'a GPU-shadow light reveals a pixel with clear line of sight, and occludes one '
       'behind a solid tile wall -- proves the shader actually does per-pixel '
       'ray-vs-segment occlusion, not just "renders without crashing"',

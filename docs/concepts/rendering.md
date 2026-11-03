@@ -80,9 +80,8 @@ Wrapped lines (`maxWidth`) follow the component's `align` inside their box.
 ## Lighting: `Light2D`
 
 2D lighting with soft falloff, color tint, real shadow casting (CPU
-raycast against `TileMap` by default; opt-in, currently-unsafe-on-some-
-devices GPU-shader shadows via `Light2D.useGpuShadows` — see
-[TODO.md](../../TODO.md) for the known issue, don't enable it), cone/
+raycast against `TileMap` by default; opt-in GPU-shader shadows via
+`Light2D.useGpuShadows`, verified on a real Android phone), cone/
 flashlight mode, flicker, and a day/night ambient cycle
 (`DayNightCycle` in `engine_core`, since it's genre-general timeline
 data, not rendering-specific). `GameConfig.ambientBrightness < 1.0`

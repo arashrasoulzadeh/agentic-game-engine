@@ -26,6 +26,7 @@ pubspec.yaml.
   exits 1 on an error. `world.patch` gained `strict` and `dryRun`; `World.checkPatch`, `World.debug()`.
 
 ### Changed
+- **Fix:** GPU shadow lights (`Light2D.useGpuShadows`) no longer draw a solid white disc. They now lift the ambient darkness like CPU lights, with tint added only for tinted lights. Reproduced and fixed on a real phone (release build); the "do not enable" warning is gone. Regression test in `gpu_light_shader_test.dart`.
 - Tiled import: `tileMapFromTmx` now merges several tilesets, reads external `.tsx` tilesets through `readTileset:`, and inflates zlib/gzip layer data through `decompress:` (the package does no I/O itself). `level.import_tmx` resolves `.tsx` files next to the map; compressed data still needs CSV or uncompressed base64 there.
 - **Breaking:** `World.storeOf<T>()` is removed; use `componentsOf<T>()` (same collection). `ComponentRegistry.storeOf` is unchanged. See [the migration guide](docs/migrating-from-storeof.md).
 - `EventBus.on` now returns a `Subscription` instead of `void`; a handler added during a flush no

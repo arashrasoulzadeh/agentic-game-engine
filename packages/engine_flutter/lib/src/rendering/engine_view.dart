@@ -1149,6 +1149,74 @@ class _EnginePainter extends CustomPainter {
     return infos;
   }
 
+  /// Draws one `Light2D.useGpuShadows` light with the `light_shadow.frag`
+  /// shader, occluded by nearby solid tile edges.
+  ///
+  /// With [revealDarkness] the disc is drawn inside the ambient-darkness
+  /// layer with `BlendMode.dstOut`, white and fully opaque, so it lifts the
+  /// darkness exactly where a CPU light would, minus the shadowed pixels.
+  /// Without it the light's own colour is added over the scene (the tint).
+  /// An earlier version drew every GPU light as an additive white glow over
+  /// the scene and never lifted the darkness, so an untinted light showed as
+  /// a solid white disc (confirmed on a Samsung SM-S731B, release build).
+  void _drawGpuLight(
+    Canvas canvas,
+    _LightRenderInfo info,
+    Size size, {
+    required bool revealDarkness,
+  }) {
+    // A degenerate uRadius (0, negative, NaN/Infinity) is undefined behavior
+    // on the GPU, not a clean no-op, so it must never reach the shader.
+    if (!info.screenRadius.isFinite || info.screenRadius <= 0) return;
+    if (!info.screenPos.dx.isFinite || !info.screenPos.dy.isFinite) return;
+    final shader = GpuLightShader.shader();
+    if (shader == null) return;
+
+    final segments = _gpuLightSegmentsFor(info, size);
+    final segmentCount = segments.length ~/ 2;
+    final color = revealDarkness
+        ? const Color(0xFFFFFFFF)
+        : Color(info.light.colorArgb);
+
+    var u = 0;
+    shader
+      ..setFloat(u++, size.width)
+      ..setFloat(u++, size.height)
+      ..setFloat(u++, info.screenPos.dx)
+      ..setFloat(u++, info.screenPos.dy)
+      ..setFloat(u++, info.screenRadius)
+      ..setFloat(u++, info.light.intensity.clamp(0.0, 1.0))
+      ..setFloat(u++, color.r)
+      ..setFloat(u++, color.g)
+      ..setFloat(u++, color.b)
+      ..setFloat(u++, color.a)
+      ..setFloat(u++, segmentCount.toDouble());
+    for (var i = 0; i < _gpuMaxSegments; i++) {
+      if (i < segmentCount) {
+        final a = segments[i * 2];
+        final b = segments[i * 2 + 1];
+        shader
+          ..setFloat(u++, a.dx)
+          ..setFloat(u++, a.dy)
+          ..setFloat(u++, b.dx)
+          ..setFloat(u++, b.dy);
+      } else {
+        shader
+          ..setFloat(u++, 0)
+          ..setFloat(u++, 0)
+          ..setFloat(u++, 0)
+          ..setFloat(u++, 0);
+      }
+    }
+
+    canvas.drawRect(
+      Rect.fromCircle(center: info.screenPos, radius: info.screenRadius),
+      Paint()
+        ..shader = shader
+        ..blendMode = revealDarkness ? BlendMode.dstOut : BlendMode.screen,
+    );
+  }
+
   /// correctly left dark, but so was the zIndex-0 sprite the light was
   /// actually supposed to reveal, because the zIndex-1 band's own (empty
   /// there) darkness rect painted over the whole canvas afterward.
@@ -1198,9 +1266,13 @@ class _EnginePainter extends CustomPainter {
     );
 
     for (final info in infos) {
-      // GPU lights apply occlusion in their own pass. An unshadowed CPU
-      // reveal here would illuminate the pixels their shader blocks.
-      if (info.light.useGpuShadows && info.light.castsShadows) continue;
+      // GPU lights apply occlusion in their own shader. An unshadowed CPU
+      // reveal here would illuminate the pixels their shader blocks, so they
+      // punch through the darkness with the shadowed disc instead.
+      if (info.light.useGpuShadows && info.light.castsShadows) {
+        _drawGpuLight(canvas, info, size, revealDarkness: true);
+        continue;
+      }
       final intensity = info.light.intensity.clamp(0.0, 1.0);
       final revealPaint = Paint()
         ..blendMode = BlendMode.dstOut
@@ -1265,91 +1337,14 @@ class _EnginePainter extends CustomPainter {
       _drawLightGradientCircle(canvas, info, overbrightPaint);
     }
 
-    // GPU-shader shadow-casting pass -- see Light2D.useGpuShadows's doc
-    // comment for why this exists (a real per-pixel-parallel
-    // alternative to the CPU raycastTileMap sweep) and why it's
-    // additive rather than replicating the CPU path's darkness-mask
-    // semantics. Skipped per-light whenever useGpuShadows/castsShadows
-    // isn't set, and skipped entirely for a frame where the shader
-    // hasn't finished its one-time async compile yet.
-    //
-    // Uses BlendMode.screen (bounded: src + dst - src*dst, mathematically
-    // can never exceed full white no matter how many lights' draws
-    // stack) rather than BlendMode.plus (unbounded: src + dst, clamped
-    // only *after* summing) -- see TODO.md's "GPU-shader shadow casting"
-    // entry and Light2D.useGpuShadows's doc comment for the specific,
-    // mechanistically-explained hypothesis this addresses (the shader's
-    // falloff() plateau draws a fully opaque disc over 60% of a light's
-    // radius; two such discs overlapping under `plus` saturated to solid
-    // white in one draw pair). **Not yet confirmed on a real device** --
-    // useGpuShadows still defaults to `false` and `test_game` still
-    // doesn't enable it, so this changes nothing for anyone today; it's
-    // here so the fix is immediately testable the next time a device is
-    // available, instead of needing to be written first. Do not flip
-    // useGpuShadows on anywhere (or remove this note) until that
-    // real-device verification has actually happened.
+    // GPU-shader shadow-casting tint pass: an untinted GPU light only reveals
+    // darkness (above), exactly like a CPU light; a tinted one also adds its
+    // colour on top, occluded by the same segments. BlendMode.screen keeps
+    // overlapping tints bounded (src + dst - src*dst never exceeds white).
     for (final info in infos) {
       if (!info.light.useGpuShadows || !info.light.castsShadows) continue;
-      // Defensive: a degenerate uRadius (0, negative, NaN/Infinity --
-      // shouldn't happen given the `light.radius <= 0` guard earlier in
-      // this method already filters those out, but a shader reading an
-      // out-of-range uniform is undefined behavior on the GPU, not a
-      // clean no-op the way CPU code would be) must never reach the
-      // shader; skip this light's GPU pass entirely rather than risk
-      // an unclipped full-rect draw.
-      if (!info.screenRadius.isFinite || info.screenRadius <= 0) continue;
-      if (!info.screenPos.dx.isFinite || !info.screenPos.dy.isFinite) continue;
-      final shader = GpuLightShader.shader();
-      if (shader == null) continue;
-
-      final segments = _gpuLightSegmentsFor(info, size);
-      final segmentCount = segments.length ~/ 2;
-
-      final rawColor = Color(info.light.colorArgb);
-      final tinted = rawColor.a > 0;
-      final color = tinted ? rawColor : const Color(0xFFFFFFFF);
-
-      var u = 0;
-      shader
-        ..setFloat(u++, size.width)
-        ..setFloat(u++, size.height)
-        ..setFloat(u++, info.screenPos.dx)
-        ..setFloat(u++, info.screenPos.dy)
-        ..setFloat(u++, info.screenRadius)
-        ..setFloat(u++, info.light.intensity.clamp(0.0, 1.0))
-        ..setFloat(u++, color.r)
-        ..setFloat(u++, color.g)
-        ..setFloat(u++, color.b)
-        ..setFloat(u++, tinted ? color.a : 1.0)
-        ..setFloat(u++, segmentCount.toDouble());
-      for (var i = 0; i < _gpuMaxSegments; i++) {
-        if (i < segmentCount) {
-          final a = segments[i * 2];
-          final b = segments[i * 2 + 1];
-          shader
-            ..setFloat(u++, a.dx)
-            ..setFloat(u++, a.dy)
-            ..setFloat(u++, b.dx)
-            ..setFloat(u++, b.dy);
-        } else {
-          shader
-            ..setFloat(u++, 0)
-            ..setFloat(u++, 0)
-            ..setFloat(u++, 0)
-            ..setFloat(u++, 0);
-        }
-      }
-
-      final lightRect = Rect.fromCircle(
-        center: info.screenPos,
-        radius: info.screenRadius,
-      );
-      canvas.drawRect(
-        lightRect,
-        Paint()
-          ..shader = shader
-          ..blendMode = BlendMode.screen,
-      );
+      if (Color(info.light.colorArgb).a == 0) continue;
+      _drawGpuLight(canvas, info, size, revealDarkness: false);
     }
     lightingStopwatch.stop();
     final stats = frameStats;

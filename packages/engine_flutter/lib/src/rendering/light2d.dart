@@ -275,32 +275,13 @@ class Light2D {
   /// compositing on the GPU too is a larger, separate undertaking).
   /// Meaningless unless [castsShadows] is also on.
   ///
-  /// **KNOWN BUG, NOT YET CONFIRMED FIXED — do not rely on this.**
-  /// Verified correct with a single light in a browser test
-  /// environment, but a real, reproducible rendering bug (an
-  /// oversaturated/blown-out render) appeared once multiple lights used
-  /// this simultaneously — confirmed on a **real Android device with a
-  /// genuine release APK** (no dev server involved), so it wasn't a
-  /// test-environment artifact. An earlier, similar-looking failure in
-  /// a dev-server browser session *was* traced to a stale dev-server
-  /// reload and wrongly assumed to be the whole story — it wasn't; see
-  /// TODO.md's "GPU-shader shadow casting" entry for the full history
-  /// before touching this again, so the same false lead doesn't get
-  /// retraced. A concrete, mechanistically-explained hypothesis was
-  /// found via code review: `light_shadow.frag`'s `falloff()` is flat
-  /// at full strength out to 60% of the light's radius, so an untinted
-  /// light drew a fully opaque white disc over that inner 60%; combined
-  /// with the unbounded `BlendMode.plus` this pass used to draw with
-  /// (`src + dst`, clamped only *after* summing), two overlapping
-  /// plateaus alone could saturate their overlap to solid white, no NaN
-  /// or cone-light involvement required. This pass now uses
-  /// `BlendMode.screen` instead (`src + dst - src*dst`, mathematically
-  /// bounded to never exceed full white regardless of how many lights'
-  /// draws overlap) as the candidate fix — **implemented but not yet
-  /// verified on a real device**, so this field still defaults to
-  /// `false` and `test_game` (this repo's own sample) still doesn't
-  /// enable it. Read TODO.md before flipping this on anywhere — it
-  /// explains exactly what still needs confirming.
+  /// An untinted GPU light lifts the ambient darkness exactly like a CPU
+  /// light (minus the shadowed pixels); a tinted one also adds its colour.
+  /// Overlapping GPU lights no longer saturate to white: that bug was an
+  /// additive white glow drawn over the scene without lifting the darkness,
+  /// reproduced and fixed on a Samsung SM-S731B release build (2026-11-03).
+  /// It stays opt-in (`false`) because the CPU path is the more tested
+  /// default; shadows beyond 32 occluder segments per light are dropped.
   bool useGpuShadows;
 
   /// Internal render-side cache for [cacheShadowGeometry] — the world-

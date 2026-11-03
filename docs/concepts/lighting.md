@@ -51,11 +51,11 @@ each at the first solid `TileMap` tile, so walls block light.
 - One-way platforms do not block light unless `blockOneWayPlatforms: true`.
 - `shadowSmoothingSeconds` smooths the shadow edge for a moving light.
 
-!!! danger "Do not enable `useGpuShadows`"
-    `Light2D.useGpuShadows` draws the shadow with a fragment shader instead of the CPU raycast. It has
-    a **known, unresolved bug on at least one real Android device** (the overlap of several lights
-    saturating to white). A candidate fix is in place but unverified, so leave it `false`.
-    See [`TODO.md`](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md).
+!!! note "GPU shadows (`useGpuShadows`)"
+    `Light2D.useGpuShadows` draws the shadow with a fragment shader instead of the CPU raycast, which is
+    cheaper with several shadow-casting lights. It lifts the ambient darkness like any other light, and
+    overlapping lights blend correctly; this was verified on a Samsung SM-S731B release build. It is off
+    by default, and each light considers at most 32 occluder segments.
 
 ## Flickering
 

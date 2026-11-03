@@ -16,19 +16,8 @@ Per-area lists live next to what they track: studio in
 `mobarez/mobarez_todo.md` and `zahaak/zahaak_todo.md` (both folders are gitignored,
 so those files exist only on the owner's machine).
 
-Sections: [Performance](#performance) · [Release](#release) ·
+Sections: [Release](#release) ·
 [Parked decisions](#parked-decisions)
-
-## Performance
-
-- [ ] **GPU shadows on device** — `Light2D.useGpuShadows` stays `false`;
-      overlapping lights saturated to white with `BlendMode.plus`. Candidate
-      fix already in tree (`BlendMode.screen` on the GPU pass). Confirm on a
-      real release APK; if good, enable on `test_game` torches and drop the
-      KNOWN BUG note on `Light2D.useGpuShadows`. If not, try shrinking
-      `light_shadow.frag`'s flat `falloff` plateau next (not a multi-light
-      shader rewrite until this is settled).
-
 
 ## Release
 
