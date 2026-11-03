@@ -830,7 +830,7 @@ REST: `POST /v1/level/fill_region` · MCP tool: `level.fill_region` · JSON-RPC 
 
 Create a level from a Tiled .tmx map.
 
-Makes a new level whose single entity holds the imported tileMap. Fails with `conflict` if the output exists. Unsupported maps (several layers or tilesets, external tilesets, non-CSV data) are `validation_failed` with the reason.
+Makes a new level whose single entity holds the imported tileMap. Fails with `conflict` if the output exists. A map with several tile layers needs `layer` (the layer name to import). Unsupported maps (several tilesets, external tilesets, compressed data) are `validation_failed` with the reason.
 
 *write*, needs an open project.
 
@@ -839,6 +839,7 @@ Makes a new level whose single entity holds the imported tileMap. Fails with `co
 | `tmx` | path; required | |
 | `output` | path | Default: assets/levels/<tmx name>.json. |
 | `entity` | string; default `"ground"` | |
+| `layer` | string | Name of the tile layer to import; required when the map has more than one. |
 | `apply` | boolean | Write now (default for write operations) or only preview (default for destructive ones). |
 | `confirmation` | string | The token returned by the preview of a destructive operation; applies exactly that change. |
 
@@ -1807,6 +1808,24 @@ game_agent world build <path>
 ```
 
 REST: `POST /v1/world/build` · MCP tool: `world.build` · JSON-RPC method: `world.build`
+
+### `world.describe`
+
+What is in the world: counts, components with their fields, systems, warnings.
+
+The data form of the world summary: tick, seed, size, entity count, each component in use with its count and schema fields, the system order (with enabled flags), queued commands, order problems and debug warnings. Cheaper than a snapshot when you only need to know what exists.
+
+*read*, idempotent.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `worldId` | string; required | |
+
+```bash
+game_agent world describe <worldId>
+```
+
+REST: `POST /v1/world/describe` · MCP tool: `world.describe` · JSON-RPC method: `world.describe`
 
 ### `world.discard`
 

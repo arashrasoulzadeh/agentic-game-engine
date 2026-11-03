@@ -71,32 +71,7 @@ class Level {
   }) {
     var entities = validate(json);
     if (defaults) entities = _withDefaults(world, entities);
-    if (strict) {
-      final problems = <ErrorProblem>[];
-      for (var i = 0; i < entities.length; i++) {
-        final components =
-            entities[i]['components'] as Map<String, dynamic>? ?? const {};
-        for (final entry in components.entries) {
-          final problem = world.components.checkComponent(
-            entry.key,
-            entry.value,
-          );
-          if (problem != null) {
-            problems.add(
-              ErrorProblem('entities[$i].components.${entry.key}', problem),
-            );
-          }
-        }
-      }
-      if (problems.isNotEmpty) {
-        throw LevelLoadException(
-          'Level has ${problems.length} invalid component '
-          '${problems.length == 1 ? 'entry' : 'entries'}:\n  '
-          '${problems.map((p) => '${p.path}: ${p.message}').join('\n  ')}',
-          problems: problems,
-        );
-      }
-    }
+    if (strict) _checkStrict(world, entities);
     final named = <String, EntityId>{};
     final spawned = <EntityId>[];
     for (final entityJson in entities) {
@@ -136,6 +111,32 @@ class Level {
   }
 
   /// Validates [json] and returns its `entities` list, cast, on success.
+  /// Throws [LevelLoadException] listing every component in [entities] that
+  /// [world] would not accept, without spawning anything.
+  static void _checkStrict(World world, List<Map<String, dynamic>> entities) {
+    final problems = <ErrorProblem>[];
+    for (var i = 0; i < entities.length; i++) {
+      final components =
+          entities[i]['components'] as Map<String, dynamic>? ?? const {};
+      for (final entry in components.entries) {
+        final problem = world.components.checkComponent(entry.key, entry.value);
+        if (problem != null) {
+          problems.add(
+            ErrorProblem('entities[$i].components.${entry.key}', problem),
+          );
+        }
+      }
+    }
+    if (problems.isNotEmpty) {
+      throw LevelLoadException(
+        'Level has ${problems.length} invalid component '
+        '${problems.length == 1 ? 'entry' : 'entries'}:\n  '
+        '${problems.map((p) => '${p.path}: ${p.message}').join('\n  ')}',
+        problems: problems,
+      );
+    }
+  }
+
   static List<Map<String, dynamic>> _withDefaults(
     World world,
     List<Map<String, dynamic>> entities,
@@ -229,12 +230,39 @@ class LevelHandle {
   List<EntityId> _entityIds;
   Map<String, EntityId> _named;
 
-  LevelHandle._(this._world, this._entityIds, this._named);
+  final bool _strict;
+  final PrefabRegistry? _prefabs;
+  final bool _defaults;
+
+  LevelHandle._(
+    this._world,
+    this._entityIds,
+    this._named,
+    this._strict,
+    this._prefabs,
+    this._defaults,
+  );
 
   /// Loads [json] into [world] via [Level.loadInto], returning a handle
-  /// that can later [reload] with new JSON.
-  factory LevelHandle.load(World world, Map<String, dynamic> json) {
-    final handle = LevelHandle._(world, const [], const {});
+  /// that can later [reload] with new JSON. [strict], [prefabs] and [defaults]
+  /// are [Level.loadInto]'s options and apply to every reload too: with
+  /// [strict], a typo'd component in an edit is rejected *before* the running
+  /// level is torn down, instead of silently dropping that component.
+  factory LevelHandle.load(
+    World world,
+    Map<String, dynamic> json, {
+    bool strict = false,
+    PrefabRegistry? prefabs,
+    bool defaults = false,
+  }) {
+    final handle = LevelHandle._(
+      world,
+      const [],
+      const {},
+      strict,
+      prefabs,
+      defaults,
+    );
     handle._loadFresh(json);
     return handle;
   }
@@ -254,7 +282,9 @@ class LevelHandle {
   /// intact rather than tearing it down for a load that was never
   /// going to succeed.
   void reload(Map<String, dynamic> json) {
-    Level.validate(json); // throws before anything is torn down
+    var entities = Level.validate(json); // throws before anything is torn down
+    if (_defaults) entities = Level._withDefaults(_world, entities);
+    if (_strict) Level._checkStrict(_world, entities);
     for (final id in _entityIds) {
       _world.destroy(id);
     }
@@ -263,7 +293,13 @@ class LevelHandle {
 
   void _loadFresh(Map<String, dynamic> json) {
     final before = Set<EntityId>.from(_world.entities.all);
-    _named = Level.loadInto(_world, json);
+    _named = Level.loadInto(
+      _world,
+      json,
+      strict: _strict,
+      prefabs: _prefabs,
+      defaults: _defaults,
+    );
     _entityIds = _world.entities.all
         .where((id) => !before.contains(id))
         .toList();

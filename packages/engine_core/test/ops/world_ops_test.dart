@@ -144,6 +144,17 @@ void main() {
     expect(problems.single['message'], contains('did you mean'));
   });
 
+  test('world.describe returns the data summary of a built world', () async {
+    final s = await Scratch.create();
+    final built = await s.map('world.build', {'json': moving});
+    final d = await s.map('world.describe', {
+      'worldId': built['worldId']! as String,
+    });
+    expect(d['entities'], greaterThan(0));
+    expect((d['components'] as Map).containsKey('position'), isTrue);
+    expect(d['systems'], isA<List>());
+  });
+
   test('bad systems, the world cap and expiry', () async {
     final s = await Scratch.create();
     expect(

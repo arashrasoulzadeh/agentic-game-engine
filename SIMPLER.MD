@@ -94,7 +94,7 @@ Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `leve
 - [x] **Auto-spawn from prefab**: `PrefabRef` component (`prefabRef: {name}`) plus `PrefabRegistry.expandRefs(world, only:)`; `Level.loadInto(prefabs: registry)` expands the placeholders it just loaded at their `Position`, and a named placeholder's name moves to the prefab's first entity. Without a registry placeholders are left alone.
 - [x] **Component defaults on level load**: opt-in `Level.loadInto(defaults: true)` fills schema-declared defaults (`{"position": {"x": 5}}` gets `y: 0`); authored values win; fields with no declared default stay required; works with `strict`.
 - [x] **Validation with fixes**: strict load (`Level.loadInto(strict: true)`), `LevelValidator` (used by `project.doctor`, `level.validate`, studio) and `checkComponent` all say `did you mean "position"?` for a typo'd component name; a missing required field says `y is missing (add "y": 0)`; a mistyped enum value suggests the closest option. `project.doctor` already uses the schema validator, which is stricter than strict load, so no second validator was added.
-- [ ] **Tiled mapping polish** and **hot-reload friendliness**.
+- [x] **Tiled polish**: `tileMapFromTmx(xml, layer:)` and `level.import_tmx --layer` choose among several tile layers (an ambiguous map now lists the names); uncompressed base64 layer data imports (flip bits stripped); compressed data names the Tiled setting to change. **Hot reload**: `LevelHandle.load(strict:, prefabs:, defaults:)` carries its options to `reload`, and with `strict` a typo'd edit is rejected before the running level is torn down (without it the typo silently drops the component). Still not supported: several tilesets, external `.tsx`, zlib/gzip.
 
 ### Physics, collision and movement
 - [x] (`world.move`, `moveToward`, `aimVelocity` shipped.) (`world.raycast`, `world.findNear` and `TileMap` world-coordinate helpers shipped; `findNear` is an O(n) scan, per-frame work should use `SpatialHash`.)
@@ -108,11 +108,11 @@ Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_
 
 ### Errors and debugging
 Audited by probing ~20 common mistakes. Good already: unregistered component, dead-entity writes, unknown prefab, bad timers, bad patches, missing `after:` systems. Fixed: component JSON with a missing or mistyped field now says which data arrived and which fields are expected (was a raw "type 'Null' is not a subtype of type 'num'").
-- [ ] **Debug warnings shipped** (`world.warnings`, `DevWarnings`: collected only in debug builds, shown in `world.debug()`): duplicate system names, component re-registration, and opt-in `warnOnUnhandledEvents`. **Not shipped: warning on `destroy` of a dead entity.** It sits on the hot path and measured +8-9% on `entity_churn` (even as a cold helper method, even returning a bool from `EntityManager.destroy`), which with the earlier drift is past the 10% limit. Owner decision: accept the cost, or find a cheaper hook (e.g. only in `WorldCommands.destroy`).
+- [x] **Debug warnings shipped** (`world.warnings`, `DevWarnings`: collected only in debug builds, shown in `world.debug()`): duplicate system names, component re-registration, and opt-in `warnOnUnhandledEvents`. **Not shipped: warning on `destroy` of a dead entity.** It sits on the hot path and measured +8-9% on `entity_churn` (even as a cold helper method, even returning a bool from `EntityManager.destroy`), which with the earlier drift is past the 10% limit. Owner decision: accept the cost, or find a cheaper hook (e.g. only in `WorldCommands.destroy`).
 - [x] **Machine-readable errors**: `EngineError` (`code`, `message`, `toJson()`) is implemented by `WorldPatchException` (`patch_invalid`), `ComponentApplyException` (`component_invalid`, with `entity` and `component`) and `LevelLoadException` (`level_invalid`); strict failures carry located `problems` (`path`, `message`, including any did-you-mean). `world.patch` returns that JSON in the error's `details`. Fix text lives in the message and hint; no separate field was added.
 
 ### API surface cleanup
-- [ ] Minimal barrel exports (advanced/internal to subpaths), consistent naming, remove redundancy, extension methods over bloating classes, dartdoc examples on public API.
+- [x] API surface: non-breaking only. Added `package:engine_core/engine_core_essentials.dart` (the daily-use set, tested by importing only it); the topic barrels (`_idle`, `_io`, `_ops`, `_testing`, `_web`) already existed. Not done on purpose: moving existing exports to subpaths, which would break downstream projects pinned to `ref: main`; revisit with the 7.final release.
 
 ### Time and tweens
 - [x] **Input recording and replay**: `SessionRecorder(world, captureInput:)` records the seed plus one input snapshot per step; `SessionReplayer.run(freshWorld, saved, applyInput:)` replays it and refuses a world built with a different seed. A test shows the replayed final state equals the recorded one byte for byte, and fails if the inputs differ.
@@ -127,8 +127,8 @@ Audited by probing ~20 common mistakes. Good already: unregistered component, de
 - [x] **Testing helpers**: `GameTester.spawnActor` (named player with Position/Velocity/Collider), `has`, `expectHas<T>`, `expectMissing<T>`, `expectAlive`, `expectDestroyed` (plain throwing helpers, not matchers: `engine_core` deliberately has no test-framework dependency). Input lives in Flutter, so `press` is `InputDriver(state, tick:)` in `engine_flutter/lib/src/testing/` (`press/release/tap/setAxis/releaseAll`), kept free of the dart:io testing library so web builds stay clean.
 
 ### Agent-friendliness
-- [ ] **Self-describing schema**: check what `schema_ops` returns before adding `world.describe()`.
-- [ ] Keep the JSON contract: fluent builders, handles and shortcuts stay sugar over plain JSON-serializable components; any new convenience API gets an operation + `game_agent` command or a documented exemption (see the table in `docs/concepts/authoring.md`).
+- [x] **Self-describing schema**: `schema.components/component/template/validate_component` already described component types; added `world.describe()` and the `world.describe` operation for the live world (counts, each component in use with its schema fields, systems with enabled flags, queued commands, order problems, warnings).
+- [x] JSON contract kept: every new convenience API is sugar over plain components or level options; `docs/concepts/authoring.md` has the exemption table, extended with the new APIs (`world.describe` got an operation).
 
 ### Tooling and onboarding
 - [x] `topdown_game` template shipped (core + engine_flutter only, verified offline in a scratch project: analyze clean, widget test passes). `platformer` = `default_game`, `turnbased` = `strategy_game`, `idle` = `idle_game` already existed, so no alias names were added. Still unverified: `game_agent create` against the pushed ref (G6).
@@ -136,7 +136,7 @@ Audited by probing ~20 common mistakes. Good already: unregistered component, de
 - [x] **Migration guide** for `storeOf` shipped: `docs/migrating-from-storeof.md`.
 
 ### Content polish
-- [ ] (`GameAudio` shipped: `sfx/music` by name, `silent()` for headless, unknown names throw even then.) **particles preset** with pooling, (`SaveMigrations` shipped: chained version steps plus rename/add helpers, plugs into `SaveGame.load(migrate:)` via `forVersion`) debug overlay audited: FPS, graphs, entity counts, collider outlines (`GameConfig.showColliderDebug`) and system timings already existed; `DebugOverlay(panels:)` now toggles sections and adds a `World.debug()` panel.
+- [x] (`GameAudio` shipped: `sfx/music` by name, `silent()` for headless, unknown names throw even then.) **particles presets** shipped as `ParticlePresets.explosion/sparks/smoke/dust` (pooling was measured and ruled out), (`SaveMigrations` shipped: chained version steps plus rename/add helpers, plugs into `SaveGame.load(migrate:)` via `forVersion`) debug overlay audited: FPS, graphs, entity counts, collider outlines (`GameConfig.showColliderDebug`) and system timings already existed; `DebugOverlay(panels:)` now toggles sections and adds a `World.debug()` panel.
 
 ## Standing guardrails
 - Components only in public API wording; convention over configuration (a minimal game in < 20 lines); explicit over magic; `engine_core` stays Flutter-free; data-driven friendly.

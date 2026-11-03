@@ -149,4 +149,14 @@ are deliberately not operations:
 | `save` / `load` | `world.snapshot` reads a sandbox world; sandbox worlds are throwaway |
 | `checkPatch`, strict `applyPatch` | `world.patch` with `dryRun` / `strict` |
 | `commands`, events, systems, phases, `after`/`every`, `GameBuilder` | code that runs the game, not data an agent edits |
+| `world.describe()` | the `world.describe` operation (same data) |
+| `world.find`, `Name`, `PrefabRef`, `Level.loadInto(prefabs:, defaults:)` | ordinary components and level options: `name` in level JSON, `prefabRef` via `level.set_field` / `world.patch` |
+| `setBehavior`, `runTree`, `Steer`, `StateMachineBuilder`, `registerCondition` | code that defines behavior; the data they point at (`aiState`, trees as JSON) is editable |
+| `SessionRecorder` / `SessionReplayer`, `InputDriver`, `LevelScene` | code that runs or tests the game |
 | `validateSystemOrder`, `debug()` | needs your game's code, so assert it in a test with `GameTester` (`engine_core_testing`); `game_agent project doctor` checks content and dependency wiring |
+
+## Smaller imports
+
+`package:engine_core/engine_core_essentials.dart` exports just the daily-use set
+(world, components, levels, prefabs, events, queries, `GameBuilder`) so
+autocomplete stays readable. It is the same types as the full barrel, so mix freely.

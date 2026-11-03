@@ -1,3 +1,5 @@
+import 'dart:convert' show base64;
+
 import 'package:xml/xml.dart';
 
 import 'tile_map.dart';
@@ -24,20 +26,26 @@ const _slopeUpLeftProperty = 'slopeUpLeft';
 /// **What's supported**: one embedded `<tileset>` (no `source=` — an
 /// external `.tsx` file reference is out of scope, since resolving it
 /// would need file I/O this Flutter-free, web-targeting package
-/// deliberately doesn't do), one `<layer>`, CSV-encoded `<data>`.
+/// deliberately doesn't do), CSV or uncompressed-base64 `<data>`, one tile
+/// layer at a time (see `layer:` below).
 /// Per-tile `bool` custom properties named `"solid"`/`"oneWay"`/
 /// `"slopeUpRight"`/`"slopeUpLeft"` (set in Tiled's tileset editor) map
 /// onto the matching `TileMap` collision set.
 ///
 /// **What's not supported** (throws [UnsupportedError] with a specific
 /// message, rather than silently importing something wrong): more than
-/// one tileset or layer, an external tileset (`source=`), non-CSV
+/// one tileset, an external tileset (`source=`), compressed
 /// layer encoding (base64, with or without zlib/gzip compression).
 /// Tile flip flags (Tiled's horizontal/vertical/diagonal flip bits on a
 /// gid) are silently stripped — the base tile id imports correctly,
 /// but a flipped orientation is lost, since `TileMap` has no concept of
 /// per-cell tile flipping.
-TileMap tileMapFromTmx(String tmxXml) {
+///
+/// With several `<layer>`s, pass [layer] (a layer's `name`) to choose the one
+/// to import; without it a map that has more than one throws, listing the
+/// names. Layer data may be CSV or uncompressed base64 (Tiled's "Base64
+/// (uncompressed)"); compressed base64 is rejected with the setting to change.
+TileMap tileMapFromTmx(String tmxXml, {String? layer}) {
   final doc = XmlDocument.parse(tmxXml);
   final mapEl = doc.rootElement;
   if (mapEl.name.local != 'map') {
@@ -98,17 +106,60 @@ TileMap tileMapFromTmx(String tmxXml) {
   if (layerEls.isEmpty) {
     throw UnsupportedError('No <layer> found in this .tmx file');
   }
-  if (layerEls.length > 1) {
+  final names = [
+    for (final l in layerEls) l.getAttribute('name') ?? '(unnamed)',
+  ];
+  final XmlElement layerEl;
+  if (layer != null) {
+    final matches = [
+      for (final l in layerEls)
+        if (l.getAttribute('name') == layer) l,
+    ];
+    if (matches.isEmpty) {
+      throw UnsupportedError(
+        'No <layer> named "$layer" in this .tmx file. Layers: ${names.join(', ')}',
+      );
+    }
+    layerEl = matches.first;
+  } else if (layerEls.length > 1) {
     throw UnsupportedError(
-      'Multiple <layer> elements found (${layerEls.length}) -- tileMapFromTmx only supports a single tile layer',
+      'Multiple <layer> elements found (${layerEls.length}: ${names.join(', ')}) -- '
+      'pass layer: "<name>" to choose the tile layer to import',
     );
+  } else {
+    layerEl = layerEls.single;
   }
-  final dataEl = layerEls.single.getElement('data');
+  final dataEl = layerEl.getElement('data');
   if (dataEl == null) {
     throw UnsupportedError('<layer> has no <data> child');
   }
   final encoding = dataEl.getAttribute('encoding');
-  if (encoding != 'csv') {
+  final compression = dataEl.getAttribute('compression');
+  final List<int> rawGids;
+  if (encoding == 'csv') {
+    rawGids = dataEl.innerText
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .map(int.parse)
+        .toList();
+  } else if (encoding == 'base64' && compression == null) {
+    final bytes = base64.decode(dataEl.innerText.trim());
+    if (bytes.length % 4 != 0) {
+      throw UnsupportedError(
+        'Base64 layer data is ${bytes.length} bytes, not a multiple of 4 (one little-endian uint32 per tile)',
+      );
+    }
+    rawGids = [
+      for (var i = 0; i < bytes.length; i += 4)
+        bytes[i] | bytes[i + 1] << 8 | bytes[i + 2] << 16 | bytes[i + 3] << 24,
+    ];
+  } else if (encoding == 'base64') {
+    throw UnsupportedError(
+      'Compressed layer data ("$compression") is not supported -- re-export with '
+      'Tiled\'s "Tile Layer Format" set to "CSV" or "Base64 (uncompressed)"',
+    );
+  } else {
     throw UnsupportedError(
       'Layer data encoding "${encoding ?? '(tile elements, uncompressed XML)'}" is not supported -- '
       're-export with Tiled\'s "CSV" tile layer format',
@@ -120,12 +171,7 @@ TileMap tileMapFromTmx(String tmxXml) {
   // masking them off keeps the base tile id and silently drops
   // orientation, per this function's documented limitation.
   const flipFlagsMask = 0x1FFFFFFF;
-  final tiles = dataEl.innerText
-      .split(',')
-      .map((s) => s.trim())
-      .where((s) => s.isNotEmpty)
-      .map((s) => int.parse(s) & flipFlagsMask)
-      .toList();
+  final tiles = [for (final gid in rawGids) gid & flipFlagsMask];
 
   if (tiles.length != cols * rows) {
     throw UnsupportedError(

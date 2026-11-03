@@ -43,5 +43,5 @@ curl -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{
 
 ## Catalogue size
 
-This registry has **92** operations (89 served over MCP/HTTP; Flutter-only ones stay CLI-only).
+This registry has **93** operations (90 served over MCP/HTTP; Flutter-only ones stay CLI-only).
 

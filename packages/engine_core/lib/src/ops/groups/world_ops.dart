@@ -137,6 +137,18 @@ List<Operation> worldOperations() => [
     },
   ),
   Operation(
+    name: 'world.describe',
+    summary:
+        'What is in the world: counts, components with their fields, systems, warnings.',
+    description:
+        'The data form of the world summary: tick, seed, size, entity count, each component in use with its count and schema fields, the system order (with enabled flags), queued commands, order problems and debug warnings. Cheaper than a snapshot when you only need to know what exists.',
+    kind: OperationKind.read,
+    scope: OperationScope.pure,
+    idempotent: true,
+    params: [_worldId],
+    handler: (ctx, a) => OpOutcome.data(_world(ctx, a).describe()),
+  ),
+  Operation(
     name: 'world.snapshot',
     summary: 'The world as plain JSON (tick, entities and their components).',
     description: '`entities` limits the output to those entity ids.',

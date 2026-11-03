@@ -422,6 +422,38 @@ class World {
     return out.toString().trimRight();
   }
 
+  /// [debug] as data: the same facts, for tools and agents that should not parse
+  /// prose. `components` maps each in-use component to its entity `count` and, when
+  /// a schema is registered, its `fields` (name, type, required), so one call tells
+  /// an agent what exists and how to write it.
+  Map<String, dynamic> describe() {
+    final counts = componentCounts();
+    return {
+      'tick': _tick,
+      'seed': seed,
+      'width': width,
+      'height': height,
+      'entities': entities.count,
+      'components': {
+        for (final name in (counts.keys.toList()..sort()))
+          name: {
+            'count': counts[name],
+            if (components.schemaFor(name) case final schema?)
+              'fields': [
+                for (final f in schema.fields)
+                  {'name': f.name, 'type': f.type.name, 'required': f.required},
+              ],
+          },
+      },
+      'systems': [
+        for (final e in _systems) {'name': e.system.name, 'enabled': e.enabled},
+      ],
+      'queuedCommands': commands.length,
+      'orderProblems': validateSystemOrder(),
+      'warnings': List<String>.of(warnings.messages),
+    };
+  }
+
   Map<String, int> componentCounts() => {
     for (final r in components.all)
       if (r.store.length > 0) r.name: r.store.length,

@@ -22,6 +22,7 @@ PrefabRegistry _registry() => PrefabRegistry()
   });
 
 void main() {
+  _handleTests();
   group('prefabRef', () {
     test('a placeholder is replaced by the prefab at its position', () {
       final world = _world();
@@ -138,6 +139,57 @@ void main() {
         () => Level.loadInto(world, level, strict: true, defaults: true),
         returnsNormally,
       );
+    });
+  });
+}
+
+void _handleTests() {
+  group('LevelHandle reload', () {
+    Map<String, dynamic> level(String component) => {
+      'entities': [
+        {
+          'name': 'p',
+          'components': {
+            component: {'x': 1.0, 'y': 2.0},
+          },
+        },
+      ],
+    };
+
+    test('strict rejects a typo before tearing the running level down', () {
+      final world = _world();
+      final handle = LevelHandle.load(world, level('position'), strict: true);
+      final before = handle.named['p']!;
+      expect(
+        () => handle.reload(level('positon')),
+        throwsA(isA<LevelLoadException>()),
+      );
+      expect(world.entities.isAlive(before), isTrue, reason: 'untouched');
+      expect(handle.named['p'], before);
+    });
+
+    test('without strict the typo silently drops the component (the gap)', () {
+      final world = _world();
+      final handle = LevelHandle.load(world, level('position'));
+      handle.reload(level('positon'));
+      expect(world.getComponent<Position>(handle.named['p']!), isNull);
+    });
+
+    test('options carry over to reload: defaults fill what an edit omits', () {
+      final world = _world();
+      final handle = LevelHandle.load(world, level('position'), defaults: true);
+      handle.reload({
+        'entities': [
+          {
+            'name': 'p',
+            'components': {
+              'position': {'x': 9.0},
+            },
+          },
+        ],
+      });
+      final p = world.getComponent<Position>(handle.named['p']!)!;
+      expect([p.x, p.y], [9, 0]);
     });
   });
 }

@@ -29,6 +29,7 @@ export 'src/physics/collider.dart';
 export 'src/rendering/day_night_cycle.dart';
 export 'src/rendering/particle.dart';
 export 'src/rendering/particle_emitter.dart';
+export 'src/rendering/particle_presets.dart';
 export 'src/rendering/particle_forces.dart';
 export 'src/physics/position.dart';
 export 'src/physics/pushable.dart';
