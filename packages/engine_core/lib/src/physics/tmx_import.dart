@@ -23,19 +23,27 @@ const _slopeUpLeftProperty = 'slopeUpLeft';
 /// standard tool for this — using `game_agent lint` or a level editor
 /// isn't a requirement to get real level geometry into this engine.
 ///
-/// **What's supported**: one embedded `<tileset>` (no `source=` — an
-/// external `.tsx` file reference is out of scope, since resolving it
-/// would need file I/O this Flutter-free, web-targeting package
-/// deliberately doesn't do), CSV or uncompressed-base64 `<data>`, one tile
-/// layer at a time (see `layer:` below).
-/// Per-tile `bool` custom properties named `"solid"`/`"oneWay"`/
-/// `"slopeUpRight"`/`"slopeUpLeft"` (set in Tiled's tileset editor) map
-/// onto the matching `TileMap` collision set.
+/// **What's supported**: one or more `<tileset>`s (Tiled gives each a
+/// `firstgid`, so global tile ids stay unique and collision properties merge
+/// across them), CSV or base64 `<data>`, one tile layer at a time (see
+/// [layer]). Per-tile `bool` custom properties named
+/// `"solid"`/`"oneWay"`/`"slopeUpRight"`/`"slopeUpLeft"` (set in Tiled's
+/// tileset editor) map onto the matching `TileMap` collision set.
+///
+/// Two things need the caller, because this Flutter-free, web-targeting package
+/// does no file I/O and has no zlib:
+/// - an external tileset (`<tileset source="x.tsx">`): pass [readTileset],
+///   which receives the `source` string and returns the `.tsx` text (or null
+///   when it can't be found, which is reported as an error);
+/// - compressed layer data (`compression="zlib"` or `"gzip"`): pass
+///   [decompress], which receives the still-compressed bytes and the
+///   compression name and returns the raw bytes (`dart:io`'s
+///   `ZLibDecoder().convert` / `GZipDecoder().convert` do this on the VM).
 ///
 /// **What's not supported** (throws [UnsupportedError] with a specific
-/// message, rather than silently importing something wrong): more than
-/// one tileset, an external tileset (`source=`), compressed
-/// layer encoding (base64, with or without zlib/gzip compression).
+/// message, rather than silently importing something wrong): an external
+/// tileset or compressed data without the matching callback, other
+/// compressions (e.g. zstd), and XML `<tile>` layer data.
 /// Tile flip flags (Tiled's horizontal/vertical/diagonal flip bits on a
 /// gid) are silently stripped — the base tile id imports correctly,
 /// but a flipped orientation is lost, since `TileMap` has no concept of
@@ -43,9 +51,13 @@ const _slopeUpLeftProperty = 'slopeUpLeft';
 ///
 /// With several `<layer>`s, pass [layer] (a layer's `name`) to choose the one
 /// to import; without it a map that has more than one throws, listing the
-/// names. Layer data may be CSV or uncompressed base64 (Tiled's "Base64
-/// (uncompressed)"); compressed base64 is rejected with the setting to change.
-TileMap tileMapFromTmx(String tmxXml, {String? layer}) {
+/// names.
+TileMap tileMapFromTmx(
+  String tmxXml, {
+  String? layer,
+  String? Function(String source)? readTileset,
+  List<int> Function(List<int> bytes, String compression)? decompress,
+}) {
   final doc = XmlDocument.parse(tmxXml);
   final mapEl = doc.rootElement;
   if (mapEl.name.local != 'map') {
@@ -63,41 +75,43 @@ TileMap tileMapFromTmx(String tmxXml, {String? layer}) {
   if (tilesetEls.isEmpty) {
     throw UnsupportedError('No <tileset> found in this .tmx file');
   }
-  if (tilesetEls.length > 1) {
-    throw UnsupportedError(
-      'Multiple <tileset> elements found (${tilesetEls.length}) -- tileMapFromTmx only supports a single embedded tileset',
-    );
-  }
-  final tilesetEl = tilesetEls.single;
-  if (tilesetEl.getAttribute('source') != null) {
-    throw UnsupportedError(
-      'External tileset file ("source" attribute) is not supported -- re-export with Tiled\'s "Embed Tileset" option',
-    );
-  }
-  final firstGid = int.parse(tilesetEl.getAttribute('firstgid')!);
 
   final solidTileIds = <int>{};
   final oneWayTileIds = <int>{};
   final slopeUpRightTileIds = <int>{};
   final slopeUpLeftTileIds = <int>{};
-  for (final tileEl in tilesetEl.findElements('tile')) {
-    final localId = int.parse(tileEl.getAttribute('id')!);
-    final globalId = firstGid + localId;
-    final propertiesEl = tileEl.getElement('properties');
-    if (propertiesEl == null) continue;
-    for (final propertyEl in propertiesEl.findElements('property')) {
-      final name = propertyEl.getAttribute('name');
-      final value = propertyEl.getAttribute('value');
-      if (value != 'true') continue;
-      switch (name) {
-        case _solidProperty:
-          solidTileIds.add(globalId);
-        case _oneWayProperty:
-          oneWayTileIds.add(globalId);
-        case _slopeUpRightProperty:
-          slopeUpRightTileIds.add(globalId);
-        case _slopeUpLeftProperty:
-          slopeUpLeftTileIds.add(globalId);
+  for (final mapTileset in tilesetEls) {
+    final firstGid = int.parse(mapTileset.getAttribute('firstgid')!);
+    final source = mapTileset.getAttribute('source');
+    var tilesetEl = mapTileset;
+    if (source != null) {
+      final text = readTileset?.call(source);
+      if (readTileset == null) {
+        throw UnsupportedError(
+          'External tileset "$source" needs readTileset: to load it, or re-export with Tiled\'s "Embed Tileset" option',
+        );
+      }
+      if (text == null) {
+        throw UnsupportedError('External tileset "$source" could not be read');
+      }
+      tilesetEl = XmlDocument.parse(text).rootElement;
+    }
+    for (final tileEl in tilesetEl.findElements('tile')) {
+      final globalId = firstGid + int.parse(tileEl.getAttribute('id')!);
+      final propertiesEl = tileEl.getElement('properties');
+      if (propertiesEl == null) continue;
+      for (final propertyEl in propertiesEl.findElements('property')) {
+        if (propertyEl.getAttribute('value') != 'true') continue;
+        switch (propertyEl.getAttribute('name')) {
+          case _solidProperty:
+            solidTileIds.add(globalId);
+          case _oneWayProperty:
+            oneWayTileIds.add(globalId);
+          case _slopeUpRightProperty:
+            slopeUpRightTileIds.add(globalId);
+          case _slopeUpLeftProperty:
+            slopeUpLeftTileIds.add(globalId);
+        }
       }
     }
   }
@@ -143,8 +157,18 @@ TileMap tileMapFromTmx(String tmxXml, {String? layer}) {
         .where((s) => s.isNotEmpty)
         .map(int.parse)
         .toList();
-  } else if (encoding == 'base64' && compression == null) {
-    final bytes = base64.decode(dataEl.innerText.trim());
+  } else if (encoding == 'base64') {
+    List<int> bytes = base64.decode(dataEl.innerText.trim());
+    if (compression != null) {
+      if (decompress == null ||
+          (compression != 'zlib' && compression != 'gzip')) {
+        throw UnsupportedError(
+          'Compressed layer data ("$compression") needs decompress: for zlib/gzip -- or re-export with '
+          'Tiled\'s "Tile Layer Format" set to "CSV" or "Base64 (uncompressed)"',
+        );
+      }
+      bytes = decompress(bytes, compression);
+    }
     if (bytes.length % 4 != 0) {
       throw UnsupportedError(
         'Base64 layer data is ${bytes.length} bytes, not a multiple of 4 (one little-endian uint32 per tile)',
@@ -154,11 +178,6 @@ TileMap tileMapFromTmx(String tmxXml, {String? layer}) {
       for (var i = 0; i < bytes.length; i += 4)
         bytes[i] | bytes[i + 1] << 8 | bytes[i + 2] << 16 | bytes[i + 3] << 24,
     ];
-  } else if (encoding == 'base64') {
-    throw UnsupportedError(
-      'Compressed layer data ("$compression") is not supported -- re-export with '
-      'Tiled\'s "Tile Layer Format" set to "CSV" or "Base64 (uncompressed)"',
-    );
   } else {
     throw UnsupportedError(
       'Layer data encoding "${encoding ?? '(tile elements, uncompressed XML)'}" is not supported -- '

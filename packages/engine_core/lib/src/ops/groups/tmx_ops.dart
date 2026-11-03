@@ -95,7 +95,7 @@ List<Operation> tmxOperations() => [
     summary: 'Create a level from a Tiled .tmx map.',
     description:
         'Makes a new level whose single entity holds the imported tileMap. Fails with `conflict` if the output exists. '
-        'A map with several tile layers needs `layer` (the layer name to import). Unsupported maps (several tilesets, external tilesets, compressed data) are `validation_failed` with the reason.',
+        'A map with several tile layers needs `layer` (the layer name to import). Several tilesets and external `.tsx` tilesets (resolved next to the map) are supported. Unsupported maps (zlib/gzip-compressed layer data, XML tile elements) are `validation_failed` with the reason; re-export the layer as CSV or uncompressed base64.',
     kind: OperationKind.write,
     scope: OperationScope.project,
     params: const [
@@ -120,7 +120,15 @@ List<Operation> tmxOperations() => [
       if (xml == null) throw OpError(ErrorCode.notFound, 'No file at $tmxRel.');
       final TileMap map;
       try {
-        map = tileMapFromTmx(xml, layer: a['layer'] as String?);
+        final tmxDir = tmxRel.contains('/')
+            ? tmxRel.substring(0, tmxRel.lastIndexOf('/') + 1)
+            : '';
+        map = tileMapFromTmx(
+          xml,
+          layer: a['layer'] as String?,
+          readTileset: (source) =>
+              ctx.files.read(ctx.project!.resolve('$tmxDir$source')),
+        );
       } on UnsupportedError catch (e) {
         throw OpError(ErrorCode.validationFailed, '${e.message}');
       } on Object catch (e) {

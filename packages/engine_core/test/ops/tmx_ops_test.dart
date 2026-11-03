@@ -75,6 +75,30 @@ void main() {
     expect(tileMap['tiles'], [1, 0]);
   });
 
+  test('import_tmx reads an external .tsx next to the map', () async {
+    final s = await Scratch.create();
+    s.write('assets/levels/tiles/ground.tsx', '''
+<tileset name="ground" tilewidth="16" tileheight="16" tilecount="2" columns="2">
+ <image source="g.png" width="32" height="16"/>
+ <tile id="1"><properties><property name="solid" type="bool" value="true"/></properties></tile>
+</tileset>
+''');
+    s.write('assets/levels/ext.tmx', '''
+<map width="2" height="1" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" source="tiles/ground.tsx"/>
+ <layer id="1" width="2" height="1"><data encoding="csv">2,1</data></layer>
+</map>
+''');
+    final imp = await s.map('level.import_tmx', {
+      'tmx': 'assets/levels/ext.tmx',
+    });
+    final entity =
+        (jsonDecode(s.read(imp['path']! as String))['entities'] as List).single
+            as Map;
+    final tileMap = (entity['components'] as Map)['tileMap'] as Map;
+    expect(tileMap['solidTileIds'], [2]);
+  });
+
   test('import refuses an existing output and unsupported maps', () async {
     final s = await Scratch.create();
     await s.data('level.export_tmx', {'path': lv});

@@ -1,3 +1,5 @@
+import 'dart:io' show GZipCodec, ZLibCodec;
+
 import 'package:engine_core/engine_core.dart';
 import 'package:test/test.dart';
 
@@ -74,7 +76,7 @@ void main() {
     expect(() => tileMapFromTmx('<notamap></notamap>'), throwsUnsupportedError);
   });
 
-  test('rejects an external tileset ("source" attribute)', () {
+  test('rejects an external tileset when no readTileset is given', () {
     const xml = '''
 <map width="1" height="1" tilewidth="16" tileheight="16">
  <tileset firstgid="1" source="tiles.tsx"/>
@@ -84,19 +86,105 @@ void main() {
     expect(() => tileMapFromTmx(xml), throwsUnsupportedError);
   });
 
-  test('rejects more than one tileset', () {
+  test('several tilesets merge their collision properties by global id', () {
+    const xml = '''
+<map width="2" height="1" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" name="a" tilewidth="16" tileheight="16" tilecount="2" columns="2">
+  <image source="a.png" width="32" height="16"/>
+  <tile id="1"><properties><property name="solid" type="bool" value="true"/></properties></tile>
+ </tileset>
+ <tileset firstgid="3" name="b" tilewidth="16" tileheight="16" tilecount="2" columns="2">
+  <image source="b.png" width="32" height="16"/>
+  <tile id="0"><properties><property name="oneWay" type="bool" value="true"/></properties></tile>
+ </tileset>
+ <layer id="1" width="2" height="1"><data encoding="csv">2,3</data></layer>
+</map>
+''';
+    final map = tileMapFromTmx(xml);
+    expect(map.solidTileIds, {2});
+    expect(map.oneWayTileIds, {3});
+  });
+
+  test(
+    'an external tileset is read through readTileset, offset by firstgid',
+    () {
+      const tsx = '''
+<tileset name="ext" tilewidth="16" tileheight="16" tilecount="2" columns="2">
+ <image source="ext.png" width="32" height="16"/>
+ <tile id="1"><properties><property name="solid" type="bool" value="true"/></properties></tile>
+</tileset>
+''';
+      const xml = '''
+<map width="1" height="1" tilewidth="16" tileheight="16">
+ <tileset firstgid="5" source="sub/ext.tsx"/>
+ <layer id="1" width="1" height="1"><data encoding="csv">6</data></layer>
+</map>
+''';
+      String? requested;
+      final map = tileMapFromTmx(
+        xml,
+        readTileset: (source) {
+          requested = source;
+          return tsx;
+        },
+      );
+      expect(requested, 'sub/ext.tsx');
+      expect(map.solidTileIds, {6});
+    },
+  );
+
+  test('an external tileset that cannot be read is an error naming it', () {
     const xml = '''
 <map width="1" height="1" tilewidth="16" tileheight="16">
- <tileset firstgid="1" name="a" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="a.png" width="16" height="16"/>
- </tileset>
- <tileset firstgid="2" name="b" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="b.png" width="16" height="16"/>
- </tileset>
+ <tileset firstgid="1" source="gone.tsx"/>
  <layer id="1" width="1" height="1"><data encoding="csv">1</data></layer>
 </map>
 ''';
-    expect(() => tileMapFromTmx(xml), throwsUnsupportedError);
+    expect(
+      () => tileMapFromTmx(xml, readTileset: (_) => null),
+      throwsA(
+        isA<UnsupportedError>().having(
+          (e) => e.message,
+          'message',
+          contains('gone.tsx'),
+        ),
+      ),
+    );
+  });
+
+  test('zlib and gzip layer data import through decompress', () {
+    String xmlFor(String compression, String data) =>
+        '''
+<map width="2" height="2" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" name="a" tilewidth="16" tileheight="16" tilecount="3" columns="3">
+  <image source="a.png" width="48" height="16"/>
+ </tileset>
+ <layer id="1" width="2" height="2"><data encoding="base64" compression="$compression">$data</data></layer>
+</map>
+''';
+    List<int> inflate(List<int> bytes, String compression) =>
+        compression == 'gzip'
+        ? GZipCodec().decode(bytes)
+        : ZLibCodec().decode(bytes);
+    for (final (compression, data) in [
+      ('zlib', 'eJxjZGBgYGKAAGYgBgAARAAH'),
+      ('gzip', 'H4sIAAAAAAAC/2NkYGBgYoAAZiAGALXrXbwQAAAA'),
+    ]) {
+      final map = tileMapFromTmx(
+        xmlFor(compression, data),
+        decompress: inflate,
+      );
+      expect(
+        [
+          map.tileAt(0, 0),
+          map.tileAt(1, 0),
+          map.tileAt(0, 1),
+          map.tileAt(1, 1),
+        ],
+        [1, 2, 0, 3],
+        reason: compression,
+      );
+    }
   });
 
   test('rejects more than one layer', () {
@@ -185,8 +273,10 @@ void main() {
     expect(tileMapFromTmx(xml).tileAt(0, 0), 1);
   });
 
-  test('compressed base64 is rejected, naming the setting to change', () {
-    const xml = '''
+  test(
+    'compressed base64 without decompress is rejected, naming the setting to change',
+    () {
+      const xml = '''
 <map width="1" height="1" tilewidth="16" tileheight="16">
  <tileset firstgid="1" name="a" tilewidth="16" tileheight="16" tilecount="1" columns="1">
   <image source="a.png" width="16" height="16"/>
@@ -194,17 +284,22 @@ void main() {
  <layer id="1" width="1" height="1"><data encoding="base64" compression="zlib">eJxjYAAAAAYAAQ==</data></layer>
 </map>
 ''';
-    expect(
-      () => tileMapFromTmx(xml),
-      throwsA(
-        isA<UnsupportedError>().having(
-          (e) => e.message,
-          'message',
-          allOf(contains('zlib'), contains('Base64 (uncompressed)')),
+      expect(
+        () => tileMapFromTmx(xml),
+        throwsA(
+          isA<UnsupportedError>().having(
+            (e) => e.message,
+            'message',
+            allOf(
+              contains('zlib'),
+              contains('decompress'),
+              contains('Base64 (uncompressed)'),
+            ),
+          ),
         ),
-      ),
-    );
-  });
+      );
+    },
+  );
 
   test('rejects uncompressed XML tile elements (no encoding)', () {
     const xml = '''
