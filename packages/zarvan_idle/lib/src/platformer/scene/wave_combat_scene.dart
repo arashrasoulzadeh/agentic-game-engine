@@ -5,6 +5,7 @@ import 'package:zarvan_flutter/zarvan_flutter.dart' hide Text;
 import 'package:zarvan_platformer/zarvan_platformer.dart';
 
 import '../combat/auto_combat_system.dart';
+import 'sun_light.dart';
 import '../combat/combat_components.dart';
 import '../combat/fighter_death_system.dart';
 import '../combat/spawn_fighter.dart';
@@ -43,6 +44,7 @@ class WaveCombatConfig {
     this.impactParticles = defaultImpactParticles,
     this.hud = const HudLayout(),
     this.ui = const WaveUiArt(),
+    this.sun,
   });
 
   /// Asset stem of the hero sheets (`<stem>_idle.png`, `_attack`, `_death`).
@@ -86,6 +88,9 @@ class WaveCombatConfig {
 
   /// Generated UI art for the bars, path and caption (each optional).
   final WaveUiArt ui;
+
+  /// A sun-like light over the scene; null (default) leaves it unlit.
+  final SunLight? sun;
 
   /// Builds the spark emitter each fighter gets.
   final ParticleEmitter Function() impactParticles;
@@ -243,8 +248,24 @@ class WaveCombatScene extends Scene {
         nodeSize: ui.pathNodeSize,
       );
     }
+    final sun = config.sun;
+    if (sun != null) {
+      final id = world.spawn();
+      world.componentsOf<Position>().set(id, Position(sun.x, sun.y));
+      world.componentsOf<Light2D>().set(
+        id,
+        Light2D(
+          radius: sun.radius,
+          intensity: sun.intensity,
+          colorArgb: sun.colorArgb,
+        ),
+      );
+    }
     _spawnEnemy(world);
   }
+
+  @override
+  double? get ambientBrightness => config.sun?.ambientBrightness;
 
   @override
   Future<AtlasRegistry> loadAssets() async {

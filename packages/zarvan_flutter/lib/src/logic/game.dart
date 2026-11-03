@@ -93,6 +93,11 @@ abstract class Game {
   /// `PlayerOptions.screenShakeIntensity` the same way as [colorblindMode].
   double get screenShakeIntensity => 1.0;
 
+  /// Whether shadow-casting lights may pick the GPU shadow shader on their own
+  /// when it gives the same result (see `EngineView.autoGpuShadows`). On by
+  /// default; return false to keep every shadow on the CPU raycast.
+  bool get autoGpuShadows => true;
+
   /// Optional letterbox / aspect fit for [EngineView]. `null` (default)
   /// fills the host widget with no bars — the original behavior. Set
   /// e.g. `ViewportConfig(targetAspectRatio: 9 / 16)` for a portrait
@@ -601,6 +606,7 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
             backgroundColor: widget.game.config.backgroundColor,
             colorblindMode: widget.game.colorblindMode,
             viewportConfig: widget.game.viewportConfig,
+            autoGpuShadows: widget.game.autoGpuShadows,
             paused: _paused || overlay != null,
             // Forced off in a real release build regardless of what
             // game_config.json says -- these are debugging aids, not

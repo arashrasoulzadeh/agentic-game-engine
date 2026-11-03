@@ -56,6 +56,9 @@ class GpuLightShader {
     return null;
   }
 
+  /// Whether the program has finished compiling, so [shader] returns a shader.
+  static bool get isReady => _program != null;
+
   /// Compiles the program now and returns when it is ready (or has failed,
   /// which stays silent like [shader]). Called from the loading screen so the
   /// first frame that needs this shader is not one frame short of it.

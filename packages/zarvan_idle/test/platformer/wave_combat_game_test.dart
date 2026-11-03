@@ -84,6 +84,31 @@ void main() {
     expect(layout.isLetterboxed, isFalse);
   });
 
+  test('a SunLight on the config sets the scene ambient brightness; none '
+      'leaves the scene unlit', () {
+    final level = LevelData.fromJson({
+      'name': 'L',
+      'wave': ['a'],
+      'boss': 'b',
+      'background': 'x',
+      'hero': {'x': 1, 'y': 2},
+      'enemy_anchor': {'x': 3, 'y': 4},
+    });
+    expect(
+      WaveCombatScene(level: level, config: _combat).ambientBrightness,
+      isNull,
+    );
+    const lit = WaveCombatConfig(
+      heroStem: 'h',
+      enemyRoot: 'e',
+      backgroundDir: 'b',
+      backgroundPrefix: 'bg',
+      sun: SunLight(ambientBrightness: 0.6),
+    );
+    expect(WaveCombatScene(level: level, config: lit).ambientBrightness, 0.6);
+    expect(const SunLight().colorArgb >> 24, greaterThan(0)); // warm tint
+  });
+
   test('a game can carry its own splash artwork', () {
     const splash = SplashConfig(title: 'Mine');
     final game = WaveCombatGame(

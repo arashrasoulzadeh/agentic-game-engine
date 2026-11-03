@@ -8,6 +8,10 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added (lighting)
+- `EngineView.autoGpuShadows` / `Game.autoGpuShadows` (on by default): a shadow-casting light draws with the GPU shadow shader on its own when the result matches the CPU one (shader ready, no `Collider(blocksLight)` entities, no one-way blocking, no `shadowSmoothingSeconds`/`openAirFalloffScale`, fewer than 32 nearby tile edges); otherwise it stays on the CPU raycast. `Light2D.useGpuShadows` still forces the GPU path.
+- `SunLight` on `WaveCombatConfig.sun`: a small warm light plus scene ambient brightness, for wave-combat games and testing.
+
 ### Changed (rendering)
 - Sprite batches use typed buffers and `drawRawAtlas` (no per-sprite `RSTransform`/`Rect`/`Color` objects). Mirrored sprites (negative `scaleX`, i.e. facing left) now batch too: one `drawVertices` per image with flipped texture coordinates, no extra texture memory. Pixel tests cover both.
 - `WaveCombatGame(viewportFit:)` (default `contain`); `ViewportFit.cover` fills the screen and crops the sides instead of leaving black bars.

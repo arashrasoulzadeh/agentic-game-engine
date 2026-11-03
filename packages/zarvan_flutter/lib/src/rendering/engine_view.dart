@@ -204,6 +204,15 @@ class EngineView extends StatefulWidget {
   /// shader pass). The legacy path remains the default for compatibility.
   final bool singlePassLighting;
 
+  /// Let shadow-casting lights use the GPU shadow shader on their own when
+  /// that is safe: the shader is loaded, the light blocks only on tile edges
+  /// (no `Collider(blocksLight)` entities, no one-way platforms), it uses no
+  /// CPU-only feature (`shadowSmoothingSeconds`, `openAirFalloffScale`) and
+  /// fewer than 32 edges are near it. Anything else keeps the CPU raycast, so
+  /// turning this on never changes what a shadow looks like or drops one.
+  /// `Light2D.useGpuShadows` still forces the GPU path.
+  final bool autoGpuShadows;
+
   /// Optional callback invoked after each world step with the time delta
   /// and the world. Useful for scene-specific per-frame logic like
   /// dialogue typewriter effects.
@@ -243,6 +252,7 @@ class EngineView extends StatefulWidget {
     this.frameStats,
     this.cullBufferPx = 96.0,
     this.singlePassLighting = false,
+    this.autoGpuShadows = true,
     this.showAutoTileBitmask = false,
     this.colorblindMode = 'none',
     this.onPostTick,
@@ -546,6 +556,7 @@ class _EngineViewState extends State<EngineView>
       cameraVelocityY: _cameraVelocityY,
       tileCullCache: _tileCullCache,
       singlePassLighting: widget.singlePassLighting,
+      autoGpuShadows: widget.autoGpuShadows,
       showAutoTileBitmask: widget.showAutoTileBitmask,
       combinedTextureCache: _combinedTextureCache,
     );
@@ -821,6 +832,9 @@ class _EnginePainter extends CustomPainter {
   /// the combined darkness mask in one fragment shader pass.
   final bool singlePassLighting;
 
+  /// See `EngineView.autoGpuShadows`.
+  final bool autoGpuShadows;
+
   /// `true` enables the auto-tile bitmask debug overlay, showing the
   /// computed 4-direction bitmask (1=N, 2=E, 4=S, 8=W) for each solid
   /// tile cell as text on top of the tile. Only works for tiles in
@@ -850,6 +864,7 @@ class _EnginePainter extends CustomPainter {
     this.cameraVelocityY = 0,
     required this.tileCullCache,
     this.singlePassLighting = false,
+    this.autoGpuShadows = true,
     this.showAutoTileBitmask = false,
     required this.combinedTextureCache,
   }) : super(repaint: null);
@@ -1142,12 +1157,59 @@ class _EnginePainter extends CustomPainter {
       final screenRadius = light.radius * camera.zoom;
       final fullRect = Offset.zero & size;
       if (!_circleIntersectsRect(screenPos, screenRadius, fullRect)) continue;
-      final clipPath = _lightClipPath(light, worldPos, size, entity);
+      final useGpu = _useGpuShadowsFor(
+        light,
+        entity,
+        _LightRenderInfo(light, screenPos, screenRadius, null, worldPos),
+        size,
+      );
+      final clipPath = _lightClipPath(
+        light,
+        worldPos,
+        size,
+        entity,
+        useGpu: useGpu,
+      );
       infos.add(
-        _LightRenderInfo(light, screenPos, screenRadius, clipPath, worldPos),
+        _LightRenderInfo(
+          light,
+          screenPos,
+          screenRadius,
+          clipPath,
+          worldPos,
+          useGpu: useGpu,
+        ),
       );
     }
     return infos;
+  }
+
+  /// Whether [light] draws its shadow with the GPU shader this frame: forced
+  /// by `Light2D.useGpuShadows`, or chosen automatically when
+  /// [autoGpuShadows] is on and the GPU result would match the CPU one (see
+  /// `EngineView.autoGpuShadows`).
+  bool _useGpuShadowsFor(
+    Light2D light,
+    EntityId lightEntity,
+    _LightRenderInfo probe,
+    Size size,
+  ) {
+    if (!light.castsShadows) return false;
+    if (light.useGpuShadows) return true;
+    // Features only the CPU raycast implements: the GPU shader would
+    // silently ignore them, so a light that uses one stays on the CPU.
+    if (!autoGpuShadows ||
+        light.blockOneWayPlatforms ||
+        light.shadowSmoothingSeconds != 0 ||
+        light.openAirFalloffScale != 1.0) {
+      return false;
+    }
+    if (!GpuLightShader.isReady) {
+      GpuLightShader.warmUp(); // load now; the CPU path covers until ready
+      return false;
+    }
+    if (_collectLightBlockingColliders(lightEntity).isNotEmpty) return false;
+    return _gpuLightSegmentsFor(probe, size).length < _gpuMaxSegments * 2;
   }
 
   /// Draws one `Light2D.useGpuShadows` light with the `light_shadow.frag`
@@ -1270,7 +1332,7 @@ class _EnginePainter extends CustomPainter {
       // GPU lights apply occlusion in their own shader. An unshadowed CPU
       // reveal here would illuminate the pixels their shader blocks, so they
       // punch through the darkness with the shadowed disc instead.
-      if (info.light.useGpuShadows && info.light.castsShadows) {
+      if (info.useGpu) {
         _drawGpuLight(canvas, info, size, revealDarkness: true);
         continue;
       }
@@ -1295,7 +1357,7 @@ class _EnginePainter extends CustomPainter {
     // skipped per-light whenever colorArgb's alpha is 0 (the default),
     // so a game that never sets a tint pays nothing for this pass.
     for (final info in infos) {
-      if (info.light.useGpuShadows && info.light.castsShadows) continue;
+      if (info.useGpu) continue;
       final tintColor = Color(info.light.colorArgb);
       if (tintColor.a == 0) continue;
 
@@ -1322,7 +1384,7 @@ class _EnginePainter extends CustomPainter {
     // per-light whenever overbrightIntensity is 0 (the default), so a
     // game that never sets it pays nothing extra.
     for (final info in infos) {
-      if (info.light.useGpuShadows && info.light.castsShadows) continue;
+      if (info.useGpu) continue;
       final peak = info.light.overbrightIntensity.clamp(0.0, 1.0);
       if (peak == 0) continue;
 
@@ -1343,7 +1405,7 @@ class _EnginePainter extends CustomPainter {
     // colour on top, occluded by the same segments. BlendMode.screen keeps
     // overlapping tints bounded (src + dst - src*dst never exceeds white).
     for (final info in infos) {
-      if (!info.light.useGpuShadows || !info.light.castsShadows) continue;
+      if (!info.useGpu) continue;
       if (Color(info.light.colorArgb).a == 0) continue;
       _drawGpuLight(canvas, info, size, revealDarkness: false);
     }
@@ -1731,8 +1793,9 @@ class _EnginePainter extends CustomPainter {
     Light2D light,
     Position worldPos,
     Size size,
-    EntityId lightEntity,
-  ) {
+    EntityId lightEntity, {
+    required bool useGpu,
+  }) {
     final hasCone = light.coneAngle != null;
     if (!hasCone && !light.castsShadows) return null;
 
@@ -1795,7 +1858,7 @@ class _EnginePainter extends CustomPainter {
       // for it, but as a plain circle/cone, not a duplicated sweep of
       // its own. Enabling useGpuShadows is meant to *replace* the CPU
       // sweep's cost for that light, not add the GPU pass on top of it.
-      final skipCpuRaycast = light.useGpuShadows;
+      final skipCpuRaycast = useGpu;
       final blockers = light.castsShadows && !skipCpuRaycast
           ? _collectLightBlockingColliders(lightEntity)
           : const <_LightBlocker>[];
@@ -3495,13 +3558,18 @@ class _LightRenderInfo {
   final double screenRadius;
   final Path? clipPath;
   final Position worldPos;
+
+  /// Whether this light's shadow is drawn by the GPU shader this frame
+  /// (forced or chosen automatically) and needs no CPU raycast.
+  final bool useGpu;
   _LightRenderInfo(
     this.light,
     this.screenPos,
     this.screenRadius,
     this.clipPath,
-    this.worldPos,
-  );
+    this.worldPos, {
+    this.useGpu = false,
+  });
 }
 
 /// One `Collider(blocksLight: true)` entity's world-space position/
