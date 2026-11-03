@@ -10,6 +10,7 @@ import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 
 import '../rendering/camera.dart';
+import '../rendering/engine_warmup.dart';
 import '../rendering/engine_view.dart';
 import '../rendering/frame_stats.dart';
 import '../rendering/viewport.dart';
@@ -482,6 +483,12 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     final camera = scene.createCamera(world)
       ..shakeIntensity = widget.game.screenShakeIntensity;
     final inputController = widget.game.createInputController();
+    progress.report(0.9, 'Warming up');
+    await EngineWarmup.run(
+      world,
+      report: (f, label) => progress.report(0.9 + 0.09 * f, label),
+    );
+    await scene.warmUp(world);
     scene.onEnter(world);
     progress.report(1, 'Ready');
     return _LoadedGame(world, atlasRegistry, camera, inputController, scene);

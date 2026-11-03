@@ -44,5 +44,14 @@ The footer shows `ZARVAN_COMMIT`, a compile-time define:
 - Otherwise pass `--dart-define=ZARVAN_COMMIT=<value>` to `flutter run` or
   `flutter build`. Without it the footer reads `ZARVAN engine · dev`.
 
-Progress is reported by `GameRunner` in stages (preparing, world, assets,
-ready), not per file.
+Progress is reported by `GameRunner`: preparing, world, assets (per asset when
+the scene calls `reportAssetProgress(done, total)`), warming up, ready.
+
+## Warm-up
+
+After the world is populated and before the first frame, the engine warms what
+the world will actually use: it compiles the lighting, GPU-shadow and
+normal-map shaders only if the world has lights or normal-mapped sprites, and
+draws each once offscreen so the GPU pipeline is built before play. Override
+`Scene.warmUp(world)` to prime your own caches or pools; it runs on the splash,
+before `onEnter`.

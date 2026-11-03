@@ -110,7 +110,13 @@ void main() {
       ).readAsStringSync();
       expect(pubspec, contains('name: my_game'));
       expect(pubspec, contains('https://example.com/engine.git'));
-      expect('ref: test-ref'.allMatches(pubspec).length, 3);
+      // core + flutter + platformer, plus zarvan_cli as the build-time asset transformer.
+      expect('ref: test-ref'.allMatches(pubspec).length, 4);
+      expect(pubspec, contains('package: zarvan_cli'));
+      expect(
+        File('${tmp.path}/my_game/assets/images/README.md').existsSync(),
+        isTrue,
+      );
       expect(pubspec, isNot(contains('{{')));
       final main = File('${tmp.path}/my_game/lib/main.dart').readAsStringSync();
       expect(main, contains('spawnEnemy'));

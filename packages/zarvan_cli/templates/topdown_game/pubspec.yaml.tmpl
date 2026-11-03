@@ -25,9 +25,18 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Build-time asset transformer: PNGs under assets/images/ ship as lossless WebP.
+  zarvan_cli:
+    git:
+      url: {{ENGINE_REPO_URL}}
+      path: packages/zarvan_cli
+      ref: {{ENGINE_REF}}
   flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
   assets:
+    - path: assets/images/
+      transformers:
+        - package: zarvan_cli
     - assets/game_config.json

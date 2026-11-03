@@ -43,6 +43,12 @@ abstract class Scene {
   /// sprites yet.
   Future<AtlasRegistry> loadAssets() async => AtlasRegistry();
 
+  /// Last chance to prepare before the first frame: build caches, prime
+  /// pools, touch lazily created resources. Runs on the splash after the
+  /// world is populated and the engine has warmed its own shaders. Default
+  /// does nothing.
+  Future<void> warmUp(World world) async {}
+
   /// Wired by `GameRunner` while [loadAssets] runs so the splash bar can fill
   /// per asset. Scenes call [reportAssetProgress]; they never set this.
   void Function(double fraction, String label)? assetProgressSink;

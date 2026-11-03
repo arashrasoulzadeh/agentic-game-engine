@@ -8,6 +8,10 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added (loading and build)
+- Splash warm-up: the engine compiles and primes the lighting, GPU-shadow and normal-map shaders a world needs before its first frame (`EngineWarmup`), and scenes get a `warmUp(world)` hook.
+- The WebP transformer verifies every conversion pixel-for-pixel (falls back to the PNG otherwise) and uses maximum lossless effort; `zarvan create` templates include it on `assets/images/`, and `zarvan upgrade` pins `zarvan_cli` too.
+
 ### Added (build-time assets)
 - `zarvan_cli` is a Flutter asset transformer that re-encodes PNGs as lossless WebP during the build (needs `cwebp`; falls back to the original). `zarvan build-release` packs the atlas named by `GameConfig.packedAtlasSource` before building. See `docs/concepts/build-time-assets.md`.
 

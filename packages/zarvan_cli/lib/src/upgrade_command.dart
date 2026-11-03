@@ -15,6 +15,7 @@ const _enginePackageNames = [
   'zarvan_platformer',
   'zarvan_strategy',
   'zarvan_idle',
+  'zarvan_cli',
 ];
 
 /// Matches one engine package's git-dependency block (name from

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:image/image.dart' as img;
 import 'package:zarvan_cli/src/webp_transform.dart';
 import 'package:test/test.dart';
 
@@ -19,6 +20,7 @@ void main() {
     final converted = transformImage(
       input,
       output,
+      verify: (_, _) => true,
       encoder: (args) {
         expect(args, containsAll(['-lossless', input]));
         File(args.last).writeAsBytesSync(List.filled(40, 9));
@@ -35,6 +37,7 @@ void main() {
     final converted = transformImage(
       input,
       output,
+      verify: (_, _) => true,
       encoder: (args) {
         File(args.last).writeAsBytesSync(List.filled(50, 9));
         return 0;
@@ -61,5 +64,67 @@ void main() {
     );
     expect(converted, isFalse);
     expect(File(output).readAsBytesSync(), [123, 125]);
+  });
+
+  test('a result that fails pixel verification keeps the original', () {
+    final input = write('a.png', List.filled(100, 1));
+    final output = '${dir.path}/out.png';
+    final converted = transformImage(
+      input,
+      output,
+      verify: (_, _) => false,
+      encoder: (args) {
+        File(args.last).writeAsBytesSync(List.filled(40, 9));
+        return 0;
+      },
+    );
+    expect(converted, isFalse);
+    expect(File(output).readAsBytesSync(), List.filled(100, 1));
+  });
+
+  group('samePixels', () {
+    final base = img.Image(width: 2, height: 1, numChannels: 4)
+      ..setPixelRgba(0, 0, 10, 20, 30, 255)
+      ..setPixelRgba(1, 0, 99, 99, 99, 0);
+
+    final hasCwebp = Process.runSync('which', ['cwebp']).exitCode == 0;
+
+    test(
+      'a real cwebp round-trip verifies, hidden colour of transparent pixels aside',
+      () {
+        final png = '${dir.path}/r.png';
+        File(png).writeAsBytesSync(img.encodePng(base));
+        final out = '${dir.path}/r.webp';
+        expect(transformImage(png, out), isTrue);
+        expect(
+          samePixels(File(png).readAsBytesSync(), File(out).readAsBytesSync()),
+          isTrue,
+        );
+      },
+      skip: hasCwebp ? false : 'cwebp not installed',
+    );
+
+    test(
+      'a 16-bit png is compared at 8 bits per channel',
+      () {
+        final wide = img.Image(
+          width: 1,
+          height: 1,
+          numChannels: 4,
+          format: img.Format.uint16,
+        )..setPixelRgba(0, 0, 65535, 0, 257, 1);
+        final path = '${dir.path}/w.png';
+        File(path).writeAsBytesSync(img.encodePng(wide));
+        final out = '${dir.path}/w.webp';
+        expect(transformImage(path, out), isTrue);
+      },
+      skip: hasCwebp ? false : 'cwebp not installed',
+    );
+
+    test('detects a changed visible pixel and a size mismatch', () {
+      final changed = img.Image.from(base)..setPixelRgba(0, 0, 11, 20, 30, 255);
+      expect(samePixels(img.encodePng(base), img.encodePng(changed)), isFalse);
+      expect(samePixels(img.encodePng(base), [1, 2, 3]), isFalse);
+    });
   });
 }

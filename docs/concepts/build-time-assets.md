@@ -26,6 +26,16 @@ PNG, when `cwebp` is not installed, or when WebP would not be smaller, so the
 step never fails a build or makes it bigger. Install the encoder with
 `brew install webp` or `apt install webp`.
 
+Every conversion is checked before it is kept: the WebP is decoded and compared
+with the PNG pixel by pixel, and if anything visible differs the original PNG is
+used instead. 8-bit PNGs must match exactly (the hidden colour of fully
+transparent pixels aside); 16-bit PNGs are compared at 8 bits, which is what
+Flutter decodes them to and all WebP can hold. Encoding uses cwebp's maximum
+lossless effort (`-z 9`).
+
+Projects made with `zarvan create` already have the transformer on
+`assets/images/`; drop PNGs there.
+
 Measured on mobarez: 124 PNG assets became WebP and the release APK went from
 24.4 MB to 21.3 MB, with identical rendering on a phone.
 

@@ -24,6 +24,23 @@ class _ReportingScene extends _SlowLoadingScene {
   }
 }
 
+class _WarmupScene extends _SlowLoadingScene {
+  final order = <String>[];
+
+  @override
+  Future<void> warmUp(World world) async => order.add('warmUp');
+
+  @override
+  void onEnter(World world) => order.add('onEnter');
+}
+
+class _WarmupGame extends _TestGame {
+  final scene = _WarmupScene();
+
+  @override
+  Scene createInitialScene() => scene;
+}
+
 class _ReportingGame extends _TestGame {
   @override
   Scene createInitialScene() => _ReportingScene();
@@ -422,6 +439,16 @@ void main() {
       expect(game.loadingProgress.fraction, 1);
     },
   );
+
+  testWidgets('Scene.warmUp runs on the splash, before onEnter', (
+    tester,
+  ) async {
+    final game = _WarmupGame();
+    await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+    await tester.pump(const Duration(milliseconds: 80));
+    await tester.pump();
+    expect(game.scene.order, ['warmUp', 'onEnter']);
+  });
 
   testWidgets('buildLoadingScreen can be overridden', (tester) async {
     final game = _CustomLoadingScreenGame();
