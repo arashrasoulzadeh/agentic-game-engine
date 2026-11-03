@@ -22,9 +22,9 @@ class SceneLight {
     this.anchor = LightAnchor.none,
     this.x = 0,
     this.y = 0,
-    this.radius = 50,
-    this.intensity = 1.0,
-    this.colorArgb = 0x44FFB347,
+    this.radius = 40,
+    this.intensity = 0.6,
+    this.colorArgb = 0x26FFB347,
     this.flicker = 0,
     this.flickerHz = 7,
   });

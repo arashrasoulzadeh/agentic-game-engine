@@ -5,10 +5,10 @@ class SunLight {
   const SunLight({
     this.x = 90,
     this.y = 70,
-    this.radius = 150,
-    this.intensity = 1.0,
-    this.colorArgb = 0x55FFD27A,
-    this.ambientBrightness = 0.78,
+    this.radius = 200,
+    this.intensity = 0.6,
+    this.colorArgb = 0x14FFE2A0,
+    this.ambientBrightness = 0.88,
   });
 
   /// World position of the light.
