@@ -5,6 +5,7 @@ import 'package:zarvan_flutter/zarvan_flutter.dart' hide Text;
 import 'package:zarvan_platformer/zarvan_platformer.dart';
 
 import '../combat/auto_combat_system.dart';
+import 'scene_light.dart';
 import 'sun_light.dart';
 import '../combat/combat_components.dart';
 import '../combat/fighter_death_system.dart';
@@ -45,6 +46,7 @@ class WaveCombatConfig {
     this.hud = const HudLayout(),
     this.ui = const WaveUiArt(),
     this.sun,
+    this.lights = const [],
   });
 
   /// Asset stem of the hero sheets (`<stem>_idle.png`, `_attack`, `_death`).
@@ -91,6 +93,10 @@ class WaveCombatConfig {
 
   /// A sun-like light over the scene; null (default) leaves it unlit.
   final SunLight? sun;
+
+  /// Extra lights: lanterns, glows, torches (see [SceneLight]). Without a
+  /// [sun] the scene is not darkened, so they only add tint.
+  final List<SceneLight> lights;
 
   /// Builds the spark emitter each fighter gets.
   final ParticleEmitter Function() impactParticles;
@@ -259,6 +265,25 @@ class WaveCombatScene extends Scene {
           intensity: sun.intensity,
           colorArgb: sun.colorArgb,
         ),
+      );
+    }
+    if (config.lights.isNotEmpty) {
+      final ids = <EntityId>[];
+      for (final spec in config.lights) {
+        final id = world.spawn();
+        world.componentsOf<Position>().set(id, Position(spec.x, spec.y));
+        world.componentsOf<Light2D>().set(
+          id,
+          Light2D(
+            radius: spec.radius,
+            intensity: spec.intensity,
+            colorArgb: spec.colorArgb,
+          ),
+        );
+        ids.add(id);
+      }
+      world.addSystem(
+        SceneLightSystem(config.lights, ids, () => heroId, () => enemyId),
       );
     }
     _spawnEnemy(world);

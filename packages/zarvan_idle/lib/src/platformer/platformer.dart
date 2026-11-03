@@ -20,5 +20,6 @@ export 'level/level_data.dart';
 export 'level/wave_progress.dart';
 export 'scene/walk_phase.dart';
 export 'scene/wave_combat_game.dart';
+export 'scene/scene_light.dart';
 export 'scene/sun_light.dart';
 export 'scene/wave_combat_scene.dart';
