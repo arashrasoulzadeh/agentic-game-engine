@@ -18,6 +18,7 @@ class WaveCombatGame extends Game {
     required this.level,
     required this.combat,
     this.splash = const SplashConfig(),
+    this.viewportFit = ViewportFit.contain,
   });
 
   @override
@@ -29,6 +30,12 @@ class WaveCombatGame extends Game {
   @override
   final SplashConfig splash;
 
+  /// How the fixed-aspect world meets the screen. [ViewportFit.contain]
+  /// (default) keeps all of it and leaves black bars on screens of another
+  /// shape; [ViewportFit.cover] fills the whole screen and crops the overflow,
+  /// so keep HUD elements away from the cropped edges.
+  final ViewportFit viewportFit;
+
   /// Loads the engine config (`assets/game_config.json` by default) and the
   /// level JSON, then builds the game.
   static Future<WaveCombatGame> load({
@@ -36,6 +43,7 @@ class WaveCombatGame extends Game {
     required WaveCombatConfig combat,
     String configAsset = 'assets/game_config.json',
     SplashConfig splash = const SplashConfig(),
+    ViewportFit viewportFit = ViewportFit.contain,
   }) async => WaveCombatGame(
     config: await GameConfig.loadFromAsset(configAsset),
     level: LevelData.fromJson(
@@ -44,11 +52,17 @@ class WaveCombatGame extends Game {
     ),
     combat: combat,
     splash: splash,
+    viewportFit: viewportFit,
   );
 
   @override
-  ViewportConfig get viewportConfig =>
-      ViewportConfig.fittingWorld(config.worldWidth, config.worldHeight);
+  ViewportConfig get viewportConfig => ViewportConfig(
+    targetAspectRatio: config.worldWidth / config.worldHeight,
+    fit: viewportFit,
+    avoidSystemUi: false,
+    centerViewport: true,
+    fitWorld: true,
+  );
 
   @override
   Scene createInitialScene() => WaveCombatScene(level: level, config: combat);

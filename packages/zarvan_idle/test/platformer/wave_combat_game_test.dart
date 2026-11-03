@@ -54,6 +54,36 @@ void main() {
     expect(game.splash.title, isNull); // default splash = the ZARVAN logo
   });
 
+  test('viewportFit defaults to contain and cover fills the screen', () {
+    WaveCombatGame make([ViewportFit? fit]) => WaveCombatGame(
+      config: const GameConfig(worldWidth: 180, worldHeight: 320),
+      level: LevelData.fromJson({
+        'name': 'L',
+        'wave': ['a'],
+        'boss': 'b',
+        'background': 'x',
+        'hero': {'x': 1, 'y': 2},
+        'enemy_anchor': {'x': 3, 'y': 4},
+      }),
+      combat: _combat,
+      viewportFit: fit ?? ViewportFit.contain,
+    );
+    final contain = make().viewportConfig;
+    expect(contain.fit, ViewportFit.contain);
+    expect(contain.fitWorld, isTrue);
+    expect(contain.targetAspectRatio, 180 / 320);
+
+    final cover = make(ViewportFit.cover).viewportConfig;
+    expect(cover.fit, ViewportFit.cover);
+    // On a 1080x2340 phone, cover fills the height and crops the sides.
+    final layout = ViewportManager(
+      cover,
+    ).computeLayout(const Size(1080, 2340), null);
+    expect(layout.contentRect.height, 2340);
+    expect(layout.contentRect.width, greaterThan(1080));
+    expect(layout.isLetterboxed, isFalse);
+  });
+
   test('a game can carry its own splash artwork', () {
     const splash = SplashConfig(title: 'Mine');
     final game = WaveCombatGame(

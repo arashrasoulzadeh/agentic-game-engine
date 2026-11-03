@@ -1,4 +1,5 @@
 import 'dart:math' show cos, exp, sin, pi, sqrt, max;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:zarvan_core/zarvan_core.dart';
@@ -2195,12 +2196,18 @@ class _EnginePainter extends CustomPainter {
       final z = zEntry.key;
       final batchesByImage = <ui.Image, _SpriteBatch>{};
       final tintedByImage = <ui.Image, _SpriteBatch>{};
+      final mirroredByImage = <ui.Image, _MirrorBatch>{};
       final fallbackIndices = <int>[];
 
       for (final i in zEntry.value) {
         final entity = sprites.entityAt(i);
         final sprite = sprites.denseAt(i);
-        if (sprite.scaleX != sprite.scaleY || sprite.scaleX <= 0) {
+        // `FacingSystem` flips with a negative scaleX of the same magnitude;
+        // `drawRawAtlas` cannot mirror, so those go through one
+        // `drawVertices` per image with mirrored texture coordinates.
+        final mirrored = sprite.scaleX < 0 && -sprite.scaleX == sprite.scaleY;
+        if (!mirrored &&
+            (sprite.scaleX != sprite.scaleY || sprite.scaleX <= 0)) {
           fallbackIndices.add(i);
           continue;
         }
@@ -2219,28 +2226,39 @@ class _EnginePainter extends CustomPainter {
         final zoom = sprite.screenSpace ? 1.0 : camera.zoom;
 
         final tint = sprite.tintArgb;
+        if (mirrored) {
+          mirroredByImage
+              .putIfAbsent(atlas.image, () => _MirrorBatch())
+              .add(
+                srcRect,
+                rotation: sprite.rotation,
+                scale: -sprite.scaleX * zoom,
+                translateX: screenPos.dx,
+                translateY: screenPos.dy,
+                colorArgb: tint,
+              );
+          continue;
+        }
         final batch = (tint == null ? batchesByImage : tintedByImage)
             .putIfAbsent(atlas.image, () => _SpriteBatch());
-        if (tint != null) batch.colors.add(Color(tint));
-        batch.transforms.add(
-          RSTransform.fromComponents(
-            rotation: sprite.rotation,
-            scale: sprite.scaleX * zoom,
-            anchorX: srcRect.width / 2,
-            anchorY: srcRect.height / 2,
-            translateX: screenPos.dx,
-            translateY: screenPos.dy,
-          ),
+        batch.add(
+          srcRect,
+          rotation: sprite.rotation,
+          scale: sprite.scaleX * zoom,
+          translateX: screenPos.dx,
+          translateY: screenPos.dy,
+          colorArgb: tint,
         );
-        batch.rects.add(srcRect);
       }
 
-      if (batchesByImage.isNotEmpty || tintedByImage.isNotEmpty) {
+      if (batchesByImage.isNotEmpty ||
+          tintedByImage.isNotEmpty ||
+          mirroredByImage.isNotEmpty) {
         items.add(
           _DrawItem(z, order++, (canvas) {
             final paint = Paint();
             for (final entry in batchesByImage.entries) {
-              canvas.drawAtlas(
+              canvas.drawRawAtlas(
                 entry.key,
                 entry.value.transforms,
                 entry.value.rects,
@@ -2254,7 +2272,7 @@ class _EnginePainter extends CustomPainter {
             // single-sprite `ColorFilter.mode(tint, modulate)` path, so a
             // hit-flashed sprite no longer costs its own draw call.
             for (final entry in tintedByImage.entries) {
-              canvas.drawAtlas(
+              canvas.drawRawAtlas(
                 entry.key,
                 entry.value.transforms,
                 entry.value.rects,
@@ -2263,6 +2281,9 @@ class _EnginePainter extends CustomPainter {
                 null,
                 paint,
               );
+            }
+            for (final entry in mirroredByImage.entries) {
+              entry.value.draw(canvas, entry.key);
             }
           }),
         );
@@ -3512,10 +3533,165 @@ class _ClipShapeInfo {
   _ClipShapeInfo(this.shape, this.screenPos);
 }
 
-/// One `Canvas.drawAtlas` call's worth of sprites sharing a source
+/// One `Canvas.drawRawAtlas` call's worth of sprites sharing a source
 /// image — see `_EnginePainter._collectSpriteItems`.
+///
+/// Typed buffers instead of a list of `RSTransform`/`Rect`/`Color` objects:
+/// a sprite-heavy frame otherwise allocates three objects per sprite, every
+/// frame, only to have the engine copy them into these same arrays.
 class _SpriteBatch {
-  final transforms = <RSTransform>[];
-  final rects = <Rect>[];
-  final colors = <Color>[];
+  var _count = 0;
+  var _transforms = Float32List(64 * 4);
+  var _rects = Float32List(64 * 4);
+  Int32List? _colors;
+
+  /// Appends one sprite. The transform is `RSTransform.fromComponents` with
+  /// the anchor at the source rect's centre, written straight into the buffer.
+  void add(
+    Rect src, {
+    required double rotation,
+    required double scale,
+    required double translateX,
+    required double translateY,
+    int? colorArgb,
+  }) {
+    if ((_count + 1) * 4 > _transforms.length) {
+      _transforms = _grow(_transforms);
+      _rects = _grow(_rects);
+    }
+    final c = cos(rotation) * scale;
+    final s = sin(rotation) * scale;
+    final anchorX = src.width / 2;
+    final anchorY = src.height / 2;
+    final o = _count * 4;
+    _transforms[o] = c;
+    _transforms[o + 1] = s;
+    _transforms[o + 2] = translateX + -c * anchorX + s * anchorY;
+    _transforms[o + 3] = translateY + -s * anchorX - c * anchorY;
+    _rects[o] = src.left;
+    _rects[o + 1] = src.top;
+    _rects[o + 2] = src.right;
+    _rects[o + 3] = src.bottom;
+    if (colorArgb != null) {
+      var colors = _colors ??= Int32List(_transforms.length ~/ 4);
+      if (colors.length * 4 < _transforms.length) {
+        colors = _colors = Int32List(_transforms.length ~/ 4)
+          ..setRange(0, colors.length, colors);
+      }
+      colors[_count] = colorArgb;
+    }
+    _count++;
+  }
+
+  static Float32List _grow(Float32List old) =>
+      Float32List(old.length * 2)..setRange(0, old.length, old);
+
+  Float32List get transforms =>
+      Float32List.sublistView(_transforms, 0, _count * 4);
+  Float32List get rects => Float32List.sublistView(_rects, 0, _count * 4);
+  Int32List? get colors =>
+      _colors == null ? null : Int32List.sublistView(_colors!, 0, _count);
+}
+
+/// Horizontally mirrored sprites sharing a source image, drawn with one
+/// `Canvas.drawVertices` call: each sprite is a quad whose texture
+/// coordinates run right-to-left. Same geometry and sampling as the
+/// per-sprite path (`canvas.scale(-s, s)` + `drawImageRect`), without a
+/// `save`/`restore` and draw call per sprite or a second, flipped copy of the
+/// texture in GPU memory.
+class _MirrorBatch {
+  /// Sprites per `drawVertices` call: indices are 16-bit.
+  static const _maxPerCall = 16000;
+
+  var _count = 0;
+  var _positions = Float32List(32 * 8);
+  var _texCoords = Float32List(32 * 8);
+  Int32List? _colors;
+
+  static Uint16List _indices = Uint16List(0);
+
+  void add(
+    Rect src, {
+    required double rotation,
+    required double scale,
+    required double translateX,
+    required double translateY,
+    int? colorArgb,
+  }) {
+    if ((_count + 1) * 8 > _positions.length) {
+      _positions = _grow(_positions);
+      _texCoords = _grow(_texCoords);
+    }
+    final c = cos(rotation) * scale;
+    final s = sin(rotation) * scale;
+    final hw = src.width / 2;
+    final hh = src.height / 2;
+    final o = _count * 8;
+    // Corners (clockwise from top-left) in the sprite's local frame, rotated
+    // about its centre.
+    const corners = [-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0];
+    for (var k = 0; k < 4; k++) {
+      final lx = corners[k * 2] * hw;
+      final ly = corners[k * 2 + 1] * hh;
+      _positions[o + k * 2] = translateX + lx * c - ly * s;
+      _positions[o + k * 2 + 1] = translateY + lx * s + ly * c;
+      // Mirrored: the left corners sample the right edge of the region.
+      _texCoords[o + k * 2] = corners[k * 2] < 0 ? src.right : src.left;
+      _texCoords[o + k * 2 + 1] = corners[k * 2 + 1] < 0 ? src.top : src.bottom;
+    }
+    // Always carry colours: one image's batch can mix tinted and plain
+    // sprites, and a plain one must modulate by white, not by 0.
+    var colors = _colors ??= Int32List(_positions.length ~/ 2);
+    if (colors.length * 2 < _positions.length) {
+      colors = _colors = Int32List(_positions.length ~/ 2)
+        ..setRange(0, colors.length, colors);
+    }
+    colors.fillRange(_count * 4, _count * 4 + 4, colorArgb ?? 0xFFFFFFFF);
+    _count++;
+  }
+
+  static Float32List _grow(Float32List old) =>
+      Float32List(old.length * 2)..setRange(0, old.length, old);
+
+  static Uint16List _indicesFor(int sprites) {
+    if (_indices.length < sprites * 6) {
+      final next = Uint16List(sprites * 6);
+      for (var i = 0; i < sprites; i++) {
+        final v = i * 4;
+        next.setRange(i * 6, i * 6 + 6, [v, v + 1, v + 2, v, v + 2, v + 3]);
+      }
+      _indices = next;
+    }
+    return _indices;
+  }
+
+  void draw(Canvas canvas, ui.Image image) {
+    final shader = ui.ImageShader(
+      image,
+      TileMode.clamp,
+      TileMode.clamp,
+      Matrix4.identity().storage,
+      filterQuality: FilterQuality.none,
+    );
+    final paint = Paint()..shader = shader;
+    for (var from = 0; from < _count; from += _maxPerCall) {
+      final n = (_count - from) < _maxPerCall ? _count - from : _maxPerCall;
+      final vertices = ui.Vertices.raw(
+        ui.VertexMode.triangles,
+        Float32List.sublistView(_positions, from * 8, (from + n) * 8),
+        textureCoordinates: Float32List.sublistView(
+          _texCoords,
+          from * 8,
+          (from + n) * 8,
+        ),
+        colors: _colors == null
+            ? null
+            : Int32List.sublistView(_colors!, from * 4, (from + n) * 4),
+        indices: Uint16List.sublistView(_indicesFor(n), 0, n * 6),
+      );
+      canvas.drawVertices(vertices, BlendMode.modulate, paint);
+      vertices.dispose();
+    }
+    shader.dispose();
+  }
 }

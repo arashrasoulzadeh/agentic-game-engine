@@ -8,6 +8,10 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Changed (rendering)
+- Sprite batches use typed buffers and `drawRawAtlas` (no per-sprite `RSTransform`/`Rect`/`Color` objects). Mirrored sprites (negative `scaleX`, i.e. facing left) now batch too: one `drawVertices` per image with flipped texture coordinates, no extra texture memory. Pixel tests cover both.
+- `WaveCombatGame(viewportFit:)` (default `contain`); `ViewportFit.cover` fills the screen and crops the sides instead of leaving black bars.
+
 ### Added (loading and build)
 - Splash warm-up: the engine compiles and primes the lighting, GPU-shadow and normal-map shaders a world needs before its first frame (`EngineWarmup`), and scenes get a `warmUp(world)` hook.
 - The WebP transformer verifies every conversion pixel-for-pixel (falls back to the PNG otherwise) and uses maximum lossless effort; `zarvan create` templates include it on `assets/images/`, and `zarvan upgrade` pins `zarvan_cli` too.
