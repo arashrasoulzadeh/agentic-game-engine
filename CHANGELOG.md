@@ -8,6 +8,9 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added (build-time assets)
+- `zarvan_cli` is a Flutter asset transformer that re-encodes PNGs as lossless WebP during the build (needs `cwebp`; falls back to the original). `zarvan build-release` packs the atlas named by `GameConfig.packedAtlasSource` before building. See `docs/concepts/build-time-assets.md`.
+
 ### Changed (rendering)
 - Tinted sprites (hit flashes) now batch through `Canvas.drawAtlas` with per-sprite colours instead of one draw call each; verified pixel-identical to the per-sprite path (`tinted_sprite_batch_test.dart`).
 
