@@ -1,16 +1,27 @@
 name: engine_cli
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - 'packages/engine_cli/**'
       - 'packages/engine_strategy/**'
+      - 'packages/engine_core/**'
+      - 'packages/engine_flutter/**'
+      - 'packages/engine_platformer/**'
+      - 'packages/engine_idle/**'
+      - 'packages/engine_schema/**'
       - '.github/workflows/engine_cli.yml'
   pull_request:
     paths:
       - 'packages/engine_cli/**'
       - 'packages/engine_strategy/**'
+      - 'packages/engine_core/**'
+      - 'packages/engine_flutter/**'
+      - 'packages/engine_platformer/**'
+      - 'packages/engine_idle/**'
+      - 'packages/engine_schema/**'
       - '.github/workflows/engine_cli.yml'
 
 jobs:

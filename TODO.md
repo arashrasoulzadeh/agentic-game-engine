@@ -35,11 +35,10 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
 
 ## Template health
 
-- [ ] **`game_agent create` against the pushed ref (G6)** has not been run by hand
-      since the last engine changes; CI's `engine_cli` templates job last ran green
-      on `0209dc8`.
-- [ ] CI's templates job is the only automatic check that templates compile and pass their own tests; run a scratch
-      `game_agent create` for each template locally when you change a template or the engine API.
+- [ ] The templates job now also runs on `engine_core`/`flutter`/`platformer`/`idle`/`schema`
+      changes (it used to run only for CLI and strategy edits, so engine API breaks went
+      unnoticed) and can be started by hand. `game_agent create` needs pub.dev, so it
+      cannot run in the offline dev sandbox; confirm the job is green on `main`.
 
 ## Engine
 
