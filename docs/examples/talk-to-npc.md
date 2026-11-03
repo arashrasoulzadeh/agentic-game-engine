@@ -4,7 +4,7 @@ Walk up to a character, start a conversation, and let a choice change the
 game. The dialogue graph and strings are [data](../concepts/dialogue.md); this
 recipe is the gameplay glue around them.
 
-Executed by `packages/engine_core/test/doc_examples_talk_to_npc_test.dart`.
+Executed by `packages/zarvan_core/test/doc_examples_talk_to_npc_test.dart`.
 
 ## The setup
 

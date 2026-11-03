@@ -2,20 +2,20 @@
 
 **Progress log** (update after each phase):
 
-- [x] Phase 0 - scaffolding (`packages/engine_api`, CI workflow, docs rows)
-- [x] Phase 1 - registry core in `engine_core` (`engine_core_ops.dart`: Operation, Param/ParamValidator, results/errors, context/policy, registry+dispatcher, JSON Schema, path sandbox, `engine.*` operations); tests in `packages/engine_core/test/ops/`
+- [x] Phase 0 - scaffolding (`packages/zarvan_api`, CI workflow, docs rows)
+- [x] Phase 1 - registry core in `zarvan_core` (`zarvan_core_ops.dart`: Operation, Param/ParamValidator, results/errors, context/policy, registry+dispatcher, JSON Schema, path sandbox, `engine.*` operations); tests in `packages/zarvan_core/test/ops/`
 - [x] Phase 2 - write safety (`safety.dart` SafetyPipeline: validation, locks, diff, preview + HMAC confirmation token, atomic write with rollback, undo journal `.studio/undo/`; `undo.list/undo/redo`). Token format `v1:<op>:<argsHash>:<beforeHash>:<expiry>:<hmac>` (base64url). Redo walks forward from the oldest undone entry.
-- [x] Phase 3 (see TODO.md for `asset.*`, `project.symbols`) - read operations in `engine_core`: `project.open/close/info/tree/search/validate/git_status`, `level.list/read/validate/diff/lock_status`, `schema.components/component/template/validate_component`, `idle.validate/simulate/format_number`, `release.plan` (+ declared `release.build`, requiresFlutter). Moved into core with shims left in `engine_studio`/`engine_cli`: `StudioProject`, project tree/search, git status, find/replace, `release_plan.dart`. CLI binding generated from the registry is done (`engine_cli/lib/src/ops_cli.dart`: `game_agent <group> <verb>`, `--json/--stdin/--args`, legacy verbs kept). Still to do in this phase: `level.lint`, `asset.*`, `project.symbols/problems`, `graph.*`.
+- [x] Phase 3 (see TODO.md for `asset.*`, `project.symbols`) - read operations in `zarvan_core`: `project.open/close/info/tree/search/validate/git_status`, `level.list/read/validate/diff/lock_status`, `schema.components/component/template/validate_component`, `idle.validate/simulate/format_number`, `release.plan` (+ declared `release.build`, requiresFlutter). Moved into core with shims left in `zarvan_studio`/`zarvan_cli`: `StudioProject`, project tree/search, git status, find/replace, `release_plan.dart`. CLI binding generated from the registry is done (`zarvan_cli/lib/src/ops_cli.dart`: `zarvan <group> <verb>`, `--json/--stdin/--args`, legacy verbs kept). Still to do in this phase: `level.lint`, `asset.*`, `project.symbols/problems`, `graph.*`.
 - [x] Phase 4 (legacy `studio` commands deliberately left as they are, see TODO.md) - write operations: `level.create/add_entity/remove_entity/move_entity/set_field/set_layer/add_component/remove_component/paint_tile/fill_region` done (`level_write_ops.dart`, reuse the studio `EditCommand`s, validate the edited level, undoable). `prefab.list/read/save/place` and `level.import_tmx/export_tmx` done. Still to do: legacy `studio` commands as adapters with golden comparison.
-- [x] Phase 6 (SSE streaming and cancellation left, see TODO.md) - `engine_api` server: JSON-RPC core, MCP session (initialize, ping, tools/list with pagination, tools/call, resources + templates, prompts/list stub), stdio transport, `--project/--read-only/--allow/--deny/--underscore-tool-names`, and HTTP (`--http`: `POST /mcp`, REST `/v1/<group>/<verb>`, `GET /v1/engine/operations`, `/v1/openapi.json`, `/v1/health`, `POST /rpc` with batches and `rpc.discover`; bearer token in `.studio/api-token` 0600, constant-time compare, Host check against DNS rebinding, body limit, `X-Request-Id`, `--allow-remote` gate) done (`packages/engine_api/lib/src`). Request log (`.studio/api-requests.jsonl`, rotated, no args/results), result-size limit (`too_large`) and rate/concurrency limits (429 + `Retry-After`) are done. Prompts (`build_level`, `fix_validation_problems`, `balance_idle_game`, in code with a stale-operation test) are done. `project://` resources and `project.read_file` done. `engine_api.yaml`, `Idempotency-Key`, CORS and the failed-auth delay are done. Still to do: SSE streaming, `Retry-After` for concurrency, logging levels.
-- [x] Phase 7 (partial) - `engine_api/test/parity_test.dart`: every served operation is an MCP tool and a REST path, Flutter-only ones (`release.build`, `project.create`, `project.upgrade`) are declared but CLI-only; CLI parity is `engine_cli/test/ops_cli_test.dart`. `engine_api/test/e2e_test.dart` walks the whole agent workflow (open, create, edit, validate, world.build/step/query, destructive preview + confirmation, undo). Generated reference `docs/reference/operations.md` with a drift test is done. Still to do: a generated per-transport quick-start page.
+- [x] Phase 6 (SSE streaming and cancellation left, see TODO.md) - `zarvan_api` server: JSON-RPC core, MCP session (initialize, ping, tools/list with pagination, tools/call, resources + templates, prompts/list stub), stdio transport, `--project/--read-only/--allow/--deny/--underscore-tool-names`, and HTTP (`--http`: `POST /mcp`, REST `/v1/<group>/<verb>`, `GET /v1/engine/operations`, `/v1/openapi.json`, `/v1/health`, `POST /rpc` with batches and `rpc.discover`; bearer token in `.studio/api-token` 0600, constant-time compare, Host check against DNS rebinding, body limit, `X-Request-Id`, `--allow-remote` gate) done (`packages/zarvan_api/lib/src`). Request log (`.studio/api-requests.jsonl`, rotated, no args/results), result-size limit (`too_large`) and rate/concurrency limits (429 + `Retry-After`) are done. Prompts (`build_level`, `fix_validation_problems`, `balance_idle_game`, in code with a stale-operation test) are done. `project://` resources and `project.read_file` done. `zarvan_api.yaml`, `Idempotency-Key`, CORS and the failed-auth delay are done. Still to do: SSE streaming, `Retry-After` for concurrency, logging levels.
+- [x] Phase 7 (partial) - `zarvan_api/test/parity_test.dart`: every served operation is an MCP tool and a REST path, Flutter-only ones (`release.build`, `project.create`, `project.upgrade`) are declared but CLI-only; CLI parity is `zarvan_cli/test/ops_cli_test.dart`. `zarvan_api/test/e2e_test.dart` walks the whole agent workflow (open, create, edit, validate, world.build/step/query, destructive preview + confirmation, undo). Generated reference `docs/reference/operations.md` with a drift test is done. Still to do: a generated per-transport quick-start page.
 
 
 Status: **implemented through phase 7**; the remaining items are in `TODO.md` under "Operation registry and agent API". Three rounds of decisions are recorded below; nothing is left open. The text below is the original specification and is kept as the design record; where the progress log says otherwise (for example prompts live in code, `level.lint` render is `includeRender` + `pngBase64` via injected `ImageCodec`, the world sandbox's `world.*` take `ticks`/`dt`), the progress log and the code win.
 
 ## Goal
 
-A new package, `packages/engine_api`, that lets a person or an AI agent drive the engine without Dart code:
+A new package, `packages/zarvan_api`, that lets a person or an AI agent drive the engine without Dart code:
 
 - **MCP server** (Model Context Protocol) so Claude and other agents can call the engine as tools and read it as resources.
 - **HTTP/JSON API** over the same operations, for non-MCP clients and scripts.
@@ -26,18 +26,18 @@ A new package, `packages/engine_api`, that lets a person or an AI agent drive th
 
 ## The 1:1 rule (the architectural constraint)
 
-> Anything in `engine_api` is a call into `engine_core` (or another engine package), and **the CLI has the same operation
+> Anything in `zarvan_api` is a call into `zarvan_core` (or another engine package), and **the CLI has the same operation
 > 1:1**. No operation exists only in the API; none exists only in the CLI.
 
 Consequences for the design:
 
 1. **One operation registry is the source of truth.** Each operation is declared once: name, summary, long description,
-   input schema, output schema, errors, examples, whether it reads or writes, and a handler that calls `engine_core`.
-2. **The CLI and the API are both generated from / bound to that registry.** A `game_agent <group> <op>` command exists
+   input schema, output schema, errors, examples, whether it reads or writes, and a handler that calls `zarvan_core`.
+2. **The CLI and the API are both generated from / bound to that registry.** A `zarvan <group> <op>` command exists
    for every operation, and the MCP tool and HTTP route for it exist too. Where does the registry live so the CLI can use
-   it without depending on `engine_api`? Proposal: the registry and handlers live in **`engine_core`** (pure Dart, the
-   `engine_core_ops.dart` entry, like `engine_core_idle.dart`); `engine_cli` binds them to commands and `engine_api` binds
-   them to MCP/HTTP. (Keeps the package DAG one-way: `engine_core` -> everything else.)
+   it without depending on `zarvan_api`? Proposal: the registry and handlers live in **`zarvan_core`** (pure Dart, the
+   `zarvan_core_ops.dart` entry, like `zarvan_core_idle.dart`); `zarvan_cli` binds them to commands and `zarvan_api` binds
+   them to MCP/HTTP. (Keeps the package DAG one-way: `zarvan_core` -> everything else.)
 3. **A parity test** enumerates the registry and fails if any operation lacks a CLI command, an MCP tool or an HTTP route,
    or if the CLI has an operation the registry does not know. Docs for the three surfaces are generated from the registry.
 
@@ -59,13 +59,13 @@ is in v1 (see questions).
 1. **Decide the surface and transport** (questions below), and the safety model for write operations.
 2. **Inventory and classify** every CLI command, studio action and public engine entry point: read / write / destructive,
    project-scoped or pure, sync or long-running.
-3. **Design the operation registry** in `engine_core` (`Operation`, `OperationParam`, `OperationResult`, error taxonomy),
+3. **Design the operation registry** in `zarvan_core` (`Operation`, `OperationParam`, `OperationResult`, error taxonomy),
    with JSON-Schema generation from the existing `FieldSchema`/component schemas so inputs are self-describing.
 4. **Migrate the existing CLI commands onto the registry** (behaviour-preserving; the existing CLI tests are the
    regression suite), so the 1:1 rule starts true.
 5. **Add the missing operations** group by group (levels, graphs, schemas, world, idle, strategy, assets, project, release),
    each with tests, CLI binding and docs.
-6. **Create `packages/engine_api`**: MCP server (stdio first), HTTP server, project/session handling, auth, limits.
+6. **Create `packages/zarvan_api`**: MCP server (stdio first), HTTP server, project/session handling, auth, limits.
 7. **Parity test + generated docs** (tool catalogue, HTTP reference, CLI reference from one source).
 8. **End-to-end verification**: an MCP client script that lists tools and runs a real project workflow (create project,
    add entity, validate, simulate idle), run in CI.
@@ -75,8 +75,8 @@ is in v1 (see questions).
 
 | Topic | Decision |
 |---|---|
-| Registry location | **`engine_core`** (pure Dart `engine_core_ops.dart`); `engine_cli` and `engine_api` both bind to it. |
-| Runtime | **Pure Dart**, compiled to a native executable; calls `engine_core` directly. |
+| Registry location | **`zarvan_core`** (pure Dart `zarvan_core_ops.dart`); `zarvan_cli` and `zarvan_api` both bind to it. |
+| Runtime | **Pure Dart**, compiled to a native executable; calls `zarvan_core` directly. |
 | Transports | **All four:** MCP over stdio, MCP over streamable HTTP, REST/JSON, and JSON-RPC. One registry feeds all. |
 | Projects | **One project root per server run** (`--project <dir>`), plus an explicit `project.open` / `project.switch` operation; every project operation is scoped to the open root. |
 | Write safety | **Dry-run by default for destructive operations** (apply with `apply: true`), an **undo log** for writes, and a **`--read-only`** mode that disables all writes. |
@@ -84,7 +84,7 @@ is in v1 (see questions).
 | Flutter-dependent operations | **Excluded from v1** (preview, run game, live world, profiling). Everything pure-Dart is covered. |
 | v1 scope | **Everything in the inventory**, built in phases behind one release; released when the parity test is green. |
 | "All engine functions" | **Curated operations over data**, not raw Dart calls. Closures/streams/live objects are excluded. Adding a public engine feature should add an operation (checklist in CONTRIBUTING). |
-| CLI mirror | Every operation is **`game_agent <group> <op>`** with `--json` output and JSON input via flags or stdin. Existing commands keep working (as the friendly form of the same operations). |
+| CLI mirror | Every operation is **`zarvan <group> <op>`** with `--json` output and JSON input via flags or stdin. Existing commands keep working (as the friendly form of the same operations). |
 | MCP self-description | **All four:** resources (schemas, project files, docs pages), prompts (guided workflows), rich tool descriptions (examples + error codes), and generated reference docs (MCP, REST/OpenAPI, CLI) from the registry. |
 | Naming / versioning | **`group.verb`** dotted names (`level.add_entity`, `idle.simulate`) shared by MCP tools, REST paths and CLI groups; the registry has a semver, removed operations are deprecated for one release. |
 
@@ -101,15 +101,15 @@ is in v1 (see questions).
 
 | Topic | Decision |
 |---|---|
-| MCP prompts | Files under `packages/engine_api/prompts/*.md` (front matter: name, description, arguments); every prompt is executed by a test against a scratch project so it cannot rot. |
+| MCP prompts | Files under `packages/zarvan_api/prompts/*.md` (front matter: name, description, arguments); every prompt is executed by a test against a scratch project so it cannot rot. |
 | REST routes | `POST /v1/<group>/<verb>` with the params as the JSON body; `GET /v1/engine/operations` lists the catalogue; OpenAPI served at `/v1/openapi.json`. |
 | JSON-RPC | One endpoint (`POST /rpc`), method = the dotted operation name, params = the same object; batch requests allowed. |
 | Token | Generated at start, printed once to stderr and written to `.studio/api-token` (mode 600) unless `--token` is given; `--rotate-token` makes a new one; stdio MCP needs no token (the parent process owns the pipe). |
-| Config | `engine_api.yaml` in the project root (or `--config`); command-line flags win over the file; the file may set allow/deny lists, limits, bind address and read-only. |
+| Config | `zarvan_api.yaml` in the project root (or `--config`); command-line flags win over the file; the file may set allow/deny lists, limits, bind address and read-only. |
 
 ## Inventory of what exists today (step 1 of the plan, to be re-verified against the code when the registry is built)
 
-Every row becomes one operation (kind: R read, W write, D destructive; scope: P pure, J project). The `game_agent` command on
+Every row becomes one operation (kind: R read, W write, D destructive; scope: P pure, J project). The `zarvan` command on
 the left is what the friendly CLI form keeps being.
 
 | Today's CLI | Operation | Kind | Scope | Notes |
@@ -142,8 +142,8 @@ Operations with no CLI form yet (to add, each with a CLI command): `project.open
 `engine.health/capabilities/operations`, `undo.list/undo/redo`.
 
 **Consequence of the 1:1 rule for Flutter-dependent commands.** `create`, `upgrade` and `build-release` need the Flutter SDK and
-long-running processes. They stay in the registry as operations flagged `requiresFlutter`, **implemented in `engine_cli`** (which
-may run processes) and **not served by `engine_api` in v1**; the parity test knows this flag, so the rule reads: every operation has
+long-running processes. They stay in the registry as operations flagged `requiresFlutter`, **implemented in `zarvan_cli`** (which
+may run processes) and **not served by `zarvan_api` in v1**; the parity test knows this flag, so the rule reads: every operation has
 a CLI command; every non-`requiresFlutter` operation also has MCP, REST and JSON-RPC bindings.
 
 ## Operation groups (draft, to be turned into the registry)
@@ -160,7 +160,7 @@ operation catalogue) - `undo.*` (list, undo, redo).
 
 1. **Inventory + classification** of every CLI command, studio action and curated engine entry point: read / write /
    destructive, project-scoped or pure, sync or long-running (long-running are excluded in v1 with Flutter ops).
-2. **Registry design in `engine_core`:** `Operation` (name, summary, description, params schema, result schema, errors,
+2. **Registry design in `zarvan_core`:** `Operation` (name, summary, description, params schema, result schema, errors,
    examples, `kind`: read|write|destructive, `scope`: pure|project), `OperationContext` (project root, read-only flag,
    undo log, clock), `OperationResult`/`OperationError` taxonomy, JSON-Schema generation from `FieldSchema`.
 3. **Write-safety layer** (shared by every surface): dry-run result as a `LevelDiff` preview with a confirmation token,
@@ -169,20 +169,20 @@ operation catalogue) - `undo.*` (list, undo, redo).
 4. **Move the existing CLI commands onto the registry** (behaviour-preserving; the existing ~130 CLI tests are the
    regression suite), adding `--json` and stdin input. 1:1 is true from here on.
 5. **Add missing operations** group by group (each: tests, CLI binding, doc entry, example).
-6. **`packages/engine_api`:** MCP server (stdio, streamable HTTP), REST + OpenAPI, JSON-RPC, bearer-token auth, localhost
+6. **`packages/zarvan_api`:** MCP server (stdio, streamable HTTP), REST + OpenAPI, JSON-RPC, bearer-token auth, localhost
    default, request limits, structured errors, resources, prompts, health/capabilities.
 7. **Parity + docs:** a test enumerates the registry and fails if any operation lacks a CLI command, MCP tool, REST route or
    JSON-RPC method, or if a surface has something the registry lacks; generated references for all three surfaces.
 8. **End-to-end:** a scripted MCP client (stdio and HTTP) runs a real workflow against a scratch project (create, add entity,
    dry-run then apply a destructive edit, validate, undo, idle simulate) in CI.
 9. **Release plumbing:** workflow, CHANGELOG, mkdocs nav, `docs/engine-releasing.md`, `release_consistency_test`, CLAUDE.md
-   package map (engine_api depends on engine_core only).
+   package map (zarvan_api depends on zarvan_core only).
 
 ## Risks
 
 - A large surface multiplies maintenance; the registry + parity test is the mitigation.
 - Write operations through an agent can destroy a project; needs dry-run/undo/locks decided up front.
-- Operations that need Flutter (rendering, preview, running a game) cannot live in pure-Dart `engine_core`; they would be
+- Operations that need Flutter (rendering, preview, running a game) cannot live in pure-Dart `zarvan_core`; they would be
   exposed only where a Flutter-capable host exists (or excluded from v1).
 - MCP spec evolves; pin the protocol version and isolate it behind an adapter.
 
@@ -195,13 +195,13 @@ package phase by phase. Names are final unless marked *(suggested)*. Where an ex
 
 ## A. Packages, dependencies and files
 
-Dependency direction stays one-way: `engine_schema` -> `engine_core` -> (`engine_cli`, `engine_api`). `engine_api` depends on
-`engine_core` (and `engine_schema` transitively) and **not** on Flutter or `engine_cli`. `engine_cli` depends on `engine_core`.
+Dependency direction stays one-way: `zarvan_schema` -> `zarvan_core` -> (`zarvan_cli`, `zarvan_api`). `zarvan_api` depends on
+`zarvan_core` (and `zarvan_schema` transitively) and **not** on Flutter or `zarvan_cli`. `zarvan_cli` depends on `zarvan_core`.
 
-### A.1 In `packages/engine_core/lib/` (the registry; pure Dart, web-safe except where noted)
+### A.1 In `packages/zarvan_core/lib/` (the registry; pure Dart, web-safe except where noted)
 
 ```
-engine_core_ops.dart                  # public entry: exports everything below
+zarvan_core_ops.dart                  # public entry: exports everything below
 src/ops/operation.dart                # Operation, OperationKind, OperationScope, Example
 src/ops/param.dart                    # Param, ParamType, ParamSchema -> JSON Schema
 src/ops/result.dart                   # OpResult, OpError, ErrorCode
@@ -228,12 +228,12 @@ src/ops/groups/undo_ops.dart          # undo.*
 src/ops/all_operations.dart           # `final allOperations = <Operation>[...]` + `buildRegistry()`
 ```
 
-`engine_core_ops.dart` is a **separate entry** (like `engine_core_idle.dart`, `engine_core_io.dart`) so games that do not need it do
-not import it. Operations that read or write files (`dart:io`) are in files imported only from `engine_core_ops.dart`; the main
-`engine_core.dart` stays web-compilable. A guard test (`ops_web_safety_test.dart`) compiles nothing but checks that
-`engine_core.dart` does not export any `src/ops/` file.
+`zarvan_core_ops.dart` is a **separate entry** (like `zarvan_core_idle.dart`, `zarvan_core_io.dart`) so games that do not need it do
+not import it. Operations that read or write files (`dart:io`) are in files imported only from `zarvan_core_ops.dart`; the main
+`zarvan_core.dart` stays web-compilable. A guard test (`ops_web_safety_test.dart`) compiles nothing but checks that
+`zarvan_core.dart` does not export any `src/ops/` file.
 
-### A.2 In `packages/engine_cli/lib/src/`
+### A.2 In `packages/zarvan_cli/lib/src/`
 
 ```
 ops_cli.dart                # builds Command<int> objects from the registry (A.2.1)
@@ -245,14 +245,14 @@ Existing files (`studio_edit_commands.dart`, `studio_diff_commands.dart`, `studi
 `lint_command.dart`, ...) are **reduced to thin legacy adapters** in phase 4 and then deleted file by file as their behaviour is
 proven identical by their existing tests.
 
-### A.3 New package `packages/engine_api/`
+### A.3 New package `packages/zarvan_api/`
 
 ```
-pubspec.yaml                          # name: engine_api; publish_to: none; version 0.1.0; deps: engine_core, args, shelf (see A.4)
+pubspec.yaml                          # name: zarvan_api; publish_to: none; version 0.1.0; deps: zarvan_core, args, shelf (see A.4)
 README.md  CHANGELOG.md  LICENSE      # required by release_consistency_test
-bin/engine_api.dart                   # executable: `engine_api serve ...`, `engine_api mcp-stdio`, `engine_api docs`
-lib/engine_api.dart                   # public API (embedding): ApiServer, ApiConfig
-lib/src/config.dart                   # ApiConfig + engine_api.yaml loader + flag overrides
+bin/zarvan_api.dart                   # executable: `zarvan_api serve ...`, `zarvan_api mcp-stdio`, `zarvan_api docs`
+lib/zarvan_api.dart                   # public API (embedding): ApiServer, ApiConfig
+lib/src/config.dart                   # ApiConfig + zarvan_api.yaml loader + flag overrides
 lib/src/server.dart                   # starts transports, shares one OperationRegistry/OpContext factory
 lib/src/transport/mcp_stdio.dart      # newline-delimited JSON-RPC over stdin/stdout
 lib/src/transport/mcp_http.dart       # streamable HTTP MCP endpoint (/mcp)
@@ -274,7 +274,7 @@ tool/gen_docs.dart                    # writes docs/reference/api/*.md, openapi.
 ### A.4 Dependencies (offline-friendly)
 
 pub.dev is unreachable in the build sandbox, so prefer packages already resolved in the monorepo: `args`, `path`, `yaml`,
-`crypto` (already used for save codes), `image` (already in engine_cli). The HTTP server uses **`dart:io` `HttpServer` directly**
+`crypto` (already used for save codes), `image` (already in zarvan_cli). The HTTP server uses **`dart:io` `HttpServer` directly**
 (no `shelf`) to avoid a new dependency; request routing is ~150 lines in `rest.dart`. SSE for streamable HTTP is written by hand
 (`text/event-stream`). If `shelf` is later preferred, it is confined to `transport/`.
 
@@ -296,7 +296,7 @@ class Operation {
     required this.handler,                   // FutureOr<OpResult> Function(OpContext, Map<String, Object?> args)
     this.errors = const [],                  // ErrorCode values this operation can return, with a sentence each
     this.examples = const [],                // List<Example>(title, args, result) - executed by tests
-    this.requiresFlutter = false,            // true: implemented in engine_cli, not served by engine_api (v1)
+    this.requiresFlutter = false,            // true: implemented in zarvan_cli, not served by zarvan_api (v1)
     this.since = '0.1.0',
     this.deprecated,                         // Deprecation(since, removeIn, replacement)
     this.cli,                                // CliHints: friendly aliases, positional params, legacy name
@@ -381,7 +381,7 @@ class OpContext {
   final bool readOnly;
   final Clock clock;                 // injected (tests, deterministic undo ids)
   final UndoLog? undo;               // null when project == null or readOnly
-  final Locks locks;                 // wraps FileLock with this process's owner id ('engine_api@host:pid')
+  final Locks locks;                 // wraps FileLock with this process's owner id ('zarvan_api@host:pid')
   final Limits limits;
   final String actor;                // 'cli' | 'mcp:<client name>' | 'rest:<token id>' | 'rpc'
   final void Function(String) log;   // request-scoped logger
@@ -462,11 +462,11 @@ acquire). `level.lock {path, force?}` / `level.unlock {path, force?}` expose `ac
 ## F. CLI binding
 
 `ops_cli.dart` builds, for each operation: `Command<int>` named `<verb>` under a group command named `<group>` (e.g.
-`game_agent level add-entity`, verb underscores become hyphens). Rules:
+`zarvan level add-entity`, verb underscores become hyphens). Rules:
 
 1. **Flags from params:** each param becomes `--<name-with-hyphens>`; `required` -> validated after parse; `boolean` -> `--[no-]flag`;
    `enumeration` -> `allowed:`; `array` -> repeatable option; `positional: true` params are positional in declared order
-   (`game_agent level diff <a> <b>`); `cliAbbr` gives `-x`.
+   (`zarvan level diff <a> <b>`); `cliAbbr` gives `-x`.
 2. **Input via stdin:** `--stdin` reads one JSON object from stdin and merges it under flags (flags win). `--args '<json>'` is the
    same inline. Params with `secret: true` are never echoed in help or logs.
 3. **Output:** default human text rendered by `ops_cli_format.dart` per operation (falls back to pretty JSON); `--json` prints the
@@ -475,17 +475,17 @@ acquire). `level.lock {path, force?}` / `level.unlock {path, force?}` expose `ac
 4. **Writes:** `--dry-run` (= `apply:false`), `--apply`, `--confirmation <token>`, `--yes` (non-interactive confirm), `--force` for
    lock/undo conflicts. `destructive` operations without `--apply`/`--yes` print the preview and exit 78.
 5. **Project:** global `--project <dir>` (default: nearest ancestor with `pubspec.yaml`); `--read-only` global flag.
-6. **Help:** generated from `summary`, `description` (first paragraph), param descriptions and the first example; `game_agent ops list`
-   prints the catalogue (name, kind, scope, summary); `game_agent ops show <name>` prints everything including JSON Schema.
+6. **Help:** generated from `summary`, `description` (first paragraph), param descriptions and the first example; `zarvan ops list`
+   prints the catalogue (name, kind, scope, summary); `zarvan ops show <name>` prints everything including JSON Schema.
 7. **Legacy compatibility:** `legacy_commands.dart` keeps today's commands working: `studio add-entity <file> --name ...` maps to
    `level.add_entity` (file positional becomes `path`); `lint`, `pack-assets`, `idle simulate`, etc. likewise. Legacy output text is
    preserved byte for byte where tests pin it; `--json` is new. Each legacy command is marked `deprecated: false` (they stay), they
    are simply aliases.
-8. **`requiresFlutter` operations** (`project.create`, `project.upgrade`, `release.build`) are bound in `engine_cli` with their current
-   process-running implementation and the same registry metadata; `engine_api` lists them in `engine.capabilities.unsupported` and
+8. **`requiresFlutter` operations** (`project.create`, `project.upgrade`, `release.build`) are bound in `zarvan_cli` with their current
+   process-running implementation and the same registry metadata; `zarvan_api` lists them in `engine.capabilities.unsupported` and
    returns `unsupported` if called.
 
-## G. MCP server (engine_api)
+## G. MCP server (zarvan_api)
 
 ### G.1 Protocol
 
@@ -493,7 +493,7 @@ acquire). `level.lock {path, force?}` / `level.unlock {path, force?}` expose `ac
   (`mcpProtocolVersion = '2025-06-18'` *(suggested; confirm against the current spec at implementation time)*). `initialize` negotiates:
   if the client requests a version we do not know, reply with ours; clients may disconnect.
 - Server capabilities in the `initialize` result: `tools: {listChanged: true}`, `resources: {subscribe: false, listChanged: true}`,
-  `prompts: {listChanged: false}`, `logging: {}`. `serverInfo: {name: 'engine_api', version: <package version>}`;
+  `prompts: {listChanged: false}`, `logging: {}`. `serverInfo: {name: 'zarvan_api', version: <package version>}`;
   `instructions`: a short paragraph (how to open a project, dry-run/confirmation flow, read-only flag).
 - Methods implemented: `initialize`, `notifications/initialized`, `ping`, `tools/list` (+ cursor pagination, page size 100),
   `tools/call`, `resources/list`, `resources/templates/list`, `resources/read`, `prompts/list`, `prompts/get`, `logging/setLevel`,
@@ -567,7 +567,7 @@ Initial prompt set (each has a test that **executes its steps** against a scratc
 
 ### G.5 Transports
 
-**stdio:** UTF-8 newline-delimited JSON, one message per line, no embedded newlines; logs only to stderr. `engine_api mcp-stdio
+**stdio:** UTF-8 newline-delimited JSON, one message per line, no embedded newlines; logs only to stderr. `zarvan_api mcp-stdio
 --project <dir> [--read-only] [--config f]`. No token (parent owns the pipe).
 
 **Streamable HTTP (`/mcp`):** `POST /mcp` with `Content-Type: application/json` and `Accept: application/json, text/event-stream`
@@ -612,12 +612,12 @@ project mutex; a batch is not transactional (documented), `engine.batch` is **no
 
 - **Token:** 32 random bytes, base64url (43 chars). On `serve` startup: if `--token` or `ENGINE_API_TOKEN` is given use it;
   otherwise read `.studio/api-token`; otherwise generate, write it there with file mode 0600 (best effort on Windows), and print
-  `engine_api: bearer token written to <path>` to stderr (the token itself is **never** printed unless `--print-token`).
+  `zarvan_api: bearer token written to <path>` to stderr (the token itself is **never** printed unless `--print-token`).
   `--rotate-token` replaces it. Comparison is constant-time (`crypto`-style XOR loop). Failed attempts are counted per remote
   address and cause a 1-second delay after 5 failures.
 - **Binding:** `127.0.0.1` by default. `--bind 0.0.0.0` (or an address) is refused unless `--allow-remote` is also passed and a token
   is configured; startup prints a warning that TLS is not terminated here and recommends a reverse proxy (`wss://`-style advice).
-- **Config file `engine_api.yaml`** (project root or `--config`); flags override file values; unknown keys are an error:
+- **Config file `zarvan_api.yaml`** (project root or `--config`); flags override file values; unknown keys are an error:
 
 ```yaml
 project: .                       # path (default: the --project flag or cwd)
@@ -654,8 +654,8 @@ log:
 ## J. Operation specifications (v1, complete list)
 
 Notation: params as `name:type!` (`!` required, default in `=`); result is the `data` field. `P` = project-scoped, `-` = pure.
-Kinds: R/W/D. Each operation also appears with its CLI command (`game_agent <group> <verb>`, verb hyphenated) and has at least one
-example. Handlers reuse the cited existing code; **no logic is re-implemented**, it is moved into `engine_core/src/ops/groups/` and the
+Kinds: R/W/D. Each operation also appears with its CLI command (`zarvan <group> <verb>`, verb hyphenated) and has at least one
+example. Handlers reuse the cited existing code; **no logic is re-implemented**, it is moved into `zarvan_core/src/ops/groups/` and the
 old call sites call the same function.
 
 ### J.1 project.*
@@ -738,7 +738,7 @@ old call sites call the same function.
 | `world.query` | R | - | `worldId!`, `component!`, `where?` | entities with that component |
 | `world.discard` | R | - | `worldId!` | `{discarded}` |
 
-(`world.*` are the "all engine functions" most useful to an agent: a deterministic, headless sandbox using `engine_core` only. Systems
+(`world.*` are the "all engine functions" most useful to an agent: a deterministic, headless sandbox using `zarvan_core` only. Systems
 available by name: `movement`, `gravity`, `collision`, `tween`, `particles`, plus the idle/strategy installers; systems that need
 Flutter or input are not listed. This keeps the Flutter exclusion intact.)
 
@@ -764,7 +764,7 @@ Flutter or input are not listed. This keeps the Flutter exclusion intact.)
 
 ## K. Documentation generation
 
-`engine_api docs` (and `tool/gen_docs.dart`) produces from the registry, deterministically (sorted by name):
+`zarvan_api docs` (and `tool/gen_docs.dart`) produces from the registry, deterministically (sorted by name):
 
 - `docs/reference/operations.md` - one section per operation: summary, kind, scope, description, params table (type, required,
   default, constraints), result schema, errors, examples as **CLI**, **MCP tools/call**, **REST curl**, **JSON-RPC** snippets.
@@ -779,7 +779,7 @@ Drift tests (like `component_docs_test.dart`): the generated files must equal th
 
 ## L. Testing specification
 
-### L.1 Registry/unit (in `engine_core`)
+### L.1 Registry/unit (in `zarvan_core`)
 
 - `operation_registry_test`: unique dotted names, valid pattern, every param typed, every example's `args` validate against the
   operation's own schema, every `errors` code exists in `ErrorCode`, `requiresFlutter` ops have no handler in core.
@@ -796,14 +796,14 @@ Drift tests (like `component_docs_test.dart`): the generated files must equal th
   happy path, each documented error code, `--dry-run` result, and (for writes) that the file content equals what the legacy CLI
   produced for the same inputs (golden comparison, proving the migration is behaviour-preserving).
 
-### L.2 CLI (`engine_cli`)
+### L.2 CLI (`zarvan_cli`)
 
 - Existing ~130 tests untouched and green after phase 4 (legacy adapters).
-- `ops_cli_test`: for **every** registered operation, `game_agent <group> <verb> --help` renders, a call with `--json` returns a valid
+- `ops_cli_test`: for **every** registered operation, `zarvan <group> <verb> --help` renders, a call with `--json` returns a valid
   envelope, required-param errors exit 64, destructive without `--apply` exits 78, `--stdin` merges. Generated from the registry so a
   new operation is covered automatically.
 
-### L.3 API (`engine_api`)
+### L.3 API (`zarvan_api`)
 
 - `mcp_protocol_test`: initialize/negotiation, tools/list pagination, tools/call success + `isError`, resources/templates/read,
   prompts/get rendering, ping, cancellation, unknown method, malformed JSON, batch handling over stdio and `/mcp`.
@@ -817,7 +817,7 @@ Drift tests (like `component_docs_test.dart`): the generated files must equal th
   `legacyAliases`), and unless `requiresFlutter` also an MCP tool, a REST route, an OpenAPI path and a JSON-RPC method; asserts the
   reverse (no CLI group/verb, tool, route or method without an operation); asserts `requiresFlutter` ops are listed in
   `engine.capabilities.unsupported`; asserts allow/deny filtering hides an operation on **all** surfaces simultaneously.
-- `e2e_test` (process level, runs in CI): start `engine_api mcp-stdio` as a subprocess with a scratch project; a small Dart MCP client
+- `e2e_test` (process level, runs in CI): start `zarvan_api mcp-stdio` as a subprocess with a scratch project; a small Dart MCP client
   performs: initialize -> tools/list (count == registry non-Flutter count) -> project.info -> level.create -> level.add_entity ->
   level.remove_entity (preview, then apply with the token) -> project.validate -> undo.undo -> idle.simulate on the sample game ->
   `world.build/step/snapshot`. Repeat the same script over HTTP (`/mcp`, `/rpc`, `/v1`) with the bearer token and assert identical
@@ -833,10 +833,10 @@ name it mentions exists in the registry and that the listed calls succeed agains
 Each phase = one or more commits, pushed after the **package's tests and `analyze --fatal-infos` are green** (gate the commit on the
 real "All tests passed" line, not on a pipe). Phases are sequential; within a phase, groups can be done in any order.
 
-**Phase 0 - scaffolding (1 commit).** Create `packages/engine_api` (pubspec with `publish_to: none`, version 0.1.0, README/CHANGELOG/
-LICENSE), `.github/workflows/engine_api.yml` (paths: engine_api, engine_core, engine_schema, engine_cli), CLAUDE.md package map
+**Phase 0 - scaffolding (1 commit).** Create `packages/zarvan_api` (pubspec with `publish_to: none`, version 0.1.0, README/CHANGELOG/
+LICENSE), `.github/workflows/zarvan_api.yml` (paths: zarvan_api, zarvan_core, zarvan_schema, zarvan_cli), CLAUDE.md package map
 row, root README row, `docs.yml` API loop entry, mkdocs nav placeholder, `release_consistency_test` passes (it picks the package up
-automatically: same version, `publish_to: none`, LICENSE/README/CHANGELOG). *Accept:* CI green with an empty `lib/engine_api.dart`.
+automatically: same version, `publish_to: none`, LICENSE/README/CHANGELOG). *Accept:* CI green with an empty `lib/zarvan_api.dart`.
 
 **Phase 1 - registry core (2-3 commits).** `operation.dart`, `param.dart`, `result.dart`, `context.dart`, `registry.dart`,
 `json_schema.dart`, `paths.dart`, error taxonomy, dispatcher (`registry.call(name, args, ctx)`: validate -> handler -> envelope ->
@@ -860,11 +860,11 @@ operation; legacy files reduced.
 Each with CLI binding (automatic), tests (L.1/L.2), doc examples. *Accept:* `parity_test` skeleton in core lists no operation without a CLI
 command.
 
-**Phase 6 - engine_api server (4 commits).** (a) config, auth, limits, request log; (b) MCP protocol + stdio + tools; (c) resources +
+**Phase 6 - zarvan_api server (4 commits).** (a) config, auth, limits, request log; (b) MCP protocol + stdio + tools; (c) resources +
 prompts; (d) HTTP: `/mcp`, REST, JSON-RPC, OpenAPI. *Accept:* L.3 tests green except e2e/parity/docs.
 
 **Phase 7 - parity, docs, e2e (2 commits).** `parity_test`, `docs_drift_test`, generator, `e2e_test`, generated references committed,
-`docs/reference/mcp.md` and a tutorial "Drive the engine from Claude" (executed by the e2e script). *Accept:* all engine_api tests green in CI.
+`docs/reference/mcp.md` and a tutorial "Drive the engine from Claude" (executed by the e2e script). *Accept:* all zarvan_api tests green in CI.
 
 **Phase 8 - release plumbing (1 commit).** CHANGELOG entries per phase, `docs/engine-releasing.md` mention, README badges row,
 `engine_mcp.md` marked **Implemented** with a link to the generated reference, TODO.md entry closed.
@@ -919,7 +919,7 @@ transactions, auto-generated operations from reflection.
 - All legacy CLI tests green and unchanged; legacy commands are adapters over the registry.
 - e2e script passes over stdio, `/mcp`, `/rpc` and `/v1` with identical data.
 - Generated docs committed and drift-tested; `docs/reference/mcp.md` explains setup for Claude Desktop and Claude Code.
-- `dart analyze --fatal-infos` and all tests green in `engine_schema`, `engine_core`, `engine_cli`, `engine_api` in CI; the repository
+- `dart analyze --fatal-infos` and all tests green in `zarvan_schema`, `zarvan_core`, `zarvan_cli`, `zarvan_api` in CI; the repository
   `release_consistency_test` includes the new package.
 
 ---
@@ -932,9 +932,9 @@ signatures to reuse, ready-to-paste skeletons for the new code, and the reposito
 
 ## R. Codebase map: where each reusable piece lives today
 
-### R.1 Already in `engine_core` (import `package:engine_core/engine_core.dart`; use as is)
+### R.1 Already in `zarvan_core` (import `package:zarvan_core/zarvan_core.dart`; use as is)
 
-| Need | Symbol (file under `packages/engine_core/lib/src/`) | Notes |
+| Need | Symbol (file under `packages/zarvan_core/lib/src/`) | Notes |
 |---|---|---|
 | Level model | `LevelDocument`, `LevelEntity` (`content/level_document.dart`) | `LevelDocument.fromJson(map)`, `.toJson()`, `.entities`, `.entityNamed(name)`; `LevelEntity(name:, components: Map<String,Map<String,dynamic>>)` |
 | Canonical-ish JSON | `encodeLevelJson(Object?)` (`content/level_format.dart:7`) | what the editor/saver writes |
@@ -945,24 +945,24 @@ signatures to reuse, ready-to-paste skeletons for the new code, and the reposito
 | Prefab | `Prefab`, `Prefab.fromEntities(name, entities)`, `toJson` (`content/prefab.dart`) | |
 | Brushes | `BrushLibrary` (`content/brush.dart`) | |
 | Locks | `FileLock(path)`, `.inspect()`, `.acquire(owner)` -> `LockResult(acquired, holder)`, `.release(owner,{force})`, `LockInfo(owner, acquiredAt)`, `lockOwner()` (`io/file_lock.dart`; **dart:io**) | |
-| Atomic file save | `AtomicSave(path).write(map)/read()` (`io/atomic_save.dart`, exported via `engine_core_io.dart`) | JSON maps only; ops need a string variant (see S.4) |
+| Atomic file save | `AtomicSave(path).write(map)/read()` (`io/atomic_save.dart`, exported via `zarvan_core_io.dart`) | JSON maps only; ops need a string variant (see S.4) |
 | Save codes | `SaveCodec.export/import`, `SaveMigrator` (`content/save_codec.dart`) | |
-| Idle | everything via `package:engine_core/engine_core_idle.dart` (`validateIdleDefinition`, `loadIdleDefinition`, `simulateIdle`, `describeSimulation`, `bestPurchase`, `computeIncome`, ...) | |
+| Idle | everything via `package:zarvan_core/zarvan_core_idle.dart` (`validateIdleDefinition`, `loadIdleDefinition`, `simulateIdle`, `describeSimulation`, `bestPurchase`, `computeIncome`, ...) | |
 | Numbers | `BigNumber`, `formatBigNumber(value,{style,decimals,decimalSeparator,groupSeparator})` | |
-| Schemas | `allComponentSchemas` (`Map<String, ComponentSchema>`), `ComponentSchema(name, fields)` `.template` (default JSON), `FieldSchema(name,type,{min,max,options,defaultValue,required,optional})`, `FieldType {int,double,bool,string,enumeration,vector2,list,object}` (package `engine_schema`, re-exported through core; **import `package:engine_schema/engine_schema.dart` explicitly** as the CLI does) | |
+| Schemas | `allComponentSchemas` (`Map<String, ComponentSchema>`), `ComponentSchema(name, fields)` `.template` (default JSON), `FieldSchema(name,type,{min,max,options,defaultValue,required,optional})`, `FieldType {int,double,bool,string,enumeration,vector2,list,object}` (package `zarvan_schema`, re-exported through core; **import `package:zarvan_schema/zarvan_schema.dart` explicitly** as the CLI does) | |
 | World | `World(width:, height:)`, `registerCoreComponents(world)`, `WorldSnapshot.capture/.toJson/.fromJson/.restoreInto`, `world.applyPatch`, `world.toJson()`, `world.components.register`, `world.componentsOf<T>()`, `world.step(dt)`, `world.events.on/emit/flush` | for `world.*` ops |
 | Graphs | `Graph`, `GraphNode`, `GraphEdge`, `GraphType {dialogue, behaviorTree, stateMachine}` (`.registry`), `NodeKind`, `GraphPort`, `PortType`, `validateGraph(graph,{registry})`, `GraphIssue`, `compile*` (`graph/*.dart`) | |
 | Turn/strategy | `OrderSystem`, `TurnSystem`, `startTurnBasedGame`, `submitOrder`, `HostSession` etc. (`turn/*`, `net/*`) | |
 | Localization | `LocalizationManager` (`content/localization.dart`), `StringTable` | |
 | Time/random | `DeterministicRandom(seed)` (`ecs/deterministic_random.dart`) | |
-| Tmx | `TmxImport`, `tileMapToTmx` (check exact names with `grep -rn "tileMapToTmx\|class TmxImport" packages/engine_core/lib`) **(verify)** | used by `studio import-tmx/export-tmx` |
+| Tmx | `TmxImport`, `tileMapToTmx` (check exact names with `grep -rn "tileMapToTmx\|class TmxImport" packages/zarvan_core/lib`) **(verify)** | used by `studio import-tmx/export-tmx` |
 
-### R.2 Currently in `engine_studio` (Flutter package) but **pure Dart** -> must move to `engine_core` in phase 3/5
+### R.2 Currently in `zarvan_studio` (Flutter package) but **pure Dart** -> must move to `zarvan_core` in phase 3/5
 
-`engine_studio` depends on Flutter, so the CLI and `engine_api` cannot import it. These files have **no Flutter imports** and move
+`zarvan_studio` depends on Flutter, so the CLI and `zarvan_api` cannot import it. These files have **no Flutter imports** and move
 (git mv, then fix imports; the studio re-imports them from core; their tests move with them):
 
-| From `packages/engine_studio/lib/src/` | To `packages/engine_core/lib/src/ops/project/` | Public symbols |
+| From `packages/zarvan_studio/lib/src/` | To `packages/zarvan_core/lib/src/ops/project/` | Public symbols |
 |---|---|---|
 | `project/studio_project.dart` | `studio_project.dart` | `StudioProject.open(path)`, `.root`, `.levelPaths()`, `.graphPaths()`, `.codeFiles()`, `.nextGraphPath()`, `ProjectOpenException` (imports `../playtest/play_test.dart` only for a constant: replace with a literal) |
 | `project/project_tree.dart` | `project_tree.dart` | `ProjectEntry(relativePath,isDirectory,depth,name)`, `listProjectTree(root)`, `FileKind`, `kindOf`, `visibleTree`, `filterFiles` |
@@ -978,11 +978,11 @@ signatures to reuse, ready-to-paste skeletons for the new code, and the reposito
 | `inspector/entity_inspector.dart` | `entity_inspector.dart` | `EntityInspector(editor).components()` uses `LevelEditor` (Flutter-tainted): move only `ParsedField parseFieldText(FieldSchema, String)` and `InspectedComponent` |
 | `code/analysis.dart` | stays in studio | analyzer output parsing; `project.analyze` is **not** in v1 (needs the Dart SDK process) |
 
-`engine_studio` keeps thin re-export shims (`export 'package:engine_core/engine_core_ops.dart' show ...`) so studio code and its ~450 tests
+`zarvan_studio` keeps thin re-export shims (`export 'package:zarvan_core/zarvan_core_ops.dart' show ...`) so studio code and its ~450 tests
 change as little as possible. **Rule:** a file moves only together with its tests, in the same commit, with `flutter test` green in
-`engine_studio`.
+`zarvan_studio`.
 
-### R.3 Currently inside `engine_cli` command classes -> extract into core ops
+### R.3 Currently inside `zarvan_cli` command classes -> extract into core ops
 
 | CLI file | Private logic to extract | Becomes |
 |---|---|---|
@@ -992,7 +992,7 @@ change as little as possible. **Rule:** a file moves only together with its test
 | `studio_edit_commands.dart` | helpers `loadLevelOrNull`, `validateAndWrite`, `entityNamedOrNull`, `parseFieldValue` and each command's `run()` body | the `level.*` edit handlers (they currently print and write directly; the new handlers **return a Proposal** instead of writing) |
 | `studio_diff_commands.dart` | diff/merge/lock/unlock bodies (use `diffLevels`, `mergeLevels`, `FileLock`) | `level.diff`, `level.merge`, `level.lock/unlock` |
 | `studio_asset_commands.dart` | `export-tmx`, `save-prefab`, `place-prefab` bodies | `level.export_tmx`, `prefab.save`, `prefab.place` |
-| `lint_command.dart` | `_checkPlayable(entities)` (pure: move to core) and `_render(entities, path)` (PNG via `package:image`) | `level.lint`. **Decision:** core contains no image code. Rendering and decoding go through an `ImageCodec` interface injected in `OpContext` (`decode(bytes)`, `resize`, `encodePng`, and a `renderTileMap(...)` helper built on them); `engine_cli` and `engine_api` each supply the same small implementation over `package:image` (about 40 lines, in `image_codec.dart` of each package). Without a codec the render/pack parts return `unsupported`. |
+| `lint_command.dart` | `_checkPlayable(entities)` (pure: move to core) and `_render(entities, path)` (PNG via `package:image`) | `level.lint`. **Decision:** core contains no image code. Rendering and decoding go through an `ImageCodec` interface injected in `OpContext` (`decode(bytes)`, `resize`, `encodePng`, and a `renderTileMap(...)` helper built on them); `zarvan_cli` and `zarvan_api` each supply the same small implementation over `package:image` (about 40 lines, in `image_codec.dart` of each package). Without a codec the render/pack parts return `unsupported`. |
 | `pack_assets_command.dart` (~500 lines, private `_PackItem`, `_Rect`, `_PackedSheet`) | the whole packer (rect packing is pure; decode/resize/encode use `package:image`) | `asset.pack` in core, written against the same injected `ImageCodec` (the packing algorithm moves to core as is; only the pixel calls go through the interface). |
 | `release_plan.dart` |
 | `release.build` | W | as plan | exit codes | **`requiresFlutter`** |
@@ -1002,7 +1002,7 @@ change as little as possible. **Rule:** a file moves only together with its test
 
 ## K. Documentation generation
 
-`engine_api docs` (and `tool/gen_docs.dart`) produces from the registry, deterministically (sorted by name):
+`zarvan_api docs` (and `tool/gen_docs.dart`) produces from the registry, deterministically (sorted by name):
 
 - `docs/reference/operations.md` - one section per operation: summary, kind, scope, description, params table (type, required,
   default, constraints), result schema, errors, examples as **CLI**, **MCP tools/call**, **REST curl**, **JSON-RPC** snippets.
@@ -1017,7 +1017,7 @@ Drift tests (like `component_docs_test.dart`): the generated files must equal th
 
 ## L. Testing specification
 
-### L.1 Registry/unit (in `engine_core`)
+### L.1 Registry/unit (in `zarvan_core`)
 
 - `operation_registry_test`: unique dotted names, valid pattern, every param typed, every example's `args` validate against the
   operation's own schema, every `errors` code exists in `ErrorCode`, `requiresFlutter` ops have no handler in core.
@@ -1034,14 +1034,14 @@ Drift tests (like `component_docs_test.dart`): the generated files must equal th
   happy path, each documented error code, `--dry-run` result, and (for writes) that the file content equals what the legacy CLI
   produced for the same inputs (golden comparison, proving the migration is behaviour-preserving).
 
-### L.2 CLI (`engine_cli`)
+### L.2 CLI (`zarvan_cli`)
 
 - Existing ~130 tests untouched and green after phase 4 (legacy adapters).
-- `ops_cli_test`: for **every** registered operation, `game_agent <group> <verb> --help` renders, a call with `--json` returns a valid
+- `ops_cli_test`: for **every** registered operation, `zarvan <group> <verb> --help` renders, a call with `--json` returns a valid
   envelope, required-param errors exit 64, destructive without `--apply` exits 78, `--stdin` merges. Generated from the registry so a
   new operation is covered automatically.
 
-### L.3 API (`engine_api`)
+### L.3 API (`zarvan_api`)
 
 - `mcp_protocol_test`: initialize/negotiation, tools/list pagination, tools/call success + `isError`, resources/templates/read,
   prompts/get rendering, ping, cancellation, unknown method, malformed JSON, batch handling over stdio and `/mcp`.
@@ -1055,7 +1055,7 @@ Drift tests (like `component_docs_test.dart`): the generated files must equal th
   `legacyAliases`), and unless `requiresFlutter` also an MCP tool, a REST route, an OpenAPI path and a JSON-RPC method; asserts the
   reverse (no CLI group/verb, tool, route or method without an operation); asserts `requiresFlutter` ops are listed in
   `engine.capabilities.unsupported`; asserts allow/deny filtering hides an operation on **all** surfaces simultaneously.
-- `e2e_test` (process level, runs in CI): start `engine_api mcp-stdio` as a subprocess with a scratch project; a small Dart MCP client
+- `e2e_test` (process level, runs in CI): start `zarvan_api mcp-stdio` as a subprocess with a scratch project; a small Dart MCP client
   performs: initialize -> tools/list (count == registry non-Flutter count) -> project.info -> level.create -> level.add_entity ->
   level.remove_entity (preview, then apply with the token) -> project.validate -> undo.undo -> idle.simulate on the sample game ->
   `world.build/step/snapshot`. Repeat the same script over HTTP (`/mcp`, `/rpc`, `/v1`) with the bearer token and assert identical
@@ -1071,10 +1071,10 @@ name it mentions exists in the registry and that the listed calls succeed agains
 Each phase = one or more commits, pushed after the **package's tests and `analyze --fatal-infos` are green** (gate the commit on the
 real "All tests passed" line, not on a pipe). Phases are sequential; within a phase, groups can be done in any order.
 
-**Phase 0 - scaffolding (1 commit).** Create `packages/engine_api` (pubspec with `publish_to: none`, version 0.1.0, README/CHANGELOG/
-LICENSE), `.github/workflows/engine_api.yml` (paths: engine_api, engine_core, engine_schema, engine_cli), CLAUDE.md package map
+**Phase 0 - scaffolding (1 commit).** Create `packages/zarvan_api` (pubspec with `publish_to: none`, version 0.1.0, README/CHANGELOG/
+LICENSE), `.github/workflows/zarvan_api.yml` (paths: zarvan_api, zarvan_core, zarvan_schema, zarvan_cli), CLAUDE.md package map
 row, root README row, `docs.yml` API loop entry, mkdocs nav placeholder, `release_consistency_test` passes (it picks the package up
-automatically: same version, `publish_to: none`, LICENSE/README/CHANGELOG). *Accept:* CI green with an empty `lib/engine_api.dart`.
+automatically: same version, `publish_to: none`, LICENSE/README/CHANGELOG). *Accept:* CI green with an empty `lib/zarvan_api.dart`.
 
 **Phase 1 - registry core (2-3 commits).** `operation.dart`, `param.dart`, `result.dart`, `context.dart`, `registry.dart`,
 `json_schema.dart`, `paths.dart`, error taxonomy, dispatcher (`registry.call(name, args, ctx)`: validate -> handler -> envelope ->
@@ -1098,11 +1098,11 @@ operation; legacy files reduced.
 Each with CLI binding (automatic), tests (L.1/L.2), doc examples. *Accept:* `parity_test` skeleton in core lists no operation without a CLI
 command.
 
-**Phase 6 - engine_api server (4 commits).** (a) config, auth, limits, request log; (b) MCP protocol + stdio + tools; (c) resources +
+**Phase 6 - zarvan_api server (4 commits).** (a) config, auth, limits, request log; (b) MCP protocol + stdio + tools; (c) resources +
 prompts; (d) HTTP: `/mcp`, REST, JSON-RPC, OpenAPI. *Accept:* L.3 tests green except e2e/parity/docs.
 
 **Phase 7 - parity, docs, e2e (2 commits).** `parity_test`, `docs_drift_test`, generator, `e2e_test`, generated references committed,
-`docs/reference/mcp.md` and a tutorial "Drive the engine from Claude" (executed by the e2e script). *Accept:* all engine_api tests green in CI.
+`docs/reference/mcp.md` and a tutorial "Drive the engine from Claude" (executed by the e2e script). *Accept:* all zarvan_api tests green in CI.
 
 **Phase 8 - release plumbing (1 commit).** CHANGELOG entries per phase, `docs/engine-releasing.md` mention, README badges row,
 `engine_mcp.md` marked **Implemented** with a link to the generated reference, TODO.md entry closed.
@@ -1157,7 +1157,7 @@ transactions, auto-generated operations from reflection.
 - All legacy CLI tests green and unchanged; legacy commands are adapters over the registry.
 - e2e script passes over stdio, `/mcp`, `/rpc` and `/v1` with identical data.
 - Generated docs committed and drift-tested; `docs/reference/mcp.md` explains setup for Claude Desktop and Claude Code.
-- `dart analyze --fatal-infos` and all tests green in `engine_schema`, `engine_core`, `engine_cli`, `engine_api` in CI; the repository
+- `dart analyze --fatal-infos` and all tests green in `zarvan_schema`, `zarvan_core`, `zarvan_cli`, `zarvan_api` in CI; the repository
   `release_consistency_test` includes the new package.
 
 ---
@@ -1170,9 +1170,9 @@ signatures to reuse, ready-to-paste skeletons for the new code, and the reposito
 
 ## R. Codebase map: where each reusable piece lives today
 
-### R.1 Already in `engine_core` (import `package:engine_core/engine_core.dart`; use as is)
+### R.1 Already in `zarvan_core` (import `package:zarvan_core/zarvan_core.dart`; use as is)
 
-| Need | Symbol (file under `packages/engine_core/lib/src/`) | Notes |
+| Need | Symbol (file under `packages/zarvan_core/lib/src/`) | Notes |
 |---|---|---|
 | Level model | `LevelDocument`, `LevelEntity` (`content/level_document.dart`) | `LevelDocument.fromJson(map)`, `.toJson()`, `.entities`, `.entityNamed(name)`; `LevelEntity(name:, components: Map<String,Map<String,dynamic>>)` |
 | Canonical-ish JSON | `encodeLevelJson(Object?)` (`content/level_format.dart:7`) | what the editor/saver writes |
@@ -1183,24 +1183,24 @@ signatures to reuse, ready-to-paste skeletons for the new code, and the reposito
 | Prefab | `Prefab`, `Prefab.fromEntities(name, entities)`, `toJson` (`content/prefab.dart`) | |
 | Brushes | `BrushLibrary` (`content/brush.dart`) | |
 | Locks | `FileLock(path)`, `.inspect()`, `.acquire(owner)` -> `LockResult(acquired, holder)`, `.release(owner,{force})`, `LockInfo(owner, acquiredAt)`, `lockOwner()` (`io/file_lock.dart`; **dart:io**) | |
-| Atomic file save | `AtomicSave(path).write(map)/read()` (`io/atomic_save.dart`, exported via `engine_core_io.dart`) | JSON maps only; ops need a string variant (see S.4) |
+| Atomic file save | `AtomicSave(path).write(map)/read()` (`io/atomic_save.dart`, exported via `zarvan_core_io.dart`) | JSON maps only; ops need a string variant (see S.4) |
 | Save codes | `SaveCodec.export/import`, `SaveMigrator` (`content/save_codec.dart`) | |
-| Idle | everything via `package:engine_core/engine_core_idle.dart` (`validateIdleDefinition`, `loadIdleDefinition`, `simulateIdle`, `describeSimulation`, `bestPurchase`, `computeIncome`, ...) | |
+| Idle | everything via `package:zarvan_core/zarvan_core_idle.dart` (`validateIdleDefinition`, `loadIdleDefinition`, `simulateIdle`, `describeSimulation`, `bestPurchase`, `computeIncome`, ...) | |
 | Numbers | `BigNumber`, `formatBigNumber(value,{style,decimals,decimalSeparator,groupSeparator})` | |
-| Schemas | `allComponentSchemas` (`Map<String, ComponentSchema>`), `ComponentSchema(name, fields)` `.template` (default JSON), `FieldSchema(name,type,{min,max,options,defaultValue,required,optional})`, `FieldType {int,double,bool,string,enumeration,vector2,list,object}` (package `engine_schema`, re-exported through core; **import `package:engine_schema/engine_schema.dart` explicitly** as the CLI does) | |
+| Schemas | `allComponentSchemas` (`Map<String, ComponentSchema>`), `ComponentSchema(name, fields)` `.template` (default JSON), `FieldSchema(name,type,{min,max,options,defaultValue,required,optional})`, `FieldType {int,double,bool,string,enumeration,vector2,list,object}` (package `zarvan_schema`, re-exported through core; **import `package:zarvan_schema/zarvan_schema.dart` explicitly** as the CLI does) | |
 | World | `World(width:, height:)`, `registerCoreComponents(world)`, `WorldSnapshot.capture/.toJson/.fromJson/.restoreInto`, `world.applyPatch`, `world.toJson()`, `world.components.register`, `world.componentsOf<T>()`, `world.step(dt)`, `world.events.on/emit/flush` | for `world.*` ops |
 | Graphs | `Graph`, `GraphNode`, `GraphEdge`, `GraphType {dialogue, behaviorTree, stateMachine}` (`.registry`), `NodeKind`, `GraphPort`, `PortType`, `validateGraph(graph,{registry})`, `GraphIssue`, `compile*` (`graph/*.dart`) | |
 | Turn/strategy | `OrderSystem`, `TurnSystem`, `startTurnBasedGame`, `submitOrder`, `HostSession` etc. (`turn/*`, `net/*`) | |
 | Localization | `LocalizationManager` (`content/localization.dart`), `StringTable` | |
 | Time/random | `DeterministicRandom(seed)` (`ecs/deterministic_random.dart`) | |
-| Tmx | `TmxImport`, `tileMapToTmx` (check exact names with `grep -rn "tileMapToTmx\|class TmxImport" packages/engine_core/lib`) **(verify)** | used by `studio import-tmx/export-tmx` |
+| Tmx | `TmxImport`, `tileMapToTmx` (check exact names with `grep -rn "tileMapToTmx\|class TmxImport" packages/zarvan_core/lib`) **(verify)** | used by `studio import-tmx/export-tmx` |
 
-### R.2 Currently in `engine_studio` (Flutter package) but **pure Dart** -> must move to `engine_core` in phase 3/5
+### R.2 Currently in `zarvan_studio` (Flutter package) but **pure Dart** -> must move to `zarvan_core` in phase 3/5
 
-`engine_studio` depends on Flutter, so the CLI and `engine_api` cannot import it. These files have **no Flutter imports** and move
+`zarvan_studio` depends on Flutter, so the CLI and `zarvan_api` cannot import it. These files have **no Flutter imports** and move
 (git mv, then fix imports; the studio re-imports them from core; their tests move with them):
 
-| From `packages/engine_studio/lib/src/` | To `packages/engine_core/lib/src/ops/project/` | Public symbols |
+| From `packages/zarvan_studio/lib/src/` | To `packages/zarvan_core/lib/src/ops/project/` | Public symbols |
 |---|---|---|
 | `project/studio_project.dart` | `studio_project.dart` | `StudioProject.open(path)`, `.root`, `.levelPaths()`, `.graphPaths()`, `.codeFiles()`, `.nextGraphPath()`, `ProjectOpenException` (imports `../playtest/play_test.dart` only for a constant: replace with a literal) |
 | `project/project_tree.dart` | `project_tree.dart` | `ProjectEntry(relativePath,isDirectory,depth,name)`, `listProjectTree(root)`, `FileKind`, `kindOf`, `visibleTree`, `filterFiles` |
@@ -1216,11 +1216,11 @@ signatures to reuse, ready-to-paste skeletons for the new code, and the reposito
 | `inspector/entity_inspector.dart` | `entity_inspector.dart` | `EntityInspector(editor).components()` uses `LevelEditor` (Flutter-tainted): move only `ParsedField parseFieldText(FieldSchema, String)` and `InspectedComponent` |
 | `code/analysis.dart` | stays in studio | analyzer output parsing; `project.analyze` is **not** in v1 (needs the Dart SDK process) |
 
-`engine_studio` keeps thin re-export shims (`export 'package:engine_core/engine_core_ops.dart' show ...`) so studio code and its ~450 tests
+`zarvan_studio` keeps thin re-export shims (`export 'package:zarvan_core/zarvan_core_ops.dart' show ...`) so studio code and its ~450 tests
 change as little as possible. **Rule:** a file moves only together with its tests, in the same commit, with `flutter test` green in
-`engine_studio`.
+`zarvan_studio`.
 
-### R.3 Currently inside `engine_cli` command classes -> extract into core ops
+### R.3 Currently inside `zarvan_cli` command classes -> extract into core ops
 
 | CLI file | Private logic to extract | Becomes |
 |---|---|---|
@@ -1230,23 +1230,23 @@ change as little as possible. **Rule:** a file moves only together with its test
 | `studio_edit_commands.dart` | helpers `loadLevelOrNull`, `validateAndWrite`, `entityNamedOrNull`, `parseFieldValue` and each command's `run()` body | the `level.*` edit handlers (they currently print and write directly; the new handlers **return a Proposal** instead of writing) |
 | `studio_diff_commands.dart` | diff/merge/lock/unlock bodies (use `diffLevels`, `mergeLevels`, `FileLock`) | `level.diff`, `level.merge`, `level.lock/unlock` |
 | `studio_asset_commands.dart` | `export-tmx`, `save-prefab`, `place-prefab` bodies | `level.export_tmx`, `prefab.save`, `prefab.place` |
-| `lint_command.dart` | `_checkPlayable(entities)` (pure: move to core) and `_render(entities, path)` (PNG via `package:image`) | `level.lint`. **Decision:** core contains no image code. Rendering and decoding go through an `ImageCodec` interface injected in `OpContext` (`decode(bytes)`, `resize`, `encodePng`, and a `renderTileMap(...)` helper built on them); `engine_cli` and `engine_api` each supply the same small implementation over `package:image` (about 40 lines, in `image_codec.dart` of each package). Without a codec the render/pack parts return `unsupported`. |
-| `pack_assets_command.dart` (~500 lines, private `_PackItem`, `_Rect`, `_PackedSheet`) | the whole packer | `asset.pack`; **needs `package:image`** for decode/resize/encode: so `asset.pack` is the **one** operation implemented in `engine_cli` and `engine_api` via an injected `ImageCodec` interface in `OpContext` (`decode(bytes)`, `encodePng`, `resize`), with the implementation in a new tiny package-internal file `engine_api/lib/src/image_codec.dart` and `engine_cli/lib/src/image_codec.dart` (each wraps `package:image`). Registry-wise it stays a normal operation; if no codec is in the context it returns `unsupported`. |
+| `lint_command.dart` | `_checkPlayable(entities)` (pure: move to core) and `_render(entities, path)` (PNG via `package:image`) | `level.lint`. **Decision:** core contains no image code. Rendering and decoding go through an `ImageCodec` interface injected in `OpContext` (`decode(bytes)`, `resize`, `encodePng`, and a `renderTileMap(...)` helper built on them); `zarvan_cli` and `zarvan_api` each supply the same small implementation over `package:image` (about 40 lines, in `image_codec.dart` of each package). Without a codec the render/pack parts return `unsupported`. |
+| `pack_assets_command.dart` (~500 lines, private `_PackItem`, `_Rect`, `_PackedSheet`) | the whole packer | `asset.pack`; **needs `package:image`** for decode/resize/encode: so `asset.pack` is the **one** operation implemented in `zarvan_cli` and `zarvan_api` via an injected `ImageCodec` interface in `OpContext` (`decode(bytes)`, `encodePng`, `resize`), with the implementation in a new tiny package-internal file `zarvan_api/lib/src/image_codec.dart` and `zarvan_cli/lib/src/image_codec.dart` (each wraps `package:image`). Registry-wise it stays a normal operation; if no codec is in the context it returns `unsupported`. |
 | `release_plan.dart` | `planAndroid(...)`, `planIos(...)`, `ReleasePlan`, `automaticExportOptions` (already pure functions) | `release.plan` handler (move file to core as is; pure) |
 | `idle_command.dart` | `SimulateCommand.run`, `ValidateIdleCommand.run` bodies | `idle.simulate`, `idle.validate` |
-| `create_command.dart`, `upgrade_command.dart`, `build_release_command.dart`, `template.dart`, `process_utils.dart` | process-running code | stay in `engine_cli` as `requiresFlutter` handlers registered into the registry at CLI start-up |
+| `create_command.dart`, `upgrade_command.dart`, `build_release_command.dart`, `template.dart`, `process_utils.dart` | process-running code | stay in `zarvan_cli` as `requiresFlutter` handlers registered into the registry at CLI start-up |
 
 ### R.4 Studio graph code
 
-`engine_studio/lib/src/graph/graph_editor.dart` mixes pure graph editing (add/remove node, connect with port-type check, params,
+`zarvan_studio/lib/src/graph/graph_editor.dart` mixes pure graph editing (add/remove node, connect with port-type check, params,
 `validate()`, `compile()`) with `dart:ui` types (`Offset` positions). Extract a pure `GraphModel`/`GraphEditorCore` into
-`engine_core/lib/src/graph/graph_edit.dart` using plain `double x, y` for positions; `GraphEditor` in the studio wraps it and converts to
+`zarvan_core/lib/src/graph/graph_edit.dart` using plain `double x, y` for positions; `GraphEditor` in the studio wraps it and converts to
 `Offset`. The `graph.*` write operations call the core class. **(verify)** the exact method names with
-`grep -n "^  [A-Za-z<>?]* [a-z][A-Za-z]*(" packages/engine_studio/lib/src/graph/graph_editor.dart` before writing the handlers.
+`grep -n "^  [A-Za-z<>?]* [a-z][A-Za-z]*(" packages/zarvan_studio/lib/src/graph/graph_editor.dart` before writing the handlers.
 
 ## S. Code skeletons (paste, then fill)
 
-### S.1 `packages/engine_core/lib/src/ops/operation.dart`
+### S.1 `packages/zarvan_core/lib/src/ops/operation.dart`
 
 ```dart
 import 'dart:async';
@@ -1412,11 +1412,11 @@ abstract class ProjectFiles {            // implemented by DiskFiles (dart:io) a
   void delete(String absolutePath);
 }
 ```
-`OpContext.files` is a `ProjectFiles`. `MemoryFiles` makes the per-operation tests fast and lets the web build of `engine_core` keep
-compiling (the disk implementation lives in `ops/disk_files.dart`, imported only by `engine_core_ops.dart`; if `engine_core_ops.dart`
+`OpContext.files` is a `ProjectFiles`. `MemoryFiles` makes the per-operation tests fast and lets the web build of `zarvan_core` keep
+compiling (the disk implementation lives in `ops/disk_files.dart`, imported only by `zarvan_core_ops.dart`; if `zarvan_core_ops.dart`
 must also compile for web, put it behind a conditional import, but v1 targets the VM only).
 
-### S.5 CLI binding core (`engine_cli/lib/src/ops_cli.dart`)
+### S.5 CLI binding core (`zarvan_cli/lib/src/ops_cli.dart`)
 
 ```dart
 List<Command<int>> buildOpCommands(OperationRegistry registry, OpContext Function(ArgResults) makeCtx) {
@@ -1453,7 +1453,7 @@ JSON), maps `ErrorCode -> exit code` from B.1, and for a destructive preview pri
 others -> `addOption(name, abbr: cliAbbr, defaultsTo: defaultValue?.toString(), help: description)`. Coercion back to typed values uses the
 same `ParamValidator` as the API (`'3'` -> 3; `json` params go through `parseFieldValue`).
 
-### S.7 MCP dispatch core (`engine_api/lib/src/mcp/tools.dart`)
+### S.7 MCP dispatch core (`zarvan_api/lib/src/mcp/tools.dart`)
 
 ```dart
 Map<String, Object?> toolFor(Operation op, Policy policy) => {
@@ -1521,7 +1521,7 @@ Future<OpResult> finish(Operation op, Map args, OpOutcome out, OpContext ctx) as
 
 ## T. Test templates and fixtures
 
-### T.1 Fixture project (`packages/engine_core/test/fixtures/ops_project/`, copied to a temp dir per test)
+### T.1 Fixture project (`packages/zarvan_core/test/fixtures/ops_project/`, copied to a temp dir per test)
 
 ```
 pubspec.yaml                      # name: ops_demo\nenvironment: {sdk: ^3.9.0}\n
@@ -1530,7 +1530,7 @@ assets/levels/empty.json          # {"entities": []}
 assets/prefabs/                   # empty
 graphs/graph1.json                # tiny dialogue graph (say -> end)
 lib/main.dart                     # class Hero {}
-assets/idle_game.json             # copy of packages/engine_idle/example/cookie_clicker.json
+assets/idle_game.json             # copy of packages/zarvan_idle/example/cookie_clicker.json
 ```
 
 Helper `Future<OpContext> scratchContext({bool readOnly = false, FakeClock? clock})` copies the fixture into `Directory.systemTemp`, returns a
@@ -1568,10 +1568,10 @@ void main() {
 ### T.3 Golden comparison with the legacy CLI (proves behaviour is preserved during phase 3/4)
 
 For each migrated command, a test runs the **legacy** command (already exercised by `runStudio([...])` in
-`packages/engine_cli/test/support/run_studio.dart`) and the new operation on two copies of the same level and asserts the resulting files are
+`packages/zarvan_cli/test/support/run_studio.dart`) and the new operation on two copies of the same level and asserts the resulting files are
 byte-identical. Delete the golden test only when the legacy command is removed.
 
-### T.4 Parity test skeleton (`engine_api/test/parity_test.dart`)
+### T.4 Parity test skeleton (`zarvan_api/test/parity_test.dart`)
 
 ```dart
 test('registry, CLI, MCP, REST, OpenAPI and JSON-RPC cover the same operations', () {
@@ -1590,10 +1590,10 @@ test('registry, CLI, MCP, REST, OpenAPI and JSON-RPC cover the same operations',
 
 ## U. Files to create verbatim
 
-### U.1 `packages/engine_api/pubspec.yaml`
+### U.1 `packages/zarvan_api/pubspec.yaml`
 
 ```yaml
-name: engine_api
+name: zarvan_api
 description: MCP server and HTTP/JSON-RPC API for the engine: every studio command, engine function and project function as one operation.
 version: 0.1.0
 publish_to: none
@@ -1608,16 +1608,16 @@ dependencies:
   path: ^1.9.0
   yaml: ^3.1.2
   crypto: ^3.0.3
-  image: ^4.7.0              # image codec for asset.pack / level.lint render (same version as engine_cli)
-  engine_schema:
+  image: ^4.7.0              # image codec for asset.pack / level.lint render (same version as zarvan_cli)
+  zarvan_schema:
     git:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
-      path: packages/engine_schema
+      path: packages/zarvan_schema
       ref: main
-  engine_core:
+  zarvan_core:
     git:
       url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
-      path: packages/engine_core
+      path: packages/zarvan_core
       ref: main
 
 dev_dependencies:
@@ -1625,35 +1625,35 @@ dev_dependencies:
   lints: ^5.0.0
 
 executables:
-  engine_api: engine_api
+  zarvan_api: zarvan_api
 ```
 
-plus `pubspec_overrides.yaml` (gitignored-safe, local development; copy the pattern from `packages/engine_cli/pubspec_overrides.yaml`):
+plus `pubspec_overrides.yaml` (gitignored-safe, local development; copy the pattern from `packages/zarvan_cli/pubspec_overrides.yaml`):
 
 ```yaml
 dependency_overrides:
-  engine_schema:
-    path: ../engine_schema
-  engine_core:
-    path: ../engine_core
+  zarvan_schema:
+    path: ../zarvan_schema
+  zarvan_core:
+    path: ../zarvan_core
 ```
 
-(`engine_core` is already declared with the self-referencing git dependency pattern described in CLAUDE.md; follow the same comment block.)
+(`zarvan_core` is already declared with the self-referencing git dependency pattern described in CLAUDE.md; follow the same comment block.)
 
-### U.2 `.github/workflows/engine_api.yml`
+### U.2 `.github/workflows/zarvan_api.yml`
 
 ```yaml
-name: engine_api
+name: zarvan_api
 on:
   push:
     branches: [main]
-    paths: ['packages/engine_api/**', 'packages/engine_core/**', 'packages/engine_schema/**', 'packages/engine_cli/**', '.github/workflows/engine_api.yml']
+    paths: ['packages/zarvan_api/**', 'packages/zarvan_core/**', 'packages/zarvan_schema/**', 'packages/zarvan_cli/**', '.github/workflows/zarvan_api.yml']
   pull_request:
-    paths: ['packages/engine_api/**', 'packages/engine_core/**', 'packages/engine_schema/**', 'packages/engine_cli/**', '.github/workflows/engine_api.yml']
+    paths: ['packages/zarvan_api/**', 'packages/zarvan_core/**', 'packages/zarvan_schema/**', 'packages/zarvan_cli/**', '.github/workflows/zarvan_api.yml']
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: packages/engine_api } }
+    defaults: { run: { working-directory: packages/zarvan_api } }
     steps:
       - uses: actions/checkout@v7
       - uses: dart-lang/setup-dart@v1
@@ -1662,20 +1662,20 @@ jobs:
       - run: dart test
 ```
 
-Also add `engine_api` to the `paths` of `engine_core.yml` consumers only if needed; add `packages/engine_core/**` changes to `engine_cli.yml` (already present) so the parity test in `engine_cli` runs when the registry changes. `docs.yml`: add `engine_api` to the API-doc loop (`dart doc` works for pure Dart: use `dart pub get`).
+Also add `zarvan_api` to the `paths` of `zarvan_core.yml` consumers only if needed; add `packages/zarvan_core/**` changes to `zarvan_cli.yml` (already present) so the parity test in `zarvan_cli` runs when the registry changes. `docs.yml`: add `zarvan_api` to the API-doc loop (`dart doc` works for pure Dart: use `dart pub get`).
 
 ### U.3 Docs touch list (do in phase 0 and phase 7)
 
-`CLAUDE.md` package map row: `packages/engine_api` - "MCP/HTTP/JSON-RPC server over the operation registry in `engine_core`; depends on `engine_core` only" ;
+`CLAUDE.md` package map row: `packages/zarvan_api` - "MCP/HTTP/JSON-RPC server over the operation registry in `zarvan_core`; depends on `zarvan_core` only" ;
 `README.md` package table + badge row; `mkdocs.yml` nav: Reference > Operations (generated), MCP server; `docs/engine-releasing.md` dependency
-order (insert `engine_api` after `engine_cli`); `CHANGELOG.md` `### Added`; `TODO.md` new item "engine_api: see engine_mcp.md".
+order (insert `zarvan_api` after `zarvan_cli`); `CHANGELOG.md` `### Added`; `TODO.md` new item "zarvan_api: see engine_mcp.md".
 
 ## V. Pitfalls already paid for (do not rediscover)
 
 1. **Gate every commit on the real test result.** `cmd | grep ... && git commit` succeeds even when tests fail (this shipped a broken commit once).
    Capture `r=$(dart test 2>&1 | tail -1)` and test `case "$r" in *"All tests passed"*) ... ;; esac`, and also run `dart analyze --fatal-infos`
    (the `unnecessary_import` lint failed CI twice).
-2. `engine_core` tests run with `dart test`; Flutter packages with `flutter test --no-pub` and `flutter_test` (not `package:test`).
+2. `zarvan_core` tests run with `dart test`; Flutter packages with `flutter test --no-pub` and `flutter_test` (not `package:test`).
    Flutter SDK is at `~/develop/flutter/bin` (not on PATH). pub.dev is unreachable in the sandbox: use `--offline`/`--no-pub`; packages
    resolve through `pubspec_overrides.yaml`.
 3. Shell aliases `rm`/`cp`/`mv` are interactive and hang or no-op: use `rm -f`, `python3` for copies/moves, `git mv` for repo moves.
@@ -1684,18 +1684,18 @@ order (insert `engine_api` after `engine_cli`); `CHANGELOG.md` `### Added`; `TOD
 5. A widget test that spawns a real process leaves a pending timer (FakeAsync): inject runners (`GitRunner`, `ProcessStarter`, `PubProcessStarter`).
    The new ops must never spawn processes except `requiresFlutter` ones.
 6. Adding a public `*Event` class requires a row in `docs/reference/events.md` (drift test); adding a component requires a schema +
-   `dart run tool/gen_component_docs.dart > ../../docs/reference/components.md` (from `packages/engine_schema`). The same drift-test
+   `dart run tool/gen_component_docs.dart > ../../docs/reference/components.md` (from `packages/zarvan_schema`). The same drift-test
    idea applies to the generated operation docs.
-7. `release_consistency_test` (engine_core) requires every package to share the version, have `publish_to: none`, LICENSE, README and
+7. `release_consistency_test` (zarvan_core) requires every package to share the version, have `publish_to: none`, LICENSE, README and
    CHANGELOG. Create them in phase 0.
-8. `game_agent` legacy exit codes and stdout wording are pinned by ~130 tests in `packages/engine_cli/test/`; keep adapters byte-compatible
+8. `zarvan` legacy exit codes and stdout wording are pinned by ~130 tests in `packages/zarvan_cli/test/`; keep adapters byte-compatible
    and change those tests only when behaviour is intentionally extended (additive `--json`).
 9. Dart records compare lists by identity in `expect`; compare fields separately.
 10. GitHub may be unreachable for a while; commit locally and retry the push later, nothing is lost.
 11. `FileLock` files are `<path>.lock` next to the level; ignore them in `project.tree` (the studio tree already hides generated files: reuse
     `listProjectTree`).
-12. Keep `engine_core` web-compilable: nothing under `src/ops/` may be exported from `engine_core.dart`; `dart:io` code lives behind
-    `engine_core_ops.dart` (the same split as `engine_core_io.dart`).
+12. Keep `zarvan_core` web-compilable: nothing under `src/ops/` may be exported from `zarvan_core.dart`; `dart:io` code lives behind
+    `zarvan_core_ops.dart` (the same split as `zarvan_core_io.dart`).
 
 ## W. Effort map (for planning, not a promise)
 
@@ -1704,7 +1704,7 @@ order (insert `engine_api` after `engine_cli`); `CHANGELOG.md` `### Added`; `TOD
 | 0 scaffolding | small | none |
 | 1 registry core | medium (about 1,200 lines + tests) | parameter schema ergonomics; settle it with `engine.*` ops first |
 | 2 write safety | medium | atomicity and token design; heavy unit tests |
-| 3 move read ops | medium-large | moving files out of `engine_studio` without breaking its tests (do one file per commit) |
+| 3 move read ops | medium-large | moving files out of `zarvan_studio` without breaking its tests (do one file per commit) |
 | 4 move write ops | medium | byte-identical output vs legacy; golden tests |
 | 5 new ops | large (many small handlers) | `graph_editor` extraction, `asset.pack` image-codec injection |
 | 6 server | large | MCP details; keep a thin protocol layer and test against the spec text |
@@ -1725,9 +1725,9 @@ Operation: `level.set_field` (write; applies immediately; always previewable).
 
 **CLI**
 ```bash
-game_agent level set-field assets/levels/level1.json --entity player --component position --field x --value 48
-game_agent level set-field assets/levels/level1.json --entity player --component position --field x --value 48 --dry-run --json
-game_agent studio set-field assets/levels/level1.json --entity player --component position --field x --value 48   # legacy alias, same result
+zarvan level set-field assets/levels/level1.json --entity player --component position --field x --value 48
+zarvan level set-field assets/levels/level1.json --entity player --component position --field x --value 48 --dry-run --json
+zarvan studio set-field assets/levels/level1.json --entity player --component position --field x --value 48   # legacy alias, same result
 ```
 
 **MCP `tools/call`** (stdio line or `POST /mcp`)
@@ -1768,7 +1768,7 @@ curl -s -X POST http://127.0.0.1:7421/rpc -H "Authorization: Bearer $TOKEN" -H "
 Copy the checklist into the working notes of each phase and tick as you go.
 
 - [ ] Read only the J/R rows for this group and the legacy source named in R.3.
-- [ ] Extraction commits first (move files with `git mv`, fix imports, shims in `engine_studio`), each green on its own package tests.
+- [ ] Extraction commits first (move files with `git mv`, fix imports, shims in `zarvan_studio`), each green on its own package tests.
 - [ ] Handler returns `OpOutcome` (reads) or a `Proposal` (writes); no direct file writes; no `Process`; no `DateTime.now()`.
 - [ ] Params typed with descriptions; errors listed; at least one example (executed by the registry test).
 - [ ] Per-operation test file from T.2, golden comparison with the legacy command where one exists.
@@ -1779,7 +1779,7 @@ Copy the checklist into the working notes of each phase and tick as you go.
 
 Commit message template (the repository asks for the *why*):
 ```
-engine_core ops: <group> operations (<list>)
+zarvan_core ops: <group> operations (<list>)
 
 Why: <what the CLI/API could not do before, or what duplicated logic this removes>.
 How verified: <per-operation tests, golden comparison with legacy <command>, counts of tests per package>.
@@ -1790,8 +1790,8 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
 ## Z. Rationale for the less obvious decisions (so they are not re-litigated)
 
-- **Registry in `engine_core`, not in `engine_api`:** the CLI must bind to it without depending on a server package, and the package DAG
-  (`engine_schema -> engine_core -> everything else`) must stay one-way (CLAUDE.md).
+- **Registry in `zarvan_core`, not in `zarvan_api`:** the CLI must bind to it without depending on a server package, and the package DAG
+  (`zarvan_schema -> zarvan_core -> everything else`) must stay one-way (CLAUDE.md).
 - **One project per server run:** an agent that can name any path can touch any folder; a single root plus the path sandbox bounds the damage
   and makes the undo log and locks unambiguous.
 - **Confirmation tokens instead of a plain `apply:true`:** a preview and the later apply can be separated by minutes and by other writers; the
@@ -1817,5 +1817,5 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 | Proposal | a write handler's list of file changes, not yet applied |
 | Preview | the dry-run result of a proposal (diff, summary, confirmation token) |
 | Project | a game folder with `pubspec.yaml` and `assets/levels`; at most one is open per server |
-| `requiresFlutter` | an operation implemented in the CLI (needs the Flutter SDK or long-running processes) and not served by `engine_api` |
+| `requiresFlutter` | an operation implemented in the CLI (needs the Flutter SDK or long-running processes) and not served by `zarvan_api` |
 | Parity test | the test that fails when the registry and any surface disagree |

@@ -1,0 +1,5 @@
+# Local monorepo development only: resolve zarvan_schema from this checkout.
+# Ignored when zarvan_core is fetched as a git dependency by another project.
+dependency_overrides:
+  zarvan_schema:
+    path: ../zarvan_schema

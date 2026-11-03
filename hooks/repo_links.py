@@ -1,7 +1,7 @@
 """MkDocs hook: make repo-relative links in docs/ work on the published site.
 
 The docs link to source files and package READMEs with paths like
-``../../packages/engine_core/README.md`` so they work when browsing on
+``../../packages/zarvan_core/README.md`` so they work when browsing on
 GitHub. Those targets are outside ``docs/`` and so don't exist on the built
 site; this rewrites them to absolute GitHub URLs at build time. Links that
 stay inside ``docs/`` are untouched.

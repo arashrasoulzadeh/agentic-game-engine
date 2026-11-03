@@ -1,0 +1,184 @@
+import 'dart:convert';
+import 'dart:ui' as ui;
+
+import 'package:flutter/services.dart' show rootBundle;
+
+/// One loaded sprite sheet plus named regions within it. Kept out of
+/// zarvan_core because `dart:ui.Image` only exists in the Flutter
+/// runtime — this is the boundary where the engine touches Flutter.
+class SpriteAtlas {
+  final ui.Image image;
+  final Map<String, ui.Rect> regions;
+
+  SpriteAtlas(this.image, this.regions);
+
+  ui.Rect regionFor(String name) {
+    final r = regions[name];
+    if (r == null) {
+      throw ArgumentError('SpriteAtlas has no region named "$name"');
+    }
+    return r;
+  }
+
+  /// Builds regions from a manifest shaped
+  /// `{"regions": {"name": {"x":, "y":, "w":, "h":}}}` against an
+  /// already-decoded [image]. Split out from [loadFromAssets] so the
+  /// parsing logic is testable without real asset I/O.
+  factory SpriteAtlas.fromManifest(
+    ui.Image image,
+    Map<String, dynamic> manifest,
+  ) {
+    final regionsJson =
+        (manifest['regions'] as Map?)?.cast<String, dynamic>() ??
+        const <String, dynamic>{};
+    final regions = <String, ui.Rect>{};
+    regionsJson.forEach((name, value) {
+      final r = (value as Map).cast<String, dynamic>();
+      regions[name] = ui.Rect.fromLTWH(
+        (r['x'] as num).toDouble(),
+        (r['y'] as num).toDouble(),
+        (r['w'] as num).toDouble(),
+        (r['h'] as num).toDouble(),
+      );
+    });
+    return SpriteAtlas(image, regions);
+  }
+
+  /// Loads a real sprite sheet: decodes [imageAssetPath] (any format
+  /// `dart:ui` supports — PNG, JPEG, etc.) and reads named regions from
+  /// [manifestAssetPath], a JSON asset in the manifest shape
+  /// [fromManifest] expects. Both must be declared under `flutter.assets`
+  /// in the game's `pubspec.yaml`.
+  static Future<SpriteAtlas> loadFromAssets({
+    required String imageAssetPath,
+    required String manifestAssetPath,
+  }) async {
+    final manifestString = await rootBundle.loadString(manifestAssetPath);
+    final manifest = jsonDecode(manifestString) as Map<String, dynamic>;
+
+    final bytes = await rootBundle.load(imageAssetPath);
+    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
+    final frame = await codec.getNextFrame();
+
+    return SpriteAtlas.fromManifest(frame.image, manifest);
+  }
+
+  /// Builds equal-sized regions along one horizontal strip of [image]:
+  /// `0`‥`frames-1` at `x = gap + i * (cell + gap)`, `y = 0`.
+  ///
+  /// The common layout for a Mobarez-style (or any single-row) sheet
+  /// authored with a sidecar `{ "cell", "gap", "frames" }` — avoids
+  /// hand-writing a regions manifest for that case.
+  factory SpriteAtlas.fromStrip(
+    ui.Image image, {
+    required int cell,
+    required int frames,
+    int gap = 0,
+  }) {
+    assert(cell > 0, 'cell must be positive');
+    assert(frames > 0, 'frames must be positive');
+    assert(gap >= 0, 'gap must be non-negative');
+    final regions = <String, ui.Rect>{};
+    for (var i = 0; i < frames; i++) {
+      final x = gap + i * (cell + gap);
+      regions['$i'] = ui.Rect.fromLTWH(
+        x.toDouble(),
+        0,
+        cell.toDouble(),
+        cell.toDouble(),
+      );
+    }
+    return SpriteAtlas(image, regions);
+  }
+
+  /// One region named [region] covering the whole [image] — backgrounds
+  /// and other non-sheet art that still want an atlas id for
+  /// `ParallaxLayer` / `Sprite`.
+  factory SpriteAtlas.fromFullImage(ui.Image image, {String region = 'full'}) {
+    return SpriteAtlas(image, {
+      region: ui.Rect.fromLTWH(
+        0,
+        0,
+        image.width.toDouble(),
+        image.height.toDouble(),
+      ),
+    });
+  }
+
+  /// Decodes [imageAssetPath] and builds a [fromStrip] atlas.
+  static Future<SpriteAtlas> loadStripFromAssets({
+    required String imageAssetPath,
+    required int cell,
+    required int frames,
+    int gap = 0,
+  }) async {
+    final bytes = await rootBundle.load(imageAssetPath);
+    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
+    final frame = await codec.getNextFrame();
+    return SpriteAtlas.fromStrip(
+      frame.image,
+      cell: cell,
+      frames: frames,
+      gap: gap,
+    );
+  }
+
+  /// Decodes [imageAssetPath] into a single-region [fromFullImage] atlas.
+  static Future<SpriteAtlas> loadFullImageFromAssets(
+    String imageAssetPath, {
+    String region = 'full',
+  }) async {
+    final bytes = await rootBundle.load(imageAssetPath);
+    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
+    final frame = await codec.getNextFrame();
+    return SpriteAtlas.fromFullImage(frame.image, region: region);
+  }
+}
+
+/// Sprite/animation components store an atlas *id*, not a `SpriteAtlas`
+/// instance, so they stay JSON-serializable (agent-editable) without
+/// embedding a decoded image. This registry resolves ids to the actual
+/// loaded atlas at render/apply time.
+class AtlasRegistry {
+  final Map<String, SpriteAtlas> _atlases = {};
+
+  void register(String id, SpriteAtlas atlas) => _atlases[id] = atlas;
+
+  /// The atlas under [id], or null if none -- for callers (hot reload) that need
+  /// to know whether there is something to replace without a try/catch.
+  SpriteAtlas? tryResolve(String id) => _atlases[id];
+
+  SpriteAtlas resolve(String id) {
+    final atlas = _atlases[id];
+    if (atlas == null) {
+      throw ArgumentError(
+        'No SpriteAtlas registered for id "$id". Call registry.register() first.',
+      );
+    }
+    return atlas;
+  }
+
+  bool has(String id) => _atlases.containsKey(id);
+
+  /// Releases the atlas registered under [id] and disposes its decoded
+  /// `ui.Image` — a game with many rooms, each with its own atlas,
+  /// otherwise keeps every atlas it has ever loaded resident in GPU
+  /// texture memory for the whole run, even for a room the player left
+  /// long ago and won't revisit. Does nothing (`false`) if nothing was
+  /// registered under [id]. Only call this once the atlas is genuinely
+  /// no longer in use anywhere in the current scene(s) — every `Sprite`
+  /// still referencing this atlas id will throw the next time
+  /// `EngineView` tries to render it (via [resolve]), and the disposed
+  /// `ui.Image` can't be un-disposed, so re-registering the same id
+  /// requires decoding a fresh `SpriteAtlas` from scratch, not reusing
+  /// this one. If the same `SpriteAtlas` instance (the same decoded
+  /// image) was deliberately registered under more than one id,
+  /// disposing it via one id's [unregister] invalidates it for the
+  /// others too — this doesn't reference-count.
+  bool unregister(String id) {
+    final atlas = _atlases.remove(id);
+    if (atlas == null) return false;
+    atlas.image.dispose();
+    return true;
+  }
+}

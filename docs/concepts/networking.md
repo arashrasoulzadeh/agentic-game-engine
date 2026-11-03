@@ -2,8 +2,8 @@
 
 How multiplayer works in this engine: an **authoritative host**, **orders** instead
 of state from clients, and **replication** back. The code is in
-`packages/engine_core/lib/src/net/` (transport-agnostic, pure Dart) and
-`engine_core_io.dart` (sockets). A runnable walkthrough:
+`packages/zarvan_core/lib/src/net/` (transport-agnostic, pure Dart) and
+`zarvan_core_io.dart` (sockets). A runnable walkthrough:
 [Tutorial 4](../tutorials/04-multiplayer.md).
 
 ```mermaid
@@ -56,11 +56,11 @@ drops 30% of packets, reorders and lags, and the client converges exactly.
 
 | | Where | Use |
 |---|---|---|
-| `LoopbackLink` | `engine_core` | Tests and replays: latency, jitter and loss with a seeded RNG, so a failure reproduces exactly. |
-| `WebSocketEndpoint` | `engine_core_io.dart` | Real play on desktop/mobile/server. Bad frames are dropped, never thrown. |
+| `LoopbackLink` | `zarvan_core` | Tests and replays: latency, jitter and loss with a seeded RNG, so a failure reproduces exactly. |
+| `WebSocketEndpoint` | `zarvan_core_io.dart` | Real play on desktop/mobile/server. Bad frames are dropped, never thrown. |
 
-`engine_core_io.dart` is separate from the main library on purpose, so
-`engine_core` keeps compiling for the web. For a browser client, implement
+`zarvan_core_io.dart` is separate from the main library on purpose, so
+`zarvan_core` keeps compiling for the web. For a browser client, implement
 `NetEndpoint` over `package:web_socket_channel`; `WebSocketEndpoint` (about 60 lines)
 is the template.
 
@@ -142,7 +142,7 @@ unchanged and share one.
 
 ## Browser clients
 
-A Flutter web client cannot use `dart:io`. Import `package:engine_core/engine_core_web.dart` and connect with
+A Flutter web client cannot use `dart:io`. Import `package:zarvan_core/zarvan_core_web.dart` and connect with
 `connectBrowserWebSocket('wss://game.example.com/play')`; it returns the same `NetEndpoint` the rest of the
 session code uses, so `ClientSession(world: world, endpoint: endpoint)` is unchanged. Browsers cannot listen, so
 the host stays a `dart:io` server (`WebSocketListener`). Serve the page over https and connect with `wss://`
@@ -151,7 +151,7 @@ checks before accepting orders.
 
 ## A ready-made client screen
 
-`OnlineStrategyView` (in `engine_strategy`) does the client side for a grid-based game: pass it the open endpoint,
+`OnlineStrategyView` (in `zarvan_strategy`) does the client side for a grid-based game: pass it the open endpoint,
 your atlas registry and the grid size, and it mirrors the host, draws it, lets the player tap a unit and then a
 cell (move) or an enemy (attack), and sends those as orders. Nothing is applied locally; the result arrives in the
 host's state, and a refused order reaches `onRejected`.
@@ -175,7 +175,7 @@ encryption: serve over `wss://` so the token cannot be read on the way. Orders a
 
 ## UDP
 
-For lower latency, `UdpListener.bind(host.accept)` and `connectUdp('host', port)` (both in `engine_core_io.dart`)
+For lower latency, `UdpListener.bind(host.accept)` and `connectUdp('host', port)` (both in `zarvan_core_io.dart`)
 give the same `NetEndpoint` over UDP datagrams. A lost packet is not waited for; the sync layer repairs it with the
 next snapshot or delta. UDP has no connection, so the first packet introduces a client, `close()` says goodbye at
 once, keep-alives hold an idle peer open and a silent one is dropped after `idleTimeout` (10 s by default).

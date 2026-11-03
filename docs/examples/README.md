@@ -4,10 +4,10 @@ Focused, copy-pasteable recipes. Each solves one problem and says what to
 watch out for.
 
 **How these are verified:** the *turn-based* recipes are executed by
-`packages/engine_strategy/test/doc_examples_test.dart`; the others are checked
+`packages/zarvan_strategy/test/doc_examples_test.dart`; the others are checked
 against current signatures by hand. This repo ships no runnable sample app on
 purpose (see [CLAUDE.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CLAUDE.md)) —
-drop snippets into a `Scene.populate` in a project made by `game_agent create`.
+drop snippets into a `Scene.populate` in a project made by `zarvan create`.
 
 ## Turn-based strategy
 

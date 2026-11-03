@@ -6,7 +6,7 @@ From nothing to a running game in about five minutes.
 
 ```mermaid
 flowchart LR
-    A[Install CLI] --> B[game_agent create] --> C[flutter run] --> D[Edit data / Dart]
+    A[Install CLI] --> B[zarvan create] --> C[flutter run] --> D[Edit data / Dart]
     D --> E[MCP / CLI ops: lint · validate · simulate]
 ```
 
@@ -25,10 +25,10 @@ not pub.dev ([why](#why-a-git-dependency)).
 ```bash
 dart pub global activate --source git \
   https://github.com/arashrasoulzadeh/agentic-game-engine.git \
-  --git-path packages/engine_cli
+  --git-path packages/zarvan_cli
 ```
 
-`game_agent` is now on your `PATH` (add `~/.pub-cache/bin` if the command
+`zarvan` is now on your `PATH` (add `~/.pub-cache/bin` if the command
 prints a warning).
 
 ## 2. Pick a starter and create it
@@ -36,7 +36,7 @@ prints a warning).
 === "Platformer"
 
     ```bash
-    game_agent create my_game
+    zarvan create my_game
     ```
 
     A player, solid ground, patrol enemy, coin, health bar, keyboard and
@@ -45,7 +45,7 @@ prints a warning).
 === "Turn-based strategy"
 
     ```bash
-    game_agent create my_war --template strategy_game
+    zarvan create my_war --template strategy_game
     ```
 
     An 8×8 skirmish against an AI; map and units in
@@ -56,7 +56,7 @@ prints a warning).
 === "Idle / incremental"
 
     ```bash
-    game_agent create bakery --template idle_game
+    zarvan create bakery --template idle_game
     ```
 
     Generators, upgrades, prestige, challenges, golden offers and offline
@@ -131,12 +131,12 @@ New to `World`, `spawn` and `componentsOf`? Read the [ECS guide](concepts/ecs.md
 ## Everyday commands
 
 ```bash
-game_agent upgrade --ref main                     # move the engine pin forward
-game_agent lint assets/levels/main.level.json     # validate a level (add --playable)
-game_agent idle validate assets/idle_game.json    # idle definition check
-game_agent strategy simulate-turns assets/levels/skirmish.level.json --turns 4
-game_agent project open .                         # then project.problems / level.* / idle.*
-game_agent pack-assets --input art --output-image assets/packed/atlas.png
+zarvan upgrade --ref main                     # move the engine pin forward
+zarvan lint assets/levels/main.level.json     # validate a level (add --playable)
+zarvan idle validate assets/idle_game.json    # idle definition check
+zarvan strategy simulate-turns assets/levels/skirmish.level.json --turns 4
+zarvan project open .                         # then project.problems / level.* / idle.*
+zarvan pack-assets --input art --output-image assets/packed/atlas.png
 ```
 
 See the [CLI reference](reference/cli.md) and [transports](reference/transports.md) for MCP/REST.
@@ -147,12 +147,12 @@ Published docs (when `engine.docs` has no local `docs/`):
 ## Why a git dependency?
 
 The packages aren't on pub.dev yet (pre-1.0). A generated project depends on
-`engine_core`, `engine_flutter` and the genre package (`engine_platformer` or
-`engine_strategy`) through a **self-referencing git dependency** — same repo
+`zarvan_core`, `zarvan_flutter` and the genre package (`zarvan_platformer` or
+`zarvan_strategy`) through a **self-referencing git dependency** — same repo
 URL and `ref` for each — rather than local `path:` entries. Pub treats a
 resolved commit and a consumer's `ref: main` as different descriptions of the
 same package and refuses to solve if they're mixed; the self-referencing form
-avoids that. Don't hand-edit these to `path:`; use `game_agent upgrade`.
+avoids that. Don't hand-edit these to `path:`; use `zarvan upgrade`.
 Details: the "Non-obvious constraints" section of
 [CLAUDE.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CLAUDE.md).
 
@@ -161,8 +161,8 @@ Details: the "Non-obvious constraints" section of
 ```bash
 git clone https://github.com/arashrasoulzadeh/agentic-game-engine.git
 cd agentic-game-engine
-(cd packages/engine_core && dart test)
-(cd packages/engine_flutter && flutter test)
+(cd packages/zarvan_core && dart test)
+(cd packages/zarvan_flutter && flutter test)
 ```
 
 See [CONTRIBUTING](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CONTRIBUTING.md).

@@ -1,14 +1,20 @@
-# agentic-game-engine
+<p align="center"><img src="assets/branding/header.png" alt="ZARVAN — Where Worlds Begin." width="100%"></p>
 
-[![engine_core](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_core.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_core.yml)
-[![engine_flutter](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_flutter.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_flutter.yml)
-[![engine_platformer](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_platformer.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_platformer.yml)
-[![engine_strategy](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_strategy.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_strategy.yml)
-[![engine_idle](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_idle.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_idle.yml)
-[![engine_studio](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_studio.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_studio.yml)
-[![engine_api](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_api.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_api.yml)
-[![engine_cli](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_cli.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_cli.yml)
-[![engine_schema](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_schema.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/engine_schema.yml)
+# ZARVAN — Where Worlds Begin.
+
+**An agent-native, simulation-first game engine built with Dart.**
+
+**Agent-Native** · **Simulation-First** · **Data-Driven** · **Deterministic** · **Extensible**
+
+[![zarvan_core](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_core.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_core.yml)
+[![zarvan_flutter](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_flutter.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_flutter.yml)
+[![zarvan_platformer](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_platformer.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_platformer.yml)
+[![zarvan_strategy](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_strategy.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_strategy.yml)
+[![zarvan_idle](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_idle.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_idle.yml)
+[![zarvan_studio](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_studio.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_studio.yml)
+[![zarvan_api](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_api.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_api.yml)
+[![zarvan_cli](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_cli.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_cli.yml)
+[![zarvan_schema](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_schema.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_schema.yml)
 [![docs](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/docs.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/docs.yml)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -18,7 +24,7 @@
 
 > **📖 Documentation: <https://meetarash.ir/agentic-game-engine/>** — tutorials, concepts, recipes and reference.
 
-A pure-Dart 2D game engine for building platformers, turn-based and real-time strategy games and idle/incremental games (ECS, fixed-timestep
+ZARVAN is a pure-Dart 2D game engine for building platformers, turn-based and real-time strategy games and idle/incremental games (ECS, fixed-timestep
 simulation, spatial-hash collision, tile-based and entity-based
 platformer physics, patrol/follow AI, movement-driven animation) built
 to be **AI-agent-friendly**: world state is plain, serializable data an
@@ -43,17 +49,29 @@ final saved = game.world.save();                       // plain JSON, incl. the 
 Seeded randomness, fixed timesteps, deferred `world.commands`, tags, timers, strict patch checking and a
 headless `GameTester` are covered in [Writing games with less code](docs/concepts/authoring.md).
 
+## The Meaning Behind ZARVAN
+
+ZARVAN takes its name from Zurvan (زروان), an ancient Iranian concept associated with infinite time and primordial existence.
+
+In this vision, time is more than a measure of progression. It is the foundation upon which worlds emerge, evolve, and transform.
+
+Inspired by this idea, ZARVAN is designed as an agent-native, simulation-first game engine: a foundation for creating interactive worlds inhabited by autonomous agents. This is a modern, creative reading of the concept, not a claim to reconstruct a historical or religious doctrine.
+
+Every world has a beginning. Every agent has the ability to act. Every action can change the future of that world.
+
+**ZARVAN — Where Worlds Begin.**
+
 ## Packages
 
 | Package | What it is |
 |---|---|
-| [`packages/engine_core`](packages/engine_core/README.md) | The genre-general engine: ECS, `Position`/`Velocity`/`Collider`, spatial-hash collision, `TileMap` data, the content DSL, and the agent-facing `WorldView`/`Behavior` API. Pure Dart, zero Flutter imports. |
-| [`packages/engine_flutter`](packages/engine_flutter/README.md) | The Flutter shell: `Game`/`GameRunner` app framework, sprite rendering, camera, input, audio, save/load. No gameplay logic. |
-| [`packages/engine_platformer`](packages/engine_platformer/README.md) | 2D-platformer-genre gameplay: gravity, jump, tile/platform collision, player/enemy spawn helpers, patrol/follow AI behaviors, facing + movement-driven animation. Kept separate from `engine_core` so a non-platformer 2D game isn't forced to depend on gravity/jump concepts. |
-| [`packages/engine_idle`](packages/engine_idle/README.md) | Idle / incremental-game layer: a whole game as one JSON file (generators, upgrades, prestige, achievements, offline progress, golden events), the widgets, saving/cloud/web stores and the `idle_game` starter. The Flutter-free rules live in `engine_core` (`engine_core_idle.dart`); `game_agent idle simulate` balances a definition. |
-| [`packages/engine_strategy`](packages/engine_strategy/README.md) | Turn-based strategy assembly: `installStrategySystems`, `spawnStrategyUnit`, plus the `strategy_game` starter. The rules themselves (turn clock, orders, grid navigation, combat, fog of war, AI turns) live in `engine_core/lib/src/turn/`. |
-| [`packages/engine_api`](packages/engine_api/README.md) | MCP server and HTTP / JSON-RPC API over one operation registry (`engine_core`); every operation is also a `game_agent` command. Spec in [engine_mcp.md](engine_mcp.md), walkthrough in [tutorial 6](docs/tutorials/06-agent-api.md). |
-| [`packages/engine_cli`](packages/engine_cli/README.md) | The `game_agent` CLI — scaffolds new Flutter games wired to the engine, updates their pinned version, lints content files. |
+| [`packages/zarvan_core`](packages/zarvan_core/README.md) | The genre-general engine: ECS, `Position`/`Velocity`/`Collider`, spatial-hash collision, `TileMap` data, the content DSL, and the agent-facing `WorldView`/`Behavior` API. Pure Dart, zero Flutter imports. |
+| [`packages/zarvan_flutter`](packages/zarvan_flutter/README.md) | The Flutter shell: `Game`/`GameRunner` app framework, sprite rendering, camera, input, audio, save/load. No gameplay logic. |
+| [`packages/zarvan_platformer`](packages/zarvan_platformer/README.md) | 2D-platformer-genre gameplay: gravity, jump, tile/platform collision, player/enemy spawn helpers, patrol/follow AI behaviors, facing + movement-driven animation. Kept separate from `zarvan_core` so a non-platformer 2D game isn't forced to depend on gravity/jump concepts. |
+| [`packages/zarvan_idle`](packages/zarvan_idle/README.md) | Idle / incremental-game layer: a whole game as one JSON file (generators, upgrades, prestige, achievements, offline progress, golden events), the widgets, saving/cloud/web stores and the `idle_game` starter. The Flutter-free rules live in `zarvan_core` (`zarvan_core_idle.dart`); `zarvan idle simulate` balances a definition. |
+| [`packages/zarvan_strategy`](packages/zarvan_strategy/README.md) | Turn-based strategy assembly: `installStrategySystems`, `spawnStrategyUnit`, plus the `strategy_game` starter. The rules themselves (turn clock, orders, grid navigation, combat, fog of war, AI turns) live in `zarvan_core/lib/src/turn/`. |
+| [`packages/zarvan_api`](packages/zarvan_api/README.md) | MCP server and HTTP / JSON-RPC API over one operation registry (`zarvan_core`); every operation is also a `zarvan` command. Spec in [engine_mcp.md](engine_mcp.md), walkthrough in [tutorial 6](docs/tutorials/06-agent-api.md). |
+| [`packages/zarvan_cli`](packages/zarvan_cli/README.md) | The `zarvan` CLI — scaffolds new Flutter games wired to the engine, updates their pinned version, lints content files. |
 
 This repo is the **engine library**, not a game — there's no sample app
 checked in (see [CLAUDE.md](CLAUDE.md) for why, and how `test_game/` is
@@ -68,14 +86,14 @@ already shipped.
 Install the CLI:
 
 ```bash
-dart pub global activate --source git https://github.com/arashrasoulzadeh/agentic-game-engine.git --git-path packages/engine_cli
+dart pub global activate --source git https://github.com/arashrasoulzadeh/agentic-game-engine.git --git-path packages/zarvan_cli
 ```
 
 Scaffold and run a game:
 
 ```bash
-game_agent create my_game                              # platformer starter
-game_agent create my_war --template strategy_game      # turn-based strategy vs an AI
+zarvan create my_game                              # platformer starter
+zarvan create my_war --template strategy_game      # turn-based strategy vs an AI
 cd my_game
 flutter run
 ```
@@ -83,16 +101,16 @@ flutter run
 Update an existing game's engine version later:
 
 ```bash
-game_agent upgrade --ref main
+zarvan upgrade --ref main
 ```
 
 Validate a level/content file without running the game:
 
 ```bash
-game_agent lint assets/level1.json
+zarvan lint assets/level1.json
 ```
 
-See [packages/engine_cli/README.md](packages/engine_cli/README.md) for
+See [packages/zarvan_cli/README.md](packages/zarvan_cli/README.md) for
 all CLI options.
 
 ## Learn more: docs and tutorials
@@ -124,7 +142,7 @@ mechanism this actually produces.
 
 ## How a generated game is structured
 
-`game_agent create` produces a normal Flutter project whose `main.dart`
+`zarvan create` produces a normal Flutter project whose `main.dart`
 extends `Game`, provides an initial `Scene`, and calls `runGame`.
 The following sketch shows where world setup belongs:
 
@@ -150,9 +168,9 @@ class MainScene extends Scene {
 }
 ```
 
-See [`packages/engine_flutter/README.md`](packages/engine_flutter/README.md)
+See [`packages/zarvan_flutter/README.md`](packages/zarvan_flutter/README.md)
 for the full `Game` API (assets, camera, input, audio, save/load) and
-[`packages/engine_core/README.md`](packages/engine_core/README.md) for
+[`packages/zarvan_core/README.md`](packages/zarvan_core/README.md) for
 the ECS/physics/agent API underneath it.
 
 ## API stability
@@ -161,15 +179,15 @@ Every package is pre-1.0 (`0.1.0`) today, so breaking changes can and
 do happen freely — e.g. `resolveSolidCircleAabb` returning a
 `CollisionSide` enum instead of a `bool`. Once a package reaches
 `1.0.0`, it commits to normal semver: a breaking change to anything
-exported from that package's top-level `<package>.dart` (`engine_core.dart`/
-`engine_flutter.dart`/`engine_platformer.dart`/`engine_cli`'s public
+exported from that package's top-level `<package>.dart` (`zarvan_core.dart`/
+`zarvan_flutter.dart`/`zarvan_platformer.dart`/`zarvan_cli`'s public
 API) requires a major version bump. Nothing under a package's internal
 `lib/src/` makes that promise at any version — only the top-level
 export surface is the contract; `src/` internals (including which
 concern-folder a file lives in) can keep moving freely.
 
 One deliberate, permanent exception carried into that commitment:
-`engine_core`'s `Velocity`/`Action` and `engine_flutter`'s `Text`
+`zarvan_core`'s `Velocity`/`Action` and `zarvan_flutter`'s `Text`
 collide with Flutter's own types of the same name. A consumer
 importing both this engine and `material`/`widgets` resolves this with
 `hide` on one side (`import 'package:flutter/material.dart' hide
@@ -186,18 +204,18 @@ through 1.0 and beyond.
 Each package is tested independently:
 
 ```bash
-(cd packages/engine_core && dart test && dart analyze --fatal-infos)
-(cd packages/engine_flutter && flutter test && flutter analyze --fatal-infos)
-(cd packages/engine_platformer && flutter test && flutter analyze --fatal-infos)
-(cd packages/engine_strategy && flutter test && flutter analyze --fatal-infos)
-(cd packages/engine_idle && flutter test && flutter analyze --fatal-infos)
-(cd packages/engine_cli && dart test && dart analyze --fatal-infos)
+(cd packages/zarvan_core && dart test && dart analyze --fatal-infos)
+(cd packages/zarvan_flutter && flutter test && flutter analyze --fatal-infos)
+(cd packages/zarvan_platformer && flutter test && flutter analyze --fatal-infos)
+(cd packages/zarvan_strategy && flutter test && flutter analyze --fatal-infos)
+(cd packages/zarvan_idle && flutter test && flutter analyze --fatal-infos)
+(cd packages/zarvan_cli && dart test && dart analyze --fatal-infos)
 
 # docs site (needs: pip install -r docs/requirements.txt)
 mkdocs build --strict
 ```
 
-CI defines per-package suites (including engine_strategy and engine_schema) with path-based triggers — see
+CI defines per-package suites (including zarvan_strategy and zarvan_schema) with path-based triggers — see
 [.github/workflows](.github/workflows).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and validation and
@@ -213,7 +231,7 @@ every item below.
 
 ### Done
 
-**Core (`engine_core`)** — ECS (`World`/`ComponentStore`/systems),
+**Core (`zarvan_core`)** — ECS (`World`/`ComponentStore`/systems),
 spatial-hash collision, `TileMap` (+ `.tmx` import, slopes, ladders,
 conveyors, per-tile friction, multi-layer/animated tiles, auto-tiling),
 raycasting (tile + entity), A* pathfinding (binary-heap), deterministic
@@ -222,7 +240,7 @@ RNG + replay/record, content DSL (`Level`) + hot-reload
 `WorldView`/`Behavior`/`AISystem` sandbox, particle system, tweening,
 triggers/pushables.
 
-**Rendering (`engine_flutter`)** — sprite atlases + `Canvas.drawAtlas`
+**Rendering (`zarvan_flutter`)** — sprite atlases + `Canvas.drawAtlas`
 batching, z-index draw ordering, parallax backgrounds (tiled or
 viewport-fit), 9-slice UI panels, text (single/multi-line, world- or
 screen-space), 2D lighting (`Light2D`: soft falloff, color tint, real
@@ -232,7 +250,7 @@ timestep + render interpolation, on-screen debug overlay
 (fps/tick/entity/sprite/particle counts, `showPerformanceOverlay`,
 `FrameStats.onSpike`).
 
-**Platformer (`engine_platformer`)** — gravity (+ asymmetric fast-
+**Platformer (`zarvan_platformer`)** — gravity (+ asymmetric fast-
 fall), jump (coyote time, buffering, double/wall jump, wall slide,
 variable height, dash), tile/platform collision (incl. moving
 platforms, one-way, slopes), ledge grab/mantle, water/swimming
@@ -248,10 +266,10 @@ slots + schema versioning + migration.
 
 **Turn-based strategy** — turn clock + action points, JSON orders, weighted
 8-way grid navigation, combat/elimination/victory, per-team fog of war,
-selection + tap input, AI turn driver (`TurnAI`), `engine_strategy`, and a
+selection + tap input, AI turn driver (`TurnAI`), `zarvan_strategy`, and a
 `strategy_game` starter (guide: [docs/concepts/turn-based-strategy.md](docs/concepts/turn-based-strategy.md)).
 
-**Tooling** — `game_agent` CLI (`create`/`upgrade`/`lint --render`/
+**Tooling** — `zarvan` CLI (`create`/`upgrade`/`lint --render`/
 `lint --playable`/`pack-assets` with MaxRects bin-packing + multi-
 resolution `--scales`), a performance benchmark suite, 100% test
 coverage across every package.

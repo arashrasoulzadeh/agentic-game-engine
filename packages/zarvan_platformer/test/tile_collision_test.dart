@@ -1,0 +1,348 @@
+import 'package:zarvan_core/zarvan_core.dart';
+import 'package:zarvan_platformer/zarvan_platformer.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+World _buildWorld() {
+  final world = World(width: 1000, height: 1000);
+  registerCoreComponents(world);
+  registerPlatformerComponents(world);
+  world.addSystem(MovementSystem());
+  world.addSystem(GravitySystem());
+  world.addSystem(PlatformerSystem());
+  world.addSystem(TileCollisionSystem());
+  world.addSystem(JumpSystem());
+  return world;
+}
+
+/// A 4x2 grid of 16x16 tiles: an all-solid floor as row 1, empty row 0,
+/// except column 2 of row 0 is a one-way platform (tile id 2).
+TileMap _testMap() => TileMap(
+  cols: 4,
+  rows: 2,
+  tileWidth: 16,
+  tileHeight: 16,
+  tiles: [
+    0, 0, 2, 0, //
+    1, 1, 1, 1, //
+  ],
+  solidTileIds: {1},
+  oneWayTileIds: {2},
+);
+
+void main() {
+  test('TileMap.tileAt is bounds-checked and returns 0 outside the grid', () {
+    final map = _testMap();
+    expect(map.tileAt(0, 1), 1);
+    expect(map.tileAt(2, 0), 2);
+    expect(map.tileAt(-1, 0), 0);
+    expect(map.tileAt(99, 99), 0);
+  });
+
+  test('TileMap constructor rejects a tiles list of the wrong length', () {
+    expect(
+      () => TileMap(
+        cols: 2,
+        rows: 2,
+        tileWidth: 16,
+        tileHeight: 16,
+        tiles: [1, 2],
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('TileMap round-trips through toJson/fromJson', () {
+    final map = _testMap();
+    final restored = TileMap.fromJson(map.toJson());
+    expect(restored.cols, map.cols);
+    expect(restored.tiles, map.tiles);
+    expect(restored.solidTileIds, map.solidTileIds);
+    expect(restored.oneWayTileIds, map.oneWayTileIds);
+  });
+
+  test('solid tile catches a falling entity from above', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+    world.componentsOf<TileMap>().set(mapEntity, _testMap());
+
+    final player = world.spawn();
+    // Row 1 (solid floor) top edge is at y=16. Start just above it,
+    // falling.
+    world.componentsOf<Position>().set(player, Position(8, 11));
+    world.componentsOf<Velocity>().set(player, Velocity(0, 50));
+    world.componentsOf<Collider>().set(player, Collider(5));
+    world.componentsOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.1);
+
+    final controller = world.componentsOf<PlatformerController>().get(player)!;
+    expect(controller.grounded, isTrue);
+    expect(world.componentsOf<Velocity>().get(player)!.y, 0);
+  });
+
+  test(
+    'grounded stays true on every tick while resting on solid ground, not just the '
+    'landing tick (regression: used to flicker false every other tick once settled '
+    'exactly at the boundary — see resolveSolidCircleAabb)',
+    tags: ['regression'],
+    () {
+      final world = _buildWorld();
+      final mapEntity = world.spawn();
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(mapEntity, _testMap());
+
+      final player = world.spawn();
+      world.componentsOf<Position>().set(player, Position(8, 11));
+      world.componentsOf<Velocity>().set(player, Velocity(0, 50));
+      world.componentsOf<Collider>().set(player, Collider(5));
+      world.componentsOf<Gravity>().set(player, Gravity());
+      world.componentsOf<PlatformerController>().set(player, PlatformerController());
+
+      // Let it land, then step many more ticks at rest -- every one of
+      // them must see grounded true, not an every-other-tick flicker.
+      for (var i = 0; i < 20; i++) {
+        world.step(0.016);
+        expect(
+          world.componentsOf<PlatformerController>().get(player)!.grounded,
+          isTrue,
+          reason: 'tick $i',
+        );
+        expect(world.componentsOf<Velocity>().get(player)!.y, 0, reason: 'tick $i');
+      }
+    },
+  );
+
+  test('one-way tile catches a falling entity from above', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+    // The one-way tile is row 1 with nothing below it (only 2 rows
+    // total) -- using _testMap()'s one-way tile would also sweep in its
+    // adjacent solid floor row in the same broad-phase pass and land on
+    // THAT instead, never actually exercising the one-way resolution.
+    world.componentsOf<TileMap>().set(
+      mapEntity,
+      TileMap(
+        cols: 1,
+        rows: 2,
+        tileWidth: 16,
+        tileHeight: 16,
+        tiles: [0, 2],
+        oneWayTileIds: {2},
+      ),
+    );
+
+    final player = world.spawn();
+    // Small dt keeps gravity's per-tick velocity addition (used by
+    // resolveOneWayCircleAabb's "was it above the tile last frame"
+    // check) from overshooting past the tile -- see that function's
+    // doc comment on how it infers a crossing.
+    world.componentsOf<Position>().set(player, Position(8, 10.5));
+    world.componentsOf<Velocity>().set(player, Velocity(0, 50));
+    world.componentsOf<Collider>().set(player, Collider(5));
+    world.componentsOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.02);
+
+    expect(world.componentsOf<PlatformerController>().get(player)!.grounded, isTrue);
+    expect(world.componentsOf<Velocity>().get(player)!.y, 0);
+  });
+
+  test('one-way tile does not block movement from below', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+    world.componentsOf<TileMap>().set(mapEntity, _testMap());
+
+    final player = world.spawn();
+    // One-way tile is column 2, row 0: world rect x[32,48] y[0,16].
+    // Start below it moving up fast.
+    world.componentsOf<Position>().set(player, Position(40, 30));
+    world.componentsOf<Velocity>().set(player, Velocity(0, -200));
+    world.componentsOf<Collider>().set(player, Collider(5));
+    world.componentsOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.05);
+
+    expect(world.componentsOf<Velocity>().get(player)!.y, -200);
+  });
+
+  test(
+    'jump fires off tile-only ground contact within the same tick '
+    '(regression: jump used to be checked before tile grounding was resolved)',
+    tags: ['regression'],
+    () {
+      final world = _buildWorld();
+      final mapEntity = world.spawn();
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(mapEntity, _testMap());
+
+      final player = world.spawn();
+      // Resting on the solid floor (top at y=16), overlapping slightly as
+      // a real frame of gravity would leave it, with no PlatformBody
+      // involved at all -- grounding here can only come from
+      // TileCollisionSystem.
+      world.componentsOf<Position>().set(player, Position(8, 12));
+      world.componentsOf<Velocity>().set(player, Velocity(0, 0));
+      world.componentsOf<Collider>().set(player, Collider(5));
+      world.componentsOf<PlatformerController>().set(
+        player,
+        PlatformerController(jumpSpeed: 250, jumpRequested: true),
+      );
+
+      world.step(0.016);
+
+      expect(world.componentsOf<Velocity>().get(player)!.y, -250);
+    },
+  );
+
+  test(
+    'TileCollisionSystem sets onLadder on plain overlap with a ladder tile',
+    () {
+      final world = _buildWorld();
+      final mapEntity = world.spawn();
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
+        mapEntity,
+        TileMap(
+          cols: 1,
+          rows: 1,
+          tileWidth: 16,
+          tileHeight: 16,
+          tiles: [9],
+          ladderTileIds: {9},
+        ),
+      );
+
+      final player = world.spawn();
+      world.componentsOf<Position>().set(player, Position(8, 8));
+      world.componentsOf<Velocity>().set(player, Velocity(0, 0));
+      world.componentsOf<Collider>().set(player, Collider(5));
+      world.componentsOf<PlatformerController>().set(player, PlatformerController());
+
+      world.step(0.016);
+
+      expect(
+        world.componentsOf<PlatformerController>().get(player)!.onLadder,
+        isTrue,
+      );
+    },
+  );
+
+  test('onLadder resets to false once the entity leaves the ladder tile', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+    world.componentsOf<TileMap>().set(
+      mapEntity,
+      TileMap(
+        cols: 1,
+        rows: 1,
+        tileWidth: 16,
+        tileHeight: 16,
+        tiles: [9],
+        ladderTileIds: {9},
+      ),
+    );
+
+    final player = world.spawn();
+    world.componentsOf<Position>().set(player, Position(8, 200));
+    world.componentsOf<Velocity>().set(player, Velocity(0, 0));
+    world.componentsOf<Collider>().set(player, Collider(5));
+    world.componentsOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.016);
+
+    expect(
+      world.componentsOf<PlatformerController>().get(player)!.onLadder,
+      isFalse,
+    );
+  });
+
+  test('a conveyor tile nudges Position.x for an entity grounded on it', () {
+    final world = _buildWorld();
+    final mapEntity = world.spawn();
+    world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+    world.componentsOf<TileMap>().set(
+      mapEntity,
+      TileMap(
+        cols: 1,
+        rows: 1,
+        tileWidth: 16,
+        tileHeight: 16,
+        tiles: [1],
+        solidTileIds: {1},
+        conveyorSpeedByTileId: {1: 100},
+      ),
+    );
+
+    final player = world.spawn();
+    world.componentsOf<Position>().set(player, Position(8, -4));
+    world.componentsOf<Velocity>().set(player, Velocity(0, 50));
+    world.componentsOf<Collider>().set(player, Collider(5));
+    world.componentsOf<PlatformerController>().set(player, PlatformerController());
+
+    world.step(0.1);
+
+    expect(world.componentsOf<PlatformerController>().get(player)!.grounded, isTrue);
+    expect(world.componentsOf<Position>().get(player)!.x, greaterThan(8));
+  });
+
+  test(
+    'a friction tile sets PlatformerController.groundFriction while grounded on it',
+    () {
+      final world = _buildWorld();
+      final mapEntity = world.spawn();
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(
+        mapEntity,
+        TileMap(
+          cols: 1,
+          rows: 1,
+          tileWidth: 16,
+          tileHeight: 16,
+          tiles: [1],
+          solidTileIds: {1},
+          frictionByTileId: {1: 0.1},
+        ),
+      );
+
+      final player = world.spawn();
+      world.componentsOf<Position>().set(player, Position(8, -4));
+      world.componentsOf<Velocity>().set(player, Velocity(0, 50));
+      world.componentsOf<Collider>().set(player, Collider(5));
+      world.componentsOf<PlatformerController>().set(player, PlatformerController());
+
+      world.step(0.1);
+
+      expect(
+        world.componentsOf<PlatformerController>().get(player)!.groundFriction,
+        0.1,
+      );
+    },
+  );
+
+  test(
+    'groundFriction defaults back to 1.0 (instant snap) on an untagged tile',
+    () {
+      final world = _buildWorld();
+      final mapEntity = world.spawn();
+      world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+      world.componentsOf<TileMap>().set(mapEntity, _testMap());
+
+      final player = world.spawn();
+      world.componentsOf<Position>().set(player, Position(8, 11));
+      world.componentsOf<Velocity>().set(player, Velocity(0, 50));
+      world.componentsOf<Collider>().set(player, Collider(5));
+      world.componentsOf<PlatformerController>().set(player, PlatformerController());
+
+      world.step(0.1);
+
+      expect(
+        world.componentsOf<PlatformerController>().get(player)!.groundFriction,
+        1.0,
+      );
+    },
+  );
+}

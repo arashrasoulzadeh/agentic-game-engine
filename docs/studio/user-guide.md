@@ -1,18 +1,18 @@
 # Studio user guide
 
-Engine Studio is the desktop editor for projects made with `game_agent create`. It
+Engine Studio is the desktop editor for projects made with `zarvan create`. It
 edits the same JSON files the engine loads and the CLI and agents edit, so anything you
 do here can also be done (and checked) from the command line.
 
 !!! note "Running it"
-    The studio is a Flutter app in `packages/engine_studio`. From a checkout of this
+    The studio is a Flutter app in `packages/zarvan_studio`. From a checkout of this
     repository, run `flutter run -d macos` there. It is not distributed as an installer
     yet.
 
 ## Open a project
 
 Start the studio and choose a project folder. A project is a folder with a
-`pubspec.yaml` and an `assets/levels` folder, which `game_agent create` makes. The
+`pubspec.yaml` and an `assets/levels` folder, which `zarvan create` makes. The
 project window then shows:
 
 - a **file tree** on the left (files git sees as changed carry a mark - M, A, D, R, ? or ! - and so do the folders that contain them; the toolbar button refreshes it) (generated and hidden folders are left out), with a filter
@@ -62,7 +62,7 @@ clicking a sprite sets `atlasId` and `region` together.
 ### Problems
 
 The validation list shows every problem in the level as you edit, using the same checks
-as `game_agent studio validate`: unknown components, wrong field types, and — when the
+as `zarvan studio validate`: unknown components, wrong field types, and — when the
 project declares its sprite sheets — sprites and atlases that do not exist. Clicking a
 problem selects the entity it is about.
 
@@ -72,7 +72,7 @@ When several people edit one project in a shared or synced folder, the studio ta
 **advisory lock** on a level while it is open (`<level>.lock` next to it, naming `user@host` and
 the time). If someone else holds it you get a banner, saving is switched off so nobody overwrites
 the other's work, and you can **Take over** (when their editor crashed). A lock older than two
-hours counts as abandoned. `game_agent studio lock` / `unlock` do the same from the command line.
+hours counts as abandoned. `zarvan studio lock` / `unlock` do the same from the command line.
 
 If someone saves the level while you have it open, the studio notices within a couple of seconds: with no unsaved edits it
 reloads and tells you; with unsaved edits it asks whether to reload (dropping yours) or keep them.
@@ -106,7 +106,7 @@ levels are not checked against them.
 - **Save as prefab** turns the selected entity into `prefabs/<name>.json` and adds a prefab
   brush for it. Stamping a prefab brush places the entity (or group) at the click.
 
-The command line has the same operations: `game_agent studio save-prefab`,
+The command line has the same operations: `zarvan studio save-prefab`,
 `place-prefab`, `export-tmx` and `import-tmx`.
 
 ## Graphs
@@ -137,7 +137,7 @@ runs `flutter run -d macos` with `--dart-define=PLAYTEST_LEVEL=...` and
 The generated game template reads the level from disk in this mode and **restarts its scene when
 the level file is saved**, so you can leave the game running while you edit. A game not built from
 the template needs to do the same (`AssetHotReloader` and `CallbackAssetHandler` in
-`engine_flutter`). The device is `macos` for now, and `flutter` must be on the PATH of the app.
+`zarvan_flutter`). The device is `macos` for now, and `flutter` must be on the PATH of the app.
 
 ## Code editor
 
@@ -153,7 +153,7 @@ Choose **Get packages** in the project toolbar to run `flutter pub get` in the p
 
 ## Settings
 
-Per-user settings live outside any project, in `~/.game_agent/`:
+Per-user settings live outside any project, in `~/.zarvan/`:
 
 - **Keyboard shortcuts** — `studio_prefs.json`:
 
@@ -165,7 +165,7 @@ Per-user settings live outside any project, in `~/.game_agent/`:
     and Control elsewhere; `cmd`, `ctrl`, `alt` and `shift` can be combined with a letter or
     digit. A binding that cannot be read just turns that shortcut off.
 - **Language** — `locale` above, plus `locales/<code>.json` containing `{"key": "text"}`.
-  Keys are the ones in `StudioStrings` (`packages/engine_studio/lib/src/prefs/strings.dart`);
+  Keys are the ones in `StudioStrings` (`packages/zarvan_studio/lib/src/prefs/strings.dart`);
   anything not translated stays English. Only the project window is translatable so far.
 
 ## Updates and downloads
@@ -182,7 +182,7 @@ already downloaded, so existing projects always open. A release list that is uns
 with the wrong key offers nothing and says why.
 
 This is off until you configure it: with no server and key, the studio makes no network requests.
-In `~/.game_agent/studio_prefs.json`:
+In `~/.zarvan/studio_prefs.json`:
 
 ```json
 { "updates": { "manifestUrl": "https://example.com/studio/manifest.json",
@@ -190,12 +190,12 @@ In `~/.game_agent/studio_prefs.json`:
 ```
 
 The signature is fetched from `<manifestUrl>.sig` (base64). Downloads are cached in
-`~/.game_agent/cache`. There is no official release server yet; this is the client side.
+`~/.zarvan/cache`. There is no official release server yet; this is the client side.
 
 ## Doing the same from the command line
 
 Every studio action has a CLI equivalent, which is what makes the editor agent-friendly:
-`game_agent studio validate`, `add-entity`, `remove-entity`, `set-field`, `move-entity`,
+`zarvan studio validate`, `add-entity`, `remove-entity`, `set-field`, `move-entity`,
 `set-layer`, `paint-tile`, `fill-region`, `import-tmx`, `export-tmx`, `export-levels`,
-`save-prefab`, `place-prefab` and `project-manifest`. Run `game_agent studio --help` for
+`save-prefab`, `place-prefab` and `project-manifest`. Run `zarvan studio --help` for
 the arguments.

@@ -1,4 +1,6 @@
-# Agentic Game Engine
+# ZARVAN — Where Worlds Begin.
+
+**An agent-native, simulation-first game engine built with Dart.**
 
 A pure-Dart **2D game engine built for AI agents and humans to work on
 together**. The world is plain JSON an agent can read and patch, content is
@@ -11,16 +13,16 @@ flowchart LR
     subgraph Your game
       G[Game + Scenes]
     end
-    G --> S[engine_strategy<br/>turn-based strategy]
-    G --> P[engine_platformer<br/>platformer gameplay]
-    G --> I[engine_idle<br/>idle / incremental games]
-    S --> F[engine_flutter<br/>render · input · audio]
+    G --> S[zarvan_strategy<br/>turn-based strategy]
+    G --> P[zarvan_platformer<br/>platformer gameplay]
+    G --> I[zarvan_idle<br/>idle / incremental games]
+    S --> F[zarvan_flutter<br/>render · input · audio]
     P --> F
     I --> F
-    F --> C[engine_core<br/>ECS · physics · content · agent API]
+    F --> C[zarvan_core<br/>ECS · physics · content · agent API]
     S --> C
     P --> C
-    C --> X[engine_schema<br/>component schemas]
+    C --> X[zarvan_schema<br/>component schemas]
 ```
 
 ## Pick your path
@@ -61,12 +63,12 @@ flowchart LR
 
 | Package | What it gives you | Depends on |
 |---|---|---|
-| [`engine_core`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_core) | ECS, physics primitives, `TileMap`, content DSL, `WorldView`/`Behavior`, **turn clock, orders, grid navigation, combat, fog of war, selection** | `engine_schema` |
-| [`engine_flutter`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_flutter) | `Game`/`Scene`, sprites, camera, lighting, input, audio, save/load, grid tap input | `engine_core` |
-| [`engine_platformer`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_platformer) | Gravity, jump, tile collision, combat, patrol/follow AI, animation | core, flutter |
-| [`engine_strategy`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_strategy) | One-call wiring for turn-based strategy, unit spawning | core, flutter |
-| [`engine_cli`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_cli) | `game_agent create / upgrade / lint / pack-assets` | `engine_core` |
-| [`engine_schema`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/engine_schema) | Hand-written component schemas used by the CLI and studio | — |
+| [`zarvan_core`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_core) | ECS, physics primitives, `TileMap`, content DSL, `WorldView`/`Behavior`, **turn clock, orders, grid navigation, combat, fog of war, selection** | `zarvan_schema` |
+| [`zarvan_flutter`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_flutter) | `Game`/`Scene`, sprites, camera, lighting, input, audio, save/load, grid tap input | `zarvan_core` |
+| [`zarvan_platformer`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_platformer) | Gravity, jump, tile collision, combat, patrol/follow AI, animation | core, flutter |
+| [`zarvan_strategy`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_strategy) | One-call wiring for turn-based strategy, unit spawning | core, flutter |
+| [`zarvan_cli`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_cli) | `zarvan create / upgrade / lint / pack-assets` | `zarvan_core` |
+| [`zarvan_schema`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_schema) | Hand-written component schemas used by the CLI and studio | — |
 
 ## Reading this documentation
 
@@ -79,9 +81,9 @@ flowchart LR
 !!! note "Code samples are tested"
     Samples in these pages are executed by tests in CI, so they cannot silently drift from the code:
     the tutorials (platformer, turn-based, agent) and the recipes in `examples/`
-    (`packages/engine_platformer/test/doc_examples_*_test.dart`,
-    `packages/engine_strategy/test/doc_examples_test.dart`,
-    `packages/engine_core/test/agent_turn_based_test.dart`, `doc_examples_multiplayer_test.dart`), and the concept pages for localization,
+    (`packages/zarvan_platformer/test/doc_examples_*_test.dart`,
+    `packages/zarvan_strategy/test/doc_examples_test.dart`,
+    `packages/zarvan_core/test/agent_turn_based_test.dart`, `doc_examples_multiplayer_test.dart`), and the concept pages for localization,
     dialogue, AI, ECS, effects, cinematics, procedural generation, performance, settings, lighting and analytics
     (`packages/*/test/doc_examples_*_test.dart`). Pages whose samples are calls into APIs
     that have their own dedicated tests rather than a `doc_examples` file: networking (`session_test.dart`,

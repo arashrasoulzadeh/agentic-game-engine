@@ -2,7 +2,7 @@
 
 ## Setup
 
-### `game_agent: command not found`
+### `zarvan: command not found`
 `dart pub global activate` installs into the pub cache's `bin/`, which must be
 on your `PATH` (usually `~/.pub-cache/bin`). The activate command prints the
 exact line to add if it isn't.
@@ -16,7 +16,7 @@ you're offline or behind a mirror that doesn't allow a transitive package;
 Never change those git dependencies to `path:` by hand — see
 [CLAUDE.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CLAUDE.md#non-obvious-constraints-dont-relitigate-these).
 
-### "'Text' is defined in both … engine_flutter and flutter/material.dart"
+### "'Text' is defined in both … zarvan_flutter and flutter/material.dart"
 `Text`, `Velocity` and `Action` collide with Flutter types by design. Hide one
 side: `import 'package:flutter/material.dart' hide Text, Velocity, Action;`.
 

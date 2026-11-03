@@ -7,13 +7,13 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - "hooks/**"
-      - "packages/engine_core/lib/**"
-      - "packages/engine_schema/lib/**"
-      - "packages/engine_flutter/lib/**"
-      - "packages/engine_platformer/lib/**"
-      - "packages/engine_strategy/lib/**"
-      - "packages/engine_idle/lib/**"
-      - "packages/engine_api/lib/**"
+      - "packages/zarvan_core/lib/**"
+      - "packages/zarvan_schema/lib/**"
+      - "packages/zarvan_flutter/lib/**"
+      - "packages/zarvan_platformer/lib/**"
+      - "packages/zarvan_strategy/lib/**"
+      - "packages/zarvan_idle/lib/**"
+      - "packages/zarvan_api/lib/**"
       - ".github/workflows/docs.yml"
   pull_request:
     paths:
@@ -51,8 +51,8 @@ jobs:
       # The Flutter SDK bundles Dart, so one setup documents every package; the
       # Flutter-dependent ones need `flutter pub get` rather than `dart pub get`.
       # Pinned: dartdoc 9.0.6 (bundled with Flutter 3.47.x) crashes with a RangeError in
-      # DocumentationComment._stripDocImports on engine_flutter. 3.38.9 documents it cleanly.
-      # Bump deliberately, after running `dart doc` on engine_flutter with the new SDK.
+      # DocumentationComment._stripDocImports on zarvan_flutter. 3.38.9 documents it cleanly.
+      # Bump deliberately, after running `dart doc` on zarvan_flutter with the new SDK.
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -60,7 +60,7 @@ jobs:
 
       - name: Generate API docs
         run: |
-          for pkg in engine_schema engine_core engine_flutter engine_platformer engine_strategy engine_idle engine_api; do
+          for pkg in zarvan_schema zarvan_core zarvan_flutter zarvan_platformer zarvan_strategy zarvan_idle zarvan_api; do
             if (cd packages/$pkg && flutter pub get && dart doc . ); then
               mkdir -p site/api/$pkg
               cp -r packages/$pkg/doc/api/. site/api/$pkg/

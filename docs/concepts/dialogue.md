@@ -6,7 +6,7 @@ graph is plain JSON, so it is authored as data — by hand, by an agent, or in t
 [studio's graph editor](../studio/user-guide.md#graphs).
 
 Everything below is executed by
-`packages/engine_core/test/doc_examples_dialogue_test.dart`.
+`packages/zarvan_core/test/doc_examples_dialogue_test.dart`.
 
 ## The graph
 
@@ -93,7 +93,7 @@ reload from its file.
 
 ## Drawing it
 
-In a Flutter game, `DialogueBoxScene` (in `engine_flutter`) is an abstract overlay scene that
+In a Flutter game, `DialogueBoxScene` (in `zarvan_flutter`) is an abstract overlay scene that
 renders a runner's current text and choices as stacked buttons. Subclass it to supply the
 runner and to react to the choices, then push it with `SceneController.pushOverlay`.
 

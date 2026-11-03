@@ -12,7 +12,7 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
   (up to 20 rounds, a guard against handler cycles).
 - Handlers are keyed by exact runtime type — subscribe to the concrete class.
 
-## engine_core — general
+## zarvan_core — general
 
 | Event | Fields | Emitted by |
 |---|---|---|
@@ -22,7 +22,7 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | `CinematicCompleteEvent` | — | `CinematicSystem` |
 | `PlaySoundEvent` | `audioKey`, `volume` | `DialogueRunner`, cinematic `PlaySoundStep`; played by `DialogueSfxSystem` |
 
-## engine_core — turn-based
+## zarvan_core — turn-based
 
 | Event | Fields | Emitted by |
 |---|---|---|
@@ -50,21 +50,21 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 
 `OrderFailure` is one of `blocked`, `outOfRange`, `invalidTarget`.
 
-## engine_core — AI and analytics
+## zarvan_core — AI and analytics
 
 | Type | Fields | Notes |
 |---|---|---|
 | `SoundEvent` | `x`, `y`, `loudness`, `tag?`, `data?` | A world event your game emits when something makes noise; `HearingSystem` delivers it to listeners (see `InvestigateBehavior`). |
 | `AnalyticsEvent` | `name`, `payload`, `timestamp`, `userId?`, `sessionId?` | **Not** a `world.events` event: a record handed to analytics providers by `AnalyticsManager`. Listed because of its name. |
 
-## engine_flutter
+## zarvan_flutter
 
 | Event | Fields | Emitted by |
 |---|---|---|
 | `AnimationFrameEvent` | `entity`, `clipName`, `type`, `data`, `frameIndex` | `AnimationSystem` (one per cue when playback enters a frame whose `frameEvents` list one; `installAnimationCueSystems` turns `shake` / `particle` / `sfx` cues into camera shake, particle bursts and sound) |
 | `AnimationEvent` | `type`, `data` | **Not** a `world.events` event: the authored cue data in `AnimationClip.frameEvents` / `SpriteClip.frameEvents`. Listed because of its name. |
 
-## engine_platformer
+## zarvan_platformer
 
 | Event | Fields | Emitted by |
 |---|---|---|
@@ -79,7 +79,7 @@ world.events.emit(MyEvent());      // queued; delivered at the end of the step
 | `EnemyTelegraphEvent` | `enemy`, `previousState`, `telegraphDuration` | `EnemyCombatBehavior` |
 | `EnemyAttackEvent` | `enemy`, `attackDuration` | `EnemyCombatBehavior` |
 
-## engine_idle
+## zarvan_idle
 
 | Event | Fields | Emitted by |
 |---|---|---|

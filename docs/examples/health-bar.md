@@ -38,5 +38,5 @@ world.componentsOf<Position>().set(
 ```
 
 See `HudBar.screenSpace`'s doc comment
-(`packages/engine_flutter/lib/src/rendering/hud_bar.dart`) for the full
+(`packages/zarvan_flutter/lib/src/rendering/hud_bar.dart`) for the full
 explanation of why world-space bars aren't auto-followed.

@@ -1,0 +1,29 @@
+name: zarvan_core
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/zarvan_core/**'
+      - '.github/workflows/zarvan_core.yml'
+  pull_request:
+    paths:
+      - 'packages/zarvan_core/**'
+      - '.github/workflows/zarvan_core.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/zarvan_core
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test
+      - name: dart doc has no warnings
+        run: |
+          dart doc --dry-run 2>&1 | tee doc.log
+          ! grep -q "warning:" doc.log

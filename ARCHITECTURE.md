@@ -2,7 +2,7 @@
 
 This is a reusable 2D game engine written in Dart. Flutter supplies the
 application and rendering shell for Android, iOS, and Web. Games consume
-the packages or are scaffolded with the `game_agent` CLI.
+the packages or are scaffolded with the `zarvan` CLI.
 
 “Agent-friendly” means the engine exposes serializable world data,
 data-authored levels, and a behavior/action API for controlling entities.
@@ -12,15 +12,15 @@ It does not by itself imply an integrated hosted AI model or service.
 
 | Package | Responsibility | Internal dependencies |
 | --- | --- | --- |
-| [engine_core](packages/engine_core/README.md) | Entities, components, systems, world serialization, collision primitives, tile data, content loading, behavior API | None |
-| [engine_flutter](packages/engine_flutter/README.md) | Game/scene lifecycle, rendering, camera, input, audio, save/load integration | `engine_core` |
-| [engine_platformer](packages/engine_platformer/README.md) | Gravity, jumping, platform/tile resolution, combat, character helpers and animation | `engine_core`, `engine_flutter` |
-| [engine_strategy](packages/engine_strategy/README.md) | One-call wiring and unit spawning for turn-based strategy (rules live in `engine_core/lib/src/turn/`) | `engine_core`, `engine_flutter` |
-| [engine_cli](packages/engine_cli/README.md) | Game scaffolding, dependency upgrades, content validation and asset packing | `engine_core` |
+| [zarvan_core](packages/zarvan_core/README.md) | Entities, components, systems, world serialization, collision primitives, tile data, content loading, behavior API | None |
+| [zarvan_flutter](packages/zarvan_flutter/README.md) | Game/scene lifecycle, rendering, camera, input, audio, save/load integration | `zarvan_core` |
+| [zarvan_platformer](packages/zarvan_platformer/README.md) | Gravity, jumping, platform/tile resolution, combat, character helpers and animation | `zarvan_core`, `zarvan_flutter` |
+| [zarvan_strategy](packages/zarvan_strategy/README.md) | One-call wiring and unit spawning for turn-based strategy (rules live in `zarvan_core/lib/src/turn/`) | `zarvan_core`, `zarvan_flutter` |
+| [zarvan_cli](packages/zarvan_cli/README.md) | Game scaffolding, dependency upgrades, content validation and asset packing | `zarvan_core` |
 
 Core has no Flutter dependency. The shell must not depend on platformer
 gameplay. For example, `TileMap` data lives in core so the shell can draw
-it, while platformer tile collision logic lives in `engine_platformer`.
+it, while platformer tile collision logic lives in `zarvan_platformer`.
 
 ## Runtime flow
 

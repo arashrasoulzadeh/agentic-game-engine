@@ -7,7 +7,7 @@ inspected/patched from outside.
 
 ## Level JSON: `Level.loadInto`
 
-`Level` (`packages/engine_core/lib/src/content/level.dart`) is the
+`Level` (`packages/zarvan_core/lib/src/content/level.dart`) is the
 content DSL:
 
 ```json
@@ -48,14 +48,14 @@ entity is still spawned normally, just not returned.
 
 `Level.validate(json)` runs the same structural validation
 `loadInto` does, without spawning anything — this is what
-`game_agent lint` calls to check a content file offline. It throws
+`zarvan lint` calls to check a content file offline. It throws
 `LevelLoadException` with a specific, human/agent-readable path to the
 bad field (never a generic "invalid JSON") on any structural problem.
 
 ## Full world state: `World.toJson()` / `applyPatch()`
 
 Every `World` can be dumped and restored as plain JSON — this is the
-save/load format (`SaveGame` in `engine_flutter` builds on it) and also
+save/load format (`SaveGame` in `zarvan_flutter` builds on it) and also
 the agent-facing read/write path for inspecting or editing a live game:
 
 ```dart
@@ -90,5 +90,5 @@ isn't showing up in a snapshot, check it's registered (see
 ## See also
 
 - [agent-api.md](agent-api.md) — the runtime `Behavior`/`WorldView` sandbox (for driving an entity *during* simulation, as opposed to patching state from outside it).
-- [`packages/engine_core/README.md`](../../packages/engine_core/README.md) — full `Level`/`World` API, hot-reload (`LevelHandle`), localization.
-- [`packages/engine_cli/README.md`](../../packages/engine_cli/README.md) — `game_agent lint`.
+- [`packages/zarvan_core/README.md`](../../packages/zarvan_core/README.md) — full `Level`/`World` API, hot-reload (`LevelHandle`), localization.
+- [`packages/zarvan_cli/README.md`](../../packages/zarvan_cli/README.md) — `zarvan lint`.

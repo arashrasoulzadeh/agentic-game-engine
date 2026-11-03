@@ -4,7 +4,7 @@ Measure before you optimise. The engine gives you a per-system profiler, a set o
 and a fixed-timestep loop that keeps the simulation cost predictable.
 
 The profiler samples are executed by
-`packages/engine_core/test/doc_examples_performance_test.dart`.
+`packages/zarvan_core/test/doc_examples_performance_test.dart`.
 
 ## Find the slow system: `WorldProfiler`
 
@@ -36,10 +36,10 @@ own tools (DevTools performance overlay) for that side.
 
 ## Benchmarks
 
-`engine_core/benchmark/` has micro-benchmarks for the pieces that scale with entity count:
+`zarvan_core/benchmark/` has micro-benchmarks for the pieces that scale with entity count:
 
 ```bash
-cd packages/engine_core
+cd packages/zarvan_core
 dart run benchmark/world_step_benchmark.dart
 dart run benchmark/collision_system_benchmark.dart
 dart run benchmark/entity_churn_benchmark.dart
@@ -94,4 +94,4 @@ jobs.shutdown();
 - Two ready-made jobs: `CollisionBroadphaseJob` and `PathfindingJob` (four-way A* over a tile grid,
   returning tile centres; it knows nothing about gravity, so it is for top-down or flying movement).
 
-These behaviours are tested in `packages/engine_core/test/job_system_test.dart`.
+These behaviours are tested in `packages/zarvan_core/test/job_system_test.dart`.

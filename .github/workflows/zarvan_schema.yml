@@ -1,0 +1,27 @@
+name: zarvan_schema
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/zarvan_schema/**'
+      - 'docs/reference/components.md'
+      - '.github/workflows/zarvan_schema.yml'
+  pull_request:
+    paths:
+      - 'packages/zarvan_schema/**'
+      - 'docs/reference/components.md'
+      - '.github/workflows/zarvan_schema.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/zarvan_schema
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test

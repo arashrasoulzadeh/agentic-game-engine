@@ -9,7 +9,7 @@ Related (not task lists):
 - [docs/studio/design.md](docs/studio/design.md) — studio PRD / design / delivered phases
 - [docs/concepts/turn-based-strategy.md](docs/concepts/turn-based-strategy.md)
 - [engine_mcp.md](engine_mcp.md) — agent API (phases 0–7 shipped; add ops via
-  `engine_core` groups + `gen_api_docs.dart`)
+  `zarvan_core` groups + `gen_api_docs.dart`)
 
 Per-area lists live next to what they track: studio in
 [docs/studio/studio.md](docs/studio/studio.md), and the sample games in
@@ -40,7 +40,7 @@ the stated trigger.
 - **No 3D, ever** and **no other game engines** — see CLAUDE.md.
 - **Networking stops at `NetEndpoint`.** WebRTC / NAT traversal need a
   native plugin or relay; games wire that themselves.
-- **Published samples are the three `game_agent create` templates** (CI
+- **Published samples are the three `zarvan create` templates** (CI
   builds each). No sample app in this repo (`test_game/` stays gitignored).
 - **Docs stay single-version** until the first published release; then
   consider `mike` with the v0.1.0 tag. `proposals/` and

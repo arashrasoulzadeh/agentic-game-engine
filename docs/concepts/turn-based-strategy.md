@@ -5,10 +5,10 @@ happen in. If you would rather build first and read later, jump to
 [Tutorial 2](../tutorials/02-turn-based-strategy.md).
 
 !!! info "Where the code lives"
-    Data and rules: `packages/engine_core/lib/src/turn/` (pure Dart).
-    Tap input and selection markers: `packages/engine_flutter`
+    Data and rules: `packages/zarvan_core/lib/src/turn/` (pure Dart).
+    Tap input and selection markers: `packages/zarvan_flutter`
     (`GridTapController`, `SelectionMarkerSystem`).
-    One-call wiring: `packages/engine_strategy`
+    One-call wiring: `packages/zarvan_strategy`
     (`installStrategySystems`, `spawnStrategyUnit`).
 
 ## The mental model

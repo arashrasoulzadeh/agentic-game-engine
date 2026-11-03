@@ -2,7 +2,7 @@
 
 Both are ordinary components driven by a system, so they save, load, and replay like
 everything else. Samples are executed by
-`packages/engine_core/test/doc_examples_effects_test.dart`.
+`packages/zarvan_core/test/doc_examples_effects_test.dart`.
 
 ## Tweens
 
@@ -56,7 +56,7 @@ world.componentsOf<ParticleEmitter>().set(
 - Particles are entities: they appear in `world.toJson()` and count toward your entity
   total, so cap `rate` × lifetime.
 
-`engine_flutter` draws them (`EngineView` renders particle entities with their scale and
+`zarvan_flutter` draws them (`EngineView` renders particle entities with their scale and
 alpha); the simulation side above needs no Flutter.
 
 ## Not covered here yet

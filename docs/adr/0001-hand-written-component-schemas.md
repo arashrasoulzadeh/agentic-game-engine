@@ -4,7 +4,7 @@ Status: accepted (docs/studio/design.md decision D1)
 
 ## Context
 
-The studio's inspector, `game_agent studio validate`, and the agent API all
+The studio's inspector, `zarvan studio validate`, and the agent API all
 need each component's field list: names, types, ranges, enum options, and
 defaults. Components already hand-write `toJson`/`fromJson`, so the field
 list exists only implicitly in those methods and is not queryable.
@@ -18,7 +18,7 @@ Two ways to make it queryable:
 ## Decision
 
 Use explicit schema descriptors (`ComponentSchema` / `FieldSchema` in
-`engine_core/lib/src/schema/`), registered with `ComponentRegistry.register`.
+`zarvan_core/lib/src/schema/`), registered with `ComponentRegistry.register`.
 
 ## Why
 
@@ -37,7 +37,7 @@ Use explicit schema descriptors (`ComponentSchema` / `FieldSchema` in
   guard against that:
   - each package's drift test round-trips a real sample through `fromJson`
     and `toJson` and checks the keys match the schema;
-  - `component_schema_coverage_test.dart` (in `engine_platformer`, the only
+  - `component_schema_coverage_test.dart` (in `zarvan_platformer`, the only
     package that sees all three registries) asserts every registered
     component has a schema;
   - the same file asserts every field default is valid for its own field.

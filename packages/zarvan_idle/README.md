@@ -1,0 +1,61 @@
+# zarvan_idle
+
+Idle / incremental games on top of [zarvan_core](../zarvan_core/README.md) and
+[zarvan_flutter](../zarvan_flutter/README.md). A whole game is one JSON file
+(resources, generators, upgrades, achievements, prestige / layers, challenges,
+golden offers, offline rules, optional auto-buyer); you write Dart only for
+what is yours.
+
+Start from the template (`zarvan create my_game --template idle_game`) or
+read the [idle games guide](../../docs/concepts/idle-games.md) and
+[tutorial 5](../../docs/tutorials/05-idle-game.md). The create path is
+shippable; device bench and genre-depth polish are listed under Idle polish in
+[TODO.md](../../TODO.md).
+
+## Where things live
+
+The Flutter-free rules are in `zarvan_core` (`package:zarvan_core/zarvan_core_idle.dart`) so command-line tools can use
+them: components, the economy (`computeIncome`, `buyGenerator`, `buyUpgrade`), prestige and achievements, challenges,
+golden events, auto-buyer, the data loader (`loadIdleDefinition` / `validateIdleDefinition`), the balance simulator
+(`simulateIdle`, also `zarvan idle simulate` / `idle validate`), `BigNumber`, offline progress, cost curves and
+save formats. This package re-exports all of that and adds what needs Flutter:
+
+| Piece | What it does |
+|---|---|
+| `IdleController` | Steps the world about ten times a second, notifies widgets, number format and locale mark |
+| `IdleSession` | Saving, loading, offline catch-up, app lifecycle, export/import codes, cloud sync, return reminders |
+| `FileSaveStore`, `BrowserSaveStore`, `MemorySaveStore`, `CloudSaveStore` | Where a save lives |
+| Widgets | `ResourceHeader`, `GeneratorList`, `UpgradeList`, `PrestigeShop`, `ResearchPanel`, `SeasonPassPanel`, `TimeWarpPanel`, `OfflineSummaryDialog`, `PrestigePanel`, `AchievementList`, `ChallengePanel`, `StatsPanel`, `GoldenOffer`, `IdleSettingsPanel`, `SaveCodePanel`, `IdleLifecycleHost`, `showIdlePauseMenu` / `showIdleCredits` |
+| `IdleSfx` | Optional one-shot hooks on buy / upgrade / tap / prestige / golden (wire to `AudioManager`) |
+| `HttpCloudSaveStore` | HTTP(S) cloud save with injected get/put (IO / web / tests) |
+| `IdleAnalytics` | Purchase, prestige and return events through the consent-aware analytics manager |
+
+Also here is the portrait **wave-combat** layer on top of `zarvan_platformer`: `WaveCombatScene` +
+`WaveCombatConfig` + `LevelData` (a whole walk-and-fight run from data), `AutoCombatSystem`, `FighterDeathSystem`,
+`spawnFighter`, `installCombatFx`, `WalkPhase`, `WaveProgress`. See the "Wave combat" section of the
+[idle games guide](../../docs/concepts/idle-games.md); the sprite-state, pivot, effect and parallax systems it uses live
+in `zarvan_flutter` ([rendering](../../docs/concepts/rendering.md)).
+
+```dart
+final world = World(width: 10, height: 10);
+registerCoreComponents(world);
+final game = loadIdleDefinition(world, jsonDecode(await rootBundle.loadString('assets/idle_game.json')));
+world
+  ..addSystem(IdleSystem())
+  ..addSystem(AutoBuySystem())
+  ..addSystem(BoostSystem());
+
+final controller = IdleController(world: world)..start();
+final session = IdleSession(
+  controller: controller,
+  store: BrowserSaveStore(),
+  offline: game.offline,
+  whileAway: () {
+    final buyers = world.componentsOf<AutoBuyer>();
+    if (buyers.length > 0) runAutoBuyer(world, controller.wallet, buyers.denseAt(0));
+  },
+)..load()..startAutosave();
+```
+
+Tests: `flutter test`; hot-path costs: `dart run benchmark/idle_bench.dart`; pacing of a definition:
+`dart run tool/simulate.dart example/cookie_clicker.json --days 2 --prestige-at 2`.

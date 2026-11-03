@@ -1,0 +1,33 @@
+name: zarvan_strategy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/zarvan_strategy/**'
+      - 'packages/zarvan_core/**'
+      - 'packages/zarvan_flutter/**'
+      - 'packages/zarvan_schema/**'
+      - '.github/workflows/zarvan_strategy.yml'
+  pull_request:
+    paths:
+      - 'packages/zarvan_strategy/**'
+      - 'packages/zarvan_core/**'
+      - 'packages/zarvan_flutter/**'
+      - 'packages/zarvan_schema/**'
+      - '.github/workflows/zarvan_strategy.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/zarvan_strategy
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter test

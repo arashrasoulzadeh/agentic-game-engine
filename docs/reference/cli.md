@@ -1,14 +1,14 @@
-# CLI reference: `game_agent`
+# CLI reference: `zarvan`
 
 Install:
 
 ```bash
 dart pub global activate --source git \
   https://github.com/arashrasoulzadeh/agentic-game-engine.git \
-  --git-path packages/engine_cli
+  --git-path packages/zarvan_cli
 ```
 
-Run `game_agent help <command>` any time; the tables below mirror that output.
+Run `zarvan help <command>` any time; the tables below mirror that output.
 
 | Command | One line |
 |---|---|
@@ -22,12 +22,12 @@ Run `game_agent help <command>` any time; the tables below mirror that output.
 ## create
 
 ```bash
-game_agent create my_game [--template strategy_game] [--org com.acme]
+zarvan create my_game [--template strategy_game] [--org com.acme]
 ```
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--template` | `default_game` | `default_game` — a platformer starter. `topdown_game` — four-direction movement and pickups using core and `engine_flutter` only. `strategy_game` — a turn-based skirmish against an AI (uses `engine_strategy`). `idle_game` — a playable idle/incremental game driven by `assets/idle_game.json` (uses `engine_idle`). |
+| `--template` | `default_game` | `default_game` — a platformer starter. `topdown_game` — four-direction movement and pickups using core and `zarvan_flutter` only. `strategy_game` — a turn-based skirmish against an AI (uses `zarvan_strategy`). `idle_game` — a playable idle/incremental game driven by `assets/idle_game.json` (uses `zarvan_idle`). |
 | `--org` | `com.example` | Reverse-domain id for Android/iOS bundles. |
 | `--output-dir` | `.` | Parent directory for the new project. |
 | `--engine-repo` | this repo's URL | Git URL the generated `pubspec.yaml` depends on. |
@@ -41,19 +41,19 @@ existing directory.
 Run inside a generated project:
 
 ```bash
-game_agent upgrade --ref v0.2.0
+zarvan upgrade --ref v0.2.0
 ```
 
-Rewrites the `ref:` of every engine dependency it finds (`engine_core`,
-`engine_flutter`, `engine_platformer`, `engine_strategy`, `engine_idle`) in `pubspec.yaml`,
+Rewrites the `ref:` of every engine dependency it finds (`zarvan_core`,
+`zarvan_flutter`, `zarvan_platformer`, `zarvan_strategy`, `zarvan_idle`) in `pubspec.yaml`,
 then runs `flutter pub upgrade`. Only dependencies your project actually has
 are touched.
 
 ## lint
 
 ```bash
-game_agent lint assets/levels/main.level.json
-game_agent lint level.json --render level.png --playable
+zarvan lint assets/levels/main.level.json
+zarvan lint level.json --render level.png --playable
 ```
 
 | Option | Meaning |
@@ -67,7 +67,7 @@ Great in CI, and for an agent to check a level it just wrote.
 ## pack-assets
 
 ```bash
-game_agent pack-assets --input art/sprites --output-image assets/packed/atlas.png --scales 1.0,0.5
+zarvan pack-assets --input art/sprites --output-image assets/packed/atlas.png --scales 1.0,0.5
 ```
 
 MaxRects bin-packs every image under `--input` into one sheet plus a region
@@ -79,9 +79,9 @@ manifest for `GameConfig.packedAtlasId`. Options: `--input/-i`,
 ## build-release
 
 ```bash
-game_agent build-release --android --keystore-path release.jks --keystore-password "$KS_PASS" \
+zarvan build-release --android --keystore-path release.jks --keystore-password "$KS_PASS" \
     --key-alias upload --key-password "$KEY_PASS"
-game_agent build-release --no-android --ios --team-id ABCDE12345 --dry-run
+zarvan build-release --no-android --ios --team-id ABCDE12345 --dry-run
 ```
 
 | Option | Meaning |
@@ -110,7 +110,7 @@ refusal Flutter would sign with the debug key, which Google Play rejects. See [R
 ## idle validate
 
 ```bash
-game_agent idle validate assets/idle_game.json
+zarvan idle validate assets/idle_game.json
 ```
 
 Checks an idle game definition and prints every problem with its path (`generators[2].cost.growth must be a number >= 1`),
@@ -120,7 +120,7 @@ CI, or from an agent.
 ## idle simulate
 
 ```bash
-game_agent idle simulate assets/idle_game.json --days 2 --prestige-at 2
+zarvan idle simulate assets/idle_game.json --days 2 --prestige-at 2
 ```
 
 Plays an idle game definition with a deterministic greedy strategy (always buy the best payback, prestige any
@@ -167,8 +167,8 @@ neighbour). `studio merge` merges by entity and component instead, and writes th
 ```
 
 ```bash
-git config merge.level.name "game_agent level merge"
-git config merge.level.driver "game_agent studio merge %O %A %B"
+git config merge.level.name "zarvan level merge"
+git config merge.level.driver "zarvan studio merge %O %A %B"
 ```
 
 Entities are matched by `name`; give the ones that matter a name. Where both sides changed the same

@@ -1,7 +1,7 @@
-# Rendering (`engine_flutter`)
+# Rendering (`zarvan_flutter`)
 
-Everything under `packages/engine_flutter/lib/src/rendering/` and
-`logic/`. This package is the Flutter shell around `engine_core`'s
+Everything under `packages/zarvan_flutter/lib/src/rendering/` and
+`logic/`. This package is the Flutter shell around `zarvan_core`'s
 simulation — it draws what the `World` contains; it never contains
 gameplay logic itself.
 
@@ -51,8 +51,8 @@ Future<AtlasRegistry> loadAssets() async {
 ```
 
 Sprites batch through `Canvas.drawAtlas` per z-index — see
-`packages/engine_flutter/README.md` for the packing tool
-(`game_agent pack-assets`) that produces the manifest.
+`packages/zarvan_flutter/README.md` for the packing tool
+(`zarvan pack-assets`) that produces the manifest.
 
 ## Camera
 
@@ -69,7 +69,7 @@ filled rectangle meter — health/stamina/boss bars) are drawn fresh
 every frame from their component data — "doesn't hide how it works"
 primitives, same philosophy as `Sprite`. Neither updates its own
 `value`/`text` — sync them yourself each tick from wherever the real
-number lives (e.g. `engine_platformer`'s `Health` via
+number lives (e.g. `zarvan_platformer`'s `Health` via
 `HealthHudSystem`/`HealthHudLink`, see
 [platformer.md](platformer.md)).
 
@@ -83,7 +83,7 @@ Wrapped lines (`maxWidth`) follow the component's `align` inside their box.
 raycast against `TileMap` by default; opt-in GPU-shader shadows via
 `Light2D.useGpuShadows`, verified on a real Android phone), cone/
 flashlight mode, flicker, and a day/night ambient cycle
-(`DayNightCycle` in `engine_core`, since it's genre-general timeline
+(`DayNightCycle` in `zarvan_core`, since it's genre-general timeline
 data, not rendering-specific). `GameConfig.ambientBrightness < 1.0`
 darkens the whole scene, revealed again through each `Light2D` entity.
 
@@ -117,13 +117,13 @@ screen size yourself, or set `fitWorld: true` and the engine does it: every fram
 whole world width fills the drawn area. A 180x320 portrait game is
 `ViewportConfig.fittingWorld(180, 320)` (what `Game.viewportConfig` returns: that aspect ratio, letterboxed, scaled,
 ignoring system insets) and needs no zoom maths of its own. Fullscreen/immersive mode is `GameConfig.fullscreen`
-(`"fullscreen": true` in `game_config.json`); `runGame(game)` is the whole `main`. Tested in `packages/engine_flutter/test/viewport_test.dart`.
+(`"fullscreen": true` in `game_config.json`); `runGame(game)` is the whole `main`. Tested in `packages/zarvan_flutter/test/viewport_test.dart`.
 
 ## Animation
 
 `AnimationClip`/`AnimationState` + `AnimationSystem` drive sprite-frame
 playback from component data; `AnimationTransitionSystem` crossfades
-between clips. `engine_platformer`'s `MovementAnimationSet`/
+between clips. `zarvan_platformer`'s `MovementAnimationSet`/
 `JumpAnimationSet` (see [platformer.md](platformer.md)) are the
 platformer-specific layer that decides *which* clip should be playing
 from movement state — this package only plays whatever clip it's told.
@@ -176,4 +176,4 @@ perf report without a full profiler session.
 ## See also
 
 - [platformer.md](platformer.md) — the genre-specific layer built on top of this.
-- [`packages/engine_flutter/README.md`](../../packages/engine_flutter/README.md) — full API reference (input, audio, save/load, on-screen controls, menus).
+- [`packages/zarvan_flutter/README.md`](../../packages/zarvan_flutter/README.md) — full API reference (input, audio, save/load, on-screen controls, menus).

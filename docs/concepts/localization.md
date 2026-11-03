@@ -1,11 +1,11 @@
 # Localization
 
-`LocalizationManager` (in `engine_core`) holds your game's text in every language and
+`LocalizationManager` (in `zarvan_core`) holds your game's text in every language and
 returns the right one for the active locale. It is a singleton, so any code — a system, a
 dialogue box, a menu — can look text up without being passed a manager.
 
 Everything below is executed by
-`packages/engine_core/test/doc_examples_localization_test.dart`.
+`packages/zarvan_core/test/doc_examples_localization_test.dart`.
 
 ## Strings
 
@@ -50,7 +50,7 @@ it fires; the manager does not push updates into text that is already on screen.
 i18n.onLocaleChanged = (code) => rebuildMenus();
 ```
 
-In a Flutter game, `LocalizationFlutter` (in `engine_flutter`) wraps the same manager and adds
+In a Flutter game, `LocalizationFlutter` (in `zarvan_flutter`) wraps the same manager and adds
 `initialize(supportedLocales: ..., initialLocale: ...)`, `textDirection`, `rtlAwareAlign` and
 `localeTextStyle` (which applies a locale's font override).
 

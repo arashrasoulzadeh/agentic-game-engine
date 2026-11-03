@@ -1,0 +1,8 @@
+# Local monorepo development only — see zarvan_flutter/pubspec_overrides.yaml
+# for why this exists and why it's safe (ignored when zarvan_cli is
+# fetched as a git dependency by another project).
+dependency_overrides:
+  zarvan_core:
+    path: ../zarvan_core
+  zarvan_schema:
+    path: ../zarvan_schema

@@ -1,7 +1,7 @@
 # Recipe: define a custom `Behavior`
 
 The built-in `PatrolBehavior`/`FollowBehavior`/`AvoidanceBehavior`/
-`PathFollowBehavior` (`engine_platformer`) cover common cases; for
+`PathFollowBehavior` (`zarvan_platformer`) cover common cases; for
 anything else — a boss with attack phases, an LLM-backed NPC, a
 scripted cutscene actor — implement `Behavior` directly. See
 [concepts/agent-api.md](../concepts/agent-api.md) for the full

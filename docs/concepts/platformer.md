@@ -1,11 +1,11 @@
-# Platformer gameplay (`engine_platformer`)
+# Platformer gameplay (`zarvan_platformer`)
 
-Genre-specific gameplay logic built on `engine_core` + `engine_flutter`:
+Genre-specific gameplay logic built on `zarvan_core` + `zarvan_flutter`:
 gravity, jump, tile/platform collision, patrol/follow AI, combat,
 health/respawn, inventory, HUD wiring, movement-driven animation. Kept
-out of `engine_core` on purpose — a non-platformer 2D game (top-down,
+out of `zarvan_core` on purpose — a non-platformer 2D game (top-down,
 puzzle) shouldn't be forced to depend on gravity/jump concepts. See
-`packages/engine_platformer/lib/src/system_pack.dart` and
+`packages/zarvan_platformer/lib/src/system_pack.dart` and
 `spawn_helpers.dart` for the two entry points below.
 
 ## Register components
@@ -18,7 +18,7 @@ registerPlatformerComponents(world); // Gravity, PlatformBody, PlatformerControl
 ```
 
 `Scene`/`GameRunner` already do the first two for you; you add the
-third yourself if you're using `engine_platformer`.
+third yourself if you're using `zarvan_platformer`.
 
 ## Spawning: `spawnPlayer` / spawn helpers
 
@@ -106,7 +106,7 @@ See `checkpoint_helpers.dart` for the full set, including manual
 Ready-made `Behavior` implementations in `ai/`:
 `PatrolBehavior` (waypoint loop), `FollowBehavior` (chase a target
 entity within range), `AvoidanceBehavior` (steer around obstacles),
-`PathFollowBehavior` (follow an `engine_core` A* path). Register and
+`PathFollowBehavior` (follow an `zarvan_core` A* path). Register and
 attach like any `Behavior` — see [agent-api.md](agent-api.md).
 
 ## Animation
@@ -116,8 +116,8 @@ attach like any `Behavior` — see [agent-api.md](agent-api.md).
 `JumpAnimationSet` (finer jump-phase clips — rise/peak/fall — via
 `JumpAnimationSystem`, a no-op if an entity has no `JumpAnimationSet`,
 so it costs nothing for a game only using the plain single-clip jump
-in `MovementAnimationSet`). Both are `engine_platformer`'s decision
-layer on top of `engine_flutter`'s generic `AnimationSystem` — see
+in `MovementAnimationSet`). Both are `zarvan_platformer`'s decision
+layer on top of `zarvan_flutter`'s generic `AnimationSystem` — see
 [rendering.md](rendering.md).
 
 ## HUD
@@ -130,6 +130,6 @@ final bar = spawnHealthHudBar(world, source: player, x: 20, y: 20, width: 200, h
 
 ## See also
 
-- [rendering.md](rendering.md) — the `engine_flutter` primitives this package builds on.
+- [rendering.md](rendering.md) — the `zarvan_flutter` primitives this package builds on.
 - [agent-api.md](agent-api.md) — writing a custom `Behavior` for a new enemy type.
-- [`packages/engine_platformer/README.md`](../../packages/engine_platformer/README.md) — full API reference (boss phases, ladders, water physics, dash, wall jump, one-way/slope tiles).
+- [`packages/zarvan_platformer/README.md`](../../packages/zarvan_platformer/README.md) — full API reference (boss phases, ladders, water physics, dash, wall jump, one-way/slope tiles).

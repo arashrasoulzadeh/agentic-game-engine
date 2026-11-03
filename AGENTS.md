@@ -14,8 +14,8 @@ and validation commands.
 
 ## Working rules
 
-- Keep `engine_core` free of Flutter. Put genre-specific gameplay in
-  `engine_platformer`, and rendering/input/audio integration in `engine_flutter`.
+- Keep `zarvan_core` free of Flutter. Put genre-specific gameplay in
+  `zarvan_platformer`, and rendering/input/audio integration in `zarvan_flutter`.
 - Preserve the package dependency direction. Shared data needed by the
   renderer belongs in core, even when platformer systems use it.
 - Keep the engine 2D and built without another game engine.

@@ -1,6 +1,6 @@
 # Releasing to the stores
 
-`game_agent build-release` wraps `flutter build appbundle` (Android) and `flutter build ipa` (iOS). It does not
+`zarvan build-release` wraps `flutter build appbundle` (Android) and `flutter build ipa` (iOS). It does not
 upload anything; it produces the signed artifact you give to Google Play Console or App Store Connect.
 
 ## Before the first release
@@ -11,7 +11,7 @@ upload anything; it produces the signed artifact you give to Google Play Console
    It cannot change after the first store upload.
 3. **Turn off debug overlays**: collider / performance / fps overlays are forced off in release builds, but
    check `assets/game_config.json` anyway.
-4. Run `dart analyze` / your tests, and `game_agent studio validate` on your levels.
+4. Run `dart analyze` / your tests, and `zarvan studio validate` on your levels.
 
 ## Android
 
@@ -47,7 +47,7 @@ buildTypes { release { signingConfig = signingConfigs.getByName("release") } }
 **Each release:**
 
 ```bash
-game_agent build-release --android \
+zarvan build-release --android \
   --keystore-path release.jks --keystore-password "$KS_PASS" --key-alias upload --key-password "$KEY_PASS"
 # -> build/app/outputs/bundle/release/app-release.aab
 ```
@@ -59,7 +59,7 @@ that file.
 
 Signing is configured in Xcode (**Signing & Capabilities**: team, bundle id, certificates, profiles).
 
-- **Automatic signing:** `game_agent build-release --no-android --ios --team-id ABCDE12345` generates an
+- **Automatic signing:** `zarvan build-release --no-android --ios --team-id ABCDE12345` generates an
   `ExportOptions.plist` (app-store method, automatic signing) and builds the IPA.
 - **Manual signing** (a specific profile or distribution certificate): write the details into an
   `ExportOptions.plist` yourself and pass `--export-options-plist path/to/it.plist`. `--provisioning-profile` and

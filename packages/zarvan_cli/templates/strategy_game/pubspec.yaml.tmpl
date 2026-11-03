@@ -1,0 +1,40 @@
+name: {{PROJECT_NAME}}
+description: A game built with ZARVAN.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  zarvan_core:
+    git:
+      url: {{ENGINE_REPO_URL}}
+      path: packages/zarvan_core
+      ref: {{ENGINE_REF}}
+  zarvan_flutter:
+    git:
+      url: {{ENGINE_REPO_URL}}
+      path: packages/zarvan_flutter
+      ref: {{ENGINE_REF}}
+  zarvan_strategy:
+    git:
+      url: {{ENGINE_REPO_URL}}
+      path: packages/zarvan_strategy
+      ref: {{ENGINE_REF}}
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/game_config.json
+    - assets/levels/skirmish.level.json
+    - assets/i18n/en.json

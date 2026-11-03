@@ -8,7 +8,7 @@ pubspec.yaml.
 
 ## [Unreleased]
 
-### Added (SIMPLER: simpler game authoring in engine_core)
+### Added (SIMPLER: simpler game authoring in zarvan_core)
 - Component access on `World`: `componentsOf<T>()`, `getComponent`, `setComponent` (rejects dead
   entities), `hasComponent`, `removeComponent`.
 - `world.query` / `query2` / `query3` joins, `Entity` handles (generation-checked) and `EntityRef`,
@@ -20,9 +20,9 @@ pubspec.yaml.
 - Determinism: `world.random` (`WorldRandom`, snapshot-able), `World(seed:)`, `FixedStepper`,
   `world.after` / `world.every`, serializable `CountdownTimer`, `world.save()` / `world.load()`.
 - `GameBuilder.create` / `GameLoop` for one-call setup.
-- `package:engine_core/engine_core_testing.dart`: `GameTester` (headless ticks, `tickUntil`, `component<T>`,
+- `package:zarvan_core/zarvan_core_testing.dart`: `GameTester` (headless ticks, `tickUntil`, `component<T>`,
   `record<E>`, canonical `snapshotText`) and `expectGolden`.
-- `game_agent project doctor` (`project.doctor`): content problems, layout and `engine_*` dependency wiring;
+- `zarvan project doctor` (`project.doctor`): content problems, layout and `zarvan_*` dependency wiring;
   exits 1 on an error. `world.patch` gained `strict` and `dryRun`; `World.checkPatch`, `World.debug()`.
 
 ### Changed
@@ -37,7 +37,7 @@ pubspec.yaml.
 - `CreditsEntry` has a const constructor, so the `const [CreditsEntry(...)]` lists in the default and strategy
   templates compile; the idle template hides the engine `Text` component where it clashes with Flutter's and
   imports `MemorySaveStore` in its test. All three templates now analyze clean against the current engine.
-- `game_agent studio validate` no longer reports `.studio/undo/` journal files as invalid levels.
+- `zarvan studio validate` no longer reports `.studio/undo/` journal files as invalid levels.
 
 ### Added (sprites, effects, idle combat)
 - `SpriteStates` / `SpriteStateSystem` / `playSpriteState` — per-state sprite
@@ -54,16 +54,16 @@ pubspec.yaml.
   the letterboxed rectangle.
 - `Text.rtl` — per-text right-to-left override for Persian/Arabic lines.
 - `ViewportConfig.fittingWorld(w, h)` — the config for a fixed-size world.
-- `engine_idle`: `WaveUiArt`, `SpriteHealthBar`, `WavePath` (generated UI art for bars, a wave progress path and a
+- `zarvan_idle`: `WaveUiArt`, `SpriteHealthBar`, `WavePath` (generated UI art for bars, a wave progress path and a
   caption backdrop) and `DialogueCaption` (typewriter caption on `DialogueRunner`). `HudLayout` is now world units.
-- `engine_idle`: `WaveCombatGame.load` (config + level -> `Game`), `HudLayout`
+- `zarvan_idle`: `WaveCombatGame.load` (config + level -> `Game`), `HudLayout`
   (configurable HUD positions/colours), `WaveCombatScene` / `WaveCombatConfig`, `WalkPhase`,
   `AutoCombatSystem`, `FighterDeathSystem`, `spawnFighter`, `installCombatFx`,
   `LevelData` (waves, balance, parallax, cues) — a portrait walk-and-fight run
   from data; the Mobarez sample is now a config plus a JSON level.
 
 ### Changed
-- `engine_idle`: `MobarezStats` renamed `FighterStats`.
+- `zarvan_idle`: `MobarezStats` renamed `FighterStats`.
 - `Text` wrapped lines follow the component's `align` inside their box
   (previously only the box was aligned).
 
@@ -189,18 +189,18 @@ pubspec.yaml.
   `costResource`, `requires`). Docs checklist + Idle polish TODO for remaining depth.
 - Idle docs and template: guide has a subsystem checklist; tutorial / getting-started cover
   `idle_game`; template includes challenges + `ChallengePanel` (auto-buyer stays opt-in).
-- `game_agent studio` edit verbs (`add-entity`, `remove-entity`, `set-field`, `move-entity`,
+- `zarvan studio` edit verbs (`add-entity`, `remove-entity`, `set-field`, `move-entity`,
   `set-layer`, `paint-tile`, `fill-region`) are thin adapters over `level.*` (undo journal,
   locks, structured errors). Destructive removes auto-confirm so the one-shot CLI UX is
   unchanged; golden stdout/stderr stays the same. `level.paint_tile` /
   `level.fill_region` flatten legend-authored tileMaps first (same as the old studio path).
-- `engine_studio/tool/package_macos.sh` packs with `diskutil image create` (UDZO; falls back to
+- `zarvan_studio/tool/package_macos.sh` packs with `diskutil image create` (UDZO; falls back to
   `hdiutil`). `SKIP_FLUTTER_BUILD=1 APP_BUNDLE=…` packs a stand-in; `tool/verify_dmg_pack.sh`
   covers that path in the macOS CI job.
-- `game_agent lint --render` is now a thin adapter over `level.lint` with `includeRender` (preview raster
-  lives in `engine_core` via injected `ImageCodec`); the API returns `pngBase64` instead of writing a file.
-- `game_agent pack-assets` is now a thin adapter over the `asset.pack` operation (packing algorithm and
-  proposal live in `engine_core`); binary atlas PNGs go through `FileChange.afterBytes` so undo works.
+- `zarvan lint --render` is now a thin adapter over `level.lint` with `includeRender` (preview raster
+  lives in `zarvan_core` via injected `ImageCodec`); the API returns `pngBase64` instead of writing a file.
+- `zarvan pack-assets` is now a thin adapter over the `asset.pack` operation (packing algorithm and
+  proposal live in `zarvan_core`); binary atlas PNGs go through `FileChange.afterBytes` so undo works.
 - Idle balance simulator (`simulateIdle` / `idle.simulate`): prestiges **every** layer that meets `prestigeAt`
   (higher layers first), skips prestige while a challenge is running, and plays incomplete challenges in
   definition order (`playChallenges`, default true; `idle.simulate` exposes the flag).
@@ -215,7 +215,7 @@ pubspec.yaml.
 - `world.step` and `idle.simulate` report progress (and poll cancellation); `simulateIdle`
   takes an optional `onProgress` callback.
 - `asset.pack` reports progress per scale tier and polls cancellation between tiers.
-- Request-log levels: `--log-level` / `engine_api.yaml` `log.level` / MCP `logging/setLevel`.
+- Request-log levels: `--log-level` / `zarvan_api.yaml` `log.level` / MCP `logging/setLevel`.
   `debug` records redacted args (`Param.secret` → `***`); default `info` stays metadata-only.
   Every line also carries `bytesIn`.
 - `i18n.keys` / `i18n.set` operations: game string catalogs at `assets/i18n/<locale>.json` (flat
@@ -223,31 +223,31 @@ pubspec.yaml.
 - MCP streamable HTTP: `GET /mcp` with `Accept: text/event-stream` opens an SSE session
   (`Mcp-Session-Id` on `initialize`, `DELETE /mcp` to end); `OpContext.reportProgress` forwards
   `notifications/progress` on that stream (`strategy.simulate_turns` reports turn progress).
-- `engine.docs` operation: list or read markdown under a configured docs root (`engine_api --docs-root`,
+- `engine.docs` operation: list or read markdown under a configured docs root (`zarvan_api --docs-root`,
   auto-detects the monorepo `docs/` tree; returns `unsupported` when none is set).
 - Cooperative cancellation: `CancellationToken` / `ErrorCode.cancelled`, wired through `OpContext` (Zone-scoped)
   and `notifications/cancelled` on the MCP session so in-flight `tools/call` / JSON-RPC can stop; long
   `strategy.simulate_turns` runs poll the token between steps.
 - `strategy.rules` and `strategy.simulate_turns` operations: catalogue of turn-based components/orders/AI, and a
-  headless AI skirmish that returns an event log (pure `engine_core`, no Flutter).
+  headless AI skirmish that returns an event log (pure `zarvan_core`, no Flutter).
 - MCP `tools/call` emits an `image` content part when operation data includes `pngBase64` (e.g. `level.lint`
   with `includeRender`).
 - `level.lint` `includeRender`: optional base64 PNG structural preview of the tileMap (needs `ImageCodec`);
   `renderLevelPreview` + drawing helpers on `ImageCodec` (`fill` / `fillRect` / `fillCircle` / `drawString`).
 - `asset.pack` operation: MaxRects atlas packing via an injected `ImageCodec` (no `package:image` in
   core); `ProjectFiles.writeAtomicBytes` / binary undo journal entries for PNG sheets.
-- `engine_api` injects `PackageImageCodec` (`package:image`) so `asset.pack` and `level.lint` render work
+- `zarvan_api` injects `PackageImageCodec` (`package:image`) so `asset.pack` and `level.lint` render work
   over MCP/HTTP the same as the CLI.
-- `engine_api` MCP server over stdio (phase 6, part 1 of `engine_mcp.md`): one tool per non-Flutter operation with JSON Schema, annotations and a detailed description, `tools/call` returning the result envelope, resources for the catalogue and schemas, `--project`, `--read-only`, `--allow/--deny`, `--underscore-tool-names`.
-- `engine_api --http`: REST (`/v1/<group>/<verb>`), JSON-RPC (`/rpc`), MCP (`/mcp`) and a generated OpenAPI document on one localhost port, behind a bearer token (`.studio/api-token`), with a Host-header check and request size limit.
-- `engine_api` operations: JSONL request log with rotation (`--log`), result size limit (`--max-result-bytes`) and HTTP rate/concurrency limits (`--requests-per-minute`).
+- `zarvan_api` MCP server over stdio (phase 6, part 1 of `engine_mcp.md`): one tool per non-Flutter operation with JSON Schema, annotations and a detailed description, `tools/call` returning the result envelope, resources for the catalogue and schemas, `--project`, `--read-only`, `--allow/--deny`, `--underscore-tool-names`.
+- `zarvan_api --http`: REST (`/v1/<group>/<verb>`), JSON-RPC (`/rpc`), MCP (`/mcp`) and a generated OpenAPI document on one localhost port, behind a bearer token (`.studio/api-token`), with a Host-header check and request size limit.
+- `zarvan_api` operations: JSONL request log with rotation (`--log`), result size limit (`--max-result-bytes`) and HTTP rate/concurrency limits (`--requests-per-minute`).
 - Operations can no longer write into `.studio/` (API token, undo journal) or `.git/`, whatever `output` path they are given.
-- `engine_api` project locking: `--allow-open <glob>` limits which folders `project.open` may open, and an HTTP server started with `--project` stays on it (`project.close` is refused too, so closing cannot be used to re-open elsewhere).
-- `project.symbols` operation (classes, atlas ids, entity names, components, plus prefix completions); `ProjectSymbols` moved from `engine_studio` into `engine_core` (re-exported).
-- `asset.index` and `asset.atlas_regions` operations. `AssetIndex` and the data half of `AtlasCatalog` moved from `engine_studio` into `engine_core` (the studio re-exports them; decoding atlases with `dart:ui` stays in the studio as an extension).
+- `zarvan_api` project locking: `--allow-open <glob>` limits which folders `project.open` may open, and an HTTP server started with `--project` stays on it (`project.close` is refused too, so closing cannot be used to re-open elsewhere).
+- `project.symbols` operation (classes, atlas ids, entity names, components, plus prefix completions); `ProjectSymbols` moved from `zarvan_studio` into `zarvan_core` (re-exported).
+- `asset.index` and `asset.atlas_regions` operations. `AssetIndex` and the data half of `AtlasCatalog` moved from `zarvan_studio` into `zarvan_core` (the studio re-exports them; decoding atlases with `dart:ui` stays in the studio as an extension).
 - `idle.state` operation (wallet, income and owned counts after a simulated stretch).
 - Tutorial 6, "Drive the engine from an AI agent" (MCP client config, the agent workflow, the same calls from the CLI and over HTTP).
-- `engine_api` hardening: CORS for listed origins (`--allow-origin`), `Idempotency-Key` replay for writes (10 minutes), a delay after repeated failed logins, and an `engine_api.yaml` config (unknown keys are errors; flags override the file).
+- `zarvan_api` hardening: CORS for listed origins (`--allow-origin`), `Idempotency-Key` replay for writes (10 minutes), a delay after repeated failed logins, and an `zarvan_api.yaml` config (unknown keys are errors; flags override the file).
 - `project.read_file` operation (UTF-8 text, 1 MiB cap, never the API token) and MCP `project://` resources (info, tree, problems, undo, levels, prefabs, graphs, file).
 - `project.problems` operation: levels, graphs and the idle game's problems as one flat list with file and severity.
 - `graph.*` operations (list, read, node_kinds, validate, compile, create, add_node, remove_node, connect, disconnect, set_param) over dialogue, behavior-tree and state-machine graphs, working on the graph JSON directly so they need no GUI types.
@@ -259,23 +259,23 @@ pubspec.yaml.
 - `idle.best_purchase` operation (the advisor's next purchase, optionally with owned counts).
 - `save.encode`, `save.decode`, `save.migrate` operations (shareable save text, version stamping) available from the CLI, MCP, REST and JSON-RPC.
 - Level write operations on the registry (phase 4 of `engine_mcp.md`): `level.create`, `add_entity`, `remove_entity` (destructive, confirmation token), `move_entity`, `set_field`, `set_layer`, `add_component`, `remove_component` (destructive), `paint_tile`, `fill_region`, `lock`, `unlock`, `export_canonical`, `merge`. Each validates the edited level before proposing it and is undoable via `undo.undo`.
-- `game_agent <group> <verb>` commands generated from the operation registry (`--json`, `--stdin`, `--args`, `--dry-run/--apply/--yes/--confirmation`); hand-written verbs keep precedence.
-- Read operations on the registry (phase 3 of `engine_mcp.md`): `project.*` (open, close, info, tree, search, validate, git_status), `level.*` (list, read, validate, diff, lock_status), `schema.*`, `idle.validate/simulate/format_number`, `release.plan`. The project model, tree, search, git status and release planner moved from `engine_studio`/`engine_cli` into `engine_core` (old paths re-export them).
+- `zarvan <group> <verb>` commands generated from the operation registry (`--json`, `--stdin`, `--args`, `--dry-run/--apply/--yes/--confirmation`); hand-written verbs keep precedence.
+- Read operations on the registry (phase 3 of `engine_mcp.md`): `project.*` (open, close, info, tree, search, validate, git_status), `level.*` (list, read, validate, diff, lock_status), `schema.*`, `idle.validate/simulate/format_number`, `release.plan`. The project model, tree, search, git status and release planner moved from `zarvan_studio`/`zarvan_cli` into `zarvan_core` (old paths re-export them).
 - Operation write safety (phase 2 of `engine_mcp.md`): every write goes through a pipeline that validates the changed files, respects advisory locks, builds a diff, previews destructive changes behind an HMAC confirmation token (bound to the call, the files' content and an expiry), writes atomically with rollback and journals the change in `.studio/undo/` (last 100). `undo.list`, `undo.undo` and `undo.redo` operations.
-- Operation registry core (`package:engine_core/engine_core_ops.dart`, phase 1 of `engine_mcp.md`): typed `Operation`s with a validating, policy-enforcing, write-serializing dispatcher, a uniform result/error envelope with stable error codes, JSON Schema generation, the project path sandbox and the `engine.health/capabilities/operations/operation` operations.
-- `packages/engine_api` scaffold (phase 0 of [engine_mcp.md](engine_mcp.md)): package, CI workflow, version/`--version` smoke tests. The operation registry, CLI parity and the MCP/HTTP server follow in later phases.
+- Operation registry core (`package:zarvan_core/zarvan_core_ops.dart`, phase 1 of `engine_mcp.md`): typed `Operation`s with a validating, policy-enforcing, write-serializing dispatcher, a uniform result/error envelope with stable error codes, JSON Schema generation, the project path sandbox and the `engine.health/capabilities/operations/operation` operations.
+- `packages/zarvan_api` scaffold (phase 0 of [engine_mcp.md](engine_mcp.md)): package, CI workflow, version/`--version` smoke tests. The operation registry, CLI parity and the MCP/HTTP server follow in later phases.
 - Idle challenges: restricted runs (`noUpgrades`, `noGenerator:<id>`, `incomeMultiplier:<x>`) with a goal and a permanent reward; `Challenge` component, `startChallenge`/`abandonChallenge`/`checkChallenges` (settled by `checkAchievements`), `ChallengeCompletedEvent`, `BuyFailure.challenge`, `"challenges"` in definitions and `ChallengePanel`.
 - Idle golden offers end to end: `"golden"` block in definitions (validated with paths), `GoldenOffer` widget and `IdleController.claimGoldenOffer`; the `idle_game` template includes them.
 - Idle prestige layers: several `PrestigeRule`s with an `id` (`"prestiges": [...]` in definitions), `resetsCurrencies` for ascensions that wipe lower layers, per-layer bonuses (`prestige:<id>`), `performPrestige`/`prestigeGainNow`/`PrestigePanel(ruleId:)`. Behaviour change: after a prestige the run stats now hold the prestige currency just earned (they used to be empty), which is what lets the next layer be based on it.
 - Idle automation: `AutoBuyer` component + `AutoBuySystem` (buys the best-payback affordable purchase on an interval, capped per run), `runAutoBuyer` for offline catch-up, `"autoBuyer"` in definitions; `bestPurchase` exposes the simulator's recommendation (the simulator now uses it; its golden report is unchanged).
-- `game_agent idle validate <game.json>`: validates an idle definition and lists every problem with its path (exit 1), for agents and CI.
+- `zarvan idle validate <game.json>`: validates an idle definition and lists every problem with its path (exit 1), for agents and CI.
 - Docs: real screenshots of the studio and the idle game, generated by tests (`UPDATE_SCREENSHOTS=1`), used in the user guide and idle guide/tutorial.
 - `idle_game` template: Progress (prestige + achievements) and Settings (number format + save code) tabs, and `BrowserSaveStore` so web builds keep their save.
 - Studio: git status marks in the project file tree (M/A/D/R/?/! beside files, a dot on folders that contain changes; works for a project inside a larger repository; no git or no repository just shows nothing).
 - Studio: a "Get packages" button runs `flutter pub get` in the project and shows its output (failures, timeouts and a missing SDK are results, not crashes).
 - Studio: strings with values (counts, paths, errors) are translatable too (`{placeholder}` syntax); the Persian catalog covers them, and a test checks translations keep their placeholders.
 - Networking: `LobbyServer`, a room list over any `NetEndpoint`: hosts `create`/`update`/`close` rooms, players `list` open ones and connect to the room's `url`. Rooms die with their host's connection, only owners change them, sizes and counts are capped. No NAT traversal.
-- Networking: a UDP transport in `engine_core_io.dart` (`UdpListener.bind`, `connectUdp`): per-peer endpoints from the first datagram, goodbye on close, keep-alives and an idle timeout, malformed/oversized messages counted instead of thrown. Guide section on when to use it.
+- Networking: a UDP transport in `zarvan_core_io.dart` (`UdpListener.bind`, `connectUdp`): per-peer endpoints from the first datagram, goodbye on close, keep-alives and an idle timeout, malformed/oversized messages counted instead of thrown. Guide section on when to use it.
 - Networking authentication: `HostSession(authenticate: (token, name) => ...)` (sync or async) holds new connections until a `hello` with a valid token arrives; refusals get `denied` and are closed, silent connections time out (`authTimeoutTicks`). `ClientSession(token:, name:)` and `denied`.
 - Studio: the level editor notices when the level file is saved by someone else. Clean editors reload (with a note); editors with unsaved edits ask (Reload / Keep my edits). Own saves and half-written files are ignored.
 - Studio code editor: real code folding. The gutter chevron collapses a block to its first line (the text is unchanged and unsaved edits are never lost); an edit or a caret entering hidden code expands everything; fold regions refresh after typing. Replaces the old select-and-reveal.
@@ -284,8 +284,8 @@ pubspec.yaml.
 - Studio plugin API: `StudioPlugin` + `StudioPlugins.register` add graph node kinds (shown in the add-node menu, validated, with inspector params) and replace the inspector control for any `component.field`, with edits still going through the undoable, schema-checked path.
 - Studio profiler: shows the preview's own paint time (smoothed) next to the simulation cost.
 - Studio "Run game": pick the device from `flutter devices`, a stop button while it runs, a relaunch stops the previous game, and closing the level editor stops it (it used to leave games running).
-- `OnlineStrategyView` (`engine_strategy`): a multiplayer client screen. Give it an open `NetEndpoint`; it mirrors the host into a local world, draws it with `EngineView`, selects your units on tap and sends move/attack orders (refusals reach `onRejected`; connecting/disconnected states are builders).
-- Networking: a browser transport, `connectBrowserWebSocket` in `package:engine_core/engine_core_web.dart` (a `NetEndpoint` over the page's `WebSocket`, no new dependency), plus `decodeNetFrame`/`encodeNetFrame` shared with the `dart:io` transport. Guide section on browser clients and `wss://`.
+- `OnlineStrategyView` (`zarvan_strategy`): a multiplayer client screen. Give it an open `NetEndpoint`; it mirrors the host into a local world, draws it with `EngineView`, selects your units on tap and sends move/attack orders (refusals reach `onRejected`; connecting/disconnected states are builders).
+- Networking: a browser transport, `connectBrowserWebSocket` in `package:zarvan_core/zarvan_core_web.dart` (a `NetEndpoint` over the page's `WebSocket`, no new dependency), plus `decodeNetFrame`/`encodeNetFrame` shared with the `dart:io` transport. Guide section on browser clients and `wss://`.
 - Docs: Cinematics and transitions guide (the engine already had `CinematicSystem`, scene transitions and `VideoPlayer`; none was documented); samples run by tests. Running them showed `addStep` only extends a cinematic that is still playing, which the guide now says.
 - Strategy: `GridFootprint(size)` gives a unit an NxN body. It blocks (and is blocked by) every cell it covers, turn-based routing keeps a big unit out of gaps it cannot fit, and attack range is measured edge to edge (`footprintDistance`). `occupiedBy` gained `footprints:`/`navigator:`.
 - Idle: `SaveCodePanel` (show/copy a save code, paste to load, plain-language errors), a v1 save fixture test, a determinism guard test and `benchmark/idle_bench.dart`.
@@ -294,22 +294,22 @@ pubspec.yaml.
 - Idle: generator rows show progress to the next milestone (`Generator.nextMilestone`).
 - Idle: `PrestigeRule.keepGenerators` (generators whose count survives prestige) and game-event achievements: `recordIdleEvent` + the `event:<name>` stat, saved in `IdleStats.eventCounts`.
 - Docs: "Build your first level" studio walkthrough (studio and command-line, the CLI steps tested).
-- Studio: a first non-English catalog, Persian (`packages/engine_studio/locales/fa.json`), with a test that it only uses real keys and covers >85% of the studio's text.
+- Studio: a first non-English catalog, Persian (`packages/zarvan_studio/locales/fa.json`), with a test that it only uses real keys and covers >85% of the studio's text.
 - Studio: the level screen, entity palette and inspector panel now take their text from `StudioStrings` (translatable); a test guards that every looked-up key exists in the English catalog.
 - `EngineView(colorblindMode:)`: protanopia, deuteranopia and tritanopia simulation over the whole view (the old `_drawColorblind` placeholder drew nothing). `colorblindMatrix` / `colorblindFiltered` are exported and tested.
-- `game_agent idle simulate <game.json> [--days N] [--prestige-at X]`. To make it possible the Flutter-free idle rules (components, economy, progression, golden events, definition loader, simulator) moved from `engine_idle` into `engine_core`, behind a separate `package:engine_core/engine_core_idle.dart` entry point; `engine_idle` re-exports it, so existing imports keep working.
+- `zarvan idle simulate <game.json> [--days N] [--prestige-at X]`. To make it possible the Flutter-free idle rules (components, economy, progression, golden events, definition loader, simulator) moved from `zarvan_idle` into `zarvan_core`, behind a separate `package:zarvan_core/zarvan_core_idle.dart` entry point; `zarvan_idle` re-exports it, so existing imports keep working.
 - `NumberStyle.grouped` and `groupSeparator`: exact digits with thousands separators (`1,234,567`, `1.234.567` in comma locales), scientific past 1e15; offered in `IdleSettingsPanel`.
 - `IdleController.decimalSeparator`: every idle widget writes numbers with the locale's decimal mark (`1,23M`).
-- `engine_idle` golden events ("golden cookie"): `GoldenEvents` component, `GoldenEventSystem(DeterministicRandom)` and `claimGolden`: timed random offers whose reward is a boost or an instant payout; reproducible from the seed, saved mid-wait, announced by `GoldenOfferedEvent`.
+- `zarvan_idle` golden events ("golden cookie"): `GoldenEvents` component, `GoldenEventSystem(DeterministicRandom)` and `claimGolden`: timed random offers whose reward is a boost or an instant payout; reproducible from the seed, saved mid-wait, announced by `GoldenOfferedEvent`.
 - Event-aware offline catch-up for changing rates (auto-buyers): `OfflineProgress.applyInSlices` and `IdleSession(whileAway:, awaySlices:)` pay the absence in slices and let game code buy/recompute between them.
-- `engine_idle` `IdleSettingsPanel` and `IdleController.setStyle`: switch the number format everywhere at once and state the offline cap/efficiency to the player.
-- `engine_idle` `IdleAnalytics`: `idle_purchase`, `idle_prestige` and `idle_offline_return` events, sent through `AnalyticsManager` (consent respected) by `IdleController(analytics:)` and `IdleSession`.
-- `engine_idle` `PrestigePanel` (gain preview, held bonus, confirm-before-reset) and `AchievementList` (progress bars, done state).
+- `zarvan_idle` `IdleSettingsPanel` and `IdleController.setStyle`: switch the number format everywhere at once and state the offline cap/efficiency to the player.
+- `zarvan_idle` `IdleAnalytics`: `idle_purchase`, `idle_prestige` and `idle_offline_return` events, sent through `AnalyticsManager` (consent respected) by `IdleController(analytics:)` and `IdleSession`.
+- `zarvan_idle` `PrestigePanel` (gain preview, held bonus, confirm-before-reset) and `AchievementList` (progress bars, done state).
 - `OfflineSummaryDialog(onDouble:)` and `IdleSession.doubleOffline`: an optional "Double it" button for a rewarded-ad flow (the game supplies the ad; the dialog pops `true` when earned). The dialog now pops `false` on Collect.
-- `engine_idle` `ReturnNotifier` interface (+ `RecordingNotifier` for tests): `IdleSession` schedules a "generators are full" reminder at the offline cap when the app pauses and cancels it on resume.
+- `zarvan_idle` `ReturnNotifier` interface (+ `RecordingNotifier` for tests): `IdleSession` schedules a "generators are full" reminder at the offline cap when the app pauses and cancels it on resume.
 - `TableCost` cost curve (`{"type": "table", "prices": [...], "tailGrowth": 1.5}`): exact hand-authored prices with a growth rule past the table, closed-form `totalCost` and bisecting `maxAffordable`; accepted by idle definitions and validated with paths.
-- `engine_idle` generator milestones: `milestones: [{"owned": 25, "multiplier": "2"}]` multiplies a generator's output once enough copies are owned; reached milestones stack, and the definition validator reports bad ones with their path.
-- `game_agent create --template idle_game`: a playable idle game driven by `assets/idle_game.json` (tap, generators, upgrades, save, offline catch-up) with a widget test. `game_agent upgrade` now repins `engine_idle` too; the CLI CI template matrix builds it.
+- `zarvan_idle` generator milestones: `milestones: [{"owned": 25, "multiplier": "2"}]` multiplies a generator's output once enough copies are owned; reached milestones stack, and the definition validator reports bad ones with their path.
+- `zarvan create --template idle_game`: a playable idle game driven by `assets/idle_game.json` (tap, generators, upgrades, save, offline catch-up) with a widget test. `zarvan upgrade` now repins `zarvan_idle` too; the CLI CI template matrix builds it.
 
 ### Fixed
 - `InvestigateBehavior.timeout` was accepted but ignored. `HearingSystem` now keeps an `age` (seconds) on `memory['lastHeardSound']`, and the behaviour forgets a sound older than the timeout.
@@ -322,34 +322,34 @@ pubspec.yaml.
 - Error reporting no longer uses `dart:io` `Platform` (it throws on the web): `CapturedError.platform` and the Sentry device context use `currentPlatformName()`.
 
 ### Added
-- `engine_idle` balance simulator: `simulateIdle` (deterministic greedy play, milestones, stall reasons) and `dart run tool/simulate.dart <game.json>`; sample game `example/cookie_clicker.json`; the idle guide now covers definitions, saving, screens and tuning.
-- `engine_idle` data-driven games: `validateIdleDefinition` / `loadIdleDefinition` build a whole idle game (resources, generators, upgrades, achievements, prestige, offline rules) from one JSON file and report every problem with its path; `package:engine_idle/engine_idle_logic.dart` is the Flutter-free entry point for tools.
-- `engine_idle` persistence: `IdleSession` (save/load of the whole world with migration and offline catch-up, autosave, pause/resume, export/import codes), `SaveStore` (`MemorySaveStore`, `FileSaveStore`), `IdleLifecycleHost` widget. `IdleController.wallet` is now looked up from the world, so restoring a save never leaves it stale.
-- `engine_idle` UI: `IdleController` (real-time stepping at 10 Hz, number-style switch, buy/tap/prestige entry points), `ResourceHeader`, `GeneratorList` / `GeneratorRow` (×1/×10/×100/Max), `UpgradeList`, `OfflineSummaryDialog`.
-- `engine_idle` active play: `tapEarn` and timed `Boost` / `activateBoost` / `BoostSystem`.
-- `engine_idle` progression: `IdleStats` (run/lifetime earnings, taps, play time), `PrestigeRule` + `performPrestige` (square-root-style gain, permanent currency as a multiplier, reset scope), `Achievement` + `checkAchievements` (stat goals with multiplier rewards). `IdleSystem` records earnings.
-- Saving for long-lived games: `SaveMigrator` (versioned migration, refuses newer saves), `SaveCodec` (copyable `GSAVE1.<payload>.<checksum>` export/import with clear errors) in `engine_core`, and `AtomicSave` (crash-safe write with backup fallback) in `engine_core_io`.
-- `engine_idle` (scaffold + first features): `Generator`, `Upgrade`, `IdleModifiers` components with schemas, `computeIncome` / `recomputeIncome`, `buyGenerator` (×1/×N/max, ownership cap, tech locks), `buyUpgrade`, `IdleSystem`.
-- `CostCurve` (`GeometricCost`, `LinearCost`) with closed-form bulk `totalCost` and loop-free `maxAffordable`, and `ModifierStack` (named additive/multiplicative bonuses with a breakdown) in `engine_core`, for idle-game pacing.
-- `OfflineProgress` / `OfflineConfig` (`engine_core`): cap, efficiency and minimum-away rules, clock-went-backwards safety, `catchUp` onto a `BigTreasury` with a gains summary, `untilCap` for reminders. Guide: `docs/concepts/idle-games.md`.
-- `BigTreasury` (`engine_core`): named resources and per-second income as `BigNumber`s, all-or-nothing `spend`, `accrue` correct for any step size; registered as the `bigTreasury` component. The int `Treasury` is unchanged.
-- `BigNumber` (mantissa/exponent, ~15 digits, range ~1e±9e15, immutable, JSON as `1.5e300`) and `formatBigNumber` (`1.23K` / `1.23e45` / engineering styles with rounding carry) for idle-game scale numbers. New package scaffold `engine_idle`.
+- `zarvan_idle` balance simulator: `simulateIdle` (deterministic greedy play, milestones, stall reasons) and `dart run tool/simulate.dart <game.json>`; sample game `example/cookie_clicker.json`; the idle guide now covers definitions, saving, screens and tuning.
+- `zarvan_idle` data-driven games: `validateIdleDefinition` / `loadIdleDefinition` build a whole idle game (resources, generators, upgrades, achievements, prestige, offline rules) from one JSON file and report every problem with its path; `package:zarvan_idle/zarvan_idle_logic.dart` is the Flutter-free entry point for tools.
+- `zarvan_idle` persistence: `IdleSession` (save/load of the whole world with migration and offline catch-up, autosave, pause/resume, export/import codes), `SaveStore` (`MemorySaveStore`, `FileSaveStore`), `IdleLifecycleHost` widget. `IdleController.wallet` is now looked up from the world, so restoring a save never leaves it stale.
+- `zarvan_idle` UI: `IdleController` (real-time stepping at 10 Hz, number-style switch, buy/tap/prestige entry points), `ResourceHeader`, `GeneratorList` / `GeneratorRow` (×1/×10/×100/Max), `UpgradeList`, `OfflineSummaryDialog`.
+- `zarvan_idle` active play: `tapEarn` and timed `Boost` / `activateBoost` / `BoostSystem`.
+- `zarvan_idle` progression: `IdleStats` (run/lifetime earnings, taps, play time), `PrestigeRule` + `performPrestige` (square-root-style gain, permanent currency as a multiplier, reset scope), `Achievement` + `checkAchievements` (stat goals with multiplier rewards). `IdleSystem` records earnings.
+- Saving for long-lived games: `SaveMigrator` (versioned migration, refuses newer saves), `SaveCodec` (copyable `GSAVE1.<payload>.<checksum>` export/import with clear errors) in `zarvan_core`, and `AtomicSave` (crash-safe write with backup fallback) in `zarvan_core_io`.
+- `zarvan_idle` (scaffold + first features): `Generator`, `Upgrade`, `IdleModifiers` components with schemas, `computeIncome` / `recomputeIncome`, `buyGenerator` (×1/×N/max, ownership cap, tech locks), `buyUpgrade`, `IdleSystem`.
+- `CostCurve` (`GeometricCost`, `LinearCost`) with closed-form bulk `totalCost` and loop-free `maxAffordable`, and `ModifierStack` (named additive/multiplicative bonuses with a breakdown) in `zarvan_core`, for idle-game pacing.
+- `OfflineProgress` / `OfflineConfig` (`zarvan_core`): cap, efficiency and minimum-away rules, clock-went-backwards safety, `catchUp` onto a `BigTreasury` with a gains summary, `untilCap` for reminders. Guide: `docs/concepts/idle-games.md`.
+- `BigTreasury` (`zarvan_core`): named resources and per-second income as `BigNumber`s, all-or-nothing `spend`, `accrue` correct for any step size; registered as the `bigTreasury` component. The int `Treasury` is unchanged.
+- `BigNumber` (mantissa/exponent, ~15 digits, range ~1e±9e15, immutable, JSON as `1.5e300`) and `formatBigNumber` (`1.23K` / `1.23e45` / engineering styles with rounding carry) for idle-game scale numbers. New package scaffold `zarvan_idle`.
 - `Camera.shakeIntensity`: multiplies every camera shake (accessibility; bind it to `PlayerOptions.screenShakeIntensity`).
 - Real-time strategy builder units: `BuildWorker`, `assignBuild`, `BuildSystem`, `placeBuilding(needsBuilder: true)`; construction only progresses while assigned team builders stand next to the site (more builders, faster). `installRealtimeStrategySystems(building: true)`. Shared `queueMoveNextTo` helper.
 - Real-time strategy tech trees: `Producer.requires`, `Provides` (finished buildings unlock tech) and `TechState` / `grantTech` (unlock by name); `availableTech`, `missingTech`; `ProductionLockedEvent`.
 - `PathfindingJob` (a `JobSystem` job) now does four-way A* over a tile grid instead of returning an empty path.
 - Real Wave Function Collapse: `WFCRules` (learned with `WFCRules.fromSample` or stated by hand) and a propagating, restarting `WFCGenerator`; unsatisfiable rules throw instead of returning a broken level. (`WFCConfig.allowBacktracking`, which did nothing, is removed.)
 - `AnalyticsManager.setConsent` / `hasConsent`: while off nothing is queued or sent, and turning it off discards what was queued.
-- Studio updates window: signed release manifest check, per-item Accept / Later / Skip, checksum-verified atomic installs with retry, offline mode that keeps cached packs usable; `ReleaseManifestVerifier.fromPublicKeyBytes`. Configured via `updates` in `studio_prefs.json`; off by default. `engine_studio/tool/package_macos.sh` builds a `.dmg`.
-- Shared-folder editing: `FileLock` (`engine_core_io`) advisory `<file>.lock`; the studio locks a level while open (banner, no saving, Take over when held by someone else); `studio lock` / `unlock`.
-- Level diff and merge: `diffLevels`, `mergeLevels` (`engine_core`) and `game_agent studio diff` / `studio merge`, usable as a git merge driver. Entities match by name; conflicts keep ours and exit 1.
+- Studio updates window: signed release manifest check, per-item Accept / Later / Skip, checksum-verified atomic installs with retry, offline mode that keeps cached packs usable; `ReleaseManifestVerifier.fromPublicKeyBytes`. Configured via `updates` in `studio_prefs.json`; off by default. `zarvan_studio/tool/package_macos.sh` builds a `.dmg`.
+- Shared-folder editing: `FileLock` (`zarvan_core_io`) advisory `<file>.lock`; the studio locks a level while open (banner, no saving, Take over when held by someone else); `studio lock` / `unlock`.
+- Level diff and merge: `diffLevels`, `mergeLevels` (`zarvan_core`) and `zarvan studio diff` / `studio merge`, usable as a git merge driver. Entities match by name; conflicts keep ours and exit 1.
 - Studio: a **Run game** button starts the project's own game as a separate process on the level being edited (unsaved edits included); failures are shown, not thrown.
 - Studio: a Profiler switch in the preview shows live `WorldProfiler` data - step time, entity count, a step-time sparkline and the slowest systems.
 - Networking: interest management. `StateSyncServer.addClient(interest: ...)` sends a client only the entities a rule admits (`nearbyInterest` for radius-based views); deltas are taken against what that client was sent, so departures are removed cleanly.
 - Real-time strategy: gathering and building. `ResourceNode`, `Depot`, `Gatherer` with `assignGather` and `GatherSystem` (walk, harvest, haul to the nearest depot, deliver to the team `Treasury`); `placeBuilding` with `BuildFailure` reasons and `Construction` / `ConstructionSystem`; `installRealtimeStrategySystems(gathering: true)`. Producers and depots under construction are inert.
-- Studio localization mechanism: `StudioStrings.t(key)` over the engine's `LocalizationManager`; translations are `~/.game_agent/locales/<code>.json`, the language is `locale` in `studio_prefs.json`. The project window is migrated; other screens follow.
-- Studio: keyboard shortcuts are configurable. `~/.game_agent/studio_prefs.json` (`{"shortcuts": {"save": "mod+k"}}`) overrides the defaults for save, find, replace and project search; `mod` is Command on macOS and Control elsewhere. A bad binding disables that shortcut instead of breaking startup.
-- Play-test hot reload: the studio passes `ASSET_DIR` to the game; the generated game reads levels from disk and restarts its scene when the level file is saved. `CallbackAssetHandler` (`engine_flutter`).
+- Studio localization mechanism: `StudioStrings.t(key)` over the engine's `LocalizationManager`; translations are `~/.zarvan/locales/<code>.json`, the language is `locale` in `studio_prefs.json`. The project window is migrated; other screens follow.
+- Studio: keyboard shortcuts are configurable. `~/.zarvan/studio_prefs.json` (`{"shortcuts": {"save": "mod+k"}}`) overrides the defaults for save, find, replace and project search; `mod` is Command on macOS and Control elsewhere. A bad binding disables that shortcut instead of breaking startup.
+- Play-test hot reload: the studio passes `ASSET_DIR` to the game; the generated game reads levels from disk and restarts its scene when the level file is saved. `CallbackAssetHandler` (`zarvan_flutter`).
 - Studio assets: an asset browser (sprite sheets with their sprites, other files by
   kind), a sprite picker behind the inspector's `sprite` field, level problems for
   sprites/atlases that do not exist, tile and prefab brushes with a stamp tool
@@ -361,7 +361,7 @@ pubspec.yaml.
   problems together. The standalone `bt_editor_web` package was removed.
 - `behaviorTreeNodeKinds`, `stateMachineNodeKinds`, `GraphType`, `compileBehaviorTree`,
   `graphFromBehaviorTree`, `compileStateMachine`, `validateBehaviorTree`,
-  `validateStateMachine` (`engine_core`).
+  `validateStateMachine` (`zarvan_core`).
 - Real-time strategy, next layer: formations (`formationCells`, `commandSelected(formation:)`,
   `GridTapController(formation:)`), `SmoothGridToWorldSystem`, `RealtimeAISystem`
   (the turn-based AIs now drive real-time units too), and an economy: `Treasury`
@@ -369,7 +369,7 @@ pubspec.yaml.
   `UnitProducedEvent`, `ProductionStalledEvent`.
 - Multiplayer sessions: `NetEndpoint`, `HostSession` / `ClientSession` (team
   assignment, server-side order validation, ping/pong clock sync) and, in
-  `package:engine_core/engine_core_io.dart`, a real `WebSocketEndpoint` /
+  `package:zarvan_core/zarvan_core_io.dart`, a real `WebSocketEndpoint` /
   `WebSocketListener` / `connectWebSocket`. Docs: networking guide and tutorial 4.
 - `ObjectiveAI` plays the carry rules: carriers deliver, the nearest unit fetches loose
   flags, guards chase an enemy carrier, a `Vip` keeps out of reach.
@@ -405,7 +405,7 @@ pubspec.yaml.
   four cameras (`SplitScreenLayout.rects`), stepping it exactly once
   (`EngineView.stepsWorld`); `installPlatformerSystems(additionalPlayers:)`
   gives each extra player their own input, ladder and ledge-grab systems.
-- Networking foundation in `engine_core` (`lib/src/net/`): `WorldSnapshot` /
+- Networking foundation in `zarvan_core` (`lib/src/net/`): `WorldSnapshot` /
   `WorldDelta` (capture, restore with original entity ids, entity-level diffs),
   `StateSyncServer`/`StateSyncClient` (deltas against the client's last
   *acknowledged* tick, so loss never breaks them), `RollbackSession`
@@ -427,27 +427,27 @@ pubspec.yaml.
   `FrameStats` history; and a `DebugOverlay` with frame/step/raster/memory
   graphs, a profiler table, a component census, aliased input display and an
   entity inspector.
-- `ActionAliases` (`engine_core`) and `InputController.aliases`: friendly names for
+- `ActionAliases` (`zarvan_core`) and `InputController.aliases`: friendly names for
   input actions, shown by the keyboard and gamepad remap menus.
 - Turn-based strategy support (see the [turn-based guide](docs/concepts/turn-based-strategy.md)): turn clock, JSON orders,
   weighted 8-way grid navigation, combat and victory, per-team fog of war,
-  selection and tap input, an AI turn driver, the `engine_strategy` package and
-  `game_agent create --template strategy_game`.
+  selection and tap input, an AI turn driver, the `zarvan_strategy` package and
+  `zarvan create --template strategy_game`.
 - Documentation site (MkDocs Material) published to GitHub Pages: new
   architecture and turn-based concept guides, tutorials 2 and 3, tested recipes,
   and generated component/events/CLI reference pages.
-- `game_agent studio validate [project]`: checks every level under
+- `zarvan studio validate [project]`: checks every level under
   `assets/levels` against the engine's component schemas and exits non-zero on
   errors (`--strict` also fails on warnings, such as an exit the player cannot
   reach).
-- `engine_schema`: a pure-Dart package holding every component's schema, so the
+- `zarvan_schema`: a pure-Dart package holding every component's schema, so the
   CLI and the studio validate levels without importing Flutter.
-- `game_agent studio export-levels`: re-writes levels in one canonical format,
+- `zarvan studio export-levels`: re-writes levels in one canonical format,
   validating each first (invalid levels are left unchanged).
-- `game_agent studio project-manifest`: writes `project.json` (name, engine ref,
+- `zarvan studio project-manifest`: writes `project.json` (name, engine ref,
   levels), keeping keys it does not own.
-- `game_agent studio import-tmx`: converts a Tiled map into a validated level.
-- Studio data model (in `engine_core`): `LevelDocument`, undoable edit commands
+- `zarvan studio import-tmx`: converts a Tiled map into a validated level.
+- Studio data model (in `zarvan_core`): `LevelDocument`, undoable edit commands
   with `CommandHistory`, and `LevelValidator`.
 
 
@@ -544,16 +544,16 @@ pubspec.yaml.
 - **The `colorblind.frag` shader failed to compile under Impeller**:
   `uniform int uColorblindType` hit "Non-floating-type struct member
   ... is not supported," breaking `flutter test`'s asset bundling for
-  every `engine_flutter`-dependent package. Changed the uniform to
+  every `zarvan_flutter`-dependent package. Changed the uniform to
   `float`, rounded on read (`shaders/colorblind.frag`).
 - Extracted `setVelocityX` (`ai/velocity_helpers.dart`): the "set `vx`,
   preserve `vy`" pattern was independently duplicated across every AI
-  `Action` in `engine_platformer` (`FollowBehavior`, `PatrolBehavior`,
+  `Action` in `zarvan_platformer` (`FollowBehavior`, `PatrolBehavior`,
   `PathFollowBehavior`, `InvestigateBehavior` — 8 call sites, 5 files),
   which is exactly how the `PatrolBehavior` vy-clobbering bug above got
   introduced in the first place.
 - Fixed several stale/broken test fixtures surfaced while getting
-  `engine_platformer`'s suite green: `behaviors_test.dart` and
+  `zarvan_platformer`'s suite green: `behaviors_test.dart` and
   `platformer_edge_cases_test.dart` still constructed the removed core
   `PathPoint` instead of `PlatformerPathPoint`;
   `investigate_behavior_test.dart`'s `HearingSystem`-integration tests
@@ -593,7 +593,7 @@ pubspec.yaml.
   against every `HearingComponent`-bearing entity's range and tile
   occlusion (reusing `raycastTileMap`'s traversal) and writes a heard
   position into that entity's `AIState.memory` blackboard.
-  `InvestigateBehavior` (`engine_platformer`) consumes it to walk the
+  `InvestigateBehavior` (`zarvan_platformer`) consumes it to walk the
   NPC toward the last-heard sound.
 - TileMap collision layers/groups: `Collider.collisionGroup`/
   `collisionMask` and a matching per-tile-id `TileMap.collisionGroups`
@@ -637,14 +637,14 @@ pubspec.yaml.
   publish), a "Why not Flame/Unity/Godot" section, a License section,
   and links into the new `docs/` tree.
 - Fixed stale `Game.populateWorld`/single-scene quickstart examples in
-  `packages/engine_flutter/README.md` and
-  `packages/engine_platformer/README.md` — that API was replaced by
+  `packages/zarvan_flutter/README.md` and
+  `packages/zarvan_platformer/README.md` — that API was replaced by
   `Game.createInitialScene()` + `Scene.populate(world, scenes, state)`
   a while ago (see `Scene`'s doc comment, which already referenced the
   old name only to explain the rename), but both READMEs' quick-start
   code samples hadn't been updated to match and would not have
   compiled against current source.
-- Documented `game_agent pack-assets` in `packages/engine_cli/README.md`
+- Documented `zarvan pack-assets` in `packages/zarvan_cli/README.md`
   (previously undocumented there despite being referenced from the
   root README and used by real projects).
 
@@ -731,7 +731,7 @@ pubspec.yaml.
   transport-agnostic binding layer any gamepad plugin's raw callbacks
   can wire into. `GamepadBindingsStorage` persists button bindings the
   same way `InputBindingsStorage` does for the keyboard.
-- `game_agent lint --playable`: flood-fills a level's non-solid tiles
+- `zarvan lint --playable`: flood-fills a level's non-solid tiles
   from its spawn entity and reports any other entity not reachable —
   catches an item/exit sealed off behind solid tiles that plain
   schema validation can't see.
@@ -825,11 +825,11 @@ pubspec.yaml.
 
 ### Asset packing
 
-- New `game_agent pack-assets` command (`engine_cli`): recursively
+- New `zarvan pack-assets` command (`zarvan_cli`): recursively
   scans a directory of level image assets and packs them into one
   sprite sheet PNG + a region manifest, written in the exact
   `{"regions": {"name": {"x","y","w","h"}}}` shape
-  `SpriteAtlas.fromManifest` (`engine_flutter`) already reads — no new
+  `SpriteAtlas.fromManifest` (`zarvan_flutter`) already reads — no new
   loading code needed on the consuming side. Run it as a pre-build step
   ahead of `flutter run`/`flutter build` instead of loading one
   `SpriteAtlas` per source sprite at runtime.
@@ -1007,7 +1007,7 @@ pubspec.yaml.
 
 ### Masking & clipping
 
-- New `ClipShape` component (`engine_flutter`): a circle or rect,
+- New `ClipShape` component (`zarvan_flutter`): a circle or rect,
   `reveal` mode (only show the scene through the shape — a spotlight/
   peephole/wipe transition) or `cutout` mode (punch a hole through the
   already-drawn scene — a vignette). `reveal` clips forward via
@@ -1019,7 +1019,7 @@ pubspec.yaml.
 ### Cinematic camera & screen effects
 
 - `CameraPanStep`/`CameraZoomStep`/`CameraShakeStep`/
-  `CameraFollowStep` (`engine_flutter`): `CinematicStep` implementations
+  `CameraFollowStep` (`zarvan_flutter`): `CinematicStep` implementations
   driving a `Camera` directly — pan/zoom capture their *from* value at
   `start()` so steps chain without hand-tracking the previous step's
   endpoint; `CameraShakeStep` just fires `Camera.shake()` once and
@@ -1027,8 +1027,8 @@ pubspec.yaml.
   every frame regardless); `CameraFollowStep` continuously re-centers
   on a moving target for one cinematic beat (a fleeing enemy), distinct
   from `Scene.cameraFollowEntity`'s whole-scene, hard-snap-every-tick
-  following. Live purely in `engine_flutter`, not alongside
-  `CinematicStep` in `engine_core` — `Camera` is a rendering-only
+  following. Live purely in `zarvan_flutter`, not alongside
+  `CinematicStep` in `zarvan_core` — `Camera` is a rendering-only
   concept with no ECS/`World` presence, and a step needs a direct
   reference to the actual `Camera` instance `EngineView` renders with.
 - New `ScreenTint` component + `ScreenTintStep`: a full-screen color
@@ -1112,12 +1112,12 @@ item at a time.
   frames over time, resolved via `TileMap.currentTileId`) — collision
   always keys off the base id regardless of which frame is showing.
 - **Swimming / water physics**: new `WaterZone` component +
-  `WaterPhysicsSystem` (`engine_platformer`) — a `PlatformerController`
+  `WaterPhysicsSystem` (`zarvan_platformer`) — a `PlatformerController`
   entity overlapping a water zone gets `controller.inWater = true`,
   buoyancy-capped `Velocity.y`, and a repeatable upward "stroke" on
   `jumpRequested` instead of a single jump arc.
 - **Boss/enemy phase framework**: new `BossPhase`/`BossPhaseSystem`
-  (`engine_platformer`) ties `CinematicSystem` and `Health` together —
+  (`zarvan_platformer`) ties `CinematicSystem` and `Health` together —
   watches an entity's health fraction and, the tick it crosses a
   configured threshold, emits `BossPhaseChangedEvent` (a game's cue to
   switch attack pattern) and optionally plays a one-shot cinematic beat.
@@ -1158,7 +1158,7 @@ item at a time.
   `world.step` regardless of frame rate, capped backlog on a slow
   frame) and interpolates `Sprite`/`Particle` positions between
   simulated states for smooth motion at any display rate.
-- **Localization / i18n**: new `StringTable` (`engine_core`) —
+- **Localization / i18n**: new `StringTable` (`zarvan_core`) —
   JSON-authorable strings keyed by id then locale, with `{param}`
   substitution and a locale → default-locale → raw-key fallback chain.
 - **Basic 2D lighting**: new `Light2D` component + `EngineView.ambientBrightness`
@@ -1175,7 +1175,7 @@ item at a time.
   `coneDirection` for flashlight-style directional lights (composes
   with shadow casting for free — both use the same clip-path code).
 
-This closes out the "Rendering (`engine_flutter`)" group of "New engine
+This closes out the "Rendering (`zarvan_flutter`)" group of "New engine
 features (round 2)" — see TODO.md for the remaining Core/Platformer
 items in that section.
 
@@ -1189,13 +1189,13 @@ items in that section.
 - **Ladders, conveyors, per-tile friction**: `TileMap` gained
   `ladderTileIds`, `conveyorSpeedByTileId`, and `frictionByTileId`
   (all opt-in, empty by default, unchanged behavior for untagged
-  tiles); new `engine_platformer` `LadderSystem` (opt-in via
+  tiles); new `zarvan_platformer` `LadderSystem` (opt-in via
   `PlatformerController.climbSpeed`) turns up/down input into vertical
   climb movement while overlapping a ladder tile;
   `PlatformerInputSystem` slides instead of snapping grounded velocity
   when standing on a low-friction (icy) tile; `TileCollisionSystem`
   nudges `Position.x` for an entity grounded on a conveyor tile. First
-  item of the "Platformer (`engine_platformer`)" group of "New engine
+  item of the "Platformer (`zarvan_platformer`)" group of "New engine
   features (round 2)" — see TODO.md for the rest.
 - **AI steering/avoidance**: new `AvoidanceBehavior`, a decorator
   around any `Behavior` (`AvoidanceBehavior(PatrolBehavior(...))`) that
@@ -1208,7 +1208,7 @@ items in that section.
   (opt-in) + new `LedgeGrabSystem` — an airborne entity touching a
   wall right at its top edge grabs on instead of sliding/falling past
   it, freezing in place until the player mantles up (hold up/jump) or
-  drops (hold down). `engine_platformer`'s `README.md` also brought up
+  drops (hold down). `zarvan_platformer`'s `README.md` also brought up
   to date in the same pass: a new "Movement feel" section documents
   every `PlatformerController` field (several previously undocumented
   entirely), a new "Tile-based terrain features" section covers
@@ -1242,7 +1242,7 @@ engine" section, one item at a time.
   (embedded tileset, CSV layer data) `.tmx` into a `TileMap`, with
   per-tile bool properties (`solid`/`oneWay`/`slopeUpRight`/
   `slopeUpLeft`) mapping onto the matching collision set.
-- **`game_agent lint --render`**: rasterizes a level's `TileMap` (color-
+- **`zarvan lint --render`**: rasterizes a level's `TileMap` (color-
   coded by collision kind) plus a labeled marker per named entity to a
   PNG, so a level's shape is visible without running the game.
 - **`TriggerZone`** + `installTriggerZones`: a general "fires
@@ -1272,7 +1272,7 @@ engine" above.
 Working through TODO.md's "New engine features" section, one item at
 a time.
 
-- **Text rendering**: `Text` component (`engine_flutter`) — drawn
+- **Text rendering**: `Text` component (`zarvan_flutter`) — drawn
   fresh every frame via `TextPainter`, `screenSpace` chooses
   world-space (scrolls/zooms with the camera) vs. screen-space (fixed
   viewport pixels, for a HUD).
@@ -1282,21 +1282,21 @@ a time.
   rendering visually identical to solid tiles in the normal renderer.
 - **Raycasting**: `raycastTileMap` (grid-DDA, no tunneling through thin
   walls) + `raycastEntities` (nearest ray-vs-circle hit).
-- **AI depth**: `findPath` (`engine_core`) — 4-directional A* pathfind
+- **AI depth**: `findPath` (`zarvan_core`) — 4-directional A* pathfind
   over a `TileMap`. `WorldView.hasLineOfSight`, built on
   `raycastTileMap`. `FollowBehavior.requireLineOfSight` (opt-in, off by
   default) stops a chase blocked by a wall instead of following through
-  it. New `PathFollowBehavior` (`engine_platformer`) walks a `findPath`
+  it. New `PathFollowBehavior` (`zarvan_platformer`) walks a `findPath`
   route one waypoint at a time.
-- **HUD/UI framework**: `HudBar` component (`engine_flutter`) — a
+- **HUD/UI framework**: `HudBar` component (`zarvan_flutter`) — a
   screen-space filled-rect bar (health/stamina/boss meters). New
   `HealthHudLink`/`HealthHudSystem`/`spawnHealthHudBar`
-  (`engine_platformer`) wire a `HudBar` to an entity's `Health`,
+  (`zarvan_platformer`) wire a `HudBar` to an entity's `Health`,
   kept in sync every tick.
 - **`lib/src/` restructured by concern** in all three packages
-  (`ecs`/`physics`/`ai`/`rendering`/`ui`/`content` in `engine_core`;
-  `rendering`/`audio`/`input`/`logic`/`ui` in `engine_flutter`;
-  `physics`/`ai`/`logic`/`rendering`/`ui` in `engine_platformer`)
+  (`ecs`/`physics`/`ai`/`rendering`/`ui`/`content` in `zarvan_core`;
+  `rendering`/`audio`/`input`/`logic`/`ui` in `zarvan_flutter`;
+  `physics`/`ai`/`logic`/`rendering`/`ui` in `zarvan_platformer`)
   instead of the flat `components/`/`systems/` split. Pure file moves
   plus import-path fixups, zero behavior change — every public export
   path is unchanged, only its internal `src/...` target moved.
@@ -1307,8 +1307,8 @@ This closes out every item added under "New engine features" above.
 
 ### Scenes, menus & rooms
 
-- **Room/door transitions**: `RoomExit` component (`engine_core`) +
-  `installRoomExitTrigger` (`engine_flutter`) — touch a door, load the
+- **Room/door transitions**: `RoomExit` component (`zarvan_core`) +
+  `installRoomExitTrigger` (`zarvan_flutter`) — touch a door, load the
   target `Scene`, appear at the matching spawn marker. The target scene
   is referenced by id (resolved against a game-registered factory map),
   the same "data references registered code" pattern as
@@ -1317,7 +1317,7 @@ This closes out every item added under "New engine features" above.
   `SceneController.loadScene` switch, unlike `World` (which is rebuilt
   from scratch per scene on purpose). A game reads/writes it across
   rooms/menus for things like a running score or unlocked content.
-- **`Scene` / `SceneController`**: `engine_flutter`'s scene-management
+- **`Scene` / `SceneController`**: `zarvan_flutter`'s scene-management
   layer — `loadScene` (tear down and load a new room),
   `pushOverlay`/`popOverlay` (freeze the current scene under a menu
   without losing its state, e.g. a pause menu), and
@@ -1326,7 +1326,7 @@ This closes out every item added under "New engine features" above.
 - **`ButtonMenuScene`** + `MenuButtonSpec`: a ready-made ECS menu —
   give it a button list and an action handler, it spawns the button
   entities and hit-tests taps against them. Built on a new generic
-  `Button` component + `hitTestButton` in `engine_core`.
+  `Button` component + `hitTestButton` in `zarvan_core`.
 - **Human-authorable levels**: `TileMap.fromJson` accepts a
   `legend` + ASCII `rows` shape (characters instead of a flat id
   array) alongside the original flat-array form; `Level.loadInto` can
@@ -1337,12 +1337,12 @@ This closes out every item added under "New engine features" above.
   slot-picker menu on top of `SaveGame` — checks `hasSave` per slot on
   every `populate` and reflects that in each button's label.
 - **Cinematic support**: `CinematicSystem` + `CinematicStep`
-  (`WaitStep`/`CallbackStep`/`TweenStep`) in `engine_core` — plays a
+  (`WaitStep`/`CallbackStep`/`TweenStep`) in `zarvan_core` — plays a
   scripted, non-interactive sequence (a cutscene, a boss intro) as a
   normal `System`, built on `Tween`'s own easing math. `skip()` jumps
   straight to `CinematicCompleteEvent`.
 
-### Platformer & gameplay helpers (`engine_platformer`)
+### Platformer & gameplay helpers (`zarvan_platformer`)
 
 - Damage/health/combat and checkpoint/respawn helpers
   (`damageEntity`/`healEntity`, `Checkpoint`/`LastCheckpoint`,
@@ -1356,13 +1356,13 @@ This closes out every item added under "New engine features" above.
   `collision_math.dart` between `PlatformerSystem` and
   `TileCollisionSystem`.
 
-### Rendering & assets (`engine_flutter`)
+### Rendering & assets (`zarvan_flutter`)
 
 - z-index draw ordering for `Sprite`/`ParallaxLayer`/`TileMap`/
   `Particle`, with `Canvas.drawAtlas` batching per shared atlas/z-slot
   for sprite-heavy scenes.
-- Particle effects (data + system in `engine_core`, rendering in
-  `engine_flutter`) and parallax scrolling backgrounds.
+- Particle effects (data + system in `zarvan_core`, rendering in
+  `zarvan_flutter`) and parallax scrolling backgrounds.
 - Tweening/easing helpers (`Tween`/`EasingType`/`TweenSystem`).
 - Real sprite asset loading (`SpriteAtlas.loadFromAssets`) and audio
   playback (`AudioManager`, via `audioplayers`).
@@ -1389,29 +1389,29 @@ This closes out every item added under "New engine features" above.
   last entity in a store, which could silently corrupt component data
   or crash once a recycled entity id collided with it under sustained
   spawn/destroy churn.
-- A performance benchmark suite (`benchmark/` in `engine_core`/
-  `engine_platformer`) and a full pass to 100% test coverage across
-  `engine_core`/`engine_flutter`/`engine_platformer`.
+- A performance benchmark suite (`benchmark/` in `zarvan_core`/
+  `zarvan_platformer`) and a full pass to 100% test coverage across
+  `zarvan_core`/`zarvan_flutter`/`zarvan_platformer`.
 
 ### Tooling
 
-- `engine_cli`'s `game_agent` CLI: `create` (scaffold a new game),
+- `zarvan_cli`'s `zarvan` CLI: `create` (scaffold a new game),
   `upgrade` (repin an existing game's engine version), `lint` (validate
   a level/content file without running the game).
 - `create`'s generated starter project rewritten to a real
-  `engine_platformer` starting point (a small data-driven tile level +
+  `zarvan_platformer` starting point (a small data-driven tile level +
   player, `installPlatformerSystems`) instead of the original
   bouncing-circle stress-test demo. `upgrade` now rewrites every
   self-referencing engine package's git ref in a project's
-  pubspec.yaml, not just `engine_core`'s.
+  pubspec.yaml, not just `zarvan_core`'s.
 
 ### Foundation
 
-- Initial ECS scaffold (`engine_core`): `World`, `ComponentStore`,
+- Initial ECS scaffold (`zarvan_core`): `World`, `ComponentStore`,
   systems, spatial hash.
-- `engine_flutter`: the Flutter shell — sprites, animation, camera,
+- `zarvan_flutter`: the Flutter shell — sprites, animation, camera,
   input, `EngineView`.
-- `engine_platformer` split out from `engine_core` so a non-platformer
+- `zarvan_platformer` split out from `zarvan_core` so a non-platformer
   2D game isn't forced to depend on gravity/jump concepts.
 - The content DSL (`Level`) and the agent-facing runtime API
   (`WorldView`/`Behavior`/`AISystem`) — world state as data an agent

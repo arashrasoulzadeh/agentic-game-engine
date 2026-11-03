@@ -8,7 +8,7 @@ without playing, and wire in the player-facing extras. No Dart is needed until y
 ![The finished game](../img/idle-game.png)
 
 ```bash
-game_agent create bakery --template idle_game
+zarvan create bakery --template idle_game
 cd bakery
 flutter run
 ```
@@ -35,7 +35,7 @@ Prices can also be a hand-written table for the first few copies:
 Validate without launching the app:
 
 ```bash
-game_agent idle validate assets/idle_game.json
+zarvan idle validate assets/idle_game.json
 ```
 
 Mistakes are reported with the path to them (`generators[4].cost.growth must be a number >= 1`).
@@ -43,7 +43,7 @@ Mistakes are reported with the path to them (`generators[4].cost.growth must be 
 ## 3. Check the pacing without playing
 
 ```bash
-game_agent idle simulate assets/idle_game.json --days 2 --prestige-at 2
+zarvan idle simulate assets/idle_game.json --days 2 --prestige-at 2
 ```
 
 It prints when income passes each power of ten, when it prestiges or clears challenges, and whether the design

@@ -2,7 +2,7 @@
 
 Three tools, from smallest to largest: a **cinematic** scripts a sequence inside a scene, a **scene transition**
 covers and reveals the swap between scenes, and a **video** plays a pre-rendered clip. The cinematic samples are
-executed by `packages/engine_core/test/doc_examples_cinematics_test.dart`.
+executed by `packages/zarvan_core/test/doc_examples_cinematics_test.dart`.
 
 ## Cinematics: a script of steps
 

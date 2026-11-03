@@ -1,0 +1,188 @@
+import 'package:zarvan_schema/zarvan_schema.dart';
+import 'package:test/test.dart';
+
+void main() {
+  _templateTests();
+  group('FieldSchema.validate', () {
+    test('accepts a value of the declared type', () {
+      expect(const FieldSchema('hp', FieldType.int).validate(5), isNull);
+      expect(const FieldSchema('scale', FieldType.double).validate(1), isNull);
+      expect(const FieldSchema('on', FieldType.bool).validate(false), isNull);
+      expect(const FieldSchema('name', FieldType.string).validate('x'), isNull);
+    });
+
+    test('rejects a value of the wrong type and names the field', () {
+      expect(
+        const FieldSchema('hp', FieldType.int).validate(1.5),
+        'hp must be an integer',
+      );
+      expect(
+        const FieldSchema('on', FieldType.bool).validate(1),
+        'on must be true or false',
+      );
+    });
+
+    test('enforces min and max bounds inclusively', () {
+      const field = FieldSchema('hp', FieldType.int, min: 0, max: 100);
+      expect(field.validate(0), isNull);
+      expect(field.validate(100), isNull);
+      expect(field.validate(-1), 'hp must be at least 0');
+      expect(field.validate(101), 'hp must be at most 100');
+    });
+
+    test('enumeration accepts only listed options', () {
+      const field = FieldSchema(
+        'facing',
+        FieldType.enumeration,
+        options: ['left', 'right'],
+      );
+      expect(field.validate('left'), isNull);
+      expect(field.validate('up'), 'facing must be one of left, right');
+    });
+
+    test('vector2 requires exactly two numbers', () {
+      const field = FieldSchema('offset', FieldType.vector2);
+      expect(field.validate([1, 2.5]), isNull);
+      expect(field.validate([1]), isNotNull);
+      expect(field.validate([1, 'a']), isNotNull);
+    });
+  });
+
+  group('optional, list, and object fields', () {
+    test(
+      'a missing optional field is valid, a present one is still checked',
+      () {
+        const field = FieldSchema('tag', FieldType.string, optional: true);
+        expect(
+          const ComponentSchema('c', [
+            FieldSchema('tag', FieldType.string, optional: true),
+          ]).validate({}),
+          isEmpty,
+        );
+        expect(field.validate(5), 'tag must be a string');
+      },
+    );
+
+    test('a null optional field is valid, a null required field is not', () {
+      const optional = FieldSchema('data', FieldType.object, optional: true);
+      const required = FieldSchema('data', FieldType.object);
+      expect(optional.validate(null), isNull);
+      expect(required.validate(null), 'data must be an object');
+    });
+
+    test('list and object accept only their JSON shape', () {
+      expect(
+        const FieldSchema('items', FieldType.list).validate([1, 2]),
+        isNull,
+      );
+      expect(
+        const FieldSchema('items', FieldType.list).validate({}),
+        'items must be a list',
+      );
+      expect(
+        const FieldSchema('data', FieldType.object).validate({'a': 1}),
+        isNull,
+      );
+      expect(
+        const FieldSchema('data', FieldType.object).validate([]),
+        'data must be an object',
+      );
+    });
+  });
+
+  group('ComponentSchema', () {
+    const health = ComponentSchema('health', [
+      FieldSchema(
+        'current',
+        FieldType.int,
+        min: 0,
+        defaultValue: 100,
+        required: true,
+      ),
+      FieldSchema('max', FieldType.int, min: 1, defaultValue: 100),
+      FieldSchema('label', FieldType.string, required: true),
+    ]);
+
+    test('fieldNames preserves declaration order', () {
+      expect(health.fieldNames, ['current', 'max', 'label']);
+    });
+
+    test('defaults include only fields that declare one', () {
+      expect(health.defaults, {'current': 100, 'max': 100});
+    });
+
+    test('validate reports every error, not just the first', () {
+      final errors = health.validate({'current': -1, 'max': 'many'});
+      expect(errors, [
+        'current must be at least 0',
+        'max must be an integer',
+        'label is missing (add "label": "")',
+      ]);
+    });
+
+    test('validate returns empty for a valid object', () {
+      expect(
+        health.validate({'current': 3, 'max': 10, 'label': 'hero'}),
+        isEmpty,
+      );
+    });
+  });
+
+  group('ComponentSchema.fieldNamed', () {
+    test('finds a declared field, and returns null for an undeclared one', () {
+      const schema = ComponentSchema('c', [FieldSchema('hp', FieldType.int)]);
+      expect(schema.fieldNamed('hp')?.type, FieldType.int);
+      expect(schema.fieldNamed('mp'), isNull);
+    });
+  });
+}
+
+void _templateTests() {
+  group('ComponentSchema.template', () {
+    test('gives every field a value that passes its own validation', () {
+      const schema = ComponentSchema('c', [
+        FieldSchema('hp', FieldType.int, min: 1),
+        FieldSchema('speed', FieldType.double, min: 0.5),
+        FieldSchema('on', FieldType.bool),
+        FieldSchema('label', FieldType.string),
+        FieldSchema(
+          'facing',
+          FieldType.enumeration,
+          options: ['left', 'right'],
+        ),
+        FieldSchema('offset', FieldType.vector2),
+        FieldSchema('items', FieldType.list),
+        FieldSchema('data', FieldType.object),
+        FieldSchema('scale', FieldType.double, defaultValue: 2),
+      ]);
+      expect(schema.validate(schema.template), isEmpty);
+    });
+
+    test(
+      'raises a zero value to the minimum rather than going out of range',
+      () {
+        const schema = ComponentSchema('c', [
+          FieldSchema('hp', FieldType.int, min: 1),
+        ]);
+        expect(schema.template['hp'], 1);
+      },
+    );
+
+    test('a declared default is used over the zero value', () {
+      const schema = ComponentSchema('c', [
+        FieldSchema('scale', FieldType.double, defaultValue: 2),
+      ]);
+      expect(schema.template['scale'], 2);
+    });
+
+    test('every engine component schema has a template that validates', () {
+      for (final schema in allComponentSchemas.values) {
+        expect(
+          schema.validate(schema.template),
+          isEmpty,
+          reason: '${schema.name} template is invalid',
+        );
+      }
+    });
+  });
+}

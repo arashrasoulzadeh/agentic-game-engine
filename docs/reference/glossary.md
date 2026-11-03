@@ -24,7 +24,7 @@
 | **Registry** | `world.components`: component name ↔ JSON codec. |
 | **Round** | One full cycle through every team's turn. |
 | **Scene** | A screen of the game; owns a fresh `World`. |
-| **Schema** | Hand-written description of a component's JSON fields (`engine_schema`). |
+| **Schema** | Hand-written description of a component's JSON fields (`zarvan_schema`). |
 | **Store** | `ComponentStore<T>`: sparse-set storage for one component type. |
 | **System** | One unit of simulation logic run every step, in registration order. |
 | **Team** | A string id grouping entities into a side. |

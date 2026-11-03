@@ -9,21 +9,21 @@ anything to its right.
 
 ```mermaid
 flowchart LR
-    schema[engine_schema] --> core[engine_core]
-    core --> flutter[engine_flutter]
-    flutter --> platformer[engine_platformer]
-    flutter --> strategy[engine_strategy]
-    flutter --> idle[engine_idle]
-    core --> cli[engine_cli]
+    schema[zarvan_schema] --> core[zarvan_core]
+    core --> flutter[zarvan_flutter]
+    flutter --> platformer[zarvan_platformer]
+    flutter --> strategy[zarvan_strategy]
+    flutter --> idle[zarvan_idle]
+    core --> cli[zarvan_cli]
 ```
 
 The rule that keeps this honest: **genre-general _data_ belongs in
-`engine_core` even if only one genre uses it today; only genre-specific
+`zarvan_core` even if only one genre uses it today; only genre-specific
 _logic_ belongs further right.** `TileMap` is the cautionary example — it
 looks platformer-specific, but the Flutter tile renderer needs the type, and
-`engine_flutter` cannot depend on `engine_platformer`. The same reasoning
-put the turn clock, orders and fog of war in `engine_core`
-(`lib/src/turn/`) and only the assembly in `engine_strategy`.
+`zarvan_flutter` cannot depend on `zarvan_platformer`. The same reasoning
+put the turn clock, orders and fog of war in `zarvan_core`
+(`lib/src/turn/`) and only the assembly in `zarvan_strategy`.
 
 ## One frame
 
@@ -85,7 +85,7 @@ anything that must survive (score, unlocked rooms, a checkpoint) lives in
 
 ```mermaid
 flowchart TB
-    subgraph core_turn["engine_core / turn"]
+    subgraph core_turn["zarvan_core / turn"]
       T[TurnState · Team · ActionPoints]
       O[Order · OrderQueue · OrderSystem]
       N[GridNavigator]
@@ -94,11 +94,11 @@ flowchart TB
       SEL[Selected · selectAtCell · commandSelected]
       AI[TurnAI · AggressiveAI · AITurnSystem]
     end
-    subgraph flutter_ui["engine_flutter"]
+    subgraph flutter_ui["zarvan_flutter"]
       TAP[GridTapController]
       MARK[SelectionMarkerSystem]
     end
-    subgraph strategy["engine_strategy"]
+    subgraph strategy["zarvan_strategy"]
       INST[installStrategySystems]
       SPAWN[spawnStrategyUnit]
     end

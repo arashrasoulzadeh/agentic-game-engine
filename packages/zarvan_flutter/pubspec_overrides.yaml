@@ -1,0 +1,11 @@
+# Local monorepo development only: resolves zarvan_core from the sibling
+# checkout instead of git, so editing both packages together doesn't
+# require a commit+push round-trip. Only applies when running pub inside
+# this package directly — ignored when zarvan_flutter is fetched as a
+# git dependency by another project, so it can't cause the ref-mismatch
+# conflict pubspec.yaml's comment describes.
+dependency_overrides:
+  zarvan_schema:
+    path: ../zarvan_schema
+  zarvan_core:
+    path: ../zarvan_core

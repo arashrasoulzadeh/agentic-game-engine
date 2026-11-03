@@ -41,7 +41,7 @@ behaviors.register('chase', FollowBehavior(target: player, speed: 80, maxDistanc
 from; `stopDistance` (default `4`) is how close it stops approaching;
 `requireLineOfSight` (default `false`) additionally requires a clear
 raycast to the target before following — see
-`packages/engine_platformer/lib/src/ai/follow_behavior.dart`.
+`packages/zarvan_platformer/lib/src/ai/follow_behavior.dart`.
 
 ## Writing your own instead
 

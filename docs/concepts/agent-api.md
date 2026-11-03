@@ -25,7 +25,7 @@ Behavior.decide(WorldView, EntityId self) -> Action
 
 ## `WorldView`: read-only queries
 
-`packages/engine_core/lib/src/ecs/world_view.dart`. Wraps a `World` and
+`packages/zarvan_core/lib/src/ecs/world_view.dart`. Wraps a `World` and
 exposes only queries — no setters:
 
 ```dart
@@ -48,7 +48,7 @@ class MyBehavior implements Behavior {
 Useful queries: `component<T>(id)`, `hasComponent<T>(id)`,
 `entitiesWith<T>()`, `entitiesWithAll<A, B>()`, and a closest-entity
 helper — see the full list in `world_view.dart` or
-`packages/engine_core/README.md`'s agent-API section.
+`packages/zarvan_core/README.md`'s agent-API section.
 
 ## `Action`: the only way to cause a change
 
@@ -59,7 +59,7 @@ abstract class Action {
 ```
 
 The engine ships generic actions (e.g. `NoOpAction`,
-`SetVelocityAction` in `packages/engine_core/lib/src/ai/set_velocity_action.dart`)
+`SetVelocityAction` in `packages/zarvan_core/lib/src/ai/set_velocity_action.dart`)
 plus whatever your game defines itself — a game-specific `Action`
 subclass is how you extend this without the engine needing to know
 about your domain logic:
@@ -115,10 +115,10 @@ Runs every `AIState`-tagged entity once per tick: resolves its
 behavior that tick sees the same consistent snapshot, so ordering
 between two behaviors' decisions within the same tick can't matter.
 
-## `engine_platformer`'s ready-made behaviors
+## `zarvan_platformer`'s ready-made behaviors
 
 `PatrolBehavior`, `FollowBehavior`, `AvoidanceBehavior`,
-`PathFollowBehavior` (`packages/engine_platformer/lib/src/ai/`) are
+`PathFollowBehavior` (`packages/zarvan_platformer/lib/src/ai/`) are
 concrete `Behavior` implementations for common enemy AI — read one of
 these as a worked example of writing your own.
 
@@ -127,7 +127,7 @@ these as a worked example of writing your own.
 - [ecs.md](ecs.md) — `World`/`ComponentStore`/`System` underneath all of this.
 - [content-as-data.md](content-as-data.md) — the other read/write path (patching from outside simulation, vs. deciding during it).
 - [examples/custom-behavior.md](../examples/custom-behavior.md) — a focused, minimal worked example.
-- [`packages/engine_core/README.md`](../../packages/engine_core/README.md)'s "The agent-facing API" section.
+- [`packages/zarvan_core/README.md`](../../packages/zarvan_core/README.md)'s "The agent-facing API" section.
 
 ## Two doors, one idea: real-time and turn-based
 

@@ -16,7 +16,7 @@ the requirements, the design, the decisions, and the record of delivered phases
 
 ### 1.1 Problem
 
-Games built on `engine_core`/`engine_flutter`/`engine_platformer` are
+Games built on `zarvan_core`/`zarvan_flutter`/`zarvan_platformer` are
 authored today by hand-writing JSON (`Level`, `TileMap`, `World` patches)
 and Dart (`Scene.populate`, behaviors). That works for an AI agent and
 for a developer who knows the format, but it is slow for level design,
@@ -62,7 +62,7 @@ All three are required targets from phase 3 onward, each built and tested in
 CI. Web is optional and view-only; it is not a substitute for a desktop build.
 
 **Must have (v1):**
-- Open/create a project folder created by `game_agent create`.
+- Open/create a project folder created by `zarvan create`.
 - Level editor: tile paint/erase/fill, entity placement, select/move/delete,
   layers, grid snap.
 - Property inspector for every registered component, driven by schema.
@@ -97,11 +97,11 @@ CI. Web is optional and view-only; it is not a substitute for a desktop build.
 
 ### 1.7 Constraints
 
-- Dependency DAG stays one-way: `engine_core` → `engine_flutter` →
-  `engine_platformer` → `studio`. Nothing in the engine may import the
+- Dependency DAG stays one-way: `zarvan_core` → `zarvan_flutter` →
+  `zarvan_platformer` → `studio`. Nothing in the engine may import the
   studio.
 - Studio UI logic lives in the studio package; reusable data logic
-  (schema, command model, graph model) lives in `engine_core` so the CLI
+  (schema, command model, graph model) lives in `zarvan_core` so the CLI
   and agents can use it without Flutter.
 - Follows the repo's conventions (CLAUDE.md): doc comments on every
   public symbol, a test for every behavior, commit per completed item.
@@ -114,14 +114,14 @@ CI. Web is optional and view-only; it is not a substitute for a desktop build.
 
 | Package | New content | Depends on |
 |---|---|---|
-| `engine_core` | `schema/` (component field metadata), `command/` (undo model), `graph/` (node graph data + validator), `project/` (project manifest) | — |
-| `engine_flutter` | `editor_runtime/` (render a level without running systems), play-test launcher hooks | `engine_core` |
-| `engine_platformer` | Platformer component schemas, platformer graph nodes | `engine_core`, `engine_flutter` |
-| `engine_cli` | `studio validate`, `studio export`, `studio import-tmx` | `engine_core` |
-| `engine_studio` (new, Flutter app, separately installable) | Editor UI, inspector, graph canvas, asset browser | all of the above |
+| `zarvan_core` | `schema/` (component field metadata), `command/` (undo model), `graph/` (node graph data + validator), `project/` (project manifest) | — |
+| `zarvan_flutter` | `editor_runtime/` (render a level without running systems), play-test launcher hooks | `zarvan_core` |
+| `zarvan_platformer` | Platformer component schemas, platformer graph nodes | `zarvan_core`, `zarvan_flutter` |
+| `zarvan_cli` | `studio validate`, `studio export`, `studio import-tmx` | `zarvan_core` |
+| `zarvan_studio` (new, Flutter app, separately installable) | Editor UI, inspector, graph canvas, asset browser | all of the above |
 
 `bt_editor_web` was a standalone app. Its node-canvas features now live in
-`engine_studio` (typed graphs: dialogue, behavior tree, state machine) and the
+`zarvan_studio` (typed graphs: dialogue, behavior tree, state machine) and the
 package has been deleted.
 
 ### 2.2 Data model (what the studio reads and writes)
@@ -197,9 +197,9 @@ abstract class EditCommand {
   `LevelDocument` from JSON. A round-trip test asserts unchanged data is
   byte-stable.
 
-**Open decision D2:** whether the command model lives in `engine_core`
-(usable by CLI/agents for scripted edits) or in `engine_studio` only. Default
-recommendation: `engine_core`, so an agent edits levels through the same
+**Open decision D2:** whether the command model lives in `zarvan_core`
+(usable by CLI/agents for scripted edits) or in `zarvan_studio` only. Default
+recommendation: `zarvan_core`, so an agent edits levels through the same
 commands a human uses.
 
 ### 2.5 Editor rendering without running the simulation
@@ -241,7 +241,7 @@ express.
 ### 2.7 Play-test flow
 
 1. Studio saves the level to a temp project snapshot.
-2. Launches the game runner (`game_agent` run, or an embedded
+2. Launches the game runner (`zarvan` run, or an embedded
    `GameRunner`) pointed at that level as the start scene.
 3. On exit (or a hotkey), the studio regains focus and reloads the level
    if the game wrote back a save slot — not the level itself.
@@ -262,7 +262,7 @@ separate process in v1.
 
 ### 2.9 Validation
 
-One validator in `engine_core`, used by the studio (live), `studio
+One validator in `zarvan_core`, used by the studio (live), `studio
 validate` (CLI), and CI:
 - Unknown component type, invalid field value against its schema.
 - Missing sprite/atlas referenced by a level.
@@ -277,24 +277,24 @@ Every studio operation has a headless equivalent:
 
 | Studio action | CLI / API |
 |---|---|
-| Create project | `game_agent create` (exists) |
-| Validate | `game_agent studio validate` |
-| Export level | `game_agent studio export` |
-| Import TMX | `game_agent studio import-tmx` |
+| Create project | `zarvan create` (exists) |
+| Validate | `zarvan studio validate` |
+| Export level | `zarvan studio export` |
+| Import TMX | `zarvan studio import-tmx` |
 | Edit level | `EditCommand` applied via agent API |
-| Build atlases | `game_agent pack-assets` (exists) |
+| Build atlases | `zarvan pack-assets` (exists) |
 
 A test enumerates the studio's command list and asserts each has a
 headless entry point. This keeps agents from being second-class users.
 
 ### 2.11 Testing strategy
 
-- `engine_core` (schema, commands, graph, validator): plain `dart test`,
+- `zarvan_core` (schema, commands, graph, validator): plain `dart test`,
   100% coverage target, no Flutter.
-- `engine_flutter` editor rendering: `flutter test` with
+- `zarvan_flutter` editor rendering: `flutter test` with
   `testWidgets` for layout and plain `test()` for asset decoding (avoid
   the FakeAsync/Ticker deadlock documented in `packed_atlas_test.dart`).
-- `engine_studio` UI: widget tests for inspector and canvas; golden tests for
+- `zarvan_studio` UI: widget tests for inspector and canvas; golden tests for
   the level view.
 - End-to-end: a script creates a project, edits a level through commands,
   saves, runs `studio validate`, and loads it in a headless `GameRunner`.
@@ -317,7 +317,7 @@ headless entry point. This keeps agents from being second-class users.
 
 ### 2.13 Distribution, install, and update
 
-`engine_studio` is its own Flutter application in its own package, with its
+`zarvan_studio` is its own Flutter application in its own package, with its
 own `pubspec.yaml`. It is installed separately from the engine: a user
 installs the studio once and uses it to create and open game projects. It
 does not need the engine repo checked out.
@@ -369,7 +369,7 @@ Each phase ends with a shippable state and a green test suite.
 Goal: the data contracts the studio depends on exist and are tested.
 
 - [x] **0.1** Component schema type (`ComponentSchema`, `FieldSchema`,
-  `FieldType`) in `engine_core/lib/src/schema/`.
+  `FieldType`) in `zarvan_core/lib/src/schema/`.
 - [x] **0.2** Schema registration in `registerCoreComponents`,
   `registerFlutterComponents`, `registerPlatformerComponents`.
 - [x] **0.3** Test: every registered component has a schema; schema
@@ -395,7 +395,7 @@ Goal: every change is an undoable command; bad data is caught before the
 game runs.
 
 - [x] **1.1** `EditCommand` base type with `apply`/`revert` in
-  `engine_core/lib/src/command/`.
+  `zarvan_core/lib/src/command/`.
 - [x] **1.2** Commands: `PlaceTile`, `EraseTile`, `FillRegion`,
   `AddEntity`, `RemoveEntity`, `SetComponentField`, `MoveEntity`,
   `SetLayer`.
@@ -403,8 +403,8 @@ game runs.
 - [x] **1.4** Test per command: `apply` then `revert` restores the
   document exactly.
 - [x] **1.5** Test: history undo/redo ordering and stroke merge.
-- [x] **1.6** Decide D2 (commands in `engine_core`) and record it.
-- [x] **1.7** `LevelValidator` in `engine_core/lib/src/validation/`:
+- [x] **1.6** Decide D2 (commands in `zarvan_core`) and record it.
+- [x] **1.7** `LevelValidator` in `zarvan_core/lib/src/validation/`:
   unknown component, field out of range, dangling entity refs.
 - [x] **1.8** Reachability check (flood-fill from spawn over the tile
   map) — reuses existing tile traversal.
@@ -415,7 +415,7 @@ game runs.
 
 Goal: an agent or CI can do everything a designer can, without a UI.
 
-- [x] **2.1** `engine_cli` command `studio validate <project>` — runs
+- [x] **2.1** `zarvan_cli` command `studio validate <project>` — runs
   `LevelValidator` over all levels, exits non-zero on errors.
 - [x] **2.2** `studio export-levels` — writes levels in engine JSON
   (no-op for native files; reserved for Tiled export in phase 5).
@@ -436,21 +436,21 @@ Goal: an agent or CI can do everything a designer can, without a UI.
   real `studio` subcommands → validate → `World`/`Level.loadInto`/60
   ticks, no Flutter involved — "headless" here means no `GameRunner`/
   rendering at all, not a specific headless mode of it. Wired into a new
-  `e2e` job in `engine_cli.yml`, separate from `test` since it needs
+  `e2e` job in `zarvan_cli.yml`, separate from `test` since it needs
   Flutter, not just Dart) End-to-end script: create project → apply commands → save
   → validate → load in headless `GameRunner`. Added to CI.
-- [x] **2.8** `game_agent lint --playable` runs its own flood-fill, separate
-  from `isTileReachable` (engine_core). Make `lint` call `isTileReachable` so the
+- [x] **2.8** `zarvan lint --playable` runs its own flood-fill, separate
+  from `isTileReachable` (zarvan_core). Make `lint` call `isTileReachable` so the
   CLI and the validator cannot disagree about reachability.
 - [x] **2.7** Verify end-to-end against the **pushed** repo (CLAUDE.md
-  rule): `game_agent create` a project and run `studio validate` on it.
+  rule): `zarvan create` a project and run `studio validate` on it.
 
-### Phase 3 — Level editor (engine_studio app, v1 MVP)
+### Phase 3 — Level editor (zarvan_studio app, v1 MVP)
 
 Goal: a designer builds, saves, and play-tests a level.
 
-- [x] **3.1** Create `packages/engine_studio` (Flutter app, depends on
-  `engine_core`, `engine_flutter`, `engine_platformer`). Builds on macOS, Windows, Linux. Add to CI.
+- [x] **3.1** Create `packages/zarvan_studio` (Flutter app, depends on
+  `zarvan_core`, `zarvan_flutter`, `zarvan_platformer`). Builds on macOS, Windows, Linux. Add to CI.
 - [x] **3.2** Project open screen: a native folder picker (Browse) or a typed path, validated (pubspec.yaml, assets/levels), then opens the first level. Reading `project.json` is deferred to the 2.4 manifest, which the screen does not need yet.
 - [x] **3.3** Static level view: draws `LevelDocument` (tiles by collision kind, entity markers and names) without running systems. Deviation: drawn directly, not through `EngineView`, which needs sprite atlases that arrive with the asset browser (5.1).
   with no systems installed (see 2.5).
@@ -487,7 +487,7 @@ Goal: a designer builds, saves, and play-tests a level.
   this one recorded here) Performance check: 500×500 tile level pans and paints at
   60 fps on the reference machine; numbers recorded.
 
-- [x] **3.17** `engine_studio` package scaffold with its own `pubspec.yaml`
+- [x] **3.17** `zarvan_studio` package scaffold with its own `pubspec.yaml`
   depending on the engine packages by git ref (same convention as other
   packages). Builds on macOS first.
 - [x] **3.19** (`release_manifest.dart`: `ReleaseManifest`/`ManifestItem`
@@ -499,7 +499,7 @@ Goal: a designer builds, saves, and play-tests a level.
   throw a bare `StateError` instead of failing verification — a crash
   bug a hostile CDN could trigger — fixed to report `invalidSignature`
   like any other forged signature instead) Signed release manifest format (`manifest.json` + signature)
-  and a verifier in `engine_core`, with tests for valid, unsigned,
+  and a verifier in `zarvan_core`, with tests for valid, unsigned,
   tampered, and checksum-mismatch manifests.
 
 - [x] **3.18 / 3.20 / 3.21** (`lib/src/bootstrap/`: `Bootstrapper` over an injected
@@ -558,7 +558,7 @@ existing runtime primitives.
 - [x] **4.1** (already recorded in the Part 4 decisions table: compile-
   only, no parallel interpreter — graphs compile to `DialogueGraph`/
   `Cinematic` steps the runtime already executes) Decide D3 (compile-only) and record it.
-- [x] **4.2** Graph data model in `engine_core/lib/src/graph/`: `Graph`,
+- [x] **4.2** Graph data model in `zarvan_core/lib/src/graph/`: `Graph`,
   `GraphNode`, `GraphEdge`, `PortType`, variables.
 - [x] **4.3** `NodeKind` registry with port schemas.
 - [x] **4.4** Built-in node kinds: `Say`, `Choice`, `SetVar`, `GetVar`,
@@ -575,7 +575,7 @@ existing runtime primitives.
 | ID | Question | Default | Decide by |
 |---|---|---|---|
 | D1 | Component schemas hand-written or generated? | Hand-written | Phase 0 |
-| D2 | Command model in `engine_core` or `studio`? | `engine_core` | Phase 1 |
+| D2 | Command model in `zarvan_core` or `studio`? | `zarvan_core` | Phase 1 |
 | D3 | Graphs compile to existing primitives only, or own interpreter? | Compile only | Phase 4 |
 | D4 | Play-test as separate process or embedded? | Separate process | Phase 1 |
 | D5 | Studio self-update: platform updater (Sparkle/WinSparkle) or notify-and-link to installer? | Notify-and-link in v1 | Phase 3 |

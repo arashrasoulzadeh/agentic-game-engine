@@ -1,0 +1,84 @@
+import 'package:zarvan_core/zarvan_core.dart';
+import 'package:zarvan_flutter/zarvan_flutter.dart';
+
+import 'combat_helpers.dart';
+import 'projectile.dart';
+
+/// Emitted when a melee projectile (zero-velocity, short-lived) hits an
+/// entity with `Health`. Allows [AttackSystem] to track combo chains.
+class MeleeHitEvent {
+  final EntityId attacker;
+  final EntityId target;
+  final double damage;
+  MeleeHitEvent(this.attacker, this.target, this.damage);
+}
+
+/// Spawns a `Position`/`Velocity`/`Collider`/`Projectile` entity moving
+/// at ([vx], [vy]) — the "shoot one" helper, matching `spawnPlayer`/
+/// `spawnEnemy`'s "replaces the hand-spawned entity + component
+/// boilerplate" role for combat instead of characters. Pass
+/// [atlasId]/[spriteRegion] to also attach a `Sprite`. Actual movement
+/// comes from `MovementSystem` (already registered by
+/// `installPlatformerSystems`) — nothing projectile-specific about it.
+EntityId spawnProjectile(
+  World world, {
+  required double x,
+  required double y,
+  required double vx,
+  required double vy,
+  required double damage,
+  double radius = 4,
+  double lifetimeSeconds = 3,
+  EntityId? owner,
+  String? atlasId,
+  String? spriteRegion,
+}) {
+  final id = world.spawn();
+  world.componentsOf<Position>().set(id, Position(x, y));
+  world.componentsOf<Velocity>().set(id, Velocity(vx, vy));
+  world.componentsOf<Collider>().set(id, Collider(radius));
+  world.componentsOf<Projectile>().set(
+    id,
+    Projectile(damage: damage, lifetimeSeconds: lifetimeSeconds, owner: owner),
+  );
+  if (atlasId != null && spriteRegion != null) {
+    world.componentsOf<Sprite>().set(id, Sprite(atlasId, spriteRegion));
+  }
+  return id;
+}
+
+/// Wires up projectile-vs-anything damage for the whole [world] in one
+/// call — a `Projectile` that hits something with `Health` (other than
+/// its own `owner`) deals its `damage` (via `damageEntity`, so
+/// invincibility windows/death still apply normally) and is destroyed;
+/// hitting anything without `Health` (another projectile, a
+/// non-damageable prop) is a harmless pass-through.
+///
+/// One subscription for every projectile ever spawned, not one per
+/// projectile — `EventBus` has no per-handler unsubscribe, so wiring
+/// this per-instance (the way a one-off `onCollisionInvolving` call
+/// does for something long-lived) would leak a handler for every
+/// projectile fired over a play session. Call once, e.g. from
+/// `Scene.populate`, after `CollisionSystem` is registered.
+void installProjectileDamage(World world) {
+  world.events.on<CollisionEvent>((event) {
+    _handleHit(world, event.a, event.b);
+    _handleHit(world, event.b, event.a);
+  });
+}
+
+void _handleHit(World world, EntityId maybeProjectile, EntityId other) {
+  final projectile = world.componentsOf<Projectile>().get(maybeProjectile);
+  if (projectile == null || other == projectile.owner) return;
+  if (damageEntity(world, other, projectile.damage, source: projectile.owner)) {
+    // Emit MeleeHitEvent for melee attacks (zero velocity, short lifetime)
+    // to enable combo chain tracking in AttackSystem
+    final vel = world.componentsOf<Velocity>().get(maybeProjectile);
+    if (vel != null && vel.x == 0 && vel.y == 0 && projectile.owner != null) {
+      world.events.emit(
+        MeleeHitEvent(projectile.owner!, other, projectile.damage),
+      );
+    }
+    world.destroy(maybeProjectile);
+  }
+}

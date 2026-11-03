@@ -4,13 +4,13 @@ Guidance for Claude (or any AI agent) working in this repository.
 
 ## What this repo is
 
-A pure-Dart 2D game engine, built to be **AI-agent-friendly** as a
+ZARVAN is an agent-native, simulation-first game engine built with Dart: a pure-Dart 2D game engine, built to be **AI-agent-friendly** as a
 first-class design goal, not an afterthought: world state is
 JSON-serializable data an agent can read/patch, content is authored as
 data (not code), and a `Behavior`/`WorldView` sandbox lets an agent
 drive an entity at runtime without any path to corrupting simulation
 state. Flutter is used only as the cross-platform rendering/input/audio
-shell — the actual engine (`engine_core`) has zero Flutter dependency.
+shell — the actual engine (`zarvan_core`) has zero Flutter dependency.
 
 **This repo is the engine library itself, not a game.** There is
 deliberately no sample app checked into git — `test_game/` (a real,
@@ -23,29 +23,29 @@ made explicitly (see the "Remove root sample app" commit).
 
 | Package | What | Depends on |
 |---|---|---|
-| `packages/engine_core` | Genre-general ECS, `TileMap` data, content DSL, agent API. Pure Dart, no Flutter. | nothing engine-internal |
-| `packages/engine_flutter` | Rendering, input, camera, audio, save/load. | `engine_core` |
-| `packages/engine_platformer` | Platformer-genre gameplay: gravity, jump, tile/platform collision, spawn helpers, patrol/follow behaviors, movement animation. | `engine_core`, `engine_flutter` |
-| `packages/engine_strategy` | Turn-based strategy assembly: `installStrategySystems`, `spawnStrategyUnit`. Rules/data live in `engine_core/lib/src/turn/`. | `engine_core`, `engine_flutter` |
-| `packages/engine_idle` | Idle / incremental-game layer: widgets, `IdleController`, `IdleSession` (lifecycle/saving). The Flutter-free idle rules live in `engine_core` (`engine_core_idle.dart`) so the CLI can use them; see the idle section of `TODO.md`. | `engine_core`, `engine_flutter` |
-| `packages/engine_api` | MCP server + HTTP/JSON-RPC API over the operation registry in `engine_core` (spec: `engine_mcp.md`; adding an operation: see the checklist in `TODO.md`'s agent-API section and regenerate `docs/reference/operations.md`). Every operation also exists as a `game_agent` command (1:1 rule). | `engine_core` |
-| `packages/engine_cli` | `game_agent` CLI: `create`/`upgrade`/`lint`. | `engine_core` (for `lint`) |
+| `packages/zarvan_core` | Genre-general ECS, `TileMap` data, content DSL, agent API. Pure Dart, no Flutter. | nothing engine-internal |
+| `packages/zarvan_flutter` | Rendering, input, camera, audio, save/load. | `zarvan_core` |
+| `packages/zarvan_platformer` | Platformer-genre gameplay: gravity, jump, tile/platform collision, spawn helpers, patrol/follow behaviors, movement animation. | `zarvan_core`, `zarvan_flutter` |
+| `packages/zarvan_strategy` | Turn-based strategy assembly: `installStrategySystems`, `spawnStrategyUnit`. Rules/data live in `zarvan_core/lib/src/turn/`. | `zarvan_core`, `zarvan_flutter` |
+| `packages/zarvan_idle` | Idle / incremental-game layer: widgets, `IdleController`, `IdleSession` (lifecycle/saving). The Flutter-free idle rules live in `zarvan_core` (`zarvan_core_idle.dart`) so the CLI can use them; see the idle section of `TODO.md`. | `zarvan_core`, `zarvan_flutter` |
+| `packages/zarvan_api` | MCP server + HTTP/JSON-RPC API over the operation registry in `zarvan_core` (spec: `engine_mcp.md`; adding an operation: see the checklist in `TODO.md`'s agent-API section and regenerate `docs/reference/operations.md`). Every operation also exists as a `zarvan` command (1:1 rule). | `zarvan_core` |
+| `packages/zarvan_cli` | `zarvan` CLI: `create`/`upgrade`/`lint`. | `zarvan_core` (for `lint`) |
 
-**Dependency direction is a one-way DAG: `engine_core` → `engine_flutter`
-→ `engine_platformer`.** Nothing may depend "backward" up this chain.
+**Dependency direction is a one-way DAG: `zarvan_core` → `zarvan_flutter`
+→ `zarvan_platformer`.** Nothing may depend "backward" up this chain.
 This bit us once already: `TileMap` was briefly moved into
-`engine_platformer` (it looked platformer-specific), but
-`engine_flutter`'s tile *renderer* needs the type to draw tiles at all —
-making `engine_flutter` depend on `engine_platformer` would be
-circular, since `engine_platformer` depends on `engine_flutter` for
+`zarvan_platformer` (it looked platformer-specific), but
+`zarvan_flutter`'s tile *renderer* needs the type to draw tiles at all —
+making `zarvan_flutter` depend on `zarvan_platformer` would be
+circular, since `zarvan_platformer` depends on `zarvan_flutter` for
 sprites/animation. `flutter test` caught it immediately (compile
 error across all three packages). The resolution, and the general
 rule: a type earlier in the chain can't depend on something defined
 later in it, no matter how "specific" that something's *use* seems —
-genre-general **data** (like `TileMap`) belongs in `engine_core` even
+genre-general **data** (like `TileMap`) belongs in `zarvan_core` even
 when only one genre currently uses it seriously; only the genre-specific
 **logic** operating on that data (like `TileCollisionSystem`) belongs
-in `engine_platformer`.
+in `zarvan_platformer`.
 
 Read each package's own README for its API — this file is about
 *working in the repo*, not the engine's API surface.
@@ -55,21 +55,21 @@ Read each package's own README for its API — this file is about
 - **2D only, no 3D, ever.** Confirmed explicitly by the project owner.
 - **Android + iOS + Web** via Flutter — Flutter is the shell, not where
   engine logic lives. If you're about to put gameplay/physics/AI logic
-  in `engine_flutter`, stop and put it in `engine_core` instead.
+  in `zarvan_flutter`, stop and put it in `zarvan_core` instead.
 - **No other game engines** (not Flame, not Unity, not Godot) — this is
   built from scratch on purpose.
-- Every `engine_flutter`/`engine_cli` package depends on `engine_core`
+- Every `zarvan_flutter`/`zarvan_cli` package depends on `zarvan_core`
   via a **self-referencing git dependency** (same URL, same `ref: main`
   a consumer would use), not a local `path:` — this is load-bearing,
   not accidental. A local `path:` dependency makes `pub` see two
-  different "descriptions" of `engine_core` (a resolved commit vs. a
+  different "descriptions" of `zarvan_core` (a resolved commit vs. a
   consumer's `ref: main`) and refuse to solve. Each such pubspec.yaml
   has a comment explaining this; read it before touching that
   dependency block. `pubspec_overrides.yaml` (gitignored-safe to keep,
   since it's ignored when the package is fetched as a git dependency)
   restores local `path:` resolution for monorepo development only.
 - **KNOWN LIMITATION**: the hardcoded `ref: main` in those
-  self-referencing dependencies must match whatever ref `engine_cli`'s
+  self-referencing dependencies must match whatever ref `zarvan_cli`'s
   `--ref` flag pins a generated project to, or the same conflict
   reappears. `main` always works; a tag only works if these pubspecs
   are updated to that tag as part of cutting the release. Publishing to
@@ -83,8 +83,8 @@ Read each package's own README for its API — this file is about
   for the calibration.
 - **Every change gets a test**, and the test suite must pass before
   committing: `dart test`/`dart analyze --fatal-infos` for
-  `engine_core`/`engine_cli`, `flutter test`/`flutter analyze
-  --fatal-infos` for `engine_flutter`/`engine_platformer`.
+  `zarvan_core`/`zarvan_cli`, `flutter test`/`flutter analyze
+  --fatal-infos` for `zarvan_flutter`/`zarvan_platformer`.
 - **Documentation and test coverage are both non-negotiable, not
   best-effort.** Every new public class/field/function gets a doc
   comment (the *why*, per the no-unnecessary-comments rule above — not
@@ -92,7 +92,7 @@ Read each package's own README for its API — this file is about
   piece of *behavior* (not just "does it compile") gets a test that
   would actually fail without the change — a "renders/runs without
   crashing" test is acceptable only where this codebase already relies
-  on that pattern (rendering-heavy `engine_flutter` widget tests), not
+  on that pattern (rendering-heavy `zarvan_flutter` widget tests), not
   a substitute for asserting real behavior wherever behavior can be
   asserted directly. This applies equally to bug fixes (a regression
   test) and new features — "add tests later" is not a valid state to
@@ -100,7 +100,7 @@ Read each package's own README for its API — this file is about
   documented, fix its doc comment too rather than leaving it as found.
 - **Verify end-to-end, not just unit tests, for anything touching the
   CLI or cross-package dependency wiring.** Several real bugs in this
-  repo's history were only caught by actually running `game_agent
+  repo's history were only caught by actually running `zarvan
   create` against the *pushed* repo and checking the generated project
   builds — unit tests alone would have missed them (e.g. the
   self-referencing git dependency conflict, the tile-rendering gap).
@@ -139,7 +139,7 @@ Read each package's own README for its API — this file is about
 - **Dependency direction stays the DAG** (see Package map above) —
   SOLID's dependency-inversion instinct never justifies a backward
   dependency in this repo; genre-general data still belongs in
-  `engine_core` even when a "cleaner" abstraction would colocate it
+  `zarvan_core` even when a "cleaner" abstraction would colocate it
   with its one current user.
 - **DRY real duplication, not superficial similarity**: two systems
   computing the same physics (`collision_math.dart`) or two components
@@ -155,8 +155,8 @@ Read each package's own README for its API — this file is about
   elsewhere in this file's spirit). When refactoring existing code
   toward this bar, keep the change behavior-preserving, keep 100% test
   coverage passing (see Validation in TODO.md), and re-run the
-  benchmark suite for anything on a hot path (`packages/engine_core/benchmark/`,
-  `packages/engine_platformer/benchmark/`) to confirm a "cleaner"
+  benchmark suite for anything on a hot path (`packages/zarvan_core/benchmark/`,
+  `packages/zarvan_platformer/benchmark/`) to confirm a "cleaner"
   version didn't regress performance.
 
 ## TODO.md
@@ -169,8 +169,8 @@ rather than letting it go untracked.
 ## If you're extending the ECS
 
 - New built-in component → register it in `registerCoreComponents`
-  (engine_core), `registerFlutterComponents` (engine_flutter), or
-  `registerPlatformerComponents` (engine_platformer) as appropriate,
+  (zarvan_core), `registerFlutterComponents` (zarvan_flutter), or
+  `registerPlatformerComponents` (zarvan_platformer) as appropriate,
   with `toJson`/`fromJson`, so it participates in `World.toJson()`/
   `applyPatch()`/`Level.loadInto()` like everything else. An
   unregistered component silently can't be serialized — that's a
@@ -178,7 +178,7 @@ rather than letting it go untracked.
   its registration during this package's own test suite).
 - Before adding a new type to any package, check it doesn't create a
   backward dependency per the DAG rule above — genre-general data goes
-  in `engine_core` even if only one current package uses it heavily.
+  in `zarvan_core` even if only one current package uses it heavily.
 - New system → think about registration order relative to existing
   systems before writing it. `JumpSystem` had a real ordering bug (jump
   consumption ran before tile-based grounding was resolved) caught only

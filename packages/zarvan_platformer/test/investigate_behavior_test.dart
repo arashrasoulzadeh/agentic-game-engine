@@ -1,0 +1,483 @@
+import 'package:zarvan_core/zarvan_core.dart';
+import 'package:zarvan_flutter/zarvan_flutter.dart';
+import 'package:zarvan_platformer/zarvan_platformer.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+World _buildWorld() {
+  final world = World(width: 500, height: 500);
+  registerCoreComponents(world);
+  registerFlutterComponents(world);
+  registerPlatformerComponents(world);
+  world.addSystem(GravitySystem());
+  world.addSystem(MovementSystem());
+  world.addSystem(PlatformerSystem());
+  world.addSystem(TileCollisionSystem());
+  world.addSystem(HearingSystem());
+  final registry = BehaviorRegistry();
+  registry.register('investigate', InvestigateBehavior(speed: 60));
+  world.addSystem(AISystem(registry));
+  return world;
+}
+
+TileMap _createFloorMap(World world, {double y = 1000, double tileSize = 40}) {
+  final mapEntity = world.spawn();
+  world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+  final rows = (y / tileSize).floor() + 1;
+  final cols = 50;
+  final tiles = <int>[];
+  for (var row = 0; row < rows; row++) {
+    for (var col = 0; col < cols; col++) {
+      tiles.add((row == rows - 1) ? 1 : 0);
+    }
+  }
+  world.componentsOf<TileMap>().set(
+    mapEntity,
+    TileMap(
+      cols: cols,
+      rows: rows,
+      tileWidth: tileSize,
+      tileHeight: tileSize,
+      tiles: tiles,
+      solidTileIds: {1},
+    ),
+  );
+  return world.componentsOf<TileMap>().get(mapEntity)!;
+}
+
+EntityId _spawnInvestigator(
+  World world, {
+  required double x,
+  required double y,
+  double speed = 60,
+  double arriveDistance = 10,
+  bool avoidGaps = true,
+}) {
+  final id = world.spawn();
+  world.componentsOf<Position>().set(id, Position(x, y));
+  world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+  world.componentsOf<Collider>().set(id, Collider(12));
+  world.componentsOf<Gravity>().set(id, Gravity(scale: 1));
+  world.componentsOf<PlatformerController>().set(id, PlatformerController());
+  world.componentsOf<AIState>().set(id, AIState('investigate'));
+  world.componentsOf<HearingComponent>().set(id, HearingComponent(range: 300));
+  return id;
+}
+
+late World _lastWorld;
+late EntityId _lastId;
+
+void main() {
+  group('InvestigateBehavior', () {
+    test('constructs with all fields and defaults correctly', () {
+      final behavior = InvestigateBehavior(
+        speed: 80,
+        arriveDistance: 15,
+        timeout: 5.0,
+        avoidGaps: false,
+        gapCheckAheadDistance: 100,
+      );
+      expect(behavior.speed, 80);
+      expect(behavior.arriveDistance, 15);
+      expect(behavior.timeout, 5.0);
+      expect(behavior.avoidGaps, isFalse);
+      expect(behavior.gapCheckAheadDistance, 100);
+    });
+
+    test('defaults for optional fields', () {
+      final behavior = InvestigateBehavior(speed: 60);
+      expect(behavior.arriveDistance, 10);
+      expect(behavior.timeout, isNull);
+      expect(behavior.avoidGaps, isTrue);
+      expect(behavior.gapCheckAheadDistance, 64);
+    });
+
+    group('timeout', () {
+      Action decideWith(double age, {double? timeout}) {
+        final world = _buildWorld();
+        final id = _spawnInvestigator(world, x: 100, y: 200);
+        world.componentsOf<AIState>().get(id)!.memory['lastHeardSound'] = {
+          'x': 900.0,
+          'y': 200.0,
+          'age': age,
+        };
+        final action = InvestigateBehavior(
+          speed: 60,
+          timeout: timeout,
+          avoidGaps: false,
+        ).decide(WorldView(world), id);
+        action.apply(world);
+        _lastWorld = world;
+        _lastId = id;
+        return action;
+      }
+
+      test(
+        'a sound older than the timeout is forgotten and the entity stops',
+        () {
+          decideWith(6, timeout: 5);
+          expect(
+            _lastWorld
+                .componentsOf<AIState>()
+                .get(_lastId)!
+                .memory['lastHeardSound'],
+            isNull,
+          );
+          expect(_lastWorld.componentsOf<Velocity>().get(_lastId)!.x, 0);
+        },
+      );
+
+      test('a fresh sound is still pursued', () {
+        decideWith(2, timeout: 5);
+        expect(
+          _lastWorld.componentsOf<AIState>().get(_lastId)!.memory['lastHeardSound'],
+          isNotNull,
+        );
+        expect(_lastWorld.componentsOf<Velocity>().get(_lastId)!.x, greaterThan(0));
+      });
+
+      test('without a timeout an old sound is pursued forever', () {
+        decideWith(9999);
+        expect(_lastWorld.componentsOf<Velocity>().get(_lastId)!.x, greaterThan(0));
+      });
+
+      test('HearingSystem ages a remembered sound each update', () {
+        final world = _buildWorld();
+        _createFloorMap(world, y: 400);
+        final id = _spawnInvestigator(world, x: 100, y: 200);
+        for (var i = 0; i < 50; i++) {
+          world.step(0.016);
+        }
+        world.events.emit(SoundEvent(x: 300, y: 388, loudness: 250));
+        world.step(0.016);
+        final memory = world.componentsOf<AIState>().get(id)!.memory;
+        expect(memory['lastHeardSound']['age'], 0.0);
+        for (var i = 0; i < 2; i++) {
+          world.step(0.5);
+        }
+        expect(memory['lastHeardSound']['age'] as double, closeTo(1.0, 0.01));
+      });
+    });
+
+    group('with HearingSystem integration', () {
+      test('hears sound and moves toward it', () {
+        final world = _buildWorld();
+        _createFloorMap(world, y: 400);
+
+        final investigator = _spawnInvestigator(world, x: 100, y: 200);
+        // Let it fall to floor
+        for (int i = 0; i < 50; i++) world.step(0.016);
+
+        // Emit sound to the right
+        world.events.emit(
+          SoundEvent(x: 300, y: 388, loudness: 250, tag: 'footstep'),
+        );
+        world.step(0.016);
+
+        // Check AIState.memory was updated
+        final aiState = world.componentsOf<AIState>().get(investigator)!;
+        final soundData = aiState.memory['lastHeardSound'];
+        expect(soundData, isNotNull);
+        expect(soundData['x'], 300);
+        expect(soundData['y'], 388);
+        expect(soundData['loudness'], 250);
+        expect(soundData['tag'], 'footstep');
+
+        // AISystem reads `AIState.memory` as it was at the *start* of the
+        // tick, but `HearingSystem`'s event handler only updates it when
+        // `World.step` flushes events at the *end* of the tick (see
+        // `World.step`) — so the tick that hears the sound hasn't yet
+        // acted on it; one more tick is needed for InvestigateBehavior to
+        // see the updated memory and set a velocity toward it.
+        world.step(0.016);
+
+        // InvestigateBehavior should now move toward the sound
+        final vel = world.componentsOf<Velocity>().get(investigator)!;
+        expect(vel.x, greaterThan(0), reason: 'should move right toward sound');
+      });
+
+      test('does not react to sound outside hearing range', () {
+        final world = _buildWorld();
+        _createFloorMap(world, y: 400);
+
+        final investigator = _spawnInvestigator(
+          world,
+          x: 100,
+          y: 200,
+          speed: 60,
+        );
+        for (int i = 0; i < 50; i++) world.step(0.016);
+
+        // Emit sound far outside hearing range (HearingComponent.range = 300)
+        world.events.emit(SoundEvent(x: 500, y: 400, loudness: 100));
+        world.step(0.016);
+
+        final aiState = world.componentsOf<AIState>().get(investigator)!;
+        expect(
+          aiState.memory['lastHeardSound'],
+          isNull,
+          reason: 'sound outside hearing range should not be heard',
+        );
+      });
+
+      test('does not react to sound outside sound loudness', () {
+        final world = _buildWorld();
+        _createFloorMap(world, y: 400);
+
+        final investigator = _spawnInvestigator(world, x: 100, y: 200);
+        for (int i = 0; i < 50; i++) world.step(0.016);
+
+        // Sound loudness 50, distance 200
+        world.events.emit(SoundEvent(x: 300, y: 400, loudness: 50));
+        world.step(0.016);
+
+        final aiState = world.componentsOf<AIState>().get(investigator)!;
+        expect(
+          aiState.memory['lastHeardSound'],
+          isNull,
+          reason: 'sound outside loudness should not be heard',
+        );
+      });
+
+      test('sound blocked by solid wall (no line of sight)', () {
+        final world = _buildWorld();
+        // TileMap with solid wall between investigator and sound
+        final mapEntity = world.spawn();
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        world.componentsOf<TileMap>().set(
+          mapEntity,
+          TileMap(
+            cols: 10,
+            rows: 10,
+            tileWidth: 40,
+            tileHeight: 40,
+            tiles: [
+              for (var row = 0; row < 10; row++)
+                for (var col = 0; col < 10; col++) (col == 5) ? 1 : 0,
+            ],
+            solidTileIds: {1},
+          ),
+        );
+
+        final investigator = _spawnInvestigator(world, x: 100, y: 200);
+        for (int i = 0; i < 50; i++) world.step(0.016);
+
+        // Sound behind wall at x=220
+        world.events.emit(SoundEvent(x: 220, y: 200, loudness: 200));
+        world.step(0.016);
+
+        final aiState = world.componentsOf<AIState>().get(investigator)!;
+        expect(
+          aiState.memory['lastHeardSound'],
+          isNull,
+          reason: 'wall should block the sound',
+        );
+      });
+
+      test('stops when arrives at sound position (within arriveDistance)', () {
+        final world = _buildWorld();
+        _createFloorMap(world, y: 400);
+
+        final investigator = _spawnInvestigator(
+          world,
+          x: 100,
+          y: 200,
+          arriveDistance: 20,
+        );
+        for (int i = 0; i < 50; i++) world.step(0.016);
+
+        // Emit sound at x=300
+        world.events.emit(SoundEvent(x: 300, y: 388, loudness: 200));
+        world.step(0.016);
+
+        // Move toward sound. At `speed: 60` (the registry's fixed
+        // InvestigateBehavior) and dt 0.016, each step covers under 1px,
+        // so closing a 200px gap down to within `arriveDistance` needs on
+        // the order of 200 steps, not a handful.
+        for (int i = 0; i < 300; i++) world.step(0.016);
+
+        final pos = world.componentsOf<Position>().get(investigator)!;
+        final vel = world.componentsOf<Velocity>().get(investigator)!;
+
+        // Should be near the sound position and stopped (or nearly stopped)
+        expect(
+          (pos.x - 300).abs(),
+          lessThan(50),
+          reason: 'should approach sound position',
+        );
+        // Once within arriveDistance, velocity should be 0
+        if ((pos.x - 300).abs() <= 20) {
+          expect(vel.x, 0, reason: 'should stop when within arriveDistance');
+        }
+      });
+
+      test('avoidGaps: stops at gap instead of walking off', () {
+        final world = _buildWorld();
+        // Floor with gap at x=240-320
+        final mapEntity = world.spawn();
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        final tiles = <int>[];
+        for (var row = 0; row < 10; row++) {
+          for (var col = 0; col < 12; col++) {
+            if (row == 9) {
+              // Gap at columns 6-7 (x=240-320)
+              tiles.add((col >= 6 && col < 8) ? 0 : 1);
+            } else {
+              tiles.add(0);
+            }
+          }
+        }
+        world.componentsOf<TileMap>().set(
+          mapEntity,
+          TileMap(
+            cols: 12,
+            rows: 10,
+            tileWidth: 40,
+            tileHeight: 40,
+            tiles: tiles,
+            solidTileIds: {1},
+          ),
+        );
+
+        final investigator = _spawnInvestigator(
+          world,
+          x: 100,
+          y: 200,
+          speed: 60,
+          avoidGaps: true,
+        );
+        for (int i = 0; i < 50; i++) world.step(0.016);
+
+        // Emit sound on the other side of the gap
+        world.events.emit(SoundEvent(x: 350, y: 348, loudness: 250));
+        world.step(0.016);
+
+        // Move toward sound
+        for (int i = 0; i < 30; i++) world.step(0.016);
+
+        final pos = world.componentsOf<Position>().get(investigator)!;
+        // Should stop before the gap (x=240)
+        expect(
+          pos.x,
+          lessThan(240),
+          reason: 'should stop before gap when avoidGaps=true',
+        );
+      });
+
+      test('without avoidGaps: walks toward sound even with gap', () {
+        final world = _buildWorld();
+        // Floor with gap at x=240-320
+        final mapEntity = world.spawn();
+        world.componentsOf<Position>().set(mapEntity, Position(0, 0));
+        final tiles = <int>[];
+        for (var row = 0; row < 10; row++) {
+          for (var col = 0; col < 12; col++) {
+            if (row == 9) {
+              tiles.add((col >= 6 && col < 8) ? 0 : 1);
+            } else {
+              tiles.add(0);
+            }
+          }
+        }
+        world.componentsOf<TileMap>().set(
+          mapEntity,
+          TileMap(
+            cols: 12,
+            rows: 10,
+            tileWidth: 40,
+            tileHeight: 40,
+            tiles: tiles,
+            solidTileIds: {1},
+          ),
+        );
+
+        final investigator = _spawnInvestigator(
+          world,
+          x: 100,
+          y: 200,
+          speed: 60,
+          avoidGaps: false,
+        );
+        for (int i = 0; i < 50; i++) world.step(0.016);
+
+        // Emit sound on the other side of the gap
+        world.events.emit(SoundEvent(x: 350, y: 348, loudness: 250));
+        world.step(0.016);
+
+        // Move toward sound
+        for (int i = 0; i < 30; i++) world.step(0.016);
+
+        final pos = world.componentsOf<Position>().get(investigator)!;
+        // Without avoidGaps, may walk into the gap
+        expect(pos.x, greaterThan(100), reason: 'should move toward sound');
+      });
+
+      test('new sound overwrites previous heard sound', () {
+        final world = _buildWorld();
+        _createFloorMap(world, y: 400);
+
+        final investigator = _spawnInvestigator(world, x: 100, y: 200);
+        for (int i = 0; i < 50; i++) world.step(0.016);
+
+        // First sound
+        world.events.emit(
+          SoundEvent(x: 200, y: 388, loudness: 100, tag: 'first'),
+        );
+        world.step(0.016);
+        var aiState = world.componentsOf<AIState>().get(investigator)!;
+        expect(aiState.memory['lastHeardSound']['tag'], 'first');
+
+        // Second sound
+        // Within loudness 100 of the investigator's starting position
+        // (still ~x=100 — the AISystem reaction to the first sound only
+        // sets velocity this tick; actual movement lags a tick behind,
+        // see `World.step`), unlike the first sound's x: 200 case this
+        // isn't right at the edge of audibility.
+        world.events.emit(
+          SoundEvent(x: 150, y: 388, loudness: 100, tag: 'second'),
+        );
+        world.step(0.016);
+        aiState = world.componentsOf<AIState>().get(investigator)!;
+        expect(aiState.memory['lastHeardSound']['tag'], 'second');
+      });
+
+      test('entity without HearingComponent does not react', () {
+        final world = _buildWorld();
+        _createFloorMap(world, y: 400);
+
+        final id = world.spawn();
+        world.componentsOf<Position>().set(id, Position(100, 200));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<Collider>().set(id, Collider(12));
+        world.componentsOf<Gravity>().set(id, Gravity(scale: 1));
+        world.componentsOf<PlatformerController>().set(id, PlatformerController());
+        world.componentsOf<AIState>().set(id, AIState('investigate'));
+        // NO HearingComponent
+
+        world.events.emit(SoundEvent(x: 200, y: 400, loudness: 200));
+        world.step(0.016);
+
+        final aiState = world.componentsOf<AIState>().get(id)!;
+        expect(aiState.memory['lastHeardSound'], isNull);
+      });
+
+      test('entity without AIState does not crash', () {
+        final world = _buildWorld();
+        _createFloorMap(world, y: 400);
+
+        final id = world.spawn();
+        world.componentsOf<Position>().set(id, Position(100, 200));
+        world.componentsOf<Velocity>().set(id, Velocity(0, 0));
+        world.componentsOf<Collider>().set(id, Collider(12));
+        world.componentsOf<Gravity>().set(id, Gravity(scale: 1));
+        world.componentsOf<PlatformerController>().set(id, PlatformerController());
+        world.componentsOf<HearingComponent>().set(id, HearingComponent(range: 300));
+        // NO AIState
+
+        world.events.emit(SoundEvent(x: 200, y: 400, loudness: 200));
+        world.step(0.016);
+
+        // Should not crash, just nothing happens
+      });
+    });
+  });
+}

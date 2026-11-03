@@ -97,7 +97,7 @@ world and replays — the replay disagreed until the systems sorted by id.
 ## Lockstep multiplayer
 
 The pieces fit together with the networking foundation in
-`engine_core/lib/src/net/` (`WorldSnapshot`, `RollbackSession`, `StateSyncServer`):
+`zarvan_core/lib/src/net/` (`WorldSnapshot`, `RollbackSession`, `StateSyncServer`):
 send only *orders* (tiny JSON) with the tick they apply on, run every client at the
 same fixed `dt`, and use `WorldSnapshot` for late joiners and desync recovery.
 A real socket transport is still to be written (see the roadmap).

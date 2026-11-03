@@ -1,0 +1,47 @@
+name: zarvan_studio
+description: >
+  Desktop level editor for games built on the ZARVAN (macOS,
+  Windows, Linux). Edits level data, validates it against the engine's
+  schemas, and play-tests it.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Self-referencing git dependencies, same pattern as the engine packages (see
+  # zarvan_core/pubspec.yaml). Local development uses pubspec_overrides.yaml.
+  path: ^1.9.0
+  zarvan_core:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/zarvan_core
+      ref: main
+  zarvan_schema:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/zarvan_schema
+      ref: main
+  zarvan_flutter:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/zarvan_flutter
+      ref: main
+  zarvan_platformer:
+    git:
+      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      path: packages/zarvan_platformer
+      ref: main
+  file_selector: ^1.1.0
+
+dev_dependencies:
+  crypto: ^3.0.3
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

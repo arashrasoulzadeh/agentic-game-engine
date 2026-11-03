@@ -1,0 +1,98 @@
+import 'package:zarvan_core/zarvan_core.dart';
+import 'package:zarvan_flutter/zarvan_flutter.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  late World world;
+  late EntityId e;
+
+  setUp(() {
+    world = World(width: 100, height: 100);
+    registerCoreComponents(world);
+    registerFlutterComponents(world);
+    world
+      ..addSystem(SpriteStateSystem())
+      ..addSystem(AnimationSystem());
+    e = world.spawn();
+    world.componentsOf<Position>().set(e, Position(0, 0));
+    world.componentsOf<Sprite>().set(e, Sprite('a_idle', '0'));
+    world.componentsOf<AnimationState>().set(
+      e,
+      AnimationState(AnimationClip('idle', ['0', '1'], loop: true)),
+    );
+    world.componentsOf<SpriteStates>().set(
+      e,
+      SpriteStates({
+        'idle': const SpriteClip(atlasId: 'a_idle', frames: 2, loop: true),
+        'attack': const SpriteClip(atlasId: 'a_attack', frames: 3),
+        'death': const SpriteClip(atlasId: 'a_death', frames: 2),
+      }),
+    );
+  });
+
+  test('a requested state swaps the sprite atlas, then returns to rest', () {
+    playSpriteState(world, e, 'attack');
+    world.step(0.01);
+    expect(world.componentsOf<Sprite>().get(e)!.atlasId, 'a_attack');
+    for (var i = 0; i < 6; i++) {
+      world.step(0.1);
+    }
+    expect(world.componentsOf<SpriteStates>().get(e)!.current, 'idle');
+    expect(world.componentsOf<Sprite>().get(e)!.atlasId, 'a_idle');
+  });
+
+  test('hold states play to the last frame and stay there', () {
+    playSpriteState(world, e, 'death');
+    world.step(0.01);
+    expect(spriteStateFinished(world, e, 'death'), isFalse);
+    for (var i = 0; i < 10; i++) {
+      world.step(0.2);
+    }
+    expect(spriteStateFinished(world, e, 'death'), isTrue);
+    expect(world.componentsOf<Sprite>().get(e)!.region, '1');
+
+    playSpriteState(world, e, 'attack');
+    world.step(0.5);
+    expect(world.componentsOf<SpriteStates>().get(e)!.current, 'death');
+  });
+
+  test('unknown states are ignored and the component round-trips JSON', () {
+    playSpriteState(world, e, 'dance');
+    world.step(0.01);
+    expect(world.componentsOf<SpriteStates>().get(e)!.current, 'idle');
+
+    final back = SpriteStates.fromJson(
+      world.componentsOf<SpriteStates>().get(e)!.toJson(),
+    );
+    expect(back.clips['attack']!.atlasId, 'a_attack');
+    expect(back.holdStates, {'death'});
+  });
+
+  test('clip frame events reach the AnimationSystem as cue events', () {
+    final cues = <AnimationFrameEvent>[];
+    world.events.on<AnimationFrameEvent>(cues.add);
+    world.componentsOf<SpriteStates>().get(e)!.clips['attack'] = const SpriteClip(
+      atlasId: 'a_attack',
+      frames: 3,
+      frameEvents: [
+        [],
+        [
+          AnimationEvent('shake', {'magnitude': 1.0}),
+        ],
+        [],
+      ],
+    );
+    playSpriteState(world, e, 'attack');
+    for (var i = 0; i < 6; i++) {
+      world.step(0.1);
+    }
+    expect(cues.map((c) => (c.clipName, c.type, c.frameIndex)), [
+      ('attack', 'shake', 1),
+    ]);
+
+    final back = SpriteClip.fromJson(
+      world.componentsOf<SpriteStates>().get(e)!.clips['attack']!.toJson(),
+    );
+    expect(back.frameEvents![1].single.data['magnitude'], 1.0);
+  });
+}

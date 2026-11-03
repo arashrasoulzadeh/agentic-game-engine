@@ -1,0 +1,83 @@
+name: zarvan_cli
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/zarvan_cli/**'
+      - 'packages/zarvan_strategy/**'
+      - 'packages/zarvan_core/**'
+      - 'packages/zarvan_flutter/**'
+      - 'packages/zarvan_platformer/**'
+      - 'packages/zarvan_idle/**'
+      - 'packages/zarvan_schema/**'
+      - '.github/workflows/zarvan_cli.yml'
+  pull_request:
+    paths:
+      - 'packages/zarvan_cli/**'
+      - 'packages/zarvan_strategy/**'
+      - 'packages/zarvan_core/**'
+      - 'packages/zarvan_flutter/**'
+      - 'packages/zarvan_platformer/**'
+      - 'packages/zarvan_idle/**'
+      - 'packages/zarvan_schema/**'
+      - '.github/workflows/zarvan_cli.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/zarvan_cli
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test
+
+  # docs/studio/design.md 2.6: create a project -> edit it with the real `studio`
+  # subcommands -> validate -> load headlessly, end to end, against the
+  # pushed repo (zarvan create resolves zarvan_core/zarvan_flutter/
+  # zarvan_platformer from the git remote, which is why this needs Flutter,
+  # not just Dart, unlike the `test` job above).
+  e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/zarvan_cli
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: dart pub get
+      - run: dart run tool/e2e_check.dart
+
+  # CLAUDE.md: verify `zarvan create` end to end against the *pushed* repo.
+  # Unit tests with a fake process runner can't catch dependency-resolution or
+  # template compile errors; this generates each starter for real (a git
+  # dependency on this repo's `main`), then analyzes and tests it.
+  templates:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [default_game, topdown_game, strategy_game, idle_game]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: dart pub get
+        working-directory: packages/zarvan_cli
+      - name: Generate ${{ matrix.template }}
+        working-directory: packages/zarvan_cli
+        run: dart run bin/zarvan.dart create template_check --template ${{ matrix.template }} --output-dir ${{ runner.temp }}
+      - name: Analyze the generated project
+        working-directory: ${{ runner.temp }}/template_check
+        run: flutter analyze
+      - name: Test the generated project
+        working-directory: ${{ runner.temp }}/template_check
+        run: flutter test

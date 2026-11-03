@@ -12,7 +12,7 @@ Today, wiring up a character's animation set means hand-editing JSON:
 cropping regions with the sprite-sheet cutter, copying region names
 into `frameRegions`, and computing `frameOffsetsY` by hand (subtract
 frame height from a reference height — see
-[`AnimationClip`'s doc comment](../../packages/engine_flutter/lib/src/rendering/animation.dart)).
+[`AnimationClip`'s doc comment](../../packages/zarvan_flutter/lib/src/rendering/animation.dart)).
 There is no way to say "play this sound effect on frame 4 of the
 attack swing" or "enable the hit-box only between frames 4 and 6"
 without writing bespoke Dart in `_AttackAnimationSystem`-style code
@@ -63,8 +63,8 @@ JSON shape (additive to the existing clip JSON):
 
 ### Firing events: `world.events`
 
-`engine_core` already has a generic pub/sub bus
-([`event_bus.dart`](../../packages/engine_core/lib/src/ecs/event_bus.dart),
+`zarvan_core` already has a generic pub/sub bus
+([`event_bus.dart`](../../packages/zarvan_core/lib/src/ecs/event_bus.dart),
 the same one `DamageEvent`/`DeathEvent` use). `AnimationSystem` is the
 natural place to emit — it already knows exactly when `frameIndex`
 changes:
@@ -81,15 +81,15 @@ if (events != null) {
 
 This keeps `AnimationSystem` genre-general (it doesn't know what
 "sfx" or "hitbox_on" *mean* — it just emits a typed event) and lets
-`engine_platformer`/`engine_flutter`/game code subscribe:
+`zarvan_platformer`/`zarvan_flutter`/game code subscribe:
 
-- A **new, small `engine_flutter` system** (e.g. `AnimationSfxSystem`)
+- A **new, small `zarvan_flutter` system** (e.g. `AnimationSfxSystem`)
   subscribes to `AnimationFrameEvent` where `type == 'sfx'` and calls
   `AudioManager.playSound(data['id'])` (or a positional variant using
   the entity's `Position`, mirroring `playPositionalSound`). This
   finally makes "sfx and their play times on frame index" (your
   phrase) a data-driven feature instead of scene code.
-- `engine_platformer`'s combat code subscribes to `hitbox_on`/
+- `zarvan_platformer`'s combat code subscribes to `hitbox_on`/
   `hitbox_off` to gate `AttackSystem`'s existing melee-range check
   instead of the current fixed `meleeDurationSeconds` window —
   this is a genuine improvement (frame-accurate hit windows instead
@@ -115,7 +115,7 @@ Your note "sizes based on world size that is 1" — `Sprite.scaleX`/
 units), and pivots (`frameOffsetsX`/`frameOffsetsY`) are already
 specified in the *same unscaled atlas-pixel space* as the region
 itself, then scaled by `sprite.scaleX`/`scaleY` at draw time (see
-[`engine_view.dart`](../../packages/engine_flutter/lib/src/rendering/engine_view.dart)'s
+[`engine_view.dart`](../../packages/zarvan_flutter/lib/src/rendering/engine_view.dart)'s
 `anchorPos` computation). So this constraint is already satisfied by
 the current design — worth stating explicitly in the IDE spec so
 nobody re-derives a second scaling scheme.
@@ -153,7 +153,7 @@ as an export format once the IDE's own save/load path is proven.
 
 ## The IDE
 
-A second Flutter desktop app (reuses `engine_flutter`'s own
+A second Flutter desktop app (reuses `zarvan_flutter`'s own
 `AtlasRegistry`/`EngineView` for pixel-accurate live preview — no
 second rendering implementation to keep in sync with the engine).
 
@@ -190,7 +190,7 @@ second rendering implementation to keep in sync with the engine).
    behavior, not just the static timeline preview.
 
 **Scope note:** this is a multi-week build, not a quick add-on — it's
-effectively a second application depending on `engine_flutter`. Doesn't
+effectively a second application depending on `zarvan_flutter`. Doesn't
 need to be built in one pass: the cutter (already exists as an
 Artifact) → clip editor → pivot tool → event track is a natural
 incremental order, each step independently useful before the next

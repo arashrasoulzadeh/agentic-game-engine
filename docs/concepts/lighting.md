@@ -4,8 +4,8 @@ Lighting works by **darkening the whole scene and revealing it again through lig
 brightness below 1, then give entities a `Light2D`; each light reveals the already-drawn scene around
 it. Nothing is recoloured unless you ask for a tint.
 
-Samples are executed by `packages/engine_core/test/doc_examples_day_night_test.dart` and
-`packages/engine_flutter/test/doc_examples_lighting_test.dart`.
+Samples are executed by `packages/zarvan_core/test/doc_examples_day_night_test.dart` and
+`packages/zarvan_flutter/test/doc_examples_lighting_test.dart`.
 
 ## Ambient darkness
 
@@ -79,7 +79,7 @@ a stationary light. With it off the radius stays put and `cacheShadowGeometry` c
 
 ## Day and night
 
-`DayNightCycle` (in `engine_core`, since a clock is not rendering) turns time of day and weather into an
+`DayNightCycle` (in `zarvan_core`, since a clock is not rendering) turns time of day and weather into an
 ambient brightness and colour:
 
 ```dart

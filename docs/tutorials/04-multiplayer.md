@@ -6,7 +6,7 @@ for the networking, so you can run all three in terminals.
 
 **Prerequisites:** [Tutorial 2](02-turn-based-strategy.md) (the game) and the
 [networking concepts](../concepts/networking.md). The code below is exercised by
-`packages/engine_core/test/websocket_transport_test.dart`.
+`packages/zarvan_core/test/websocket_transport_test.dart`.
 
 ## What runs where
 
@@ -30,8 +30,8 @@ sequenceDiagram
 ```dart
 import 'dart:async';
 
-import 'package:engine_core/engine_core.dart';
-import 'package:engine_core/engine_core_io.dart';
+import 'package:zarvan_core/zarvan_core.dart';
+import 'package:zarvan_core/zarvan_core_io.dart';
 
 Future<void> main() async {
   final world = World(width: 12, height: 12);
@@ -69,8 +69,8 @@ assigns the next free team. A third connection is told `full` and closed.
 ## Step 2 — a client
 
 ```dart
-import 'package:engine_core/engine_core.dart';
-import 'package:engine_core/engine_core_io.dart';
+import 'package:zarvan_core/zarvan_core.dart';
+import 'package:zarvan_core/zarvan_core_io.dart';
 
 Future<void> main() async {
   final world = World(width: 12, height: 12);

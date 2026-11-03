@@ -29,8 +29,8 @@ mkdocs build --strict   # what CI runs: fails on broken links
 ## Code samples must be real
 
 - Turn-based samples are executed by
-  `packages/engine_strategy/test/doc_examples_test.dart` and
-  `packages/engine_core/test/agent_turn_based_test.dart`. When you change a
+  `packages/zarvan_strategy/test/doc_examples_test.dart` and
+  `packages/zarvan_core/test/agent_turn_based_test.dart`. When you change a
   sample, change the test in the same commit (and vice versa).
 - For other samples, check the signature against the source before committing.
 - Never use `const` with `Position`, `Velocity` or `Collider` — their
@@ -38,10 +38,10 @@ mkdocs build --strict   # what CI runs: fails on broken links
 
 ## Regenerating the component reference
 
-`docs/reference/components.md` is generated from `engine_schema`:
+`docs/reference/components.md` is generated from `zarvan_schema`:
 
 ```bash
-cd packages/engine_schema
+cd packages/zarvan_schema
 dart run tool/gen_component_docs.dart > ../../docs/reference/components.md
 ```
 
@@ -51,8 +51,8 @@ A test fails if the committed file is stale.
 JSON-RPC method). After adding or changing an operation:
 
 ```bash
-cd packages/engine_api
+cd packages/zarvan_api
 dart run tool/gen_api_docs.dart > ../../docs/reference/operations.md
 ```
 
-`packages/engine_api/test/docs_test.dart` fails when the committed page is stale.
+`packages/zarvan_api/test/docs_test.dart` fails when the committed page is stale.

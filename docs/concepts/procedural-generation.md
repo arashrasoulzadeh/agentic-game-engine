@@ -1,10 +1,10 @@
 # Procedural generation
 
-`engine_core` can generate tile levels from a **seed**. The same seed always gives the same
+`zarvan_core` can generate tile levels from a **seed**. The same seed always gives the same
 level, on every platform, so a seed is a complete, shareable description of a level (and a
 fair thing to put in a save file or a multiplayer handshake). The generators are in
 `physics/procedural_generation.dart`; the samples here are checked by
-`packages/engine_core/test/procedural_generation_test.dart`.
+`packages/zarvan_core/test/procedural_generation_test.dart`.
 
 Tile ids used by BSP and cellular automata: **`1` is floor, `2` is wall**. `ProceduralLevelGenerator.toTileMap`
 marks `2` solid.

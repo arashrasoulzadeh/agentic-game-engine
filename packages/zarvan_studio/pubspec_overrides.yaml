@@ -1,0 +1,11 @@
+# Local monorepo development only: resolve the engine packages from this
+# checkout. Ignored when zarvan_studio is built from a git checkout elsewhere.
+dependency_overrides:
+  zarvan_core:
+    path: ../zarvan_core
+  zarvan_schema:
+    path: ../zarvan_schema
+  zarvan_flutter:
+    path: ../zarvan_flutter
+  zarvan_platformer:
+    path: ../zarvan_platformer

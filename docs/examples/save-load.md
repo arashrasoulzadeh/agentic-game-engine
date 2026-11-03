@@ -1,6 +1,6 @@
 # Recipe: save/load game state
 
-`SaveGame` (`packages/engine_flutter/lib/src/logic/save_game.dart`)
+`SaveGame` (`packages/zarvan_flutter/lib/src/logic/save_game.dart`)
 persists a full `World.toJson()` snapshot via `SharedPreferences`, under
 a named slot, with schema versioning.
 
@@ -58,6 +58,6 @@ await SaveGame.deleteSave(slot: 'slot2');
 final slots = await SaveGame.listSlots();    // List<String>
 ```
 
-`SaveSlotMenuScene` (`engine_flutter`) is a ready-made UI scene for a
+`SaveSlotMenuScene` (`zarvan_flutter`) is a ready-made UI scene for a
 multi-slot save/load menu built on this API — see
-`packages/engine_flutter/README.md`.
+`packages/zarvan_flutter/README.md`.

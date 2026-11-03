@@ -1,21 +1,21 @@
 # Idle games
 
 The idle / incremental genre layer is **shipped**: create a game with
-`game_agent create my_game --template idle_game`, edit `assets/idle_game.json`,
-and tune pacing with `game_agent idle simulate` / `idle validate`. Genre UI and
-session code live in `engine_idle`; numbers, offline catch-up, economy rules and
-the balance simulator live in `engine_core` (`engine_core_idle.dart`) so CLI and
+`zarvan create my_game --template idle_game`, edit `assets/idle_game.json`,
+and tune pacing with `zarvan idle simulate` / `idle validate`. Genre UI and
+session code live in `zarvan_idle`; numbers, offline catch-up, economy rules and
+the balance simulator live in `zarvan_core` (`zarvan_core_idle.dart`) so CLI and
 agents can use them without Flutter.
 
-Samples are executed by `packages/engine_core/test/doc_examples_idle_test.dart` and
-`packages/engine_idle/test/doc_examples_test.dart`. Remaining idle work (device bench,
+Samples are executed by `packages/zarvan_core/test/doc_examples_idle_test.dart` and
+`packages/zarvan_idle/test/doc_examples_test.dart`. Remaining idle work (device bench,
 cloud-save walkthrough, localisation, research UI, …) lives under Idle polish in
 [`TODO.md`](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md).
 
 ## Creating a new idle game
 
 ```bash
-game_agent create bakery --template idle_game
+zarvan create bakery --template idle_game
 cd bakery && flutter run
 ```
 
@@ -49,7 +49,7 @@ common path; optional blocks are noted.
 | Season pass | `"seasonPass"` + `SeasonPassPanel` / `claimSeasonPass` | yes |
 | Localised names | `nameKey` + `StringTable` / `assets/i18n/en.json` | yes |
 | Definition JSON Schema | `schema.idle_game` / `idleGameDefinitionJsonSchema` | yes |
-| Balance check | `game_agent idle simulate` / `idle.validate` | CLI / agent |
+| Balance check | `zarvan idle simulate` / `idle.validate` | CLI / agent |
 | Headless agent ops | `idle.*` on MCP/REST/CLI | yes |
 
 Automation is on by default in the template (`"autoBuyer"` + `AutoBuySystem()` after
@@ -129,7 +129,7 @@ grants nothing. `OfflineProgress.untilCap` tells you when the cap will be reache
 
 ## Describing a whole game as data
 
-`engine_idle` loads an idle game from one JSON file: resources, **generators** (things you buy copies of that
+`zarvan_idle` loads an idle game from one JSON file: resources, **generators** (things you buy copies of that
 make resources every second), **upgrades** (one-time multipliers), **achievements** and a **prestige** rule.
 
 ```json
@@ -156,7 +156,7 @@ buyGenerator(world, game.wallet, cursor, count: null);     // as many as afforda
 
 `validateIdleDefinition(json)` returns the problems without throwing, each with its path
 (`generators[1].cost.growth must be a number >= 1`), so an editor or an agent can fix them all at once. The full
-example is `packages/engine_idle/example/cookie_clicker.json`.
+example is `packages/zarvan_idle/example/cookie_clicker.json`.
 
 - **Cost curves:** `geometric` (`base * growth^owned`, growth 1.07-1.15 is typical) and `linear`. Buying ×10 or
   "max" uses closed forms, so a budget of 1e200 is answered instantly.
@@ -291,7 +291,7 @@ The engine makes a deliberate, simple choice: **a single-player idle game trusts
 
 ## Wave combat (portrait auto-fighter)
 
-`engine_idle` also carries the genre's combat layer, which sits on `engine_platformer` and needs no Flutter code in
+`zarvan_idle` also carries the genre's combat layer, which sits on `zarvan_platformer` and needs no Flutter code in
 the game. `WaveCombatGame.load(levelAsset: ..., combat: ...)` builds the whole game (engine config + level JSON, letterboxed
 and scaled to the window), so a game's `main` is `runGame(await WaveCombatGame.load(...))`. Its scene,
 `WaveCombatScene(level: ..., config: ...)`, is a whole portrait run: the hero walks (scenery scrolling in
@@ -316,7 +316,7 @@ effect and parallax machinery lives in [rendering](rendering.md#animation).
 
 ## Tuning without playing
 
-`simulateIdle` (also `game_agent idle simulate` and the MCP/REST `idle.simulate` op) plays a definition with a
+`simulateIdle` (also `zarvan idle simulate` and the MCP/REST `idle.simulate` op) plays a definition with a
 deterministic greedy strategy (buy the best payback, wait just long enough) and reports when income reaches each
 power of ten, when achievements and prestiges happen, and why a design stalls. When `prestigeAt` is set it
 prestiges **every** layer that meets the threshold (higher layers first, so a ready ascension is not starved by
@@ -325,11 +325,11 @@ run). Incomplete challenges are started in definition order as soon as none is a
 skips them):
 
 ```bash
-game_agent idle validate path/to/bakery/assets/idle_game.json
-game_agent idle simulate path/to/bakery/assets/idle_game.json --days 3 --prestige-at 1.0
+zarvan idle validate path/to/bakery/assets/idle_game.json
+zarvan idle simulate path/to/bakery/assets/idle_game.json --days 3 --prestige-at 1.0
 ```
 
 From an engine checkout you can also run
 `dart run tool/simulate.dart example/cookie_clicker.json --days 3 --prestige-at 1.0` inside
-`packages/engine_idle`. Use it to check that the early game is not a wall and that prestige pays at a sensible
+`packages/zarvan_idle`. Use it to check that the early game is not a wall and that prestige pays at a sensible
 time; it is a fair baseline, not an optimal player.

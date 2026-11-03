@@ -1,0 +1,33 @@
+name: zarvan_api
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/zarvan_api/**'
+      - 'packages/zarvan_core/**'
+      - 'packages/zarvan_schema/**'
+      - 'packages/zarvan_cli/**'
+      - 'docs/reference/operations.md'
+      - '.github/workflows/zarvan_api.yml'
+  pull_request:
+    paths:
+      - 'packages/zarvan_api/**'
+      - 'packages/zarvan_core/**'
+      - 'packages/zarvan_schema/**'
+      - 'packages/zarvan_cli/**'
+      - 'docs/reference/operations.md'
+      - '.github/workflows/zarvan_api.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/zarvan_api
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test

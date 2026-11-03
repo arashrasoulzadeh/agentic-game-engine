@@ -1,15 +1,15 @@
-# ADR 0002: The command model lives in engine_core
+# ADR 0002: The command model lives in zarvan_core
 
 Status: accepted (docs/studio/design.md decision D2, default recommendation)
 
 ## Context
 
 Every studio edit is an `EditCommand` with apply/revert. Put the command types
-in `studio` (Flutter UI) or in `engine_core` (plain Dart)?
+in `studio` (Flutter UI) or in `zarvan_core` (plain Dart)?
 
 ## Decision
 
-In `engine_core/lib/src/command/`.
+In `zarvan_core/lib/src/command/`.
 
 ## Why
 
@@ -17,7 +17,7 @@ In `engine_core/lib/src/command/`.
   lived in the Flutter app, an agent would have to drive the UI or duplicate
   the logic, which is the second-class treatment the PRD rules out (2.10).
 - The commands operate on `LevelDocument`, which is plain data. Nothing in
-  them needs Flutter, so `engine_core` is the right home under the DAG rule.
+  them needs Flutter, so `zarvan_core` is the right home under the DAG rule.
 - Undo correctness is then testable with `dart test`, with no widget tree.
 
 ## Consequences

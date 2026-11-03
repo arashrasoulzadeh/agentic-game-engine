@@ -3,7 +3,7 @@
 The shortest path from nothing to a running simulation, and the small set of
 calls you will use every day. Everything here is plain `World` API underneath,
 so you can always drop down to [the ECS](ecs.md) when you need to. The code on
-this page is exercised by `packages/engine_core/test/doc_examples_authoring_test.dart`.
+this page is exercised by `packages/zarvan_core/test/doc_examples_authoring_test.dart`.
 
 ## One call to start
 
@@ -130,7 +130,7 @@ expect(t.component<Position>(ball).x, closeTo(60, 1));
 expectGolden('test/golden/ball.json', t.snapshotText());
 ```
 
-`import 'package:engine_core/engine_core_testing.dart'`. `tickUntil` waits for a
+`import 'package:zarvan_core/zarvan_core_testing.dart'`. `tickUntil` waits for a
 condition and fails with `world.debug()` instead of hanging; `expectGolden`
 creates a missing golden and, under `UPDATE_GOLDENS=1`, refreshes it.
 
@@ -153,10 +153,10 @@ are deliberately not operations:
 | `world.find`, `Name`, `PrefabRef`, `Level.loadInto(prefabs:, defaults:)` | ordinary components and level options: `name` in level JSON, `prefabRef` via `level.set_field` / `world.patch` |
 | `setBehavior`, `runTree`, `Steer`, `StateMachineBuilder`, `registerCondition` | code that defines behavior; the data they point at (`aiState`, trees as JSON) is editable |
 | `SessionRecorder` / `SessionReplayer`, `InputDriver`, `LevelScene` | code that runs or tests the game |
-| `validateSystemOrder`, `debug()` | needs your game's code, so assert it in a test with `GameTester` (`engine_core_testing`); `game_agent project doctor` checks content and dependency wiring |
+| `validateSystemOrder`, `debug()` | needs your game's code, so assert it in a test with `GameTester` (`zarvan_core_testing`); `zarvan project doctor` checks content and dependency wiring |
 
 ## Smaller imports
 
-`package:engine_core/engine_core_essentials.dart` exports just the daily-use set
+`package:zarvan_core/zarvan_core_essentials.dart` exports just the daily-use set
 (world, components, levels, prefabs, events, queries, `GameBuilder`) so
 autocomplete stays readable. It is the same types as the full barrel, so mix freely.

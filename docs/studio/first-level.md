@@ -20,13 +20,13 @@ In your game project, create `assets/levels/level1.json` containing:
 **Command line:**
 
 ```bash
-game_agent studio add-entity assets/levels/level1.json --name ground --component position --component tileMap
-game_agent studio set-field assets/levels/level1.json --entity ground --component tileMap --field cols --value 8
-game_agent studio set-field assets/levels/level1.json --entity ground --component tileMap --field rows --value 3
-game_agent studio set-field assets/levels/level1.json --entity ground --component tileMap --field tileWidth --value 16
-game_agent studio set-field assets/levels/level1.json --entity ground --component tileMap --field tileHeight --value 16
-game_agent studio set-field assets/levels/level1.json --entity ground --component tileMap --field solidTileIds --value '[1]'
-game_agent studio set-field assets/levels/level1.json --entity ground --component tileMap --field tiles \
+zarvan studio add-entity assets/levels/level1.json --name ground --component position --component tileMap
+zarvan studio set-field assets/levels/level1.json --entity ground --component tileMap --field cols --value 8
+zarvan studio set-field assets/levels/level1.json --entity ground --component tileMap --field rows --value 3
+zarvan studio set-field assets/levels/level1.json --entity ground --component tileMap --field tileWidth --value 16
+zarvan studio set-field assets/levels/level1.json --entity ground --component tileMap --field tileHeight --value 16
+zarvan studio set-field assets/levels/level1.json --entity ground --component tileMap --field solidTileIds --value '[1]'
+zarvan studio set-field assets/levels/level1.json --entity ground --component tileMap --field tiles \
   --value '[0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 1,1,1,1,1,1,1,1]'
 ```
 
@@ -39,7 +39,7 @@ game_agent studio set-field assets/levels/level1.json --entity ground --componen
 **Command line:**
 
 ```bash
-game_agent studio paint-tile assets/levels/level1.json --entity ground --col 3 --row 1 --tile-id 1
+zarvan studio paint-tile assets/levels/level1.json --entity ground --col 3 --row 1 --tile-id 1
 ```
 
 ## 4. The player
@@ -50,15 +50,15 @@ game_agent studio paint-tile assets/levels/level1.json --entity ground --col 3 -
 **Command line:**
 
 ```bash
-game_agent studio add-entity assets/levels/level1.json --name player --component position
-game_agent studio set-field assets/levels/level1.json --entity player --component position --field x --value 24
-game_agent studio set-field assets/levels/level1.json --entity player --component position --field y --value 16
+zarvan studio add-entity assets/levels/level1.json --name player --component position
+zarvan studio set-field assets/levels/level1.json --entity player --component position --field x --value 24
+zarvan studio set-field assets/levels/level1.json --entity player --component position --field y --value 16
 ```
 
 ## 5. Check it
 
 ```bash
-game_agent studio validate .
+zarvan studio validate .
 ```
 
 It exits 0 when every level in the project is valid, and otherwise names the entity, component and field that

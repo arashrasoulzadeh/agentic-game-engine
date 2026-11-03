@@ -5,8 +5,8 @@ saves and announces them; `SettingsMenuScene` draws a menu bound to them. **The 
 presents the options. Applying them to the game is your code's job** - see
 [What the engine applies](#what-the-engine-applies).
 
-Samples are executed by `packages/engine_core/test/doc_examples_player_options_test.dart` and
-`packages/engine_flutter/test/doc_examples_settings_test.dart`.
+Samples are executed by `packages/zarvan_core/test/doc_examples_player_options_test.dart` and
+`packages/zarvan_flutter/test/doc_examples_settings_test.dart`.
 
 ## The options
 
@@ -42,7 +42,7 @@ options.getOption('masterVolume');                        // 0.4
 
 ## Persistence
 
-Storage is an interface (`PlayerOptionsStorage`: `load`, `save`, `clear`). `engine_flutter` provides
+Storage is an interface (`PlayerOptionsStorage`: `load`, `save`, `clear`). `zarvan_flutter` provides
 `SharedPreferencesPlayerOptionsStorage`, and `createPlayerOptionsManager()` builds a manager on it and
 loads it:
 

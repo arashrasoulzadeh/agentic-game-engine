@@ -2,7 +2,7 @@
 
 Both are **data**: JSON that an `AIState` component carries, run each step by a system.
 The [studio](../studio/user-guide.md#graphs) edits and exports the same JSON. The samples
-below are executed by `packages/engine_core/test/doc_examples_ai_test.dart`.
+below are executed by `packages/zarvan_core/test/doc_examples_ai_test.dart`.
 
 ## Behaviors are the leaves
 
@@ -128,7 +128,7 @@ world.events.emit(const SoundEvent(x: 150, y: 100, loudness: 120, tag: 'footstep
 - It records the *latest* heard sound only, overwriting the last. Clear it when handled.
 - Emit `SoundEvent` from your gameplay code (a gunshot, a thrown rock, a footstep system).
 
-`InvestigateBehavior` (in `engine_platformer`) walks toward `lastHeardSound` along x, avoids ledges, and
+`InvestigateBehavior` (in `zarvan_platformer`) walks toward `lastHeardSound` along x, avoids ledges, and
 clears the memory on arrival. Its `timeout` parameter is accepted but **not implemented yet**. Use it as a
 leaf in a tree or a state in a machine.
 
@@ -144,4 +144,4 @@ with `requireLineOfSight: true` only flees what it can see.
   [turn-based](turn-based-strategy.md) and [real-time](realtime-strategy.md) guides.
 - **Off the main isolate:** `PathfindingJob` runs four-way A* over a tile grid on a worker; see
   [Performance](performance.md#background-work-jobsystem).
-- Platformer-aware paths that know about jumps and ladders live in `engine_platformer`'s pathfinding.
+- Platformer-aware paths that know about jumps and ladders live in `zarvan_platformer`'s pathfinding.

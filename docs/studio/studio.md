@@ -1,6 +1,6 @@
 # Studio: open work and checks
 
-Open items for `packages/engine_studio`. Design and delivered phases:
+Open items for `packages/zarvan_studio`. Design and delivered phases:
 [design.md](design.md). Delete an item once shipped; what shipped goes in
 [CHANGELOG.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CHANGELOG.md).
 

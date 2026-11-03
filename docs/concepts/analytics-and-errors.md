@@ -3,10 +3,10 @@
 Two separate, optional systems. Neither does anything until you register a **provider** or
 **reporter**, and nothing is sent anywhere by default.
 
-Samples are executed by `packages/engine_flutter/test/doc_examples_error_reporting_test.dart` and
-`packages/engine_core/test/analytics_test.dart`.
+Samples are executed by `packages/zarvan_flutter/test/doc_examples_error_reporting_test.dart` and
+`packages/zarvan_core/test/analytics_test.dart`.
 
-## Analytics (`engine_core`)
+## Analytics (`zarvan_core`)
 
 `AnalyticsManager.instance` fans events out to your `AnalyticsProvider`s.
 
@@ -45,7 +45,7 @@ Consent defaults to **on**, since analytics only acts once you register a provid
 ask first calls `setConsent(false)` before `initialize` and `setConsent(true)` when the player
 agrees. Keep personal data out of event payloads and `userId`; payloads go to every provider.
 
-## Error reporting (`engine_flutter`)
+## Error reporting (`zarvan_flutter`)
 
 `ErrorReportingManager.instance` sends errors to your `ErrorReporter`s. Bundled reporters:
 `ConsoleErrorReporter`, `NoOpErrorReporter`, `SentryErrorReporter` (posts to Sentry's HTTP API),

@@ -100,9 +100,9 @@ endTurn(world);
 ## CLI
 
 ```bash
-game_agent create my_game --template strategy_game
-game_agent upgrade --ref main
-game_agent lint assets/levels/main.level.json --playable
+zarvan create my_game --template strategy_game
+zarvan upgrade --ref main
+zarvan lint assets/levels/main.level.json --playable
 ```
 
 → [CLI reference](cli.md)

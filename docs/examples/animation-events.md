@@ -70,8 +70,8 @@ Agents/CLI can edit the same clip JSON without Flutter, and studio opens
 clip-shaped JSON in `ClipEditorScreen` automatically:
 
 ```bash
-game_agent animation set_event assets/anims/attack.json --frame 2 --type sfx --data '{"id":"swing"}' --apply
-game_agent animation set_pivot assets/anims/attack.json --frame 1 --offsetY -4 --apply
+zarvan animation set_event assets/anims/attack.json --frame 2 --type sfx --data '{"id":"swing"}' --apply
+zarvan animation set_pivot assets/anims/attack.json --frame 1 --offsetY -4 --apply
 ```
 
 See the proposal at

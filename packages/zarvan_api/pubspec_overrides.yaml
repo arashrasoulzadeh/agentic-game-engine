@@ -1,0 +1,6 @@
+# Local monorepo development only; ignored when zarvan_api is fetched as a git dependency.
+dependency_overrides:
+  zarvan_core:
+    path: ../zarvan_core
+  zarvan_schema:
+    path: ../zarvan_schema

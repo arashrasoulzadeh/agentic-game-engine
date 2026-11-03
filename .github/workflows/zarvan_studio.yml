@@ -1,0 +1,59 @@
+name: zarvan_studio
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/zarvan_studio/**'
+      - 'packages/zarvan_core/**'
+      - 'packages/zarvan_flutter/**'
+      - 'packages/zarvan_platformer/**'
+      - 'packages/zarvan_schema/**'
+      - '.github/workflows/zarvan_studio.yml'
+  pull_request:
+    paths:
+      - 'packages/zarvan_studio/**'
+      - 'packages/zarvan_core/**'
+      - 'packages/zarvan_flutter/**'
+      - 'packages/zarvan_platformer/**'
+      - 'packages/zarvan_schema/**'
+      - '.github/workflows/zarvan_studio.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/zarvan_studio
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
+      # Packing smoke (stand-in trees): AppDir archive + Windows zip — no
+      # flutter desktop build or WiX/appimagetool required on ubuntu CI.
+      - run: bash tool/verify_appimage_pack.sh
+      - run: bash tool/verify_windows_pack.sh
+
+  # The desktop target; the LSP-backed IDE (Phase 3B) and play-test both
+  # launch real subprocesses (the Dart language server, `flutter run`), so
+  # this also catches build regressions `flutter test` alone would not.
+  build-macos:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: packages/zarvan_studio
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter config --enable-macos-desktop
+      - run: flutter pub get
+      - run: flutter build macos --debug
+      # Packing step only (stand-in .app): catches diskutil/hdiutil regressions
+      # without needing a release build or signing.
+      - run: bash tool/verify_dmg_pack.sh

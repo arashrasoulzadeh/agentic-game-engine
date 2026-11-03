@@ -1,7 +1,7 @@
 # Pickups, doors, patrols and waves
 
 Four small recipes built only from core APIs. Each is exercised by
-`packages/engine_core/test/doc_examples_pickups_test.dart`.
+`packages/zarvan_core/test/doc_examples_pickups_test.dart`.
 
 ## Coin pickup
 

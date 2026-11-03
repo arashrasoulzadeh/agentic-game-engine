@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *packages/*/lib/*.dart) jq -n --arg f \"$f\" '{systemMessage: (\"Source changed: \" + $f + \" — check whether the corresponding package README.md (engine_core/README.md, engine_flutter/README.md, engine_cli/README.md) or the root CLAUDE.md needs updating to match.\")}' ;; esac",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *packages/*/lib/*.dart) jq -n --arg f \"$f\" '{systemMessage: (\"Source changed: \" + $f + \" — check whether the corresponding package README.md (zarvan_core/README.md, zarvan_flutter/README.md, zarvan_cli/README.md) or the root CLAUDE.md needs updating to match.\")}' ;; esac",
             "timeout": 10
           }
         ]

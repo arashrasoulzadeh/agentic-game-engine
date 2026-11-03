@@ -6,14 +6,14 @@ enemy, one collectible, a health bar — using only public API. Follow
 `my_game`; this tutorial edits `lib/main.dart`.
 
 Every snippet below is checked against current signatures in
-`packages/engine_core/lib/src/` and `packages/engine_platformer/lib/src/`.
+`packages/zarvan_core/lib/src/` and `packages/zarvan_platformer/lib/src/`.
 
 ## Step 1 — a `Game` and a `Scene`
 
 ```dart
-import 'package:engine_core/engine_core.dart';
-import 'package:engine_flutter/engine_flutter.dart' hide Text;
-import 'package:engine_platformer/engine_platformer.dart';
+import 'package:zarvan_core/zarvan_core.dart';
+import 'package:zarvan_flutter/zarvan_flutter.dart' hide Text;
+import 'package:zarvan_platformer/zarvan_platformer.dart';
 
 class MyGame extends Game {
   final input = InputController();
@@ -92,7 +92,7 @@ world.setComponent(groundEntity, tileMap);
 `TileMap` also supports `oneWayTileIds` (platforms you can jump up
 through), `slopeUpLeftTileIds`/`slopeUpRightTileIds` (ramps), and
 ladder/conveyor/friction tile sets — see
-`packages/engine_core/README.md`'s `TileMap` section before authoring a
+`packages/zarvan_core/README.md`'s `TileMap` section before authoring a
 real level; the sketch above only uses the minimum for one solid floor.
 
 ## Step 4 — one patrol enemy
@@ -145,7 +145,7 @@ dealPickupOnTouch(world, {coinId}, 'coin');
 
 Give the enemy a `Weapon` or let the player attack it — see
 [concepts/platformer.md](../concepts/platformer.md)'s Combat section
-and `packages/engine_platformer/README.md` for `Weapon`/`AttackSystem`
+and `packages/zarvan_platformer/README.md` for `Weapon`/`AttackSystem`
 setup; it's deliberately left out of this base tutorial to keep it
 focused, but every helper it needs (`damageEntity`,
 `installProjectileDamage`) is already covered there.

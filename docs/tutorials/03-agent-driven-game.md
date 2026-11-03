@@ -10,7 +10,7 @@ page (or [Tutorial 2](02-turn-based-strategy.md)). No Flutter needed — this
 tutorial is pure Dart.
 
 The code is executed by
-`packages/engine_core/test/agent_turn_based_test.dart`.
+`packages/zarvan_core/test/agent_turn_based_test.dart`.
 
 ## Why this matters
 
