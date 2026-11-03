@@ -473,7 +473,10 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     await scene.populate(world, _sceneController, _gameState);
 
     progress.report(0.5, 'Loading assets');
+    scene.assetProgressSink = (fraction, label) =>
+        progress.report(0.5 + 0.35 * fraction.clamp(0.0, 1.0), label);
     final atlasRegistry = await scene.loadAssets();
+    scene.assetProgressSink = null;
     progress.report(0.85, 'Loading assets');
     await _registerPackedAtlas(atlasRegistry);
     final camera = scene.createCamera(world)

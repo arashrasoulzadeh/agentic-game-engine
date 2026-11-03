@@ -14,6 +14,21 @@ class _EmptyScene extends Scene {
   ) async {}
 }
 
+class _ReportingScene extends _SlowLoadingScene {
+  @override
+  Future<AtlasRegistry> loadAssets() async {
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    reportAssetProgress(1, 2, 'Loading hero');
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    return AtlasRegistry();
+  }
+}
+
+class _ReportingGame extends _TestGame {
+  @override
+  Scene createInitialScene() => _ReportingScene();
+}
+
 class _SlowLoadingScene extends Scene {
   @override
   Future<void> populate(
@@ -387,6 +402,23 @@ void main() {
       await tester.pump();
       expect(find.byType(EngineView), findsOneWidget);
       expect(find.byType(SplashScreen), findsNothing);
+      expect(game.loadingProgress.fraction, 1);
+    },
+  );
+
+  testWidgets(
+    'a scene reporting asset progress moves the splash bar mid-load',
+    (tester) async {
+      final game = _ReportingGame();
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 25));
+      // Halfway through the assets: 0.5 + 0.35 * (1/2).
+      expect(game.loadingProgress.fraction, closeTo(0.675, 1e-9));
+      expect(game.loadingProgress.label, 'Loading hero');
+
+      await tester.pump(const Duration(milliseconds: 40));
+      await tester.pump();
       expect(game.loadingProgress.fraction, 1);
     },
   );

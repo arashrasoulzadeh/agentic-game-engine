@@ -249,6 +249,17 @@ class WaveCombatScene extends Scene {
   @override
   Future<AtlasRegistry> loadAssets() async {
     final registry = AtlasRegistry();
+    final ui = config.ui;
+    final total =
+        level.parallax.length +
+        _meta.length * FighterMeta.states.length +
+        _fxStems.length +
+        (ui.barsStem != null ? 1 : 0) +
+        (ui.pathNodesStem != null ? 1 : 0) +
+        (ui.pathLineImage != null ? 1 : 0) +
+        (ui.captionBackdropImage != null ? 1 : 0);
+    var done = 0;
+    void loaded() => reportAssetProgress(++done, total);
     for (final layer in level.parallax) {
       registry.register(
         layer.atlasId(config.backgroundPrefix),
@@ -256,6 +267,7 @@ class WaveCombatScene extends Scene {
           '${config.backgroundDir}/${layer.name}.png',
         ),
       );
+      loaded();
     }
     for (final meta in _meta.values) {
       for (final state in FighterMeta.states) {
@@ -266,6 +278,7 @@ class WaveCombatScene extends Scene {
           sheet.pivots,
           cell: sheet.sidecar.cell.toDouble(),
         );
+        loaded();
       }
     }
     for (final e in _fxStems.entries) {
@@ -273,28 +286,32 @@ class WaveCombatScene extends Scene {
         e.key,
         (await loadSpriteSheet(e.value, measurePivots: false)).atlas,
       );
+      loaded();
     }
-    final ui = config.ui;
     if (ui.barsStem != null) {
       registry.register(_uiBars, await BarsArt.load(ui.barsStem!));
+      loaded();
     }
     if (ui.pathNodesStem != null) {
       registry.register(
         _uiNodes,
         (await loadSpriteSheet(ui.pathNodesStem!, measurePivots: false)).atlas,
       );
+      loaded();
     }
     if (ui.pathLineImage != null) {
       registry.register(
         _uiLine,
         await SpriteAtlas.loadFullImageFromAssets(ui.pathLineImage!),
       );
+      loaded();
     }
     if (ui.captionBackdropImage != null) {
       registry.register(
         _uiScroll,
         await SpriteAtlas.loadFullImageFromAssets(ui.captionBackdropImage!),
       );
+      loaded();
     }
     return registry;
   }

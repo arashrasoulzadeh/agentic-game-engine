@@ -43,6 +43,22 @@ abstract class Scene {
   /// sprites yet.
   Future<AtlasRegistry> loadAssets() async => AtlasRegistry();
 
+  /// Wired by `GameRunner` while [loadAssets] runs so the splash bar can fill
+  /// per asset. Scenes call [reportAssetProgress]; they never set this.
+  void Function(double fraction, String label)? assetProgressSink;
+
+  /// Tells the splash that [done] of [total] assets are loaded. Call it from
+  /// [loadAssets] after each asset; a scene that never calls it still works,
+  /// the bar just holds until loading ends.
+  void reportAssetProgress(
+    int done,
+    int total, [
+    String label = 'Loading assets',
+  ]) {
+    if (total <= 0) return;
+    assetProgressSink?.call(done / total, label);
+  }
+
   /// Defaults to a camera centered on the world. Override to start
   /// somewhere else or follow a specific entity from frame one.
   Camera createCamera(World world) =>
