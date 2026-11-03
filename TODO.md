@@ -16,8 +16,8 @@ Per-area lists live next to what they track: studio in
 `mobarez/mobarez_todo.md` and `zahaak/zahaak_todo.md` (both folders are gitignored,
 so those files exist only on the owner's machine).
 
-Sections: [Performance](#performance) ·
-[Template health](#template-health) · [Docs](#docs) · [Release](#release) ·
+Sections: [Performance](#performance) · [Template health](#template-health) ·
+[Docs](#docs) · [Release](#release) ·
 [Parked decisions](#parked-decisions)
 
 ## Performance
@@ -35,10 +35,9 @@ Sections: [Performance](#performance) ·
 
 ## Template health
 
-- [ ] The templates job now also runs on `engine_core`/`flutter`/`platformer`/`idle`/`schema`
-      changes (it used to run only for CLI and strategy edits, so engine API breaks went
-      unnoticed) and can be started by hand. `game_agent create` needs pub.dev, so it
-      cannot run in the offline dev sandbox; confirm the job is green on `main`.
+- [ ] Confirm the `engine_cli` workflow's `templates` jobs (all four starters, generated
+      from `main`) are green after the 2026-11-03 engine changes. `game_agent create`
+      needs pub.dev, so it cannot run in the offline dev sandbox; CI is the check.
 
 ## Docs
 
