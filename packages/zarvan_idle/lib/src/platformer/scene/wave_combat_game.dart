@@ -17,6 +17,7 @@ class WaveCombatGame extends Game {
     required this.config,
     required this.level,
     required this.combat,
+    this.splash = const SplashConfig(),
   });
 
   @override
@@ -24,12 +25,17 @@ class WaveCombatGame extends Game {
   final LevelData level;
   final WaveCombatConfig combat;
 
+  /// Splash artwork; the default shows the ZARVAN logo.
+  @override
+  final SplashConfig splash;
+
   /// Loads the engine config (`assets/game_config.json` by default) and the
   /// level JSON, then builds the game.
   static Future<WaveCombatGame> load({
     required String levelAsset,
     required WaveCombatConfig combat,
     String configAsset = 'assets/game_config.json',
+    SplashConfig splash = const SplashConfig(),
   }) async => WaveCombatGame(
     config: await GameConfig.loadFromAsset(configAsset),
     level: LevelData.fromJson(
@@ -37,6 +43,7 @@ class WaveCombatGame extends Game {
           as Map<String, dynamic>,
     ),
     combat: combat,
+    splash: splash,
   );
 
   @override

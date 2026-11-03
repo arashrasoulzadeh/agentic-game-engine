@@ -56,6 +56,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
+  assets:
+    - assets/branding/zarvan_logo.png
   shaders:
     - shaders/light_shadow.frag
     - shaders/ambient_lighting.frag

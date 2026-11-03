@@ -183,4 +183,33 @@ void main() {
       expect(plan.warnings.single, contains('Xcode'));
     });
   });
+
+  group('engine commit', () {
+    test('is baked into Android and iOS builds as ZARVAN_COMMIT', () {
+      final android = planAndroid(
+        target: 'lib/main.dart',
+        buildName: '1.0.0',
+        buildNumber: '1',
+        engineCommit: 'abc1234',
+      );
+      expect(android.command, contains('--dart-define=ZARVAN_COMMIT=abc1234'));
+      final ios = planIos(
+        target: 'lib/main.dart',
+        buildName: '1.0.0',
+        buildNumber: '1',
+        noCodesign: true,
+        engineCommit: 'abc1234',
+      );
+      expect(ios.command, contains('--dart-define=ZARVAN_COMMIT=abc1234'));
+    });
+
+    test('is omitted when unknown', () {
+      final plan = planAndroid(
+        target: 'lib/main.dart',
+        buildName: '1.0.0',
+        buildNumber: '1',
+      );
+      expect(plan.command.any((a) => a.contains('ZARVAN_COMMIT')), isFalse);
+    });
+  });
 }

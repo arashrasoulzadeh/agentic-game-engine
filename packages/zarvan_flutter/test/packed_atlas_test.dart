@@ -167,7 +167,7 @@ void main() {
 
       expect(reported, hasLength(1));
       expect(find.byType(EngineView), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(SplashScreen), findsOneWidget);
     },
   );
 

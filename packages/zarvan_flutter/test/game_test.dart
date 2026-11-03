@@ -76,6 +76,12 @@ class _CustomLoadingScreenGame extends _SlowLoadingGame {
       const Center(child: Text('Loading my game...'));
 }
 
+class _HeldSplashGame extends _TestGame {
+  @override
+  SplashConfig get splash =>
+      const SplashConfig(minDuration: Duration(milliseconds: 500));
+}
+
 class _DefaultCallbacksGame extends Game {
   @override
   GameConfig get config => const GameConfig(worldWidth: 100, worldHeight: 100);
@@ -357,15 +363,33 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
     await tester.pump();
 
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(SplashScreen), findsOneWidget);
     expect(find.byType(EngineView), findsNothing);
 
     await tester.pump(const Duration(milliseconds: 60));
     await tester.pump();
 
     expect(find.byType(EngineView), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(SplashScreen), findsNothing);
   });
+
+  testWidgets(
+    'SplashConfig.minDuration keeps the splash up after a fast load',
+    (tester) async {
+      final game = _HeldSplashGame();
+      await tester.pumpWidget(MaterialApp(home: GameRunner(game: game)));
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(SplashScreen), findsOneWidget);
+      expect(find.byType(EngineView), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump();
+      expect(find.byType(EngineView), findsOneWidget);
+      expect(find.byType(SplashScreen), findsNothing);
+      expect(game.loadingProgress.fraction, 1);
+    },
+  );
 
   testWidgets('buildLoadingScreen can be overridden', (tester) async {
     final game = _CustomLoadingScreenGame();
@@ -373,7 +397,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Loading my game...'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(SplashScreen), findsNothing);
 
     // Let the pending delayed Future resolve before the test ends, or
     // the test framework flags it as a leaked timer.

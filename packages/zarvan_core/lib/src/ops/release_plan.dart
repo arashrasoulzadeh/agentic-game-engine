@@ -49,6 +49,9 @@ buildTypes {
 /// `android/key.properties` and requires that the project's Gradle file already reads it;
 /// otherwise Flutter would silently sign with the **debug** key, which Google Play rejects.
 /// Without a keystore the build proceeds and the warning says exactly that.
+///
+/// [engineCommit], when given, is baked into the build (`ZARVAN_COMMIT`) so the splash
+/// screen can show which engine build the game shipped with.
 ReleasePlan planAndroid({
   required String target,
   required String buildName,
@@ -62,6 +65,7 @@ ReleasePlan planAndroid({
   bool verbose = false,
   bool keystoreExists = true,
   String? gradleText,
+  String? engineCommit,
 }) {
   final command = [
     'flutter',
@@ -73,6 +77,7 @@ ReleasePlan planAndroid({
     '--release',
     if (flavor != null) '--flavor=$flavor',
     if (splitPerAbi) '--split-per-abi',
+    if (engineCommit != null) '--dart-define=ZARVAN_COMMIT=$engineCommit',
     if (verbose) '-v',
   ];
   final given = [keystorePath, keystorePassword, keyAlias, keyPassword];
@@ -148,6 +153,7 @@ ReleasePlan planIos({
   String? exportOptionsPlist,
   bool noCodesign = false,
   bool verbose = false,
+  String? engineCommit,
 }) {
   final base = [
     'flutter',
@@ -158,6 +164,7 @@ ReleasePlan planIos({
     '--build-number=$buildNumber',
     '--release',
     if (flavor != null) '--flavor=$flavor',
+    if (engineCommit != null) '--dart-define=ZARVAN_COMMIT=$engineCommit',
     if (verbose) '-v',
   ];
   if (noCodesign) {

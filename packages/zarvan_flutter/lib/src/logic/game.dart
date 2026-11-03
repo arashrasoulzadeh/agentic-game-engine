@@ -15,6 +15,7 @@ import '../rendering/frame_stats.dart';
 import '../rendering/viewport.dart';
 import 'game_config.dart';
 import '../input/input.dart';
+import '../ui/splash_screen.dart';
 import '../input/on_screen_controls.dart';
 import '../register_components.dart';
 import 'scene.dart';
@@ -108,8 +109,17 @@ abstract class Game {
   /// spinner on the configured background color — override for a
   /// branded splash screen/logo instead.
   Widget buildLoadingScreen(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
+    return SplashScreen(config: splash, progress: loadingProgress);
   }
+
+  /// Artwork and options for the default splash: logo, title, accent colour,
+  /// minimum time on screen. Override to brand a game; the default shows the
+  /// ZARVAN logo.
+  SplashConfig get splash => const SplashConfig();
+
+  /// Fed by `GameRunner` while the initial scene loads; the default splash
+  /// draws it. A custom [buildLoadingScreen] can listen to it too.
+  final LoadingProgress loadingProgress = LoadingProgress();
 }
 
 class _LoadedGame {
@@ -189,7 +199,17 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
       captureScreenshot: _captureScreenshot,
     );
     _gameState = widget.game.createInitialState();
-    _future = _load(widget.game.createInitialScene());
+    _future = _loadInitial(widget.game.createInitialScene());
+  }
+
+  /// The first load, held on the splash for `SplashConfig.minDuration`.
+  Future<_LoadedGame> _loadInitial(Scene scene) async {
+    final hold = widget.game.splash.minDuration;
+    if (hold == Duration.zero) return _load(scene);
+    final minimum = Future<void>.delayed(hold);
+    final loaded = await _load(scene);
+    await minimum;
+    return loaded;
   }
 
   /// The `SceneController` callback: rebuilds `_future` with [next], so
@@ -439,7 +459,10 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
   /// `populate`) would otherwise keep running against the new scene's
   /// entities, a class of bug a fresh `World` rules out entirely.
   Future<_LoadedGame> _load(Scene scene) async {
+    final progress = widget.game.loadingProgress;
+    progress.report(0.05, 'Preparing');
     await _ensureDefaultFontLoaded();
+    progress.report(0.15, 'Loading world');
     final world = World(
       width: widget.game.config.worldWidth,
       height: widget.game.config.worldHeight,
@@ -449,12 +472,15 @@ class _GameRunnerState extends State<GameRunner> with WidgetsBindingObserver {
     world.addSystem(SceneTransitionSystem());
     await scene.populate(world, _sceneController, _gameState);
 
+    progress.report(0.5, 'Loading assets');
     final atlasRegistry = await scene.loadAssets();
+    progress.report(0.85, 'Loading assets');
     await _registerPackedAtlas(atlasRegistry);
     final camera = scene.createCamera(world)
       ..shakeIntensity = widget.game.screenShakeIntensity;
     final inputController = widget.game.createInputController();
     scene.onEnter(world);
+    progress.report(1, 'Ready');
     return _LoadedGame(world, atlasRegistry, camera, inputController, scene);
   }
 

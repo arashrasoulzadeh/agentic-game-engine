@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:zarvan_flutter/zarvan_flutter.dart';
 import 'package:zarvan_idle/zarvan_idle.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -50,6 +51,25 @@ void main() {
     expect(game.viewportConfig.fitWorld, isTrue);
     expect(game.viewportConfig.targetAspectRatio, 180 / 320);
     expect(game.createInitialScene(), isA<WaveCombatScene>());
+    expect(game.splash.title, isNull); // default splash = the ZARVAN logo
+  });
+
+  test('a game can carry its own splash artwork', () {
+    const splash = SplashConfig(title: 'Mine');
+    final game = WaveCombatGame(
+      config: const GameConfig(worldWidth: 180, worldHeight: 320),
+      level: LevelData.fromJson({
+        'name': 'L',
+        'wave': ['a'],
+        'boss': 'b',
+        'background': 'x',
+        'hero': {'x': 1, 'y': 2},
+        'enemy_anchor': {'x': 3, 'y': 4},
+      }),
+      combat: _combat,
+      splash: splash,
+    );
+    expect(game.splash, same(splash));
   });
 
   test(

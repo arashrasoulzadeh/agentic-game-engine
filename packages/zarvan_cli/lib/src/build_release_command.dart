@@ -7,6 +7,8 @@ import 'package:yaml/yaml.dart';
 
 import 'release_plan.dart';
 
+import 'engine_commit.dart';
+
 /// Builds a signed release Android App Bundle (AAB) and/or iOS IPA.
 /// Supports both local signing (keystore/provisioning profile) and
 /// CI-friendly environment variable-based signing.
@@ -141,6 +143,7 @@ class BuildReleaseCommand extends Command<int> {
         : '1.0.0';
     final pubspecBuildNumber = versionParts.length > 1 ? versionParts[1] : '1';
 
+    final engineCommit = resolveEngineCommit(projectDir.path);
     final resolvedBuildName = buildName ?? pubspecBuildName;
     final resolvedBuildNumber = buildNumber ?? pubspecBuildNumber;
 
@@ -151,6 +154,7 @@ class BuildReleaseCommand extends Command<int> {
         target: target,
         buildName: resolvedBuildName,
         buildNumber: resolvedBuildNumber,
+        engineCommit: engineCommit,
         keystorePath: args['keystore-path'] as String?,
         keystorePassword: args['keystore-password'] as String?,
         keyAlias: args['key-alias'] as String?,
@@ -173,6 +177,7 @@ class BuildReleaseCommand extends Command<int> {
         target: target,
         buildName: resolvedBuildName,
         buildNumber: resolvedBuildNumber,
+        engineCommit: engineCommit,
         teamId: args['team-id'] as String?,
         provisioningProfile: args['provisioning-profile'] as String?,
         codesignIdentity: args['codesign-identity'] as String?,
@@ -193,6 +198,7 @@ class BuildReleaseCommand extends Command<int> {
     required String target,
     required String buildName,
     required String buildNumber,
+    String? engineCommit,
     String? keystorePath,
     String? keystorePassword,
     String? keyAlias,
@@ -213,6 +219,7 @@ class BuildReleaseCommand extends Command<int> {
       target: target,
       buildName: buildName,
       buildNumber: buildNumber,
+      engineCommit: engineCommit,
       flavor: flavor,
       keystorePath: keystorePath,
       keystorePassword: keystorePassword,
@@ -232,6 +239,7 @@ class BuildReleaseCommand extends Command<int> {
     required String target,
     required String buildName,
     required String buildNumber,
+    String? engineCommit,
     String? teamId,
     String? provisioningProfile,
     String? codesignIdentity,
@@ -250,6 +258,7 @@ class BuildReleaseCommand extends Command<int> {
       target: target,
       buildName: buildName,
       buildNumber: buildNumber,
+      engineCommit: engineCommit,
       flavor: flavor,
       teamId: teamId,
       provisioningProfile: provisioningProfile,
