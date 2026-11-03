@@ -24,7 +24,7 @@ not pub.dev ([why](#why-a-git-dependency)).
 
 ```bash
 dart pub global activate --source git \
-  https://github.com/arashrasoulzadeh/agentic-game-engine.git \
+  https://github.com/arashrasoulzadeh/zarvan.git \
   --git-path packages/zarvan_cli
 ```
 
@@ -154,15 +154,15 @@ resolved commit and a consumer's `ref: main` as different descriptions of the
 same package and refuses to solve if they're mixed; the self-referencing form
 avoids that. Don't hand-edit these to `path:`; use `zarvan upgrade`.
 Details: the "Non-obvious constraints" section of
-[CLAUDE.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CLAUDE.md).
+[CLAUDE.md](https://github.com/arashrasoulzadeh/zarvan/blob/main/CLAUDE.md).
 
 ## Working on the engine itself
 
 ```bash
-git clone https://github.com/arashrasoulzadeh/agentic-game-engine.git
-cd agentic-game-engine
+git clone https://github.com/arashrasoulzadeh/zarvan.git
+cd zarvan
 (cd packages/zarvan_core && dart test)
 (cd packages/zarvan_flutter && flutter test)
 ```
 
-See [CONTRIBUTING](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CONTRIBUTING.md).
+See [CONTRIBUTING](https://github.com/arashrasoulzadeh/zarvan/blob/main/CONTRIBUTING.md).

@@ -2,7 +2,7 @@
 
 Open items for `packages/zarvan_studio`. Design and delivered phases:
 [design.md](design.md). Delete an item once shipped; what shipped goes in
-[CHANGELOG.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CHANGELOG.md).
+[CHANGELOG.md](https://github.com/arashrasoulzadeh/zarvan/blob/main/CHANGELOG.md).
 
 ## Distribution (3.22)
 

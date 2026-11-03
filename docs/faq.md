@@ -14,7 +14,7 @@ local paths. If resolution fails with an authorization error from pub.dev,
 you're offline or behind a mirror that doesn't allow a transitive package;
 `flutter pub get --offline` works when the cache already has everything.
 Never change those git dependencies to `path:` by hand — see
-[CLAUDE.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CLAUDE.md#non-obvious-constraints-dont-relitigate-these).
+[CLAUDE.md](https://github.com/arashrasoulzadeh/zarvan/blob/main/CLAUDE.md#non-obvious-constraints-dont-relitigate-these).
 
 ### "'Text' is defined in both … zarvan_flutter and flutter/material.dart"
 `Text`, `Velocity` and `Action` collide with Flutter types by design. Hide one
@@ -119,4 +119,4 @@ Not yet (pre-1.0). Generated projects depend on the git repo; see
 3D: no, by decision. RTS: yes at a basic level — see
 [Real-time strategy](concepts/realtime-strategy.md). Still missing: formations,
 a resource economy and a real-time AI — tracked in
-[the roadmap](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md#turn-based-strategy).
+[the roadmap](https://github.com/arashrasoulzadeh/zarvan/blob/main/TODO.md#turn-based-strategy).

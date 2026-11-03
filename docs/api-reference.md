@@ -25,11 +25,11 @@ dart doc .                      # → doc/api/index.html
 ## 2. Package READMEs
 
 Each package README lists its public surface with examples:
-[zarvan_core](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/packages/zarvan_core/README.md) ·
-[zarvan_flutter](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/packages/zarvan_flutter/README.md) ·
-[zarvan_platformer](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/packages/zarvan_platformer/README.md) ·
-[zarvan_strategy](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/packages/zarvan_strategy/README.md) ·
-[zarvan_cli](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/packages/zarvan_cli/README.md)
+[zarvan_core](https://github.com/arashrasoulzadeh/zarvan/blob/main/packages/zarvan_core/README.md) ·
+[zarvan_flutter](https://github.com/arashrasoulzadeh/zarvan/blob/main/packages/zarvan_flutter/README.md) ·
+[zarvan_platformer](https://github.com/arashrasoulzadeh/zarvan/blob/main/packages/zarvan_platformer/README.md) ·
+[zarvan_strategy](https://github.com/arashrasoulzadeh/zarvan/blob/main/packages/zarvan_strategy/README.md) ·
+[zarvan_cli](https://github.com/arashrasoulzadeh/zarvan/blob/main/packages/zarvan_cli/README.md)
 
 ## 3. Lookup tables in this site
 

@@ -63,12 +63,12 @@ flowchart LR
 
 | Package | What it gives you | Depends on |
 |---|---|---|
-| [`zarvan_core`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_core) | ECS, physics primitives, `TileMap`, content DSL, `WorldView`/`Behavior`, **turn clock, orders, grid navigation, combat, fog of war, selection** | `zarvan_schema` |
-| [`zarvan_flutter`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_flutter) | `Game`/`Scene`, sprites, camera, lighting, input, audio, save/load, grid tap input | `zarvan_core` |
-| [`zarvan_platformer`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_platformer) | Gravity, jump, tile collision, combat, patrol/follow AI, animation | core, flutter |
-| [`zarvan_strategy`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_strategy) | One-call wiring for turn-based strategy, unit spawning | core, flutter |
-| [`zarvan_cli`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_cli) | `zarvan create / upgrade / lint / pack-assets` | `zarvan_core` |
-| [`zarvan_schema`](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/packages/zarvan_schema) | Hand-written component schemas used by the CLI and studio | — |
+| [`zarvan_core`](https://github.com/arashrasoulzadeh/zarvan/tree/main/packages/zarvan_core) | ECS, physics primitives, `TileMap`, content DSL, `WorldView`/`Behavior`, **turn clock, orders, grid navigation, combat, fog of war, selection** | `zarvan_schema` |
+| [`zarvan_flutter`](https://github.com/arashrasoulzadeh/zarvan/tree/main/packages/zarvan_flutter) | `Game`/`Scene`, sprites, camera, lighting, input, audio, save/load, grid tap input | `zarvan_core` |
+| [`zarvan_platformer`](https://github.com/arashrasoulzadeh/zarvan/tree/main/packages/zarvan_platformer) | Gravity, jump, tile collision, combat, patrol/follow AI, animation | core, flutter |
+| [`zarvan_strategy`](https://github.com/arashrasoulzadeh/zarvan/tree/main/packages/zarvan_strategy) | One-call wiring for turn-based strategy, unit spawning | core, flutter |
+| [`zarvan_cli`](https://github.com/arashrasoulzadeh/zarvan/tree/main/packages/zarvan_cli) | `zarvan create / upgrade / lint / pack-assets` | `zarvan_core` |
+| [`zarvan_schema`](https://github.com/arashrasoulzadeh/zarvan/tree/main/packages/zarvan_schema) | Hand-written component schemas used by the CLI and studio | — |
 
 ## Reading this documentation
 
@@ -107,7 +107,7 @@ flowchart LR
 
 ## Project links
 
-[Source on GitHub](https://github.com/arashrasoulzadeh/agentic-game-engine) ·
-[Changelog](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CHANGELOG.md) ·
-[Roadmap (TODO.md)](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md) ·
-[Contributing](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/CONTRIBUTING.md)
+[Source on GitHub](https://github.com/arashrasoulzadeh/zarvan) ·
+[Changelog](https://github.com/arashrasoulzadeh/zarvan/blob/main/CHANGELOG.md) ·
+[Roadmap (TODO.md)](https://github.com/arashrasoulzadeh/zarvan/blob/main/TODO.md) ·
+[Contributing](https://github.com/arashrasoulzadeh/zarvan/blob/main/CONTRIBUTING.md)

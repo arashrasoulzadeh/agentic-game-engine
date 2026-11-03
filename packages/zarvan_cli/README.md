@@ -5,7 +5,7 @@ CLI for scaffolding and updating Flutter games built on `zarvan_core`.
 ## Install
 
 ```bash
-dart pub global activate --source git https://github.com/arashrasoulzadeh/agentic-game-engine.git --git-path packages/zarvan_cli
+dart pub global activate --source git https://github.com/arashrasoulzadeh/zarvan.git --git-path packages/zarvan_cli
 ```
 
 ## Create a new game

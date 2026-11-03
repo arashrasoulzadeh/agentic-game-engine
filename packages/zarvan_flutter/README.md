@@ -32,7 +32,7 @@ content) lives in `zarvan_core`, which stays Flutter-free.
 dependencies:
   zarvan_flutter:
     git:
-      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      url: https://github.com/arashrasoulzadeh/zarvan.git
       path: packages/zarvan_flutter
       ref: main
 ```

@@ -1597,8 +1597,8 @@ name: zarvan_api
 description: MCP server and HTTP/JSON-RPC API for the engine: every studio command, engine function and project function as one operation.
 version: 0.1.0
 publish_to: none
-homepage: https://github.com/arashrasoulzadeh/agentic-game-engine
-repository: https://github.com/arashrasoulzadeh/agentic-game-engine
+homepage: https://github.com/arashrasoulzadeh/zarvan
+repository: https://github.com/arashrasoulzadeh/zarvan
 
 environment:
   sdk: ^3.9.0
@@ -1611,12 +1611,12 @@ dependencies:
   image: ^4.7.0              # image codec for asset.pack / level.lint render (same version as zarvan_cli)
   zarvan_schema:
     git:
-      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      url: https://github.com/arashrasoulzadeh/zarvan.git
       path: packages/zarvan_schema
       ref: main
   zarvan_core:
     git:
-      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      url: https://github.com/arashrasoulzadeh/zarvan.git
       path: packages/zarvan_core
       ref: main
 

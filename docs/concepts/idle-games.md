@@ -10,7 +10,7 @@ agents can use them without Flutter.
 Samples are executed by `packages/zarvan_core/test/doc_examples_idle_test.dart` and
 `packages/zarvan_idle/test/doc_examples_test.dart`. Remaining idle work (device bench,
 cloud-save walkthrough, localisation, research UI, …) lives under Idle polish in
-[`TODO.md`](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/TODO.md).
+[`TODO.md`](https://github.com/arashrasoulzadeh/zarvan/blob/main/TODO.md).
 
 ## Creating a new idle game
 

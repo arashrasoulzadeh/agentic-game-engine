@@ -2,8 +2,8 @@ name: zarvan_flutter
 description: Flutter rendering/input/camera shell for zarvan_core. No gameplay logic lives here.
 version: 0.1.0
 publish_to: none
-homepage: https://github.com/arashrasoulzadeh/agentic-game-engine
-repository: https://github.com/arashrasoulzadeh/agentic-game-engine
+homepage: https://github.com/arashrasoulzadeh/zarvan
+repository: https://github.com/arashrasoulzadeh/zarvan
 
 environment:
   sdk: ^3.9.0
@@ -31,12 +31,12 @@ dependencies:
   # zarvan_core/pubspec.yaml).
   zarvan_schema:
     git:
-      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      url: https://github.com/arashrasoulzadeh/zarvan.git
       path: packages/zarvan_schema
       ref: main
   zarvan_core:
     git:
-      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      url: https://github.com/arashrasoulzadeh/zarvan.git
       path: packages/zarvan_core
       ref: main
   # For SaveGame: shared_preferences works identically on

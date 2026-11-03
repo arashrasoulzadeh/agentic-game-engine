@@ -18,7 +18,7 @@ name: my_game
 dependencies:
   zarvan_core:
     git:
-      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      url: https://github.com/arashrasoulzadeh/zarvan.git
       path: packages/zarvan_core
       ref: v0.1.0
 ''';

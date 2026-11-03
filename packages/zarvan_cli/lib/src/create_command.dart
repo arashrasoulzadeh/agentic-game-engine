@@ -6,7 +6,7 @@ import 'process_utils.dart';
 import 'template.dart';
 
 const defaultEngineRepoUrl =
-    'https://github.com/arashrasoulzadeh/agentic-game-engine.git';
+    'https://github.com/arashrasoulzadeh/zarvan.git';
 
 class CreateCommand extends Command<int> {
   @override

@@ -112,5 +112,5 @@ cells and draws a marker.
 
 ## Further reading
 
-- [ADRs](https://github.com/arashrasoulzadeh/agentic-game-engine/tree/main/docs/adr) — why schemas are hand-written, why commands live in core, why play-test is a separate process.
-- [Root ARCHITECTURE.md](https://github.com/arashrasoulzadeh/agentic-game-engine/blob/main/ARCHITECTURE.md) — the short version.
+- [ADRs](https://github.com/arashrasoulzadeh/zarvan/tree/main/docs/adr) — why schemas are hand-written, why commands live in core, why play-test is a separate process.
+- [Root ARCHITECTURE.md](https://github.com/arashrasoulzadeh/zarvan/blob/main/ARCHITECTURE.md) — the short version.

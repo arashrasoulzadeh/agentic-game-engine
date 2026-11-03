@@ -45,7 +45,7 @@ logic* against it lives here.
 dependencies:
   zarvan_platformer:
     git:
-      url: https://github.com/arashrasoulzadeh/agentic-game-engine.git
+      url: https://github.com/arashrasoulzadeh/zarvan.git
       path: packages/zarvan_platformer
       ref: main
 ```

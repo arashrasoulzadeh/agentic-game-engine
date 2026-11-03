@@ -4,7 +4,7 @@ Install:
 
 ```bash
 dart pub global activate --source git \
-  https://github.com/arashrasoulzadeh/agentic-game-engine.git \
+  https://github.com/arashrasoulzadeh/zarvan.git \
   --git-path packages/zarvan_cli
 ```
 

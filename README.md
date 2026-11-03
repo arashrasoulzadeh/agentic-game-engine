@@ -6,16 +6,16 @@
 
 **Agent-Native** · **Simulation-First** · **Data-Driven** · **Deterministic** · **Extensible**
 
-[![zarvan_core](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_core.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_core.yml)
-[![zarvan_flutter](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_flutter.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_flutter.yml)
-[![zarvan_platformer](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_platformer.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_platformer.yml)
-[![zarvan_strategy](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_strategy.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_strategy.yml)
-[![zarvan_idle](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_idle.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_idle.yml)
-[![zarvan_studio](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_studio.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_studio.yml)
-[![zarvan_api](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_api.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_api.yml)
-[![zarvan_cli](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_cli.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_cli.yml)
-[![zarvan_schema](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_schema.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/zarvan_schema.yml)
-[![docs](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/docs.yml/badge.svg)](https://github.com/arashrasoulzadeh/agentic-game-engine/actions/workflows/docs.yml)
+[![zarvan_core](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_core.yml/badge.svg)](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_core.yml)
+[![zarvan_flutter](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_flutter.yml/badge.svg)](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_flutter.yml)
+[![zarvan_platformer](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_platformer.yml/badge.svg)](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_platformer.yml)
+[![zarvan_strategy](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_strategy.yml/badge.svg)](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_strategy.yml)
+[![zarvan_idle](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_idle.yml/badge.svg)](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_idle.yml)
+[![zarvan_studio](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_studio.yml/badge.svg)](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_studio.yml)
+[![zarvan_api](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_api.yml/badge.svg)](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_api.yml)
+[![zarvan_cli](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_cli.yml/badge.svg)](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_cli.yml)
+[![zarvan_schema](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_schema.yml/badge.svg)](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/zarvan_schema.yml)
+[![docs](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/docs.yml/badge.svg)](https://github.com/arashrasoulzadeh/zarvan/actions/workflows/docs.yml)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 > The badges are live CI status for each package. Version `0.1.0`, pre-1.0, not yet on pub.dev
@@ -86,7 +86,7 @@ already shipped.
 Install the CLI:
 
 ```bash
-dart pub global activate --source git https://github.com/arashrasoulzadeh/agentic-game-engine.git --git-path packages/zarvan_cli
+dart pub global activate --source git https://github.com/arashrasoulzadeh/zarvan.git --git-path packages/zarvan_cli
 ```
 
 Scaffold and run a game:

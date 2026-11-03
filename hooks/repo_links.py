@@ -10,7 +10,7 @@ stay inside ``docs/`` are untouched.
 import posixpath
 import re
 
-REPO = "https://github.com/arashrasoulzadeh/agentic-game-engine"
+REPO = "https://github.com/arashrasoulzadeh/zarvan"
 BRANCH = "main"
 
 # [text](target) -- skips images' leading "!" being special; they're handled
