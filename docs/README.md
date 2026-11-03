@@ -1,6 +1,63 @@
+---
+template: home.html
+hide:
+  - navigation
+  - toc
+---
+
 # ZARVAN — Where Worlds Begin.
 
 **An agent-native, simulation-first game engine built with Dart.**
+
+<div class="zv-pillars" markdown>
+<div markdown>**Agent-Native**<br>Agents read, patch and drive worlds safely.</div>
+<div markdown>**Simulation-First**<br>The simulation is the product; Flutter is the shell.</div>
+<div markdown>**Data-Driven**<br>State and content are plain JSON.</div>
+<div markdown>**Deterministic**<br>Seeded randomness and fixed timesteps.</div>
+<div markdown>**Extensible**<br>Components, systems and behaviors.</div>
+</div>
+
+## Choose your path
+
+<div class="grid cards" markdown>
+
+-   :material-gamepad-variant: **I make games**
+
+    Scaffold a game, edit levels in Studio, ship to the stores.
+
+    [:octicons-arrow-right-24: For game makers](guides/for-users.md)
+
+-   :material-code-braces: **I write Dart**
+
+    Worlds, systems, components, testing and the package map.
+
+    [:octicons-arrow-right-24: For developers](guides/for-developers.md)
+
+-   :material-robot-outline: **I am (or build) an AI agent**
+
+    Observe, decide and act through safe, machine-readable interfaces.
+
+    [:octicons-arrow-right-24: For AI agents](guides/for-ai-agents.md)
+
+-   :material-book-open-variant: **I want the idea first**
+
+    The meaning of the name and the concept behind the engine.
+
+    [:octicons-arrow-right-24: The concept](concepts/concept.md)
+
+-   :material-translate: **فارسی**
+
+    مستندات فارسی ZARVAN: معنی نام، مفاهیم و شروع سریع.
+
+    [:octicons-arrow-right-24: مستندات فارسی](fa/index.md)
+
+-   :material-package-variant: **What is in the box**
+
+    Nine packages on a one-way dependency chain.
+
+    [:octicons-arrow-right-24: Packages](packages.md)
+
+</div>
 
 A pure-Dart **2D game engine built for AI agents and humans to work on
 together**. The world is plain JSON an agent can read and patch, content is

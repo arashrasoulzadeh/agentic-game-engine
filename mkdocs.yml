@@ -8,11 +8,16 @@ docs_dir: docs
 
 theme:
   name: material
+  custom_dir: overrides
+  logo: assets/logo.png
+  favicon: assets/favicon.png
   features:
     - navigation.tracking
     - navigation.tabs
     - navigation.sections
     - navigation.top
+    - navigation.indexes
+    - content.action.edit
     - navigation.footer
     - search.suggest
     - search.highlight
@@ -35,9 +40,18 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
+extra_css:
+  - stylesheets/zarvan.css
+
+extra_javascript:
+  - javascripts/rtl.js
+
 markdown_extensions:
   - admonition
   - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - md_in_html
   - tables
   - toc:
@@ -57,6 +71,7 @@ markdown_extensions:
 
 hooks:
   - hooks/repo_links.py
+  - hooks/llms_txt.py
 
 exclude_docs: |
   proposals/
@@ -69,6 +84,19 @@ validation:
 
 nav:
   - Home: README.md
+  - Guides:
+      - For game makers: guides/for-users.md
+      - For developers: guides/for-developers.md
+      - For AI agents: guides/for-ai-agents.md
+      - Packages: packages.md
+  - فارسی:
+      - صفحه‌ی اصلی: fa/index.md
+      - مفهوم ZARVAN: fa/concept.md
+      - شروع سریع: fa/getting-started.md
+      - معماری: fa/architecture.md
+      - API عامل: fa/agent-api.md
+      - بسته‌ها: fa/packages.md
+      - واژه‌نامه: fa/glossary.md
   - Start:
       - Getting started: getting-started.md
       - Releasing to the stores: releasing.md
@@ -89,6 +117,7 @@ nav:
       - Design and decisions: studio/design.md
       - Open work: studio/studio.md
   - Concepts:
+      - The concept (name and vocabulary): concepts/concept.md
       - Architecture: concepts/architecture.md
       - The ECS: concepts/ecs.md
       - Writing games with less code: concepts/authoring.md

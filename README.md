@@ -59,7 +59,21 @@ Inspired by this idea, ZARVAN is designed as an agent-native, simulation-first g
 
 Every world has a beginning. Every agent has the ability to act. Every action can change the future of that world.
 
-**ZARVAN — Where Worlds Begin.**
+**ZARVAN — Where Worlds Begin.** More in [the concept page](docs/concepts/concept.md).
+
+<div dir="rtl">
+
+### معنی نام ZARVAN (زروان)
+
+نام **ZARVAN** برگرفته از **زروان** است؛ مفهومی کهن در جهان‌بینی ایرانی که با **زمان بی‌کران** و هستیِ آغازین پیوند دارد. در این نگاه، زمان فقط معیار گذشتن نیست؛ بستری است که جهان‌ها در آن پدید می‌آیند، تکامل می‌یابند و دگرگون می‌شوند.
+
+ZARVAN با الهام از این ایده، یک **موتور بازی عامل‌محور و شبیه‌سازی‌محور** است که با Dart ساخته شده و پایه‌ای برای ساختن جهان‌های تعاملی فراهم می‌کند که عامل‌های خودمختار در آن‌ها زندگی می‌کنند. این برداشتی مدرن و خلاقانه از مفهوم زروان است، نه ادعای بازسازی دقیق یک آموزه تاریخی یا دینی.
+
+هر جهان آغازی دارد. هر عامل می‌تواند کنش کند. هر کنش می‌تواند آینده‌ی آن جهان را تغییر دهد.
+
+**ZARVAN — جایی که جهان‌ها آغاز می‌شوند.** مستندات فارسی: [docs/fa](docs/fa/index.md)
+
+</div>
 
 ## Packages
 

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="zv-hero">
+  <div class="zv-hero__text">
+    <p class="zv-eyebrow">ZARVAN · زروان</p>
+    <h1>Where Worlds Begin.</h1>
+    <p class="zv-lead">An agent-native, simulation-first game engine built with Dart.
+      A foundation for interactive worlds that people, scripts and AI agents can
+      observe, act in and change.</p>
+    <p class="zv-actions">
+      <a class="md-button md-button--primary" href="getting-started/">Get started</a>
+      <a class="md-button" href="concepts/concept/">The concept</a>
+      <a class="md-button" href="guides/for-ai-agents/">For AI agents</a>
+      <a class="md-button" href="fa/">فارسی</a>
+    </p>
+  </div>
+  <div class="zv-hero__art">
+    <img src="assets/logo.png" alt="ZARVAN logo" width="260" height="260">
+  </div>
+</section>
+{{ super() }}
+{% endblock %}

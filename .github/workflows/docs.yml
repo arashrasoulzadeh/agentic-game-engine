@@ -7,6 +7,7 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - "hooks/**"
+      - "overrides/**"
       - "packages/zarvan_core/lib/**"
       - "packages/zarvan_schema/lib/**"
       - "packages/zarvan_flutter/lib/**"
@@ -20,6 +21,7 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - "hooks/**"
+      - "overrides/**"
   workflow_dispatch:
 
 permissions:
