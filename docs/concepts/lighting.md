@@ -57,6 +57,15 @@ each at the first solid `TileMap` tile, so walls block light.
     overlapping lights blend correctly; this was verified on a Samsung SM-S731B release build. It is off
     by default, and each light considers at most 32 occluder segments.
 
+!!! note "Automatic GPU shadows (`autoGpuShadows`)"
+    `EngineView.autoGpuShadows` (and `Game.autoGpuShadows`, both on by default) lets a shadow-casting light use
+    the GPU shader on its own, but only when the result matches the CPU raycast: the shader has loaded, no
+    `Collider(blocksLight: true)` entity is in the world (the shader only knows tile edges), the light does not
+    use `blockOneWayPlatforms`, `shadowSmoothingSeconds` or `openAirFalloffScale` (CPU-only features), and fewer
+    than 32 tile edges are near it. Otherwise the light keeps the CPU raycast, so shadows are never dropped or
+    changed. `useGpuShadows: true` still forces the GPU path; return `false` from `Game.autoGpuShadows` to keep
+    every shadow on the CPU.
+
 ## Flickering
 
 A torch that gutters:

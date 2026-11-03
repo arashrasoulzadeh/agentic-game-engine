@@ -50,7 +50,10 @@ Future<AtlasRegistry> loadAssets() async {
 }
 ```
 
-Sprites batch through `Canvas.drawAtlas` per z-index (tinted sprites, such as hit flashes, batch too; mirrored or non-uniformly scaled ones cannot and draw individually) — see
+Sprites batch through `Canvas.drawRawAtlas` per z-index, written straight into typed buffers (no per-sprite
+objects). Tinted sprites (hit flashes) batch with a per-sprite colour. Mirrored sprites (a negative `scaleX`, which
+is how `FacingSystem` faces left) batch through one `drawVertices` per image with flipped texture coordinates, so no
+flipped copy of the texture is kept in memory. Only non-uniformly scaled sprites draw individually — see
 `packages/zarvan_flutter/README.md` for the packing tool
 (`zarvan pack-assets`) that produces the manifest.
 
@@ -108,6 +111,10 @@ EngineView(
 | `contain` | Largest 16:9 area that fits; bars fill the rest. Nothing cropped. |
 | `cover` | Smallest 16:9 area that covers the screen. No bars; the overflow is cropped. |
 | `width` / `height` | Spans the screen's width / height; bars or cropping on the other axis. |
+
+`WaveCombatGame` takes the same choice as `viewportFit:` (default `contain`). `ViewportFit.cover` fills a tall
+phone with no black bars and crops the world sides (about 9% each on a 9:19.5 phone for a 9:16 world), so keep HUD
+elements inside the part that is still visible.
 
 With `avoidSystemUi` (default) the area stays inside the system safe area (notches, status and navigation
 bars). A screen that already has the target ratio gets exactly the whole screen and no bars. Taps

@@ -280,8 +280,10 @@ class Light2D {
   /// Overlapping GPU lights no longer saturate to white: that bug was an
   /// additive white glow drawn over the scene without lifting the darkness,
   /// reproduced and fixed on a Samsung SM-S731B release build (2026-11-03).
-  /// It stays opt-in (`false`) because the CPU path is the more tested
-  /// default; shadows beyond 32 occluder segments per light are dropped.
+  /// Setting it forces the GPU path; with it `false` the engine may still pick
+  /// the GPU by itself when the result matches (see
+  /// `EngineView.autoGpuShadows`). Shadows beyond 32 occluder segments per
+  /// light are dropped, which is why the automatic choice requires fewer.
   bool useGpuShadows;
 
   /// Internal render-side cache for [cacheShadowGeometry] — the world-

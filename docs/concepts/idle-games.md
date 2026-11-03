@@ -303,6 +303,12 @@ replays. A game supplies two things:
   health bars; all world units, the defaults suit a 180x320 portrait world) and a `WaveUiArt` (generated UI art, each
   part optional: ornate `SpriteHealthBar`s from `ui_bars`, a `WavePath` of `ui_level_node` nodes with a divider line
   showing progress through the waves to the boss, and a parchment `ui_dialog_scroll` that opens behind the caption).
+  `WaveCombatGame.load` also takes `splash:` (a `SplashConfig`, see [Splash screen](splash-screen.md)) and
+  `viewportFit:` (`ViewportFit.cover` to fill the screen, see [Rendering](rendering.md)).
+  `WaveCombatConfig.sun` (a `SunLight`: a warm light that dims the rest of the scene) and
+  `WaveCombatConfig.lights` (`SceneLight`s anchored to the hero, the current enemy or a fixed point, with optional
+  flicker) are optional and off by default. Defaults are faint; art that already has baked-in lighting usually
+  wants neither.
 - `LevelData` (JSON): `wave` and `boss` ids, hero/enemy anchors, balance (`preview_hero_scale`,
   `preview_boss_scale`), `parallax` layers with speeds, and `cues` (animation cues per state and frame, e.g. camera
   shake on the frame an attack lands).
