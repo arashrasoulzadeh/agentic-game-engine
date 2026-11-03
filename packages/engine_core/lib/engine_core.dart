@@ -21,6 +21,7 @@ export 'package:engine_schema/engine_schema.dart'
 export 'src/ecs/component_store.dart';
 export 'src/ecs/deterministic_random.dart';
 export 'src/ecs/replay_recorder.dart';
+export 'src/ecs/session_replay.dart';
 export 'src/ai/ai_state.dart';
 export 'src/ui/button.dart';
 export 'src/ui/button_hit_box.dart';

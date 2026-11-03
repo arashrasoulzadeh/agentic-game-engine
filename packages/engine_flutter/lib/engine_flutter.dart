@@ -42,6 +42,7 @@ export 'src/ui/gamepad_remap_menu_scene.dart';
 export 'src/input/input.dart';
 export 'src/input/input_facade.dart';
 export 'src/logic/level_asset.dart';
+export 'src/logic/level_scene.dart';
 export 'src/testing/input_driver.dart';
 export 'src/input/input_bindings_storage.dart';
 export 'src/input/on_screen_controls.dart';

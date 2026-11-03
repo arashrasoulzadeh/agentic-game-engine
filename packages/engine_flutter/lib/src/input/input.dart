@@ -57,13 +57,46 @@ class InputController {
        bindings = bindings ?? defaultBindings(),
        aliases = aliases ?? ActionAliases();
 
-  static Map<LogicalKeyboardKey, String> defaultBindings() => {
-    LogicalKeyboardKey.arrowLeft: 'left',
-    LogicalKeyboardKey.arrowRight: 'right',
-    LogicalKeyboardKey.arrowUp: 'up',
-    LogicalKeyboardKey.arrowDown: 'down',
-    LogicalKeyboardKey.space: 'jump',
-  };
+  /// Arrow keys and space; with [wasd], W/A/S/D too (extra keys for the same
+  /// actions, so nothing that read `left` or `jump` changes).
+  static Map<LogicalKeyboardKey, String> defaultBindings({bool wasd = false}) =>
+      {
+        LogicalKeyboardKey.arrowLeft: 'left',
+        LogicalKeyboardKey.arrowRight: 'right',
+        LogicalKeyboardKey.arrowUp: 'up',
+        LogicalKeyboardKey.arrowDown: 'down',
+        LogicalKeyboardKey.space: 'jump',
+        if (wasd) ...{
+          LogicalKeyboardKey.keyA: 'left',
+          LogicalKeyboardKey.keyD: 'right',
+          LogicalKeyboardKey.keyW: 'up',
+          LogicalKeyboardKey.keyS: 'down',
+        },
+      };
+
+  /// Binds [key] to [action], replacing whatever [key] did before. Several
+  /// keys may share one action (that is how arrows and WASD both mean `left`).
+  void bind(LogicalKeyboardKey key, String action) => bindings[key] = action;
+
+  /// Binds every key in [keys] to [action].
+  void bindAll(String action, Iterable<LogicalKeyboardKey> keys) {
+    for (final key in keys) {
+      bind(key, action);
+    }
+  }
+
+  /// Removes every key bound to [action]; if it was held, lets it go too, so a
+  /// rebind menu cannot leave a stuck action behind.
+  void unbindAction(String action) {
+    bindings.removeWhere((_, bound) => bound == action);
+    state.pressedActions.remove(action);
+  }
+
+  /// Every key currently bound to [action], for a remap menu to display.
+  List<LogicalKeyboardKey> keysFor(String action) => [
+    for (final entry in bindings.entries)
+      if (entry.value == action) entry.key,
+  ];
 
   /// Set by a control-remapping UI (see `RemapMenuScene`) to capture
   /// the *next* physical key pressed, regardless of whether it's

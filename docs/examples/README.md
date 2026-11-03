@@ -32,3 +32,4 @@ drop snippets into a `Scene.populate` in a project made by `game_agent create`.
 | Recipe | You learn |
 |---|---|
 | [Save / load](save-load.md) | Slots, versioning, migration |
+| [Talk to an NPC](talk-to-npc.md) | `DialogueRunner`, `world.find`, proximity, choice events |

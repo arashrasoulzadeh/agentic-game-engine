@@ -104,7 +104,7 @@ Audit-and-polish, not greenfield: `content/prefab.dart`, `Level.loadInto`, `leve
 
 ### Input and UI (`engine_flutter`)
 Mostly unification: `InputState`, bindings, gamepad, `Camera`, `animation_shake_system.dart` and cinematic camera steps exist; `core/content/action_aliases.dart` may overlap.
-- [ ] **Action mapping and UI wiring.** Camera audited: `followSmooth` shipped and `shake(frequency:)` now oscillates when set (null keeps the original random jitter). (`Input` facade shipped in `input_facade.dart`: `justPressed/justReleased/isDown/axis` over `InputState`; keyboard, touch and gamepad already all write the same named actions.)
+- [x] **Action mapping and UI wiring.** Audited: keyboard, touch and gamepad already write the same named actions, with persisted bindings and a remap menu. Added what was missing: `InputController.defaultBindings(wasd:)`, `bind`, `bindAll`, `unbindAction` (releases a held action) and `keysFor`. Camera: `followSmooth` and `shake(frequency:)` shipped; `Input` facade shipped.
 
 ### Errors and debugging
 Audited by probing ~20 common mistakes. Good already: unregistered component, dead-entity writes, unknown prefab, bad timers, bad patches, missing `after:` systems. Fixed: component JSON with a missing or mistyped field now says which data arrived and which fields are expected (was a raw "type 'Null' is not a subtype of type 'num'").
@@ -115,10 +115,10 @@ Audited by probing ~20 common mistakes. Good already: unregistered component, de
 - [ ] Minimal barrel exports (advanced/internal to subpaths), consistent naming, remove redundancy, extension methods over bloating classes, dartdoc examples on public API.
 
 ### Time and tweens
-- [ ] **Input recording and replay**: `ReplayRecorder` exists; wire inputs + `world.random` seed so a bug can be reproduced headlessly.
+- [x] **Input recording and replay**: `SessionRecorder(world, captureInput:)` records the seed plus one input snapshot per step; `SessionReplayer.run(freshWorld, saved, applyInput:)` replays it and refuses a world built with a different seed. A test shows the replayed final state equals the recorded one byte for byte, and fails if the inputs differ.
 
 ### Scenes and game flow (stay in `engine_flutter`, D5)
-- [ ] **Scene = level + systems + UI bundle** (idea only; a `Scene` already bundles populate + assets + camera). Overlay stack, `onEnter/onExit` and full-scene `pushScene/popScene` (suspended world kept alive) shipped; transitions already exist.
+- [x] **Scene bundle**: `LevelScene(asset:, setup:, follow:, atlases:, strict:, prefabs:, defaults:)` is a level file plus a setup callback instead of a class per room; the camera follows a named entity via `world.find`. Overlay stack, `onEnter/onExit` and `pushScene/popScene` shipped earlier.
 
 ### Hierarchy
 - [x] **Named lookup**: decided to add a registered `Name` component (not keep names a level concern). `world.find('player')` (lowest id wins on duplicates), `nameOf`, `setName`; `Level.loadInto` gives every entity with a `name` key this component (skipped when `name` is not registered). `find` is a scan: look up once and keep the id. `world.withTag(...)` still covers many-entities labels.
@@ -132,7 +132,7 @@ Audited by probing ~20 common mistakes. Good already: unregistered component, de
 
 ### Tooling and onboarding
 - [x] `topdown_game` template shipped (core + engine_flutter only, verified offline in a scratch project: analyze clean, widget test passes). `platformer` = `default_game`, `turnbased` = `strategy_game`, `idle` = `idle_game` already existed, so no alias names were added. Still unverified: `game_agent create` against the pushed ref (G6).
-- [ ] **Cookbook**: dialogue recipe still missing (health bar, pickup, door+key, patrol, waves exist in `docs/examples`, the last four tested in `doc_examples_pickups_test.dart`).
+- [x] **Cookbook**: dialogue recipe added (`docs/examples/talk-to-npc.md`, executed by `doc_examples_talk_to_npc_test.dart`): proximity starts the conversation, a choice event changes the game. Health bar, pickup, door+key, patrol and waves existed already.
 - [x] **Migration guide** for `storeOf` shipped: `docs/migrating-from-storeof.md`.
 
 ### Content polish

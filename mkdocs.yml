@@ -121,6 +121,7 @@ nav:
       - Pickups, doors, patrols and waves: examples/pickups-doors-waves.md
       - Custom Behavior: examples/custom-behavior.md
       - Save / load: examples/save-load.md
+      - Talk to an NPC: examples/talk-to-npc.md
   - Reference:
       - Cheat sheet: reference/cheatsheet.md
       - Components: reference/components.md
