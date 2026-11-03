@@ -29,6 +29,7 @@ class DamageNumberStyle {
     ],
     this.criticalColorArgb = 0xFFFFC93C,
     this.enemyHitColorArgb = 0xFFFF5A4D,
+    this.dodgeColorArgb = 0xFF7FDBFF,
   });
 
   /// Seconds a number stays up while it rises and fades.
@@ -66,6 +67,9 @@ class DamageNumberStyle {
   /// A critical, and an enemy hitting the hero.
   final int criticalColorArgb;
   final int enemyHitColorArgb;
+
+  /// The colour of a dodged hit's text.
+  final int dodgeColorArgb;
 
   /// The colour for a hero hit worth [fraction] of the target's max health.
   int tierColor(double fraction) {
@@ -187,42 +191,79 @@ void installDamageNumbers(World world, DamageNumberStyle style) {
         : hit.attackerSide == 'hero'
         ? style.tierColor(fraction)
         : style.enemyHitColorArgb;
-    final label = '${hit.damage.round()}${hit.critical ? '!' : ''}';
-    final x = pos.x + world.random.nextDouble() * 12 - 6;
-    final drift = (world.random.nextDouble() * 2 - 1) * style.drift;
-    final pop = hit.critical ? style.popScale * 1.25 : style.popScale;
-
-    void spawn(double dx, double dy, int argb, int z) {
-      final id = world.spawn();
-      world.componentsOf<Position>().set(id, Position(x + dx, pos.y - 24 + dy));
-      world.componentsOf<eng.Text>().set(
-        id,
-        eng.Text(
-          label,
-          fontSize: size,
-          colorArgb: argb,
-          align: eng.TextAlignment.center,
-          screenSpace: false,
-          zIndex: z,
-        ),
-      );
-      world.componentsOf<DamageNumber>().set(
-        id,
-        DamageNumber(
-          life: style.lifetime,
-          riseSpeed: style.riseSpeed,
-          colorArgb: argb,
-          popScale: pop,
-          popSeconds: style.popSeconds,
-          driftX: drift,
-        ),
-      );
-    }
-
-    // The dark copy first (behind), then the coloured number on top.
-    spawn(size * 0.07, size * 0.07, style.shadowColorArgb, 129);
-    spawn(0, 0, color, 130);
+    spawnFloatingText(
+      world,
+      '${hit.damage.round()}${hit.critical ? '!' : ''}',
+      pos.x + world.random.nextDouble() * 12 - 6,
+      pos.y - 24,
+      size: size,
+      colorArgb: color,
+      style: style,
+      popScale: hit.critical ? style.popScale * 1.25 : style.popScale,
+      drift: (world.random.nextDouble() * 2 - 1) * style.drift,
+    );
   });
+  world.events.on<FighterDodge>((dodge) {
+    final pos = world.componentsOf<Position>().get(dodge.defender);
+    if (pos == null) return;
+    spawnFloatingText(
+      world,
+      'Dodge',
+      pos.x,
+      pos.y - 24,
+      size: style.baseSize * 1.1,
+      colorArgb: style.dodgeColorArgb,
+      style: style,
+    );
+  });
+}
+
+/// Spawns [text] at ([x], [y]) as a floating number: a dark copy behind a
+/// coloured one, both animated by [DamageNumberSystem]. [life] and [rise]
+/// default to the [style]'s.
+void spawnFloatingText(
+  World world,
+  String text,
+  double x,
+  double y, {
+  required double size,
+  required int colorArgb,
+  required DamageNumberStyle style,
+  double? popScale,
+  double drift = 0,
+  double? life,
+  double? rise,
+}) {
+  void spawn(double dx, double dy, int argb, int z) {
+    final id = world.spawn();
+    world.componentsOf<Position>().set(id, Position(x + dx, y + dy));
+    world.componentsOf<eng.Text>().set(
+      id,
+      eng.Text(
+        text,
+        fontSize: size,
+        colorArgb: argb,
+        align: eng.TextAlignment.center,
+        screenSpace: false,
+        zIndex: z,
+      ),
+    );
+    world.componentsOf<DamageNumber>().set(
+      id,
+      DamageNumber(
+        life: life ?? style.lifetime,
+        riseSpeed: rise ?? style.riseSpeed,
+        colorArgb: argb,
+        popScale: popScale ?? style.popScale,
+        popSeconds: style.popSeconds,
+        driftX: drift,
+      ),
+    );
+  }
+
+  // The dark copy first (behind), then the coloured number on top.
+  spawn(size * 0.07, size * 0.07, style.shadowColorArgb, 129);
+  spawn(0, 0, colorArgb, 130);
 }
 
 /// Registers [DamageNumber] so it serializes.

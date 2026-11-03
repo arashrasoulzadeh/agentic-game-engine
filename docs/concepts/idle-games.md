@@ -315,6 +315,13 @@ replays. A game supplies two things:
   `damageNumbers: DamageNumberStyle()` floats RPG-style numbers over the target (bigger for heavier hits, hotter colours
   by weight, gold and larger for criticals, a dark copy behind for legibility); `hitFeedback: HitFeedback()` adds
   knockback, a red flash and camera shake when the hero is hit, and a harder shake plus sparks on criticals.
+- Fight depth, also optional: enemies act on the `powers` and boss `phases` in their sidecars that the engine
+  understands (`EnemyPowers`: rage below a health fraction, dodge, a stronger first strike; other effects are
+  ignored); `windupSeconds` telegraphs each enemy attack (a glow and a "!") and `HitFeedback.hitStopSeconds` freezes
+  combat for a moment on heavy hits; `comboBonusPerHit` builds a damage combo from consecutive hits.
+  `random_waves` in the level JSON (`RandomWaves`) shuffles waves inside blocks, turns some into tougher, larger
+  elites that pay more coins, and can add one rare, nearly harmless treasure enemy (a chosen enemy's art) that pays
+  many coins; `WaveCombatConfig.waveSeed` repeats a run.
 - `LevelData` (JSON): `wave` and `boss` ids, hero/enemy anchors, balance (`preview_hero_scale`,
   `preview_boss_scale`), `parallax` layers with speeds, `enemy_ramp` (`{"start": 0.5, "waves": 8}`: early enemies start weaker and reach full strength), `hero_crit` (`{"chance": 0.2, "multiplier": 2}`), and `cues` (animation cues per state and frame, e.g. camera
   shake on the frame an attack lands).

@@ -16,7 +16,11 @@ class FighterStats {
     this.regeneration = 0,
     this.frames = 4,
     this.cell = 64,
+    this.powers = const [],
   });
+
+  /// Effect texts of the sidecar's `powers` and `phases` (see `EnemyPowers`).
+  final List<String> powers;
 
   final double hp;
   final double attack;
@@ -36,8 +40,26 @@ class FighterStats {
       regeneration: (s['regeneration'] as num? ?? 0).toDouble(),
       frames: (json['frames'] as num?)?.toInt() ?? 4,
       cell: (json['cell'] as num?)?.toDouble() ?? 64,
+      powers: [
+        for (final p in (json['powers'] as List?) ?? const [])
+          if (p is Map && p['effect'] is String) p['effect'] as String,
+        for (final p in (json['phases'] as List?) ?? const [])
+          if (p is Map) ...?_phaseText(p),
+      ],
     );
   }
+}
+
+/// A boss phase like `{hp_below: 50, effect: 'attack_speed x1.5'}` as the
+/// power text `EnemyPowers` understands.
+List<String>? _phaseText(Map phase) {
+  final below = phase['hp_below'];
+  final m = RegExp(
+    r'attack_speed x(\d+(?:\.\d+)?)',
+  ).firstMatch('${phase['effect']}');
+  if (below is! num || m == null) return null;
+  final pct = ((double.parse(m[1]!) - 1) * 100).round();
+  return ['+$pct% attack speed below ${below.round()}% hp'];
 }
 
 /// A fighter's display [name], [stats] and one sheet per animation state

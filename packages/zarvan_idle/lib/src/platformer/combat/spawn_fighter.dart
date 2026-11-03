@@ -3,6 +3,7 @@ import 'package:zarvan_flutter/zarvan_flutter.dart' hide Text;
 import 'package:zarvan_platformer/zarvan_platformer.dart';
 
 import 'combat_components.dart';
+import 'enemy_powers.dart';
 
 /// Spawns a fighter: [Sprite] + [AnimationState] + [Health] + [HitFlash].
 ///
@@ -28,6 +29,7 @@ EntityId spawnFighter(
   int zIndex = 10,
   double critChance = 0,
   double critMultiplier = 1.5,
+  EnemyPowers? powers,
 }) {
   final regions = [for (var i = 0; i < frameCount; i++) '$i'];
   final id = world.spawn();
@@ -75,6 +77,7 @@ EntityId spawnFighter(
       critMultiplier: critMultiplier,
     ),
   );
+  if (powers != null) world.componentsOf<EnemyPowers>().set(id, powers);
   world.componentsOf<Health>().set(id, Health(current: hp, max: hp));
   world.componentsOf<HitFlash>().set(id, HitFlash());
   return id;

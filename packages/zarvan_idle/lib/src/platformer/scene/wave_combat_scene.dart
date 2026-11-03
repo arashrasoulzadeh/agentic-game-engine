@@ -1,10 +1,16 @@
+import 'dart:math' as math;
 import 'dart:ui' show Offset;
 
 import 'package:zarvan_core/zarvan_core.dart';
 import 'package:zarvan_flutter/zarvan_flutter.dart' hide Text;
+import 'package:zarvan_flutter/zarvan_flutter.dart'
+    as eng
+    show Text, TextAlignment;
 import 'package:zarvan_platformer/zarvan_platformer.dart';
 
 import '../combat/auto_combat_system.dart';
+import '../combat/enemy_powers.dart';
+import '../level/wave_plan.dart';
 import '../fx/damage_numbers.dart';
 import '../fx/hit_feedback.dart';
 import '../hud/upgrade_bar.dart';
@@ -56,6 +62,10 @@ class WaveCombatConfig {
     this.bossCoins = 50,
     this.damageNumbers,
     this.hitFeedback,
+    this.windupSeconds = 0,
+    this.comboBonusPerHit = 0,
+    this.comboMax = 10,
+    this.waveSeed,
   });
 
   /// Asset stem of the hero sheets (`<stem>_idle.png`, `_attack`, `_death`).
@@ -122,6 +132,19 @@ class WaveCombatConfig {
   /// (default) adds none.
   final HitFeedback? hitFeedback;
 
+  /// Seconds before an attack that it is telegraphed (see
+  /// `HitFeedback.windupTintArgb`); 0 (default) means no wind-up.
+  final double windupSeconds;
+
+  /// Combo: every consecutive hero hit (a hit taken resets it) adds this
+  /// fraction of damage, up to [comboMax] hits. 0 (default) turns combos off.
+  final double comboBonusPerHit;
+  final int comboMax;
+
+  /// Seeds the random wave order (`LevelData.randomWaves`); null = a fresh
+  /// order every run.
+  final int? waveSeed;
+
   /// Builds the spark emitter each fighter gets.
   final ParticleEmitter Function() impactParticles;
 
@@ -167,8 +190,12 @@ class WaveCombatScene extends Scene {
   static const _uiScroll = 'ui_caption_scroll';
   static const _uiButtons = 'ui_buttons';
 
+  late final WavePlan plan = WavePlan.generate(
+    level,
+    math.Random(config.waveSeed ?? DateTime.now().microsecondsSinceEpoch),
+  );
   late final WaveProgress waves = WaveProgress(
-    wave: level.wave,
+    wave: plan.ids,
     boss: level.boss,
   );
   late final Map<String, String> _fxStems = {
@@ -195,6 +222,10 @@ class WaveCombatScene extends Scene {
   bool finished = false;
   bool _heroFell = false;
   bool _enemyRewarded = false;
+  int _rewardCoins = 0;
+  int _combo = 0;
+  EntityId? _comboLabel;
+  HitStop? _hitStop;
   UpgradeBar? _upgradeBar;
   late double _baseHp, _baseAttack, _baseAttackSpeed, _baseArmor;
   late String status = level.name;
@@ -223,6 +254,7 @@ class WaveCombatScene extends Scene {
     registerCombatComponents(world);
     registerDamageNumberComponents(world);
     registerHitFeedbackComponents(world);
+    registerWindupComponents(world);
     world
       ..addSystem(_combat)
       ..addSystem(TweenSystem())
@@ -267,7 +299,39 @@ class WaveCombatScene extends Scene {
     final numbers = config.damageNumbers;
     if (numbers != null) installDamageNumbers(world, numbers);
     final feedback = config.hitFeedback;
-    if (feedback != null) installHitFeedback(world, feedback, _camera);
+    if (feedback != null) {
+      _hitStop = HitStop(world);
+      installHitFeedback(
+        world,
+        feedback,
+        _camera,
+        hitStop: _hitStop,
+        warningStyle: numbers ?? const DamageNumberStyle(),
+      );
+    }
+    _combat.windupSeconds = config.windupSeconds;
+    if (config.comboBonusPerHit > 0) {
+      _comboLabel = world.spawn();
+      world.componentsOf<Position>().set(_comboLabel!, Position(145, 64));
+      world.componentsOf<eng.Text>().set(
+        _comboLabel!,
+        eng.Text(
+          '',
+          fontSize: 5.4,
+          colorArgb: 0xFFFFC93C,
+          align: eng.TextAlignment.center,
+          screenSpace: false,
+          zIndex: 125,
+        ),
+      );
+      _combat.damageMultiplier = (side) => side == 'hero'
+          ? 1 + math.min(_combo, config.comboMax) * config.comboBonusPerHit
+          : 1;
+      world.events.on<FighterHit>((hit) {
+        _combo = hit.attackerSide == 'hero' ? _combo + 1 : 0;
+        _syncCombo(world);
+      });
+    }
 
     _meta[config.heroId] = await FighterMeta.load(
       config.heroId,
@@ -498,7 +562,27 @@ class WaveCombatScene extends Scene {
     final meta = _meta[waves.currentId]!;
     final stats = meta.stats;
     status = waves.isBoss ? config.bossLabel : waves.label;
-    final scale = _fitScale(stats.cell);
+    final kind = waves.isBoss ? WaveKind.normal : plan.kinds[waves.index];
+    final rw = level.randomWaves;
+    final hpKind = switch (kind) {
+      WaveKind.elite => rw?.eliteHp ?? 1,
+      WaveKind.treasure => rw?.treasureHp ?? 1,
+      WaveKind.normal => 1.0,
+    };
+    final attackKind = switch (kind) {
+      WaveKind.elite => rw?.eliteAttack ?? 1,
+      WaveKind.treasure => rw?.treasureAttack ?? 1,
+      WaveKind.normal => 1.0,
+    };
+    final sizeKind = kind == WaveKind.elite ? (rw?.eliteScale ?? 1) : 1.0;
+    _rewardCoins = waves.isBoss
+        ? config.bossCoins
+        : switch (kind) {
+            WaveKind.elite => config.coinsPerKill * (rw?.eliteCoins ?? 1),
+            WaveKind.treasure => config.coinsPerKill * (rw?.treasureCoins ?? 1),
+            WaveKind.normal => config.coinsPerKill,
+          };
+    final scale = _fitScale(stats.cell) * sizeKind;
     final drawn = stats.cell * scale;
     _enemyTargetX = level.enemyAnchor.x + drawn / 2;
     _enemyBaseY = level.enemyAnchor.y + drawn / 2;
@@ -509,12 +593,15 @@ class WaveCombatScene extends Scene {
       y: _enemyBaseY,
       hp: waves.isBoss
           ? level.bossScaled('hp', stats.hp)
-          : stats.hp * level.enemyRamp(waves.index),
+          : stats.hp * level.enemyRamp(waves.index) * hpKind,
       attack: waves.isBoss
           ? level.bossScaled('attack', stats.attack)
-          : stats.attack * level.enemyRamp(waves.index),
+          : stats.attack * level.enemyRamp(waves.index) * attackKind,
       attackSpeed: stats.attackSpeed,
       armor: stats.armor,
+      powers: kind == WaveKind.treasure
+          ? null
+          : EnemyPowers.parse(stats.powers),
       atlasId: meta.atlasId('idle'),
       frameCount: meta.frames['idle']!,
       extraClips: meta.extraClips(cues: level.cues),
@@ -551,7 +638,11 @@ class WaveCombatScene extends Scene {
       );
     }
     _path?.update(waves.index, config.ui.pathNodeSize);
-    enemyLabel = meta.name;
+    enemyLabel = switch (kind) {
+      WaveKind.elite => 'Elite ${meta.name}',
+      WaveKind.treasure => 'Golden ${meta.name}',
+      WaveKind.normal => meta.name,
+    };
     enemyDescription = meta.descriptionFa;
     _combat.enabled = false;
     _walk.start(world, hero: heroId!, enemy: enemyId!, corpse: _corpse);
@@ -608,8 +699,17 @@ class WaveCombatScene extends Scene {
     return true;
   }
 
+  void _syncCombo(World world) {
+    final id = _comboLabel;
+    if (id == null) return;
+    world.componentsOf<eng.Text>().get(id)?.text = _combo >= 2
+        ? 'Combo x$_combo'
+        : '';
+  }
+
   @override
   void update(double dt, World world) {
+    _hitStop?.update(dt);
     _caption.update(world, dt);
     _heroBar?.sync();
     _enemyBar?.sync();
@@ -638,7 +738,7 @@ class WaveCombatScene extends Scene {
       _caption.hide();
       if (!_enemyRewarded) {
         _enemyRewarded = true;
-        progress.coins += waves.isBoss ? config.bossCoins : config.coinsPerKill;
+        progress.coins += _rewardCoins;
         _upgradeBar?.sync(world);
       }
       if (!_deathPlayed(world, e, dt)) return;

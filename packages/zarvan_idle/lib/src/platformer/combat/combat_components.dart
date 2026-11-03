@@ -1,5 +1,7 @@
 import 'package:zarvan_core/zarvan_core.dart';
 
+import 'enemy_powers.dart';
+
 /// Who is fighting (hero lane vs enemy lane).
 class CombatRole {
   CombatRole(this.side);
@@ -60,6 +62,11 @@ void registerCombatComponents(World world) {
     (c) => c.toJson(),
     CombatRole.fromJson,
   );
+  world.components.register<EnemyPowers>(
+    'enemyPowers',
+    (c) => c.toJson(),
+    EnemyPowers.fromJson,
+  );
   world.components.register<CombatStats>(
     'combatStats',
     (c) => c.toJson(),
@@ -89,4 +96,25 @@ class FighterHit {
 
   /// The hit rolled a critical (already included in [damage]).
   final bool critical;
+}
+
+/// A fighter avoided a hit entirely (its `EnemyPowers.dodge`).
+class FighterDodge {
+  FighterDodge({required this.attacker, required this.defender});
+
+  final EntityId attacker;
+  final EntityId defender;
+}
+
+/// A fighter is about to attack in [seconds]: presentation can telegraph it.
+class AttackWindup {
+  AttackWindup({
+    required this.attacker,
+    required this.attackerSide,
+    required this.seconds,
+  });
+
+  final EntityId attacker;
+  final String attackerSide;
+  final double seconds;
 }

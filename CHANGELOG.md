@@ -8,6 +8,9 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added (wave combat, fight depth)
+- `EnemyPowers` parsed from sidecar `powers`/`phases` (rage, dodge, first strike), `AutoCombatSystem.windupSeconds` + `AttackWindup`/`FighterDodge` events, attack telegraph (glow and "!"), `HitStop`, damage combo (`comboBonusPerHit`), and randomised waves with elites and a treasure enemy (`RandomWaves`, `WavePlan`).
+
 ### Added (wave combat)
 - Hero upgrades with coins and a Retry button that keeps them (`HeroUpgrade`, `HeroProgress`, `UpgradeBar`); critical hits (`CombatStats.critChance`, `FighterHit.critical`, level `hero_crit`); an early-game enemy ramp (level `enemy_ramp`); floating damage numbers (`DamageNumberStyle`) and hit feedback (`HitFeedback`: knockback, red flash, shake, critical sparks).
 
