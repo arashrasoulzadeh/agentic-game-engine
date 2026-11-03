@@ -2115,7 +2115,7 @@ REST: `POST /v1/level/fill_region` · MCP tool: `level.fill_region` · JSON-RPC 
 
 Create a level from a Tiled .tmx map.
 
-Makes a new level whose single entity holds the imported tileMap. Fails with `conflict` if the output exists. A map with several tile layers needs `layer` (the layer name to import). Unsupported maps (several tilesets, external tilesets, compressed data) are `validation_failed` with the reason.
+Makes a new level whose single entity holds the imported tileMap. Fails with `conflict` if the output exists. A map with several tile layers needs `layer` (the layer name to import). Several tilesets and external `.tsx` tilesets (resolved next to the map) are supported. Unsupported maps (zlib/gzip-compressed layer data, XML tile elements) are `validation_failed` with the reason; re-export the layer as CSV or uncompressed base64.
 
 *write*, needs an open project.
 
