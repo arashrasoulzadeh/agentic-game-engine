@@ -26,6 +26,8 @@ EntityId spawnFighter(
   double scaleX = 1,
   double scaleY = 1,
   int zIndex = 10,
+  double critChance = 0,
+  double critMultiplier = 1.5,
 }) {
   final regions = [for (var i = 0; i < frameCount; i++) '$i'];
   final id = world.spawn();
@@ -69,6 +71,8 @@ EntityId spawnFighter(
       attack: attack,
       attackSpeed: attackSpeed,
       armor: armor,
+      critChance: critChance,
+      critMultiplier: critMultiplier,
     ),
   );
   world.componentsOf<Health>().set(id, Health(current: hp, max: hp));

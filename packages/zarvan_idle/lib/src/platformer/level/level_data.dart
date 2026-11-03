@@ -30,6 +30,10 @@ class LevelData {
     required this.enemyAnchor,
     this.previewScale = const {},
     this.previewBossScale = const {},
+    this.enemyRampStart = 1,
+    this.enemyRampWaves = 0,
+    this.heroCritChance = 0,
+    this.heroCritMultiplier = 1.5,
     this.parallax = const [],
     this.cues = const {},
   });
@@ -48,6 +52,23 @@ class LevelData {
   /// Per-stat multipliers on the boss. Roster boss stats assume a levelled
   /// hero, so a preview with an unlevelled one tones the boss down here.
   final Map<String, double> previewBossScale;
+
+  /// Early-game ease: normal enemies (not the boss) start at this fraction of
+  /// their hp and attack and reach full strength after [enemyRampWaves] waves.
+  /// 1 (default) means no ramp.
+  final double enemyRampStart;
+  final int enemyRampWaves;
+
+  /// The hero's critical-hit chance (0..1) and damage multiplier.
+  final double heroCritChance;
+  final double heroCritMultiplier;
+
+  /// Multiplier for the normal enemy of wave [index] (0-based).
+  double enemyRamp(int index) {
+    if (enemyRampWaves <= 0 || enemyRampStart >= 1) return 1;
+    final t = (index / enemyRampWaves).clamp(0.0, 1.0);
+    return enemyRampStart + (1 - enemyRampStart) * t;
+  }
 
   /// Scrolling background layers, far to near; empty = none.
   final List<ParallaxSpec> parallax;
@@ -69,6 +90,13 @@ class LevelData {
     ),
     previewScale: _scales(json['preview_hero_scale']),
     previewBossScale: _scales(json['preview_boss_scale']),
+    enemyRampStart:
+        ((json['enemy_ramp'] as Map?)?['start'] as num?)?.toDouble() ?? 1,
+    enemyRampWaves: ((json['enemy_ramp'] as Map?)?['waves'] as num?)?.toInt() ?? 0,
+    heroCritChance:
+        ((json['hero_crit'] as Map?)?['chance'] as num?)?.toDouble() ?? 0,
+    heroCritMultiplier:
+        ((json['hero_crit'] as Map?)?['multiplier'] as num?)?.toDouble() ?? 1.5,
     cues: _cues(json['cues']),
     parallax: [
       for (final l in (json['parallax'] as List?) ?? const [])

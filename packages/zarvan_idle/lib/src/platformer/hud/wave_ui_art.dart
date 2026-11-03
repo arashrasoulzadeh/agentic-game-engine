@@ -1,3 +1,5 @@
+import 'upgrade_bar.dart';
+
 /// The generated UI art a [WaveCombatScene] can dress itself in. Every part
 /// is optional: leave a stem null and that piece falls back to the plain
 /// engine primitive (rectangle bars, no path, bare caption text).
@@ -6,6 +8,8 @@ class WaveUiArt {
     this.barsStem,
     this.pathNodesStem,
     this.pathLineImage,
+    this.buttonImage,
+    this.upgradeLayout = const UpgradeLayout(),
     this.captionBackdropImage,
     this.pathY = 38,
     this.pathInset = 9,
@@ -23,6 +27,13 @@ class WaveUiArt {
 
   /// Full image stretched behind the nodes as the path line (`ui_divider`).
   final String? pathLineImage;
+
+  /// Full path of the `ui_button_atlas` sheet (see `ButtonSheet`). Needed for
+  /// the upgrade and retry buttons; without it a lost run replays on any tap.
+  final String? buttonImage;
+
+  /// Where the upgrade buttons, coin counter and retry button sit.
+  final UpgradeLayout upgradeLayout;
 
   /// Full image behind the caption (`ui_dialog_scroll`).
   final String? captionBackdropImage;

@@ -5,6 +5,10 @@ import 'package:zarvan_flutter/zarvan_flutter.dart' hide Text;
 import 'package:zarvan_platformer/zarvan_platformer.dart';
 
 import '../combat/auto_combat_system.dart';
+import '../fx/damage_numbers.dart';
+import '../fx/hit_feedback.dart';
+import '../hud/upgrade_bar.dart';
+import '../progress/hero_progress.dart';
 import 'scene_light.dart';
 import 'sun_light.dart';
 import '../combat/combat_components.dart';
@@ -47,6 +51,11 @@ class WaveCombatConfig {
     this.ui = const WaveUiArt(),
     this.sun,
     this.lights = const [],
+    this.upgrades = const [],
+    this.coinsPerKill = 10,
+    this.bossCoins = 50,
+    this.damageNumbers,
+    this.hitFeedback,
   });
 
   /// Asset stem of the hero sheets (`<stem>_idle.png`, `_attack`, `_death`).
@@ -98,6 +107,21 @@ class WaveCombatConfig {
   /// [sun] the scene is not darkened, so they only add tint.
   final List<SceneLight> lights;
 
+  /// Hero upgrades the player can buy with coins (needs
+  /// `WaveUiArt.buttonImage` for the buttons). Empty (default) means none.
+  final List<HeroUpgrade> upgrades;
+
+  /// Coins for each enemy killed, and for the boss.
+  final int coinsPerKill;
+  final int bossCoins;
+
+  /// Floating damage numbers on hits; null (default) shows none.
+  final DamageNumberStyle? damageNumbers;
+
+  /// Knockback, red screen flash, camera shake and critical sparks; null
+  /// (default) adds none.
+  final HitFeedback? hitFeedback;
+
   /// Builds the spark emitter each fighter gets.
   final ParticleEmitter Function() impactParticles;
 
@@ -121,10 +145,18 @@ class WaveCombatConfig {
 /// shake/particle cues and the walk are engine systems this scene registers;
 /// a game supplies a [LevelData] and a [WaveCombatConfig].
 class WaveCombatScene extends Scene {
-  WaveCombatScene({required this.level, required this.config});
+  WaveCombatScene({
+    required this.level,
+    required this.config,
+    HeroProgress? progress,
+  }) : progress = progress ?? HeroProgress();
 
   final LevelData level;
   final WaveCombatConfig config;
+
+  /// Coins and upgrade levels. Pass the same object to the next scene (a
+  /// retry) to keep them.
+  final HeroProgress progress;
 
   static const _hitFx = 'fx_hit';
   static const _slashFx = 'fx_slash';
@@ -133,6 +165,7 @@ class WaveCombatScene extends Scene {
   static const _uiNodes = 'ui_path_nodes';
   static const _uiLine = 'ui_path_line';
   static const _uiScroll = 'ui_caption_scroll';
+  static const _uiButtons = 'ui_buttons';
 
   late final WaveProgress waves = WaveProgress(
     wave: level.wave,
@@ -160,6 +193,10 @@ class WaveCombatScene extends Scene {
   SceneController? _scenes;
 
   bool finished = false;
+  bool _heroFell = false;
+  bool _enemyRewarded = false;
+  UpgradeBar? _upgradeBar;
+  late double _baseHp, _baseAttack, _baseAttackSpeed, _baseArmor;
   late String status = level.name;
   String enemyLabel = '';
   String enemyDescription = '';
@@ -184,6 +221,8 @@ class WaveCombatScene extends Scene {
     _scenes = scenes;
     registerPlatformerComponents(world);
     registerCombatComponents(world);
+    registerDamageNumberComponents(world);
+    registerHitFeedbackComponents(world);
     world
       ..addSystem(_combat)
       ..addSystem(TweenSystem())
@@ -196,7 +235,9 @@ class WaveCombatScene extends Scene {
       ..addSystem(SpriteStateSystem())
       ..addSystem(AnimationSystem())
       ..addSystem(SpritePivotSystem(_pivots))
-      ..addSystem(OneShotFxSystem());
+      ..addSystem(OneShotFxSystem())
+      ..addSystem(DamageNumberSystem())
+      ..addSystem(HitFeedbackSystem());
 
     _camera = Camera(x: world.width / 2, y: world.height / 2);
     // Shake / particle cues authored in the level JSON fire from animation
@@ -223,6 +264,10 @@ class WaveCombatScene extends Scene {
       ),
       pivots: _pivots,
     );
+    final numbers = config.damageNumbers;
+    if (numbers != null) installDamageNumbers(world, numbers);
+    final feedback = config.hitFeedback;
+    if (feedback != null) installHitFeedback(world, feedback, _camera);
 
     _meta[config.heroId] = await FighterMeta.load(
       config.heroId,
@@ -286,6 +331,15 @@ class WaveCombatScene extends Scene {
         SceneLightSystem(config.lights, ids, () => heroId, () => enemyId),
       );
     }
+    if (config.upgrades.isNotEmpty && config.ui.buttonImage != null) {
+      _upgradeBar = UpgradeBar.spawn(
+        world,
+        atlasId: _uiButtons,
+        upgrades: config.upgrades,
+        progress: progress,
+        layout: config.ui.upgradeLayout,
+      );
+    }
     _spawnEnemy(world);
   }
 
@@ -303,7 +357,8 @@ class WaveCombatScene extends Scene {
         (ui.barsStem != null ? 1 : 0) +
         (ui.pathNodesStem != null ? 1 : 0) +
         (ui.pathLineImage != null ? 1 : 0) +
-        (ui.captionBackdropImage != null ? 1 : 0);
+        (ui.captionBackdropImage != null ? 1 : 0) +
+        (ui.buttonImage != null ? 1 : 0);
     var done = 0;
     void loaded() => reportAssetProgress(++done, total);
     for (final layer in level.parallax) {
@@ -359,6 +414,15 @@ class WaveCombatScene extends Scene {
       );
       loaded();
     }
+    if (ui.buttonImage != null) {
+      registry.register(
+        _uiButtons,
+        UpgradeBar.atlasFor(
+          await SpriteAtlas.loadFullImageFromAssets(ui.buttonImage!),
+        ),
+      );
+      loaded();
+    }
     return registry;
   }
 
@@ -370,15 +434,22 @@ class WaveCombatScene extends Scene {
     final hs = meta.stats;
     final scale = _fitScale(hs.cell);
     final drawn = hs.cell * scale;
+    _baseHp = level.scaled('hp', hs.hp);
+    _baseAttack = level.scaled('attack', hs.attack);
+    _baseAttackSpeed = level.scaled('attack_speed', hs.attackSpeed);
+    _baseArmor = level.scaled('armor', hs.armor);
+    double up(String stat) => progress.multiplier(stat, config.upgrades);
     heroId = spawnFighter(
       world,
       side: 'hero',
       x: level.hero.x + drawn / 2,
       y: level.hero.y + drawn / 2,
-      hp: level.scaled('hp', hs.hp),
-      attack: level.scaled('attack', hs.attack),
-      attackSpeed: level.scaled('attack_speed', hs.attackSpeed),
-      armor: level.scaled('armor', hs.armor),
+      hp: _baseHp * up('hp'),
+      attack: _baseAttack * up('attack'),
+      attackSpeed: _baseAttackSpeed * up('attack_speed'),
+      armor: _baseArmor * up('armor'),
+      critChance: level.heroCritChance,
+      critMultiplier: level.heroCritMultiplier,
       atlasId: meta.atlasId('idle'),
       frameCount: meta.frames['idle']!,
       extraClips: meta.extraClips(cues: level.cues),
@@ -418,6 +489,7 @@ class WaveCombatScene extends Scene {
   /// walked up to its anchor. The previous one stays as a corpse that
   /// scrolls away with the ground.
   void _spawnEnemy(World world) {
+    _enemyRewarded = false;
     if (_corpse != null) world.destroy(_corpse!);
     _corpse = enemyId;
     if (_enemyHudId != null) world.destroy(_enemyHudId!);
@@ -435,10 +507,12 @@ class WaveCombatScene extends Scene {
       side: 'enemy',
       x: _enemyTargetX + config.enterDistance,
       y: _enemyBaseY,
-      hp: waves.isBoss ? level.bossScaled('hp', stats.hp) : stats.hp,
+      hp: waves.isBoss
+          ? level.bossScaled('hp', stats.hp)
+          : stats.hp * level.enemyRamp(waves.index),
       attack: waves.isBoss
           ? level.bossScaled('attack', stats.attack)
-          : stats.attack,
+          : stats.attack * level.enemyRamp(waves.index),
       attackSpeed: stats.attackSpeed,
       armor: stats.armor,
       atlasId: meta.atlasId('idle'),
@@ -493,6 +567,36 @@ class WaveCombatScene extends Scene {
     status = message;
     _caption.hide();
     _syncHud(world);
+    if (_heroFell) _upgradeBar?.showRetry(world);
+  }
+
+  /// Re-derives the living hero's stats from the base values and the bought
+  /// upgrade levels, keeping the health fraction it already has.
+  void _applyUpgrades(World world) {
+    final h = heroId;
+    if (h == null) return;
+    double up(String stat) => progress.multiplier(stat, config.upgrades);
+    final stats = world.componentsOf<CombatStats>();
+    final health = world.componentsOf<Health>().get(h);
+    final old = stats.get(h);
+    if (old == null || health == null) return;
+    final maxHp = _baseHp * up('hp');
+    final fraction = health.max <= 0 ? 1.0 : health.current / health.max;
+    stats.set(
+      h,
+      CombatStats(
+        maxHp: maxHp,
+        attack: _baseAttack * up('attack'),
+        attackSpeed: _baseAttackSpeed * up('attack_speed'),
+        armor: _baseArmor * up('armor'),
+        cooldown: old.cooldown,
+        critChance: old.critChance,
+        critMultiplier: old.critMultiplier,
+      ),
+    );
+    health
+      ..max = maxHp
+      ..current = maxHp * fraction;
   }
 
   /// True once [fighter]'s death clip has finished and lingered for a beat.
@@ -526,11 +630,17 @@ class WaveCombatScene extends Scene {
     final enemyHp = world.componentsOf<Health>().get(e);
     if (heroHp != null && heroHp.current <= 0) {
       if (!_deathPlayed(world, h, dt)) return;
+      _heroFell = true;
       return _finish(world, config.fallenMessage);
     }
     if (enemyHp != null && enemyHp.current <= 0) {
       // The description stays up for the whole encounter and goes with the enemy.
       _caption.hide();
+      if (!_enemyRewarded) {
+        _enemyRewarded = true;
+        progress.coins += waves.isBoss ? config.bossCoins : config.coinsPerKill;
+        _upgradeBar?.sync(world);
+      }
       if (!_deathPlayed(world, e, dt)) return;
       if (waves.isBoss) return _finish(world, config.clearedMessage);
       waves.advance();
@@ -540,9 +650,25 @@ class WaveCombatScene extends Scene {
 
   @override
   void handleTap(World world, SceneController scenes, Offset worldPosition) {
+    final bar = _upgradeBar;
+    final pressed = bar?.hit(worldPosition);
+    if (pressed == UpgradeBar.retryAction) return _restart(scenes);
+    if (pressed != null) {
+      final upgrade = config.upgrades.firstWhere((u) => u.id == pressed);
+      if (progress.buy(upgrade)) {
+        _applyUpgrades(world);
+        bar!.sync(world);
+      }
+      return;
+    }
     if (!finished) return;
-    (_scenes ?? scenes).loadScene(
-      WaveCombatScene(level: level, config: config),
-    );
+    // A lost run with a retry button restarts only from that button; a win,
+    // or a scene without buttons, replays on any tap.
+    if (_heroFell && bar != null) return;
+    _restart(scenes);
   }
+
+  void _restart(SceneController scenes) => (_scenes ?? scenes).loadScene(
+    WaveCombatScene(level: level, config: config, progress: progress),
+  );
 }

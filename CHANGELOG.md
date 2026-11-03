@@ -8,6 +8,9 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added (wave combat)
+- Hero upgrades with coins and a Retry button that keeps them (`HeroUpgrade`, `HeroProgress`, `UpgradeBar`); critical hits (`CombatStats.critChance`, `FighterHit.critical`, level `hero_crit`); an early-game enemy ramp (level `enemy_ramp`); floating damage numbers (`DamageNumberStyle`) and hit feedback (`HitFeedback`: knockback, red flash, shake, critical sparks).
+
 ### Added (lighting)
 - `WaveCombatConfig.lights`: `SceneLight`s anchored to the hero, the current enemy or a fixed point, with optional flicker (`SceneLightSystem`); off when the anchor has no target.
 - `EngineView.autoGpuShadows` / `Game.autoGpuShadows` (on by default): a shadow-casting light draws with the GPU shadow shader on its own when the result matches the CPU one (shader ready, no `Collider(blocksLight)` entities, no one-way blocking, no `shadowSmoothingSeconds`/`openAirFalloffScale`, fewer than 32 nearby tile edges); otherwise it stays on the CPU raycast. `Light2D.useGpuShadows` still forces the GPU path.

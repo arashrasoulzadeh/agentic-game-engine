@@ -42,7 +42,10 @@ class AutoCombatSystem extends System {
     s.cooldown = 1.0 / s.attackSpeed.clamp(0.05, 10);
     final raw = s.attack - stats.get(defender)!.armor;
     final hp = world.componentsOf<Health>().get(defender)!;
-    final dmg = raw < 1 ? 1.0 : raw;
+    final base = raw < 1 ? 1.0 : raw;
+    final critical =
+        s.critChance > 0 && world.random.nextDouble() < s.critChance;
+    final dmg = critical ? base * s.critMultiplier : base;
     hp.current = (hp.current - dmg).clamp(0, hp.max);
     playSpriteState(world, attacker, 'attack');
     flashHit(world, defender);
@@ -53,6 +56,7 @@ class AutoCombatSystem extends System {
         attackerSide: world.componentsOf<CombatRole>().get(attacker)!.side,
         damage: dmg,
         fatal: hp.current <= 0,
+        critical: critical,
       ),
     );
   }

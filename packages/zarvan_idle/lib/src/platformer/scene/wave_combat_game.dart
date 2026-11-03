@@ -4,6 +4,7 @@ import 'package:zarvan_flutter/zarvan_flutter.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../level/level_data.dart';
+import '../progress/hero_progress.dart';
 import 'wave_combat_scene.dart';
 
 /// A whole wave-combat game: the engine's `Game` around a [WaveCombatScene].
@@ -65,5 +66,9 @@ class WaveCombatGame extends Game {
   );
 
   @override
-  Scene createInitialScene() => WaveCombatScene(level: level, config: combat);
+  Scene createInitialScene() =>
+      WaveCombatScene(level: level, config: combat, progress: progress);
+
+  /// Coins and upgrades, kept across retries of this game session.
+  final HeroProgress progress = HeroProgress();
 }

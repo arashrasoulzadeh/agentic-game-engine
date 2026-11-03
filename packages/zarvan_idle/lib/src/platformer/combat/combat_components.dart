@@ -18,6 +18,8 @@ class CombatStats {
     required this.attackSpeed,
     required this.armor,
     this.cooldown = 0,
+    this.critChance = 0,
+    this.critMultiplier = 1.5,
   });
 
   final double maxHp;
@@ -26,12 +28,18 @@ class CombatStats {
   final double armor;
   double cooldown;
 
+  /// Chance (0..1) that a hit is critical and deals [critMultiplier] damage.
+  final double critChance;
+  final double critMultiplier;
+
   Map<String, dynamic> toJson() => {
     'maxHp': maxHp,
     'attack': attack,
     'attackSpeed': attackSpeed,
     'armor': armor,
     'cooldown': cooldown,
+    'critChance': critChance,
+    'critMultiplier': critMultiplier,
   };
 
   factory CombatStats.fromJson(Map<String, dynamic> json) => CombatStats(
@@ -40,6 +48,8 @@ class CombatStats {
     attackSpeed: (json['attackSpeed'] as num).toDouble(),
     armor: (json['armor'] as num).toDouble(),
     cooldown: (json['cooldown'] as num?)?.toDouble() ?? 0,
+    critChance: (json['critChance'] as num?)?.toDouble() ?? 0,
+    critMultiplier: (json['critMultiplier'] as num?)?.toDouble() ?? 1.5,
   );
 }
 
@@ -66,6 +76,7 @@ class FighterHit {
     required this.attackerSide,
     required this.damage,
     required this.fatal,
+    this.critical = false,
   });
 
   final EntityId attacker;
@@ -75,4 +86,7 @@ class FighterHit {
 
   /// The hit took the defender's health to zero.
   final bool fatal;
+
+  /// The hit rolled a critical (already included in [damage]).
+  final bool critical;
 }

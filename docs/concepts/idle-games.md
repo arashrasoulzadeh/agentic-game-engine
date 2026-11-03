@@ -309,8 +309,14 @@ replays. A game supplies two things:
   `WaveCombatConfig.lights` (`SceneLight`s anchored to the hero, the current enemy or a fixed point, with optional
   flicker) are optional and off by default. Defaults are faint; art that already has baked-in lighting usually
   wants neither.
+- Progression and feel, all optional on `WaveCombatConfig`: `upgrades` (`HeroUpgrade`s bought with coins from kills; needs
+  `WaveUiArt.buttonImage`, the `ui_button_atlas` sheet) with `coinsPerKill`/`bossCoins`; coins and levels live in
+  `WaveCombatGame.progress`, so a **Retry** button after a defeat restarts from wave 1 with everything bought.
+  `damageNumbers: DamageNumberStyle()` floats RPG-style numbers over the target (bigger for heavier hits, hotter colours
+  by weight, gold and larger for criticals, a dark copy behind for legibility); `hitFeedback: HitFeedback()` adds
+  knockback, a red flash and camera shake when the hero is hit, and a harder shake plus sparks on criticals.
 - `LevelData` (JSON): `wave` and `boss` ids, hero/enemy anchors, balance (`preview_hero_scale`,
-  `preview_boss_scale`), `parallax` layers with speeds, and `cues` (animation cues per state and frame, e.g. camera
+  `preview_boss_scale`), `parallax` layers with speeds, `enemy_ramp` (`{"start": 0.5, "waves": 8}`: early enemies start weaker and reach full strength), `hero_crit` (`{"chance": 0.2, "multiplier": 2}`), and `cues` (animation cues per state and frame, e.g. camera
   shake on the frame an attack lands).
 
 Fighters have one sheet per state (`<id>_idle`, `_attack`, `_death`, each with a `.json` sidecar) and an optional
