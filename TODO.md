@@ -16,8 +16,7 @@ Per-area lists live next to what they track: studio in
 `mobarez/mobarez_todo.md` and `zahaak/zahaak_todo.md` (both folders are gitignored,
 so those files exist only on the owner's machine).
 
-Sections: [Performance](#performance) · [Template health](#template-health) ·
-[Docs](#docs) · [Release](#release) ·
+Sections: [Performance](#performance) · [Release](#release) ·
 [Parked decisions](#parked-decisions)
 
 ## Performance
@@ -29,21 +28,10 @@ Sections: [Performance](#performance) · [Template health](#template-health) ·
       KNOWN BUG note on `Light2D.useGpuShadows`. If not, try shrinking
       `light_shadow.frag`'s flat `falloff` plateau next (not a multi-light
       shader rewrite until this is settled).
-- [ ] **Idle device bench** — host baseline is in
-      `packages/engine_idle/benchmark/idle_bench.dart` (2026-10-25). Still need
-      release-APK timings for ~1,000 generators and long offline catch-up.
-
-## Template health
-
-- [ ] Confirm the `engine_cli` workflow's `templates` jobs (all four starters, generated
-      from `main`) are green after the 2026-11-03 engine changes. `game_agent create`
-      needs pub.dev, so it cannot run in the offline dev sandbox; CI is the check.
-
-## Docs
-
-Site: <https://meetarash.ir/agentic-game-engine/>.
-
-- [ ] Strategy-template screenshot (needs art); `UPDATE_SCREENSHOTS=1` regenerates `docs/img/`.
+- [ ] **Idle device bench** — host JIT and host AOT baselines are in
+      `packages/engine_idle/benchmark/idle_bench.dart` (1,000 generators: ~304 us AOT,
+      offline catch-up 0.3 us). Only the phone run remains; it needs an Android
+      device or emulator, and none exists in the dev sandbox.
 
 ## Release
 

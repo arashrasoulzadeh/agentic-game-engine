@@ -4,6 +4,8 @@
 against a computer-controlled blue army, with terrain that slows movement,
 fog of war, and a victory message.
 
+![The skirmish battlefield: grass, forest and mountain tiles, two red units bottom-left and two blue units top-right](../img/strategy-skirmish.png)
+
 **Time:** about 30 minutes. **Prerequisite:** [Getting started](../getting-started.md).
 Background reading, if you want it:
 [Turn-based strategy concepts](../concepts/turn-based-strategy.md).

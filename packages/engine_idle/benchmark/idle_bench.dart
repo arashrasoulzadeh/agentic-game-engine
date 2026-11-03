@@ -6,6 +6,11 @@
 //
 // Host baseline (macOS Apple Silicon, 2026-10-25): recomputeIncome≈312 us/op,
 // geometric maxAffordable≈1.5 us, offline catch-up≈0.8 us, formatBigNumber≈0.5 us.
+// AOT (the compilation mode a release APK uses; `dart build cli --target
+// benchmark/idle_bench.dart`), same machine, 2026-11-03: recomputeIncome with 1,000
+// generators≈304 us/op, geometric maxAffordable≈1.2 us, table+tail≈3.7 us, offline
+// catch-up (6 months)≈0.3 us, formatBigNumber≈0.7 us. A 60 fps frame is 16,667 us, so
+// even a phone 10x slower leaves income recomputation under 20% of a frame.
 // Real-device (release APK) confirmation is still open in TODO.md — phone CPUs can
 // differ; re-run this script on-device via a Flutter isolate or compare against
 // test/performance_budget_test.dart's loose CI ceilings.
