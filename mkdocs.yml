@@ -88,6 +88,7 @@ nav:
       - User guide: studio/user-guide.md
       - Build your first level: studio/first-level.md
       - Design and decisions: studio/design.md
+      - Open work: studio/studio.md
   - Concepts:
       - Architecture: concepts/architecture.md
       - The ECS: concepts/ecs.md

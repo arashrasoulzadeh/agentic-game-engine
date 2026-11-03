@@ -6,7 +6,7 @@ pipeline, play-test, and project management. It sits **on top of** the
 engine; the engine remains the runtime and stays usable without the
 studio.
 
-Remaining work is tracked in [TODO.md](../../TODO.md#studio). This document keeps
+Remaining work is tracked in [studio.md](studio.md). This document keeps
 the requirements, the design, the decisions, and the record of delivered phases
 (source comments cite items such as "3.14" or "IDE.13" from Part 3).
 

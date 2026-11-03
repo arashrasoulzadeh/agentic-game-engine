@@ -31,7 +31,7 @@ world.removeComponent<Position>(id);
 world.componentsOf<Position>();            // the whole collection, for loops
 ```
 
-`storeOf` is the old name of `componentsOf` and is deprecated.
+`storeOf` was removed; use `componentsOf` (see the [migration guide](../migrating-from-storeof.md)).
 
 ## Creating entities
 
