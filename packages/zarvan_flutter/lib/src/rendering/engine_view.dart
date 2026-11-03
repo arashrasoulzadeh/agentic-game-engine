@@ -2168,7 +2168,8 @@ class _EnginePainter extends CustomPainter {
   /// scale — so a sprite with `scaleX != scaleY`, or a negative one (the
   /// standard way `FacingSystem` flips a sprite horizontally), can't be
   /// expressed that way and falls back to the original per-sprite
-  /// `drawImageRect` path instead.
+  /// `drawImageRect` path instead. Tinted sprites (hit flashes) do batch:
+  /// `drawAtlas` takes a colour per sprite and modulates it.
   int _collectSpriteItems(
     List<_DrawItem> items,
     int order,
@@ -2193,14 +2194,13 @@ class _EnginePainter extends CustomPainter {
     for (final zEntry in indicesByZ.entries) {
       final z = zEntry.key;
       final batchesByImage = <ui.Image, _SpriteBatch>{};
+      final tintedByImage = <ui.Image, _SpriteBatch>{};
       final fallbackIndices = <int>[];
 
       for (final i in zEntry.value) {
         final entity = sprites.entityAt(i);
         final sprite = sprites.denseAt(i);
-        if (sprite.scaleX != sprite.scaleY ||
-            sprite.scaleX <= 0 ||
-            sprite.tintArgb != null) {
+        if (sprite.scaleX != sprite.scaleY || sprite.scaleX <= 0) {
           fallbackIndices.add(i);
           continue;
         }
@@ -2218,10 +2218,10 @@ class _EnginePainter extends CustomPainter {
             : camera.worldToScreen(anchorPos.dx, anchorPos.dy, size);
         final zoom = sprite.screenSpace ? 1.0 : camera.zoom;
 
-        final batch = batchesByImage.putIfAbsent(
-          atlas.image,
-          () => _SpriteBatch(),
-        );
+        final tint = sprite.tintArgb;
+        final batch = (tint == null ? batchesByImage : tintedByImage)
+            .putIfAbsent(atlas.image, () => _SpriteBatch());
+        if (tint != null) batch.colors.add(Color(tint));
         batch.transforms.add(
           RSTransform.fromComponents(
             rotation: sprite.rotation,
@@ -2235,7 +2235,7 @@ class _EnginePainter extends CustomPainter {
         batch.rects.add(srcRect);
       }
 
-      if (batchesByImage.isNotEmpty) {
+      if (batchesByImage.isNotEmpty || tintedByImage.isNotEmpty) {
         items.add(
           _DrawItem(z, order++, (canvas) {
             final paint = Paint();
@@ -2246,6 +2246,20 @@ class _EnginePainter extends CustomPainter {
                 entry.value.rects,
                 null,
                 null,
+                null,
+                paint,
+              );
+            }
+            // Per-sprite colours modulate the texture exactly like the
+            // single-sprite `ColorFilter.mode(tint, modulate)` path, so a
+            // hit-flashed sprite no longer costs its own draw call.
+            for (final entry in tintedByImage.entries) {
+              canvas.drawAtlas(
+                entry.key,
+                entry.value.transforms,
+                entry.value.rects,
+                entry.value.colors,
+                BlendMode.modulate,
                 null,
                 paint,
               );
@@ -3503,4 +3517,5 @@ class _ClipShapeInfo {
 class _SpriteBatch {
   final transforms = <RSTransform>[];
   final rects = <Rect>[];
+  final colors = <Color>[];
 }

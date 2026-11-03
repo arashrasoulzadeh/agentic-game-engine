@@ -8,6 +8,9 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Changed (rendering)
+- Tinted sprites (hit flashes) now batch through `Canvas.drawAtlas` with per-sprite colours instead of one draw call each; verified pixel-identical to the per-sprite path (`tinted_sprite_batch_test.dart`).
+
 ### Added (splash screen)
 - Every game gets a splash screen by default: ZARVAN logo, a loading progress bar and the engine commit footer. Configure with `Game.splash` / `SplashConfig`; progress is `Game.loadingProgress`. `zarvan build-release` bakes in `ZARVAN_COMMIT`. **Behaviour change:** the default loading screen is no longer a spinner.
 

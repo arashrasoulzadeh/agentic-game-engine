@@ -50,7 +50,7 @@ Future<AtlasRegistry> loadAssets() async {
 }
 ```
 
-Sprites batch through `Canvas.drawAtlas` per z-index — see
+Sprites batch through `Canvas.drawAtlas` per z-index (tinted sprites, such as hit flashes, batch too; mirrored or non-uniformly scaled ones cannot and draw individually) — see
 `packages/zarvan_flutter/README.md` for the packing tool
 (`zarvan pack-assets`) that produces the manifest.
 
