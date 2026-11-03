@@ -11,7 +11,10 @@
 // generators≈304 us/op, geometric maxAffordable≈1.2 us, table+tail≈3.7 us, offline
 // catch-up (6 months)≈0.3 us, formatBigNumber≈0.7 us. A 60 fps frame is 16,667 us, so
 // even a phone 10x slower leaves income recomputation under 20% of a frame.
-// Real-device (release APK) confirmation is still open in TODO.md — phone CPUs can
+// Real device (Samsung SM-S731B, Android 17, release APK, 2026-11-03): recomputeIncome with
+// 1,000 generators≈371 us/op (2.2% of a 60 fps frame), geometric maxAffordable≈1.4 us,
+// table+tail≈4.0 us, offline catch-up (6 months)≈0.4 us, formatBigNumber≈0.7 us. Same order as the host.
+// Superseded note, kept for history: real-device confirmation was open in TODO.md — phone CPUs can
 // differ; re-run this script on-device via a Flutter isolate or compare against
 // test/performance_budget_test.dart's loose CI ceilings.
 import 'package:engine_core/engine_core.dart';

@@ -28,10 +28,7 @@ Sections: [Performance](#performance) · [Release](#release) ·
       KNOWN BUG note on `Light2D.useGpuShadows`. If not, try shrinking
       `light_shadow.frag`'s flat `falloff` plateau next (not a multi-light
       shader rewrite until this is settled).
-- [ ] **Idle device bench** — host JIT and host AOT baselines are in
-      `packages/engine_idle/benchmark/idle_bench.dart` (1,000 generators: ~304 us AOT,
-      offline catch-up 0.3 us). Only the phone run remains; it needs an Android
-      device or emulator, and none exists in the dev sandbox.
+
 
 ## Release
 
