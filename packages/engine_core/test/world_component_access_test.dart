@@ -44,27 +44,6 @@ void main() {
       expect(world.hasComponent<Velocity>(id), isTrue);
     });
 
-    test(
-      'componentsOf is the same collection the deprecated storeOf returns',
-      () {
-        final world = _world();
-        expect(
-          // ignore: deprecated_member_use_from_same_package
-          identical(world.componentsOf<Position>(), world.storeOf<Position>()),
-          isTrue,
-        );
-      },
-    );
-
-    test('values set through the deprecated storeOf are visible through '
-        'getComponent', () {
-      final world = _world();
-      final id = world.spawn();
-      // ignore: deprecated_member_use_from_same_package
-      world.storeOf<Position>().set(id, Position(7, 8));
-      expect(world.getComponent<Position>(id)!.y, 8);
-    });
-
     test('an unregistered type fails with the registration hint', () {
       final world = _world();
       final id = world.spawn();

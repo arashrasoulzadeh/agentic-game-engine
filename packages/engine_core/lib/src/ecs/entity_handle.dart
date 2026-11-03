@@ -6,7 +6,7 @@ import 'world.dart';
 ///
 /// A plain [EntityId] is recycled, so a stored id can end up naming an
 /// unrelated entity. An [Entity] never does: once the original is destroyed,
-/// [World.isCurrent] is false for it even if a new entity reuses the id. It
+/// `World.isCurrent` is false for it even if a new entity reuses the id. It
 /// is a single integer at runtime (no allocation), so keep it in fields and
 /// lists freely. Do not put it in component JSON: serialize [id] instead.
 ///

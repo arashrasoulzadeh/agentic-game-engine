@@ -208,14 +208,6 @@ class World {
     return found;
   }
 
-  /// The old name of [componentsOf].
-  @Deprecated(
-    'Use componentsOf<T>(), or getComponent/setComponent/hasComponent/'
-    'removeComponent for one entity. storeOf will be removed in a future '
-    'release.',
-  )
-  ComponentStore<T> storeOf<T>() => components.storeOf<T>();
-
   /// Every [T] component in the world, as a dense collection for iteration and
   /// bulk work. Prefer [getComponent]/[setComponent] for a single entity.
   ///
@@ -391,7 +383,7 @@ class World {
   /// tick, seed, entity and component counts, the system order (disabled
   /// systems marked) and any [validateSystemOrder] problems.
   ///
-  /// Meant to be read, not parsed; use [toJson] or [save] for data.
+  /// Meant to be read, not parsed; use [toJson] or `save` for data.
   String debug() {
     final counts = componentCounts();
     final components = counts.keys.toList()..sort();

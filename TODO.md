@@ -1,6 +1,6 @@
 # Remaining work
 
-The single source of truth for what is left. Delete items once shipped —
+The single source of truth for what is left. Only open work lives here; delete items once shipped —
 what shipped is recorded in [CHANGELOG.md](CHANGELOG.md); reasoning lives
 in git history. Add newly discovered work here rather than in comments or
 side files.
@@ -12,7 +12,7 @@ Related (not task lists):
   `engine_core` groups + `gen_api_docs.dart`)
 
 Sections: [Performance](#performance) · [Engine](#engine) ·
-[Game-dev workflow](#game-dev-workflow) · [Idle polish](#idle-polish) ·
+[Template health](#template-health) · [Mobarez](#mobarez-sample-follow-ups) ·
 [Studio](#studio) · [Docs](#docs) · [Release](#release) ·
 [Parked decisions](#parked-decisions)
 
@@ -36,49 +36,17 @@ Sections: [Performance](#performance) · [Engine](#engine) ·
       `zahaak/docs/engine-gap-analysis.md`). Still open: Persian font bundling
       in the game itself, and rewriting GDD §11 from Unity → this ECS once
       zahaak build scope locks.
-- [x] **Hit flash + strip atlases** — `HitFlash`/`flashHit` and
-      `SpriteAtlas.fromStrip`/`fromFullImage` (promoted from Mobarez preview
-      needs).
-- [x] **Animation frame events (runtime)** —
-      `frameEvents` + SFX/shake/particle bridges + frame-gated melee +
-      recipe `docs/examples/animation-events.md` (proposal steps 1–3).
-- [x] **Visual animation IDE** — studio `ClipEditorScreen` (frames /
-      pivots / frameEvents / save) + atlas region picker + onion-skin
-      preview + event-track timeline + embedded `EngineView` playtest
-      (`ClipPlaytest`). Sheet cutter already exists as a studio Atlas
-      view / Artifact.
-- [x] **Frame-gated melee** — `Weapon.meleeHitboxFromAnimation` gates
-      `AttackSystem` melee on `hitbox_on`/`hitbox_off` animation cues
-      (proposal step 3); default false keeps wall-clock duration.
-- [x] **AnimationSfxSystem** — subscribe to `AnimationFrameEvent` `type ==
-      'sfx'` and call `AudioManager` (proposal step 2).
-- [x] **AISystem FSM/BT real `dt`** — `_RunStateMachineAction` /
-      behavior-tree runners hardcode `1/60` instead of the tick's `dt`
-      (`World.deltaTime` + runners/`BehaviorTreeSystem` set `_dt`).
 
-## Template health (found while verifying SIMPLER 9.3)
-- [x] **`create --template idle_game` widget test** fixed: the test now sets a tall view (the lazy lists never built the lower panels in 800x600).
-- [ ] CI's templates job is the only automatic check that templates compile and pass their own tests; run the
-      scratch-project check from SIMPLER.MD (9.3) locally when you change a template or the engine API.
+## Template health
 
-## Game-dev workflow
-
-Agent create → edit → verify path is shippable for all three templates:
-`project.open` (idle/strategy too), strategy `skirmish.level.json`, platformer
-enemy/coin/HUD, pause/settings/credits + PlayerOptions (colorblind/shake/
-volume) on platformer & strategy, `assets/i18n/en.json`, `project.manifest`
-op, `engine.docs` remote index when no local `docs/`, curated markdown bundled
-in-package (`kBundledDocs` / `dart run tool/gen_bundled_docs.dart`).
-
-## Idle polish
-
-Create path is shippable (`--template idle_game`: durable save, cold-start
-offline dialog, challenges, stats, golden, layered prestiges, auto-buyer,
-synergy upgrades, format persistence, offline double stub, return notifier,
-Material pause/settings/credits + volumes, `IdleSfx` stubs, prestige shop,
-`schema.idle_game`, research tree, time warps, season pass, `nameKey` + i18n,
-`HttpCloudSaveStore` walkthrough). Guide checklist:
-[docs/concepts/idle-games.md](docs/concepts/idle-games.md).
+- [ ] **`game_agent create` against the pushed ref (G6)** has not been run by hand
+      since the last engine changes; CI's `engine_cli` templates job last ran green
+      on `0209dc8`.
+- [ ] **Flaky studio test** — `play_test_test.dart` "devices and stopping the
+      device in use appears in the launch arguments" failed once in CI with
+      "failed after test completion" (a timer or stream outliving the test).
+- [ ] CI's templates job is the only automatic check that templates compile and pass their own tests; run a scratch
+      `game_agent create` for each template locally when you change a template or the engine API.
 
 ## Mobarez sample follow-ups
 
@@ -105,8 +73,11 @@ Design and delivered phases: [docs/studio/design.md](docs/studio/design.md).
       signing + notarization, and a release server / signing key (update
       client exists; nothing to talk to).
 - [ ] **Debugger** — own phase; not in current IDE scope.
-- [x] **Studio terminal** — bottom drawer on `ProjectScreen` runs `/bin/sh
-      -c` in the project root (kill + streaming output).
+
+## Engine (unsupported imports)
+
+- [ ] Tiled import: several tilesets, external `.tsx` files and zlib/gzip-compressed
+      layer data are not supported (compressed data is rejected with a hint).
 
 ## Docs
 
@@ -117,7 +88,10 @@ Site: <https://meetarash.ir/agentic-game-engine/>.
 
 ## Release
 
-- [ ] Cut the first public release: push local `v0.1.0`, decide tag/`ref`
+- [ ] After the release exists, tell downstream projects `World.storeOf` is gone
+      (see [docs/migrating-from-storeof.md](docs/migrating-from-storeof.md)); it was removed
+      before the tag at the owner's request.
+- [ ] Cut the first public release (the local `v0.1.0` tag is 600+ commits stale, retag at `main`), decide tag/`ref`
       policy for generated projects, publish packages to pub.dev (drops the
       self-referencing git-dep constraint), then swap README badges to
       pub.dev version badges. Checklist: [docs/engine-releasing.md](docs/engine-releasing.md).

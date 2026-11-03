@@ -102,7 +102,7 @@ Future<String> readGitDiff(
   return '';
 }
 
-/// Outcome of `git add -A` + `git commit -m` in [projectRoot].
+/// Outcome of `git add -A` + `git commit -m` in `projectRoot`.
 class GitCommitResult {
   final bool ok;
   final String output;
@@ -113,7 +113,7 @@ class GitCommitResult {
 /// Stages every change in [projectRoot] and commits with [message].
 ///
 /// Empty messages are refused without touching git. A missing git binary or a
-/// failed `add`/`commit` (nothing to commit, hook, …) returns [ok] false.
+/// failed `add`/`commit` (nothing to commit, hook, …) returns `ok` false.
 Future<GitCommitResult> commitGitAll(
   String projectRoot,
   String message, {

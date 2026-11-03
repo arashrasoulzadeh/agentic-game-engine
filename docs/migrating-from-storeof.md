@@ -1,7 +1,7 @@
 # Migrating from `World.storeOf`
 
-`World.storeOf<T>()` is deprecated and will be removed in a later release
-(after at least one tagged release, because projects pin `ref: main`).
+`World.storeOf<T>()` was removed; this guide shows the rename
+(the project pinned `ref: main`, so the deprecation shipped first).
 Everything it did has a clearer name.
 
 | Before | After | Notes |

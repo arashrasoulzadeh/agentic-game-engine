@@ -26,8 +26,6 @@ final has = world.hasComponent<Position>(id);        // bool
 final all = world.componentsOf<Position>();          // the whole collection
 ```
 
-(`storeOf<T>()` is the old name of `componentsOf<T>()` and is deprecated.)
-
 A component type must be **registered** before it participates in
 `World.toJson()`/`applyPatch()`/`Level.loadInto()` — see
 [content-as-data.md](content-as-data.md). Engine built-ins are

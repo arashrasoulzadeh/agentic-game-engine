@@ -9,7 +9,7 @@
 /// ```
 ///
 /// A step N takes world JSON at version N and returns it at version N + 1.
-/// Steps may edit the map they are given; [call] hands each step a deep copy
+/// Steps may edit the map they are given; `call` hands each step a deep copy
 /// so a failing migration never damages the caller's data.
 class SaveMigrations {
   final Map<int, Map<String, dynamic> Function(Map<String, dynamic>)> _steps =

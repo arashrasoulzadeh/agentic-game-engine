@@ -140,7 +140,7 @@ class GameTester {
     return events;
   }
 
-  /// The world as stable, human-diffable text: the [World.save] JSON with keys
+  /// The world as stable, human-diffable text: the `World.save` JSON with keys
   /// sorted and two-space indentation. Compare it to a golden file with
   /// [expectGolden].
   String snapshotText() => canonicalJson(world.save());
