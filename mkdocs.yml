@@ -9,7 +9,6 @@ docs_dir: docs
 theme:
   name: material
   features:
-    - navigation.instant
     - navigation.tracking
     - navigation.tabs
     - navigation.sections
