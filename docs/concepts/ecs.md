@@ -114,3 +114,13 @@ prefab on a schedule as pure data: `{"prefab": "coin", "every": 2, "delay": 1, "
 or timed bursts with `"waves": [{"at": 5, "count": 3}]`. The first periodic spawn is at `delay`; `maxAlive` counts the
 spawner's live spawns (each is tagged `SpawnedBy`) and a blocked spawner waits instead of banking a burst; `total`
 retires it; spawns are deterministic for the world's seed. Each emits a `Spawned` event.
+
+## Joints
+
+A `Joint` component ties its entity to another entity (`other`) or to a fixed world point (`anchorX`, `anchorY`) by
+distance, and `JointSystem` solves it each step: `{"kind": "spring", "other": 12, "length": 50, "stiffness": 40,
+"damping": 4}`. The kinds: `spring` pulls toward `length` both ways, `rope` only pulls when stretched past it, `rod`
+holds exactly that distance (a pendulum is a rod to a fixed point). `breakDistance` snaps the joint (removing it and
+emitting `JointBroken`). Springs and ropes push the ends' `Velocity`; a rod corrects `Position` directly and removes the
+speed along the rod. Register `JointSystem` **before** `MovementSystem` so the change is integrated in the same step. A
+destroyed far end leaves the joint inert.

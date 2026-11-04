@@ -22,6 +22,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'tween': tweenSchema,
   'triggerZone': triggerZoneSchema,
   'spawner': spawnerSchema,
+  'joint': jointSchema,
   'spawnedBy': spawnedBySchema,
   'pushable': pushableSchema,
   'dialogueGraph': dialogueGraphSchema,

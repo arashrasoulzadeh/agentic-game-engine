@@ -95,6 +95,7 @@ export 'src/physics/tmx_export.dart';
 export 'src/ui/trigger_helpers.dart';
 export 'src/ecs/entity_pool.dart';
 export 'src/ecs/spawner.dart';
+export 'src/physics/joint.dart';
 export 'src/ecs/world.dart';
 export 'src/ecs/world_random.dart';
 export 'src/ecs/world_timers.dart' show TimerHandle;

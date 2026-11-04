@@ -374,3 +374,19 @@ const spawnerSchema = ComponentSchema('spawner', [
 const spawnedBySchema = ComponentSchema('spawnedBy', [
   FieldSchema('spawner', FieldType.int, required: true),
 ]);
+
+const jointSchema = ComponentSchema('joint', [
+  FieldSchema(
+    'kind',
+    FieldType.enumeration,
+    options: ['spring', 'rope', 'rod'],
+    defaultValue: 'spring',
+  ),
+  FieldSchema('other', FieldType.int, optional: true),
+  FieldSchema('anchorX', FieldType.double, defaultValue: 0),
+  FieldSchema('anchorY', FieldType.double, defaultValue: 0),
+  FieldSchema('length', FieldType.double, min: 0, defaultValue: 50),
+  FieldSchema('stiffness', FieldType.double, min: 0, defaultValue: 40),
+  FieldSchema('damping', FieldType.double, min: 0, defaultValue: 4),
+  FieldSchema('breakDistance', FieldType.double, min: 0, defaultValue: 0),
+]);
