@@ -3,10 +3,17 @@ import 'dart:ui' show Offset;
 
 import 'package:zarvan_core/zarvan_core.dart';
 import 'package:zarvan_flutter/zarvan_flutter.dart' hide Text;
+import 'package:zarvan_flutter/zarvan_flutter.dart' as eng show Text;
 import 'package:zarvan_platformer/zarvan_platformer.dart';
 
 import '../register_components.dart';
 import '../combat/auto_combat_system.dart';
+import '../combat/conditions.dart';
+import '../combat/skill_runner.dart';
+import '../hud/wave_strings.dart';
+import '../progress/loot.dart';
+import '../progress/hero_skill.dart';
+import '../progress/offline_rule.dart';
 import '../combat/enemy_powers.dart';
 import '../level/wave_plan.dart';
 import '../fx/damage_numbers.dart';
@@ -14,6 +21,8 @@ import '../fx/hit_feedback.dart';
 import '../fx/hit_feedback_system.dart';
 import '../fx/hit_stop.dart';
 import '../hud/upgrade_bar.dart';
+import '../hud/world_text.dart';
+import '../progress/gear.dart';
 import '../combat/combo_tracker.dart';
 import '../progress/hero_loadout.dart';
 import '../progress/hero_progress.dart';
@@ -67,6 +76,14 @@ class WaveCombatConfig {
     this.comboBonusPerHit = 0,
     this.comboMax = 10,
     this.waveSeed,
+    this.strings = const WaveStrings(),
+    this.skills = const [],
+    this.loot,
+    this.checkpointEvery = 0,
+    this.prestigeBonusPerStar = 0,
+    this.offline,
+    this.showSummary = true,
+    this.hints = true,
   });
 
   /// Asset stem of the hero sheets (`<stem>_idle.png`, `_attack`, `_death`).
@@ -146,6 +163,33 @@ class WaveCombatConfig {
   /// order every run.
   final int? waveSeed;
 
+  /// Every word the scene draws itself (see [WaveStrings]); override to
+  /// translate.
+  final WaveStrings strings;
+
+  /// Active abilities on buttons with cooldowns (needs `WaveUiArt.buttonImage`).
+  final List<HeroSkill> skills;
+
+  /// What enemies drop; null (default) means no loot.
+  final LootTable? loot;
+
+  /// A new run starts at the best wave rounded down to a multiple of this
+  /// (0 = always wave 1).
+  final int checkpointEvery;
+
+  /// After clearing the boss the hero may ascend: a permanent star worth this
+  /// fraction of hp and attack each, at the price of coins and upgrades.
+  /// 0 (default) turns prestige off.
+  final double prestigeBonusPerStar;
+
+  /// Coins earned while the app was closed, credited by `WaveCombatGame` when
+  /// it loads a saved `HeroProgress`. null means no offline earnings.
+  final OfflineRule? offline;
+
+  /// Show a one-line run summary under a lost run, and the first-run hints.
+  final bool showSummary;
+  final bool hints;
+
   /// Builds the spark emitter each fighter gets.
   final ParticleEmitter Function() impactParticles;
 
@@ -173,10 +217,14 @@ class WaveCombatScene extends Scene {
     required this.level,
     required this.config,
     HeroProgress? progress,
-  }) : progress = progress ?? HeroProgress();
+    FighterMetaLoader metaLoader = FighterMeta.load,
+  }) : progress = progress ?? HeroProgress(),
+       _loadMeta = metaLoader;
 
   final LevelData level;
   final WaveCombatConfig config;
+
+  final FighterMetaLoader _loadMeta;
 
   /// Coins and upgrade levels. Pass the same object to the next scene (a
   /// retry) to keep them.
@@ -226,6 +274,11 @@ class WaveCombatScene extends Scene {
   int _rewardCoins = 0;
   HitStop? _hitStop;
   UpgradeBar? _upgradeBar;
+  bool _heroWon = false;
+  SkillRunner? _skills;
+  EntityId? _condLabel;
+  EntityId? _gearLabel;
+  double _barSync = 0;
   late HeroLoadout _loadout;
   late String status = level.name;
   String enemyLabel = '';
@@ -250,6 +303,7 @@ class WaveCombatScene extends Scene {
   ) async {
     _scenes = scenes;
     registerWaveCombatComponents(world);
+    progress.startRun();
     world
       ..addSystem(_combat)
       ..addSystem(TweenSystem())
@@ -305,6 +359,8 @@ class WaveCombatScene extends Scene {
       );
     }
     _combat.windupSeconds = config.windupSeconds;
+    world.addSystem(ConditionSystem());
+    if (config.skills.isNotEmpty) _skills = SkillRunner(config.skills, _combat);
     if (config.comboBonusPerHit > 0) {
       ComboTracker.install(
         world,
@@ -314,12 +370,9 @@ class WaveCombatScene extends Scene {
       );
     }
 
-    _meta[config.heroId] = await FighterMeta.load(
-      config.heroId,
-      config.heroStem,
-    );
+    _meta[config.heroId] = await _loadMeta(config.heroId, config.heroStem);
     for (final id in level.enemyIds) {
-      _meta[id] = await FighterMeta.load(id, _enemyStem(id));
+      _meta[id] = await _loadMeta(id, _enemyStem(id));
     }
 
     _spawnHero(world);
@@ -351,16 +404,89 @@ class WaveCombatScene extends Scene {
       heroOf: () => heroId,
       enemyOf: () => enemyId,
     );
-    if (config.upgrades.isNotEmpty && config.ui.buttonImage != null) {
+    if ((config.upgrades.isNotEmpty || config.skills.isNotEmpty) &&
+        config.ui.buttonImage != null) {
       _upgradeBar = UpgradeBar.spawn(
         world,
         atlasId: _uiButtons,
         upgrades: config.upgrades,
         progress: progress,
         layout: config.ui.upgradeLayout,
+        skills: config.skills,
+        strings: config.strings,
       );
+      final skills = _skills;
+      if (skills != null) _upgradeBar!.syncSkills(world, skills.cooldowns);
     }
+    waves.index = math.min(
+      progress.checkpoint(config.checkpointEvery),
+      plan.ids.length,
+    );
+    _condLabel = spawnWorldText(
+      world,
+      0,
+      0,
+      '',
+      fontSize: 4.6,
+      colorArgb: 0xFFE8B4FF,
+      zIndex: 126,
+    );
+    _gearLabel = spawnWorldText(
+      world,
+      90,
+      74,
+      config.strings.gearSummary(progress.gear.values),
+      fontSize: 4.2,
+      colorArgb: 0xFFCFE8FF,
+      zIndex: 125,
+    );
+    _greetPlayer(world);
     _spawnEnemy(world);
+  }
+
+  DamageNumberStyle get _say =>
+      config.damageNumbers ?? const DamageNumberStyle();
+
+  /// Shows [text] as a floating line (messages, loot, hints).
+  void _announce(
+    World world,
+    String text,
+    double y, {
+    int color = 0xFFFFE7A0,
+    double size = 6.5,
+    double life = 3.2,
+  }) => spawnFloatingText(
+    world,
+    text,
+    90,
+    y,
+    size: size,
+    colorArgb: color,
+    style: _say,
+    life: life,
+    rise: 6,
+    popScale: 1.3,
+  );
+
+  /// The welcome-back earnings, and the one-time hints.
+  void _greetPlayer(World world) {
+    if (progress.pendingOfflineCoins > 0) {
+      _announce(
+        world,
+        config.strings.awayMessage(progress.pendingOfflineCoins),
+        105,
+        size: 7.5,
+        life: 4.5,
+      );
+      progress.pendingOfflineCoins = 0;
+    }
+    if (!config.hints) return;
+    if (config.upgrades.isNotEmpty && progress.markHintSeen('upgrade')) {
+      _announce(world, config.strings.hintUpgrade, 235, life: 5);
+    }
+    if (config.skills.isNotEmpty && progress.markHintSeen('skill')) {
+      _announce(world, config.strings.hintSkill, 224, life: 5);
+    }
   }
 
   @override
@@ -461,6 +587,7 @@ class WaveCombatScene extends Scene {
       armor: level.scaled('armor', hs.armor),
       upgrades: config.upgrades,
       progress: progress,
+      starBonusPerStar: config.prestigeBonusPerStar,
     );
     heroId = spawnFighter(
       world,
@@ -583,7 +710,11 @@ class WaveCombatScene extends Scene {
       );
     }
     _path?.update(waves.index, config.ui.pathNodeSize);
-    enemyLabel = kind.label(meta.name);
+    enemyLabel = switch (kind) {
+      WaveKind.elite => config.strings.eliteName(meta.name),
+      WaveKind.treasure => config.strings.goldenName(meta.name),
+      WaveKind.normal => meta.name,
+    };
     enemyDescription = meta.descriptionFa;
     _combat.enabled = false;
     _walk.start(world, hero: heroId!, enemy: enemyId!, corpse: _corpse);
@@ -599,7 +730,55 @@ class WaveCombatScene extends Scene {
     status = message;
     _caption.hide();
     _syncHud(world);
-    if (_heroFell) _upgradeBar?.showRetry(world);
+    final bar = _upgradeBar;
+    if (config.showSummary && _heroFell) {
+      _caption.show(
+        world,
+        config.strings.summary(
+          wave: waves.index + 1,
+          killCount: progress.kills,
+          bestWave: progress.bestWave,
+        ),
+      );
+    }
+    if (bar == null) return;
+    final startWave = progress.checkpoint(config.checkpointEvery) + 1;
+    if (_heroFell || _heroWon) {
+      bar.showRetry(world, label: config.strings.retryLabel(startWave));
+    }
+    if (_heroWon && config.prestigeBonusPerStar > 0) bar.showAscend(world);
+  }
+
+  /// Rolls the loot for the enemy just killed and wears it if it is better.
+  void _rollLoot(World world) {
+    final table = config.loot;
+    if (table == null) return;
+    final kind = waves.isBoss ? WaveKind.treasure : plan.kinds[waves.index];
+    final random = math.Random(
+      progress.kills * 7919 + waves.index * 31 + progress.coins,
+    );
+    final gear = table.roll(random, kind, waves.index);
+    if (gear == null) return;
+    if (!progress.equipIfBetter(gear)) return;
+    _announce(
+      world,
+      config.strings.lootLabel(gear),
+      190,
+      color: switch (gear.rarity) {
+        GearRarity.epic => 0xFFD38CFF,
+        GearRarity.rare => 0xFF6FB6FF,
+        GearRarity.common => 0xFFFFFFFF,
+      },
+      life: 2.6,
+    );
+    final id = _gearLabel;
+    if (id != null) {
+      world.componentsOf<eng.Text>().get(id)?.text = config.strings.gearSummary(
+        progress.gear.values,
+      );
+    }
+    final h = heroId;
+    if (h != null) _loadout.apply(world, h);
   }
 
   /// True once [fighter]'s death clip has finished and lingered for a beat.
@@ -614,6 +793,14 @@ class WaveCombatScene extends Scene {
   @override
   void update(double dt, World world) {
     _hitStop?.update(dt);
+    _skills?.tick(dt);
+    _barSync += dt;
+    if (_barSync >= 0.2) {
+      _barSync = 0;
+      final skills = _skills;
+      if (skills != null) _upgradeBar?.syncSkills(world, skills.cooldowns);
+    }
+    _updateConditionLabel(world);
     _caption.update(world, dt);
     _heroBar?.sync();
     _enemyBar?.sync();
@@ -642,14 +829,34 @@ class WaveCombatScene extends Scene {
       _caption.hide();
       if (!_enemyRewarded) {
         _enemyRewarded = true;
-        progress.coins += _rewardCoins;
+        progress.addCoins(_rewardCoins);
+        progress.recordKill();
+        _rollLoot(world);
         _upgradeBar?.sync(world);
       }
       if (!_deathPlayed(world, e, dt)) return;
-      if (waves.isBoss) return _finish(world, config.clearedMessage);
+      if (waves.isBoss) {
+        _heroWon = true;
+        return _finish(world, config.clearedMessage);
+      }
       waves.advance();
+      progress.reachWave(waves.index);
       _spawnEnemy(world);
     }
+  }
+
+  /// Keeps the hero's condition line (Bleed 2s...) over its head.
+  void _updateConditionLabel(World world) {
+    final label = _condLabel;
+    final h = heroId;
+    if (label == null || h == null) return;
+    final pos = world.componentsOf<Position>().get(h);
+    final text = world.componentsOf<eng.Text>().get(label);
+    if (pos == null || text == null) return;
+    text.text = world.componentsOf<Conditions>().get(h)?.describe() ?? '';
+    world.componentsOf<Position>().get(label)
+      ?..x = pos.x
+      ..y = pos.y - 46;
   }
 
   @override
@@ -657,6 +864,22 @@ class WaveCombatScene extends Scene {
     final bar = _upgradeBar;
     final pressed = bar?.hit(worldPosition);
     if (pressed == UpgradeBar.retryAction) return _restart(scenes);
+    if (pressed == UpgradeBar.ascendAction) {
+      progress.ascend();
+      return _restart(scenes);
+    }
+    if (pressed != null && pressed.startsWith(UpgradeBar.skillPrefix)) {
+      final skill = config.skills.firstWhere(
+        (s) => '${UpgradeBar.skillPrefix}${s.id}' == pressed,
+      );
+      final h = heroId;
+      final skills = _skills;
+      if (h != null && skills != null) {
+        skills.use(world, skill, hero: h, enemy: enemyId);
+        bar!.syncSkills(world, skills.cooldowns);
+      }
+      return;
+    }
     if (pressed != null) {
       final upgrade = config.upgrades.firstWhere((u) => u.id == pressed);
       if (progress.buy(upgrade)) {
@@ -667,9 +890,9 @@ class WaveCombatScene extends Scene {
       return;
     }
     if (!finished) return;
-    // A lost run with a retry button restarts only from that button; a win,
-    // or a scene without buttons, replays on any tap.
-    if (_heroFell && bar != null) return;
+    // With buttons, a finished run restarts only from them; without, any tap
+    // replays.
+    if (bar != null) return;
     _restart(scenes);
   }
 

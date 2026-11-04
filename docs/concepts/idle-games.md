@@ -322,6 +322,16 @@ replays. A game supplies two things:
   `random_waves` in the level JSON (`RandomWaves`) shuffles waves inside blocks, turns some into tougher, larger
   elites that pay more coins, and can add one rare, nearly harmless treasure enemy (a chosen enemy's art) that pays
   many coins; `WaveCombatConfig.waveSeed` repeats a run.
+- Making it an idle game, all optional on `WaveCombatConfig`: **saving** (`WaveCombatGame.load(saveStore: await
+  PrefsSaveStore.open())` persists coins, upgrades, stars, gear and counters through `HeroProgressStore`) and
+  **offline earnings** (`offline: OfflineRule(...)`, paid out on the next launch and announced once);
+  **checkpoints** (`checkpointEvery: 5` restarts at the best wave rounded down; the Retry button names it) and
+  **prestige** (`prestigeBonusPerStar`: after the boss, **Ascend** trades coins and upgrades for a permanent star);
+  **skills** (`HeroSkill`: strike, heal or guard buttons with cooldowns, needing `WaveUiArt.buttonImage`);
+  **loot** (`LootTable`: elites and treasure enemies drop gear for the weapon, armor and charm slots);
+  **conditions** from enemy powers (bleed, poison that stacks, stun and archer volleys, shown over the hero);
+  **strings** (`WaveStrings`: every word the scene draws, for translation); a run summary and one-time hints.
+- Testing: pass `metaLoader:` to `WaveCombatScene` (and override `loadAssets`) to run a whole scene with no assets.
 - `LevelData` (JSON): `wave` and `boss` ids, hero/enemy anchors, balance (`preview_hero_scale`,
   `preview_boss_scale`), `parallax` layers with speeds, `enemy_ramp` (`{"start": 0.5, "waves": 8}`: early enemies start weaker and reach full strength), `hero_crit` (`{"chance": 0.2, "multiplier": 2}`), and `cues` (animation cues per state and frame, e.g. camera
   shake on the frame an attack lands).

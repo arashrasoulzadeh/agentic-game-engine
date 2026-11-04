@@ -192,7 +192,7 @@ void main() {
       final world = _world()
         ..addSystem(
           AutoCombatSystem()
-            ..damageMultiplier = (side) => side == 'hero' ? 2.0 : 1.0,
+            ..damageModifiers.add((side) => side == 'hero' ? 2.0 : 1.0),
         );
       final hits = <FighterHit>[];
       world.events.on<FighterHit>(hits.add);

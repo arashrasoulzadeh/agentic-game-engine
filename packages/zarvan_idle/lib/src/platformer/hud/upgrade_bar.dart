@@ -6,6 +6,8 @@ import 'package:zarvan_flutter/zarvan_flutter.dart'
     show Sprite, SpriteAtlas, Text;
 
 import '../progress/hero_progress.dart';
+import '../progress/hero_skill.dart';
+import 'wave_strings.dart';
 import 'world_text.dart';
 
 /// Where the upgrade buttons and the retry button sit (world units).
@@ -16,6 +18,7 @@ class UpgradeLayout {
     this.right = 162,
     this.buttonWidth = 44,
     this.coinsY = 64,
+    this.skillY = 262,
     this.retryX = 90,
     this.retryY = 196,
     this.retryWidth = 70,
@@ -27,8 +30,9 @@ class UpgradeLayout {
   final double right;
   final double buttonWidth;
 
-  /// Where the coin counter is drawn.
+  /// Where the coin counter is drawn, and the centre line of the skill row.
   final double coinsY;
+  final double skillY;
 
   /// The retry button's centre and width.
   final double retryX;
@@ -65,11 +69,19 @@ class UpgradeBar {
     required this.upgrades,
     required this.progress,
     this.layout = const UpgradeLayout(),
+    this.skills = const [],
+    this.strings = const WaveStrings(),
   }) {
     final span = layout.right - layout.left;
     for (var i = 0; i < upgrades.length; i++) {
       final cx = layout.left + span * (i + 0.5) / upgrades.length;
       _buttons.add(_spawnButton(world, cx, layout.y, layout.buttonWidth));
+    }
+    for (var i = 0; i < skills.length; i++) {
+      final cx = layout.left + span * (i + 0.5) / skills.length;
+      _skillButtons.add(
+        _spawnButton(world, cx, layout.skillY, layout.buttonWidth),
+      );
     }
     _coins = _text(world, 90, layout.coinsY, 5.2, 0xFFFFE7A0);
     sync(world);
@@ -83,12 +95,21 @@ class UpgradeBar {
   final HeroProgress progress;
   final UpgradeLayout layout;
 
+  /// Active skills drawn as a second row of buttons above the upgrades.
+  final List<HeroSkill> skills;
+  final WaveStrings strings;
+
   final _buttons = <_Button>[];
+  final _skillButtons = <_Button>[];
+  _Button? _ascend;
   late final EntityId _coins;
   _Button? _retry;
 
-  /// The id passed to [hit] callers for the retry button.
+  /// What [hit] returns for the retry and ascend buttons, and the prefix of a
+  /// skill's id.
   static const retryAction = 'retry';
+  static const ascendAction = 'ascend';
+  static const skillPrefix = 'skill:';
 
   _Button _spawnButton(
     World world,
@@ -139,13 +160,14 @@ class UpgradeBar {
   /// Refreshes labels and styles from [progress]: affordable upgrades look
   /// active, the rest disabled, a maxed one reads MAX.
   void sync(World world) {
-    world.componentsOf<eng.Text>().get(_coins)?.text =
-        'Coins ${progress.coins}';
+    world.componentsOf<eng.Text>().get(_coins)?.text = strings.coinsLabel(
+      progress.coins,
+    );
     for (var i = 0; i < upgrades.length; i++) {
       final u = upgrades[i];
       final level = progress.levelOf(u);
       if (progress.isMaxed(u)) {
-        _set(world, _buttons[i], 'secondary', '${u.label} $level', 'MAX');
+        _set(world, _buttons[i], 'secondary', '${u.label} $level', strings.max);
       } else {
         _set(
           world,
@@ -158,8 +180,38 @@ class UpgradeBar {
     }
   }
 
+  /// Refreshes the skill buttons: ready ones are active, those cooling down
+  /// show the seconds left.
+  void syncSkills(World world, SkillCooldowns cooldowns) {
+    for (var i = 0; i < skills.length; i++) {
+      final s = skills[i];
+      final left = cooldowns.remaining(s);
+      _set(
+        world,
+        _skillButtons[i],
+        left > 0 ? 'disabled' : 'primary',
+        s.label,
+        left > 0 ? '${left.ceil()}s' : strings.ready,
+      );
+    }
+  }
+
+  /// Shows the ascend (prestige) button under the retry one (idempotent).
+  void showAscend(World world, {String? label}) {
+    if (_ascend != null) return;
+    final b = _spawnButton(
+      world,
+      layout.retryX,
+      layout.retryY + layout.retryWidth * 0.5,
+      layout.retryWidth,
+      fontScale: 1.5,
+    );
+    _ascend = b;
+    _set(world, b, 'secondary', label ?? strings.ascend, '');
+  }
+
   /// Shows the retry button (idempotent).
-  void showRetry(World world, {String label = 'Retry'}) {
+  void showRetry(World world, {String? label}) {
     if (_retry != null) return;
     final b = _spawnButton(
       world,
@@ -170,16 +222,27 @@ class UpgradeBar {
     );
     _retry = b;
     world.componentsOf<eng.Text>().get(b.bottom)?.text = '';
-    _set(world, b, 'primary', label, '');
+    _set(world, b, 'primary', label ?? strings.retry, '');
   }
 
   bool get retryVisible => _retry != null;
+
+  bool get ascendVisible => _ascend != null;
 
   /// What a tap at [worldPosition] pressed: an upgrade's `id`, [retryAction],
   /// or null for nothing.
   String? hit(Offset worldPosition) {
     final retry = _retry;
     if (retry != null && retry.rect.contains(worldPosition)) return retryAction;
+    final ascend = _ascend;
+    if (ascend != null && ascend.rect.contains(worldPosition)) {
+      return ascendAction;
+    }
+    for (var i = 0; i < _skillButtons.length; i++) {
+      if (_skillButtons[i].rect.contains(worldPosition)) {
+        return '$skillPrefix${skills[i].id}';
+      }
+    }
     for (var i = 0; i < _buttons.length; i++) {
       if (_buttons[i].rect.contains(worldPosition)) return upgrades[i].id;
     }

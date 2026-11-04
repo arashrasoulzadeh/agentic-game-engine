@@ -28,7 +28,7 @@ class ComboTracker {
       colorArgb: 0xFFFFC93C,
       zIndex: 125,
     );
-    combat.damageMultiplier = (side) => side == 'hero' ? multiplier : 1;
+    combat.damageModifiers.add((side) => side == 'hero' ? multiplier : 1);
     world.events.on<FighterHit>((hit) {
       count = hit.attackerSide == 'hero' ? count + 1 : 0;
       _sync(world);

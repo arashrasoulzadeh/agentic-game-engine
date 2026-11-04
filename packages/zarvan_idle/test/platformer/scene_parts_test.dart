@@ -154,8 +154,8 @@ void main() {
       expect(_texts(world), isNot(contains('Combo x1'))); // shown from the 2nd
       hit('hero');
       expect(_texts(world), contains('Combo x2'));
-      expect(combat.damageMultiplier!('hero'), closeTo(1.2, 1e-9));
-      expect(combat.damageMultiplier!('enemy'), 1);
+      expect(combat.damageFactor('hero'), closeTo(1.2, 1e-9));
+      expect(combat.damageFactor('enemy'), 1);
       for (var i = 0; i < 5; i++) {
         hit('hero');
       }

@@ -8,6 +8,9 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added (wave combat as an idle game)
+- Save and offline earnings (`HeroProgressStore`, `PrefsSaveStore`, `OfflineRule`), checkpoints and prestige (`checkpointEvery`, `prestigeBonusPerStar`, an Ascend button), hero skills (`HeroSkill`, `SkillRunner`), loot and gear (`LootTable`, `Gear`), bleed/poison/stun/volley conditions from enemy powers (`Conditions`, `ConditionSystem`), translatable text (`WaveStrings`), run summary and one-time hints. `AutoCombatSystem.damageModifiers` replaces the single `damageMultiplier`. `WaveCombatScene(metaLoader:)` makes whole-scene tests possible; scene-flow tests now cover coin rewards, mid-fight purchases, Retry, checkpoints, Ascend, skills, conditions, loot, hints and offline messages.
+
 ### Changed (zarvan_idle refactor, behaviour-preserving)
 - `WaveCombatScene` shed its inline logic: `HeroLoadout` (hero stats and mid-fight upgrades), `ComboTracker`, `installSceneLights`, `WaveKind` stats and one `registerWaveCombatComponents`. `hit_feedback.dart` is split into components, `HitStop` and the system, and the wind-up tint now stores its own colour instead of a static map. One `spawnWorldText` replaces four copies of text spawning. `CombatStats.copyWith` replaces rebuilding stats by hand (which had dropped the crit fields once). `RandomWaves` has its own file.
 - The idle panels each have their own file under `ui/` (`idle_screens.dart` is now a barrel), and `session.dart` is split into `save_store.dart`, `cloud_save_store.dart` and `return_notifier.dart` (still exported from `session.dart`). Public imports are unchanged.

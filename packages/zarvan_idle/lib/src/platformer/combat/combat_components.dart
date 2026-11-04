@@ -1,5 +1,6 @@
 import 'package:zarvan_core/zarvan_core.dart';
 
+import 'conditions.dart';
 import 'enemy_powers.dart';
 
 /// Who is fighting (hero lane vs enemy lane).
@@ -77,6 +78,7 @@ class CombatStats {
 }
 
 void registerCombatComponents(World world) {
+  registerConditionComponents(world);
   if (world.components.isRegistered('combatRole')) return;
   world.components.register<CombatRole>(
     'combatRole',

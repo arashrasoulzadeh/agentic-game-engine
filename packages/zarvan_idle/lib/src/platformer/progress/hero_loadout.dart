@@ -15,6 +15,7 @@ class HeroLoadout {
     required this.armor,
     required this.upgrades,
     required this.progress,
+    this.starBonusPerStar = 0,
   });
 
   /// Base stats before upgrades (the level's preview scaling already applied).
@@ -22,10 +23,17 @@ class HeroLoadout {
   final List<HeroUpgrade> upgrades;
   final HeroProgress progress;
 
-  double _up(String stat) => progress.multiplier(stat, upgrades);
+  /// Permanent bonus per prestige star on hp and attack (0.1 = +10% each).
+  final double starBonusPerStar;
 
-  double get maxHp => hp * _up('hp');
-  double get attackNow => attack * _up('attack');
+  double get _stars => 1 + progress.stars * starBonusPerStar;
+
+  /// Upgrades plus worn gear for [stat], as a multiplier of the base.
+  double _up(String stat) =>
+      progress.multiplier(stat, upgrades) + progress.gearBonus(stat);
+
+  double get maxHp => hp * _up('hp') * _stars;
+  double get attackNow => attack * _up('attack') * _stars;
   double get attackSpeedNow => attackSpeed * _up('attack_speed');
   double get armorNow => armor * _up('armor');
 

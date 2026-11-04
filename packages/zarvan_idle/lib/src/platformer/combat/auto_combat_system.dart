@@ -6,6 +6,7 @@ import 'package:zarvan_platformer/zarvan_platformer.dart';
 
 import 'combat_components.dart';
 import 'enemy_powers.dart';
+import 'conditions.dart';
 
 /// Auto-attacks; on damage calls engine [flashHit] for red tint feedback.
 class AutoCombatSystem extends System {
@@ -17,8 +18,19 @@ class AutoCombatSystem extends System {
   /// emitted so the hit can be telegraphed (0 = never).
   double windupSeconds = 0;
 
-  /// Extra multiplier on a side's damage (e.g. a combo bonus for `hero`).
-  double Function(String side)? damageMultiplier;
+  /// Extra multipliers on a side's damage (a combo for the hero, a guard on
+  /// the enemy's hits...). Each gets the attacker's side; the factor applied is
+  /// their product.
+  final List<double Function(String side)> damageModifiers = [];
+
+  /// The combined damage factor for attacks by [side].
+  double damageFactor(String side) {
+    var f = 1.0;
+    for (final m in damageModifiers) {
+      f *= m(side);
+    }
+    return f;
+  }
 
   final Set<EntityId> _winding = {};
 
@@ -58,6 +70,9 @@ class AutoCombatSystem extends System {
     final speed = s.attackSpeed * (raging ? mine.rageAttackSpeed : 1);
     final side = world.componentsOf<CombatRole>().get(attacker)!.side;
 
+    if (world.componentsOf<Conditions>().get(attacker)?.stunned ?? false) {
+      return;
+    }
     s.cooldown -= dt;
     if (windupSeconds > 0 &&
         s.cooldown > 0 &&
@@ -89,24 +104,68 @@ class AutoCombatSystem extends System {
       mine.firstStrikeUsed = true;
       attack *= mine.firstStrike;
     }
-    attack *= damageMultiplier?.call(side) ?? 1;
-    final raw = attack - stats.get(defender)!.armor;
+    attack *= damageFactor(side);
+    final armor = stats.get(defender)!.armor;
     final hp = health.get(defender)!;
-    final base = raw < 1 ? 1.0 : raw;
-    final critical =
-        s.critChance > 0 && world.random.nextDouble() < s.critChance;
-    final dmg = critical ? base * s.critMultiplier : base;
-    hp.current = (hp.current - dmg).clamp(0, hp.max);
-    flashHit(world, defender);
-    world.events.emit(
-      FighterHit(
-        attacker: attacker,
-        defender: defender,
-        attackerSide: side,
-        damage: dmg,
-        fatal: hp.current <= 0,
-        critical: critical,
-      ),
-    );
+
+    // Every Nth attack of an archer is a volley: several lighter arrows.
+    mine?.attacksMade++;
+    final volley =
+        mine != null &&
+        mine.volleyEvery > 0 &&
+        mine.attacksMade % mine.volleyEvery == 0;
+    final blows = volley ? mine.volleyArrows : 1;
+    for (var i = 0; i < blows; i++) {
+      if (hp.current <= 0) break;
+      final raw = (volley ? attack * mine.volleyDamage : attack) - armor;
+      final base = raw < 1 ? 1.0 : raw;
+      final critical =
+          s.critChance > 0 && world.random.nextDouble() < s.critChance;
+      final dmg = critical ? base * s.critMultiplier : base;
+      hp.current = (hp.current - dmg).clamp(0, hp.max);
+      flashHit(world, defender);
+      world.events.emit(
+        FighterHit(
+          attacker: attacker,
+          defender: defender,
+          attackerSide: side,
+          damage: dmg,
+          fatal: hp.current <= 0,
+          critical: critical,
+        ),
+      );
+    }
+    if (mine != null && hp.current > 0) _applyConditions(world, mine, defender);
+  }
+
+  /// Puts the attacker's bleed, poison and stun on the defender.
+  void _applyConditions(World world, EnemyPowers p, EntityId defender) {
+    if (p.bleedFraction <= 0 && p.poisonFraction <= 0 && p.stunChance <= 0) {
+      return;
+    }
+    final store = world.componentsOf<Conditions>();
+    var fx = store.get(defender);
+    if (fx == null) {
+      fx = Conditions();
+      store.set(defender, fx);
+    }
+    if (p.bleedFraction > 0) {
+      fx.apply(
+        ConditionKind.bleed,
+        seconds: p.bleedSeconds,
+        dpsFraction: p.bleedFraction,
+      );
+    }
+    if (p.poisonFraction > 0) {
+      fx.apply(
+        ConditionKind.poison,
+        seconds: p.poisonSeconds,
+        dpsFraction: p.poisonFraction,
+        maxStacks: p.poisonMaxStacks,
+      );
+    }
+    if (p.stunChance > 0 && world.random.nextDouble() < p.stunChance) {
+      fx.apply(ConditionKind.stun, seconds: p.stunSeconds);
+    }
   }
 }

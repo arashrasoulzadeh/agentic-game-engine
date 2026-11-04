@@ -1,13 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:zarvan_core/zarvan_core.dart';
-import 'package:zarvan_flutter/zarvan_flutter.dart'
-    as eng
-    show Text;
+import 'package:zarvan_flutter/zarvan_flutter.dart' as eng show Text;
 
 import 'package:zarvan_platformer/zarvan_platformer.dart' show Health;
 
 import '../combat/combat_components.dart';
+import '../combat/conditions.dart';
 import '../hud/world_text.dart';
 
 /// How floating damage numbers look. Pass to `WaveCombatConfig.damageNumbers`.
@@ -31,6 +30,9 @@ class DamageNumberStyle {
     this.criticalColorArgb = 0xFFFFC93C,
     this.enemyHitColorArgb = 0xFFFF5A4D,
     this.dodgeColorArgb = 0xFF7FDBFF,
+    this.bleedColorArgb = 0xFFB3201B,
+    this.poisonColorArgb = 0xFF7CD13C,
+    this.dodgeText = 'Dodge',
   });
 
   /// Seconds a number stays up while it rises and fades.
@@ -69,8 +71,13 @@ class DamageNumberStyle {
   final int criticalColorArgb;
   final int enemyHitColorArgb;
 
-  /// The colour of a dodged hit's text.
+  /// The colour of a dodged hit's text and its wording.
   final int dodgeColorArgb;
+  final String dodgeText;
+
+  /// Damage-over-time numbers: bleed and poison.
+  final int bleedColorArgb;
+  final int poisonColorArgb;
 
   /// The colour for a hero hit worth [fraction] of the target's max health.
   int tierColor(double fraction) {
@@ -204,12 +211,29 @@ void installDamageNumbers(World world, DamageNumberStyle style) {
       drift: (world.random.nextDouble() * 2 - 1) * style.drift,
     );
   });
+  world.events.on<ConditionTick>((tick) {
+    final pos = world.componentsOf<Position>().get(tick.entity);
+    if (pos == null || tick.damage < 0.5) return;
+    spawnFloatingText(
+      world,
+      tick.damage.round().toString(),
+      pos.x + world.random.nextDouble() * 10 - 5,
+      pos.y - 10,
+      size: style.baseSize * 0.8,
+      colorArgb: tick.kind == ConditionKind.poison
+          ? style.poisonColorArgb
+          : style.bleedColorArgb,
+      style: style,
+      life: 0.7,
+      popScale: 1,
+    );
+  });
   world.events.on<FighterDodge>((dodge) {
     final pos = world.componentsOf<Position>().get(dodge.defender);
     if (pos == null) return;
     spawnFloatingText(
       world,
-      'Dodge',
+      style.dodgeText,
       pos.x,
       pos.y - 24,
       size: style.baseSize * 1.1,

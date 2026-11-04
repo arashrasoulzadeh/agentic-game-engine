@@ -50,6 +50,10 @@ class FighterStats {
   }
 }
 
+/// Loads a fighter's [FighterMeta] from its asset stem; replaced in tests so a
+/// scene can run without any assets.
+typedef FighterMetaLoader = Future<FighterMeta> Function(String id, String stem);
+
 /// A boss phase like `{hp_below: 50, effect: 'attack_speed x1.5'}` as the
 /// power text `EnemyPowers` understands.
 List<String>? _phaseText(Map phase) {

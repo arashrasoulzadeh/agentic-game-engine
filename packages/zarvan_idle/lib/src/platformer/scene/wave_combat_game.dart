@@ -5,6 +5,8 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../level/level_data.dart';
 import '../progress/hero_progress.dart';
+import '../progress/hero_progress_store.dart';
+import '../../save_store.dart';
 import 'wave_combat_scene.dart';
 
 /// A whole wave-combat game: the engine's `Game` around a [WaveCombatScene].
@@ -20,7 +22,10 @@ class WaveCombatGame extends Game {
     required this.combat,
     this.splash = const SplashConfig(),
     this.viewportFit = ViewportFit.contain,
-  });
+    HeroProgress? progress,
+    HeroProgressStore? progressStore,
+  }) : progress = progress ?? HeroProgress(),
+       _store = progressStore;
 
   @override
   final GameConfig config;
@@ -45,16 +50,27 @@ class WaveCombatGame extends Game {
     String configAsset = 'assets/game_config.json',
     SplashConfig splash = const SplashConfig(),
     ViewportFit viewportFit = ViewportFit.contain,
-  }) async => WaveCombatGame(
-    config: await GameConfig.loadFromAsset(configAsset),
-    level: LevelData.fromJson(
-      jsonDecode(await rootBundle.loadString(levelAsset))
-          as Map<String, dynamic>,
-    ),
-    combat: combat,
-    splash: splash,
-    viewportFit: viewportFit,
-  );
+    SaveStore? saveStore,
+    DateTime Function()? clock,
+  }) async {
+    // With a save store, coins, upgrades, stars and gear persist, and the time
+    // away is paid out by the config's `offline` rule.
+    final store = saveStore == null
+        ? null
+        : HeroProgressStore(saveStore, clock: clock);
+    return WaveCombatGame(
+      config: await GameConfig.loadFromAsset(configAsset),
+      level: LevelData.fromJson(
+        jsonDecode(await rootBundle.loadString(levelAsset))
+            as Map<String, dynamic>,
+      ),
+      combat: combat,
+      splash: splash,
+      viewportFit: viewportFit,
+      progress: store?.load(rule: combat.offline),
+      progressStore: store,
+    );
+  }
 
   @override
   ViewportConfig get viewportConfig => ViewportConfig(
@@ -69,6 +85,13 @@ class WaveCombatGame extends Game {
   Scene createInitialScene() =>
       WaveCombatScene(level: level, config: combat, progress: progress);
 
-  /// Coins and upgrades, kept across retries of this game session.
-  final HeroProgress progress = HeroProgress();
+  /// Coins, upgrades, stars and gear: kept across retries, and across launches
+  /// when the game was loaded with a save store.
+  final HeroProgress progress;
+
+  final HeroProgressStore? _store;
+
+  /// Stamps the save so the time away is counted from now.
+  @override
+  void onPause() => _store?.save(progress);
 }

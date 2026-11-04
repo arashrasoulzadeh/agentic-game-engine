@@ -17,6 +17,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # PrefsSaveStore: one key-value save that works on Android, iOS and web.
+  shared_preferences: ^2.3.0
   # Self-referencing git dependencies, same pattern (and same
   # ref-must-match-consumer limitation) as zarvan_strategy — see
   # zarvan_flutter's pubspec.yaml comment.
