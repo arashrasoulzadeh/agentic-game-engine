@@ -132,3 +132,7 @@ destroyed far end leaves the joint inert.
 ## Level mechanics
 
 `ConveyorZone` drags bodies inside its rectangle at a velocity; `Teleporter` moves bodies to a point or entity with a per-body cooldown and emits `Teleported`. Register `ConveyorZoneSystem` before movement and `TeleporterSystem` anywhere. `DestructibleTiles(map, {tileId: DestructibleTile(hits:, becomes:)})` breaks tiles via `hit(col,row)` or `blast(x,y,radius)`. Both components have schemas, so the studio can place them.
+
+## UI toolkit models
+
+Pure-Dart building blocks for in-game UI: `layoutStack(bounds, [40, null, null], gap:, padding:, vertical:)` splits space between fixed and flexible children; `anchorRect(parent, UiAnchor.bottomRight, w, h, dx:, dy:)` pins a box to a corner, edge or centre; `ScrollListModel` handles clamped scrolling, fling inertia, hit-testing and keyboard selection; `TextInputModel` holds text, caret, length limit and character filter. Widgets that render them are still to do.

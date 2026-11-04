@@ -41,5 +41,5 @@ listed. Tick them off as they ship, with a test and docs.
       ship as `PostProcessed`; these three need fragment programs (and a captured scene texture).
 - [ ] **Screen-reader semantics.** Expose menus, buttons and HUD text to TalkBack/VoiceOver (`Semantics`) from the
       engine's UI scenes; accessibility settings exist, assistive-technology support does not.
-- [ ] **UI toolkit pieces: text input, scrolling lists, layout containers.** In-world UI has buttons and menus but
-      no text field, scroll view or row/column/anchor layout.
+- [ ] **UI toolkit: Flutter widgets for the new models.** `layoutStack`, `anchorRect`, `ScrollListModel` and
+      `TextInputModel` exist as pure models; scenes still need widgets that render and drive them.

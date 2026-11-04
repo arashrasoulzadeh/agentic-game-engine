@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added (engine)
+- UI toolkit models: `layoutStack`/`anchorRect` (row, column, anchor layout), `ScrollListModel` (scroll, fling, selection) and `TextInputModel` (caret, limits, filters).
 - Level mechanics: `ConveyorZone`, `Teleporter` (with `Teleported` event) and `DestructibleTiles` (hits, rubble, blast radius), with schemas for the studio.
 - `PostProcessed` with `ColorGrade` (brightness/contrast/saturation/tint, composed into one filter layer), `Vignette` and `Scanlines`.
 - `DevConsole` (pure Dart: commands, history, did-you-mean, completion; built-ins for time scale, spawn, inspect, set, teleport, kill) and the `DevConsoleOverlay` widget in `zarvan_flutter`.
