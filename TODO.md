@@ -32,16 +32,14 @@ Sections: [Release](#release) ·
 
 ## Wanted: engine gaps
 
-Ten things a general 2D engine needs that this repo did not have (the first five shipped and were removed from
-this list, see the changelog; five remain). Each was checked against the source (no
+Ten things a general 2D engine needs that this repo did not have (the first six shipped and were removed from
+this list, see the changelog; four remain). Each was checked against the source (no
 matching class or file in `zarvan_core`, `zarvan_flutter`, `zarvan_platformer` or `zarvan_strategy`) before being
 listed. Tick them off as they ship, with a test and docs.
 
 - [ ] **Post-processing pipeline.** Full-screen shader passes (bloom, vignette, scanlines/CRT, colour grading,
       chromatic aberration, pixelate) as a component stack on the camera; today only `ScreenTint` and the lighting
       shaders exist.
-- [ ] **In-game developer console.** A command console (toggle, history, autocomplete) wired to the operation
-      registry so every agent operation and cheat (`give`, `teleport`, `timescale`) is typable on device.
 - [ ] **Screen-reader semantics.** Expose menus, buttons and HUD text to TalkBack/VoiceOver (`Semantics`) from the
       engine's UI scenes; accessibility settings exist, assistive-technology support does not.
 - [ ] **UI toolkit pieces: text input, scrolling lists, layout containers.** In-world UI has buttons and menus but

@@ -71,6 +71,7 @@ export 'src/rendering/animation_transition_system.dart';
 export 'src/rendering/light_flicker_system.dart';
 export 'src/ui/button_menu_scene.dart';
 export 'src/ui/menu_button_atlas.dart';
+export 'src/ui/dev_console_overlay.dart';
 export 'src/ui/remap_menu_scene.dart';
 export 'src/ui/save_slot_menu_scene.dart';
 export 'src/ui/dialogue_box_scene.dart';

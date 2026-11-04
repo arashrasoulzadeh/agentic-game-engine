@@ -124,3 +124,7 @@ holds exactly that distance (a pendulum is a rod to a fixed point). `breakDistan
 emitting `JointBroken`). Springs and ropes push the ends' `Velocity`; a rod corrects `Position` directly and removes the
 speed along the rod. Register `JointSystem` **before** `MovementSystem` so the change is integrated in the same step. A
 destroyed far end leaves the joint inert.
+
+## Developer console
+
+`DevConsole` is a Flutter-free command console: `run(line)` parses (quotes supported), executes and logs; `previous()`/`next()` walk history; `complete(typed)` suggests command, prefab and component names; unknown commands get a "did you mean". Built-ins: `help`, `timescale`, `pause`, `resume`, `step`, `hitstop`, `entities`, `inspect`, `systems`, `spawn`, `kill`, `teleport`, `set`. Games add cheats with `addCommand(ConsoleCommand(...))`. In Flutter, show `DevConsoleOverlay(console: console)` (for example behind a debug-only toggle).

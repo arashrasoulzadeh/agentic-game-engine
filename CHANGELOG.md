@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added (engine)
+- `DevConsole` (pure Dart: commands, history, did-you-mean, completion; built-ins for time scale, spawn, inspect, set, teleport, kill) and the `DevConsoleOverlay` widget in `zarvan_flutter`.
 - `Joint` (spring, rope, rod; to an entity or a fixed point; breakable) with `JointSystem` and `JointBroken`; schema in `zarvan_schema`.
 - `CameraRig` (dead-zone, velocity look-ahead, easing, level bounds) via `EngineView(cameraRig:)` and `Camera.clampTo`.
 - `World.timeScale`, `World.hitStop` and `RealTimeSystem` (slow motion, pause, hit-stop); `EntityPool` for recycling short-lived entities' components; data-driven `Spawner`/`SpawnedBy` components with `SpawnerSystem` (periodic or wave spawns, caps, totals, scatter radius; schemas in `zarvan_schema`). `zarvan_idle`'s `HitStop` now uses the world's.
