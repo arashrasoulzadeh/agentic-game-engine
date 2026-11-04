@@ -156,8 +156,9 @@ class _ShaderPostProcessedState extends State<ShaderPostProcessed>
     if (ro is! RenderRepaintBoundary || !ro.attached) return;
     _capturing = true;
     try {
+      final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
       final img = await ro.toImage(
-        pixelRatio: widget.scale.clamp(0.25, 1.0).toDouble(),
+        pixelRatio: dpr * widget.scale.clamp(0.25, 1.0).toDouble(),
       );
       if (!mounted) {
         img.dispose();
@@ -198,6 +199,7 @@ class _ShaderPostProcessedState extends State<ShaderPostProcessed>
                 frame,
                 widget.fx,
                 _t.inMicroseconds / 1e6,
+                MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0,
               ),
             ),
           ),
@@ -208,12 +210,17 @@ class _ShaderPostProcessedState extends State<ShaderPostProcessed>
 }
 
 class _FxPainter extends CustomPainter {
-  _FxPainter(this.program, this.frame, this.fx, this.time);
+  _FxPainter(this.program, this.frame, this.fx, this.time, this.dpr);
 
   final ui.FragmentProgram program;
   final ui.Image frame;
   final ShaderPostFx fx;
   final double time;
+
+  /// Kept for the snapshot's sharpness only: `FlutterFragCoord` is in logical
+  /// pixels, so the size uniform must be logical too (device pixels shrank
+  /// the picture into a corner, seen on web).
+  final double dpr;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -225,8 +232,10 @@ class _FxPainter extends CustomPainter {
       shader.setFloat(i++, v);
     }
     shader.setImageSampler(0, frame);
+    // Not disposed here: the draw is only recorded, and freeing the shader
+    // before raster read its uniforms is the suspected cause of zeroed
+    // uniforms on web (unconfirmed).
     canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
-    shader.dispose();
   }
 
   @override
