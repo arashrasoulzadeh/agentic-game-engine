@@ -202,6 +202,20 @@ class Camera {
     _clampToWorld(viewportSize, worldWidth, worldHeight);
   }
 
+  /// Clamps the camera so the viewport stays inside [bounds] (a level
+  /// rectangle in world units); a level smaller than the viewport is centred.
+  /// The same rule [follow] applies to the world, for any rectangle.
+  void clampTo(Rect bounds, Size viewportSize) {
+    final halfW = viewportSize.width / (2 * zoom);
+    final halfH = viewportSize.height / (2 * zoom);
+    x = bounds.width > halfW * 2
+        ? x.clamp(bounds.left + halfW, bounds.right - halfW)
+        : bounds.center.dx;
+    y = bounds.height > halfH * 2
+        ? y.clamp(bounds.top + halfH, bounds.bottom - halfH)
+        : bounds.center.dy;
+  }
+
   void _clampToWorld(
     Size? viewportSize,
     double? worldWidth,

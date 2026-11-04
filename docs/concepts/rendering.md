@@ -90,6 +90,26 @@ flashlight mode, flicker, and a day/night ambient cycle
 data, not rendering-specific). `GameConfig.ambientBrightness < 1.0`
 darkens the whole scene, revealed again through each `Light2D` entity.
 
+## Following a target: dead-zone, look-ahead, bounds
+
+`Camera.follow` centres on a target; `followSmooth` eases. For a platformer feel give `EngineView` a `CameraRig`:
+
+```dart
+EngineView(
+  // ...
+  cameraFollowEntity: player,
+  cameraRig: CameraRig(
+    deadZoneWidth: 60, deadZoneHeight: 30,   // the target roams this window; the camera holds still
+    lookAhead: 40, lookAheadSpeed: 120,      // lead up to 40 units in the direction of travel
+    lookAheadHalfLife: 0.25, halfLife: 0.1,  // easing, so turning around does not whip the view
+    bounds: Rect.fromLTWH(0, 0, 2000, 600),  // never show past the level (default: the world rectangle)
+  ),
+)
+```
+
+The velocity comes from the target's `Velocity`. A level smaller than the viewport is centred. `rig.reset(camera, x, y)` snaps
+for a teleport; `Camera.clampTo(rect, viewport)` is the same bounds rule for your own code.
+
 ## Aspect ratio and safe areas
 
 `EngineView(viewportConfig: ViewportConfig(...))` decides the **rectangle** the game is drawn in on screens of

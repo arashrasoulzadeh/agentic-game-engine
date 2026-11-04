@@ -32,13 +32,11 @@ Sections: [Release](#release) ·
 
 ## Wanted: engine gaps
 
-Ten things a general 2D engine needs that this repo did not have (the first three shipped and were removed from
-this list, see the changelog; seven remain). Each was checked against the source (no
+Ten things a general 2D engine needs that this repo did not have (the first four shipped and were removed from
+this list, see the changelog; six remain). Each was checked against the source (no
 matching class or file in `zarvan_core`, `zarvan_flutter`, `zarvan_platformer` or `zarvan_strategy`) before being
 listed. Tick them off as they ship, with a test and docs.
 
-- [ ] **Camera dead-zone, look-ahead and bounds.** Follow with a dead-zone window, velocity look-ahead and clamping
-      to a level rectangle, on top of the existing follow and shake.
 - [ ] **Joints and springs.** Distance, spring and rope constraints between entities (and entity-to-point), solved
       in a system; the only physics today is circle/AABB collision and platformer gravity.
 - [ ] **Post-processing pipeline.** Full-screen shader passes (bloom, vignette, scanlines/CRT, colour grading,

@@ -10,6 +10,7 @@ import 'package:flutter/widgets.dart' hide Velocity;
 import 'package:flutter/scheduler.dart';
 
 import 'camera.dart';
+import 'camera_rig.dart';
 import 'clip_shape.dart';
 import 'parallax_layer.dart';
 import 'viewport.dart';
@@ -45,6 +46,10 @@ class EngineView extends StatefulWidget {
   final Camera camera;
   final InputController? inputController;
   final EntityId? cameraFollowEntity;
+
+  /// How the camera follows [cameraFollowEntity]: dead-zone, look-ahead,
+  /// easing and level bounds (see `CameraRig`). Null keeps the plain follow.
+  final CameraRig? cameraRig;
   final Color backgroundColor;
   final bool paused;
 
@@ -238,6 +243,7 @@ class EngineView extends StatefulWidget {
     required this.camera,
     this.inputController,
     this.cameraFollowEntity,
+    this.cameraRig,
     this.backgroundColor = const Color(0xFF000000),
     this.paused = false,
     this.stepsWorld = true,
@@ -443,13 +449,34 @@ class _EngineViewState extends State<EngineView>
       final pos = widget.world.componentsOf<Position>().get(followId);
       if (pos != null) {
         final box = context.findRenderObject() as RenderBox?;
-        widget.camera.follow(
-          pos.x,
-          pos.y,
-          viewportSize: _viewportLayout?.contentRect.size ?? box?.size,
-          worldWidth: widget.world.width,
-          worldHeight: widget.world.height,
-        );
+        final viewport = _viewportLayout?.contentRect.size ?? box?.size;
+        final rig = widget.cameraRig;
+        if (rig != null) {
+          final v = widget.world.componentsOf<Velocity>().get(followId);
+          rig.update(
+            widget.camera,
+            targetX: pos.x,
+            targetY: pos.y,
+            velocityX: v?.x ?? 0,
+            velocityY: v?.y ?? 0,
+            dt: dt,
+            viewportSize: viewport,
+            defaultBounds: Rect.fromLTWH(
+              0,
+              0,
+              widget.world.width,
+              widget.world.height,
+            ),
+          );
+        } else {
+          widget.camera.follow(
+            pos.x,
+            pos.y,
+            viewportSize: viewport,
+            worldWidth: widget.world.width,
+            worldHeight: widget.world.height,
+          );
+        }
       }
       final vel = widget.world.componentsOf<Velocity>().get(followId);
       _frameStats.followedSpeed = vel == null
