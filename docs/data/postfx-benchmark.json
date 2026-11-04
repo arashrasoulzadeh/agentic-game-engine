@@ -1,5 +1,80 @@
 {
-  "environment": {
+  "unit": "ms per frame (totalSpan)",
+  "presets": [
+    "off",
+    "grade",
+    "vignette + scanlines",
+    "bloom",
+    "chromatic aberration",
+    "pixelate",
+    "CRT",
+    "CRT at 0.5x",
+    "everything"
+  ],
+  "before_pixel_cap": {
+    "label": "snapshot at full 2x resolution (5.2 MP)",
+    "avg": [
+      3.03,
+      3.21,
+      3.02,
+      36.0,
+      35.27,
+      35.05,
+      35.15,
+      11.9,
+      36.03
+    ],
+    "p95": [
+      4.4,
+      4.4,
+      3.9,
+      40.5,
+      38.6,
+      38.8,
+      38.1,
+      13.1,
+      40.5
+    ]
+  },
+  "after_pixel_cap": {
+    "label": "snapshot capped to 1.6 MP (the new default)",
+    "avg": [
+      3.14,
+      3.62,
+      3.6,
+      13.83,
+      12.02,
+      12.3,
+      13.84,
+      12.09,
+      14.53
+    ],
+    "p95": [
+      4.5,
+      4.9,
+      5.0,
+      15.1,
+      12.9,
+      13.6,
+      15.9,
+      14.0,
+      17.4
+    ]
+  },
+  "snapshot_cost": {
+    "note": "frame ms above the no-effect baseline (3.0 ms) against snapshot megapixels",
+    "megapixels": [
+      1.3,
+      1.6,
+      5.2
+    ],
+    "extra_ms": [
+      8.9,
+      10.8,
+      32.1
+    ]
+  },
+  "environment_web": {
     "machine": "Apple M1 Pro, macOS, Chrome (ANGLE Metal)",
     "window": "1512x862 logical px at 2x device pixel ratio (3024x1724 px)",
     "build": "flutter build web --profile (Flutter 3.38.9, CanvasKit)",
@@ -7,21 +82,55 @@
     "method": "FrameTiming over 4 s per preset after a 1.5 s warm-up; average and p95 of totalSpan, ms",
     "notes": "Chrome ran this window at about 30 Hz, so frame time is reported, not fps. Two runs on a quiet machine; runs while the machine was busy (load average 17+) were discarded as noise."
   },
-  "unit": "ms per frame (totalSpan)",
-  "presets": ["off", "grade", "vignette + scanlines", "bloom", "chromatic aberration", "pixelate", "CRT", "CRT at 0.5x", "everything"],
-  "before_pixel_cap": {
-    "label": "snapshot at full 2x resolution (5.2 MP)",
-    "avg": [3.03, 3.21, 3.02, 36.0, 35.27, 35.05, 35.15, 11.9, 36.03],
-    "p95": [4.4, 4.4, 3.9, 40.5, 38.6, 38.8, 38.1, 13.1, 40.5]
-  },
-  "after_pixel_cap": {
-    "label": "snapshot capped to 1.6 MP (the new default)",
-    "avg": [3.14, 3.62, 3.6, 13.83, 12.02, 12.3, 13.84, 12.09, 14.53],
-    "p95": [4.5, 4.9, 5.0, 15.1, 12.9, 13.6, 15.9, 14.0, 17.4]
-  },
-  "snapshot_cost": {
-    "note": "frame ms above the no-effect baseline (3.0 ms) against snapshot megapixels",
-    "megapixels": [1.3, 1.6, 5.2],
-    "extra_ms": [8.9, 10.8, 32.1]
+  "device_android": {
+    "device": "Samsung SM-S731B, Android 17 (API 37), 120 Hz",
+    "display": "1080x2340 px at device pixel ratio 2.81 (about 2.5 MP; the default cap snapshots at 1.6 MP)",
+    "build": "flutter run --profile (Flutter 3.38.9, Impeller), native, not web",
+    "scene": "400 random procedural sprites, one atlas, seed 7",
+    "method": "FrameTiming over 4 s per preset after a 1.5 s warm-up; average and p95 of totalSpan, ms; fps is frames per second measured",
+    "presets": [
+      "off",
+      "grade",
+      "vignette + scanlines",
+      "bloom",
+      "chromatic aberration",
+      "pixelate",
+      "CRT",
+      "CRT at 0.5x",
+      "everything"
+    ],
+    "avg": [
+      4.55,
+      4.96,
+      6.1,
+      25.38,
+      17.6,
+      12.59,
+      11.36,
+      5.58,
+      24.22
+    ],
+    "p95": [
+      5.49,
+      5.94,
+      7.14,
+      35.11,
+      24.58,
+      19.52,
+      17.28,
+      7.41,
+      30.1
+    ],
+    "fps": [
+      120.3,
+      120.2,
+      120.2,
+      68.7,
+      91.7,
+      111.0,
+      117.7,
+      120.2,
+      69.5
+    ]
   }
 }

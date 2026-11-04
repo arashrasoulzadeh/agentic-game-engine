@@ -52,5 +52,26 @@ def cost_chart():
     o.append('</svg>')
     (root / 'docs/img/postfx-cost-vs-pixels.svg').write_text('\n'.join(o))
 
-frame_time_chart(); cost_chart()
-print('wrote docs/img/postfx-frame-time.svg and postfx-cost-vs-pixels.svg')
+def device_chart():
+    dv = d['device_android']; names = dv['presets']; a = dv['avg']
+    W, row, left, top = 760, 36, 190, 56
+    H = top + row * len(names) + 40
+    scale = (W - left - 80) / 30.0  # 0..30 ms
+    o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" font-family="system-ui,sans-serif" font-size="13">',
+         f'<text x="{left}" y="22" fill="{TEXT}" font-size="15" font-weight="600">On a phone: frame time by preset (ms, lower is better)</text>',
+         f'<text x="{left}" y="42" fill="{TEXT}" font-size="12">Samsung SM-S731B, 120 Hz, profile build. Dashed lines: 120 fps and 60 fps budgets.</text>']
+    for ms, lab in ((8.33, '120 fps'), (16.67, '60 fps')):
+        x = left + ms * scale
+        o.append(f'<line x1="{x:.1f}" y1="{top - 6}" x2="{x:.1f}" y2="{H - 30}" stroke="{OLD}" stroke-width="1.5" stroke-dasharray="5 4"/>'
+                 f'<text x="{x:.1f}" y="{H - 12}" fill="{OLD}" text-anchor="middle" font-size="11">{lab}</text>')
+    for i, n in enumerate(names):
+        y = top + i * row; v = a[i]
+        col = NEW if v <= 16.67 else '#c46a5a'
+        o.append(f'<text x="{left - 10}" y="{y + 17}" fill="{TEXT}" text-anchor="end">{n}</text>'
+                 f'<rect x="{left}" y="{y + 4}" width="{max(v * scale, 1):.1f}" height="18" rx="2" fill="{col}"/>'
+                 f'<text x="{left + v * scale + 6:.1f}" y="{y + 18}" fill="{TEXT}" font-size="11">{v:g} ms ({dv["fps"][i]:g} fps)</text>')
+    o.append('</svg>')
+    (root / 'docs/img/postfx-phone-frame-time.svg').write_text('\n'.join(o))
+
+frame_time_chart(); cost_chart(); device_chart()
+print('wrote the post-fx charts')

@@ -42,13 +42,12 @@ unchanged and never takes a snapshot.
 
 The cost of an effect is not the effect. It is the snapshot.
 
-!!! warning "These benchmarks are web only"
-    Every figure below was measured in **Chrome on a Mac, on the web**. None of it was measured on a phone or tablet, and
-    mobile GPUs, Impeller and thermal throttling can change both the absolute numbers and the ratios. Device
-    measurements (an Android phone and an iPhone) are still to do; until they are added, treat the numbers as a guide to
-    what scales (pixels, not effects), not as a promise for your target device.
+!!! warning "Web and one Android phone; no iPhone yet"
+    The first set of figures was measured in **Chrome on a Mac, on the web**. A second set comes from **one Android phone**
+    (Samsung SM-S731B, a native profile build). The two disagree about *why* effects cost what they do, so read both. An
+    iPhone has not been measured; a different GPU can change the ratios again, so measure on the devices you ship to.
 
-**Setup.** Chrome on an Apple M1 Pro (Metal), a 1512x862 window at 2x device pixel ratio (3024x1724 px), a
+**Web setup.** Chrome on an Apple M1 Pro (Metal), a 1512x862 window at 2x device pixel ratio (3024x1724 px), a
 `flutter build web --profile` build, 400 random sprites. Each preset ran for 4 s after a 1.5 s warm-up; the figures are
 the average of `FrameTiming.totalSpan`. Raw numbers: [`docs/data/postfx-benchmark.json`](../data/postfx-benchmark.json).
 
@@ -69,9 +68,9 @@ the average of `FrameTiming.totalSpan`. Raw numbers: [`docs/data/postfx-benchmar
 What the numbers say:
 
 - **Grade, vignette and scanlines are free.** Within a few tenths of a millisecond of no effect at all.
-- **Every shader preset costs the same.** Bloom (a 16-tap blur), a three-tap chromatic split and a single-tap pixelate
-  all land within about 1.5 ms of each other, and "everything on" is only 1 to 2 ms above the cheapest. The fragment
-  shader is not the bottleneck; stacking effects in one `ShaderPostFx` is essentially free.
+- **On the web, every shader preset costs the same.** Bloom (a 16-tap blur), a three-tap chromatic split and a single-tap pixelate
+  all land within about 1.5 ms of each other, and "everything on" is only 1 to 2 ms above the cheapest. On that desktop
+  GPU the fragment shader is not the bottleneck. **This does not hold on a phone**, see below.
 - **The snapshot is the cost, and it grows with pixels.**
 
 ![Extra milliseconds per frame against snapshot megapixels](../img/postfx-cost-vs-pixels.svg)
@@ -82,11 +81,43 @@ What the numbers say:
   under budget is untouched, and `maxPixels: 0` turns the cap off.
 - **`scale` and the cap do the same job.** `scale: 0.5` at 2x is already 1.3 MP, so it measured the same as the cap.
 
-**Read these as relative.** One machine, a window the browser ran at about 30 Hz (so frame time is reported, not fps),
+**Read the web figures as relative.** One machine, a window the browser ran at about 30 Hz (so frame time is reported, not fps),
 two runs on a quiet machine. Runs taken while the machine was busy swung from 3 ms to 190 ms for the same preset and
-were thrown away. Phones will differ: measure on the devices you ship to (see
-[Reproduce it](#try-it-yourself-random-assets-in-the-browser)). The Flutter web raster time is not reported reliably, so
+were thrown away. The Flutter web raster time is not reported reliably, so
 the figures are whole-frame spans.
+
+### On a phone (Android)
+
+**Setup.** Samsung SM-S731B, Android 17, a 120 Hz display at 1080x2340 px (device pixel ratio 2.81, about 2.5 MP),
+`flutter run --profile` (native, Impeller), the same 400 random sprites. The snapshot is capped to 1.6 MP by default, so
+it was rendered below native resolution. Raw numbers are in the JSON file above.
+
+![Frame time by preset on the phone](../img/postfx-phone-frame-time.svg)
+
+| Preset | Frame time | fps | p95 | Over baseline |
+|---|---:|---:|---:|---:|
+| off | 4.6 ms | 120 | 5.5 ms | |
+| grade | 5.0 ms | 120 | 5.9 ms | +0.4 ms |
+| vignette + scanlines | 6.1 ms | 120 | 7.1 ms | +1.6 ms |
+| bloom | 25.4 ms | 69 | 35.1 ms | +20.8 ms |
+| chromatic aberration | 17.6 ms | 92 | 24.6 ms | +13.0 ms |
+| pixelate | 12.6 ms | 111 | 19.5 ms | +8.0 ms |
+| CRT | 11.4 ms | 118 | 17.3 ms | +6.8 ms |
+| CRT at 0.5x | 5.6 ms | 120 | 7.4 ms | +1.0 ms |
+| everything on | 24.2 ms | 70 | 30.1 ms | +19.7 ms |
+
+What the phone says:
+
+- **Here the effect matters.** Bloom (a 16-tap blur) is the most expensive at about 21 ms over baseline, chromatic
+  aberration costs 13 ms, a CRT about 7. The ordering follows the work the shader does, not the snapshot, which is the
+  opposite of the web result.
+- **Resolution is the lever.** The CRT at half resolution costs 1 ms and holds 120 fps; at the default cap it costs
+  7 ms and still holds about 118. If you want bloom on a phone, run it at a lower `scale` (try `0.5`).
+- **The cheap passes cost 0.4 and 1.6 ms.** Fine at 120 Hz and free at 60 Hz. Scanlines cost the most of them because
+  they paint many thin rects; a handful of wider lines is cheaper.
+- **Frame budgets.** 120 fps is 8.3 ms and 60 fps is 16.7 ms. Bloom and the full stack at the default cap miss 60 fps on
+  this phone; the CRT, pixelate and the cheap passes fit.
+- One device, one run each. Another Android GPU, or an iPhone, may order these differently.
 
 **Two traps found while measuring**
 
@@ -100,7 +131,8 @@ the figures are whole-frame spans.
 | Goal | Do |
 |---|---|
 | Cheapest possible look | `PostProcessed` only: grade, vignette, scanlines |
-| A CRT or bloom on a phone | Leave `maxPixels` at its default, or lower it (`1e6`) on slow devices |
+| A CRT on a phone | The default cap held 118 fps on the test phone; lower `scale` if your target is slower |
+| Bloom on a phone | It was the costliest effect (about 21 ms over baseline); use `scale: 0.5` or skip it on mid-range devices |
 | Crisp bloom on a desktop | `maxPixels: 0` (no cap) and accept the snapshot cost, or `scale: 1` with a lower DPR |
 | Effects only sometimes | Set `game.postFx.value` back to `const ShaderPostFx()`: the identity takes no snapshot |
 | Settings toggle | Store a bool and map it to `ShaderPostFx.crt()` or the identity |
@@ -235,6 +267,6 @@ and throw away any run where the no-effect preset is not steady.
   use it for a hit flash that must land on the exact frame (use `PostProcessed`, or accept 16 ms).
 - **No depth of field, motion blur or distortion yet** (shockwaves, heat haze).
 - **Web.** Measured and tested on the CanvasKit renderer only; the older HTML renderer has no fragment shaders.
-- **Not yet measured on devices.** See the warning above.
+- **iPhone not measured yet.** See the warning above.
 
 See also: [Rendering](rendering.md), [Settings and accessibility](settings.md), [Performance](performance.md).

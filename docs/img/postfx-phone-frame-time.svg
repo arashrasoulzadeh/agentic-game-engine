@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" font-family="system-ui,sans-serif" font-size="13">
+<text x="190" y="22" fill="#9aa3b2" font-size="15" font-weight="600">On a phone: frame time by preset (ms, lower is better)</text>
+<text x="190" y="42" fill="#9aa3b2" font-size="12">Samsung SM-S731B, 120 Hz, profile build. Dashed lines: 120 fps and 60 fps budgets.</text>
+<line x1="326.1" y1="50" x2="326.1" y2="390" stroke="#526b91" stroke-width="1.5" stroke-dasharray="5 4"/><text x="326.1" y="408" fill="#526b91" text-anchor="middle" font-size="11">120 fps</text>
+<line x1="462.3" y1="50" x2="462.3" y2="390" stroke="#526b91" stroke-width="1.5" stroke-dasharray="5 4"/><text x="462.3" y="408" fill="#526b91" text-anchor="middle" font-size="11">60 fps</text>
+<text x="180" y="73" fill="#9aa3b2" text-anchor="end">off</text><rect x="190" y="60" width="74.3" height="18" rx="2" fill="#c8a66a"/><text x="270.3" y="74" fill="#9aa3b2" font-size="11">4.55 ms (120.3 fps)</text>
+<text x="180" y="109" fill="#9aa3b2" text-anchor="end">grade</text><rect x="190" y="96" width="81.0" height="18" rx="2" fill="#c8a66a"/><text x="277.0" y="110" fill="#9aa3b2" font-size="11">4.96 ms (120.2 fps)</text>
+<text x="180" y="145" fill="#9aa3b2" text-anchor="end">vignette + scanlines</text><rect x="190" y="132" width="99.6" height="18" rx="2" fill="#c8a66a"/><text x="295.6" y="146" fill="#9aa3b2" font-size="11">6.1 ms (120.2 fps)</text>
+<text x="180" y="181" fill="#9aa3b2" text-anchor="end">bloom</text><rect x="190" y="168" width="414.5" height="18" rx="2" fill="#c46a5a"/><text x="610.5" y="182" fill="#9aa3b2" font-size="11">25.38 ms (68.7 fps)</text>
+<text x="180" y="217" fill="#9aa3b2" text-anchor="end">chromatic aberration</text><rect x="190" y="204" width="287.5" height="18" rx="2" fill="#c46a5a"/><text x="483.5" y="218" fill="#9aa3b2" font-size="11">17.6 ms (91.7 fps)</text>
+<text x="180" y="253" fill="#9aa3b2" text-anchor="end">pixelate</text><rect x="190" y="240" width="205.6" height="18" rx="2" fill="#c8a66a"/><text x="401.6" y="254" fill="#9aa3b2" font-size="11">12.59 ms (111 fps)</text>
+<text x="180" y="289" fill="#9aa3b2" text-anchor="end">CRT</text><rect x="190" y="276" width="185.5" height="18" rx="2" fill="#c8a66a"/><text x="381.5" y="290" fill="#9aa3b2" font-size="11">11.36 ms (117.7 fps)</text>
+<text x="180" y="325" fill="#9aa3b2" text-anchor="end">CRT at 0.5x</text><rect x="190" y="312" width="91.1" height="18" rx="2" fill="#c8a66a"/><text x="287.1" y="326" fill="#9aa3b2" font-size="11">5.58 ms (120.2 fps)</text>
+<text x="180" y="361" fill="#9aa3b2" text-anchor="end">everything</text><rect x="190" y="348" width="395.6" height="18" rx="2" fill="#c46a5a"/><text x="591.6" y="362" fill="#9aa3b2" font-size="11">24.22 ms (69.5 fps)</text>
+</svg>
