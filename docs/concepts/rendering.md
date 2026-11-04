@@ -271,7 +271,9 @@ perf report without a full profiler session.
 
 ## Post-processing
 
-Wrap the game view in `PostProcessed(effects: [...], child: ...)`. `ColorGrade` entries compose into a single colour filter; `Vignette` and `Scanlines` draw as overlays in list order. Bloom, chromatic aberration and pixelate need shaders and are not included yet.
+`PostProcessed(effects: [...], child: ...)` composes `ColorGrade` entries into one colour filter and paints `Vignette`
+and `Scanlines` as overlays. Cheap enough to leave on. Full reference, measurements and recipes:
+[Post-processing and screen effects](post-processing.md).
 
 ## Screen readers
 
@@ -279,18 +281,7 @@ The canvas is invisible to TalkBack and VoiceOver, so wrap the game view in `Wor
 
 ## Shader post-processing
 
-`ShaderPostProcessed(fx: ShaderPostFx(...), child: ...)` runs the game through one fragment shader: bloom, chromatic aberration, pixelate, CRT curvature/scanlines/phosphor mask, vignette and grain. `ShaderPostFx.crt()` is a ready look; set `game.postFx.value` to change it at runtime (default off). It snapshots the child each frame, so it works everywhere but lags one frame; lower `scale` to cut cost.
-
-### Shader post-fx reference
-
-| `ShaderPostFx` field | Effect | Notes |
-|---|---|---|
-| `bloom`, `bloomThreshold`, `bloomRadius` | Glow on bright pixels | Threshold is luminance 0..1; radius in logical px |
-| `chromaticAberration` | Red/blue split toward the edges | px at the edge |
-| `pixelSize` | Pixelate | px per big pixel; 0 off |
-| `scanlines`, `scanlineSpacing` | CRT lines | strength 0..1, period in px |
-| `curvature` | Barrel distortion | 0 flat |
-| `phosphorMask` | RGB stripe mask | 0..1 |
-| `vignette`, `grain` | Edge darkening, animated noise | 0..1 |
-
-Presets: `ShaderPostFx.bloomOnly(intensity:)` and `ShaderPostFx.crt()`. Set `game.postFx.value` to switch at runtime. Gotchas found on web: the shader must not be disposed before drawing, and its size uniform is in logical pixels.
+`ShaderPostProcessed(fx: ShaderPostFx(...), child: ...)` runs the game through one fragment shader: bloom, chromatic
+aberration, pixelate, CRT and grain. `game.postFx.value` switches it at runtime. It snapshots the child each frame, so its
+cost depends on pixels, not on effects, and the snapshot is capped to 1.6 megapixels by default. Everything, with
+benchmarks and graphs, is in [Post-processing and screen effects](post-processing.md).

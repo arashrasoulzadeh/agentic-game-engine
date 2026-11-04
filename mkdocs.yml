@@ -135,6 +135,7 @@ nav:
       - Analytics and error reporting: concepts/analytics-and-errors.md
       - The agent API: concepts/agent-api.md
       - Rendering: concepts/rendering.md
+      - Post-processing and screen effects: concepts/post-processing.md
       - Lighting: concepts/lighting.md
       - Platformer gameplay: concepts/platformer.md
       - Turn-based strategy: concepts/turn-based-strategy.md

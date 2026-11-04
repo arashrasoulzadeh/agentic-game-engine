@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
@@ -97,7 +98,7 @@ class ShaderPostFx {
 /// pixelate, CRT and friends in one pass.
 ///
 /// Works on every Flutter backend by snapshotting [child] each frame
-/// (`RepaintBoundary.toImage`) and redrawing the snapshot through the shader,
+/// (`RepaintBoundary.toImageSync`, which stays on the GPU) and redrawing the snapshot through the shader,
 /// so the picture is one frame behind and costs a render-to-image per frame:
 /// use [scale] below 1 to trade sharpness for speed. If the shader cannot be
 /// loaded, or [fx] is the identity, [child] is shown unchanged.
@@ -108,6 +109,7 @@ class ShaderPostProcessed extends StatefulWidget {
     required this.fx,
     required this.child,
     this.scale = 1,
+    this.maxPixels = defaultMaxPixels,
   });
 
   /// The effect strengths; change it any time (for example on a hit).
@@ -118,6 +120,32 @@ class ShaderPostProcessed extends StatefulWidget {
 
   /// Snapshot resolution relative to the screen, 0.25..1.
   final double scale;
+
+  /// Upper bound on the snapshot's pixel count. The snapshot is the whole cost of
+  /// this widget (the shader itself measured under 1 ms), and it grows with pixels:
+  /// about 32 ms at 5.2 megapixels (a 2x display) against 9 ms at 1.3, so a high-DPI
+  /// screen is rendered below its native resolution unless this is raised. `0` or
+  /// less disables the cap.
+  final double maxPixels;
+
+  /// The default [maxPixels]: 1.6 megapixels.
+  static const double defaultMaxPixels = 1.6e6;
+
+  /// The pixel ratio to snapshot a [size] logical-pixel area at, given the screen's
+  /// [dpr], the requested [scale] and the [maxPixels] budget.
+  static double snapshotRatio(
+    Size size,
+    double dpr,
+    double scale,
+    double maxPixels,
+  ) {
+    var ratio = dpr * scale.clamp(0.25, 1.0).toDouble();
+    final pixels = size.width * size.height * ratio * ratio;
+    if (maxPixels > 0 && pixels > maxPixels) {
+      ratio *= math.sqrt(maxPixels / pixels);
+    }
+    return ratio;
+  }
 
   @override
   State<ShaderPostProcessed> createState() => _ShaderPostProcessedState();
@@ -130,9 +158,9 @@ class _ShaderPostProcessedState extends State<ShaderPostProcessed>
 
   final _boundary = GlobalKey();
   ui.FragmentProgram? _program;
+  ui.FragmentShader? _shader;
   ui.Image? _frame;
   Ticker? _ticker;
-  bool _capturing = false;
   Duration _t = Duration.zero;
 
   @override
@@ -142,7 +170,11 @@ class _ShaderPostProcessedState extends State<ShaderPostProcessed>
       _asset,
     ).then<ui.FragmentProgram?>((p) => p).catchError((Object _) => null);
     _loading!.then((p) {
-      if (mounted) setState(() => _program = p);
+      if (!mounted) return;
+      setState(() {
+        _program = p;
+        _shader = p?.fragmentShader();
+      });
     });
     _ticker = createTicker((d) {
       _t = d;
@@ -150,27 +182,28 @@ class _ShaderPostProcessedState extends State<ShaderPostProcessed>
     })..start();
   }
 
-  Future<void> _capture() async {
-    if (_capturing || _program == null || widget.fx.isIdentity) return;
+  void _capture() {
+    if (_program == null || widget.fx.isIdentity) return;
     final ro = _boundary.currentContext?.findRenderObject();
     if (ro is! RenderRepaintBoundary || !ro.attached) return;
-    _capturing = true;
     try {
       final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
-      final img = await ro.toImage(
-        pixelRatio: dpr * widget.scale.clamp(0.25, 1.0).toDouble(),
+      // toImageSync keeps the snapshot on the GPU. The async toImage reads the
+      // pixels back to the CPU every frame, which measured ~1 fps at 2x pixel
+      // ratio in a profile web build (400 sprites) against 60+ fps with this.
+      final img = ro.toImageSync(
+        pixelRatio: ShaderPostProcessed.snapshotRatio(
+          ro.size,
+          dpr,
+          widget.scale,
+          widget.maxPixels,
+        ),
       );
-      if (!mounted) {
-        img.dispose();
-        return;
-      }
       final old = _frame;
       setState(() => _frame = img);
       old?.dispose();
     } catch (_) {
       // A frame that cannot be captured (not painted yet) is just skipped.
-    } finally {
-      _capturing = false;
     }
   }
 
@@ -178,6 +211,7 @@ class _ShaderPostProcessedState extends State<ShaderPostProcessed>
   void dispose() {
     _ticker?.dispose();
     _frame?.dispose();
+    _shader?.dispose();
     super.dispose();
   }
 
@@ -185,8 +219,8 @@ class _ShaderPostProcessedState extends State<ShaderPostProcessed>
   Widget build(BuildContext context) {
     final inner = RepaintBoundary(key: _boundary, child: widget.child);
     final frame = _frame;
-    final program = _program;
-    if (program == null || frame == null || widget.fx.isIdentity) return inner;
+    final shader = _shader;
+    if (shader == null || frame == null || widget.fx.isIdentity) return inner;
     return Stack(
       fit: StackFit.passthrough,
       children: [
@@ -195,7 +229,7 @@ class _ShaderPostProcessedState extends State<ShaderPostProcessed>
           child: IgnorePointer(
             child: CustomPaint(
               painter: _FxPainter(
-                program,
+                shader,
                 frame,
                 widget.fx,
                 _t.inMicroseconds / 1e6,
@@ -210,9 +244,11 @@ class _ShaderPostProcessedState extends State<ShaderPostProcessed>
 }
 
 class _FxPainter extends CustomPainter {
-  _FxPainter(this.program, this.frame, this.fx, this.time, this.dpr);
+  _FxPainter(this.shader, this.frame, this.fx, this.time, this.dpr);
 
-  final ui.FragmentProgram program;
+  /// One shader reused every frame: building and leaking a new one per paint
+  /// churned memory and was a suspect for the low frame rate measured on web.
+  final ui.FragmentShader shader;
   final ui.Image frame;
   final ShaderPostFx fx;
   final double time;
@@ -224,7 +260,6 @@ class _FxPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final shader = program.fragmentShader();
     var i = 0;
     shader.setFloat(i++, size.width);
     shader.setFloat(i++, size.height);
@@ -232,9 +267,8 @@ class _FxPainter extends CustomPainter {
       shader.setFloat(i++, v);
     }
     shader.setImageSampler(0, frame);
-    // Not disposed here: the draw is only recorded, and freeing the shader
-    // before raster read its uniforms is the suspected cause of zeroed
-    // uniforms on web (unconfirmed).
+    // The shader is owned by the State and disposed with it: disposing it here,
+    // right after the draw is recorded, zeroed its uniforms before raster on web.
     canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
   }
 

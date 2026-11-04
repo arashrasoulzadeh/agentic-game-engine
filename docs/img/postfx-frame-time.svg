@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 492" font-family="system-ui,sans-serif" font-size="13">
+<text x="190" y="22" fill="#9aa3b2" font-size="15" font-weight="600">Frame time by preset (ms, lower is better)</text>
+<rect x="190" y="32" width="12" height="12" fill="#526b91"/><text x="208" y="43" fill="#9aa3b2">before: snapshot at 5.2 MP</text>
+<rect x="420" y="32" width="12" height="12" fill="#c8a66a"/><text x="438" y="43" fill="#9aa3b2">after: capped to 1.6 MP</text>
+<line x1="190.0" y1="56" x2="190.0" y2="462" stroke="#4a5160" stroke-width="1" stroke-dasharray="3 4"/><text x="190.0" y="480" fill="#9aa3b2" text-anchor="middle">0</text>
+<line x1="315.0" y1="56" x2="315.0" y2="462" stroke="#4a5160" stroke-width="1" stroke-dasharray="3 4"/><text x="315.0" y="480" fill="#9aa3b2" text-anchor="middle">10</text>
+<line x1="440.0" y1="56" x2="440.0" y2="462" stroke="#4a5160" stroke-width="1" stroke-dasharray="3 4"/><text x="440.0" y="480" fill="#9aa3b2" text-anchor="middle">20</text>
+<line x1="565.0" y1="56" x2="565.0" y2="462" stroke="#4a5160" stroke-width="1" stroke-dasharray="3 4"/><text x="565.0" y="480" fill="#9aa3b2" text-anchor="middle">30</text>
+<line x1="690.0" y1="56" x2="690.0" y2="462" stroke="#4a5160" stroke-width="1" stroke-dasharray="3 4"/><text x="690.0" y="480" fill="#9aa3b2" text-anchor="middle">40</text>
+<text x="180" y="78" fill="#9aa3b2" text-anchor="end">off</text>
+<rect x="190" y="62" width="37.9" height="12" rx="2" fill="#526b91"/><text x="233.9" y="72" fill="#9aa3b2" font-size="11">3.03</text>
+<rect x="190" y="77" width="39.2" height="12" rx="2" fill="#c8a66a"/><text x="235.2" y="87" fill="#9aa3b2" font-size="11">3.14</text>
+<text x="180" y="122" fill="#9aa3b2" text-anchor="end">grade</text>
+<rect x="190" y="106" width="40.1" height="12" rx="2" fill="#526b91"/><text x="236.1" y="116" fill="#9aa3b2" font-size="11">3.21</text>
+<rect x="190" y="121" width="45.2" height="12" rx="2" fill="#c8a66a"/><text x="241.2" y="131" fill="#9aa3b2" font-size="11">3.62</text>
+<text x="180" y="166" fill="#9aa3b2" text-anchor="end">vignette + scanlines</text>
+<rect x="190" y="150" width="37.8" height="12" rx="2" fill="#526b91"/><text x="233.8" y="160" fill="#9aa3b2" font-size="11">3.02</text>
+<rect x="190" y="165" width="45.0" height="12" rx="2" fill="#c8a66a"/><text x="241.0" y="175" fill="#9aa3b2" font-size="11">3.6</text>
+<text x="180" y="210" fill="#9aa3b2" text-anchor="end">bloom</text>
+<rect x="190" y="194" width="450.0" height="12" rx="2" fill="#526b91"/><text x="646.0" y="204" fill="#9aa3b2" font-size="11">36</text>
+<rect x="190" y="209" width="172.9" height="12" rx="2" fill="#c8a66a"/><text x="368.9" y="219" fill="#9aa3b2" font-size="11">13.83</text>
+<text x="180" y="254" fill="#9aa3b2" text-anchor="end">chromatic aberration</text>
+<rect x="190" y="238" width="440.9" height="12" rx="2" fill="#526b91"/><text x="636.9" y="248" fill="#9aa3b2" font-size="11">35.27</text>
+<rect x="190" y="253" width="150.2" height="12" rx="2" fill="#c8a66a"/><text x="346.2" y="263" fill="#9aa3b2" font-size="11">12.02</text>
+<text x="180" y="298" fill="#9aa3b2" text-anchor="end">pixelate</text>
+<rect x="190" y="282" width="438.1" height="12" rx="2" fill="#526b91"/><text x="634.1" y="292" fill="#9aa3b2" font-size="11">35.05</text>
+<rect x="190" y="297" width="153.8" height="12" rx="2" fill="#c8a66a"/><text x="349.8" y="307" fill="#9aa3b2" font-size="11">12.3</text>
+<text x="180" y="342" fill="#9aa3b2" text-anchor="end">CRT</text>
+<rect x="190" y="326" width="439.4" height="12" rx="2" fill="#526b91"/><text x="635.4" y="336" fill="#9aa3b2" font-size="11">35.15</text>
+<rect x="190" y="341" width="173.0" height="12" rx="2" fill="#c8a66a"/><text x="369.0" y="351" fill="#9aa3b2" font-size="11">13.84</text>
+<text x="180" y="386" fill="#9aa3b2" text-anchor="end">CRT at 0.5x</text>
+<rect x="190" y="370" width="148.8" height="12" rx="2" fill="#526b91"/><text x="344.8" y="380" fill="#9aa3b2" font-size="11">11.9</text>
+<rect x="190" y="385" width="151.1" height="12" rx="2" fill="#c8a66a"/><text x="347.1" y="395" fill="#9aa3b2" font-size="11">12.09</text>
+<text x="180" y="430" fill="#9aa3b2" text-anchor="end">everything</text>
+<rect x="190" y="414" width="450.4" height="12" rx="2" fill="#526b91"/><text x="646.4" y="424" fill="#9aa3b2" font-size="11">36.03</text>
+<rect x="190" y="429" width="181.6" height="12" rx="2" fill="#c8a66a"/><text x="377.6" y="439" fill="#9aa3b2" font-size="11">14.53</text>
+</svg>

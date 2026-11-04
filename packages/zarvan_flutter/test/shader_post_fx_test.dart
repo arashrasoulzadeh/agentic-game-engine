@@ -32,9 +32,7 @@ void main() {
   });
 
   test('the shader compiles and takes exactly those uniforms', () async {
-    final program = await ui.FragmentProgram.fromAsset(
-      'shaders/post_fx.frag',
-    );
+    final program = await ui.FragmentProgram.fromAsset('shaders/post_fx.frag');
     final shader = program.fragmentShader();
     // uSize (2) + 12 floats, then one sampler: setting float 13 must fail.
     for (var i = 0; i < 14; i++) {
@@ -42,6 +40,28 @@ void main() {
     }
     expect(() => shader.setFloat(14, 0), throwsA(anything));
     shader.dispose();
+  });
+
+  test('the snapshot ratio is capped to the pixel budget, never raised', () {
+    const size = Size(1512, 862); // 1.3 MP at 1x, 5.2 MP at 2x
+    expect(
+      ShaderPostProcessed.snapshotRatio(size, 1, 1, 1.6e6),
+      1,
+      reason: 'already under budget',
+    );
+    final r = ShaderPostProcessed.snapshotRatio(size, 2, 1, 1.6e6);
+    expect(r, lessThan(2));
+    expect(size.width * size.height * r * r, closeTo(1.6e6, 1.6e6 * 0.01));
+    expect(
+      ShaderPostProcessed.snapshotRatio(size, 2, 1, 0),
+      2,
+      reason: '0 = no cap',
+    );
+    expect(
+      ShaderPostProcessed.snapshotRatio(size, 2, 0.5, 1.6e6),
+      1,
+      reason: 'scale 0.5 at 2x is 1.3 MP',
+    );
   });
 
   testWidgets('identity shows the child; strengths keep it mounted', (t) async {

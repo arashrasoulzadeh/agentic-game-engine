@@ -58,3 +58,8 @@ What `zarvan_idle` and the wave-combat layer still lack for a full idle game, mo
 - [ ] A rewarded-boost extension point (for example "double offline earnings") that works with any ads or purchase SDK.
 - [ ] Live events: remote config or an event calendar, server-time anti-cheat, leaderboards.
 - [ ] A visual balance-curve viewer on top of the existing simulator.
+- [ ] **Benchmark post-processing on real devices** (an Android phone and an iPhone, profile builds) and add the figures
+      to `docs/data/postfx-benchmark.json` and the [post-processing page](docs/concepts/post-processing.md); all current
+      numbers are web-only.
+- [ ] **Snapshot-free shader path.** Run the same `post_fx` shader through `ImageFilter.shader` on Impeller platforms, so
+      the per-frame snapshot (the whole cost, about 6 ms per megapixel on the web) disappears on iOS and Android.
