@@ -61,7 +61,9 @@ void main() {
     () {
       final a = _newGame();
       a.buy(a.generatorIds.first, count: 5);
-      a.world.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('1e200')});
+      a.world.componentsOf<IdleStats>().denseAt(0).credit({
+        'coins': n('1e200'),
+      });
       a.tick(10);
       final s = session(a)..save();
 

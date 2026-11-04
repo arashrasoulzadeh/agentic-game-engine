@@ -78,8 +78,14 @@ void main() {
     );
 
     world.step(0.05);
-    expect(world.componentsOf<Sprite>().get(enemy)!.tintArgb, kDefaultHitFlashTint);
-    expect(world.componentsOf<Sprite>().get(hero)!.tintArgb, kDefaultHitFlashTint);
+    expect(
+      world.componentsOf<Sprite>().get(enemy)!.tintArgb,
+      kDefaultHitFlashTint,
+    );
+    expect(
+      world.componentsOf<Sprite>().get(hero)!.tintArgb,
+      kDefaultHitFlashTint,
+    );
 
     world.componentsOf<HitFlash>().get(enemy)!.remaining = 0;
     world.componentsOf<HitFlash>().get(hero)!.remaining = 0;

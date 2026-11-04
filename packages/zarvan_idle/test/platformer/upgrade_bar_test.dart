@@ -63,6 +63,121 @@ void main() {
     expect(regions..sort(), ['0', '1']);
   });
 
+  test('icon-only buttons centre the icon and show no words', () {
+    final w = _world();
+    final bar = UpgradeBar.spawn(
+      w,
+      atlasId: 'btn',
+      iconAtlasId: 'icons',
+      upgrades: upgrades,
+      layout: const UpgradeLayout(iconOnly: true),
+      progress: HeroProgress(coins: 1000),
+    );
+    bar.sync(w);
+    final store = w.componentsOf<eng.Text>();
+    final texts = [
+      for (var i = 0; i < store.length; i++) store.denseAt(i).text,
+    ].where((t) => t.isNotEmpty);
+    // No labels ("Strength 0"), only costs; the unicon "guard" keeps its words.
+    expect(texts.where((t) => t.contains('Strength')), isEmpty);
+    expect(texts.where((t) => t.contains('Vitality')), isEmpty);
+    expect(texts.where((t) => t.contains('Guard')), isNotEmpty);
+  });
+
+  test('a menu hides the upgrades until its button is tapped', () {
+    final w = _world();
+    final bar = UpgradeBar.spawn(
+      w,
+      atlasId: 'btn',
+      upgrades: upgrades,
+      layout: const UpgradeLayout(menu: true, y: 250, menuX: 90, menuY: 308),
+      progress: HeroProgress(coins: 1000),
+    );
+    expect(bar.menuOpen, isFalse);
+    expect(bar.hit(const Offset(30, 250)), isNull, reason: 'panel is closed');
+    expect(bar.hit(const Offset(90, 308)), UpgradeBar.menuAction);
+    bar.toggleMenu(w);
+    expect(bar.menuOpen, isTrue);
+    expect(bar.hit(const Offset(30, 250)), 'strength');
+    final sprites = w.componentsOf<eng.Sprite>();
+    final positions = w.componentsOf<Position>();
+    for (var i = 0; i < sprites.length; i++) {
+      expect(positions.get(sprites.entityAt(i))!.y, lessThan(400));
+    }
+    bar.toggleMenu(w);
+    expect(bar.hit(const Offset(30, 250)), isNull);
+  });
+
+  test('the dialog holds skills too, with a nine-piece frame, and pauses', () {
+    final w = _world();
+    final bar = UpgradeBar.spawn(
+      w,
+      atlasId: 'btn',
+      frameAtlasId: 'frame',
+      upgrades: upgrades,
+      skills: const [
+        HeroSkill(id: 'strike', label: 'Strike', kind: SkillKind.strike),
+      ],
+      layout: const UpgradeLayout(menu: true, y: 190, skillY: 140),
+      progress: HeroProgress(),
+    );
+    expect(_spritesIn(w, 'frame'), 10, reason: 'nine pieces and the veil');
+    expect(bar.dialogOpen, isFalse);
+    expect(bar.hit(const Offset(90, 140)), isNull, reason: 'closed');
+    bar.toggleMenu(w);
+    expect(bar.dialogOpen, isTrue);
+    expect(bar.hit(const Offset(90, 140)), '${UpgradeBar.skillPrefix}strike');
+    final sprites = w.componentsOf<eng.Sprite>();
+    final positions = w.componentsOf<Position>();
+    for (var i = 0; i < sprites.length; i++) {
+      final y = positions.get(sprites.entityAt(i))!.y;
+      if (sprites.denseAt(i).atlasId == 'frame') {
+        expect(y, inInclusiveRange(70, 250));
+      }
+    }
+  });
+
+  test('the dialog fades in and out and leaves the screen when closed', () {
+    final w = _world();
+    final bar = UpgradeBar.spawn(
+      w,
+      atlasId: 'btn',
+      frameAtlasId: 'frame',
+      upgrades: upgrades,
+      layout: const UpgradeLayout(menu: true, y: 190),
+      progress: HeroProgress(),
+    );
+    int? tintOfFrame() {
+      final sprites = w.componentsOf<eng.Sprite>();
+      for (var i = 0; i < sprites.length; i++) {
+        final s = sprites.denseAt(i);
+        if (s.atlasId == 'frame' && s.region == 'f00') return s.tintArgb;
+      }
+      return null;
+    }
+
+    double maxY() {
+      final p = w.componentsOf<Position>();
+      var m = 0.0;
+      for (var i = 0; i < p.length; i++) {
+        if (p.denseAt(i).y > m) m = p.denseAt(i).y;
+      }
+      return m;
+    }
+
+    bar.toggleMenu(w);
+    bar.update(w, 0.1);
+    final half = (tintOfFrame()! >> 24) & 0xFF;
+    expect(half, inInclusiveRange(100, 150), reason: 'half way in');
+    bar.update(w, 0.2);
+    expect((tintOfFrame()! >> 24) & 0xFF, 255);
+    bar.toggleMenu(w);
+    bar.update(w, 0.1);
+    expect(maxY(), lessThan(400), reason: 'still fading out, still visible');
+    bar.update(w, 0.2);
+    expect(maxY(), greaterThan(1000), reason: 'gone once faded');
+  });
+
   test('without an icon atlas nothing changes', () {
     final w = _world();
     UpgradeBar.spawn(

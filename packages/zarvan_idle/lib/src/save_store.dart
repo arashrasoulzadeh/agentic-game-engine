@@ -1,6 +1,4 @@
-
 import 'package:zarvan_core/zarvan_core_io.dart' show AtomicSave;
-
 
 /// Where a game keeps its save. An interface so tests (and web, where there is no file system) can
 /// supply their own.

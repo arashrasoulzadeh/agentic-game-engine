@@ -59,6 +59,7 @@ WaveCombatConfig _config({
   SquadRule? squad,
   CombatTimingRules? timing,
   double windup = 0,
+  double fightDelay = 0,
 }) => WaveCombatConfig(
   heroStem: 'hero',
   enemyRoot: 'enemies',
@@ -77,6 +78,7 @@ WaveCombatConfig _config({
   squad: squad,
   timing: timing,
   windupSeconds: windup,
+  fightDelaySeconds: fightDelay,
 );
 
 class _Run {
@@ -289,6 +291,27 @@ void main() {
     final lines = [for (var i = 0; i < t.length; i++) t.denseAt(i).text];
     expect(lines, contains('+123 coins earned while away'));
     expect(progress.pendingOfflineCoins, 0);
+  });
+
+  group('the start of a fight', () {
+    test(
+      'no blow lands until the fight delay after the walk has passed',
+      () async {
+        final r = await _start(
+          _Scene(level: _level(), config: _config(fightDelay: 4)),
+        );
+        final health = r.world.componentsOf<Health>();
+        final hero = r.scene.heroId!;
+        final start = health.get(hero)!.current;
+        // The walk takes about 2.7 s, so by 4 s the delay is still running.
+        r.run(4);
+        expect(health.get(r.scene.enemyId!)!.current, greaterThan(0));
+        expect(r.scene.progress.kills, 0);
+        expect(health.get(hero)!.current, start);
+        r.run(14);
+        expect(r.scene.progress.kills, greaterThanOrEqualTo(1));
+      },
+    );
   });
 
   group('squads and player timing', () {

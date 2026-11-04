@@ -29,7 +29,10 @@ class DialogueCaption {
        _backdropH = backdropHeight / backdropSourceHeight {
     if (backdropAtlasId != null) {
       _backdrop = world.spawn();
-      world.componentsOf<Position>().set(_backdrop!, Position(style.x, style.y));
+      world.componentsOf<Position>().set(
+        _backdrop!,
+        Position(style.x, style.y),
+      );
       world.componentsOf<eng.Sprite>().set(
         _backdrop!,
         eng.Sprite(backdropAtlasId, 'full', scaleX: 0, scaleY: 0, zIndex: 119),

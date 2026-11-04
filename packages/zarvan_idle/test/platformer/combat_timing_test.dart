@@ -208,15 +208,38 @@ void main() {
   });
 
   group('several enemies', () {
-    test('every enemy attacks the hero', () {
+    test('enemies take turns: never two swings in the same instant', () {
       final f = _fight(count: 3, enemyCooldown: 0);
+      final swings = <double>[];
       final attackers = <EntityId>{};
+      var t = 0.0;
       f.world.events.on<FighterHit>((h) {
-        if (h.attackerSide == 'enemy') attackers.add(h.attacker);
+        if (h.attackerSide != 'enemy') return;
+        attackers.add(h.attacker);
+        swings.add(t);
       });
-      f.world.step(0.1);
-      expect(attackers, f.enemies.toSet());
-      expect(f.hp(f.hero), closeTo(1000 - 30, 1e-9));
+      for (var i = 0; i < 100; i++) {
+        t += 0.05;
+        f.world.step(0.05);
+      }
+      expect(attackers, f.enemies.toSet(), reason: 'everyone gets a turn');
+      for (var i = 1; i < swings.length; i++) {
+        expect(swings[i] - swings[i - 1], greaterThan(0.05));
+      }
+    });
+
+    test('an enemy that dies while winding up does not block the others', () {
+      final f = _fight(count: 2, enemyCooldown: 0.3);
+      f.world.step(0.05);
+      f.world.componentsOf<Health>().get(f.enemies[0])!.current = 0;
+      var hits = 0;
+      f.world.events.on<FighterHit>((h) {
+        if (h.attackerSide == 'enemy') hits++;
+      });
+      for (var i = 0; i < 40; i++) {
+        f.world.step(0.05);
+      }
+      expect(hits, greaterThan(0));
     });
 
     test('the hero hits the first enemy by default and the focus when set', () {

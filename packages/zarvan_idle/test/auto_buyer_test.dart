@@ -169,7 +169,10 @@ void main() {
           reason: 'not yet',
         );
         sys.update(g.world, 1);
-        expect(g.world.componentsOf<Generator>().get(g.farm)!.owned, greaterThan(0));
+        expect(
+          g.world.componentsOf<Generator>().get(g.farm)!.owned,
+          greaterThan(0),
+        );
         expect(g.wallet.of('coins'), lessThan(n('250')));
       },
     );

@@ -299,7 +299,9 @@ void main() {
         );
         expect(find.textContaining('Earn more coins'), findsOneWidget);
 
-        c.world.componentsOf<IdleStats>().denseAt(0).credit({'coins': n('10000')});
+        c.world.componentsOf<IdleStats>().denseAt(0).credit({
+          'coins': n('10000'),
+        });
         c.wallet.add('coins', n('10000'));
         c.refresh();
         await tester.pump();

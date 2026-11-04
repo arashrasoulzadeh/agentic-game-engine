@@ -9,6 +9,7 @@ class WaveStrings {
     this.max = 'MAX',
     this.retry = 'Retry',
     this.ascend = 'Ascend',
+    this.upgradesMenu = 'Upgrades',
     this.dodge = 'Dodge',
     this.combo = 'Combo',
     this.elite = 'Elite',
@@ -32,6 +33,9 @@ class WaveStrings {
   final String max;
   final String retry;
   final String ascend;
+
+  /// The label of the button that opens the upgrade panel (`UpgradeLayout.menu`).
+  final String upgradesMenu;
   final String dodge;
   final String combo;
   final String elite;

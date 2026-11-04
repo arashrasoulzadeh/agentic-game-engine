@@ -11,6 +11,7 @@ import '../combat/auto_combat_system.dart';
 import '../combat/combat_components.dart';
 import '../combat/combat_rules.dart';
 import '../combat/conditions.dart';
+import '../combat/lunge_system.dart';
 import '../combat/skill_runner.dart';
 import '../hud/wave_strings.dart';
 import '../progress/loot.dart';
@@ -58,6 +59,9 @@ class WaveCombatConfig {
     this.deathFxStem,
     this.hitBurst = 6,
     this.fighterSize = 80,
+    this.enemyScale = 1,
+    this.meleeLunge = false,
+    this.fightDelaySeconds = 0,
     this.walkSpeed = 70,
     this.enterDistance = 190,
     this.deathHoldSeconds = 0.5,
@@ -113,6 +117,19 @@ class WaveCombatConfig {
   /// Every fighter is drawn this many world units square whatever its sheet's
   /// cell, so high-resolution sheets and small ones stand the same size.
   final double fighterSize;
+
+  /// Multiplies every enemy's drawn size relative to the hero (1 = same
+  /// size); bosses and elites keep their usual proportion on top of it.
+  final double enemyScale;
+
+  /// Melee enemies run up to the hero as they wind up an attack and walk back
+  /// after it (see `LungeSystem`); enemies with a volley power stay put. Needs
+  /// [windupSeconds] above zero.
+  final bool meleeLunge;
+
+  /// Seconds the hero and the enemy stand facing each other, after the walk
+  /// stops, before the first blow, so a fight does not start mid-stride.
+  final double fightDelaySeconds;
 
   final double walkSpeed;
   final double enterDistance;
@@ -249,6 +266,7 @@ class WaveCombatScene extends Scene {
   static const _uiScroll = 'ui_caption_scroll';
   static const _uiButtons = 'ui_buttons';
   static const _uiIcons = 'ui_icons';
+  static const _uiPanel = 'ui_panel';
 
   late final WavePlan plan = WavePlan.generate(
     level,
@@ -266,6 +284,7 @@ class WaveCombatScene extends Scene {
   late SceneHud _hud;
   late DialogueCaption _caption;
   late WalkPhase _walk;
+  double _fightDelayLeft = 0;
   late Camera _camera;
   final _combat = AutoCombatSystem();
   final _pivots = PivotTable();
@@ -335,6 +354,7 @@ class WaveCombatScene extends Scene {
       ..addSystem(OneShotFxSystem())
       ..addSystem(DamageNumberSystem())
       ..addSystem(HitFeedbackSystem());
+    if (config.meleeLunge) world.addSystem(LungeSystem());
 
     _camera = Camera(x: world.width / 2, y: world.height / 2);
     // Shake / particle cues authored in the level JSON fire from animation
@@ -462,6 +482,7 @@ class WaveCombatScene extends Scene {
         atlasId: _uiButtons,
         iconAtlasId: config.ui.iconsStem == null ? null : _uiIcons,
         iconCellSize: _iconCell,
+        frameAtlasId: config.ui.panelImage == null ? null : _uiPanel,
         upgrades: config.upgrades,
         progress: progress,
         layout: config.ui.upgradeLayout,
@@ -623,6 +644,14 @@ class WaveCombatScene extends Scene {
       );
       loaded();
     }
+    if (ui.panelImage != null) {
+      final full = await SpriteAtlas.loadFullImageFromAssets(ui.panelImage!);
+      registry.register(
+        _uiPanel,
+        UpgradeBar.frameAtlasFor(full, ui.upgradeLayout.frameInset),
+      );
+      loaded();
+    }
     if (ui.buttonImage != null) {
       registry.register(
         _uiButtons,
@@ -733,10 +762,10 @@ class WaveCombatScene extends Scene {
     _rewardCoins = waves.isBoss
         ? config.bossCoins
         : kind.coins(rw, config.coinsPerKill);
-    final scale = _fitScale(stats.cell) * sizeKind;
+    final scale = _fitScale(stats.cell) * sizeKind * config.enemyScale;
     final drawn = stats.cell * scale;
     _enemyTargetX = level.enemyAnchor.x + drawn / 2;
-    _enemyBaseY = level.enemyAnchor.y + drawn / 2;
+    _enemyBaseY = level.enemyAnchor.y + drawn / config.enemyScale - drawn / 2;
     enemyId = spawnFighter(
       world,
       side: 'enemy',
@@ -1022,6 +1051,8 @@ class WaveCombatScene extends Scene {
 
   @override
   void update(double dt, World world) {
+    _upgradeBar?.update(world, dt);
+    if (_upgradeBar?.dialogOpen ?? false) return;
     _hitStop?.update(dt);
     _skills?.tick(dt);
     _barSync += dt;
@@ -1048,8 +1079,14 @@ class WaveCombatScene extends Scene {
     if (_walk.active) {
       if (_walk.update(world)) {
         _corpses = [];
-        _combat.enabled = true;
+        _fightDelayLeft = config.fightDelaySeconds;
+        _combat.enabled = _fightDelayLeft <= 0;
       }
+      return;
+    }
+    if (_fightDelayLeft > 0) {
+      _fightDelayLeft -= dt;
+      if (_fightDelayLeft <= 0) _combat.enabled = true;
       return;
     }
 
@@ -1096,6 +1133,11 @@ class WaveCombatScene extends Scene {
       progress.ascend();
       return _restart(scenes);
     }
+    if (pressed == UpgradeBar.menuAction) {
+      bar!.toggleMenu(world);
+      world.timeScale = bar.dialogOpen ? 0 : 1;
+      return;
+    }
     if (pressed != null && pressed.startsWith(UpgradeBar.skillPrefix)) {
       final skill = config.skills.firstWhere(
         (s) => '${UpgradeBar.skillPrefix}${s.id}' == pressed,
@@ -1123,6 +1165,7 @@ class WaveCombatScene extends Scene {
       }
       return;
     }
+    if (bar?.dialogOpen ?? false) return;
     if (!finished) {
       if (_focusEnemyAt(world, worldPosition)) return;
       if (config.timing != null) _combat.tap(world);

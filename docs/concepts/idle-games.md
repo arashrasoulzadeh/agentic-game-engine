@@ -330,6 +330,13 @@ replays. A game supplies two things:
   is drawn smaller, tapping an enemy focuses it, and the wave ends when the whole squad is down. A `HeroSkill` with
   `hitsAll: true` strikes every living enemy, and one with `ultimate: true` is gated by the meter instead of a
   cooldown (its button shows the percentage until it is ready).
+- Layout and feel of fights, also optional. `UpgradeLayout(menu: true)` hides every button behind one **Upgrades**
+  button: tapping it pauses the game and opens a framed dialog (`WaveUiArt.panelImage`, a nine-slice frame; the
+  game behind fades under a dark veil) holding the skills and upgrades; `iconOnly` draws icon buttons with at most a
+  small number. `enemyScale` draws enemies smaller than the hero, with their feet on the hero's ground line;
+  `meleeLunge: true` makes melee enemies dash to the hero as they wind up (to a random distance) and walk back
+  afterwards, while enemies with a volley power stay put; squad members attack one at a time;
+  `fightDelaySeconds` holds the first blow for a moment after the walk stops.
 - Making it an idle game, all optional on `WaveCombatConfig`: **saving** (`WaveCombatGame.load(saveStore: await
   PrefsSaveStore.open())` persists coins, upgrades, stars, gear and counters through `HeroProgressStore`) and
   **offline earnings** (`offline: OfflineRule(...)`, paid out on the next launch and announced once);

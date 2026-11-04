@@ -1,7 +1,5 @@
 import 'dart:async';
 
-
-
 /// A save kept on a server (Game Center, Play Games, your own backend). The engine defines only the
 /// contract; each platform's implementation belongs to the game.
 abstract class CloudSaveStore {

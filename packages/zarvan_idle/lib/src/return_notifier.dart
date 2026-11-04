@@ -1,6 +1,3 @@
-
-
-
 /// Schedules the "your generators are full" reminder. The engine only defines the contract; a game wires
 /// a platform notification plugin (kept out of the engine so it stays web-safe and testable).
 abstract class ReturnNotifier {

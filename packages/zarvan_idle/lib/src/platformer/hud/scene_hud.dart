@@ -1,7 +1,5 @@
 import 'package:zarvan_core/zarvan_core.dart';
-import 'package:zarvan_flutter/zarvan_flutter.dart'
-    as eng
-    show Text;
+import 'package:zarvan_flutter/zarvan_flutter.dart' as eng show Text;
 
 import 'hud_layout.dart';
 import 'world_text.dart';

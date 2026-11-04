@@ -12,6 +12,7 @@ class WaveUiArt {
     this.iconsStem,
     this.upgradeLayout = const UpgradeLayout(),
     this.captionBackdropImage,
+    this.panelImage,
     this.pathY = 38,
     this.pathInset = 9,
     this.pathNodeSize = 7.4,
@@ -42,6 +43,11 @@ class WaveUiArt {
 
   /// Full image behind the caption (`ui_dialog_scroll`).
   final String? captionBackdropImage;
+
+  /// Full image of a framed panel (`ui_panel_9slice`): the border of
+  /// `UpgradeLayout.frameInset` pixels is kept, the middle stretches. Draws
+  /// the upgrades dialog (`UpgradeLayout.menu`); without it the dialog is bare.
+  final String? panelImage;
 
   /// Path height, left/right inset and node size, in world units.
   final double pathY;

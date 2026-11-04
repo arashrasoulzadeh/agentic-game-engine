@@ -79,6 +79,11 @@ class AutoCombatSystem extends System {
 
   final Set<EntityId> _winding = {};
 
+  /// Pause after an enemy's swing before the next squad member may start its
+  /// own wind-up, so attacks arrive one by one and can each be parried.
+  double turnGapSeconds = 0.3;
+  double _turn = 0;
+
   @override
   String get name => 'autoCombat';
 
@@ -111,8 +116,31 @@ class AutoCombatSystem extends System {
     if (hero == null || enemies.isEmpty) return;
 
     _tick(world, dt, hero, targetOf(enemies)!);
-    for (final enemy in enemies) {
+    _turn = math.max(0, _turn - dt);
+    // A fighter that died or was replaced mid wind-up never clears itself;
+    // left in the set it would stop the rest of the squad from ever attacking.
+    _winding.removeWhere((e) => e != hero && !enemies.contains(e));
+    _parried.removeWhere((e) => !enemies.contains(e));
+    final stats = world.componentsOf<CombatStats>();
+    // Most overdue first, so the same enemy never keeps taking the turn.
+    final order = [
+      ...enemies,
+    ]..sort((a, b) => stats.get(a)!.cooldown.compareTo(stats.get(b)!.cooldown));
+    for (final enemy in order) {
+      final before = stats.get(enemy)!.cooldown;
+      final ready = before <= windupSeconds + dt;
+      // Only one enemy telegraphs or swings at a time, so a squad takes turns
+      // instead of landing every hit in the same instant.
+      if (enemies.length > 1 &&
+          ready &&
+          !_winding.contains(enemy) &&
+          (_turn > 0 || _winding.isNotEmpty)) {
+        continue;
+      }
       _tick(world, dt, enemy, hero);
+      if (enemies.length > 1 && stats.get(enemy)!.cooldown > before) {
+        _turn = turnGapSeconds;
+      }
     }
   }
 
