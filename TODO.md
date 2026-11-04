@@ -18,7 +18,7 @@ so those files exist only on the owner's machine).
 
 Sections: [Release](#release) ·
 [Wanted: engine gaps](#wanted-engine-gaps) ·
-[Parked decisions](#parked-decisions)
+[Wanted: idle gaps](#wanted-idle-gaps)
 
 ## Release
 
@@ -32,10 +32,29 @@ Sections: [Release](#release) ·
 
 ## Wanted: engine gaps
 
-Ten things a general 2D engine needs that this repo did not have (the all ten shipped; the UI toolkit is partly done (see the item below) and were removed from
-this list, see the changelog; one follow-up remains). Each was checked against the source (no
-matching class or file in `zarvan_core`, `zarvan_flutter`, `zarvan_platformer` or `zarvan_strategy`) before being
-listed. Tick them off as they ship, with a test and docs.
+Ten things a general 2D engine needed and did not have were checked against the source and built (time scale and
+hit-stop, pooling, spawners, camera rig, joints, developer console, post-processing and shader effects, screen-reader
+semantics, level mechanics, UI toolkit models); see the changelog. One follow-up remains. Tick items off as they
+ship, with a test and docs.
 
 - [ ] **UI toolkit: Flutter widgets for the new models.** `layoutStack`, `anchorRect`, `ScrollListModel` and
       `TextInputModel` exist as pure models; scenes still need widgets that render and drive them.
+
+## Wanted: idle gaps
+
+What `zarvan_idle` and the wave-combat layer still lack for a full idle game, most important first:
+
+- [ ] **Automation in wave combat.** `AutoBuyer` exists in core, but the wave scene still needs taps to buy upgrades,
+      cast skills, retry and ascend. Add auto-buy, auto-cast, auto-retry and auto-ascend toggles (generic, config-driven).
+- [ ] **Flutter widgets for the UI toolkit models** (see above): scrolling lists, tabs, popups and tooltips for shops,
+      inventories and skill trees.
+- [ ] **Meta-progression beyond one prestige.** A talent or skill tree bought with prestige currency, achievements with
+      permanent bonuses, daily quests and login streaks.
+- [ ] **Many heroes.** Party or companions, summon or collection, and a gear inventory screen with rarity and merging
+      (loot drops exist; browsing and comparing gear does not).
+- [ ] **Offline that includes combat.** Offline pays coins only; simulate waves cleared and loot, and show a
+      "welcome back" breakdown.
+- [ ] Big-number formatting (1.2K, 3.4aa) and values beyond double range; a multi-currency HUD.
+- [ ] A rewarded-boost extension point (for example "double offline earnings") that works with any ads or purchase SDK.
+- [ ] Live events: remote config or an event calendar, server-time anti-cheat, leaderboards.
+- [ ] A visual balance-curve viewer on top of the existing simulator.
