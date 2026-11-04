@@ -20,11 +20,16 @@ class HeroSkill {
     this.power = 2,
     this.cooldown = 12,
     this.duration = 4,
+    this.icon,
   });
 
   final String id;
   final String label;
   final SkillKind kind;
+
+  /// Frame index in the icon strip (`WaveUiArt.iconsStem`) drawn on the
+  /// button, or null for a text-only button.
+  final int? icon;
 
   /// Strike: damage multiplier. Heal: fraction of max hp. Guard: damage cut.
   final double power;

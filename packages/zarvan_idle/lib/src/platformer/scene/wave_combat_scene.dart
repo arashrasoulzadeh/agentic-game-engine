@@ -238,6 +238,7 @@ class WaveCombatScene extends Scene {
   static const _uiLine = 'ui_path_line';
   static const _uiScroll = 'ui_caption_scroll';
   static const _uiButtons = 'ui_buttons';
+  static const _uiIcons = 'ui_icons';
 
   late final WavePlan plan = WavePlan.generate(
     level,
@@ -274,6 +275,7 @@ class WaveCombatScene extends Scene {
   int _rewardCoins = 0;
   HitStop? _hitStop;
   UpgradeBar? _upgradeBar;
+  double _iconCell = 32;
   bool _heroWon = false;
   SkillRunner? _skills;
   EntityId? _condLabel;
@@ -409,6 +411,8 @@ class WaveCombatScene extends Scene {
       _upgradeBar = UpgradeBar.spawn(
         world,
         atlasId: _uiButtons,
+        iconAtlasId: config.ui.iconsStem == null ? null : _uiIcons,
+        iconCellSize: _iconCell,
         upgrades: config.upgrades,
         progress: progress,
         layout: config.ui.upgradeLayout,
@@ -498,13 +502,14 @@ class WaveCombatScene extends Scene {
     final ui = config.ui;
     final total =
         level.parallax.length +
-        _meta.length * FighterMeta.states.length +
+        _meta.values.fold<int>(0, (n, m) => n + m.frames.length) +
         _fxStems.length +
         (ui.barsStem != null ? 1 : 0) +
         (ui.pathNodesStem != null ? 1 : 0) +
         (ui.pathLineImage != null ? 1 : 0) +
         (ui.captionBackdropImage != null ? 1 : 0) +
-        (ui.buttonImage != null ? 1 : 0);
+        (ui.buttonImage != null ? 1 : 0) +
+        (ui.iconsStem != null ? 1 : 0);
     var done = 0;
     void loaded() => reportAssetProgress(++done, total);
     for (final layer in level.parallax) {
@@ -517,7 +522,7 @@ class WaveCombatScene extends Scene {
       loaded();
     }
     for (final meta in _meta.values) {
-      for (final state in FighterMeta.states) {
+      for (final state in meta.frames.keys) {
         final sheet = await loadSpriteSheet(meta.stem(state));
         registry.register(meta.atlasId(state), sheet.atlas);
         _pivots.register(
@@ -567,6 +572,12 @@ class WaveCombatScene extends Scene {
           await SpriteAtlas.loadFullImageFromAssets(ui.buttonImage!),
         ),
       );
+      loaded();
+    }
+    if (ui.iconsStem != null) {
+      final icons = await loadSpriteSheet(ui.iconsStem!, measurePivots: false);
+      registry.register(_uiIcons, icons.atlas);
+      _iconCell = (await loadSheetSidecar(ui.iconsStem!)).cell.toDouble();
       loaded();
     }
     return registry;

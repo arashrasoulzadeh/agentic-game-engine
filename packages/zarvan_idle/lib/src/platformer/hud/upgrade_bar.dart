@@ -22,6 +22,7 @@ class UpgradeLayout {
     this.retryX = 90,
     this.retryY = 196,
     this.retryWidth = 70,
+    this.iconSize = 13,
   });
 
   /// Centre line of the upgrade buttons, and the span they spread across.
@@ -38,6 +39,9 @@ class UpgradeLayout {
   final double retryX;
   final double retryY;
   final double retryWidth;
+
+  /// Width and height of a button's icon (world units).
+  final double iconSize;
 }
 
 /// The `ui_button_atlas` sheet: cells of [cellWidth] x [cellHeight] with
@@ -66,6 +70,8 @@ class UpgradeBar {
   UpgradeBar.spawn(
     World world, {
     required this.atlasId,
+    this.iconAtlasId,
+    this.iconCellSize = 32,
     required this.upgrades,
     required this.progress,
     this.layout = const UpgradeLayout(),
@@ -75,12 +81,26 @@ class UpgradeBar {
     final span = layout.right - layout.left;
     for (var i = 0; i < upgrades.length; i++) {
       final cx = layout.left + span * (i + 0.5) / upgrades.length;
-      _buttons.add(_spawnButton(world, cx, layout.y, layout.buttonWidth));
+      _buttons.add(
+        _spawnButton(
+          world,
+          cx,
+          layout.y,
+          layout.buttonWidth,
+          icon: upgrades[i].icon,
+        ),
+      );
     }
     for (var i = 0; i < skills.length; i++) {
       final cx = layout.left + span * (i + 0.5) / skills.length;
       _skillButtons.add(
-        _spawnButton(world, cx, layout.skillY, layout.buttonWidth),
+        _spawnButton(
+          world,
+          cx,
+          layout.skillY,
+          layout.buttonWidth,
+          icon: skills[i].icon,
+        ),
       );
     }
     _coins = _text(world, 90, layout.coinsY, 5.2, 0xFFFFE7A0);
@@ -91,6 +111,12 @@ class UpgradeBar {
   static const _label = 125;
 
   final String atlasId;
+
+  /// Atlas of the icon strip (regions `0`, `1`, ...), or null for no icons.
+  final String? iconAtlasId;
+
+  /// Edge of one icon frame in the strip, in pixels.
+  final double iconCellSize;
   final List<HeroUpgrade> upgrades;
   final HeroProgress progress;
   final UpgradeLayout layout;
@@ -117,8 +143,12 @@ class UpgradeBar {
     double cy,
     double width, {
     double fontScale = 1,
+    int? icon,
   }) {
     final scale = width / ButtonSheet.cellWidth;
+    final hasIcon = icon != null && iconAtlasId != null;
+    // Text moves right so the icon and the label share the button.
+    final textX = hasIcon ? cx + width * 0.14 : cx;
     final sprite = world.spawn();
     world.componentsOf<Position>().set(sprite, Position(cx, cy));
     world.componentsOf<eng.Sprite>().set(
@@ -132,11 +162,25 @@ class UpgradeBar {
       ),
     );
     final height = ButtonSheet.cellHeight * scale;
+    EntityId? iconSprite;
+    if (hasIcon) {
+      iconSprite = world.spawn();
+      final s = layout.iconSize / iconCellSize;
+      world.componentsOf<Position>().set(
+        iconSprite,
+        Position(cx - width * 0.3, cy),
+      );
+      world.componentsOf<eng.Sprite>().set(
+        iconSprite,
+        eng.Sprite(iconAtlasId!, '$icon', scaleX: s, scaleY: s, zIndex: _label),
+      );
+    }
     return _Button(
       sprite,
-      _text(world, cx, cy - height * 0.14, 4.6 * fontScale, 0xFFFFFFFF),
-      _text(world, cx, cy + height * 0.16, 4.6 * fontScale, 0xFFFFE7A0),
+      _text(world, textX, cy - height * 0.14, 4.6 * fontScale, 0xFFFFFFFF),
+      _text(world, textX, cy + height * 0.16, 4.6 * fontScale, 0xFFFFE7A0),
       Rect.fromCenter(center: Offset(cx, cy), width: width, height: height),
+      icon: iconSprite,
     );
   }
 
@@ -255,8 +299,11 @@ class UpgradeBar {
 }
 
 class _Button {
-  _Button(this.sprite, this.top, this.bottom, this.rect);
+  _Button(this.sprite, this.top, this.bottom, this.rect, {this.icon});
   final EntityId sprite;
+
+  /// The icon sprite, if this button has one.
+  final EntityId? icon;
   final EntityId top;
   final EntityId bottom;
   final Rect rect;

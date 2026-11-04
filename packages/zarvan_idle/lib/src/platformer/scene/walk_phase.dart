@@ -28,6 +28,7 @@ class WalkPhase {
   /// Peak vertical lift of a step, in world units.
   final double bobHeight;
 
+  bool _animated = false;
   EntityId? _walk;
   EntityId? _bob;
   EntityId? _hero;
@@ -55,6 +56,16 @@ class WalkPhase {
     _enemy = enemy;
     _corpse = corpse;
     _done = 0;
+    // A hero with a `walk` clip plays it for the whole walk; without one the
+    // bob below is the only step cue.
+    _animated =
+        world
+            .componentsOf<SpriteStates>()
+            .get(hero)
+            ?.clips
+            .containsKey('walk') ??
+        false;
+    if (_animated) playSpriteState(world, hero, 'walk');
     _heroY = pos.get(hero)?.y ?? 0;
     _enemyX = (pos.get(enemy)?.x ?? 0) - distance;
     _enemyY = pos.get(enemy)?.y ?? 0;
@@ -94,6 +105,11 @@ class WalkPhase {
     if (!walk.isComplete) return false;
     h.y = _heroY;
     e.y = _enemyY;
+    if (_animated) {
+      final rest = world.componentsOf<SpriteStates>().get(_hero!)?.restState;
+      playSpriteState(world, _hero!, rest ?? 'idle');
+      _animated = false;
+    }
     world.destroy(_walk!);
     world.destroy(_bob!);
     if (_corpse != null) world.destroy(_corpse!);

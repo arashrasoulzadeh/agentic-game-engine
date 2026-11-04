@@ -75,4 +75,33 @@ void main() {
     expect(seenLift, isTrue);
     expect(elapsed, closeTo(2.0, 0.05)); // 200 units at 100/s
   });
+
+  SpriteStates states({required bool withWalk}) => SpriteStates({
+    'idle': const SpriteClip(atlasId: 'h_idle', frames: 4, loop: true),
+    if (withWalk)
+      'walk': const SpriteClip(atlasId: 'h_walk', frames: 6, loop: true),
+  });
+
+  test('a hero with a walk clip walks in it and returns to rest after', () {
+    world.componentsOf<SpriteStates>().set(hero, states(withWalk: true));
+    walk.start(world, hero: hero, enemy: enemy);
+    expect(world.componentsOf<SpriteStates>().get(hero)!.requested, 'walk');
+
+    for (var i = 0; i < 400; i++) {
+      world.step(0.016);
+      if (walk.update(world)) break;
+    }
+    expect(world.componentsOf<SpriteStates>().get(hero)!.requested, 'idle');
+  });
+
+  test('without a walk clip the hero clip state is left alone', () {
+    world.componentsOf<SpriteStates>().set(hero, states(withWalk: false));
+    walk.start(world, hero: hero, enemy: enemy);
+    expect(world.componentsOf<SpriteStates>().get(hero)!.requested, isNull);
+    for (var i = 0; i < 400; i++) {
+      world.step(0.016);
+      if (walk.update(world)) break;
+    }
+    expect(world.componentsOf<SpriteStates>().get(hero)!.requested, isNull);
+  });
 }

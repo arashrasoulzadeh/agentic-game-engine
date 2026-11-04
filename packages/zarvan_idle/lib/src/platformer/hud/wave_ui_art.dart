@@ -9,6 +9,7 @@ class WaveUiArt {
     this.pathNodesStem,
     this.pathLineImage,
     this.buttonImage,
+    this.iconsStem,
     this.upgradeLayout = const UpgradeLayout(),
     this.captionBackdropImage,
     this.pathY = 38,
@@ -31,6 +32,10 @@ class WaveUiArt {
   /// Full path of the `ui_button_atlas` sheet (see `ButtonSheet`). Needed for
   /// the upgrade and retry buttons; without it a lost run replays on any tap.
   final String? buttonImage;
+
+  /// `<stem>.png` + `.json` is a strip of square icons; `HeroUpgrade.icon` and
+  /// `HeroSkill.icon` pick a frame to draw on the left of their button.
+  final String? iconsStem;
 
   /// Where the upgrade buttons, coin counter and retry button sit.
   final UpgradeLayout upgradeLayout;

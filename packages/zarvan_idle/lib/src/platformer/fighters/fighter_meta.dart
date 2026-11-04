@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show AssetManifest, rootBundle;
 
 import 'package:zarvan_flutter/zarvan_flutter.dart';
 
@@ -52,7 +52,8 @@ class FighterStats {
 
 /// Loads a fighter's [FighterMeta] from its asset stem; replaced in tests so a
 /// scene can run without any assets.
-typedef FighterMetaLoader = Future<FighterMeta> Function(String id, String stem);
+typedef FighterMetaLoader =
+    Future<FighterMeta> Function(String id, String stem);
 
 /// A boss phase like `{hp_below: 50, effect: 'attack_speed x1.5'}` as the
 /// power text `EnemyPowers` understands.
@@ -82,6 +83,10 @@ class FighterMeta {
   /// States every fighter is expected to ship a sheet for.
   static const states = ['idle', 'attack', 'death'];
 
+  /// States loaded only when the fighter ships a sheet for them: `walk`
+  /// loops while the hero walks between fights.
+  static const optionalStates = ['walk'];
+
   final String id;
   final String name;
   final FighterStats stats;
@@ -107,6 +112,7 @@ class FighterMeta {
         e.key: SpriteClip(
           atlasId: atlasId(e.key),
           frames: e.value,
+          loop: e.key == 'walk',
           frameSeconds: e.key == 'death' ? 0.18 : 0.1,
           frameEvents: cues[e.key] == null
               ? null
@@ -124,6 +130,20 @@ class FighterMeta {
       'idle': (idle['frames'] as num?)?.toInt() ?? 4,
     };
     for (final state in states.skip(1)) {
+      frames[state] = ((await read(state))['frames'] as num?)?.toInt() ?? 1;
+    }
+    // Ask the manifest instead of requesting a missing file, so a fighter
+    // without a walk sheet does not log a 404 per load.
+    Set<String> bundled;
+    try {
+      bundled = (await AssetManifest.loadFromAssetBundle(
+        rootBundle,
+      )).listAssets().toSet();
+    } catch (_) {
+      bundled = const {};
+    }
+    for (final state in optionalStates) {
+      if (!bundled.contains('${stemPrefix}_$state.json')) continue;
       frames[state] = ((await read(state))['frames'] as num?)?.toInt() ?? 1;
     }
     return FighterMeta(

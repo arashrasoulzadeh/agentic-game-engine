@@ -362,3 +362,10 @@ From an engine checkout you can also run
 `dart run tool/simulate.dart example/cookie_clicker.json --days 3 --prestige-at 1.0` inside
 `packages/zarvan_idle`. Use it to check that the early game is not a wall and that prestige pays at a sensible
 time; it is a fair baseline, not an optimal player.
+
+
+## Icon buttons and the walk clip
+
+Give `WaveUiArt(iconsStem: 'assets/ui/ui_icons')` a strip of square icons (a `<stem>.png` plus `.json` with `cell`/`gap`/`frames`, one icon per frame) and set `icon:` on a `HeroUpgrade` or `HeroSkill` to draw that frame on the left of its button; buttons without an index stay text-only.
+
+A hero that ships `<heroStem>_walk.png` + `.json` plays that clip, looping, while `WalkPhase` moves it between fights, then returns to its rest state. Without the sheet nothing changes.

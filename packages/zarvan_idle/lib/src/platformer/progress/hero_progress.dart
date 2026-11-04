@@ -12,6 +12,7 @@ class HeroUpgrade {
     this.baseCost = 20,
     this.costGrowth = 1.6,
     this.maxLevel = 20,
+    this.icon,
   });
 
   /// Stable key progress is stored under.
@@ -19,6 +20,10 @@ class HeroUpgrade {
 
   /// Button text.
   final String label;
+
+  /// Frame index in the icon strip (`WaveUiArt.iconsStem`) drawn on the
+  /// button, or null for a text-only button.
+  final int? icon;
 
   /// Which fighter stat it raises: `hp`, `attack`, `armor` or `attack_speed`.
   final String stat;
