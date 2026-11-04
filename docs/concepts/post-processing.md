@@ -42,10 +42,10 @@ unchanged and never takes a snapshot.
 
 The cost of an effect is not the effect. It is the snapshot.
 
-!!! warning "Web and one Android phone; no iPhone yet"
+!!! warning "Web and one Android phone"
     The first set of figures was measured in **Chrome on a Mac, on the web**. A second set comes from **one Android phone**
-    (Samsung SM-S731B, a native profile build). The two disagree about *why* effects cost what they do, so read both. An
-    iPhone has not been measured; a different GPU can change the ratios again, so measure on the devices you ship to.
+    (Samsung SM-S731B, a native profile build). The two disagree about *why* effects cost what they do, so read both. Other
+    devices were not measured; a different GPU can change the ratios again, so measure on the devices you ship to.
 
 **Web setup.** Chrome on an Apple M1 Pro (Metal), a 1512x862 window at 2x device pixel ratio (3024x1724 px), a
 `flutter build web --profile` build, 400 random sprites. Each preset ran for 4 s after a 1.5 s warm-up; the figures are
@@ -117,7 +117,7 @@ What the phone says:
   they paint many thin rects; a handful of wider lines is cheaper.
 - **Frame budgets.** 120 fps is 8.3 ms and 60 fps is 16.7 ms. Bloom and the full stack at the default cap miss 60 fps on
   this phone; the CRT, pixelate and the cheap passes fit.
-- One device, one run each. Another Android GPU, or an iPhone, may order these differently.
+- One device, one run each. Another GPU may order these differently.
 
 **Two traps found while measuring**
 
@@ -267,6 +267,6 @@ and throw away any run where the no-effect preset is not steady.
   use it for a hit flash that must land on the exact frame (use `PostProcessed`, or accept 16 ms).
 - **No depth of field, motion blur or distortion yet** (shockwaves, heat haze).
 - **Web.** Measured and tested on the CanvasKit renderer only; the older HTML renderer has no fragment shaders.
-- **iPhone not measured yet.** See the warning above.
+- **One phone only.** See the warning above.
 
 See also: [Rendering](rendering.md), [Settings and accessibility](settings.md), [Performance](performance.md).
