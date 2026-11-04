@@ -208,3 +208,11 @@ perf report without a full profiler session.
 ## Post-processing
 
 Wrap the game view in `PostProcessed(effects: [...], child: ...)`. `ColorGrade` entries compose into a single colour filter; `Vignette` and `Scanlines` draw as overlays in list order. Bloom, chromatic aberration and pixelate need shaders and are not included yet.
+
+## Screen readers
+
+The canvas is invisible to TalkBack and VoiceOver, so wrap the game view in `WorldSemantics(worldOf:, cameraOf:, onActivate:, child:)`. It rebuilds labelled nodes from `Button` + `ButtonHitBox` entities (labelled by the `Text` inside them) and exposes remaining `Text` as read-only lines; a double-tap calls `onActivate(actionId)`. It does nothing unless assistive navigation is on.
+
+## Shader post-processing
+
+`ShaderPostProcessed(fx: ShaderPostFx(...), child: ...)` runs the game through one fragment shader: bloom, chromatic aberration, pixelate, CRT curvature/scanlines/phosphor mask, vignette and grain. `ShaderPostFx.crt()` is a ready look; set `game.postFx.value` to change it at runtime (default off). It snapshots the child each frame, so it works everywhere but lags one frame; lower `scale` to cut cost.

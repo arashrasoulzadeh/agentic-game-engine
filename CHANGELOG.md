@@ -9,6 +9,8 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added (engine)
+- `ShaderPostProcessed` + `ShaderPostFx` (`shaders/post_fx.frag`): one-pass bloom, chromatic aberration, pixelate, CRT (curvature, scanlines, phosphor mask), vignette and grain; `Game.postFx` turns it on in `runGame`. Snapshot-based, so it works on every backend (one frame behind).
+- `WorldSemantics` and `semanticTargets`: TalkBack/VoiceOver nodes for `Button` and `Text` entities, active only when assistive navigation is on.
 - UI toolkit models: `layoutStack`/`anchorRect` (row, column, anchor layout), `ScrollListModel` (scroll, fling, selection) and `TextInputModel` (caret, limits, filters).
 - Level mechanics: `ConveyorZone`, `Teleporter` (with `Teleported` event) and `DestructibleTiles` (hits, rubble, blast radius), with schemas for the studio.
 - `PostProcessed` with `ColorGrade` (brightness/contrast/saturation/tint, composed into one filter layer), `Vignette` and `Scanlines`.

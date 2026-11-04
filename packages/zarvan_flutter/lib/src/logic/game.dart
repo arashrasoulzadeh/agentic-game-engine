@@ -22,6 +22,7 @@ import '../register_components.dart';
 import 'scene.dart';
 import 'scene_transition.dart';
 import 'snapshot_transition.dart';
+import '../rendering/shader_post_fx.dart';
 import '../rendering/sprite_atlas.dart';
 
 /// The top-level entry point a game implements. Extend this instead of
@@ -88,6 +89,13 @@ abstract class Game {
   /// `deuteranopia`, `tritanopia`). Read each frame from your
   /// `PlayerOptions` so a settings menu takes effect immediately.
   String get colorblindMode => 'none';
+
+  /// Full-screen post-processing (bloom, CRT, chromatic aberration, pixelate)
+  /// applied by [runGame]. Set `postFx.value` any time; the default is off
+  /// and costs nothing.
+  final ValueNotifier<ShaderPostFx> postFx = ValueNotifier(
+    const ShaderPostFx(),
+  );
 
   /// Multiplier for [Camera] shake (`0` off, `1` as authored). Bind from
   /// `PlayerOptions.screenShakeIntensity` the same way as [colorblindMode].
@@ -761,7 +769,12 @@ void runGame(Game game) {
       theme: ThemeData(scaffoldBackgroundColor: game.config.backgroundColor),
       home: Scaffold(
         backgroundColor: game.config.backgroundColor,
-        body: GameRunner(game: game),
+        body: ValueListenableBuilder<ShaderPostFx>(
+          valueListenable: game.postFx,
+          builder: (context, fx, child) =>
+              ShaderPostProcessed(fx: fx, child: child!),
+          child: GameRunner(game: game),
+        ),
       ),
     ),
   );

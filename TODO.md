@@ -32,14 +32,10 @@ Sections: [Release](#release) ·
 
 ## Wanted: engine gaps
 
-Ten things a general 2D engine needs that this repo did not have (the first six shipped (post-processing partly), plus level mechanics and were removed from
-this list, see the changelog; three remain). Each was checked against the source (no
+Ten things a general 2D engine needs that this repo did not have (the all ten shipped; the UI toolkit is partly done (see the item below) and were removed from
+this list, see the changelog; one follow-up remains). Each was checked against the source (no
 matching class or file in `zarvan_core`, `zarvan_flutter`, `zarvan_platformer` or `zarvan_strategy`) before being
 listed. Tick them off as they ship, with a test and docs.
 
-- [ ] **Shader post-processing: bloom, chromatic aberration, pixelate.** Colour grade, vignette and scanlines
-      ship as `PostProcessed`; these three need fragment programs (and a captured scene texture).
-- [ ] **Screen-reader semantics.** Expose menus, buttons and HUD text to TalkBack/VoiceOver (`Semantics`) from the
-      engine's UI scenes; accessibility settings exist, assistive-technology support does not.
 - [ ] **UI toolkit: Flutter widgets for the new models.** `layoutStack`, `anchorRect`, `ScrollListModel` and
       `TextInputModel` exist as pure models; scenes still need widgets that render and drive them.
