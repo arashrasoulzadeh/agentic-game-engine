@@ -117,6 +117,14 @@ What the phone says:
   they paint many thin rects; a handful of wider lines is cheaper.
 - **Frame budgets.** 120 fps is 8.3 ms and 60 fps is 16.7 ms. Bloom and the full stack at the default cap miss 60 fps on
   this phone; the CRT, pixelate and the cheap passes fit.
+- **Heat dominates.** The table above is the first run, with the phone at 31 °C on battery. Later runs, with the phone
+  at 38 to 41 °C and charging over USB, ran the same presets two to three times slower (the CRT went from 11 ms to
+  20 to 31 ms) and identical runs differed by up to 25%. When the phone was hot, shrinking the snapshot from 2.5 MP to
+  0.5 MP changed the CRT by only 31.8 to 26.3 ms. Benchmark on a cool phone, unplugged, with a pause between runs, and
+  compare variants interleaved in one run rather than across runs.
+- **What did not help.** Splitting the shader so non-bloom presets skip the bloom code made no difference when the two
+  were interleaved in the same run (chromatic 37.1 vs 28.2 ms, pixelate 27.4 vs 23.7, CRT 20.1 vs 20.0), so the combined
+  shader stayed.
 - One device, one run each. Another GPU may order these differently.
 
 **Two traps found while measuring**

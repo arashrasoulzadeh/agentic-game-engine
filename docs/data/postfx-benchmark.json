@@ -131,6 +131,26 @@
       117.7,
       120.2,
       69.5
-    ]
+    ],
+    "thermal_note": {
+      "first_run": "31 C, on battery: the table above (CRT 11.4 ms)",
+      "later_runs": "38 to 41 C and charging over USB: the same shaders ran 2 to 3 times slower (CRT 20 to 31 ms, chromatic 20 to 37 ms), and varied up to 25% between identical runs",
+      "pixel_budget_sweep_hot": {
+        "cap_mp": [
+          2.5,
+          1.6,
+          1.0,
+          0.5
+        ],
+        "crt_ms": [
+          31.78,
+          30.09,
+          28.66,
+          26.26
+        ],
+        "note": "measured hot, so the snapshot size barely showed"
+      },
+      "shader_split_experiment": "A lite shader without the bloom loop was no faster than the combined one when interleaved in the same run (chromatic 37.1 vs 28.2 ms, pixelate 27.4 vs 23.7, CRT 20.1 vs 20.0), so it was reverted."
+    }
   }
 }
