@@ -204,3 +204,7 @@ perf report without a full profiler session.
 
 - [platformer.md](platformer.md) — the genre-specific layer built on top of this.
 - [`packages/zarvan_flutter/README.md`](../../packages/zarvan_flutter/README.md) — full API reference (input, audio, save/load, on-screen controls, menus).
+
+## Post-processing
+
+Wrap the game view in `PostProcessed(effects: [...], child: ...)`. `ColorGrade` entries compose into a single colour filter; `Vignette` and `Scanlines` draw as overlays in list order. Bloom, chromatic aberration and pixelate need shaders and are not included yet.

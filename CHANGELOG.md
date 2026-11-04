@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added (engine)
+- `PostProcessed` with `ColorGrade` (brightness/contrast/saturation/tint, composed into one filter layer), `Vignette` and `Scanlines`.
 - `DevConsole` (pure Dart: commands, history, did-you-mean, completion; built-ins for time scale, spawn, inspect, set, teleport, kill) and the `DevConsoleOverlay` widget in `zarvan_flutter`.
 - `Joint` (spring, rope, rod; to an entity or a fixed point; breakable) with `JointSystem` and `JointBroken`; schema in `zarvan_schema`.
 - `CameraRig` (dead-zone, velocity look-ahead, easing, level bounds) via `EngineView(cameraRig:)` and `Camera.clampTo`.
