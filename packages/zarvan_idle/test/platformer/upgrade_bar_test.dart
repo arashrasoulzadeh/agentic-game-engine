@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zarvan_core/zarvan_core.dart';
 import 'package:zarvan_flutter/src/register_components.dart';
-import 'package:zarvan_flutter/zarvan_flutter.dart' as eng show Sprite, Text;
+import 'package:zarvan_flutter/zarvan_flutter.dart'
+    as eng
+    show BackdropBlur, Sprite, Text;
 import 'package:zarvan_idle/zarvan_idle.dart';
 
 World _world() {
@@ -177,6 +179,49 @@ void main() {
     bar.update(w, 0.2);
     expect(maxY(), greaterThan(1000), reason: 'gone once faded');
   });
+
+  test(
+    'the dialog lists upgrades one per row, with descriptions and a blur',
+    () {
+      final w = _world();
+      const described = [
+        HeroUpgrade(
+          id: 'strength',
+          label: 'Strength',
+          stat: 'attack',
+          description: 'More damage per hit',
+        ),
+        HeroUpgrade(id: 'vitality', label: 'Vitality', stat: 'hp'),
+      ];
+      final bar = UpgradeBar.spawn(
+        w,
+        atlasId: 'btn',
+        frameAtlasId: 'frame',
+        upgrades: described,
+        layout: const UpgradeLayout(menu: true, y: 150, rowHeight: 30),
+        progress: HeroProgress(coins: 1000),
+      );
+      bar.toggleMenu(w);
+      expect(bar.hit(const Offset(60, 150)), 'strength');
+      expect(bar.hit(const Offset(60, 180)), 'vitality');
+      expect(bar.hit(const Offset(60, 120)), isNull, reason: 'above the rows');
+      final texts = w.componentsOf<eng.Text>();
+      final all = [
+        for (var i = 0; i < texts.length; i++) texts.denseAt(i).text,
+      ];
+      expect(all, contains('More damage per hit'));
+      expect(all, contains('Strength  0'));
+
+      final blur = w.componentsOf<eng.BackdropBlur>();
+      expect(blur.length, 1);
+      expect(blur.denseAt(0).sigma, 0, reason: 'not faded in yet');
+      bar.update(w, 0.3);
+      expect(blur.denseAt(0).sigma, 3);
+      bar.toggleMenu(w);
+      bar.update(w, 0.3);
+      expect(blur.denseAt(0).sigma, 0);
+    },
+  );
 
   test('without an icon atlas nothing changes', () {
     final w = _world();

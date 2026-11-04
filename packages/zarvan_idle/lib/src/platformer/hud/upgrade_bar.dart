@@ -4,7 +4,7 @@ import 'dart:ui' show Offset, Rect, Size;
 import 'package:zarvan_core/zarvan_core.dart';
 import 'package:zarvan_flutter/zarvan_flutter.dart'
     as eng
-    show Sprite, SpriteAtlas, Text;
+    show BackdropBlur, Sprite, SpriteAtlas, Text, TextAlignment;
 
 import '../progress/hero_progress.dart';
 import '../progress/hero_skill.dart';
@@ -34,6 +34,9 @@ class UpgradeLayout {
     this.frameInset = 24,
     this.frameSource = const Size(96, 75),
     this.menuFontScale = 0.75,
+    this.rowHeight = 28,
+    this.rowButtonWidth = 34,
+    this.blurSigma = 3,
   });
 
   /// Centre line of the upgrade buttons, and the span they spread across.
@@ -85,6 +88,16 @@ class UpgradeLayout {
   /// Text scale of the buttons inside the dialog, which are narrower than the
   /// stand-alone ones.
   final double menuFontScale;
+
+  /// In the dialog every upgrade is one row: icon, name with its level and a
+  /// description, and a small buy button with the price. Rows start at [y] and
+  /// are [rowHeight] apart; the button is [rowButtonWidth] wide.
+  final double rowHeight;
+  final double rowButtonWidth;
+
+  /// Blur (world units) the game behind the dialog fades to while it is open;
+  /// 0 leaves the game sharp under the veil.
+  final double blurSigma;
 }
 
 /// The `ui_button_atlas` sheet: cells of [cellWidth] x [cellHeight] with
@@ -124,17 +137,19 @@ class UpgradeBar {
   }) {
     final span = layout.right - layout.left;
     for (var i = 0; i < upgrades.length; i++) {
+      if (layout.menu) {
+        _buttons.add(_spawnRow(world, i));
+        continue;
+      }
       final cx = layout.left + span * (i + 0.5) / upgrades.length;
       _buttons.add(
         _spawnButton(
           world,
           cx,
           layout.y,
-          layout.menu ? span / upgrades.length * 0.92 : layout.buttonWidth,
+          layout.buttonWidth,
           icon: upgrades[i].icon,
-          fontScale: layout.menu ? layout.menuFontScale : 1,
-          iconOnly: !layout.menu && layout.iconOnly,
-          lift: layout.menu ? _dialogLift : 0,
+          iconOnly: layout.iconOnly,
         ),
       );
     }
@@ -208,6 +223,8 @@ class UpgradeBar {
   bool _shown = false;
   double _fade = 0;
   EntityId? _overlay;
+  EntityId? _blur;
+  final _rowTitles = <EntityId>[];
   static const _hidden = 3000.0;
 
   /// Draw-order boost of the dialog's contents, so it covers the captions and
@@ -222,6 +239,73 @@ class UpgradeBar {
 
   /// What [hit] returns for the menu button (see [UpgradeLayout.menu]).
   static const menuAction = 'menu';
+
+  /// One upgrade of the dialog: icon and text on the left, a small buy button
+  /// with the price on the right; a tap anywhere on the row buys.
+  _Button _spawnRow(World world, int i) {
+    final u = upgrades[i];
+    final r = layout.dialog;
+    final y = layout.y + i * layout.rowHeight;
+    final bw = layout.rowButtonWidth;
+    final button = _spawnButton(
+      world,
+      r.right - 8 - bw / 2,
+      y,
+      bw,
+      fontScale: layout.menuFontScale,
+      iconOnly: false,
+      lift: _dialogLift,
+    );
+    // Only the price is written, so it sits in the middle of the button.
+    world.componentsOf<Position>().get(button.top)?.y = y;
+    if (iconAtlasId != null && u.icon != null) {
+      final icon = world.spawn();
+      final scale = layout.iconSize / iconCellSize;
+      world.componentsOf<Position>().set(icon, Position(r.left + 16, y));
+      world.componentsOf<eng.Sprite>().set(
+        icon,
+        eng.Sprite(
+          iconAtlasId!,
+          '${u.icon}',
+          scaleX: scale,
+          scaleY: scale,
+          zIndex: _label + _dialogLift,
+        ),
+      );
+      _dialogParts.add(icon);
+    }
+    final textX = r.left + 30;
+    final width = r.right - 8 - bw - 6 - textX;
+    final title = _text(
+      world,
+      textX,
+      y - 5,
+      4.6,
+      0xFF3A2410,
+      lift: _dialogLift,
+    );
+    final desc = _text(world, textX, y + 4, 3.5, 0xFF6A5034, lift: _dialogLift);
+    final texts = world.componentsOf<eng.Text>();
+    for (final e in [title, desc]) {
+      texts.get(e)
+        ?..align = eng.TextAlignment.left
+        ..maxWidth = width;
+    }
+    texts.get(desc)?.text = u.description ?? '';
+    _rowTitles.add(title);
+    _dialogParts.addAll([title, desc]);
+    return _Button(
+      button.sprite,
+      button.top,
+      button.bottom,
+      Rect.fromLTRB(
+        r.left + 4,
+        y - layout.rowHeight / 2,
+        r.right - 4,
+        y + layout.rowHeight / 2,
+      ),
+    );
+  }
 
   _Button _spawnButton(
     World world,
@@ -331,6 +415,24 @@ class UpgradeBar {
     for (var i = 0; i < upgrades.length; i++) {
       final u = upgrades[i];
       final level = progress.levelOf(u);
+      if (layout.menu) {
+        final b = _buttons[i];
+        final texts = world.componentsOf<eng.Text>();
+        texts.get(_rowTitles[i])?.text = '${u.label}  $level';
+        texts.get(b.top)?.text = progress.isMaxed(u)
+            ? strings.max
+            : '${progress.costOf(u)}';
+        texts.get(b.bottom)?.text = '';
+        world
+            .componentsOf<eng.Sprite>()
+            .get(b.sprite)
+            ?.region = progress.isMaxed(u)
+            ? 'secondary'
+            : progress.canBuy(u)
+            ? 'primary'
+            : 'disabled';
+        continue;
+      }
       if (progress.isMaxed(u)) {
         _set(world, _buttons[i], 'secondary', '${u.label} $level', strings.max);
       } else {
@@ -475,6 +577,8 @@ class UpgradeBar {
     final sprites = world.componentsOf<eng.Sprite>();
     final texts = world.componentsOf<eng.Text>();
     final tint = (_fade * 0.6 * 255).round() << 24 | 0x101828;
+    world.componentsOf<eng.BackdropBlur>().get(_blur ?? -1)?.sigma =
+        _fade * layout.blurSigma;
     for (final e in _dialogParts) {
       sprites.get(e)?.tintArgb = e == _overlay ? tint : white;
       final t = texts.get(e);
@@ -514,6 +618,11 @@ class UpgradeBar {
       );
       _overlay = veil;
       _dialogParts.add(veil);
+      _blur = world.spawn();
+      world.componentsOf<eng.BackdropBlur>().set(
+        _blur!,
+        eng.BackdropBlur(belowZIndex: _sprite + _dialogLift - 20),
+      );
     }
     if (atlas != null) {
       final frameSize = layout.frameSource;

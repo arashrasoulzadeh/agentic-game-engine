@@ -4,7 +4,7 @@
 
 Every built-in component and the exact JSON shape it serializes to — what you see in `World.toJson()` and what `applyPatch` / `Level.loadInto` accept. This page is generated from `zarvan_schema`, the same schemas the studio and `zarvan lint` validate against, so it is always current.
 
-**103 components** across 4 packages. Jump to: [zarvan_core](#zarvan_core) · [zarvan_flutter](#zarvan_flutter) · [zarvan_platformer](#zarvan_platformer) · [zarvan_idle](#zarvan_idle)
+**104 components** across 4 packages. Jump to: [zarvan_core](#zarvan_core) · [zarvan_flutter](#zarvan_flutter) · [zarvan_platformer](#zarvan_platformer) · [zarvan_idle](#zarvan_idle)
 
 ## zarvan_core
 
@@ -660,6 +660,13 @@ A marker: present or absent, no fields.
 | `overbrightIntensity` | `double` | 0 to ∞; default `0` |
 | `openAirFalloffScale` | `double` | 0 to ∞; default `1` |
 | `useGpuShadows` | `bool` | default `false` |
+
+### `backdropBlur`
+
+| Field | Type | Notes |
+|---|---|---|
+| `sigma` | `double` | 0 to ∞; default `0` |
+| `belowZIndex` | `int` | required |
 
 ### `screenTint`
 

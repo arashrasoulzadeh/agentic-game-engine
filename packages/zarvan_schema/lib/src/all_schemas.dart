@@ -92,6 +92,7 @@ const allComponentSchemas = <String, ComponentSchema>{
   'nineSliceSprite': nineSliceSpriteSchema,
   'animationTransition': animationTransitionSchema,
   'light2d': light2dSchema,
+  'backdropBlur': backdropBlurSchema,
   'screenTint': screenTintSchema,
   'hitFlash': hitFlashSchema,
   'clipShape': clipShapeSchema,

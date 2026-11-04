@@ -27,6 +27,7 @@ export 'src/rendering/sprite_pivots.dart';
 export 'src/rendering/one_shot_fx.dart';
 export 'src/rendering/sprite_sheet_loader.dart';
 export 'src/rendering/parallax_scroller.dart';
+export 'src/rendering/backdrop_blur.dart';
 export 'src/rendering/screen_tint.dart';
 export 'src/rendering/clip_shape.dart';
 export 'src/rendering/sprite.dart';

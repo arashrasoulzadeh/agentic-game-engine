@@ -9,6 +9,7 @@ import 'package:zarvan_core/zarvan_core.dart';
 import 'package:flutter/widgets.dart' hide Velocity;
 import 'package:flutter/scheduler.dart';
 
+import 'backdrop_blur.dart';
 import 'camera.dart';
 import 'camera_rig.dart';
 import 'clip_shape.dart';
@@ -998,9 +999,7 @@ class _EnginePainter extends CustomPainter {
     if (_effectiveAmbientBrightness < _ambientBrightnessSkipThreshold) {
       _paintZBanded(canvas, size, positions, items);
     } else {
-      for (final item in items) {
-        item.paint(canvas);
-      }
+      _paintItems(canvas, size, items);
     }
 
     _drawScreenTint(canvas, size);
@@ -1057,6 +1056,40 @@ class _EnginePainter extends CustomPainter {
       );
     }
     return path;
+  }
+
+  /// Draws [items] in order; with an active `BackdropBlur` the ones below its
+  /// `belowZIndex` go through one blurred layer first.
+  void _paintItems(Canvas canvas, Size size, List<_DrawItem> items) {
+    final blurs = world.componentsOf<BackdropBlur>();
+    BackdropBlur? blur;
+    for (var i = 0; i < blurs.length; i++) {
+      if (blurs.denseAt(i).sigma > 0) {
+        blur = blurs.denseAt(i);
+        break;
+      }
+    }
+    var index = 0;
+    if (blur != null) {
+      final sigma = blur.sigma * camera.zoom;
+      canvas.saveLayer(
+        Offset.zero & size,
+        Paint()
+          ..imageFilter = ui.ImageFilter.blur(
+            sigmaX: sigma,
+            sigmaY: sigma,
+            tileMode: TileMode.clamp,
+          ),
+      );
+      while (index < items.length && items[index].zIndex < blur.belowZIndex) {
+        items[index].paint(canvas);
+        index++;
+      }
+      canvas.restore();
+    }
+    for (; index < items.length; index++) {
+      items[index].paint(canvas);
+    }
   }
 
   /// Splits [items] into z-bands at every `Light2D.minZIndex`/

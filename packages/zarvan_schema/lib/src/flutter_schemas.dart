@@ -136,6 +136,11 @@ const light2dSchema = ComponentSchema('light2d', [
   FieldSchema('useGpuShadows', FieldType.bool, defaultValue: false),
 ]);
 
+const backdropBlurSchema = ComponentSchema('backdropBlur', [
+  FieldSchema('sigma', FieldType.double, min: 0, defaultValue: 0),
+  FieldSchema('belowZIndex', FieldType.int, required: true),
+]);
+
 const screenTintSchema = ComponentSchema('screenTint', [
   FieldSchema('colorArgb', FieldType.int, required: true),
 ]);

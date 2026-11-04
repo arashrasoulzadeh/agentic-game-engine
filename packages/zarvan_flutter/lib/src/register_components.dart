@@ -10,6 +10,7 @@ import 'rendering/nine_slice_sprite.dart';
 import 'rendering/one_shot_fx.dart';
 import 'rendering/parallax_layer.dart';
 import 'rendering/sprite_states.dart';
+import 'rendering/backdrop_blur.dart';
 import 'rendering/screen_tint.dart';
 import 'rendering/sprite.dart';
 import 'rendering/text.dart';
@@ -93,6 +94,12 @@ void registerFlutterComponents(World world) {
     (l) => l.toJson(),
     Light2D.fromJson,
     schema: light2dSchema,
+  );
+  world.components.register<BackdropBlur>(
+    'backdropBlur',
+    (b) => b.toJson(),
+    BackdropBlur.fromJson,
+    schema: backdropBlurSchema,
   );
   world.components.register<ScreenTint>(
     'screenTint',
