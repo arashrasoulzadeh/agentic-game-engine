@@ -1,104 +1,17 @@
 import 'dart:async';
 
 import 'package:zarvan_core/zarvan_core.dart';
-import 'package:zarvan_core/zarvan_core_io.dart' show AtomicSave;
 
 import 'package:zarvan_core/zarvan_core_idle.dart';
 import 'ui/idle_controller.dart';
 
-/// Where a game keeps its save. An interface so tests (and web, where there is no file system) can
-/// supply their own.
-abstract class SaveStore {
-  /// The newest readable save, or null.
-  Map<String, dynamic>? read();
+export 'cloud_save_store.dart';
+export 'return_notifier.dart';
+export 'save_store.dart';
 
-  /// Stores [save], replacing the previous one.
-  void write(Map<String, dynamic> save);
-}
-
-/// A [SaveStore] in memory, for tests.
-class MemorySaveStore implements SaveStore {
-  Map<String, dynamic>? value;
-
-  @override
-  Map<String, dynamic>? read() => value;
-
-  @override
-  void write(Map<String, dynamic> save) => value = save;
-}
-
-/// A [SaveStore] on disk using `AtomicSave`: a crash mid-write leaves the previous save, and a corrupt
-/// file falls back to the backup.
-class FileSaveStore implements SaveStore {
-  FileSaveStore(String path) : _file = AtomicSave(path);
-  final AtomicSave _file;
-
-  @override
-  Map<String, dynamic>? read() => _file.read();
-
-  @override
-  void write(Map<String, dynamic> save) => _file.write(save);
-}
-
-/// A save kept on a server (Game Center, Play Games, your own backend). The engine defines only the
-/// contract; each platform's implementation belongs to the game.
-abstract class CloudSaveStore {
-  /// The saved game in the cloud, or null if there is none.
-  Future<Map<String, dynamic>?> fetch();
-
-  /// Replaces the cloud copy with [save].
-  Future<void> push(Map<String, dynamic> save);
-}
-
-/// A [CloudSaveStore] in memory, for tests.
-class MemoryCloudSaveStore implements CloudSaveStore {
-  Map<String, dynamic>? value;
-  int pushes = 0;
-
-  @override
-  Future<Map<String, dynamic>?> fetch() async => value;
-
-  @override
-  Future<void> push(Map<String, dynamic> save) async {
-    value = save;
-    pushes++;
-  }
-}
-
-/// What [IdleSession.syncCloud] did.
-enum CloudSyncResult {
-  /// Both sides were empty, or already the same moment.
-  unchanged,
-
-  /// The local game replaced the cloud copy.
-  pushed,
-
-  /// The cloud copy replaced the local game.
-  pulled,
-}
-
-/// Schedules the "your generators are full" reminder. The engine only defines the contract; a game wires
-/// a platform notification plugin (kept out of the engine so it stays web-safe and testable).
-abstract class ReturnNotifier {
-  /// Shows [message] after [delay] unless cancelled first. Replaces any reminder already scheduled.
-  void schedule(Duration delay, String message);
-
-  /// Drops the pending reminder, if any.
-  void cancel();
-}
-
-/// A [ReturnNotifier] that only records what was asked, for tests.
-class RecordingNotifier implements ReturnNotifier {
-  /// The pending reminder, or null.
-  ({Duration delay, String message})? pending;
-
-  @override
-  void schedule(Duration delay, String message) =>
-      pending = (delay: delay, message: message);
-
-  @override
-  void cancel() => pending = null;
-}
+import 'cloud_save_store.dart';
+import 'return_notifier.dart';
+import 'save_store.dart';
 
 /// Saving, loading and offline catch-up for an idle game, wired to the app's lifecycle.
 ///

@@ -3,9 +3,10 @@ import 'dart:ui' show Offset, Rect;
 import 'package:zarvan_core/zarvan_core.dart';
 import 'package:zarvan_flutter/zarvan_flutter.dart'
     as eng
-    show Sprite, SpriteAtlas, Text, TextAlignment;
+    show Sprite, SpriteAtlas, Text;
 
 import '../progress/hero_progress.dart';
+import 'world_text.dart';
 
 /// Where the upgrade buttons and the retry button sit (world units).
 class UpgradeLayout {
@@ -118,22 +119,16 @@ class UpgradeBar {
     );
   }
 
-  EntityId _text(World world, double x, double y, double size, int color) {
-    final id = world.spawn();
-    world.componentsOf<Position>().set(id, Position(x, y));
-    world.componentsOf<eng.Text>().set(
-      id,
-      eng.Text(
+  EntityId _text(World world, double x, double y, double size, int color) =>
+      spawnWorldText(
+        world,
+        x,
+        y,
         '',
         fontSize: size,
         colorArgb: color,
-        align: eng.TextAlignment.center,
-        screenSpace: false,
         zIndex: _label,
-      ),
-    );
-    return id;
-  }
+      );
 
   void _set(World world, _Button b, String region, String top, String bottom) {
     world.componentsOf<eng.Sprite>().get(b.sprite)?.region = region;

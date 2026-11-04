@@ -34,6 +34,27 @@ class CombatStats {
   final double critChance;
   final double critMultiplier;
 
+  /// A copy with the given fields changed. Stats are immutable so a change
+  /// (an upgrade) is a new value; copying here means a field added later cannot
+  /// be dropped by whoever rebuilds one by hand.
+  CombatStats copyWith({
+    double? maxHp,
+    double? attack,
+    double? attackSpeed,
+    double? armor,
+    double? cooldown,
+    double? critChance,
+    double? critMultiplier,
+  }) => CombatStats(
+    maxHp: maxHp ?? this.maxHp,
+    attack: attack ?? this.attack,
+    attackSpeed: attackSpeed ?? this.attackSpeed,
+    armor: armor ?? this.armor,
+    cooldown: cooldown ?? this.cooldown,
+    critChance: critChance ?? this.critChance,
+    critMultiplier: critMultiplier ?? this.critMultiplier,
+  );
+
   Map<String, dynamic> toJson() => {
     'maxHp': maxHp,
     'attack': attack,

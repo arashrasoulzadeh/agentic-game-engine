@@ -8,6 +8,10 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Changed (zarvan_idle refactor, behaviour-preserving)
+- `WaveCombatScene` shed its inline logic: `HeroLoadout` (hero stats and mid-fight upgrades), `ComboTracker`, `installSceneLights`, `WaveKind` stats and one `registerWaveCombatComponents`. `hit_feedback.dart` is split into components, `HitStop` and the system, and the wind-up tint now stores its own colour instead of a static map. One `spawnWorldText` replaces four copies of text spawning. `CombatStats.copyWith` replaces rebuilding stats by hand (which had dropped the crit fields once). `RandomWaves` has its own file.
+- The idle panels each have their own file under `ui/` (`idle_screens.dart` is now a barrel), and `session.dart` is split into `save_store.dart`, `cloud_save_store.dart` and `return_notifier.dart` (still exported from `session.dart`). Public imports are unchanged.
+
 ### Added (wave combat, fight depth)
 - `EnemyPowers` parsed from sidecar `powers`/`phases` (rage, dodge, first strike), `AutoCombatSystem.windupSeconds` + `AttackWindup`/`FighterDodge` events, attack telegraph (glow and "!"), `HitStop`, damage combo (`comboBonusPerHit`), and randomised waves with elites and a treasure enemy (`RandomWaves`, `WavePlan`).
 

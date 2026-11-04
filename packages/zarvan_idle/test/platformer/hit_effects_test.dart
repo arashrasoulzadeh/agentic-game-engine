@@ -69,6 +69,53 @@ void main() {
       expect(hits.firstWhere((h) => h.attackerSide == 'hero').damage, 10);
     });
 
+    test('copyWith changes only what is named and keeps crit and cooldown', () {
+      final s = CombatStats(
+        maxHp: 10,
+        attack: 2,
+        attackSpeed: 1,
+        armor: 0,
+        cooldown: 0.4,
+        critChance: 0.25,
+        critMultiplier: 3,
+      );
+      final c = s.copyWith(attack: 5);
+      expect(c.attack, 5);
+      expect(
+        (
+          c.maxHp,
+          c.attackSpeed,
+          c.armor,
+          c.cooldown,
+          c.critChance,
+          c.critMultiplier,
+        ),
+        (10, 1, 0, 0.4, 0.25, 3),
+      );
+    });
+
+    test(
+      'registerWaveCombatComponents registers every wave-combat component',
+      () {
+        final world = World(width: 1, height: 1);
+        registerCoreComponents(world);
+        eng.registerFlutterComponents(world);
+        registerWaveCombatComponents(world);
+        registerWaveCombatComponents(world); // idempotent
+        for (final name in [
+          'combatRole',
+          'combatStats',
+          'enemyPowers',
+          'damageNumber',
+          'hitRecoil',
+          'screenFlash',
+          'windupTint',
+        ]) {
+          expect(world.components.isRegistered(name), isTrue, reason: name);
+        }
+      },
+    );
+
     test('CombatStats keeps its crit values through JSON', () {
       final s = CombatStats(
         maxHp: 1,

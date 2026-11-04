@@ -3,11 +3,12 @@ import 'dart:math' as math;
 import 'package:zarvan_core/zarvan_core.dart';
 import 'package:zarvan_flutter/zarvan_flutter.dart'
     as eng
-    show Text, TextAlignment;
+    show Text;
 
 import 'package:zarvan_platformer/zarvan_platformer.dart' show Health;
 
 import '../combat/combat_components.dart';
+import '../hud/world_text.dart';
 
 /// How floating damage numbers look. Pass to `WaveCombatConfig.damageNumbers`.
 class DamageNumberStyle {
@@ -235,18 +236,14 @@ void spawnFloatingText(
   double? rise,
 }) {
   void spawn(double dx, double dy, int argb, int z) {
-    final id = world.spawn();
-    world.componentsOf<Position>().set(id, Position(x + dx, y + dy));
-    world.componentsOf<eng.Text>().set(
-      id,
-      eng.Text(
-        text,
-        fontSize: size,
-        colorArgb: argb,
-        align: eng.TextAlignment.center,
-        screenSpace: false,
-        zIndex: z,
-      ),
+    final id = spawnWorldText(
+      world,
+      x + dx,
+      y + dy,
+      text,
+      fontSize: size,
+      colorArgb: argb,
+      zIndex: z,
     );
     world.componentsOf<DamageNumber>().set(
       id,

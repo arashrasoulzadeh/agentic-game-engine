@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:zarvan_core/zarvan_core.dart';
 import 'package:zarvan_flutter/zarvan_flutter.dart' hide Text;
 
+import 'sun_light.dart';
+
 /// What a [SceneLight] is attached to.
 enum LightAnchor {
   /// Fixed at its own `x`/`y`.
@@ -46,6 +48,49 @@ class SceneLight {
   /// [flickerHz]: torch and lantern flames.
   final double flicker;
   final double flickerHz;
+}
+
+/// Spawns the sun (if any) and every [SceneLight] of a scene, and adds the
+/// [SceneLightSystem] that moves them. [heroOf]/[enemyOf] resolve the anchors.
+void installSceneLights(
+  World world, {
+  SunLight? sun,
+  List<SceneLight> lights = const [],
+  required EntityId? Function() heroOf,
+  required EntityId? Function() enemyOf,
+}) {
+  EntityId spawnLight(double x, double y, Light2D light) {
+    final id = world.spawn();
+    world.componentsOf<Position>().set(id, Position(x, y));
+    world.componentsOf<Light2D>().set(id, light);
+    return id;
+  }
+
+  if (sun != null) {
+    spawnLight(
+      sun.x,
+      sun.y,
+      Light2D(
+        radius: sun.radius,
+        intensity: sun.intensity,
+        colorArgb: sun.colorArgb,
+      ),
+    );
+  }
+  if (lights.isEmpty) return;
+  final ids = [
+    for (final l in lights)
+      spawnLight(
+        l.x,
+        l.y,
+        Light2D(
+          radius: l.radius,
+          intensity: l.intensity,
+          colorArgb: l.colorArgb,
+        ),
+      ),
+  ];
+  world.addSystem(SceneLightSystem(lights, ids, heroOf, enemyOf));
 }
 
 /// Moves the lights of `WaveCombatConfig.lights` to their anchors and flickers

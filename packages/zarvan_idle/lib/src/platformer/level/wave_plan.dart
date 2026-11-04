@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'level_data.dart';
+import 'random_waves.dart';
 
 /// What kind of enemy a wave slot holds.
 enum WaveKind {
@@ -57,4 +58,38 @@ class WavePlan {
     }
     return WavePlan(ids, kinds);
   }
+}
+
+/// What a [WaveKind] does to an enemy, from the level's [RandomWaves] numbers
+/// (a level without them leaves every kind at its normal strength).
+extension WaveKindStats on WaveKind {
+  double hpFactor(RandomWaves? rw) => switch (this) {
+    WaveKind.elite => rw?.eliteHp ?? 1,
+    WaveKind.treasure => rw?.treasureHp ?? 1,
+    WaveKind.normal => 1,
+  };
+
+  double attackFactor(RandomWaves? rw) => switch (this) {
+    WaveKind.elite => rw?.eliteAttack ?? 1,
+    WaveKind.treasure => rw?.treasureAttack ?? 1,
+    WaveKind.normal => 1,
+  };
+
+  /// Drawn-size factor (only elites are larger).
+  double sizeFactor(RandomWaves? rw) =>
+      this == WaveKind.elite ? (rw?.eliteScale ?? 1) : 1;
+
+  /// Coins for killing it, given [perKill] for a normal enemy.
+  int coins(RandomWaves? rw, int perKill) => switch (this) {
+    WaveKind.elite => perKill * (rw?.eliteCoins ?? 1),
+    WaveKind.treasure => perKill * (rw?.treasureCoins ?? 1),
+    WaveKind.normal => perKill,
+  };
+
+  /// The enemy's displayed name.
+  String label(String name) => switch (this) {
+    WaveKind.elite => 'Elite $name',
+    WaveKind.treasure => 'Golden $name',
+    WaveKind.normal => name,
+  };
 }
