@@ -104,4 +104,46 @@ void main() {
     }
     expect(world.componentsOf<SpriteStates>().get(hero)!.requested, isNull);
   });
+
+  test('companions keep their place beside the enemy and arrive with it', () {
+    final back = at(
+      300 + 14,
+      200 - 10,
+    ); // a back-line fighter next to the enemy
+    walk.start(world, hero: hero, enemy: enemy, companions: [back]);
+    final pos = world.componentsOf<Position>();
+    for (var i = 0; i < 400; i++) {
+      world.step(0.016);
+      final done = walk.update(world);
+      expect(
+        pos.get(back)!.x - pos.get(enemy)!.x,
+        closeTo(14, 1e-6),
+        reason: 'offset held on every frame',
+      );
+      if (done) break;
+    }
+    expect(pos.get(enemy)!.x, closeTo(100, 1e-6));
+    expect(pos.get(back)!.x, closeTo(114, 1e-6));
+    expect(pos.get(back)!.y, closeTo(190, 1e-6));
+  });
+
+  test(
+    'every corpse slides off with the scenery and is removed at the end',
+    () {
+      final c2 = at(120, 200);
+      walk.start(
+        world,
+        hero: hero,
+        enemy: enemy,
+        corpse: corpse,
+        corpses: [c2],
+      );
+      for (var i = 0; i < 400; i++) {
+        world.step(0.016);
+        if (walk.update(world)) break;
+      }
+      expect(world.componentsOf<Position>().has(corpse), isFalse);
+      expect(world.componentsOf<Position>().has(c2), isFalse);
+    },
+  );
 }

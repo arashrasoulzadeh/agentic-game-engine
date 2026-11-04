@@ -22,6 +22,10 @@ class WaveStrings {
     this.coinsWhileAway = 'coins earned while away',
     this.hintUpgrade = 'Spend coins on upgrades to grow stronger',
     this.hintSkill = 'Tap a skill when it is ready',
+    this.parry = 'Parry!',
+    this.perfect = 'Perfect!',
+    this.tooEarly = 'Too early',
+    this.hintParry = 'Tap when an enemy flashes to parry',
   });
 
   final String coins;
@@ -41,6 +45,10 @@ class WaveStrings {
   final String coinsWhileAway;
   final String hintUpgrade;
   final String hintSkill;
+  final String parry;
+  final String perfect;
+  final String tooEarly;
+  final String hintParry;
 
   String coinsLabel(int n) => '$coins $n';
   String comboLabel(int n) => '$combo x$n';

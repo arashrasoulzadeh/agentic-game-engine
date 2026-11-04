@@ -21,6 +21,8 @@ class HeroSkill {
     this.cooldown = 12,
     this.duration = 4,
     this.icon,
+    this.hitsAll = false,
+    this.ultimate = false,
   });
 
   final String id;
@@ -30,6 +32,13 @@ class HeroSkill {
   /// Frame index in the icon strip (`WaveUiArt.iconsStem`) drawn on the
   /// button, or null for a text-only button.
   final int? icon;
+
+  /// A strike hits every living enemy, not only the target (an area skill).
+  final bool hitsAll;
+
+  /// The skill is charged by good play instead of a timer: it needs the combat
+  /// system's ultimate meter full and empties it (see `AutoCombatSystem.ultimate`).
+  final bool ultimate;
 
   /// Strike: damage multiplier. Heal: fraction of max hp. Guard: damage cut.
   final double power;

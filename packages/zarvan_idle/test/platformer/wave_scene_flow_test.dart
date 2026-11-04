@@ -21,7 +21,7 @@ Future<FighterMeta> _meta(String id, String stem) async => FighterMeta(
   stats: id == 'hero'
       ? FighterStats(hp: 500, attack: 40, attackSpeed: 2, armor: 0)
       : FighterStats(
-          hp: id == 'boss' ? 60 : 30,
+          hp: id == 'boss' ? 60 : (id == 'tank' ? 5000 : 30),
           attack: 2,
           attackSpeed: 1,
           armor: 0,
@@ -56,6 +56,9 @@ WaveCombatConfig _config({
   LootTable? loot,
   int checkpointEvery = 0,
   double prestige = 0,
+  SquadRule? squad,
+  CombatTimingRules? timing,
+  double windup = 0,
 }) => WaveCombatConfig(
   heroStem: 'hero',
   enemyRoot: 'enemies',
@@ -71,6 +74,9 @@ WaveCombatConfig _config({
   bossCoins: 50,
   deathHoldSeconds: 0.1,
   waveSeed: 1,
+  squad: squad,
+  timing: timing,
+  windupSeconds: windup,
 );
 
 class _Run {
@@ -283,5 +289,178 @@ void main() {
     final lines = [for (var i = 0; i < t.length; i++) t.denseAt(i).text];
     expect(lines, contains('+123 coins earned while away'));
     expect(progress.pendingOfflineCoins, 0);
+  });
+
+  group('squads and player timing', () {
+    List<EntityId> enemies(World w) {
+      final roles = w.componentsOf<CombatRole>();
+      final health = w.componentsOf<Health>();
+      return [
+        for (var i = 0; i < roles.length; i++)
+          if (roles.denseAt(i).side == 'enemy' &&
+              (health.get(roles.entityAt(i))?.current ?? 0) > 0)
+            roles.entityAt(i),
+      ];
+    }
+
+    const trio = SquadRule(oneExtraFromWave: 1, twoExtrasFromWave: 1);
+
+    test(
+      'a squad wave brings extras that stand behind the front enemy',
+      () async {
+        final r = await _start(
+          _Scene(
+            level: _level(),
+            config: _config(squad: trio),
+          ),
+        );
+        r.run(2.5);
+        final all = enemies(r.world);
+        expect(all, hasLength(3));
+        final pos = r.world.componentsOf<Position>();
+        final front = pos.get(r.scene.enemyId!)!;
+        for (final id in all.where((e) => e != r.scene.enemyId)) {
+          expect(pos.get(id)!.x, greaterThan(front.x));
+          expect(pos.get(id)!.y, lessThan(front.y));
+        }
+      },
+    );
+
+    test('without a squad rule every wave is one-on-one', () async {
+      final r = await _start(_Scene(level: _level(), config: _config()));
+      r.run(2.5);
+      expect(enemies(r.world), hasLength(1));
+    });
+
+    test(
+      'the wave advances only when the whole squad is down; each pays',
+      () async {
+        final progress = HeroProgress();
+        final r = await _start(
+          _Scene(
+            level: _level(),
+            config: _config(squad: trio),
+            progress: progress,
+          ),
+        );
+        var steps = 0;
+        while (progress.kills < 3 && steps++ < 400) {
+          r.run(0.05);
+        }
+        expect(progress.kills, 3);
+        // front pays 10, each extra ceil(10 x 0.6) = 6
+        expect(progress.coins, 22);
+      },
+    );
+
+    test('tapping a back-line enemy makes the hero fight it', () async {
+      final r = await _start(
+        _Scene(
+          level: _level(),
+          config: _config(squad: trio),
+        ),
+      );
+      r.run(2.5);
+      final front = r.scene.enemyId!;
+      final back = enemies(r.world).firstWhere((e) => e != front);
+      final at = r.world.componentsOf<Position>().get(back)!;
+      r.tap(at.x, at.y);
+      expect(r.scene.enemyId, back);
+    });
+
+    test('a tap in empty space does not change the target', () async {
+      final r = await _start(
+        _Scene(
+          level: _level(),
+          config: _config(squad: trio),
+        ),
+      );
+      r.run(2.5);
+      final front = r.scene.enemyId;
+      r.tap(5, 5);
+      expect(r.scene.enemyId, front);
+    });
+
+    test(
+      'the next wave starts cleanly after a squad (no lost enemy)',
+      () async {
+        final progress = HeroProgress();
+        final r = await _start(
+          _Scene(
+            level: _level(),
+            config: _config(squad: trio),
+            progress: progress,
+          ),
+        );
+        r.run(15);
+        expect(progress.kills, greaterThanOrEqualTo(6));
+        final alive = enemies(r.world);
+        expect(alive, isNotEmpty);
+        final health = r.world.componentsOf<Health>();
+        for (final e in alive) {
+          expect(health.get(e)!.current, greaterThan(0));
+          expect(r.world.componentsOf<CombatStats>().has(e), isTrue);
+        }
+      },
+    );
+
+    test('an area skill strikes the whole squad', () async {
+      const blast = HeroSkill(
+        id: 'b',
+        label: 'B',
+        kind: SkillKind.strike,
+        power: 20,
+        cooldown: 30,
+        hitsAll: true,
+      );
+      final r = await _start(
+        _Scene(
+          level: _level(),
+          config: _config(squad: trio, skills: const [blast]),
+        ),
+      );
+      r.run(2.5);
+      final before = enemies(r.world);
+      expect(before, hasLength(3));
+      r.tap(90, 262); // the skill button
+      expect(enemies(r.world), isEmpty);
+    });
+
+    test('a tap while an enemy winds up parries it', () async {
+      final parried = <AttackParried>[];
+      final winding = <AttackWindup>[];
+      final r = await _start(
+        _Scene(
+          level: _level(wave: ['tank']),
+          config: _config(timing: const CombatTimingRules(), windup: 0.4),
+        ),
+      );
+      r.world.events
+        ..on<AttackParried>(parried.add)
+        ..on<AttackWindup>(winding.add);
+      for (var i = 0; i < 400 && parried.isEmpty; i++) {
+        r.run(0.05);
+        if (winding.any((w) => w.attackerSide == 'enemy') && parried.isEmpty) {
+          r.tap(5, 5); // empty space: the parry tap
+        }
+      }
+      expect(parried, hasLength(1));
+    });
+
+    test('taps do nothing without timing rules', () async {
+      final parried = <AttackParried>[];
+      final r = await _start(
+        _Scene(
+          level: _level(wave: ['tank']),
+          config: _config(windup: 0.4),
+        ),
+      );
+      r.world.events.on<AttackParried>(parried.add);
+      for (var i = 0; i < 200; i++) {
+        r.run(0.05);
+        r.tap(5, 5);
+      }
+      expect(parried, isEmpty);
+    });
   });
 }

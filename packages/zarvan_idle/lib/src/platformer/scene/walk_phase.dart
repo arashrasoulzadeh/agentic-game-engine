@@ -1,3 +1,5 @@
+import 'dart:ui' show Offset;
+
 import 'package:zarvan_core/zarvan_core.dart';
 import 'package:zarvan_flutter/zarvan_flutter.dart' hide Text;
 
@@ -33,7 +35,9 @@ class WalkPhase {
   EntityId? _bob;
   EntityId? _hero;
   EntityId? _enemy;
-  EntityId? _corpse;
+  List<EntityId> _corpses = [];
+  List<EntityId> _companions = [];
+  final Map<EntityId, Offset> _offsets = {};
   double _done = 0;
   double _heroY = 0;
   double _enemyX = 0;
@@ -50,11 +54,23 @@ class WalkPhase {
     required EntityId hero,
     required EntityId enemy,
     EntityId? corpse,
+    List<EntityId> corpses = const [],
+    List<EntityId> companions = const [],
   }) {
     final pos = world.componentsOf<Position>();
     _hero = hero;
     _enemy = enemy;
-    _corpse = corpse;
+    _corpses = [?corpse, ...corpses];
+    // Companions (the rest of a squad) keep their place relative to [enemy]
+    // while it walks in.
+    _companions = companions;
+    _offsets.clear();
+    final ex = pos.get(enemy)?.x ?? 0;
+    final ey = pos.get(enemy)?.y ?? 0;
+    for (final c in companions) {
+      final p = pos.get(c);
+      if (p != null) _offsets[c] = Offset(p.x - ex, p.y - ey);
+    }
     _done = 0;
     // A hero with a `walk` clip plays it for the whole walk; without one the
     // bob below is the only step cue.
@@ -98,8 +114,18 @@ class WalkPhase {
     final step = walk.value - _done;
     _done = walk.value;
     scroller.scroll(world, step);
-    if (_corpse != null) pos.get(_corpse!)?.x -= step;
+    for (final c in _corpses) {
+      pos.get(c)?.x -= step;
+    }
     e.x = _enemyX + distance - _done;
+    for (final c in _companions) {
+      final off = _offsets[c];
+      final p = pos.get(c);
+      if (off != null && p != null) {
+        p.x = e.x + off.dx;
+        p.y = _enemyY + off.dy;
+      }
+    }
     h.y = _heroY - bob.value;
 
     if (!walk.isComplete) return false;
@@ -112,8 +138,12 @@ class WalkPhase {
     }
     world.destroy(_walk!);
     world.destroy(_bob!);
-    if (_corpse != null) world.destroy(_corpse!);
-    _walk = _bob = _corpse = null;
+    for (final c in _corpses) {
+      world.destroy(c);
+    }
+    _corpses = [];
+    _companions = [];
+    _walk = _bob = null;
     return true;
   }
 }

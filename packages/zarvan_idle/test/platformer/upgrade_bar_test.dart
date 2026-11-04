@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zarvan_core/zarvan_core.dart';
 import 'package:zarvan_flutter/src/register_components.dart';
-import 'package:zarvan_flutter/zarvan_flutter.dart' as eng show Sprite;
+import 'package:zarvan_flutter/zarvan_flutter.dart' as eng show Sprite, Text;
 import 'package:zarvan_idle/zarvan_idle.dart';
 
 World _world() {
@@ -102,5 +102,32 @@ void main() {
       progress: HeroProgress(),
     );
     expect(_spritesIn(w, 'icons'), 1);
+  });
+
+  test('an ultimate button shows the meter until it is full', () {
+    final w = _world();
+    const ult = HeroSkill(
+      id: 'ult',
+      label: 'Ult',
+      kind: SkillKind.strike,
+      ultimate: true,
+    );
+    final bar = UpgradeBar.spawn(
+      w,
+      atlasId: 'btn',
+      upgrades: const [],
+      skills: const [ult],
+      progress: HeroProgress(),
+    );
+    List<String> texts() {
+      final store = w.componentsOf<eng.Text>();
+      return [for (var i = 0; i < store.length; i++) store.denseAt(i).text];
+    }
+
+    bar.syncSkills(w, SkillCooldowns(const [ult]), ultimate: 0.5);
+    expect(texts(), contains('50%'));
+    bar.syncSkills(w, SkillCooldowns(const [ult]), ultimate: 1);
+    expect(texts(), isNot(contains('50%')));
+    expect(texts(), contains(const WaveStrings().ready));
   });
 }

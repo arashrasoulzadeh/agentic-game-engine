@@ -141,3 +141,39 @@ class AttackWindup {
   final String attackerSide;
   final double seconds;
 }
+
+/// What [AutoCombatSystem.tap] did with a tap.
+enum TapResult {
+  /// Timing is off or there is nobody to fight.
+  none,
+
+  /// An enemy's wind-up was parried.
+  parried,
+
+  /// The hero's next attack is now a timed strike.
+  timedStrike,
+
+  /// Nothing to time: the tap is a miss and [AutoCombatSystem.tap] is locked.
+  missed,
+
+  /// A recent miss still has [AutoCombatSystem.tap] locked.
+  locked,
+}
+
+/// The player parried [attacker]'s telegraphed attack; its swing does nothing.
+class AttackParried {
+  AttackParried({required this.attacker, required this.defender});
+
+  final EntityId attacker;
+  final EntityId defender;
+}
+
+/// The hero's attack landed as a timed strike (always critical).
+class TimedStrike {
+  TimedStrike({required this.attacker});
+
+  final EntityId attacker;
+}
+
+/// A tap that was not on a parry or a strike window.
+class TapMissed {}

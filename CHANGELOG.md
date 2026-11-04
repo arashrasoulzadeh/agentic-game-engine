@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added (engine)
+- Wave combat: player timing (`CombatTimingRules`: tap a wind-up to parry, tap the impact for a timed critical, ultimate meter) and squads (`SquadRule`: extra enemies in a back row, tap to focus, `HeroSkill.hitsAll` and `HeroSkill.ultimate`). Found while building it: entity ids are recycled, so a stale health-bar id destroyed the next enemy; the scene now clears its references when it destroys one.
 - `ShaderPostProcessed` snapshots with `toImageSync` and caps the snapshot to `maxPixels` (1.6 megapixels by default, `0` disables the cap), reuses one shader instead of leaking one per frame, and exposes `ShaderPostProcessed.snapshotRatio`. On a 2x display this took shader presets from about 35 ms to about 13 ms per frame (web, Chrome). New page: Post-processing and screen effects, with measurements, graphs, recipes and a random-assets web example.
 - Docs: the site opens in dark mode by default (toggle to light), the home page shows how a frame is made, and the rendering page has an end-to-end pipeline (simulation, draw, shell) covering time control, joints, level mechanics, CameraRig, lighting, post-processing, shader effects, the developer console and screen-reader nodes.
 - `ShaderPostProcessed` + `ShaderPostFx` (`shaders/post_fx.frag`): one-pass bloom, chromatic aberration, pixelate, CRT (curvature, scanlines, phosphor mask), vignette and grain; `Game.postFx` turns it on in `runGame`. Snapshot-based, so it works on every backend (one frame behind).

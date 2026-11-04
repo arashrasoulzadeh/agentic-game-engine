@@ -8,6 +8,8 @@ import 'package:zarvan_platformer/zarvan_platformer.dart';
 
 import '../register_components.dart';
 import '../combat/auto_combat_system.dart';
+import '../combat/combat_components.dart';
+import '../combat/combat_rules.dart';
 import '../combat/conditions.dart';
 import '../combat/skill_runner.dart';
 import '../hud/wave_strings.dart';
@@ -84,6 +86,8 @@ class WaveCombatConfig {
     this.offline,
     this.showSummary = true,
     this.hints = true,
+    this.timing,
+    this.squad,
   });
 
   /// Asset stem of the hero sheets (`<stem>_idle.png`, `_attack`, `_death`).
@@ -190,6 +194,12 @@ class WaveCombatConfig {
   final bool showSummary;
   final bool hints;
 
+  /// The player's timing (parry, timed strike, ultimate); null = fully automatic.
+  final CombatTimingRules? timing;
+
+  /// Several enemies per wave; null = always one-on-one.
+  final SquadRule? squad;
+
   /// Builds the spark emitter each fighter gets.
   final ParticleEmitter Function() impactParticles;
 
@@ -266,12 +276,16 @@ class WaveCombatScene extends Scene {
   SpriteHealthBar? _heroBar;
   SpriteHealthBar? _enemyBar;
   WavePath? _path;
-  EntityId? _corpse;
+  List<EntityId> _corpses = [];
+  final List<EntityId> _squad = [];
+  final Set<EntityId> _rewarded = {};
+  EntityId? _lastDead;
+  EntityId? _focus;
+  EntityId? _focusMark;
   SceneController? _scenes;
 
   bool finished = false;
   bool _heroFell = false;
-  bool _enemyRewarded = false;
   int _rewardCoins = 0;
   HitStop? _hitStop;
   UpgradeBar? _upgradeBar;
@@ -361,6 +375,41 @@ class WaveCombatScene extends Scene {
       );
     }
     _combat.windupSeconds = config.windupSeconds;
+    final timing = config.timing;
+    if (timing != null) {
+      timing.applyTo(_combat);
+      world.events
+        ..on<AttackParried>(
+          (_) => _announce(
+            world,
+            config.strings.parry,
+            150,
+            color: 0xFF7FE0FF,
+            size: 8,
+            life: 1.2,
+          ),
+        )
+        ..on<TimedStrike>(
+          (_) => _announce(
+            world,
+            config.strings.perfect,
+            150,
+            color: 0xFFFFD84A,
+            size: 8,
+            life: 1.2,
+          ),
+        )
+        ..on<TapMissed>(
+          (_) => _announce(
+            world,
+            config.strings.tooEarly,
+            150,
+            color: 0xFFB0B0B0,
+            size: 5,
+            life: 0.8,
+          ),
+        );
+    }
     world.addSystem(ConditionSystem());
     if (config.skills.isNotEmpty) _skills = SkillRunner(config.skills, _combat);
     if (config.comboBonusPerHit > 0) {
@@ -420,7 +469,13 @@ class WaveCombatScene extends Scene {
         strings: config.strings,
       );
       final skills = _skills;
-      if (skills != null) _upgradeBar!.syncSkills(world, skills.cooldowns);
+      if (skills != null) {
+        _upgradeBar!.syncSkills(
+          world,
+          skills.cooldowns,
+          ultimate: _combat.ultimate,
+        );
+      }
     }
     waves.index = math.min(
       progress.checkpoint(config.checkpointEvery),
@@ -490,6 +545,9 @@ class WaveCombatScene extends Scene {
     }
     if (config.skills.isNotEmpty && progress.markHintSeen('skill')) {
       _announce(world, config.strings.hintSkill, 224, life: 5);
+    }
+    if (config.timing != null && progress.markHintSeen('parry')) {
+      _announce(world, config.strings.hintParry, 213, life: 5);
     }
   }
 
@@ -650,11 +708,21 @@ class WaveCombatScene extends Scene {
   /// walked up to its anchor. The previous one stays as a corpse that
   /// scrolls away with the ground.
   void _spawnEnemy(World world) {
-    _enemyRewarded = false;
-    if (_corpse != null) world.destroy(_corpse!);
-    _corpse = enemyId;
+    _rewarded.clear();
+    _lastDead = null;
+    _focus = null;
+    for (final c in _corpses) {
+      world.destroy(c);
+    }
+    // The squad that just fell becomes the corpses that slide off.
+    _corpses = List.of(_squad);
+    _squad.clear();
+    // Cleared once destroyed: entity ids are recycled, so destroying the same
+    // bar twice would destroy whatever was spawned into its ids in between.
     if (_enemyHudId != null) world.destroy(_enemyHudId!);
+    _enemyHudId = null;
     _enemyBar?.destroy();
+    _enemyBar = null;
 
     final meta = _meta[waves.currentId]!;
     final stats = meta.stats;
@@ -694,6 +762,35 @@ class WaveCombatScene extends Scene {
       scaleY: scale,
       zIndex: 20,
     );
+    _squad.add(enemyId!);
+    _spawnExtras(world, meta, stats, kind, scale);
+    _combat.focus = enemyId;
+    _spawnEnemyBar(world);
+    _path?.update(waves.index, config.ui.pathNodeSize);
+    enemyLabel = switch (kind) {
+      WaveKind.elite => config.strings.eliteName(meta.name),
+      WaveKind.treasure => config.strings.goldenName(meta.name),
+      WaveKind.normal => meta.name,
+    };
+    enemyDescription = meta.descriptionFa;
+    _combat.enabled = false;
+    _walk.start(
+      world,
+      hero: heroId!,
+      enemy: _squad.first,
+      corpses: _corpses,
+      companions: _squad.skip(1).toList(),
+    );
+    _caption.show(world, enemyDescription);
+    _syncHud(world);
+  }
+
+  /// The health bar of the enemy being fought (the focused one).
+  void _spawnEnemyBar(World world) {
+    if (_enemyHudId != null) world.destroy(_enemyHudId!);
+    _enemyHudId = null;
+    _enemyBar?.destroy();
+    _enemyBar = null;
     final bar = config.hud.enemyBar;
     if (config.ui.barsStem != null) {
       _enemyBar = SpriteHealthBar.spawn(
@@ -720,17 +817,139 @@ class WaveCombatScene extends Scene {
         zIndex: 100,
       );
     }
-    _path?.update(waves.index, config.ui.pathNodeSize);
-    enemyLabel = switch (kind) {
-      WaveKind.elite => config.strings.eliteName(meta.name),
-      WaveKind.treasure => config.strings.goldenName(meta.name),
-      WaveKind.normal => meta.name,
-    };
-    enemyDescription = meta.descriptionFa;
-    _combat.enabled = false;
-    _walk.start(world, hero: heroId!, enemy: enemyId!, corpse: _corpse);
-    _caption.show(world, enemyDescription);
-    _syncHud(world);
+  }
+
+  /// Spawns the extra enemies of a squad behind the front one.
+  void _spawnExtras(
+    World world,
+    FighterMeta meta,
+    FighterStats stats,
+    WaveKind kind,
+    double scale,
+  ) {
+    final rule = config.squad;
+    if (rule == null) return;
+    final n = rule.extrasFor(waves.index, boss: waves.isBoss, kind: kind);
+    final rw = level.randomWaves;
+    for (var i = 1; i <= n; i++) {
+      final s = scale * math.pow(rule.backScale, i);
+      final id = spawnFighter(
+        world,
+        side: 'enemy',
+        x: _enemyTargetX + config.enterDistance + rule.rowOffsetX * i,
+        y: _enemyBaseY + rule.rowOffsetY * i,
+        hp:
+            stats.hp *
+            level.enemyRamp(waves.index) *
+            kind.hpFactor(rw) *
+            rule.extraStrength,
+        attack:
+            stats.attack *
+            level.enemyRamp(waves.index) *
+            kind.attackFactor(rw) *
+            rule.extraStrength,
+        attackSpeed: stats.attackSpeed,
+        armor: stats.armor,
+        powers: EnemyPowers.parse(stats.powers),
+        atlasId: meta.atlasId('idle'),
+        frameCount: meta.frames['idle']!,
+        extraClips: meta.extraClips(cues: level.cues),
+        impactParticles: config.impactParticles(),
+        scaleX: s,
+        scaleY: s,
+        zIndex: 20 - i,
+      );
+      _squad.add(id);
+    }
+  }
+
+  bool _alive(World world, EntityId id) =>
+      (world.componentsOf<Health>().get(id)?.current ?? 0) > 0;
+
+  List<EntityId> _livingEnemies(World world) => [
+    for (final id in _squad)
+      if (_alive(world, id)) id,
+  ];
+
+  /// Focuses the living enemy under [at] (a tap on it); true when one was hit.
+  /// Only meaningful while several are standing.
+  bool _focusEnemyAt(World world, Offset at) {
+    final living = _livingEnemies(world);
+    if (living.length < 2) return false;
+    final pos = world.componentsOf<Position>();
+    EntityId? best;
+    var bestDist = config.fighterSize * 0.5;
+    for (final id in living) {
+      final p = pos.get(id);
+      if (p == null) continue;
+      final d = (Offset(p.x, p.y) - at).distance;
+      if (d <= bestDist) {
+        bestDist = d;
+        best = id;
+      }
+    }
+    if (best == null) return false;
+    _focus = best;
+    _refreshSquad(world);
+    return true;
+  }
+
+  /// Pays for enemies that just fell, then points the fight (and the health
+  /// bar) at the focused enemy, or the first one left standing.
+  void _refreshSquad(World world) {
+    for (final id in _squad) {
+      if (_alive(world, id) || !_rewarded.add(id)) continue;
+      final front = id == _squad.first;
+      progress.addCoins(
+        front
+            ? _rewardCoins
+            : (_rewardCoins * (config.squad?.extraStrength ?? 1)).ceil(),
+      );
+      progress.recordKill();
+      if (front) _rollLoot(world);
+      _upgradeBar?.sync(world);
+      _lastDead = id;
+    }
+    final living = [
+      for (final id in _squad)
+        if (_alive(world, id)) id,
+    ];
+    final target = _focus != null && living.contains(_focus)
+        ? _focus
+        : living.firstOrNull;
+    if (target != null && target != enemyId) {
+      enemyId = target;
+      _combat.focus = target;
+      _spawnEnemyBar(world);
+    }
+    _updateFocusMark(world, living.length > 1 ? target : null);
+  }
+
+  /// A marker over the enemy the hero is fighting, only while there are several.
+  void _updateFocusMark(World world, EntityId? target) {
+    final pos = target == null
+        ? null
+        : world.componentsOf<Position>().get(target);
+    var mark = _focusMark;
+    if (pos == null) {
+      if (mark != null) {
+        world.destroy(mark);
+        _focusMark = null;
+      }
+      return;
+    }
+    mark ??= _focusMark = spawnWorldText(
+      world,
+      pos.x,
+      pos.y,
+      'v',
+      fontSize: 8,
+      colorArgb: 0xFFFFD84A,
+      zIndex: 130,
+    );
+    world.componentsOf<Position>().get(mark)
+      ?..x = pos.x
+      ..y = pos.y - config.fighterSize * 0.55;
   }
 
   void _syncHud(World world) =>
@@ -809,7 +1028,13 @@ class WaveCombatScene extends Scene {
     if (_barSync >= 0.2) {
       _barSync = 0;
       final skills = _skills;
-      if (skills != null) _upgradeBar?.syncSkills(world, skills.cooldowns);
+      if (skills != null) {
+        _upgradeBar?.syncSkills(
+          world,
+          skills.cooldowns,
+          ultimate: _combat.ultimate,
+        );
+      }
     }
     _updateConditionLabel(world);
     _caption.update(world, dt);
@@ -822,38 +1047,30 @@ class WaveCombatScene extends Scene {
 
     if (_walk.active) {
       if (_walk.update(world)) {
-        _corpse = null;
+        _corpses = [];
         _combat.enabled = true;
       }
       return;
     }
 
     final heroHp = world.componentsOf<Health>().get(h);
-    final enemyHp = world.componentsOf<Health>().get(e);
     if (heroHp != null && heroHp.current <= 0) {
       if (!_deathPlayed(world, h, dt)) return;
       _heroFell = true;
       return _finish(world, config.fallenMessage);
     }
-    if (enemyHp != null && enemyHp.current <= 0) {
-      // The description stays up for the whole encounter and goes with the enemy.
-      _caption.hide();
-      if (!_enemyRewarded) {
-        _enemyRewarded = true;
-        progress.addCoins(_rewardCoins);
-        progress.recordKill();
-        _rollLoot(world);
-        _upgradeBar?.sync(world);
-      }
-      if (!_deathPlayed(world, e, dt)) return;
-      if (waves.isBoss) {
-        _heroWon = true;
-        return _finish(world, config.clearedMessage);
-      }
-      waves.advance();
-      progress.reachWave(waves.index);
-      _spawnEnemy(world);
+    _refreshSquad(world);
+    if (_squad.any((id) => _alive(world, id))) return; // the fight goes on
+    // The description stays up for the whole encounter and goes with the enemy.
+    _caption.hide();
+    if (!_deathPlayed(world, _lastDead ?? e, dt)) return;
+    if (waves.isBoss) {
+      _heroWon = true;
+      return _finish(world, config.clearedMessage);
     }
+    waves.advance();
+    progress.reachWave(waves.index);
+    _spawnEnemy(world);
   }
 
   /// Keeps the hero's condition line (Bleed 2s...) over its head.
@@ -886,8 +1103,14 @@ class WaveCombatScene extends Scene {
       final h = heroId;
       final skills = _skills;
       if (h != null && skills != null) {
-        skills.use(world, skill, hero: h, enemy: enemyId);
-        bar!.syncSkills(world, skills.cooldowns);
+        skills.use(
+          world,
+          skill,
+          hero: h,
+          enemy: enemyId,
+          enemies: _livingEnemies(world),
+        );
+        bar!.syncSkills(world, skills.cooldowns, ultimate: _combat.ultimate);
       }
       return;
     }
@@ -900,7 +1123,11 @@ class WaveCombatScene extends Scene {
       }
       return;
     }
-    if (!finished) return;
+    if (!finished) {
+      if (_focusEnemyAt(world, worldPosition)) return;
+      if (config.timing != null) _combat.tap(world);
+      return;
+    }
     // With buttons, a finished run restarts only from them; without, any tap
     // replays.
     if (bar != null) return;

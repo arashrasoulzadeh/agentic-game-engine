@@ -226,9 +226,25 @@ class UpgradeBar {
 
   /// Refreshes the skill buttons: ready ones are active, those cooling down
   /// show the seconds left.
-  void syncSkills(World world, SkillCooldowns cooldowns) {
+  void syncSkills(
+    World world,
+    SkillCooldowns cooldowns, {
+    double ultimate = 0,
+  }) {
     for (var i = 0; i < skills.length; i++) {
       final s = skills[i];
+      if (s.ultimate) {
+        // Charged by play, not by a timer: show the meter.
+        final full = ultimate >= 1;
+        _set(
+          world,
+          _skillButtons[i],
+          full ? 'primary' : 'disabled',
+          s.label,
+          full ? strings.ready : '${(ultimate * 100).floor()}%',
+        );
+        continue;
+      }
       final left = cooldowns.remaining(s);
       _set(
         world,

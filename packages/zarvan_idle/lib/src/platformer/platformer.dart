@@ -7,6 +7,7 @@ library;
 export 'combat/auto_combat_system.dart';
 export 'combat/combat_components.dart';
 export 'combat/conditions.dart';
+export 'combat/combat_rules.dart';
 export 'combat/combo_tracker.dart';
 export 'combat/skill_runner.dart';
 export 'combat/enemy_powers.dart';

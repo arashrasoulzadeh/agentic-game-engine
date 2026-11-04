@@ -322,6 +322,14 @@ replays. A game supplies two things:
   `random_waves` in the level JSON (`RandomWaves`) shuffles waves inside blocks, turns some into tougher, larger
   elites that pay more coins, and can add one rare, nearly harmless treasure enemy (a chosen enemy's art) that pays
   many coins; `WaveCombatConfig.waveSeed` repeats a run.
+- Player skill and squads, both optional on `WaveCombatConfig`. `timing: CombatTimingRules()` lets a tap during an
+  enemy's "!" wind-up **parry** the swing (it is cancelled, a short counter bonus opens and the ultimate meter fills),
+  and a tap just before the hero's own swing lands makes it a guaranteed **timed strike** critical. A tap outside
+  both windows is a miss and locks taps out for a moment, so spamming does not work. `squad: SquadRule()` adds one or
+  two weaker enemies behind the front one from chosen waves (bosses and treasure enemies stay alone); the back row
+  is drawn smaller, tapping an enemy focuses it, and the wave ends when the whole squad is down. A `HeroSkill` with
+  `hitsAll: true` strikes every living enemy, and one with `ultimate: true` is gated by the meter instead of a
+  cooldown (its button shows the percentage until it is ready).
 - Making it an idle game, all optional on `WaveCombatConfig`: **saving** (`WaveCombatGame.load(saveStore: await
   PrefsSaveStore.open())` persists coins, upgrades, stars, gear and counters through `HeroProgressStore`) and
   **offline earnings** (`offline: OfflineRule(...)`, paid out on the next launch and announced once);
