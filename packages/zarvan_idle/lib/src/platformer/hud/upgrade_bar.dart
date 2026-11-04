@@ -225,6 +225,7 @@ class UpgradeBar {
   EntityId? _overlay;
   EntityId? _blur;
   final _rowTitles = <EntityId>[];
+  _Button? _close;
   static const _hidden = 3000.0;
 
   /// Draw-order boost of the dialog's contents, so it covers the captions and
@@ -524,6 +525,13 @@ class UpgradeBar {
     final menu = _menu;
     if (menu != null && menu.rect.contains(worldPosition)) return menuAction;
     if (layout.menu && !_menuOpen) return null;
+    // Open: the X and any tap outside the dialog close it.
+    final close = _close;
+    if (menu != null &&
+        ((close != null && close.rect.contains(worldPosition)) ||
+            !layout.dialog.contains(worldPosition))) {
+      return menuAction;
+    }
     for (var i = 0; i < _skillButtons.length; i++) {
       if (_skillButtons[i].rect.contains(worldPosition)) {
         return '$skillPrefix${skills[i].id}';
@@ -584,7 +592,7 @@ class UpgradeBar {
       final t = texts.get(e);
       if (t != null) t.colorArgb = (a << 24) | (t.colorArgb & 0xFFFFFF);
     }
-    for (final b in [..._buttons, ..._skillButtons]) {
+    for (final b in [..._buttons, ..._skillButtons, ?_close]) {
       sprites.get(b.sprite)?.tintArgb = white;
       if (b.icon != null) sprites.get(b.icon!)?.tintArgb = white;
       for (final e in [b.top, b.bottom]) {
@@ -667,6 +675,20 @@ class UpgradeBar {
     );
     world.componentsOf<eng.Text>().get(title)?.text = strings.upgradesMenu;
     _dialogParts.add(title);
+    final close = _spawnButton(
+      world,
+      r.right - 16,
+      r.top + 13,
+      20,
+      fontScale: layout.menuFontScale,
+      iconOnly: false,
+      lift: _dialogLift,
+    );
+    world.componentsOf<eng.Text>().get(close.top)?.text = 'X';
+    world.componentsOf<eng.Text>().get(close.bottom)?.text = '';
+    world.componentsOf<Position>().get(close.top)?.y = r.top + 13;
+    world.componentsOf<eng.Sprite>().get(close.sprite)?.region = 'secondary';
+    _close = close;
   }
 
   void _shiftDialog(World world, double dy) {

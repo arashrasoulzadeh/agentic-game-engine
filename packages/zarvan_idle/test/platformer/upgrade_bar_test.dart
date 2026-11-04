@@ -1,3 +1,5 @@
+import 'dart:ui' show Offset, Rect;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zarvan_core/zarvan_core.dart';
 import 'package:zarvan_flutter/src/register_components.dart';
@@ -92,22 +94,22 @@ void main() {
       w,
       atlasId: 'btn',
       upgrades: upgrades,
-      layout: const UpgradeLayout(menu: true, y: 250, menuX: 90, menuY: 308),
+      layout: const UpgradeLayout(menu: true, y: 200, menuX: 90, menuY: 308),
       progress: HeroProgress(coins: 1000),
     );
     expect(bar.menuOpen, isFalse);
-    expect(bar.hit(const Offset(30, 250)), isNull, reason: 'panel is closed');
+    expect(bar.hit(const Offset(30, 200)), isNull, reason: 'panel is closed');
     expect(bar.hit(const Offset(90, 308)), UpgradeBar.menuAction);
     bar.toggleMenu(w);
     expect(bar.menuOpen, isTrue);
-    expect(bar.hit(const Offset(30, 250)), 'strength');
+    expect(bar.hit(const Offset(30, 200)), 'strength');
     final sprites = w.componentsOf<eng.Sprite>();
     final positions = w.componentsOf<Position>();
     for (var i = 0; i < sprites.length; i++) {
       expect(positions.get(sprites.entityAt(i))!.y, lessThan(400));
     }
     bar.toggleMenu(w);
-    expect(bar.hit(const Offset(30, 250)), isNull);
+    expect(bar.hit(const Offset(30, 200)), isNull);
   });
 
   test('the dialog holds skills too, with a nine-piece frame, and pauses', () {
@@ -222,6 +224,29 @@ void main() {
       expect(blur.denseAt(0).sigma, 0);
     },
   );
+
+  test('the dialog closes from its X and from a tap outside it', () {
+    final w = _world();
+    final bar = UpgradeBar.spawn(
+      w,
+      atlasId: 'btn',
+      frameAtlasId: 'frame',
+      upgrades: upgrades,
+      layout: const UpgradeLayout(
+        menu: true,
+        y: 150,
+        dialog: Rect.fromLTRB(10, 70, 170, 250),
+      ),
+      progress: HeroProgress(),
+    );
+    expect(bar.hit(const Offset(20, 20)), isNull, reason: 'closed: no-op');
+    bar.toggleMenu(w);
+    expect(bar.hit(const Offset(154, 83)), UpgradeBar.menuAction, reason: 'X');
+    expect(bar.hit(const Offset(90, 20)), UpgradeBar.menuAction, reason: 'out');
+    expect(bar.hit(const Offset(5, 160)), UpgradeBar.menuAction, reason: 'out');
+    expect(bar.hit(const Offset(90, 118)), isNull, reason: 'empty dialog');
+    expect(bar.hit(const Offset(60, 150)), 'strength', reason: 'a row');
+  });
 
   test('without an icon atlas nothing changes', () {
     final w = _world();
