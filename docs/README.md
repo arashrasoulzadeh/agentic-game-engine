@@ -82,6 +82,20 @@ flowchart LR
     C --> X[zarvan_schema<br/>component schemas]
 ```
 
+## How a frame is made
+
+```mermaid
+flowchart LR
+    A["Input · agents · scripts"] --> B["Simulation<br/>fixed-step systems<br/>pure Dart, headless"]
+    B --> C["Draw<br/>camera · parallax · tiles<br/>sprites · particles · lighting"]
+    C --> D["Post-processing<br/>grade · bloom · CRT<br/>pixelate · colorblind"]
+    D --> E["Screen<br/>+ console · screen-reader nodes"]
+    F["Agent API<br/>read / patch the world"] -.-> B
+```
+
+The simulation never depends on Flutter, so the same world runs in tests, on a server and on a phone. See the
+[full render pipeline](concepts/rendering.md#the-frame-end-to-end).
+
 ## Pick your path
 
 | I want to… | Start here |

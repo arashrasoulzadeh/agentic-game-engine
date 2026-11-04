@@ -9,6 +9,7 @@ pubspec.yaml.
 ## [Unreleased]
 
 ### Added (engine)
+- Docs: the site opens in dark mode by default (toggle to light), the home page shows how a frame is made, and the rendering page has an end-to-end pipeline (simulation, draw, shell) covering time control, joints, level mechanics, CameraRig, lighting, post-processing, shader effects, the developer console and screen-reader nodes.
 - `ShaderPostProcessed` + `ShaderPostFx` (`shaders/post_fx.frag`): one-pass bloom, chromatic aberration, pixelate, CRT (curvature, scanlines, phosphor mask), vignette and grain; `Game.postFx` turns it on in `runGame`. Snapshot-based, so it works on every backend (one frame behind).
 - `WorldSemantics` and `semanticTargets`: TalkBack/VoiceOver nodes for `Button` and `Text` entities, active only when assistive navigation is on.
 - UI toolkit models: `layoutStack`/`anchorRect` (row, column, anchor layout), `ScrollListModel` (scroll, fling, selection) and `TextInputModel` (caret, limits, filters).

@@ -17,6 +17,70 @@ gameplay logic itself.
 - `EngineView` — the actual `CustomPaint`/render loop; you don't touch
   it directly in normal usage, `GameRunner` owns it.
 
+## The frame, end to end
+
+One tick of the game, from input to pixels. The simulation is pure Dart in `zarvan_core` and runs the same headless
+(tests, the CLI, agents); the draw stage and the shell are Flutter.
+
+```mermaid
+flowchart LR
+    IN["Input<br/>players · scripts · agents"] --> SIM["1 · Simulation<br/>zarvan_core · fixed timestep"]
+    SIM -- "world state, read only" --> DRAW["2 · Draw<br/>EngineView paint"]
+    DRAW --> SHELL["3 · Shell<br/>post-processing · overlays"]
+    SHELL --> SCREEN(("Screen"))
+    AGENT["Agent API<br/>read / patch the world"] -. "safe operations" .-> SIM
+```
+
+### 1 · Simulation (fixed timestep)
+
+```mermaid
+flowchart TB
+    A["Input and agent actions<br/>Behaviors · AISystem"] --> B["SpawnerSystem<br/>EntityPool recycles entities"]
+    B --> C["JointSystem<br/>springs · ropes · rods"]
+    C --> D["ConveyorZoneSystem · TeleporterSystem"]
+    D --> E["MovementSystem · Collision · TileCollision<br/>DestructibleTiles"]
+    E --> F["Animation · Tween · SpriteStates"]
+    F --> G["EventBus flush<br/>one delivery per step"]
+    T["World.timeScale · hitStop<br/>RealTimeSystem still gets real time"] -.-> C
+```
+
+### 2 · Draw (EngineView paint, read only)
+
+```mermaid
+flowchart TB
+    A["Camera<br/>CameraRig: dead-zone · look-ahead · bounds · shake"] --> B["Parallax layers"]
+    B --> C["TileMap<br/>animated tiles"]
+    C --> D["Sprites and nine-slice<br/>one drawRawAtlas batch per atlas"]
+    D --> E["Particles · Text · HudBar"]
+    E --> F["Lighting<br/>ambient shader · Light2D shadows · normal maps"]
+    F --> G["ScreenTint and fades"]
+```
+
+### 3 · Shell (widgets over the canvas)
+
+```mermaid
+flowchart TB
+    A["Colorblind filter"] --> B["PostProcessed<br/>ColorGrade · Vignette · Scanlines"]
+    B --> C["ShaderPostProcessed<br/>bloom · chromatic aberration · pixelate · CRT · grain"]
+    C --> D["Overlays<br/>DevConsoleOverlay · debug stats"]
+    D --> E["WorldSemantics<br/>TalkBack and VoiceOver nodes"]
+```
+
+| Stage | What runs | Where it is documented |
+|---|---|---|
+| Simulation | Systems in registration order, one fixed step at a time; events are delivered once per step | [ECS](ecs.md), [Architecture](architecture.md) |
+| Time control | `World.timeScale` (slow motion, pause), `hitStop`; a `RealTimeSystem` still gets real time | [ECS](ecs.md#time-scale-hit-stop-pooling-and-spawners) |
+| Level mechanics | `ConveyorZone`, `Teleporter`, `Joint`, `DestructibleTiles` | [ECS](ecs.md#level-mechanics) |
+| Camera | `Camera` zoom, pan and shake; `CameraRig` dead-zone, look-ahead and level bounds | [Following a target](#following-a-target-dead-zone-look-ahead-bounds) |
+| World layers | Parallax, tiles, sprites, particles, text, drawn by `zIndex`; sprites batch into one `drawRawAtlas` per atlas | [Sprite](#sprite-data-only-resolved-against-an-atlasregistry) |
+| Lighting | One ambient shader pass, `Light2D` with optional shadows, normal-mapped sprites | [Lighting](#lighting-light2d) |
+| Post-processing | Cheap colour grade, vignette and scanlines, then one fragment shader for bloom, chromatic aberration, pixelate, CRT and grain | [Post-processing](#post-processing), [Shader post-processing](#shader-post-processing) |
+| Overlays | Developer console, debug stats and frame timing | [Debug overlays](#debug-overlays) |
+| Accessibility | Screen-reader nodes rebuilt from `Button` and `Text` entities, only while assistive navigation is on | [Screen readers](#screen-readers) |
+
+Two rules the pipeline keeps: the draw stage only **reads** the `World` (it never changes simulation state), and every
+effect to the right of the draw stage is optional and costs nothing when it is off.
+
 ## `Sprite`: data-only, resolved against an `AtlasRegistry`
 
 A `Sprite` component (`rendering/sprite.dart`) is just `{atlasId,
