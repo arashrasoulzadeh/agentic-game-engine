@@ -7,3 +7,9 @@ abstract class System {
   String get name;
   void update(World world, double dt);
 }
+
+/// Marks a [System] that runs on real frame time even while the world is
+/// slowed, paused or in hit-stop (`World.timeScale`, `World.hitStop`): a UI
+/// animation, a camera, an input reader. Add it with `implements` or `with`;
+/// an ordinary system follows the world's clock.
+abstract interface class RealTimeSystem {}

@@ -38,6 +38,7 @@ import '../ui/button_hit_box.dart';
 import '../ui/room_exit.dart';
 import '../ui/trigger_zone.dart';
 import 'package:zarvan_schema/zarvan_schema.dart';
+import 'spawner.dart';
 
 /// Registers the engine's built-in components on [world]. Games/agents
 /// register their own additional component types the same way via
@@ -134,6 +135,7 @@ void registerCoreComponents(World world) {
 
     schema: triggerZoneSchema,
   );
+  registerSpawnerComponents(world);
   world.components.register<Pushable>(
     'pushable',
     (p) => p.toJson(),

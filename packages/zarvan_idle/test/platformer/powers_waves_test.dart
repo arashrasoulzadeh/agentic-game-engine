@@ -237,21 +237,17 @@ void main() {
       expect(world.componentsOf<eng.Sprite>().get(hero)!.tintArgb, isNull);
     });
 
-    test('hit-stop pauses combat and animation, then resumes them', () {
-      final world = _world()
-        ..addSystem(AutoCombatSystem())
-        ..addSystem(eng.AnimationSystem());
+    test('hit-stop freezes the world clock for real seconds, then resumes', () {
+      final world = _world()..addSystem(AutoCombatSystem());
       final stop = HitStop(world);
-      expect(world.isSystemEnabled('autoCombat'), isTrue);
+      expect(stop.frozen, isFalse);
       stop.freeze(0.1);
       expect(stop.frozen, isTrue);
-      expect(world.isSystemEnabled('autoCombat'), isFalse);
-      expect(world.isSystemEnabled('animation'), isFalse);
-      stop.update(0.05);
-      expect(world.isSystemEnabled('autoCombat'), isFalse);
-      stop.update(0.06);
+      expect(world.isHitStopped, isTrue);
+      world.step(0.06);
+      expect(stop.frozen, isTrue);
+      world.step(0.06);
       expect(stop.frozen, isFalse);
-      expect(world.isSystemEnabled('autoCombat'), isTrue);
     });
 
     test('a critical hit triggers the freeze; a light hit does not', () {

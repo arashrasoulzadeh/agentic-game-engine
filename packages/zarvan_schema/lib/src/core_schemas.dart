@@ -354,3 +354,23 @@ const bigTreasurySchema = ComponentSchema('bigTreasury', [
   FieldSchema('amounts', FieldType.object),
   FieldSchema('incomePerSecond', FieldType.object),
 ]);
+
+const spawnerSchema = ComponentSchema('spawner', [
+  FieldSchema('prefab', FieldType.string, required: true),
+  FieldSchema('every', FieldType.double, min: 0, defaultValue: 1),
+  FieldSchema('count', FieldType.int, min: 1, defaultValue: 1),
+  FieldSchema('maxAlive', FieldType.int, min: 0, defaultValue: 0),
+  FieldSchema('total', FieldType.int, min: 0, defaultValue: 0),
+  FieldSchema('delay', FieldType.double, min: 0, defaultValue: 0),
+  FieldSchema('radius', FieldType.double, min: 0, defaultValue: 0),
+  FieldSchema('active', FieldType.bool, defaultValue: true),
+  FieldSchema('waves', FieldType.list),
+  FieldSchema('elapsed', FieldType.double, min: 0, defaultValue: 0),
+  FieldSchema('spawned', FieldType.int, min: 0, defaultValue: 0),
+  FieldSchema('cycles', FieldType.int, min: 0, defaultValue: 0),
+  FieldSchema('waveIndex', FieldType.int, min: 0, defaultValue: 0),
+]);
+
+const spawnedBySchema = ComponentSchema('spawnedBy', [
+  FieldSchema('spawner', FieldType.int, required: true),
+]);

@@ -328,28 +328,59 @@ class World {
     components.archetypeManager.onEntityDestroyed(id);
   }
 
+  double _timeScale = 1;
+  double _hitStopLeft = 0;
+
+  /// How fast simulated time runs relative to real time: 1 is normal, 0.25 slow
+  /// motion, 0 a pause. Systems and timers (`after`, `every`) get `dt` times
+  /// this; a system that must keep real time (UI, camera) overrides
+  /// `RealTimeSystem`. Events still flush every step, so a paused
+  /// world still reacts to input. Runtime state: not part of a save.
+  double get timeScale => _timeScale;
+  set timeScale(double value) {
+    if (value.isNaN || value < 0) {
+      throw ArgumentError.value(value, 'timeScale', 'must be 0 or more');
+    }
+    _timeScale = value;
+  }
+
+  /// Freezes simulated time for [seconds] of *real* time (a hit-stop: a brief
+  /// freeze that makes a heavy blow land), then resumes at [timeScale].
+  /// A longer stop already running is kept.
+  void hitStop(double seconds) {
+    if (seconds > _hitStopLeft) _hitStopLeft = seconds;
+  }
+
+  /// Whether a [hitStop] is freezing the world right now.
+  bool get isHitStopped => _hitStopLeft > 0;
+
   /// Runs every registered system once, in registration order, then
   /// flushes events emitted during this tick. Fixed timestep is enforced
   /// by the caller (zarvan_flutter's ticker) — World just executes dt.
   void step(double dt) {
-    _deltaTime = dt;
-    _timers?.advance(dt);
+    final scaled = _hitStopLeft > 0 ? 0.0 : dt * _timeScale;
+    if (_hitStopLeft > 0) {
+      _hitStopLeft = (_hitStopLeft - dt).clamp(0.0, double.infinity);
+    }
+    _deltaTime = scaled;
+    _timers?.advance(scaled);
     final profiler = this.profiler;
     if (profiler == null) {
       for (final entry in _systems) {
         if (!entry.enabled) continue;
-        entry.system.update(this, dt);
+        final system = entry.system;
+        system.update(this, system is RealTimeSystem ? dt : scaled);
         commands.apply();
       }
       events.flush();
       commands.apply();
     } else {
-      _profiledStep(profiler, dt);
+      _profiledStep(profiler, dt, scaled);
     }
     _tick++;
   }
 
-  void _profiledStep(WorldProfiler profiler, double dt) {
+  void _profiledStep(WorldProfiler profiler, double dt, double scaled) {
     final whole = Stopwatch()..start();
     final timer = Stopwatch();
     for (final entry in _systems) {
@@ -358,7 +389,7 @@ class World {
       timer
         ..reset()
         ..start();
-      system.update(this, dt);
+      system.update(this, system is RealTimeSystem ? dt : scaled);
       commands.apply();
       profiler.recordSystem(system.name, timer.elapsedMicroseconds / 1000);
     }

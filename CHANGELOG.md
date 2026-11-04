@@ -8,6 +8,9 @@ pubspec.yaml.
 
 ## [Unreleased]
 
+### Added (engine)
+- `World.timeScale`, `World.hitStop` and `RealTimeSystem` (slow motion, pause, hit-stop); `EntityPool` for recycling short-lived entities' components; data-driven `Spawner`/`SpawnedBy` components with `SpawnerSystem` (periodic or wave spawns, caps, totals, scatter radius; schemas in `zarvan_schema`). `zarvan_idle`'s `HitStop` now uses the world's.
+
 ### Added (wave combat as an idle game)
 - Save and offline earnings (`HeroProgressStore`, `PrefsSaveStore`, `OfflineRule`), checkpoints and prestige (`checkpointEvery`, `prestigeBonusPerStar`, an Ascend button), hero skills (`HeroSkill`, `SkillRunner`), loot and gear (`LootTable`, `Gear`), bleed/poison/stun/volley conditions from enemy powers (`Conditions`, `ConditionSystem`), translatable text (`WaveStrings`), run summary and one-time hints. `AutoCombatSystem.damageModifiers` replaces the single `damageMultiplier`. `WaveCombatScene(metaLoader:)` makes whole-scene tests possible; scene-flow tests now cover coin rewards, mid-fight purchases, Retry, checkpoints, Ascend, skills, conditions, loot, hints and offline messages.
 

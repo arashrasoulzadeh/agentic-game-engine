@@ -32,16 +32,11 @@ Sections: [Release](#release) ·
 
 ## Wanted: engine gaps
 
-Ten things a general 2D engine needs that this repo does not have. Each was checked against the source (no
+Ten things a general 2D engine needs that this repo did not have (the first three shipped and were removed from
+this list, see the changelog; seven remain). Each was checked against the source (no
 matching class or file in `zarvan_core`, `zarvan_flutter`, `zarvan_platformer` or `zarvan_strategy`) before being
 listed. Tick them off as they ship, with a test and docs.
 
-- [ ] **Time scale and hit-stop in the world.** `World.timeScale` (slow motion, pause groups, per-system exemption)
-      so hit-stop and bullet time are one call. `zarvan_idle` fakes hit-stop by disabling named systems.
-- [ ] **Entity / object pooling.** A reusable pool for bullets, particles, damage numbers and projectiles, so a busy
-      scene stops allocating entities and components every frame.
-- [ ] **Data-driven spawners.** Timed, wave and area spawners authored as component data (what, where, how often,
-      cap, stop condition), usable by any genre; today waves exist only inside `zarvan_idle`.
 - [ ] **Camera dead-zone, look-ahead and bounds.** Follow with a dead-zone window, velocity look-ahead and clamping
       to a level rectangle, on top of the existing follow and shake.
 - [ ] **Joints and springs.** Distance, spring and rope constraints between entities (and entity-to-point), solved

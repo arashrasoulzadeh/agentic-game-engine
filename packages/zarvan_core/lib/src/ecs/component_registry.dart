@@ -97,6 +97,23 @@ class ComponentRegistration<T> {
     return 'a field is missing or has the wrong type. Got $json$expected';
   }
 
+  /// Removes and returns [entity]'s component, keeping the instance alive
+  /// (type-erased, for `EntityPool`); null when it has none.
+  Object? detach(EntityId entity) {
+    final value = _store.get(entity);
+    if (value == null) return null;
+    _archetypeManager?.onComponentRemoved(entity, T);
+    _store.remove(entity);
+    return value;
+  }
+
+  /// Puts a component instance back on [entity], the inverse of [detach].
+  void attach(EntityId entity, Object component) {
+    final isNew = !_store.has(entity);
+    _store.set(entity, component as T);
+    if (isNew) _archetypeManager?.onComponentAdded(entity, T);
+  }
+
   void removeEntity(EntityId entity) {
     if (_store.has(entity)) {
       _archetypeManager?.onComponentRemoved(entity, T);

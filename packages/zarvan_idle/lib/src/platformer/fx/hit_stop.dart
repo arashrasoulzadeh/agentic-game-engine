@@ -1,41 +1,20 @@
-import 'dart:math' as math;
-
 import 'package:zarvan_core/zarvan_core.dart';
 
-/// Freezes combat and animation for a moment. [freeze] pauses the named
-/// systems; [update] (call it with the real frame time) resumes them.
+/// Freezes the fight for a moment so a heavy blow lands visibly: a thin
+/// wrapper over the engine's `World.hitStop`, which freezes every system and
+/// timer that follows the world's clock for that many *real* seconds.
 class HitStop {
-  HitStop(
-    this.world, {
-    this.systems = const ['autoCombat', 'animation', 'spriteState', 'movement'],
-  });
+  HitStop(this.world);
 
   final World world;
-  final List<String> systems;
-  double _remaining = 0;
 
-  bool get frozen => _remaining > 0;
+  bool get frozen => world.isHitStopped;
 
   void freeze(double seconds) {
-    if (seconds <= 0) return;
-    if (!frozen) _set(false);
-    _remaining = math.max(_remaining, seconds);
+    if (seconds > 0) world.hitStop(seconds);
   }
 
-  void update(double realDt) {
-    if (!frozen) return;
-    _remaining -= realDt;
-    if (_remaining <= 0) {
-      _remaining = 0;
-      _set(true);
-    }
-  }
-
-  void _set(bool enabled) {
-    for (final name in systems) {
-      if (world.systemOrder.contains(name)) {
-        world.setSystemEnabled(name, enabled);
-      }
-    }
-  }
+  /// Kept for callers that tick it with the frame time; the world counts the
+  /// freeze down itself.
+  void update(double realDt) {}
 }

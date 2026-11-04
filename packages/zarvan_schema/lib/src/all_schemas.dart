@@ -21,6 +21,8 @@ const allComponentSchemas = <String, ComponentSchema>{
   'particleEmitter': particleEmitterSchema,
   'tween': tweenSchema,
   'triggerZone': triggerZoneSchema,
+  'spawner': spawnerSchema,
+  'spawnedBy': spawnedBySchema,
   'pushable': pushableSchema,
   'dialogueGraph': dialogueGraphSchema,
   'gameState': gameStateSchema,

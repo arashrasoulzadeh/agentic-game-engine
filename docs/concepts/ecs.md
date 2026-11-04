@@ -96,3 +96,21 @@ common-case wrappers.
 - [content-as-data.md](content-as-data.md) — serializing/patching a `World` as JSON.
 - [agent-api.md](agent-api.md) — the `Behavior`/`WorldView` sandbox for runtime agents.
 - [`packages/zarvan_core/README.md`](../../packages/zarvan_core/README.md) — full API reference.
+
+## Time scale, hit-stop, pooling and spawners
+
+**Time scale.** `world.timeScale` (1 normal, `0.25` slow motion, `0` pause) multiplies the `dt` every system and timer
+receives. A system that must keep real time (UI, camera, input) adds `implements RealTimeSystem`. Events still flush
+every step, so a paused world can react to input. `world.hitStop(0.07)` freezes simulated time for that many *real*
+seconds, then resumes at the current scale: one call for a heavy blow. Neither is part of a save.
+
+**Pooling.** `EntityPool(world)` recycles the component *objects* of short-lived entities (bullets, sparks):
+`pool.acquire()` returns a `PooledEntity` whose `recycled` flag says whether it carries stale components from an earlier
+use (set every field you rely on) or is brand new (build it as usual); `pool.release(id)` strips the entity into the
+stash. The pool's `created` and `recycled` counters show whether it is working.
+
+**Spawners.** A `Spawner` component on an entity with a `Position`, plus a `SpawnerSystem(prefabRegistry)`, spawns a
+prefab on a schedule as pure data: `{"prefab": "coin", "every": 2, "delay": 1, "maxAlive": 5, "total": 20, "radius": 30}`,
+or timed bursts with `"waves": [{"at": 5, "count": 3}]`. The first periodic spawn is at `delay`; `maxAlive` counts the
+spawner's live spawns (each is tagged `SpawnedBy`) and a blocked spawner waits instead of banking a burst; `total`
+retires it; spawns are deterministic for the world's seed. Each emits a `Spawned` event.
