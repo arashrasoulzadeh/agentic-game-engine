@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:zarvan_core/zarvan_core_idle.dart';
 import 'idle_controller.dart';
+import 'idle_list_panel.dart';
 
 /// Rebuilds when [listenable] notifies, but at most once per [interval] for quiet ticks.
 ///
@@ -382,9 +383,7 @@ class UpgradeList extends StatelessWidget {
               controller.team,
               u.requires,
             ).isNotEmpty;
-            final cost = u.cost.entries
-                .map((c) => '${controller.format(c.value)} ${c.key}')
-                .join(', ');
+            final cost = costText(controller, u.cost);
             final can =
                 !u.purchased && !locked && controller.wallet.canAfford(u.cost);
             return ListTile(

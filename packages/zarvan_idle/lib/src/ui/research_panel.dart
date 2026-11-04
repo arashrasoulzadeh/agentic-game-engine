@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:zarvan_core/zarvan_core_idle.dart';
 import 'idle_controller.dart';
-import 'idle_widgets.dart';
+import 'idle_list_panel.dart';
 
 /// Research tree: buy nodes to [grantTech] unlocks that gate generators / upgrades.
 class ResearchPanel extends StatelessWidget {
@@ -12,32 +12,13 @@ class ResearchPanel extends StatelessWidget {
   final IdleController controller;
 
   @override
-  Widget build(BuildContext context) {
-    return ThrottledListenableBuilder(
-      listenable: controller,
-      urgentOf: () => controller.urgentGeneration,
-      builder: (context, _) {
-        final ids = controller.researchIds;
-        if (ids.isEmpty) {
-          return const SizedBox.shrink(key: Key('research-empty'));
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-              child: Text(
-                'Research',
-                key: const Key('research-title'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            for (final e in ids) _row(e),
-          ],
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) => IdleListPanel(
+    controller: controller,
+    title: 'Research',
+    keyPrefix: 'research',
+    idsOf: () => controller.researchIds,
+    rowFor: _row,
+  );
 
   Widget _row(EntityId entity) {
     final n = controller.world.componentsOf<ResearchNode>().get(entity)!;
@@ -46,9 +27,7 @@ class ResearchPanel extends StatelessWidget {
       controller.team,
       n.requires,
     ).isNotEmpty;
-    final cost = n.cost.entries
-        .map((c) => '${controller.format(c.value)} ${c.key}')
-        .join(', ');
+    final cost = costText(controller, n.cost);
     final can = !n.purchased && !locked && controller.wallet.canAfford(n.cost);
     return ListTile(
       key: Key('research-${n.id}'),

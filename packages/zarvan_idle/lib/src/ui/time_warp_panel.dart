@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:zarvan_core/zarvan_core_idle.dart';
 import 'idle_controller.dart';
-import 'idle_widgets.dart';
+import 'idle_list_panel.dart';
 
 /// Paid time skips from the definition's `"timeWarps"` block.
 class TimeWarpPanel extends StatelessWidget {
@@ -12,38 +12,17 @@ class TimeWarpPanel extends StatelessWidget {
   final IdleController controller;
 
   @override
-  Widget build(BuildContext context) {
-    return ThrottledListenableBuilder(
-      listenable: controller,
-      urgentOf: () => controller.urgentGeneration,
-      builder: (context, _) {
-        final ids = controller.timeWarpIds;
-        if (ids.isEmpty) {
-          return const SizedBox.shrink(key: Key('timewarp-empty'));
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-              child: Text(
-                'Time warp',
-                key: const Key('timewarp-title'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            for (final e in ids) _row(e),
-          ],
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) => IdleListPanel(
+    controller: controller,
+    title: 'Time warp',
+    keyPrefix: 'timewarp',
+    idsOf: () => controller.timeWarpIds,
+    rowFor: _row,
+  );
 
   Widget _row(EntityId entity) {
     final o = controller.world.componentsOf<TimeWarpOffer>().get(entity)!;
-    final cost = o.cost.entries
-        .map((c) => '${controller.format(c.value)} ${c.key}')
-        .join(', ');
+    final cost = costText(controller, o.cost);
     final can = controller.wallet.canAfford(o.cost);
     final hours = o.seconds / 3600;
     final label = hours >= 1

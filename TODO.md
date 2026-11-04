@@ -17,6 +17,7 @@ Per-area lists live next to what they track: studio in
 so those files exist only on the owner's machine).
 
 Sections: [Release](#release) ·
+[Wanted: engine gaps](#wanted-engine-gaps) ·
 [Parked decisions](#parked-decisions)
 
 ## Release
@@ -28,6 +29,36 @@ Sections: [Release](#release) ·
       policy for generated projects, publish packages to pub.dev (drops the
       self-referencing git-dep constraint), then swap README badges to
       pub.dev version badges. Checklist: [docs/engine-releasing.md](docs/engine-releasing.md).
+
+## Wanted: engine gaps
+
+Ten things a general 2D engine needs that this repo does not have. Each was checked against the source (no
+matching class or file in `zarvan_core`, `zarvan_flutter`, `zarvan_platformer` or `zarvan_strategy`) before being
+listed. Tick them off as they ship, with a test and docs.
+
+- [ ] **Time scale and hit-stop in the world.** `World.timeScale` (slow motion, pause groups, per-system exemption)
+      so hit-stop and bullet time are one call. `zarvan_idle` fakes hit-stop by disabling named systems.
+- [ ] **Entity / object pooling.** A reusable pool for bullets, particles, damage numbers and projectiles, so a busy
+      scene stops allocating entities and components every frame.
+- [ ] **Data-driven spawners.** Timed, wave and area spawners authored as component data (what, where, how often,
+      cap, stop condition), usable by any genre; today waves exist only inside `zarvan_idle`.
+- [ ] **Camera dead-zone, look-ahead and bounds.** Follow with a dead-zone window, velocity look-ahead and clamping
+      to a level rectangle, on top of the existing follow and shake.
+- [ ] **Joints and springs.** Distance, spring and rope constraints between entities (and entity-to-point), solved
+      in a system; the only physics today is circle/AABB collision and platformer gravity.
+- [ ] **Post-processing pipeline.** Full-screen shader passes (bloom, vignette, scanlines/CRT, colour grading,
+      chromatic aberration, pixelate) as a component stack on the camera; today only `ScreenTint` and the lighting
+      shaders exist.
+- [ ] **In-game developer console.** A command console (toggle, history, autocomplete) wired to the operation
+      registry so every agent operation and cheat (`give`, `teleport`, `timescale`) is typable on device.
+- [ ] **Screen-reader semantics.** Expose menus, buttons and HUD text to TalkBack/VoiceOver (`Semantics`) from the
+      engine's UI scenes; accessibility settings exist, assistive-technology support does not.
+- [ ] **UI toolkit pieces: text input, scrolling lists, layout containers.** In-world UI has buttons and menus but
+      no text field, scroll view or row/column/anchor layout.
+- [ ] **Level mechanics: conveyors, teleporters, destructible tiles.** Data-driven tile and trigger behaviours beyond
+      one-way and moving platforms, with editor-schema support so the studio can place them.
+
+Also noted, smaller: minimap, trail/ribbon renderer, weather particle presets, in-game toast queue.
 
 ## Parked decisions
 
