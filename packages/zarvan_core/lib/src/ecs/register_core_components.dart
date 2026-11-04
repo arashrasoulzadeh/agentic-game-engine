@@ -39,6 +39,7 @@ import '../ui/room_exit.dart';
 import '../ui/trigger_zone.dart';
 import 'package:zarvan_schema/zarvan_schema.dart';
 import '../physics/joint.dart';
+import '../physics/level_mechanics.dart';
 import 'spawner.dart';
 
 /// Registers the engine's built-in components on [world]. Games/agents
@@ -138,6 +139,7 @@ void registerCoreComponents(World world) {
   );
   registerSpawnerComponents(world);
   registerJointComponents(world);
+  registerLevelMechanicsComponents(world);
   world.components.register<Pushable>(
     'pushable',
     (p) => p.toJson(),

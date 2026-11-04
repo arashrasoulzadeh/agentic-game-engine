@@ -23,6 +23,8 @@ const allComponentSchemas = <String, ComponentSchema>{
   'triggerZone': triggerZoneSchema,
   'spawner': spawnerSchema,
   'joint': jointSchema,
+  'conveyorZone': conveyorZoneSchema,
+  'teleporter': teleporterSchema,
   'spawnedBy': spawnedBySchema,
   'pushable': pushableSchema,
   'dialogueGraph': dialogueGraphSchema,

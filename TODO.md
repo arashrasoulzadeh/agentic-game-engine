@@ -32,8 +32,8 @@ Sections: [Release](#release) ·
 
 ## Wanted: engine gaps
 
-Ten things a general 2D engine needs that this repo did not have (the first six shipped (post-processing partly) and were removed from
-this list, see the changelog; four remain). Each was checked against the source (no
+Ten things a general 2D engine needs that this repo did not have (the first six shipped (post-processing partly), plus level mechanics and were removed from
+this list, see the changelog; three remain). Each was checked against the source (no
 matching class or file in `zarvan_core`, `zarvan_flutter`, `zarvan_platformer` or `zarvan_strategy`) before being
 listed. Tick them off as they ship, with a test and docs.
 
@@ -43,30 +43,3 @@ listed. Tick them off as they ship, with a test and docs.
       engine's UI scenes; accessibility settings exist, assistive-technology support does not.
 - [ ] **UI toolkit pieces: text input, scrolling lists, layout containers.** In-world UI has buttons and menus but
       no text field, scroll view or row/column/anchor layout.
-- [ ] **Level mechanics: conveyors, teleporters, destructible tiles.** Data-driven tile and trigger behaviours beyond
-      one-way and moving platforms, with editor-schema support so the studio can place them.
-
-Also noted, smaller: minimap, trail/ribbon renderer, weather particle presets, in-game toast queue.
-
-## Parked decisions
-
-Not tasks — conclusions kept so they aren't re-litigated. Re-open only on
-the stated trigger.
-
-- **No dirty-rect / partial redraw in `EngineView`.** Full redraw every
-  tick is deliberate; measured paint is ~10–16% of frame on device.
-  **Re-open only** if `paint` itself becomes a real over-budget fraction.
-- **No 3D, ever** and **no other game engines** — see CLAUDE.md.
-- **Networking stops at `NetEndpoint`.** WebRTC / NAT traversal need a
-  native plugin or relay; games wire that themselves.
-- **Published samples are the three `zarvan create` templates** (CI
-  builds each). No sample app in this repo (`test_game/` stays gitignored).
-- **Docs stay single-version** until the first published release; then
-  consider `mike` with the v0.1.0 tag. `proposals/` and
-  `studio/qa-level-editor.md` stay unpublished on purpose.
-- **`PlayerOptions` stay shell-applied.** The engine stores/presents settings
-  but does not read them itself. Games wire `colorblindMode` /
-  `screenShakeIntensity` (templates zero shake when `reduceMotion`), volumes,
-  and `textScale` in their own UI. Re-open only if a second genre needs the
-  same wiring and duplication becomes painful — see
-  [docs/concepts/settings.md](docs/concepts/settings.md).

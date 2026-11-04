@@ -4,7 +4,7 @@
 
 Every built-in component and the exact JSON shape it serializes to — what you see in `World.toJson()` and what `applyPatch` / `Level.loadInto` accept. This page is generated from `zarvan_schema`, the same schemas the studio and `zarvan lint` validate against, so it is always current.
 
-**101 components** across 4 packages. Jump to: [zarvan_core](#zarvan_core) · [zarvan_flutter](#zarvan_flutter) · [zarvan_platformer](#zarvan_platformer) · [zarvan_idle](#zarvan_idle)
+**103 components** across 4 packages. Jump to: [zarvan_core](#zarvan_core) · [zarvan_flutter](#zarvan_flutter) · [zarvan_platformer](#zarvan_platformer) · [zarvan_idle](#zarvan_idle)
 
 ## zarvan_core
 
@@ -489,6 +489,26 @@ A marker: present or absent, no fields.
 | `stiffness` | `double` | 0 to ∞; default `40` |
 | `damping` | `double` | 0 to ∞; default `4` |
 | `breakDistance` | `double` | 0 to ∞; default `0` |
+
+### `conveyorZone`
+
+| Field | Type | Notes |
+|---|---|---|
+| `width` | `double` | 0 to ∞; default `64` |
+| `height` | `double` | 0 to ∞; default `16` |
+| `speedX` | `double` | default `60` |
+| `speedY` | `double` | default `0` |
+
+### `teleporter`
+
+| Field | Type | Notes |
+|---|---|---|
+| `width` | `double` | 0 to ∞; default `32` |
+| `height` | `double` | 0 to ∞; default `32` |
+| `targetX` | `double` | default `0` |
+| `targetY` | `double` | default `0` |
+| `targetEntity` | `int` | may be null |
+| `cooldown` | `double` | 0 to ∞; default `0.5` |
 
 ## zarvan_flutter
 

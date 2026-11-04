@@ -390,3 +390,19 @@ const jointSchema = ComponentSchema('joint', [
   FieldSchema('damping', FieldType.double, min: 0, defaultValue: 4),
   FieldSchema('breakDistance', FieldType.double, min: 0, defaultValue: 0),
 ]);
+
+const conveyorZoneSchema = ComponentSchema('conveyorZone', [
+  FieldSchema('width', FieldType.double, min: 0, defaultValue: 64),
+  FieldSchema('height', FieldType.double, min: 0, defaultValue: 16),
+  FieldSchema('speedX', FieldType.double, defaultValue: 60),
+  FieldSchema('speedY', FieldType.double, defaultValue: 0),
+]);
+
+const teleporterSchema = ComponentSchema('teleporter', [
+  FieldSchema('width', FieldType.double, min: 0, defaultValue: 32),
+  FieldSchema('height', FieldType.double, min: 0, defaultValue: 32),
+  FieldSchema('targetX', FieldType.double, defaultValue: 0),
+  FieldSchema('targetY', FieldType.double, defaultValue: 0),
+  FieldSchema('targetEntity', FieldType.int, optional: true),
+  FieldSchema('cooldown', FieldType.double, min: 0, defaultValue: 0.5),
+]);

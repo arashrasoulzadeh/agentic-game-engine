@@ -874,6 +874,10 @@ destroyed far end leaves the joint inert.
 ## Developer console
 
 `DevConsole` is a Flutter-free command console: `run(line)` parses (quotes supported), executes and logs; `previous()`/`next()` walk history; `complete(typed)` suggests command, prefab and component names; unknown commands get a "did you mean". Built-ins: `help`, `timescale`, `pause`, `resume`, `step`, `hitstop`, `entities`, `inspect`, `systems`, `spawn`, `kill`, `teleport`, `set`. Games add cheats with `addCommand(ConsoleCommand(...))`. In Flutter, show `DevConsoleOverlay(console: console)` (for example behind a debug-only toggle).
+
+## Level mechanics
+
+`ConveyorZone` drags bodies inside its rectangle at a velocity; `Teleporter` moves bodies to a point or entity with a per-body cooldown and emits `Teleported`. Register `ConveyorZoneSystem` before movement and `TeleporterSystem` anywhere. `DestructibleTiles(map, {tileId: DestructibleTile(hits:, becomes:)})` breaks tiles via `hit(col,row)` or `blast(x,y,radius)`. Both components have schemas, so the studio can place them.
 ''',
 
   'concepts/idle-games.md': '''# Idle games
